@@ -18607,8 +18607,8 @@ This version of the operator has been available since version 13 of the default 
   current_mean = ReducedMean(X, axis=all_except_channel_index)
   current_var =  ReducedVar(X, axis=all_except_channel_index)
   
-  running_mean = mean * momentum + current_mean * (1 - momentum)
-  running_var = var * momentum + current_var * (1 - momentum)
+  running_mean = input_mean * momentum + current_mean * (1 - momentum)
+  running_var = input_var * momentum + current_var * (1 - momentum)
   
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
   ```
@@ -18646,10 +18646,10 @@ This version of the operator has been available since version 14 of the default 
 <dd>Bias tensor of shape (C).</dd>
 <dt><tt>input_mean</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
-<dt><tt>Input_var</tt> (differentiable) : T</dt>
+<dt><tt>input_var</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 <dt><tt>training_mode</tt> (optional, non-differentiable) : T1</dt>
-<dd>If set to true then it indicates BatchNormalization is being used for training. It is an optional value hence unless specified explicitly, it is false.</dd>
+<dd>A 0-D tensor. If set to true then it indicates BatchNormalization is being used for training. It is an optional value hence unless specified explicitly, it is false.</dd>
 </dl>
 
 #### Outputs (1 - 5)

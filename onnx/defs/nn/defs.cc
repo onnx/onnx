@@ -1607,8 +1607,8 @@ The outputs are updated as follows when training_mode=True:
 current_mean = ReducedMean(X, axis=all_except_channel_index)
 current_var =  ReducedVar(X, axis=all_except_channel_index)
 
-running_mean = mean * momentum + current_mean * (1 - momentum)
-running_var = var * momentum + current_var * (1 - momentum)
+running_mean = input_mean * momentum + current_mean * (1 - momentum)
+running_var = input_var * momentum + current_var * (1 - momentum)
 
 Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
 ```
@@ -1682,7 +1682,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .Input(
             4,
-            "Input_var",
+            "input_var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
             "T",
             OpSchema::Single,
@@ -1692,7 +1692,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             5,
             "training_mode",
-            "If set to true then it indicates BatchNormalization is being used for training. It is an "
+            "A 0-D tensor. If set to true then it indicates BatchNormalization is being used for training. It is an "
             "optional value hence unless specified explicitly, it is false.",
             "T1",
             OpSchema::Optional,
@@ -1768,15 +1768,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (ctx.getNumInputs() > 5 && hasInputShape(ctx, 5)) {
             auto& mode_input_shape = getInputShape(ctx, 5);
-            // if mode is not scalar or tensor of rank 1, fail shape inference
+            // if mode is not scalar or tensor of rank 0, fail shape inference
             if (static_cast<int>(mode_input_shape.dim_size()) != 0) {
-              if (static_cast<int>(mode_input_shape.dim_size()) > 1 ||
-                  !mode_input_shape.dim(0).has_dim_value() ||
-                  static_cast<int>(mode_input_shape.dim(0).dim_value()) !=
-                      1) {
-                fail_shape_inference(
-                    "Training_mode must be a scalar boolean, but it's not.");
-              }
+              fail_shape_inference(
+                  "Training_mode must be a 0-D scalar boolean, but it's not.");
             }
           }
 
