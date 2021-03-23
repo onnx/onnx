@@ -3,7 +3,7 @@ E
 X
 WY"ConvTranspose*
 auto_pad"
-SAME_UPPER *
+SAME_LOWER *
 strides@@ test_convtranspose_autopad_sameZ
 X
 
