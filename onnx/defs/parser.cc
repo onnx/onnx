@@ -2,6 +2,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Experimental language syntax and parser for ONNX. Please note that the syntax as formalized
+// by this parser is preliminary and may change.
+
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -62,9 +65,9 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
     tensortype->set_elem_type(dtype);
     tensortype->clear_shape();
     // Grammar:
-    // FLOAT indicates scalar (rank 0)
-    // FLOAT [] indicates unknown rank tensor
-    // FLOAT [one-or-more-dimensions] indicates tensor of known rank > 0.
+    // float indicates scalar (rank 0)
+    // float [] indicates unknown rank tensor (not a zero rank tensor)
+    // float [one-or-more-dimensions] indicates tensor of known rank > 0.
     if (Matches('[')) {
       if (!Matches(']')) {
         PARSE(*tensortype->mutable_shape());
@@ -90,9 +93,11 @@ Status OnnxParser::Parse(ValueInfoProto& valueinfo) {
 Status OnnxParser::Parse(ValueInfoList& vilist) {
   vilist.Clear();
   MATCH('(');
-  while (!Matches(')')) {
-    PARSE(*vilist.Add());
-    (void)Matches(','); // skip optional comma if present
+  if (!Matches(')')) {
+    do {
+      PARSE(*vilist.Add());
+    } while (Matches(','));
+    MATCH(')');
   }
   return Status::OK();
 }
@@ -116,49 +121,51 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
 
   // tensorProto.mutable_int64_data()->Reserve(n);
   // Parse the actual values:
-  MATCH('{');
+
   int64_t intval;
   float floatval;
   double dblval;
   std::string strval;
-  while (!Matches('}')) {
-    switch (static_cast<TensorProto::DataType>(elem_type)) {
-      case TensorProto::DataType::TensorProto_DataType_INT8:
-      case TensorProto::DataType::TensorProto_DataType_INT16:
-      case TensorProto::DataType::TensorProto_DataType_INT32:
-      case TensorProto::DataType::TensorProto_DataType_UINT8:
-      case TensorProto::DataType::TensorProto_DataType_UINT16:
-      case TensorProto::DataType::TensorProto_DataType_BOOL:
-        PARSE_TOKEN(intval);
-        // TODO: check values are in the correct range.
-        tensorProto.add_int32_data(intval);
-        break;
-      case TensorProto::DataType::TensorProto_DataType_INT64:
-        PARSE_TOKEN(intval);
-        tensorProto.add_int64_data(intval);
-        break;
-      case TensorProto::DataType::TensorProto_DataType_UINT32:
-      case TensorProto::DataType::TensorProto_DataType_UINT64:
-        PARSE_TOKEN(intval);
-        tensorProto.add_uint64_data(intval);
-        break;
-      case TensorProto::DataType::TensorProto_DataType_FLOAT:
-        PARSE_TOKEN(floatval);
-        tensorProto.add_float_data(floatval);
-        break;
-      case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-        PARSE_TOKEN(dblval);
-        tensorProto.add_double_data(dblval);
-        break;
-      case TensorProto::DataType::TensorProto_DataType_STRING:
-        PARSE_TOKEN(strval);
-        tensorProto.add_string_data(strval);
-        break;
-      default:
-        PARSE_ERROR("Unhandled type: %d", elem_type);
-    }
-
-    (void)Matches(',');
+  MATCH('{');
+  if (!Matches('}')) {
+    do {
+      switch (static_cast<TensorProto::DataType>(elem_type)) {
+        case TensorProto::DataType::TensorProto_DataType_INT8:
+        case TensorProto::DataType::TensorProto_DataType_INT16:
+        case TensorProto::DataType::TensorProto_DataType_INT32:
+        case TensorProto::DataType::TensorProto_DataType_UINT8:
+        case TensorProto::DataType::TensorProto_DataType_UINT16:
+        case TensorProto::DataType::TensorProto_DataType_BOOL:
+          PARSE_TOKEN(intval);
+          // TODO: check values are in the correct range.
+          tensorProto.add_int32_data(intval);
+          break;
+        case TensorProto::DataType::TensorProto_DataType_INT64:
+          PARSE_TOKEN(intval);
+          tensorProto.add_int64_data(intval);
+          break;
+        case TensorProto::DataType::TensorProto_DataType_UINT32:
+        case TensorProto::DataType::TensorProto_DataType_UINT64:
+          PARSE_TOKEN(intval);
+          tensorProto.add_uint64_data(intval);
+          break;
+        case TensorProto::DataType::TensorProto_DataType_FLOAT:
+          PARSE_TOKEN(floatval);
+          tensorProto.add_float_data(floatval);
+          break;
+        case TensorProto::DataType::TensorProto_DataType_DOUBLE:
+          PARSE_TOKEN(dblval);
+          tensorProto.add_double_data(dblval);
+          break;
+        case TensorProto::DataType::TensorProto_DataType_STRING:
+          PARSE_TOKEN(strval);
+          tensorProto.add_string_data(strval);
+          break;
+        default:
+          PARSE_ERROR("Unhandled type: %d", elem_type);
+      }
+    } while (Matches(','));
+    MATCH('}');
   }
   return Status::OK();
 }
@@ -205,10 +212,11 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   attr.set_name(name);
   MATCH('=');
   if (NextChar() == '[') {
-    // Parse a list of values
+    // Parse a list of values. For now, empty list is not allowed, as we need to
+    // figure out a type for the attribute.
     std::vector<Literal> vals;
     MATCH('[');
-    while (!Matches(']')) {
+    do {
       AttributeProto nextval;
       CHECK_PARSER_STATUS(ParseSingleAttributeValue(nextval));
       switch (nextval.type()) {
@@ -227,8 +235,8 @@ Status OnnxParser::Parse(AttributeProto& attr) {
         default:
           break;
       }
-      (void)Matches(',');
-    }
+    } while (Matches(','));
+    MATCH(']');
   } else {
     CHECK_PARSER_STATUS(ParseSingleAttributeValue(attr));
   }
@@ -241,7 +249,7 @@ Status OnnxParser::Parse(AttrList& attrlist) {
     do {
       PARSE(*attrlist.Add());
     } while (Matches(','));
-    Match('>');
+    MATCH('>');
   }
   return Status::OK();
 }
@@ -299,7 +307,7 @@ Status OnnxParser::Parse(ModelProto& model) {
   std::string strval;
   int64_t intval;
   if (Matches('<')) {
-    while (!Matches('>')) {
+    do {
       KeyWordMap::KeyWord keyword = KeyWordMap::KeyWord::NONE;
       PARSE_TOKEN(keyword);
       MATCH(':');
@@ -344,20 +352,24 @@ Status OnnxParser::Parse(ModelProto& model) {
         case KeyWordMap::KeyWord::METADATA_PROPS: {
           auto& metadata_props = *model.mutable_metadata_props();
           MATCH('[');
-          while (!Matches(']')) {
-            auto* metadata = metadata_props.Add();
-            PARSE_TOKEN(strval);
-            metadata->set_key(strval);
-            MATCH(':');
-            PARSE_TOKEN(strval);
-            metadata->set_value(strval);
+          if (!Matches(']')) {
+            do {
+              auto* metadata = metadata_props.Add();
+              PARSE_TOKEN(strval);
+              metadata->set_key(strval);
+              MATCH(':');
+              PARSE_TOKEN(strval);
+              metadata->set_value(strval);
+            } while (Matches(','));
+            MATCH(']');
           }
           break;
         }
         default:
           PARSE_ERROR("Unhandled keyword.");
       }
-    }
+    } while (Matches(','));
+    MATCH('>');
   }
   return Parse(*model.mutable_graph());
 }

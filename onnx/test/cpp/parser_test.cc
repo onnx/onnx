@@ -252,16 +252,14 @@ z = If (b) <
 TEST(ParserTest, ModelTest) {
   const char* code = R"ONNX(
 <
-  ir_version: 7
-  opset_import: [ 
-    "ai.onnx.ml" : 10
-  ]
-  producer_name: "ParserTest"
-  producer_version: "1.0"
-  domain: "ai.onnx.ml"
-  model_version: 1
-  doc_string: "A parser test case model."
-  metadata_props: [ "somekey" : "somevalue" ]
+  ir_version: 7,
+  opset_import: [ "ai.onnx.ml" : 10 ],
+  producer_name: "ParserTest",
+  producer_version: "1.0",
+  domain: "ai.onnx.ml",
+  model_version: 1,
+  doc_string: "A parser test case model.",
+  metadata_props: [ "somekey" : "somevalue", "key2" : "value2" ]
 >
 agraph (float[N] y, float[N] z) => (float[N] w)
 {
@@ -281,7 +279,7 @@ agraph (float[N] y, float[N] z) => (float[N] w)
 TEST(ParserTest, ModelCheckTest) {
   const char* code = R"ONNX(
 <
-  ir_version: 7
+  ir_version: 7,
   opset_import: [ "" : 10 ]
 >
 agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
@@ -298,20 +296,14 @@ agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
 TEST(ParserTest, IfModelTest) {
   const char* code = R"ONNX(
 <
-  ir_version: 7
+  ir_version: 7,
   opset_import: [ "" : 13 ]
 >
 iftest (bool b, float[128] X, float[128] Y) => (float[128] Z)
 {
   Z = If (b) <
-      then_branch = g1 () => (float[128] z_then)
-        {
-          z_then = Identity(X)
-        },
-      else_branch = g2 () => (float[128] z_else)
-        {
-          z_else = Identity(Y)
-        }
+      then_branch = g1 () => (float[128] z_then) { z_then = Identity(X) },
+      else_branch = g2 () => (float[128] z_else) { z_else = Identity(Y) }
       >
 }
 )ONNX";

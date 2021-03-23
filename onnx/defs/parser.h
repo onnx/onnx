@@ -2,6 +2,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Experimental language syntax and parser for ONNX. Please note that the syntax as formalized
+// by this parser is preliminary and may change.
+
 #pragma once
 
 #include <ctype.h>
@@ -30,7 +33,7 @@ using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
 #define PARSE_ERROR(...)                                                                                         \
   do {                                                                                                           \
     return Status(                                                                                               \
-        NONE, FAIL, ONNX_NAMESPACE::MakeString("[ParseError at position ", (next_ - start_), "]", __VA_ARGS__)); \
+        NONE, FAIL, ONNX_NAMESPACE::MakeString("[ParseError at position ", GetCurrentPos(), "]", __VA_ARGS__)); \
   } while (0)
 
 #define PARSER_CHECK(cond, msg) \
@@ -137,7 +140,8 @@ class KeyWordMap {
 
 class ParserBase {
  public:
-  ParserBase(const std::string& str) : start_(str.data()), next_(str.data()), end_(str.data() + str.length()), saved_pos_(next_) {}
+  ParserBase(const std::string& str)
+      : start_(str.data()), next_(str.data()), end_(str.data() + str.length()), saved_pos_(next_) {}
 
   ParserBase(const char* cstr) : start_(cstr), next_(cstr), end_(cstr + strlen(cstr)), saved_pos_(next_) {}
 
@@ -147,6 +151,19 @@ class ParserBase {
 
   void RestorePos() {
     next_ = saved_pos_;
+  }
+
+  std::string GetCurrentPos() {
+    uint32_t line = 1, col = 1;
+    for (const char* p = start_; p < next_; p++) {
+      if (*p == '\n') {
+        line++;
+        col = 1;
+      } else {
+        col++;
+      }
+    }
+    return ONNX_NAMESPACE::MakeString("(line: ", line, " column: ", col, ")");
   }
 
   void SkipWhiteSpace() {
