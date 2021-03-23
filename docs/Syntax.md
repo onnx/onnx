@@ -9,6 +9,8 @@ of use-cases. One is to enable compact description of test-cases and its use in 
 repo as well as in other dependent repos such as ONNX-MLIR). The second is to help simplify the
 definition of ONNX functions. Several of the existing function-definitions are verbose, and the
 use of this syntax will lead to more compact, readable, and easier-to-maintain function definitions.
+Efficient representation and efficient parsing of very large tensor-constants is *not* a goal.
+Alternative methods should be used for that.
 
 The API
 -------
@@ -35,4 +37,34 @@ agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
   checker::check_model(model);
 ```
 
-See the [test-cases](../onnx/test/cpp/parser_test.cc) for more examples illustrating the API and syntax. 
+See the [test-cases](../onnx/test/cpp/parser_test.cc) for more examples illustrating the API and syntax.
+
+The Syntax
+----------
+
+The grammar below describes the syntax:
+
+```
+   id-list ::= id (',' id)*
+   tensor-dim ::= '?' | id | int-constant
+   tensor-dims ::= tensor-dim (',' tensor-dim)*
+   tensor-type ::= prim-type | prim-type '[' ']' | prim-type '[' tensor-dims ']'
+   type ::= tensor-type
+   value-info ::= type id
+   value-infos ::= value-info (',' value-info)*
+   value-info-list ::= '(' value-infos? ')'
+   prim-constants ::= prim-constant (',' prim-constant)*
+   tensor-constant ::= tensor-type '{' prim-constants '}'
+   single-attr-value ::= tensor-constant | graph | prim-constant
+   attr-value-list ::= '[' single-attr-value (',' single-attr-value)* ']'
+   attr-value ::= single-attr-value | attr-value-list
+   attr ::= id '=' attr-value
+   attr-list ::= '<' attr (',' attr)* '>'
+   node ::= id-list? '=' qualified-id attr-list? '(' id-list? ')'
+         |  id-list? '=' qualified-id '(' id-list? ')' attr-list
+   node-list ::= '{' node* '}'
+   graph ::= id value-info-list '=>' value-info-list node-list
+   model-data ::= id ':' value
+   model-data-list ::= '<' model-data (',' model-data)* '>'
+   model ::= model-data-list? graph
+```
