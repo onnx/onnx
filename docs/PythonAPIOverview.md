@@ -59,10 +59,9 @@ Runnable IPython notebooks:
 ## Converting and Saving an ONNX Model to External Data
 ```python
 import onnx
-from onnx.external_data_helper import covert_and_save_model_to_external_data
 
 onnx_model = ... # Your model in memory as ModelProto
-covert_and_save_model_to_external_data(onnx_model, 'path/to/save/the/model.onnx', all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
+onnx.save_model(onnx_model, 'path/to/save/the/model.onnx', save_as_external_data=True, all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
 # Then the onnx_model has converted raw data as external data and saved to specific directory
 ```
 

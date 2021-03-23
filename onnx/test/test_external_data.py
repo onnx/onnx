@@ -15,7 +15,6 @@ from onnx import checker, helper
 from onnx import ModelProto, TensorProto
 from onnx.external_data_helper import set_external_data
 from onnx.external_data_helper import convert_model_to_external_data
-from onnx.external_data_helper import covert_and_save_model_to_external_data
 from onnx.external_data_helper import convert_model_from_external_data
 from onnx.external_data_helper import load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
@@ -311,19 +310,27 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
         self.assertTrue(attribute_tensor.HasField("data_location"))
 
-    def test_convert_and_save_model_to_external_data_saves_the_model(self):  # type: () -> None
+    def test_save_model_does_not_convert_to_external_data_and_saves_the_model(self):  # type: () -> None
         model_file_path = self.get_temp_model_filename()
-        covert_and_save_model_to_external_data(self.model, model_file_path)
+        onnx.save_model(self.model, model_file_path, save_as_external_data=False)
         self.assertTrue(Path.isfile(model_file_path))
 
-    def test_convert_and_save_model_to_external_data_converts_the_model(self):  # type: () -> None
+        model = onnx.load_model(model_file_path)
+        initializer_tensor = model.graph.initializer[0]
+        self.assertFalse(initializer_tensor.HasField("data_location"))
+
+        attribute_tensor = model.graph.node[0].attribute[0].t
+        self.assertFalse(attribute_tensor.HasField("data_location"))
+
+    def test_save_model_does_convert_and_saves_the_model(self):  # type: () -> None
         model_file_path = self.get_temp_model_filename()
-        covert_and_save_model_to_external_data(self.model,
-                                               model_file_path,
-                                               all_tensors_to_one_file=True,
-                                               location=None,
-                                               size_threshold=0,
-                                               convert_attribute=False)
+        onnx.save_model(self.model,
+                        model_file_path,
+                        save_as_external_data=True,
+                        all_tensors_to_one_file=True,
+                        location=None,
+                        size_threshold=0,
+                        convert_attribute=False)
 
         model = onnx.load_model(model_file_path)
 

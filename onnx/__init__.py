@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import os
 
 from .onnx_cpp2py_export import ONNX_ML
-from onnx.external_data_helper import load_external_data_for_model, write_external_data_tensors
+from onnx.external_data_helper import load_external_data_for_model, write_external_data_tensors, convert_model_to_external_data
 from .onnx_pb import *  # noqa
 from .onnx_operators_pb import * # noqa
 from .onnx_data_pb import * # noqa
@@ -172,17 +172,28 @@ def load_tensor_from_string(s, format=None):  # type: (bytes, Optional[Any]) -> 
     return _deserialize(s, TensorProto())
 
 
-def save_model(proto, f, format=None):  # type: (Union[ModelProto, bytes], Union[IO[bytes], Text], Optional[Any]) -> None
+def save_model(proto, f, format=None, save_as_external_data=False, all_tensors_to_one_file=True, location=None, size_threshold=1024, convert_attribute=False):
+    # type: (Union[ModelProto, bytes], Union[IO[bytes], Text], Optional[Any], bool, bool, Optional[Text], int, bool) -> None
     '''
-    Saves the ModelProto to the specified path.
+    Saves the ModelProto to the specified path and optionally, set tensors with raw data as external data before saving.
 
     @params
-    proto should be a in-memory ModelProto
-    f can be a file-like object (has "write" function) or a string containing a file name
-    format is for future use
+    proto: should be a in-memory ModelProto
+    f: can be a file-like object (has "write" function) or a string containing a file name format is for future use
+    all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
+                             If false, save each tensor to a file named with the tensor name.
+    location: specify the external file that all tensors to save to.
+              If not specified, will use the model name.
+    size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold it will be converted
+                    to external data. To convert every tensor with raw data to external data set size_threshold=0.
+    convert_attribute: If true, convert all tensors to external data
+                       If false, convert only non-attribute tensors to external data
     '''
     if isinstance(proto, bytes):
         proto = _deserialize(proto, ModelProto())
+
+    if save_as_external_data:
+        convert_model_to_external_data(proto, all_tensors_to_one_file, location, size_threshold, convert_attribute)
 
     model_filepath = _get_file_path(f)
     if model_filepath:
