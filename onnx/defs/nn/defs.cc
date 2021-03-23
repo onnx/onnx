@@ -1692,8 +1692,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             5,
             "training_mode",
-            "A 0-D tensor. If set to true then it indicates BatchNormalization is being used for training. It is an "
-            "optional value hence unless specified explicitly, it is false.",
+            "A 0-D tensor. If set to true, it indicates BatchNormalization is being used for training, and outputs 1, "
+            "2, 3, and 4 would be populated. It is an optional value and unless specified explicitly, it is false.",
             "T1",
             OpSchema::Optional,
             true,

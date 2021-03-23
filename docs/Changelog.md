@@ -18649,7 +18649,7 @@ This version of the operator has been available since version 14 of the default 
 <dt><tt>input_var</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 <dt><tt>training_mode</tt> (optional, non-differentiable) : T1</dt>
-<dd>A 0-D tensor. If set to true then it indicates BatchNormalization is being used for training. It is an optional value hence unless specified explicitly, it is false.</dd>
+<dd>A 0-D tensor. If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated. It is an optional value and unless specified explicitly, it is false.</dd>
 </dl>
 
 #### Outputs (1 - 5)
