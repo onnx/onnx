@@ -1836,7 +1836,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
   There are five required inputs 'X', 'scale', 'B', 'input_mean' and
-  'input_var', in addition to one optional input 'training_mode'.
+  'input_var'.
   Note that 'input_mean' and 'input_var' are expected to be the estimated
   statistics in inference mode (training_mode=False, default),
   and the running statistics in training mode (training_mode=True).
@@ -1845,7 +1845,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
   Output case #2: Y (training_mode=False)
   
-  When training_mode=False, extra outputs are undefined and the user should not depend on those.
+  When training_mode=False, extra outputs are invalid.
   The outputs are updated as follows when training_mode=True:
   ```
   current_mean = ReducedMean(X, axis=all_except_channel_index)
@@ -1879,9 +1879,11 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
+<dt><tt>training_mode</tt> : int (default is 0)</dt>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
 </dl>
 
-#### Inputs (5 - 6)
+#### Inputs
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
@@ -1894,8 +1896,6 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
 <dt><tt>input_var</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
-<dt><tt>training_mode</tt> (optional, non-differentiable) : T1</dt>
-<dd>A 0-D tensor. If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated. It is an optional value and unless specified explicitly, it is false.</dd>
 </dl>
 
 #### Outputs (1 - 5)
@@ -1918,8 +1918,6 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain input training_mode to boolean tensors.</dd>
 </dl>
 
 
@@ -1983,17 +1981,18 @@ mean = np.array([0, 3]).astype(np.float32)
 var = np.array([1, 1.5]).astype(np.float32)
 # using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
 # working around by using np.byte(1).astype(bool)
-training_mode = np.byte(1).astype(bool)
+training_mode = 1
 y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
-    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    inputs=['x', 's', 'bias', 'mean', 'var'],
     outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+    training_mode=training_mode
 )
 
 # output size: (1, 2, 1, 3)
-expect(node, inputs=[x, s, bias, mean, var, training_mode],
+expect(node, inputs=[x, s, bias, mean, var],
        outputs=[y, output_mean, output_var, saved_mean, saved_var],
        name='test_batchnorm_example_training_mode')
 
@@ -2003,7 +2002,7 @@ s = np.random.randn(3).astype(np.float32)
 bias = np.random.randn(3).astype(np.float32)
 mean = np.random.randn(3).astype(np.float32)
 var = np.random.rand(3).astype(np.float32)
-training_mode = np.byte(1).astype(bool)
+training_mode = 1
 momentum = 0.9
 epsilon = 1e-2
 y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
@@ -2011,13 +2010,14 @@ y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, 
 
 node = onnx.helper.make_node(
     'BatchNormalization',
-    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    inputs=['x', 's', 'bias', 'mean', 'var'],
     outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
     epsilon=epsilon,
+    training_mode=training_mode
 )
 
 # output size: (2, 3, 4, 5)
-expect(node, inputs=[x, s, bias, mean, var, training_mode],
+expect(node, inputs=[x, s, bias, mean, var],
        outputs=[y, output_mean, output_var, saved_mean, saved_var],
        name='test_batchnorm_epsilon_training_mode')
 ```

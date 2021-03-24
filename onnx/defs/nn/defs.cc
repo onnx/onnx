@@ -1592,7 +1592,7 @@ static const char* BatchNormalization_ver14_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 There are five required inputs 'X', 'scale', 'B', 'input_mean' and
-'input_var', in addition to one optional input 'training_mode'.
+'input_var'.
 Note that 'input_mean' and 'input_var' are expected to be the estimated
 statistics in inference mode (training_mode=False, default),
 and the running statistics in training mode (training_mode=True).
@@ -1601,7 +1601,7 @@ There are multiple cases for the number of outputs, which we list below:
 Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
 Output case #2: Y (training_mode=False)
 
-When training_mode=False, extra outputs are undefined and the user should not depend on those.
+When training_mode=False, extra outputs are invalid.
 The outputs are updated as follows when training_mode=True:
 ```
 current_mean = ReducedMean(X, axis=all_except_channel_index)
@@ -1639,6 +1639,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "e.g., running_mean = running_mean * momentum + mean * (1 - momentum).",
             AttributeProto::FLOAT,
             0.9f)
+        .Attr(
+            "training_mode",
+            "If set to true, it indicates BatchNormalization is being used for training, and outputs 1, "
+            "2, 3, and 4 would be populated.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(
             0,
             "X",
@@ -1689,16 +1695,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .Input(
-            5,
-            "training_mode",
-            "A 0-D tensor. If set to true, it indicates BatchNormalization is being used for training, and outputs 1, "
-            "2, 3, and 4 would be populated. It is an optional value and unless specified explicitly, it is false.",
-            "T1",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
         .Output(
             0,
             "Y",
@@ -1750,10 +1746,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(bool)"},
-            "Constrain input training_mode to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           propagateShapeFromInputToOutput(ctx, 0, 0);
@@ -1765,15 +1757,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           unifyInputDim(ctx, 2, 0, num_channels);
           unifyInputDim(ctx, 3, 0, num_channels);
           unifyInputDim(ctx, 4, 0, num_channels);
-
-          if (ctx.getNumInputs() > 5 && hasInputShape(ctx, 5)) {
-            auto& mode_input_shape = getInputShape(ctx, 5);
-            // if mode is not scalar or tensor of rank 0, fail shape inference
-            if (static_cast<int>(mode_input_shape.dim_size()) != 0) {
-              fail_shape_inference(
-                  "Training_mode must be a 0-D scalar boolean, but it's not.");
-            }
-          }
 
           if (ctx.getNumOutputs() > 1) {
             TensorShapeProto outputs_shape;

@@ -1358,17 +1358,18 @@ mean = np.array([0, 3]).astype(np.float32)
 var = np.array([1, 1.5]).astype(np.float32)
 # using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
 # working around by using np.byte(1).astype(bool)
-training_mode = np.byte(1).astype(bool)
+training_mode = 1
 y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
-    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    inputs=['x', 's', 'bias', 'mean', 'var'],
     outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+    training_mode=training_mode
 )
 
 # output size: (1, 2, 1, 3)
-expect(node, inputs=[x, s, bias, mean, var, training_mode],
+expect(node, inputs=[x, s, bias, mean, var],
        outputs=[y, output_mean, output_var, saved_mean, saved_var],
        name='test_batchnorm_example_training_mode')
 
@@ -1378,7 +1379,7 @@ s = np.random.randn(3).astype(np.float32)
 bias = np.random.randn(3).astype(np.float32)
 mean = np.random.randn(3).astype(np.float32)
 var = np.random.rand(3).astype(np.float32)
-training_mode = np.byte(1).astype(bool)
+training_mode = 1
 momentum = 0.9
 epsilon = 1e-2
 y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
@@ -1386,13 +1387,14 @@ y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, 
 
 node = onnx.helper.make_node(
     'BatchNormalization',
-    inputs=['x', 's', 'bias', 'mean', 'var', 'training_mode'],
+    inputs=['x', 's', 'bias', 'mean', 'var'],
     outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
     epsilon=epsilon,
+    training_mode=training_mode
 )
 
 # output size: (2, 3, 4, 5)
-expect(node, inputs=[x, s, bias, mean, var, training_mode],
+expect(node, inputs=[x, s, bias, mean, var],
        outputs=[y, output_mean, output_var, saved_mean, saved_var],
        name='test_batchnorm_epsilon_training_mode')
 ```
@@ -14717,10 +14719,11 @@ pads: 1
 strides: 1
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14795,10 +14798,11 @@ pads: 2
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14873,10 +14877,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14951,10 +14956,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -15029,10 +15035,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -15112,10 +15119,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -15195,10 +15203,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -15278,10 +15287,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
