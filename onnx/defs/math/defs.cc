@@ -19,6 +19,8 @@ std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
+
+(Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
         ReplaceAll(doc, "{name}", name);
         ReplaceAll(

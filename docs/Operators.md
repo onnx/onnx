@@ -383,6 +383,8 @@ expect(node, inputs=[x], outputs=[y],
   Performs element-wise binary addition (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  
+  (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
 
@@ -4479,6 +4481,8 @@ expect(node, inputs=[x], outputs=[y],
   Performs element-wise binary division (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  
+  (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
 
@@ -11017,6 +11021,8 @@ expect(node, inputs=[x, y], outputs=[z],
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  
+  (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
 
@@ -21039,6 +21045,8 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwo
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  
+  (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
 
