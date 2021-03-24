@@ -175,11 +175,11 @@ def load_tensor_from_string(s, format=None):  # type: (bytes, Optional[Any]) -> 
 def save_model(proto, f, format=None, save_as_external_data=False, all_tensors_to_one_file=True, location=None, size_threshold=1024, convert_attribute=False):
     # type: (Union[ModelProto, bytes], Union[IO[bytes], Text], Optional[Any], bool, bool, Optional[Text], int, bool) -> None
     '''
-    Saves the ModelProto to the specified path and optionally, set tensors with raw data as external data before saving.
+    Saves the ModelProto to the specified path and optionally, serialize tensors with raw data as external data before saving.
 
     @params
     proto: should be a in-memory ModelProto
-    f: can be a file-like object (has "write" function) or a string containing a file name format is for future use
+    f: can be a file-like object (has "write" function) or a string containing a file name format for future use
     all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
                              If false, save each tensor to a file named with the tensor name.
     location: specify the external file that all tensors to save to.
