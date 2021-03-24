@@ -30,9 +30,9 @@ using AttrList = google::protobuf::RepeatedPtrField<AttributeProto>;
 
 using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
 
-#define PARSE_ERROR(...)                                                                                         \
-  do {                                                                                                           \
-    return Status(                                                                                               \
+#define PARSE_ERROR(...)                                                                                        \
+  do {                                                                                                          \
+    return Status(                                                                                              \
         NONE, FAIL, ONNX_NAMESPACE::MakeString("[ParseError at position ", GetCurrentPos(), "]", __VA_ARGS__)); \
   } while (0)
 
@@ -343,19 +343,11 @@ class OnnxParser : public ParserBase {
  public:
   OnnxParser(const char* cstr) : ParserBase(cstr) {}
 
-  Status Parse(IdList& idlist);
-
   Status Parse(TensorShapeProto& shape);
 
   Status Parse(TypeProto& typeProto);
 
   Status Parse(TensorProto& tensorProto);
-
-  Status Parse(ValueInfoProto& valueinfo);
-
-  Status Parse(ValueInfoList& vilist);
-
-  Status ParseSingleAttributeValue(AttributeProto& attr);
 
   Status Parse(AttributeProto& attr);
 
@@ -367,8 +359,6 @@ class OnnxParser : public ParserBase {
 
   Status Parse(GraphProto& graph);
 
-  Status Parse(std::string name, GraphProto& graph);
-
   Status Parse(ModelProto& model);
 
   template <typename T>
@@ -376,6 +366,17 @@ class OnnxParser : public ParserBase {
     OnnxParser parser(input);
     return parser.Parse(parsedData);
   }
+
+ private:
+  Status Parse(std::string name, GraphProto& graph);
+
+  Status Parse(IdList& idlist);
+
+  Status ParseSingleAttributeValue(AttributeProto& attr);
+
+  Status Parse(ValueInfoProto& valueinfo);
+
+  Status Parse(ValueInfoList& vilist);
 };
 
 } // namespace ONNX_NAMESPACE
