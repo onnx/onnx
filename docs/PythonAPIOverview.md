@@ -33,6 +33,16 @@ load_external_data_for_model(onnx_model, 'data/directory/path/')
 # Then the onnx_model has loaded the external data from the specific directory
 ```
 
+## Converting an ONNX Model to External Data
+```python
+from onnx.external_data_helper import convert_model_to_external_data
+
+onnx_model = ... # Your model in memory as ModelProto
+convert_model_to_external_data(onnx_model, all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
+# Then the onnx_model has converted raw data as external data
+# Must be followed by save
+```
+
 ## Saving an ONNX Model
 ```python
 import onnx
@@ -44,6 +54,17 @@ onnx.save(onnx_model, 'path/to/the/model.onnx')
 ```
 Runnable IPython notebooks:
 - [save_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/save_model.ipynb)
+
+
+## Converting and Saving an ONNX Model to External Data
+```python
+import onnx
+
+onnx_model = ... # Your model in memory as ModelProto
+onnx.save_model(onnx_model, 'path/to/save/the/model.onnx', save_as_external_data=True, all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
+# Then the onnx_model has converted raw data as external data and saved to specific directory
+```
+
 
 ## Manipulating TensorProto and Numpy Array
 ```python
