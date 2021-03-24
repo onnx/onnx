@@ -15,20 +15,6 @@ from onnx import helper, TensorProto
 
 
 class TestUtilityFunctions(unittest.TestCase):
-    def test_polish_model(self):  # type: () -> None
-        node_def = helper.make_node(
-            "Relu", ["X"], ["Y"], doc_string="ABC")
-        graph_def = helper.make_graph(
-            [node_def],
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
-        model_def = helper.make_model(graph_def, producer_name='test')
-        polished_def = onnx.utils.polish_model(model_def)
-        self.assertEqual(polished_def.producer_name, 'test')
-        self.assertEqual(len(polished_def.graph.node), 1)
-        self.assertFalse(polished_def.graph.node[0].HasField('doc_string'))
-
     def test_extract_model(self):  # type: () -> None
         def create_tensor(name):  # type: ignore
             return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1, 2])

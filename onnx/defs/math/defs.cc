@@ -1029,6 +1029,48 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* HardSwish_ver14_doc = R"DOC(
+HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
+the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
+where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    HardSwish,
+    14,
+    OpSchema()
+        .SetDoc(HardSwish_ver14_doc)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(FunctionBodyHelper::BuildNodes({
+            // nodes: {outputs, op, inputs, attributes}
+            {{"HS_X"},
+             "HardSigmoid",
+             {"X"},
+             {MakeAttribute("alpha", 1.0f/6.0f), MakeAttribute("beta", 0.5f)}},
+            {{"Y"}, "Mul", {"X", "HS_X"}}})));
+
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
@@ -1719,8 +1761,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           int64_t axis = getAttribute(ctx, "axis", -1);
           if (axis < 0)
             axis += rank;
-          if (axis < 0 || axis >= rank)
+          if (axis < 0 || axis >= rank) {
             fail_shape_inference("Invalid value for attribute axis");
+          }
 
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
           const auto* k = ctx.getInputData(1);
@@ -1733,18 +1776,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           // should be enforced)
           if (nullptr != k && axis_dim.has_dim_value()) {
             int64_t k_value = 0;
-            if (k->dims_size() != 1 || k->dims(0) != 1)
-              fail_shape_inference(
-                  "K input must be a one-dimensional tensor of size 1.");
+            if (k->dims_size() != 1 || k->dims(0) != 1) {
+              fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
+            }
             if (k->data_type() == TensorProto::INT64) {
               const auto& data = ParseData<int64_t>(k);
               k_value = data[0];
-            } else
-              fail_shape_inference("K input must be of type int64.");
-
-            if (axis_dim.dim_value() < k_value)
-              fail_shape_inference(
-                  "Axis has less than the requested k elements.");
+            } else {
+                fail_shape_inference("K input must be of type int64.");
+            }
+            if (axis_dim.dim_value() < k_value) {
+              fail_shape_inference("Axis has less than the requested k elements.");
+            }
 
             TensorShapeProto result_shape = input_shape;
             result_shape.mutable_dim(static_cast<int>(axis))
@@ -2030,9 +2073,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& shape_initializer_shape =
                 ctx.getInputType(1)->tensor_type().shape();
             if (shape_initializer_shape.dim_size() != 1 ||
-                shape_initializer->data_type() != TensorProto::INT64)
-              fail_shape_inference(
-                  "'shape' input must be 1D tensor of type INT64");
+                shape_initializer->data_type() != TensorProto::INT64) {
+                    fail_shape_inference("'shape' input must be 1D tensor of type INT64");
+                }
 
             const auto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
@@ -2689,7 +2732,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const int rank = static_cast<int>(input_shape.dim_size());
 
             if (rank < 2) {
-              fail_shape_inference("Input rank must be >= 2.")
+              fail_shape_inference("Input rank must be >= 2.");
             }
 
             const auto mat_w = input_shape.dim(rank - 1);
@@ -3107,7 +3150,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             if (target_rank != input_rank - 1) {
               fail_shape_inference(
-                  "Target rank must be 1 less than the input rank.")
+                  "Target rank must be 1 less than the input rank.");
             }
 
             // match input dimensions (N, C, d1, ..., dk) with target
@@ -3119,14 +3162,15 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
                   input_dim.dim_value() != target_dim.dim_value())
                 fail_shape_inference(
-                    "Input and target dimension value mismatch.")
+                    "Input and target dimension value mismatch.");
             }
 
             if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
               const TensorShapeProto& weight_shape =
                   ctx.getInputType(2)->tensor_type().shape();
-              if (weight_shape.dim_size() != 1)
-                fail_shape_inference("Weight rank must be 1.")
+              if (weight_shape.dim_size() != 1) {
+                fail_shape_inference("Weight rank must be 1.");
+              }
             }
 
             TensorShapeProto* output_shape =

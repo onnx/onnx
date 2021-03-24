@@ -21,13 +21,15 @@ void RNNShapeInference(InferenceContext& ctx) {
   if (hidden_size_value > 0)
     hidden_size.set_dim_value(hidden_size_value);
 
+  auto layout_value = getAttribute(ctx, "layout", 0);
+
   if (hasInputShape(ctx, 0)) {
     auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }
-    seq_length = first_input_shape.dim(0);
-    batch_size = first_input_shape.dim(1);
+    seq_length = first_input_shape.dim((layout_value == 0) ? 0 : 1);
+    batch_size = first_input_shape.dim((layout_value == 0) ? 1 : 0);
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -35,20 +37,40 @@ void RNNShapeInference(InferenceContext& ctx) {
   if (num_outputs > 0) {
     // Y
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
-    updateOutputShape(
-        ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
+
+    if (layout_value == 0) {      
+      auto dims = {seq_length, num_directions, batch_size, hidden_size};
+      updateOutputShape(ctx, 0, dims);
+    } else {
+      auto dims = {batch_size, seq_length, num_directions, hidden_size};
+      updateOutputShape(ctx, 0, dims);
+    }
   }
 
   if (num_outputs > 1) {
     // Y_h
     propagateElemTypeFromInputToOutput(ctx, 0, 1);
-    updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
+
+    if (layout_value == 0) {      
+      auto dims = {num_directions, batch_size, hidden_size};
+      updateOutputShape(ctx, 1, dims);
+    } else {
+      auto dims = {batch_size, num_directions, hidden_size};
+      updateOutputShape(ctx, 1, dims);
+    }
   }
 
   if (num_outputs > 2) {
     // Y_c : only in the case of LSTM
     propagateElemTypeFromInputToOutput(ctx, 0, 2);
-    updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
+
+    if (layout_value == 0) {      
+      auto dims = {num_directions, batch_size, hidden_size};
+      updateOutputShape(ctx, 2, dims);
+    } else {
+      auto dims = {batch_size, num_directions, hidden_size};
+      updateOutputShape(ctx, 2, dims);
+    }
   }
 }
 
@@ -60,6 +82,19 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
         std::string("forward"));
+    schema.Attr(
+        "layout",
+        "The shape format of inputs X, initial_h and outputs Y, Y_h. "
+        "If 0, the following shapes are expected: "
+        "X.shape = [seq_length, batch_size, input_size], "
+        "Y.shape = [seq_length, num_directions, batch_size, hidden_size], "
+        "initial_h.shape = Y_h.shape = [num_directions, batch_size, hidden_size]. "
+        "If 1, the following shapes are expected: "
+        "X.shape = [batch_size, seq_length, input_size], "
+        "Y.shape = [batch_size, seq_length, num_directions, hidden_size], "
+        "initial_h.shape = Y_h.shape = [batch_size, num_directions, hidden_size].",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
     schema.Attr(
         "hidden_size",
         "Number of neurons in the hidden layer",
@@ -148,7 +183,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
   };
 }
 
-static const char* RNN_ver7_doc = R"DOC(
+static const char* RNN_ver14_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -213,10 +248,10 @@ Equations (Default: f=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
-    7,
+    14,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(RNN_ver7_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(RNN_ver14_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -260,7 +295,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
-static const char* GRU_ver7_doc = R"DOC(
+static const char* GRU_ver14_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -337,10 +372,10 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
-    7,
+    14,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(GRU_ver7_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(GRU_ver14_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -392,7 +427,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
-static const char* LSTM_ver7_doc = R"DOC(
+static const char* LSTM_ver14_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -477,10 +512,10 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
-    7,
+    14,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(LSTM_ver7_doc) + GenerateOptionalArgumentsDoc()))
+            std::string(LSTM_ver14_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "
@@ -489,6 +524,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "for default if not specified.",
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
+      .Attr(
+          "layout",
+          "The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. "
+          "If 0, the following shapes are expected: "
+          "X.shape = [seq_length, batch_size, input_size], "
+          "Y.shape = [seq_length, num_directions, batch_size, hidden_size], "
+          "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
+          "[num_directions, batch_size, hidden_size]. "
+          "If 1, the following shapes are expected: "
+          "X.shape = [batch_size, seq_length, input_size], "
+          "Y.shape = [batch_size, seq_length, num_directions, hidden_size], "
+          "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
+          "[num_directions, batch_size, hidden_size].",
+          AttributeProto::INT,
+          static_cast<int64_t>(0))
         .Attr(
             "input_forget",
             "Couple the input and forget gates if 1.",

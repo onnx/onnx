@@ -11,7 +11,6 @@
 #include "onnx/checker.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
-#include "onnx/optimizer/optimize.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
@@ -174,8 +173,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             const auto* schema = OpSchemaRegistry::Schema(
                 op_type, max_inclusive_version, domain);
             if (!schema) {
-              throw SchemaError(
-                  "No schema registered for '" + op_type + "'!");
+              fail_schema("No schema registered for '" + op_type + "'!");
             }
             return *schema;
           },
@@ -188,8 +186,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, domain);
             if (!schema) {
-              throw SchemaError(
-                  "No schema registered for '" + op_type + "'!");
+              fail_schema("No schema registered for '" + op_type + "'!");
             }
             return *schema;
           },
@@ -281,34 +278,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   checker.def(
       "check_model_path",
       (void (*)(const std::string&)) & checker::check_model);
-
-  // Submodule `optimizer`
-  auto optimizer = onnx_cpp2py_export.def_submodule("optimizer");
-  optimizer.doc() = "Optimizer submodule";
-
-  optimizer.def(
-      "optimize",
-      [](const py::bytes& bytes, const std::vector<std::string>& names) {
-        ModelProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
-        auto const result = optimization::Optimize(proto, names);
-        std::string out;
-        result.SerializeToString(&out);
-        return py::bytes(out);
-      });
-
-  optimizer.def(
-      "optimize_fixedpoint",
-      [](const py::bytes& bytes, const std::vector<std::string>& names) {
-        ModelProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
-        auto const result =
-            optimization::OptimizeFixed(proto, names);
-        std::string out;
-        result.SerializeToString(&out);
-        return py::bytes(out);
-      });
-  optimizer.def("get_available_passes", &optimization::GetAvailablePasses);
 
   // Submodule `version_converter`
   auto version_converter =
