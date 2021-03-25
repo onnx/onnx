@@ -168,6 +168,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-12">12</a>|
+|<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-12">12</a>|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
@@ -3352,7 +3353,31 @@ This version of the operator has been available since version 10 of the default 
 #### Examples
 
 <details>
-<summary>convinteger</summary>
+<summary>with_padding</summary>
+
+```python
+
+x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
+x_zero_point = np.uint8(1)
+w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
+
+y = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
+
+# ConvInteger with padding
+convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'],
+    pads=[1, 1, 1, 1],)
+
+expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y],
+       name='test_convinteger_with_padding')
+```
+
+</details>
+
+
+<details>
+<summary>without_padding</summary>
 
 ```python
 
@@ -3368,18 +3393,7 @@ convinteger_node = onnx.helper.make_node('ConvInteger',
     outputs=['y'])
 
 expect(convinteger_node, inputs=[x, w, x_zero_point], outputs=[y],
-       name='test_basic_convinteger')
-
-# ConvInteger with padding
-y_with_padding = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
-
-convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
-    inputs=['x', 'w', 'x_zero_point'],
-    outputs=['y'],
-    pads=[1, 1, 1, 1],)
-
-expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_with_padding],
-       name='test_convinteger_with_padding')
+       name='test_convinteger_without_padding')
 ```
 
 </details>
@@ -7346,6 +7360,59 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x * default_alpha + default_beta, 0, 1)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardsigmoid_default')
+```
+
+</details>
+
+
+### <a name="HardSwish"></a><a name="hardswish">**HardSwish**</a>
+
+  HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
+  the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
+  where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>hardswish</summary>
+
+```python
+node = onnx.helper.make_node(
+    'HardSwish',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = hardswish(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardswish')
 ```
 
 </details>

@@ -1,6 +1,9 @@
 name: MacRelease
 
 on:
+  schedule:
+    # Run weekly on Monday 00:00
+    - cron:  '00 00 * * MON'
   push:
     branches: [master, rel-*]
   pull_request:
@@ -15,7 +18,7 @@ jobs:
     runs-on: macos-10.15
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8, 3.9]
         architecture: ['x64']
 
     steps:
@@ -50,9 +53,11 @@ jobs:
         wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-cpp-3.11.3.tar.gz
         tar -xvf protobuf-cpp-3.11.3.tar.gz
         cd protobuf-3.11.3
-        ./autogen.sh
-        ./configure --disable-shared
-        make -j${NUM_CORES} && make check && make install
+        mkdir build_source && cd build_source
+        cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+        make -j${NUM_CORES}
+        make install
+        export PATH=$(pwd)/bin:$PATH
         cd $ONNX_PATH
 
     - name: Build wheel and install
@@ -63,7 +68,11 @@ jobs:
       run: |
         # Currently GitHub Action agent is using 10.14 Python, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
-        python setup.py bdist_wheel -p macosx_10_12_x86_64
+        if [ '${{ github.event_name }}' == 'schedule' ]; then
+          python setup.py bdist_wheel -p macosx_10_12_x86_64 --weekly_build
+        else
+          python setup.py bdist_wheel -p macosx_10_12_x86_64
+        fi
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
 
     - name: Test the installed wheel
@@ -83,3 +92,9 @@ jobs:
       with:
         name: wheels
         path: dist
+
+    - name: Upload wheel to TestPyPI weekly
+      if: (github.event_name == 'schedule') # Only triggered by weekly event
+      run: |
+        python -m pip install -q twine
+        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
