@@ -36,7 +36,8 @@ def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=N
         # setting mode='clip' to deal with ignore_index > C or < 0 cases.
         # when the target value is > C or < 0, it doesn't matter which value we are
         # taking in gather_weight, since it will be set to 0 in the following if-block
-        gather_weight = np.take(weight, target, mode='clip')
+        # use np.int32 to make it compatible with x86 machines
+        gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode='clip')
         # set `ignore_index`'s loss weight to 0.
         # The loss tensor will be multiplied by this weight tensor,
         # so `ingore_index`'s loss value will be eliminated.
@@ -104,7 +105,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
         # Compute SoftmaxCrossEntropyLoss
         sce = softmaxcrossentropy(x, labels, reduction='none')
@@ -126,7 +127,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
         # Compute SoftmaxCrossEntropyLoss
         loss, log_prob = softmaxcrossentropy(x, labels, reduction='none', get_log_prob=True)
@@ -148,7 +149,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -171,7 +172,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -194,7 +195,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
         # Compute SoftmaxCrossEntropyLoss
         sce = softmaxcrossentropy(x, labels, reduction='sum')
@@ -216,7 +217,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
         # Compute SoftmaxCrossEntropyLoss
         loss, log_prob = softmaxcrossentropy(x, labels, reduction='sum', get_log_prob=True)
@@ -238,7 +239,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
         # Compute SoftmaxCrossEntropyLoss
         sce = softmaxcrossentropy(x, labels)
@@ -260,7 +261,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
 
         # Compute SoftmaxCrossEntropyLoss
         loss, log_prob = softmaxcrossentropy(x, labels, get_log_prob=True)
@@ -282,7 +283,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2).astype(np.float32)
-        y = np.random.randint(0, high=5, size=(3, 2))
+        y = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
 
         # Compute SoftmaxCrossEntropyLoss
         sce = softmaxcrossentropy(x, y)
@@ -304,7 +305,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2).astype(np.float32)
-        y = np.random.randint(0, high=5, size=(3, 2))
+        y = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
 
         # Compute SoftmaxCrossEntropyLoss
         loss, log_prob = softmaxcrossentropy(x, y, get_log_prob=True)
@@ -326,7 +327,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -349,7 +350,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -374,7 +375,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
         labels[0] = np.int64(0)
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
@@ -400,7 +401,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
         labels[0] = np.int64(0)
         weights = np.array([0.9, 0.7, 0.8, 0.9, 0.9], dtype=np.float32)
 
@@ -426,7 +427,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
         labels[0] = np.int64(2)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -451,7 +452,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, ))
+        labels = np.random.randint(0, high=5, size=(3, )).astype(np.int64)
         labels[0] = np.int64(2)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -476,7 +477,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, 2))
+        labels = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
         labels[0][0] = np.int64(1)
         weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 
@@ -502,7 +503,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, 2))
+        labels = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
         labels[0][0] = np.int64(1)
         weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 
@@ -528,7 +529,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, 2))
+        labels = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
         labels[0][0] = np.int64(2)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -553,7 +554,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, 2))
+        labels = np.random.randint(0, high=5, size=(3, 2)).astype(np.int64)
         labels[0][0] = np.int64(2)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -578,7 +579,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2, 7).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, 2, 7))
+        labels = np.random.randint(0, high=5, size=(3, 2, 7)).astype(np.int64)
         labels[0][0][0] = np.int64(2)
         weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 
@@ -604,7 +605,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2, 7).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, 2, 7))
+        labels = np.random.randint(0, high=5, size=(3, 2, 7)).astype(np.int64)
         labels[0][0][0] = np.int64(2)
         weights = np.array([0.2, 0.3, 0.6, 0.1, 0.5], dtype=np.float32)
 
@@ -630,7 +631,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2, 7).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, 2, 7))
+        labels = np.random.randint(0, high=5, size=(3, 2, 7)).astype(np.int64)
         labels[0][0][0] = np.int64(2)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -655,7 +656,7 @@ class SoftmaxCrossEntropyLoss(Base):
         # Define operator inputs.
         np.random.seed(0)
         x = np.random.rand(3, 5, 2, 7).astype(np.float32)
-        labels = np.random.randint(0, high=5, size=(3, 2, 7))
+        labels = np.random.randint(0, high=5, size=(3, 2, 7)).astype(np.int64)
         labels[0][0][0] = np.int64(2)
 
         # Compute SoftmaxCrossEntropyLoss
@@ -676,7 +677,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
         np.random.seed(0)
         x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
         sce = softmaxcrossentropy(x,
@@ -698,7 +699,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
         np.random.seed(0)
         x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
         loss, log_prob = softmaxcrossentropy(x,
@@ -721,7 +722,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
         np.random.seed(0)
         x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
 
         sce = softmaxcrossentropy(x,
                                 labels,
@@ -741,7 +742,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
         np.random.seed(0)
         x = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5))
+        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
 
         loss, log_prob = softmaxcrossentropy(x,
                                 labels,
@@ -764,7 +765,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C, dim1 = 3, 5, 6
         np.random.seed(0)
         x = np.random.rand(N, C, dim1).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N, dim1))
+        labels = np.random.randint(0, high=C, size=(N, dim1)).astype(np.int64)
         labels[0][0] = -1
         weight = np.random.rand(C).astype(np.float32)
 
@@ -790,7 +791,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C, dim1 = 3, 5, 6
         np.random.seed(0)
         x = np.random.rand(N, C, dim1).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N, dim1))
+        labels = np.random.randint(0, high=C, size=(N, dim1)).astype(np.int64)
         labels[0][0] = -1
         weight = np.random.rand(C).astype(np.float32)
 
@@ -817,7 +818,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C, dim1, dim2, dim3 = 3, 5, 6, 6, 5
         np.random.seed(0)
         x = np.random.rand(N, C, dim1, dim2, dim3).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3))
+        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3)).astype(np.int64)
         labels[0][0][0][0] = -5
 
         sce = softmaxcrossentropy(x,
@@ -841,7 +842,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C, dim1, dim2, dim3 = 3, 5, 6, 6, 5
         np.random.seed(0)
         x = np.random.rand(N, C, dim1, dim2, dim3).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3))
+        labels = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3)).astype(np.int64)
         labels[0][0][0][0] = -5
 
         loss, log_prob = softmaxcrossentropy(x,
@@ -866,7 +867,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C = 3, 5
         np.random.seed(0)
         x = np.random.rand(N, C).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N))
+        labels = np.random.randint(0, high=C, size=(N)).astype(np.int64)
         labels[0] = 10
         weight = np.random.rand(C).astype(np.float32)
 
@@ -892,7 +893,7 @@ class SoftmaxCrossEntropyLoss(Base):
         N, C = 3, 5
         np.random.seed(0)
         x = np.random.rand(N, C).astype(np.float32)
-        labels = np.random.randint(0, high=C, size=(N))
+        labels = np.random.randint(0, high=C, size=(N)).astype(np.int64)
         labels[0] = 10
         weight = np.random.rand(C).astype(np.float32)
 

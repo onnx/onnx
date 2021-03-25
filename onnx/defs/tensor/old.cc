@@ -88,6 +88,166 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* Reshape_ver13_doc = R"DOC(
+Reshape the input tensor similar to numpy.reshape.
+First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
+At most one dimension of the new shape can be -1. In this case, the value is
+inferred from the size of the tensor and the remaining dimensions. A dimension
+could also be 0, in which case the actual dimension value is unchanged (i.e. taken
+from the input tensor).)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Reshape,
+    13,
+    OpSchema()
+        .SetDoc(Reshape_ver13_doc)
+        .Input(0,
+            "data",
+            "An input tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(1,
+            "shape",
+            "Specified shape for output.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(0,
+            "reshaped",
+            "Reshaped data.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape Inference if 2nd input data (the target shape) is available
+          const TensorProto* targetShapeInitializer = ctx.getInputData(1);
+          if (!targetShapeInitializer) {
+            return;
+          }
+          // Make targetShape (0 -> same as originalShape, -1 -> inferred).
+          // The targetShape vector represents the specified shape for output.
+          std::vector<int64_t> targetShape;
+          if (targetShapeInitializer->has_raw_data()) {
+            const std::string& bytes = targetShapeInitializer->raw_data();
+            targetShape.insert(
+                targetShape.end(),
+                reinterpret_cast<const int64_t*>(bytes.c_str()),
+                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+          } else {
+            const auto& data = targetShapeInitializer->int64_data();
+            targetShape.insert(targetShape.end(), data.begin(), data.end());
+          }
+
+          // Iterate through targetShape, adding dimensions in the outputShape
+          // TensorProto. If the targertShape dimension is -1, we do not set the
+          // dimension value in this iteration, but we record the Dimension. If
+          // targertShape dimension is 0, we attempt to propagate the dimension
+          // value/param. If the value cannot be inferred, we set the flag in
+          // the unresolveZeros vector. If targetShape dimension is positive, we
+          // set the dimension value in the outputShape. We track the product of
+          // the dimensions we are setting outputShape in the outputProduct
+          // variable. The outputProduct will potentially be used for inferring
+          // a dimension marked -1.
+          auto* outputShape =
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          TensorShapeProto::Dimension* negativeOneDim = nullptr;
+          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          std::vector<bool> unresolvedZeros(targetShape.size(), false);
+          int64_t outputProduct = 1;
+          for (int i = 0; i < static_cast<int>(targetShape.size()); ++i) {
+            // Add a new dimension to outputShape
+            auto* new_dim = outputShape->add_dim();
+            if (targetShape[i] == -1) {
+              // Check if multiple -1's. If not, set negativeOneDim, marking
+              // this dimension to potentially be filled in later.
+              if (negativeOneDim) {
+                fail_shape_inference(
+                    "Target shape may not have multiple -1 dimensions");
+              }
+              negativeOneDim = new_dim;
+            } else if (targetShape[i] == 0) {
+              // Check if data input has a shape and if the index i is within
+              // its bounds. If these conditions are satisfied, any dimension
+              // value/param should be propogated. If dimension value cannot be
+              // inferred, set the corresponding  unresolvedZeros flag to true.
+              unresolvedZeros[i] = true;
+              if (dataInputTensorType.has_shape()) {
+                if (i >= dataInputTensorType.shape().dim_size()) {
+                  fail_shape_inference("Invalid position of 0");
+                }
+                if (dataInputTensorType.shape().dim(i).has_dim_value()) {
+                  const auto& dim_value =
+                      dataInputTensorType.shape().dim(i).dim_value();
+                  new_dim->set_dim_value(dim_value);
+                  outputProduct *= dim_value;
+                  unresolvedZeros[i] = false;
+                } else if (dataInputTensorType.shape().dim(i).has_dim_param()) {
+                  const auto& dim_param =
+                      dataInputTensorType.shape().dim(i).dim_param();
+                  new_dim->set_dim_param(dim_param);
+                }
+              }
+            } else if (targetShape[i] > 0) {
+              // Set the dimension value to targetShape[i]
+              new_dim->set_dim_value(targetShape[i]);
+              outputProduct *= targetShape[i];
+            } else {
+              // Check if value is less than -1; fail if so
+              fail_shape_inference("Invalid dimension value: ", targetShape[i]);
+            }
+          }
+
+          // If negativeOneDim has been set, we attempt to infer its value. This
+          // can be done if all dimension values for the data input tensor shape
+          // are known other than the ones corresponding to unresolvedZeros
+          // flags.
+          if (negativeOneDim) {
+            // First, attempt to compute product of data input shape dimensions
+            // that are not marked by unresolvedZeros. If not possible, set the
+            // inputProductValid flag to false.
+            if (!outputProduct) {
+              fail_shape_inference("Invalid Target shape product of 0");
+            }
+            int64_t inputProduct = 1;
+            bool inputProductValid = true;
+            if (!dataInputTensorType.has_shape()) {
+              inputProductValid = false;
+            } else {
+              for (int i = 0; i < dataInputTensorType.shape().dim_size(); ++i) {
+                if (dataInputTensorType.shape().dim(i).has_dim_value()) {
+                  inputProduct *=
+                      dataInputTensorType.shape().dim(i).dim_value();
+                } else if (
+                    i >= static_cast<int>(unresolvedZeros.size()) ||
+                    !unresolvedZeros[i]) {
+                  inputProductValid = false;
+                  break;
+                }
+              }
+            }
+            if (inputProductValid) {
+              if (inputProduct % outputProduct != 0) {
+                fail_shape_inference(
+                    "Dimension could not be inferred: incompatible shapes");
+              }
+              negativeOneDim->set_dim_value(inputProduct / outputProduct);
+            }
+          }
+        }));
+
 static const char* Reshape_ver5_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -351,8 +511,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
-            if (shape.dim_size() != rank)
+            if (shape.dim_size() != rank) {
               fail_shape_inference("All inputs to Concat must have same rank");
+            }
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
@@ -672,11 +833,13 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ? axes[axis_index] + static_cast<int64_t>(input_rank)
                 : axes[axis_index];
 
-            if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
+            if (axis >= static_cast<int64_t>(input_rank) || axis < 0) {
               fail_shape_inference("Input axes has invalid data");
+            }
 
-            if (unique_axes.find(axis) != unique_axes.end())
+            if (unique_axes.find(axis) != unique_axes.end()) {
               fail_shape_inference("'axes' has duplicates");
+            }
 
             unique_axes.insert(axis);
 
@@ -700,8 +863,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // process step
             auto step = steps[axis_index];
-            if (step == 0)
+            if (step == 0) {
               fail_shape_inference("'step' cannot be 0");
+            }
 
             // process start
             auto start = starts[axis_index];
@@ -1398,8 +1562,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto blocksize = getAttribute(ctx, "blocksize", 0);
-          if (blocksize <= 0)
+          if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
+          }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -1412,8 +1577,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    input_shape.dim(1) * (blocksize * blocksize),
                    input_shape.dim(2) / blocksize,
                    input_shape.dim(3) / blocksize});
-            } else
+            } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
+            }
           }
         }));
 
@@ -1479,8 +1645,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto blocksize = getAttribute(ctx, "blocksize", 0);
-          if (blocksize <= 0)
+          if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
+          }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -1493,8 +1660,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    input_shape.dim(1) / (blocksize * blocksize),
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
-            } else
+            } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
+            }
           }
         }));
 
@@ -1553,17 +1721,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& repeats_shape =
                 ctx.getInputType(1)->tensor_type().shape();
             if (repeats_shape.dim_size() != 1 ||
-                repeats_inputs->data_type() != TensorProto::INT64)
-              fail_shape_inference(
-                  "'Repeats' input must be 1D tensor of type int64");
+                repeats_inputs->data_type() != TensorProto::INT64) {
+                  fail_shape_inference("'Repeats' input must be 1D tensor of type int64");
+            }
 
             const auto& repeats_data = ParseData<int64_t>(repeats_inputs);
 
-            if (repeats_data.size() != static_cast<size_t>(input_rank))
+            if (repeats_data.size() != static_cast<size_t>(input_rank)) {
               fail_shape_inference(
                   "'Repeats' input has incorrect number of values. "
                   "The number of values in 'repeats' must be equal "
                   "to the number of input dimensions.");
+            }
 
             for (size_t i = 0; (int64_t)i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
@@ -2043,14 +2212,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto* pads_initializer = ctx.getInputData(1);
           if (nullptr != pads_initializer) {
             if (pads_initializer->dims_size() != 1 ||
-                pads_initializer->data_type() != TensorProto::INT64)
-              fail_shape_inference(
-                  "'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+                pads_initializer->data_type() != TensorProto::INT64) {
+                  fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+            }
 
             const auto& pads_data = ParseData<int64_t>(pads_initializer);
-
-            if (pads_data.size() != static_cast<size_t>(2 * input_rank))
+            if (pads_data.size() != static_cast<size_t>(2 * input_rank)) {
               fail_shape_inference("Pads has incorrect number of values");
+            }
 
             auto* output_shape =
                 ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -2269,8 +2438,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
-            if (shape.dim_size() != rank)
+            if (shape.dim_size() != rank) {
               fail_shape_inference("All inputs to Concat must have same rank");
+            }
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
@@ -2937,14 +3107,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ? axes[axis_index] + static_cast<int64_t>(input_rank)
                 : axes[axis_index];
 
-            if (axis >= static_cast<int64_t>(input_rank) || axis < 0)
+            if (axis >= static_cast<int64_t>(input_rank) || axis < 0) {
               fail_shape_inference("Input axes has invalid data");
+            }
 
-            if (unique_axes.find(axis) != unique_axes.end())
+            if (unique_axes.find(axis) != unique_axes.end()) {
               fail_shape_inference("'axes' has duplicates");
+            }
 
             unique_axes.insert(axis);
-
             auto input_dim =
                 ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
 
@@ -2957,8 +3128,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // process step
             auto step = steps[axis_index];
-            if (step == 0)
+            if (step == 0) {
               fail_shape_inference("'step' cannot be 0");
+            }
 
             // process start
             auto start = starts[axis_index];
@@ -3098,8 +3270,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto blocksize = getAttribute(ctx, "blocksize", 0);
-          if (blocksize <= 0)
+          if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
+          }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -3112,8 +3285,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    input_shape.dim(1) / (blocksize * blocksize),
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
-            } else
+            } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
+            }
           }
         }));
 
@@ -3723,8 +3897,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
 
           std::vector<int64_t> pads;
-          if (!getRepeatedAttribute(ctx, "pads", pads))
+          if (!getRepeatedAttribute(ctx, "pads", pads)) {
             fail_shape_inference("Attribute value for pads is required");
+          }
           if (pads.size() != static_cast<size_t>(input_shape.dim_size() * 2)) {
             fail_shape_inference("Attribute pads has incorrect length");
             ;
