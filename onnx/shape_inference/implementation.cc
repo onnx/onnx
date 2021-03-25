@@ -509,7 +509,13 @@ void InferShapes(
     const std::string& save_path,
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options) {
+#if ONNX_PROTO_ARENA
+  google::protobuf::Arena arena;
+  ModelProto* model_ptr = google::protobuf::Arena::CreateMessage<ModelProto>(&arena);
+  ModelProto& model = *model_ptr;
+#else
   ModelProto model;
+#endif
   std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
   if (!model_stream.good()) {
     fail_check("Unable to open model file:", model_path, ". Please check if it is a valid file.");

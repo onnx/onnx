@@ -280,14 +280,26 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   checker.def(
       "check_graph",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+#if ONNX_PROTO_ARENA
+        google::protobuf::Arena arena;
+        GraphProto* proto_ptr = google::protobuf::Arena::CreateMessage<GraphProto>(&arena);
+        GraphProto& proto = *proto_ptr;
+#else
         GraphProto proto{};
+#endif
         ParseProtoFromPyBytes(&proto, bytes);
         checker::LexicalScopeContext lex_ctx;
         checker::check_graph(proto, ctx, lex_ctx);
       });
 
   checker.def("check_model", [](const py::bytes& bytes) -> void {
+#if ONNX_PROTO_ARENA
+    google::protobuf::Arena arena;
+    ModelProto* proto_ptr = google::protobuf::Arena::CreateMessage<ModelProto>(&arena);
+    ModelProto& proto = *proto_ptr;
+#else
     ModelProto proto{};
+#endif
     ParseProtoFromPyBytes(&proto, bytes);
     checker::check_model(proto);
   });

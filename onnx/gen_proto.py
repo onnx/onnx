@@ -33,6 +33,7 @@ option optimize_for = LITE_RUNTIME;
 DEFAULT_PACKAGE_NAME = "onnx"
 
 IF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#if\s+ONNX-ML\s*$')
+IF_ARENA_REGEX = re.compile(r'\s*//\s*#if\s+ARENA\s*$')
 ENDIF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#endif\s*$')
 ELSE_ONNX_ML_REGEX = re.compile(r'\s*//\s*#else\s*$')
 
@@ -42,12 +43,18 @@ if MYPY:
     from typing import Iterable, Text
 
 
-def process_ifs(lines, onnx_ml):  # type: (Iterable[Text], bool) -> Iterable[Text]
+def process_ifs(lines, onnx_ml, arena):  # type: (Iterable[Text], bool, bool) -> Iterable[Text]
     in_if = 0
+    mode = None
     for line in lines:
         if IF_ONNX_ML_REGEX.match(line):
             assert 0 == in_if
             in_if = 1
+            mode = "onnx-ml"
+        elif IF_ARENA_REGEX.match(line):
+            assert 0 == in_if
+            in_if = 1
+            mode = "arena"
         elif ELSE_ONNX_ML_REGEX.match(line):
             assert 1 == in_if
             in_if = 2
@@ -57,10 +64,16 @@ def process_ifs(lines, onnx_ml):  # type: (Iterable[Text], bool) -> Iterable[Tex
         else:
             if 0 == in_if:
                 yield line
-            elif (1 == in_if and onnx_ml):
-                yield line
-            elif (2 == in_if and not onnx_ml):
-                yield line
+            elif (mode == "onnx-ml"):
+                if (1 == in_if and onnx_ml):
+                    yield line
+                elif (2 == in_if and not onnx_ml):
+                    yield line
+            elif (mode == "arena"):
+                if (1 == in_if and arena):
+                    yield line
+                elif (2 == in_if and not arena):
+                    yield line
 
 
 IMPORT_REGEX = re.compile(r'(\s*)import\s*"([^"]*)\.proto";\s*$')
@@ -118,9 +131,9 @@ def gen_proto3_code(protoc_path, proto3_path, include_path, cpp_out, python_out)
     subprocess.check_call(build_args)
 
 
-def translate(source, proto, onnx_ml, package_name):  # type: (Text, int, bool, Text) -> Text
+def translate(source, proto, onnx_ml, arena, package_name):  # type: (Text, int, bool, bool, Text) -> Text
     lines = source.splitlines()  # type: Iterable[Text]
-    lines = process_ifs(lines, onnx_ml=onnx_ml)
+    lines = process_ifs(lines, onnx_ml=onnx_ml, arena=arena)
     lines = process_package_name(lines, package_name=package_name)
     if proto == 3:
         lines = convert_to_proto3(lines)
@@ -133,7 +146,7 @@ def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):  # type: (Te
     return os.path.join(pardir, f)
 
 
-def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_path=''):  # type: (Text, Text, Text, bool, bool, Text) -> None
+def convert(stem, package_name, output, do_onnx_ml=False, arena=False, lite=False, protoc_path=''):  # type: (Text, Text, Text, bool, bool, bool, Text) -> None
     proto_in = qualify("{}.in.proto".format(stem))
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
     # Having a separate variable for import_ml ensures that the import statements for the generated
@@ -156,13 +169,13 @@ def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_pat
         print("Writing {}".format(proto))
         with io.open(proto, 'w', newline='') as fout:
             fout.write(autogen_header)
-            fout.write(translate(source, proto=2, onnx_ml=import_ml, package_name=package_name))
+            fout.write(translate(source, proto=2, onnx_ml=import_ml, arena=arena, package_name=package_name))
             if lite:
                 fout.write(LITE_OPTION)
         print("Writing {}".format(proto3))
         with io.open(proto3, 'w', newline='') as fout:
             fout.write(autogen_header)
-            fout.write(translate(source, proto=3, onnx_ml=import_ml, package_name=package_name))
+            fout.write(translate(source, proto=3, onnx_ml=import_ml, arena=arena, package_name=package_name))
             if lite:
                 fout.write(LITE_OPTION)
         if protoc_path:
@@ -227,6 +240,7 @@ def main():  # type: () -> None
     parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators', 'onnx-data'],
                         help='list of .in.proto file stems '
                         '(default: %(default)s)')
+    parser.add_argument('-a', '--arena', action='store_true', help='Arena mode')
     args = parser.parse_args()
 
     if not os.path.exists(args.output):
@@ -237,6 +251,7 @@ def main():  # type: () -> None
                 package_name=args.package,
                 output=args.output,
                 do_onnx_ml=args.ml,
+                arena=args.arena,
                 lite=args.lite,
                 protoc_path=args.protoc_path)
 

@@ -61,8 +61,9 @@ jobs:
 
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
+      python onnx/gen_proto.py -l --arena
       python onnx/gen_proto.py -l --ml
-      
+      python onnx/gen_proto.py -l --ml --arena
       git diff --exit-code  -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "git diff returned failures"

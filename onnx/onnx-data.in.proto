@@ -4,6 +4,13 @@
 syntax = "proto2";
 
 package {PACKAGE_NAME};
+
+// #if ARENA
+
+option cc_enable_arenas = true;
+
+// #endif
+
 // #if ONNX-ML
 import "onnx/onnx-ml.proto";
 // #else

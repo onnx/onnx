@@ -10,6 +10,10 @@ syntax = "proto2";
 
 package onnx;
 
+
+option cc_enable_arenas = true;
+
+
 // Overview
 //
 // ONNX is an open specification that is comprised of the following components:

@@ -9,6 +9,11 @@
 syntax = "proto2";
 
 package onnx;
+
+
+option cc_enable_arenas = true;
+
+
 import "onnx/onnx-ml.proto";
 
 // This file contains the proto definitions for MapProto and
