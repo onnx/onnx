@@ -78,7 +78,7 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
       (void)(tensortype->mutable_shape());
     }
   } else
-    PARSE_ERROR("Unexpected type.");
+    return ParseError("Unexpected type.");
   return Status::OK();
 }
 
@@ -107,13 +107,16 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
   // Parse the concrete tensor-type with numeric dimensions:
   TypeProto typeProto;
   PARSE(typeProto);
-  PARSER_CHECK(typeProto.has_tensor_type(), "Error parsing TensorProto (expected a tensor type).");
+  if (!typeProto.has_tensor_type())
+    return ParseError("Error parsing TensorProto (expected a tensor type).");
   auto elem_type = typeProto.tensor_type().elem_type();
   tensorProto.set_data_type(elem_type);
-  PARSER_CHECK(typeProto.tensor_type().has_shape(), "Error parsing TensorProto (expected a tensor shape).");
+  if (!typeProto.tensor_type().has_shape())
+    return ParseError("Error parsing TensorProto (expected a tensor shape).");
   uint64_t n = 1;
   for (auto& dim : typeProto.tensor_type().shape().dim()) {
-    PARSER_CHECK(dim.has_dim_value(), "Error parsing TensorProto shape (expected numeric dimension).");
+    if (!dim.has_dim_value())
+      return ParseError("Error parsing TensorProto shape (expected numeric dimension).");
     auto dimval = dim.dim_value();
     tensorProto.add_dims(dimval);
     n *= dimval;
@@ -163,7 +166,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
           tensorProto.add_string_data(strval);
           break;
         default:
-          PARSE_ERROR("Unhandled type: %d", elem_type);
+          return ParseError("Unhandled type: %d", elem_type);
       }
     } while (Matches(','));
     MATCH('}');
@@ -201,7 +204,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
         attr.set_s(literal.value);
         break;
       default:
-        PARSE_ERROR("Unexpected literal type.");
+        return ParseError("Unexpected literal type.");
     }
   }
   return Status::OK();
@@ -367,7 +370,7 @@ Status OnnxParser::Parse(ModelProto& model) {
           break;
         }
         default:
-          PARSE_ERROR("Unhandled keyword.");
+          return ParseError("Unhandled keyword.");
       }
     } while (Matches(','));
     MATCH('>');

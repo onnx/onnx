@@ -30,16 +30,6 @@ using AttrList = google::protobuf::RepeatedPtrField<AttributeProto>;
 
 using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
 
-#define PARSE_ERROR(...)                                                                                        \
-  do {                                                                                                          \
-    return Status(                                                                                              \
-        NONE, FAIL, ONNX_NAMESPACE::MakeString("[ParseError at position ", GetCurrentPos(), "]", __VA_ARGS__)); \
-  } while (0)
-
-#define PARSER_CHECK(cond, msg) \
-  if (!(cond))                  \
-  PARSE_ERROR(msg)
-
 #define CHECK_PARSER_STATUS(status) \
   {                                 \
     auto local_status_ = status;    \
@@ -166,6 +156,11 @@ class ParserBase {
     return ONNX_NAMESPACE::MakeString("(line: ", line, " column: ", col, ")");
   }
 
+  template <typename... Args>
+  Status ParseError(const Args&... args) {
+    return Status(NONE, FAIL, ONNX_NAMESPACE::MakeString("[ParseError at position ", GetCurrentPos(), "]", args...));
+  }
+
   void SkipWhiteSpace() {
     while ((next_ < end_) && (isspace(*next_)))
       ++next_;
@@ -189,7 +184,7 @@ class ParserBase {
 
   Status Match(char ch, bool skipspace = true) {
     if (!Matches(ch, skipspace))
-      PARSE_ERROR("Expected character ", ch, " not found", ch);
+      return ParseError("Expected character ", ch, " not found", ch);
     return Status::OK();
   }
 
@@ -231,7 +226,7 @@ class ParserBase {
       }
 
       if (next_ == from)
-        PARSE_ERROR("Value expected but not found.");
+        return ParseError("Value expected but not found.");
 
       result.value = std::string(from, next_ - from);
       result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
@@ -243,7 +238,7 @@ class ParserBase {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal));
     if (literal.type != LiteralType::INT_LITERAL)
-      PARSE_ERROR("Integer value expected, but not found.");
+      return ParseError("Integer value expected, but not found.");
     std::string s = literal.value;
     val = std::stoll(s);
     return Status::OK();
@@ -253,7 +248,7 @@ class ParserBase {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal));
     if (literal.type != LiteralType::INT_LITERAL)
-      PARSE_ERROR("Integer value expected, but not found.");
+      return ParseError("Integer value expected, but not found.");
     std::string s = literal.value;
     val = std::stoull(s);
     return Status::OK();
@@ -268,7 +263,7 @@ class ParserBase {
         val = std::stof(literal.value);
         break;
       default:
-        PARSE_ERROR("Unexpected literal type.");
+        return ParseError("Unexpected literal type.");
     }
     return Status::OK();
   }
@@ -282,7 +277,7 @@ class ParserBase {
         val = std::stod(literal.value);
         break;
       default:
-        PARSE_ERROR("Unexpected literal type.");
+        return ParseError("Unexpected literal type.");
     }
     return Status::OK();
   }
@@ -292,7 +287,7 @@ class ParserBase {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal));
     if (literal.type != LiteralType::STRING_LITERAL)
-      PARSE_ERROR("String value expected, but not found.");
+      return ParseError("String value expected, but not found.");
     val = literal.value;
     return Status::OK();
   }
@@ -314,7 +309,7 @@ class ParserBase {
   Status ParseIdentifier(std::string& id) {
     ParseOptionalIdentifier(id);
     if (id.empty())
-      PARSE_ERROR("Identifier expected but not found.");
+      return ParseError("Identifier expected but not found.");
     return Status::OK();
   }
 
