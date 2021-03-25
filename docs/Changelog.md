@@ -18604,8 +18604,8 @@ This version of the operator has been available since version 13 of the default 
   When training_mode=False, extra outputs are invalid.
   The outputs are updated as follows when training_mode=True:
   ```
-  current_mean = ReducedMean(X, axis=all_except_channel_index)
-  current_var =  ReducedVar(X, axis=all_except_channel_index)
+  current_mean = ReduceMean(X, axis=all_except_channel_index)
+  current_var =  ReduceVar(X, axis=all_except_channel_index)
   
   running_mean = input_mean * momentum + current_mean * (1 - momentum)
   running_var = input_var * momentum + current_var * (1 - momentum)

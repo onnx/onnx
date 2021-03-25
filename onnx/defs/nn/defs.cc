@@ -1604,8 +1604,8 @@ Output case #2: Y (training_mode=False)
 When training_mode=False, extra outputs are invalid.
 The outputs are updated as follows when training_mode=True:
 ```
-current_mean = ReducedMean(X, axis=all_except_channel_index)
-current_var =  ReducedVar(X, axis=all_except_channel_index)
+current_mean = ReduceMean(X, axis=all_except_channel_index)
+current_var =  ReduceVar(X, axis=all_except_channel_index)
 
 running_mean = input_mean * momentum + current_mean * (1 - momentum)
 running_var = input_var * momentum + current_var * (1 - momentum)
@@ -1757,6 +1757,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           unifyInputDim(ctx, 2, 0, num_channels);
           unifyInputDim(ctx, 3, 0, num_channels);
           unifyInputDim(ctx, 4, 0, num_channels);
+
+          if (ctx.getAttribute("training_mode") &&
+               static_cast<int>(ctx.getAttribute("training_mode")->i()) != 0) {
+            if (ctx.getNumOutputs() != 5)
+              fail_shape_inference(
+                "This number of op outputs should be 5 when Training_mode = True, but it is not.");
+          } else {
+            if (ctx.getNumOutputs() != 1)
+              fail_shape_inference(
+                "This number of op outputs should be 1 when Training_mode = False, but it is not.");
+          }
 
           if (ctx.getNumOutputs() > 1) {
             TensorShapeProto outputs_shape;
