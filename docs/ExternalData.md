@@ -22,6 +22,27 @@ load_external_data_for_model(onnx_model, 'data/directory/path/')
 # Then the onnx_model has loaded the external data from the specific directory
 ```
 
+## Converting an ONNX Model to External Data
+```python
+import onnx
+from onnx.external_data_helper import convert_model_to_external_data
+
+onnx_model = ... # Your model in memory as ModelProto
+convert_model_to_external_data(onnx_model, all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
+# Must be followed by save_model to save the converted model to a specific path
+onnx.save_model(onnx_model, 'path/to/save/the/model.onnx')
+# Then the onnx_model has converted raw data as external data and saved to specific directory
+```
+
+## Converting and Saving an ONNX Model to External Data
+```python
+import onnx
+
+onnx_model = ... # Your model in memory as ModelProto
+onnx.save_model(onnx_model, 'path/to/save/the/model.onnx', save_as_external_data=True, all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
+# Then the onnx_model has converted raw data as external data and saved to specific directory
+```
+
 ## onnx.checker for Models with External Data
 
 ### Models with External Data (<2GB)
