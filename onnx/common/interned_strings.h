@@ -172,6 +172,7 @@ namespace ONNX_NAMESPACE {
   _(Less)                         \
   _(scales)                       \
   _(Upsample)                     \
+  _(Resize)                       \
   _(RNN)                          \
   _(layout)
 

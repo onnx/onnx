@@ -1017,6 +1017,37 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[0].name == "mode"
         assert converted_model.opset_import[0].version == to_opset
 
+    def test_upsample_9_10(self):  # type: () -> None
+        from_opset = 9
+        to_opset = 10
+        data_type = TensorProto.FLOAT
+
+        nodes = [onnx.helper.make_node(
+            "Upsample",
+            inputs=["X", "scales"],
+            outputs=["Y"],
+            mode="nearest"
+        )]
+
+        scale_value = [1.0, 1.0, 2.0, 3.0]
+        scale_tensor = onnx.helper.make_tensor("scales", onnx.TensorProto.FLOAT, [4], scale_value)
+
+        graph = helper.make_graph(
+            nodes,
+            "test_upsample",
+            [onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2]),
+             onnx.helper.make_tensor_value_info("scales", data_type, [4])],
+            [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
+            [scale_tensor])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        assert len(converted_model.graph.node) == 1
+        assert converted_model.graph.node[0].op_type == "Resize"
+        assert len(converted_model.graph.node[0].attribute) == 1
+        assert converted_model.opset_import[0].version == to_opset
+        assert len(converted_model.graph.node[0].input) == 2
+
     # Test Helper for Upsample Adapter: 9 -> 8
     def helper_upsample_with_initializer(self, raw_scale=False):  # type: (bool) -> None
         from_opset = 9
