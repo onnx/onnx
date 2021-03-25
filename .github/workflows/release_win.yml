@@ -1,9 +1,12 @@
 name: WindowsRelease
 
 on:
-   push:
+  schedule:
+    # Run weekly on Monday 00:00
+    - cron:  '00 00 * * MON'
+  push:
     branches: [master, rel-*]
-   pull_request:
+  pull_request:
     branches: [rel-*]
 
 jobs:
@@ -11,7 +14,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8, 3.9]
         architecture: ['x64', 'x86']
     steps:         
     - name: Checkout Protobuf 
@@ -20,7 +23,7 @@ jobs:
         repository: protocolbuffers/protobuf
         ref: refs/tags/v3.11.3
         path: ./protobuf_root/protobuf
-        
+  
     - name: Checkout Protobuf submodules
       shell: bash
       run: |
@@ -33,7 +36,7 @@ jobs:
       uses: actions/checkout@v2
       with:
          path: ./onnx
-         
+
     - name: Checkout ONNX submodules
       shell: bash
       run: |
@@ -41,10 +44,10 @@ jobs:
          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
          git submodule sync --recursive
          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
-        
+
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
-            
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
@@ -80,15 +83,22 @@ jobs:
         $Env:PATH="$ENV:PATH;$protoc_path;$protoc_lib_path;$protobuf_include_path"
         $($Env:PATH).Split(';')
         protoc
-        
+
         cd ../../../onnx
         dir
         echo "Install ONNX"
         $Env:USE_MSVC_STATIC_RUNTIME=1
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON"
-        python setup.py bdist_wheel
-        Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname}
+
+        if ('${{ github.event_name }}' -eq 'schedule') {
+          echo "Build weekly TestPyPI package"
+          python setup.py bdist_wheel --weekly_build
+        } else {
+          python setup.py bdist_wheel
+        }
+        Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname} 
+  
 
     - name: Test the installed wheel
       run: |
@@ -109,3 +119,9 @@ jobs:
       with:
         name: wheels
         path: ./onnx/dist
+  
+    - name: Upload wheel to TestPyPI weekly
+      if: (github.event_name == 'schedule') # Only triggered by weekly event
+      run: |
+        python -m pip install -q twine
+        twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
