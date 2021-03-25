@@ -155,12 +155,12 @@ class ParserBase {
 
   std::string GetCurrentPos() {
     uint32_t line = 1, col = 1;
-    for (const char* p = start_; p < next_; p++) {
+    for (const char* p = start_; p < next_; ++p) {
       if (*p == '\n') {
-        line++;
+        ++line;
         col = 1;
       } else {
-        col++;
+        ++col;
       }
     }
     return ONNX_NAMESPACE::MakeString("(line: ", line, " column: ", col, ")");
@@ -168,7 +168,7 @@ class ParserBase {
 
   void SkipWhiteSpace() {
     while ((next_ < end_) && (isspace(*next_)))
-      next_++;
+      ++next_;
   }
 
   int NextChar(bool skipspace = true) {
@@ -210,16 +210,16 @@ class ParserBase {
     auto nextch = NextChar();
     auto from = next_;
     if (nextch == '"') {
-      next_++;
+      ++next_;
       // TODO: Handle escape characters
       while ((next_ < end_) && (*next_ != '"')) {
-        next_++;
+        ++next_;
       }
-      next_++;
+      ++next_;
       result.type = LiteralType::STRING_LITERAL;
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
     } else if ((isdigit(nextch) || (nextch == '-'))) {
-      next_++;
+      ++next_;
 
       while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
         if (*next_ == '.') {
@@ -227,7 +227,7 @@ class ParserBase {
             break; // Only one decimal point allowed in numeric literal
           decimal_point = true;
         }
-        next_++;
+        ++next_;
       }
 
       if (next_ == from)
@@ -303,9 +303,9 @@ class ParserBase {
     SkipWhiteSpace();
     auto from = next_;
     if ((next_ < end_) && (isalpha(*next_) || (*next_ == '_'))) {
-      next_++;
+      ++next_;
       while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
-        next_++;
+        ++next_;
     }
     id = std::string(from, next_ - from);
     return Status::OK();

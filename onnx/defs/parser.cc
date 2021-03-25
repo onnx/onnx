@@ -123,6 +123,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
   // Parse the actual values:
 
   int64_t intval;
+  uint64_t uintval;
   float floatval;
   double dblval;
   std::string strval;
@@ -146,8 +147,8 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
           break;
         case TensorProto::DataType::TensorProto_DataType_UINT32:
         case TensorProto::DataType::TensorProto_DataType_UINT64:
-          PARSE_TOKEN(intval);
-          tensorProto.add_uint64_data(intval);
+          PARSE_TOKEN(uintval);
+          tensorProto.add_uint64_data(uintval);
           break;
         case TensorProto::DataType::TensorProto_DataType_FLOAT:
           PARSE_TOKEN(floatval);
