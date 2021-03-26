@@ -19,6 +19,8 @@ std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
+
+(Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
         ReplaceAll(doc, "{name}", name);
         ReplaceAll(
@@ -50,8 +52,8 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
         OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
-        OpSchema::numeric_types_for_math_reduction_with_bfloat(),
-        "Constrain input and output types to high-precision numeric tensors.");
+        OpSchema::all_numeric_types_with_bfloat(),
+        "Constrain input and output types to all numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (hasNInputShapes(ctx, 2))
@@ -151,12 +153,12 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 
 ONNX_OPERATOR_SET_SCHEMA(
     Add,
-    13,
+    14,
     OpSchema().FillUsing(MathDocGenerator("addition")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sub,
-    13,
+    14,
     OpSchema().FillUsing(MathDocGenerator("subtraction")));
 
 static const char* Mod_doc = R"DOC(
@@ -224,12 +226,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mul,
-    13,
+    14,
     OpSchema().FillUsing(MathDocGenerator("multiplication")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Div,
-    13,
+    14,
     OpSchema().FillUsing(MathDocGenerator("division")));
 
 static const char* Neg_ver13_doc = R"DOC(

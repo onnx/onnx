@@ -14,7 +14,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Abs">Abs</a>|<a href="Changelog.md#Abs-13">13</a>, <a href="Changelog.md#Abs-6">6</a>, <a href="Changelog.md#Abs-1">1</a>|
 |<a href="#Acos">Acos</a>|<a href="Changelog.md#Acos-7">7</a>|
 |<a href="#Acosh">Acosh</a>|<a href="Changelog.md#Acosh-9">9</a>|
-|<a href="#Add">Add</a>|<a href="Changelog.md#Add-13">13</a>, <a href="Changelog.md#Add-7">7</a>, <a href="Changelog.md#Add-6">6</a>, <a href="Changelog.md#Add-1">1</a>|
+|<a href="#Add">Add</a>|<a href="Changelog.md#Add-14">14</a>, <a href="Changelog.md#Add-13">13</a>, <a href="Changelog.md#Add-7">7</a>, <a href="Changelog.md#Add-6">6</a>, <a href="Changelog.md#Add-1">1</a>|
 |<a href="#And">And</a>|<a href="Changelog.md#And-7">7</a>, <a href="Changelog.md#And-1">1</a>|
 |<a href="#ArgMax">ArgMax</a>|<a href="Changelog.md#ArgMax-13">13</a>, <a href="Changelog.md#ArgMax-12">12</a>, <a href="Changelog.md#ArgMax-11">11</a>, <a href="Changelog.md#ArgMax-1">1</a>|
 |<a href="#ArgMin">ArgMin</a>|<a href="Changelog.md#ArgMin-13">13</a>, <a href="Changelog.md#ArgMin-12">12</a>, <a href="Changelog.md#ArgMin-11">11</a>, <a href="Changelog.md#ArgMin-1">1</a>|
@@ -23,7 +23,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Atan">Atan</a>|<a href="Changelog.md#Atan-7">7</a>|
 |<a href="#Atanh">Atanh</a>|<a href="Changelog.md#Atanh-9">9</a>|
 |<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
-|<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
+|<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
 |<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
@@ -42,7 +42,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-11">11</a>|
-|<a href="#Div">Div</a>|<a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
+|<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
 |<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-12">12</a>|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|
@@ -86,7 +86,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Mean">Mean</a>|<a href="Changelog.md#Mean-13">13</a>, <a href="Changelog.md#Mean-8">8</a>, <a href="Changelog.md#Mean-6">6</a>, <a href="Changelog.md#Mean-1">1</a>|
 |<a href="#Min">Min</a>|<a href="Changelog.md#Min-13">13</a>, <a href="Changelog.md#Min-12">12</a>, <a href="Changelog.md#Min-8">8</a>, <a href="Changelog.md#Min-6">6</a>, <a href="Changelog.md#Min-1">1</a>|
 |<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
-|<a href="#Mul">Mul</a>|<a href="Changelog.md#Mul-13">13</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-1">1</a>|
+|<a href="#Mul">Mul</a>|<a href="Changelog.md#Mul-14">14</a>, <a href="Changelog.md#Mul-13">13</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-1">1</a>|
 |<a href="#Multinomial">Multinomial</a>|<a href="Changelog.md#Multinomial-7">7</a>|
 |<a href="#Neg">Neg</a>|<a href="Changelog.md#Neg-13">13</a>, <a href="Changelog.md#Neg-6">6</a>, <a href="Changelog.md#Neg-1">1</a>|
 |<a href="#NonMaxSuppression">NonMaxSuppression</a>|<a href="Changelog.md#NonMaxSuppression-11">11</a>, <a href="Changelog.md#NonMaxSuppression-10">10</a>|
@@ -149,7 +149,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
 |<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
 |<a href="#StringNormalizer">StringNormalizer</a>|<a href="Changelog.md#StringNormalizer-10">10</a>|
-|<a href="#Sub">Sub</a>|<a href="Changelog.md#Sub-13">13</a>, <a href="Changelog.md#Sub-7">7</a>, <a href="Changelog.md#Sub-6">6</a>, <a href="Changelog.md#Sub-1">1</a>|
+|<a href="#Sub">Sub</a>|<a href="Changelog.md#Sub-14">14</a>, <a href="Changelog.md#Sub-13">13</a>, <a href="Changelog.md#Sub-7">7</a>, <a href="Changelog.md#Sub-6">6</a>, <a href="Changelog.md#Sub-1">1</a>|
 |<a href="#Sum">Sum</a>|<a href="Changelog.md#Sum-13">13</a>, <a href="Changelog.md#Sum-8">8</a>, <a href="Changelog.md#Sum-6">6</a>, <a href="Changelog.md#Sum-1">1</a>|
 |<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-7">7</a>|
 |<a href="#Tanh">Tanh</a>|<a href="Changelog.md#Tanh-13">13</a>, <a href="Changelog.md#Tanh-6">6</a>, <a href="Changelog.md#Tanh-1">1</a>|
@@ -383,12 +383,14 @@ expect(node, inputs=[x], outputs=[y],
   Performs element-wise binary addition (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  
+  (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Add-1">1</a>, <a href="Changelog.md#Add-6">6</a>, <a href="Changelog.md#Add-7">7</a>
+Other versions of this operator: <a href="Changelog.md#Add-1">1</a>, <a href="Changelog.md#Add-6">6</a>, <a href="Changelog.md#Add-7">7</a>, <a href="Changelog.md#Add-13">13</a>
 
 #### Inputs
 
@@ -409,8 +411,8 @@ Other versions of this operator: <a href="Changelog.md#Add-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -449,6 +451,25 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y],
        name='test_add_bcast')
+```
+
+</details>
+
+
+<details>
+<summary>add_uint8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+)
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add_uint8')
 ```
 
 </details>
@@ -1835,20 +1856,42 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-  there are multiple cases for the number of outputs, which we list below:
+  There are five required inputs 'X', 'scale', 'B', 'input_mean' and
+  'input_var'.
+  Note that 'input_mean' and 'input_var' are expected to be the estimated
+  statistics in inference mode (training_mode=False, default),
+  and the running statistics in training mode (training_mode=True).
+  There are multiple cases for the number of outputs, which we list below:
   
-  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-  Output case #2: Y (test mode)
+  Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
+  Output case #2: Y (training_mode=False)
+  
+  When training_mode=False, extra outputs are invalid.
+  The outputs are updated as follows when training_mode=True:
+  ```
+  current_mean = ReduceMean(X, axis=all_except_channel_index)
+  current_var =  ReduceVar(X, axis=all_except_channel_index)
+  
+  running_mean = input_mean * momentum + current_mean * (1 - momentum)
+  running_var = input_var * momentum + current_var * (1 - momentum)
+  
+  Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+  ```
+  
+  When training_mode=False:
+  ```
+  Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
+  ```
   
   For previous (depreciated) non-spatial cases, implementors are suggested
-  to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+  to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-7">7</a>
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-9">9</a>
 
 #### Attributes
 
@@ -1857,6 +1900,8 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
+<dt><tt>training_mode</tt> : int (default is 0)</dt>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
 </dl>
 
 #### Inputs
@@ -1868,9 +1913,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dd>Scale tensor of shape (C).</dd>
 <dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Bias tensor of shape (C).</dd>
-<dt><tt>mean</tt> (differentiable) : T</dt>
+<dt><tt>input_mean</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
-<dt><tt>var</tt> (differentiable) : T</dt>
+<dt><tt>input_var</tt> (differentiable) : T</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
@@ -1879,14 +1924,14 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>mean</tt> (optional, non-differentiable) : T</dt>
+<dt><tt>running_mean</tt> (optional, non-differentiable) : T</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
-<dt><tt>var</tt> (optional, non-differentiable) : T</dt>
+<dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
 <dd>The running variance after the BatchNormalization operator.</dd>
-<dt><tt>saved_mean</tt> (optional, non-differentiable) : T</dt>
-<dd>Saved mean used during training to speed up gradient computation.</dd>
-<dt><tt>saved_var</tt> (optional, non-differentiable) : T</dt>
-<dd>Saved variance used during training to speed up gradient computation.</dd>
+<dt><tt>current_mean</tt> (optional, non-differentiable) : T</dt>
+<dd>Current mean used during training to speed up gradient computation.</dd>
+<dt><tt>current_var</tt> (optional, non-differentiable) : T</dt>
+<dd>Current variance used during training to speed up gradient computation.</dd>
 </dl>
 
 #### Type Constraints
@@ -1903,15 +1948,6 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <summary>batchnormalization</summary>
 
 ```python
-def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
-    dims_x = len(x.shape)
-    dim_ones = (1,) * (dims_x - 2)
-    s = s.reshape(-1, *dim_ones)
-    bias = bias.reshape(-1, *dim_ones)
-    mean = mean.reshape(-1, *dim_ones)
-    var = var.reshape(-1, *dim_ones)
-    return s * (x - mean) / np.sqrt(var + epsilon) + bias
-
 # input size: (1, 2, 1, 3)
 x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
 s = np.array([1.0, 1.5]).astype(np.float32)
@@ -1949,6 +1985,62 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
        name='test_batchnorm_epsilon')
+```
+
+</details>
+
+
+<details>
+<summary>train</summary>
+
+```python
+# input size: (1, 2, 1, 3)
+x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
+s = np.array([1.0, 1.5]).astype(np.float32)
+bias = np.array([0, 1]).astype(np.float32)
+mean = np.array([0, 3]).astype(np.float32)
+var = np.array([1, 1.5]).astype(np.float32)
+# using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
+# working around by using np.byte(1).astype(bool)
+training_mode = 1
+y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+    training_mode=training_mode
+)
+
+# output size: (1, 2, 1, 3)
+expect(node, inputs=[x, s, bias, mean, var],
+       outputs=[y, output_mean, output_var, saved_mean, saved_var],
+       name='test_batchnorm_example_training_mode')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
+training_mode = 1
+momentum = 0.9
+epsilon = 1e-2
+y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
+                                                                            epsilon)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+    epsilon=epsilon,
+    training_mode=training_mode
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias, mean, var],
+       outputs=[y, output_mean, output_var, saved_mean, saved_var],
+       name='test_batchnorm_epsilon_training_mode')
 ```
 
 </details>
@@ -4460,12 +4552,14 @@ expect(node, inputs=[x], outputs=[y],
   Performs element-wise binary division (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  
+  (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Div-1">1</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-7">7</a>
+Other versions of this operator: <a href="Changelog.md#Div-1">1</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-13">13</a>
 
 #### Inputs
 
@@ -4486,8 +4580,8 @@ Other versions of this operator: <a href="Changelog.md#Div-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -4514,6 +4608,12 @@ y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div')
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_div_uint8')
 ```
 
 </details>
@@ -10992,12 +11092,14 @@ expect(node, inputs=[x, y], outputs=[z],
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  
+  (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mul-1">1</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-7">7</a>
+Other versions of this operator: <a href="Changelog.md#Mul-1">1</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-13">13</a>
 
 #### Inputs
 
@@ -11018,8 +11120,8 @@ Other versions of this operator: <a href="Changelog.md#Mul-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -11046,6 +11148,12 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mul')
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mul_uint8')
 ```
 
 </details>
@@ -21008,12 +21116,14 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwo
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
   
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  
+  (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sub-1">1</a>, <a href="Changelog.md#Sub-6">6</a>, <a href="Changelog.md#Sub-7">7</a>
+Other versions of this operator: <a href="Changelog.md#Sub-1">1</a>, <a href="Changelog.md#Sub-6">6</a>, <a href="Changelog.md#Sub-7">7</a>, <a href="Changelog.md#Sub-13">13</a>
 
 #### Inputs
 
@@ -21034,8 +21144,8 @@ Other versions of this operator: <a href="Changelog.md#Sub-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -21062,6 +21172,12 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_sub')
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint8)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_sub_uint8')
 ```
 
 </details>
