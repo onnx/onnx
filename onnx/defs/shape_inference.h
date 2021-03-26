@@ -484,12 +484,12 @@ inline void propagateElemTypeFromAttributeToOutput(
     InferenceContext& ctx,
     const std::string& attributeName,
     size_t outputIndex,
+    TypeProto::ValueCase expected_type,
     TensorProto_DataType default_value = TensorProto::UNDEFINED) {
   auto attr_proto = ctx.getAttribute(attributeName);
-  auto output_type = ctx.getOutputType(outputIndex);
   if (nullptr == attr_proto) { // attribute not present
     if (default_value != TensorProto::UNDEFINED) {
-      updateOutputElemType(ctx, outputIndex, default_value, output_type->value_case());
+      updateOutputElemType(ctx, outputIndex, default_value, expected_type);
       return;
     } else {
       fail_type_inference("Value of attribute ", attributeName, " not specified");
@@ -503,7 +503,15 @@ inline void propagateElemTypeFromAttributeToOutput(
   if (!TensorProto_DataType_IsValid(elem_type)) {
     fail_type_inference("Attribute ", attributeName, " does not specify a valid type.");
   }
-  updateOutputElemType(ctx, outputIndex, elem_type, output_type->value_case());
+  updateOutputElemType(ctx, outputIndex, elem_type, expected_type);
+}
+
+inline void propagateElemTypeFromAttributeToOutput(
+    InferenceContext& ctx,
+    const std::string& attributeName,
+    size_t outputIndex,
+    TensorProto_DataType default_value = TensorProto::UNDEFINED) {
+  propagateElemTypeFromAttributeToOutput(ctx, attributeName, outputIndex, TypeProto::kTensorType, default_value);
 }
 
 inline TensorShapeProto* getTensorMutableShape(TypeProto::ValueCase value_case, TypeProto& type) {
