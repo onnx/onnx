@@ -61,6 +61,8 @@ struct InferenceContext {
   virtual TypeProto* getOutputType(size_t index) = 0;
   virtual GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) = 0;
   virtual ~InferenceContext() {}
+  /// XXX: Do we need default implementation here
+  virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
 };
 
 using InferenceFunction = std::function<void(InferenceContext&)>;

@@ -68,12 +68,12 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
 #ifdef ONNX_ML
     case TypeProto::kOpaqueType:
       break;
+#endif
     case TypeProto::kSparseTensorType: {
       const auto& type = value_info.type().sparse_tensor_type();
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
-#endif
 
     default:
       fail_check("Unrecognized type value case (value_info name: ", value_info.name(), "): ", value_case);
