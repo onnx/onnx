@@ -28,7 +28,7 @@ class Dropout_11_12 final : public Adapter {
       auto& data_ratio = t_ratio.floats();
       data_ratio.emplace_back(ratio);
       Value* v_ratio;
-      v_ratio = graph->addInitializerAndInput(t_ratio, "ratio");
+      v_ratio = graph->addInitializerAndInput(t_ratio);
       node->addInput(v_ratio);
     }
 
