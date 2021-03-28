@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 148/162 (91.36%, 5 generators excluded) common operators.
+Node tests have covered 149/163 (91.41%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -274,7 +274,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
 
 
 ### Add
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>add</summary>
 
@@ -306,6 +306,23 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y],
        name='test_add_bcast')
+```
+
+</details>
+<details>
+<summary>add_uint8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+)
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add_uint8')
 ```
 
 </details>
@@ -1301,20 +1318,11 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 
 ### BatchNormalization
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>batchnormalization</summary>
 
 ```python
-def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
-    dims_x = len(x.shape)
-    dim_ones = (1,) * (dims_x - 2)
-    s = s.reshape(-1, *dim_ones)
-    bias = bias.reshape(-1, *dim_ones)
-    mean = mean.reshape(-1, *dim_ones)
-    var = var.reshape(-1, *dim_ones)
-    return s * (x - mean) / np.sqrt(var + epsilon) + bias
-
 # input size: (1, 2, 1, 3)
 x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
 s = np.array([1.0, 1.5]).astype(np.float32)
@@ -1352,6 +1360,60 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
        name='test_batchnorm_epsilon')
+```
+
+</details>
+<details>
+<summary>train</summary>
+
+```python
+# input size: (1, 2, 1, 3)
+x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
+s = np.array([1.0, 1.5]).astype(np.float32)
+bias = np.array([0, 1]).astype(np.float32)
+mean = np.array([0, 3]).astype(np.float32)
+var = np.array([1, 1.5]).astype(np.float32)
+# using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
+# working around by using np.byte(1).astype(bool)
+training_mode = 1
+y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+    training_mode=training_mode
+)
+
+# output size: (1, 2, 1, 3)
+expect(node, inputs=[x, s, bias, mean, var],
+       outputs=[y, output_mean, output_var, saved_mean, saved_var],
+       name='test_batchnorm_example_training_mode')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
+training_mode = 1
+momentum = 0.9
+epsilon = 1e-2
+y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
+                                                                            epsilon)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+    epsilon=epsilon,
+    training_mode=training_mode
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias, mean, var],
+       outputs=[y, output_mean, output_var, saved_mean, saved_var],
+       name='test_batchnorm_epsilon_training_mode')
 ```
 
 </details>
@@ -2168,9 +2230,31 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 
 
 ### ConvInteger
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
-<summary>convinteger</summary>
+<summary>with_padding</summary>
+
+```python
+
+x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
+x_zero_point = np.uint8(1)
+w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
+
+y = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
+
+# ConvInteger with padding
+convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'],
+    pads=[1, 1, 1, 1],)
+
+expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y],
+       name='test_convinteger_with_padding')
+```
+
+</details>
+<details>
+<summary>without_padding</summary>
 
 ```python
 
@@ -2186,18 +2270,7 @@ convinteger_node = onnx.helper.make_node('ConvInteger',
     outputs=['y'])
 
 expect(convinteger_node, inputs=[x, w, x_zero_point], outputs=[y],
-       name='test_basic_convinteger')
-
-# ConvInteger with padding
-y_with_padding = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
-
-convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
-    inputs=['x', 'w', 'x_zero_point'],
-    outputs=['y'],
-    pads=[1, 1, 1, 1],)
-
-expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_with_padding],
-       name='test_convinteger_with_padding')
+       name='test_convinteger_without_padding')
 ```
 
 </details>
@@ -2910,6 +2983,12 @@ y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div')
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_div_uint8')
 ```
 
 </details>
@@ -4527,6 +4606,27 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x * default_alpha + default_beta, 0, 1)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardsigmoid_default')
+```
+
+</details>
+
+
+### HardSwish
+There are 1 test cases, listed as following:
+<details>
+<summary>hardswish</summary>
+
+```python
+node = onnx.helper.make_node(
+    'HardSwish',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = hardswish(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardswish')
 ```
 
 </details>
@@ -6775,6 +6875,12 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mul')
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mul_uint8')
 ```
 
 </details>
@@ -13009,6 +13115,12 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_sub')
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint8)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_sub_uint8')
 ```
 
 </details>
@@ -14642,10 +14754,11 @@ pads: 1
 strides: 1
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14720,10 +14833,11 @@ pads: 2
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14798,10 +14912,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14876,10 +14991,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14954,10 +15070,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -15037,10 +15154,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -15120,10 +15238,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -15203,10 +15322,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
