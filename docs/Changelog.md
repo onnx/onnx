@@ -18622,6 +18622,93 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
+### <a name="BatchNormalization-14"></a>**BatchNormalization-14**</a>
+
+  Carries out batch normalization as described in the paper
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  There are five required inputs 'X', 'scale', 'B', 'input_mean' and
+  'input_var'.
+  Note that 'input_mean' and 'input_var' are expected to be the estimated
+  statistics in inference mode (training_mode=False, default),
+  and the running statistics in training mode (training_mode=True).
+  There are multiple cases for the number of outputs, which we list below:
+  
+  Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
+  Output case #2: Y (training_mode=False)
+  
+  When training_mode=False, extra outputs are invalid.
+  The outputs are updated as follows when training_mode=True:
+  ```
+  current_mean = ReduceMean(X, axis=all_except_channel_index)
+  current_var =  ReduceVar(X, axis=all_except_channel_index)
+  
+  running_mean = input_mean * momentum + current_mean * (1 - momentum)
+  running_var = input_var * momentum + current_var * (1 - momentum)
+  
+  Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+  ```
+  
+  When training_mode=False:
+  ```
+  Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
+  ```
+  
+  For previous (depreciated) non-spatial cases, implementors are suggested
+  to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
+<dt><tt>training_mode</tt> : int (default is 0)</dt>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dt><tt>scale</tt> (differentiable) : T</dt>
+<dd>Scale tensor of shape (C).</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Bias tensor of shape (C).</dd>
+<dt><tt>input_mean</tt> (differentiable) : T</dt>
+<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
+<dt><tt>input_var</tt> (differentiable) : T</dt>
+<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
+</dl>
+
+#### Outputs (1 - 5)
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>The output tensor of the same shape as X</dd>
+<dt><tt>running_mean</tt> (optional, non-differentiable) : T</dt>
+<dd>The running mean after the BatchNormalization operator.</dd>
+<dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
+<dd>The running variance after the BatchNormalization operator.</dd>
+<dt><tt>current_mean</tt> (optional, non-differentiable) : T</dt>
+<dd>Current mean used during training to speed up gradient computation.</dd>
+<dt><tt>current_var</tt> (optional, non-differentiable) : T</dt>
+<dd>Current variance used during training to speed up gradient computation.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="CumSum-14"></a>**CumSum-14**</a>
 
   Performs cumulative sum of the input elements along the given axis.
