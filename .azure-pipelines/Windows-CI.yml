@@ -43,8 +43,8 @@ jobs:
       python -m pip install --upgrade pip
       # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
       # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-      # TODO Remove fixed ipython
-      python -m pip install --quiet pytest==5.4.3 nbval numpy ipython==7.21.0
+      # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
+      python -m pip install --quiet pytest==5.4.3 nbval numpy ipython==7.16.1
 
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1

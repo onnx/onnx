@@ -102,8 +102,8 @@ jobs:
       # onnx python api tests
       # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
       # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-      # TODO Remove fixed ipython
-      python -m pip install --quiet pytest==5.4.3 nbval ipython==7.21.0
+      # TODO Remove fixed ipython 7.16.1 once ONNX remove Python 3.6
+      python -m pip install --quiet pytest==5.4.3 nbval ipython==7.16.1
 
       pytest
       if [ $? -ne 0 ]; then
