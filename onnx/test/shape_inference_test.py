@@ -3530,6 +3530,20 @@ class TestShapeInference(unittest.TestCase):
                                       make_tensor_value_info('saved_var', TensorProto.FLOAT, ('C',)),  # type: ignore
                                       ])
 
+    def test_nonzero(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (None,))],
+            [make_node('NonZero', ['x'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (1, None))])
+
+    def test_nonzero_no_shape(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, None)],
+            [make_node('NonZero', ['x'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (None, None))])
+
 
 if __name__ == '__main__':
     unittest.main()
