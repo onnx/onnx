@@ -78,6 +78,9 @@ BuildFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& sche
 
 void RegisterCustomFuncFloatSchema() {
   ONNX_NAMESPACE::OpSchema schema;
+#ifndef __ONNX_DISABLE_STATIC_REGISTRATION
+  RegisterOnnxOperatorSetSchema();
+#endif
   schema.SetName("CustomFuncFloat")
       .SetDomain(ONNX_DOMAIN)
       .SinceVersion(12)
@@ -92,7 +95,6 @@ void RegisterCustomFuncFloatSchema() {
 
 // Test for Context dependant function without type context
 TEST(FunctionAPITest, ContextDependentFunctionTest) {
-#ifndef __ONNX_DISABLE_STATIC_REGISTRATION
   RegisterCustomFuncFloatSchema();
 
   const auto* schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);
@@ -116,7 +118,6 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
   check_function(fnProto, checkerCtx, lexicalScope);
-#endif
 }
 
 // A polymorphic context-dependent function test-case.
