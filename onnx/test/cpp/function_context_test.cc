@@ -92,7 +92,7 @@ void RegisterCustomFuncFloatSchema() {
 
 // Test for Context dependant function without type context
 TEST(FunctionAPITest, ContextDependentFunctionTest) {
-#ifndef ONNX_DISABLE_STATIC_REGISTRATION
+#ifndef __ONNX_DISABLE_STATIC_REGISTRATION
   RegisterCustomFuncFloatSchema();
 
   const auto* schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);

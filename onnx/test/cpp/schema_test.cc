@@ -13,7 +13,7 @@ namespace ONNX_NAMESPACE {
 namespace Test {
 
 TEST(SchemaTest, RegisterAllOpsetSchema) {
-#ifndef ONNX_DISABLE_STATIC_REGISTRATION
+#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
     EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == -1);
     RegisterOnnxOperatorSetSchema();
     EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0);
