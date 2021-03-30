@@ -8,15 +8,14 @@
 
 namespace ONNX_NAMESPACE {
 namespace Test {
-#ifndef ONNX_DISABLE_STATIC_REGISTRATION
-TEST(SchemaTest, RegisterAllOpsetSchema) {
 
+TEST(SchemaTest, RegisterAllOpsetSchema) {
+#ifndef ONNX_DISABLE_STATIC_REGISTRATION
     EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == -1);
     RegisterOnnxOperatorSetSchema();
     EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0);
     //EXPECT_TRUE(OpSchemaRegistry::GetRegisteredSchemaCount() == ONNX_DBG_GET_COUNT_IN_OPSETS());
-
-}
 #endif
+}
 } // namespace Test
 } // namespace ONNX_NAMESPACE
