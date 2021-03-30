@@ -7,6 +7,7 @@
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/operator_sets.h"
 #include "onnx/defs/schema.h"
 
 using namespace ONNX_NAMESPACE::checker;

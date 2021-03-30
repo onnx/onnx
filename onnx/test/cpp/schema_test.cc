@@ -4,8 +4,8 @@
 
 #include <iostream>
 #include "gtest/gtest.h"
-#include "onnx/defs/schema.h"
 #include "onnx/defs/operator_sets.h"
+#include "onnx/defs/schema.h"
 
 using namespace ONNX_NAMESPACE;
 
