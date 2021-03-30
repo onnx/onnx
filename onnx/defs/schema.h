@@ -1173,7 +1173,9 @@ OpSchema GetOpSchema();
   size_t dbg_count_check_##name##_##domain##_ver##ver =                     \
       (dbg_included_in_static_opset) ? ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() \
                                      : 0;
-
+#ifdef NDEBUG
+#define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() 0
+#else
 #define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() \
   DbgOperatorSetTracker::Instance().IncrementCount()
 #define ONNX_DBG_GET_COUNT_IN_OPSETS() \
@@ -1194,6 +1196,7 @@ class DbgOperatorSetTracker {
  private:
   size_t count_ = 0;
 };
+#endif
 
 // Naming convention for operator schema classes
 #define ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name) \
