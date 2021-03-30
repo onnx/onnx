@@ -2216,7 +2216,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
-    13,
+    14,
     OpSchema()
         .SetDoc("Identity operator")
         .Input(
