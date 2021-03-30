@@ -7,6 +7,8 @@
 #include "onnx/defs/schema.h"
 #include "onnx/defs/operator_sets.h"
 
+using namespace ONNX_NAMESPACE;
+
 namespace ONNX_NAMESPACE {
 namespace Test {
 
