@@ -19,7 +19,8 @@ $PIP_COMMAND numpy protobuf==3.11.3
 $PIP_COMMAND dist/*-manylinux2010_i686.whl
 
 # pytest with the built wheel
-$PIP_COMMAND pytest==5.4.3 nbval
+# TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
+$PIP_COMMAND pytest==5.4.3 nbval ipython==7.16.1
 /opt/python/${PY_VER}/bin/pytest
 
 # Test backend test data
