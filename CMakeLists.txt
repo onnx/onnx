@@ -397,22 +397,11 @@ if(MSVC)
     target_compile_definitions(onnx_proto PUBLIC "ONNX_API=")
   endif()
 else()
-  # On non-Windows, set default visibility if built as shared or exporting symbols forced
-  if(ONNX_BUILD_MAIN_LIB OR BUILD_SHARED_LIBS)
+  # On non-Windows, hide all symbols we don't need
     target_compile_definitions(onnx_proto PUBLIC "ONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
     set_target_properties(onnx_proto PROPERTIES
-      CXX_VISIBILITY_PRESET default
-      C_VISIBILITY_PRESET default
-      VISIBILITY_INLINES_HIDDEN OFF)
-
-  else() # hide symbols for static lib case
-    target_compile_definitions(onnx_proto PUBLIC "ONNX_API=__attribute__\(\(__visibility__\(\"hidden\"\)\)\)")
-    set_target_properties(onnx_proto PROPERTIES
       CXX_VISIBILITY_PRESET hidden
-      C_VISIBILITY_PRESET hidden
       VISIBILITY_INLINES_HIDDEN ON)
-
-  endif()
 endif()
 
 if(ONNX_USE_LITE_PROTO)
