@@ -839,6 +839,17 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistr
   return map;
 }
 
+size_t OpSchemaRegistry::GetRegisteredSchemaCount() {
+  size_t count = 0;
+  for (auto& x : GetMapWithoutEnsuringRegistration()) {
+    for (auto& y : x.second) {
+      count += y.second.size();
+    }
+  }
+  return count;
+}
+
+
 OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
   auto& map = GetMapWithoutEnsuringRegistration();
 
@@ -850,7 +861,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       // In debug builds, the number of schema registered in this constructor
       // is compared against the number of calls to schema registration macros.
 #ifndef NDEBUG
-      size_t dbg_initial_schema_count = GetRegisteredSchemaCount();
+      size_t dbg_initial_schema_count = OpSchemaRegistry::GetRegisteredSchemaCount();
 #endif
 
       RegisterOnnxOperatorSetSchema();
@@ -866,7 +877,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       RegisterOnnxPreviewOperatorSetSchema();
 
 #ifndef NDEBUG
-      size_t dbg_registered_schema_count = GetRegisteredSchemaCount() - dbg_initial_schema_count;
+      size_t dbg_registered_schema_count = OpSchemaRegistry::GetRegisteredSchemaCount() - dbg_initial_schema_count;
       // Only checks if the schemas were entirely loaded
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
@@ -878,20 +889,9 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       }
 #endif
     }
-
-   private:
-    static size_t GetRegisteredSchemaCount() {
-      size_t count = 0;
-      for (auto& x : GetMapWithoutEnsuringRegistration()) {
-        for (auto& y : x.second) {
-          count += y.second.size();
-        }
-      }
-      return count;
-    }
   };
 
-#ifndef __ONNX_DISABLE_STATIC_REGISTRATION
+#ifndef ONNX_DISABLE_STATIC_REGISTRATION
   static SchemasRegisterer schemasRegisterer;
 #endif
 

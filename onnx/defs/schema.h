@@ -1091,10 +1091,11 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    * fiasco.
    */
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
-  static OpName_Domain_Version_Schema_Map& map();
+
   static int loaded_schema_version;
 
  public:
+  static OpName_Domain_Version_Schema_Map& map();
   static const std::vector<OpSchema> get_all_schemas_with_history() {
     std::vector<OpSchema> r;
     for (auto& x : map()) {
@@ -1117,6 +1118,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     }
     return r;
   }
+
+  static size_t OpSchemaRegistry::GetRegisteredSchemaCount();
 };
 
 void RegisterSchema(OpSchema schema, int opset_version_to_load=0);
@@ -1171,9 +1174,6 @@ OpSchema GetOpSchema();
       (dbg_included_in_static_opset) ? ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() \
                                      : 0;
 
-#ifdef NDEBUG
-#define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() 0
-#else
 #define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() \
   DbgOperatorSetTracker::Instance().IncrementCount()
 #define ONNX_DBG_GET_COUNT_IN_OPSETS() \
@@ -1194,7 +1194,6 @@ class DbgOperatorSetTracker {
  private:
   size_t count_ = 0;
 };
-#endif
 
 // Naming convention for operator schema classes
 #define ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name) \
