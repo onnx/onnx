@@ -891,7 +891,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
     }
   };
 
-#ifndef ONNX_DISABLE_STATIC_REGISTRATION
+#ifndef __ONNX_DISABLE_STATIC_REGISTRATION
   static SchemasRegisterer schemasRegisterer;
 #endif
 
