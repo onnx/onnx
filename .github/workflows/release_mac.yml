@@ -77,7 +77,8 @@ jobs:
 
     - name: Test the installed wheel
       run: |
-        python -m pip install -q pytest==5.4.3 nbval
+        # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
+        python -m pip install -q pytest==5.4.3 nbval ipython==7.16.1
         pytest
 
     - name: Test backend test data
