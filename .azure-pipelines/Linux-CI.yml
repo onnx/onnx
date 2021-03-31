@@ -56,7 +56,7 @@ jobs:
       make -j${NUM_PROCESSOR}
       make install
       ldconfig
-      cd ..
+      cd ../..
 
       python -m pip install --upgrade pip
       python -m pip install numpy protobuf==3.11.3
