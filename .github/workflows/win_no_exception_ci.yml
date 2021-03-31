@@ -56,7 +56,7 @@ jobs:
         if ('${{ matrix.architecture }}' -eq 'x86') {
           $arch = 'Win32'
         }
-        $ONNX_REPO_PATH="%cd%\onnx"
+        $ONNX_REPO_PATH=%cd%\onnx
         echo "Install protobuf"
         cd ./protobuf_root
         $protobuf_root_dir = Get-Location
