@@ -15,8 +15,8 @@ namespace Test {
 TEST(SchemaTest, RegisterAllOpsetSchema) {
 #ifdef __ONNX_DISABLE_STATIC_REGISTRATION
     EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == -1);
-    RegisterOnnxOperatorSetSchema();
-    EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0);
+    RegisterOnnxOperatorSetSchema(12);
+    EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 12);
     //EXPECT_TRUE(OpSchemaRegistry::GetRegisteredSchemaCount() == ONNX_DBG_GET_COUNT_IN_OPSETS());
 #endif
 }
