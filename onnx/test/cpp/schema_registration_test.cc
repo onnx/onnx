@@ -14,7 +14,7 @@ namespace Test {
 
 // By default ONNX registers all opset versions and selective schema loading cannot be tested
 // So this test is run only when static registration is disabled
-TEST(SchemaRegistrationTest.cc, RegisterSpecifiedOpsetSchemaVersion) {
+TEST(SchemaRegistrationTest, RegisterSpecifiedOpsetSchemaVersion) {
 #ifdef __ONNX_DISABLE_STATIC_REGISTRATION
     EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == -1);
     RegisterOnnxOperatorSetSchema(13);
