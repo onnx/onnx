@@ -1858,6 +1858,35 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
+    13,
+    OpSchema()
+        .SetDoc("Identity operator")
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor to copy input into.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Identity,
     1,
     OpSchema()
         .SetDoc("Identity operator")

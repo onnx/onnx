@@ -167,8 +167,7 @@ std::string DataTypeUtils::ToString(
     }
 #endif
     default:
-      assert(false);
-      return std::string();
+      ONNX_THROW_EX(std::invalid_argument("Unsuported type proto value case."));
   }
 }
 
