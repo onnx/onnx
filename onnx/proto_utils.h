@@ -20,6 +20,9 @@ namespace ONNX_NAMESPACE {
 #ifdef ONNX_USE_LITE_PROTO
 using ::google::protobuf::MessageLite;
 inline std::string ProtoDebugString(const MessageLite& proto) {
+  // Since the MessageLite interface does not support reflection, there is very
+  // little information that this and similar methods can provide.
+  // But when using lite proto this is the best we can provide.
   return proto.ShortDebugString();
 }
 #else
