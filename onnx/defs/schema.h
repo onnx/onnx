@@ -954,7 +954,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    OpSchemaRegisterOnce(OpSchema& op_schema) {
+    OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load=0) {
       ONNX_TRY {
         op_schema.Finalize();
 
@@ -963,6 +963,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         auto& op_name = op_schema.Name();
         auto& op_domain = op_schema.domain();
         auto ver = op_schema.SinceVersion();
+        // Stops because the opset_version is higher than opset_version_to_load
+        if (opset_version_to_load != 0 && ver > opset_version_to_load) {
+          return;
+        }
 
         if (m[op_name][op_domain].count(ver)) {
           const auto& schema = m[op_name][op_domain][ver];
@@ -973,6 +977,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << op_schema.line() << ", but it is already registered from file "
               << schema.file() << " line " << schema.line() << std::endl;
           fail_schema(err.str());
+        }
+        // Return early if schema for the targeted opset version has already been loaded
+        if (opset_version_to_load != 0 && !m[op_name][op_domain].empty()) {
+          return;
         }
 
         auto ver_range_map = DomainToVersionRange::Instance().Map();
@@ -1060,7 +1068,12 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       const std::string& domain = ONNX_DOMAIN) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
-
+  static void SetLoadedSchemaVersion(int target_version) {
+    loaded_schema_version = target_version;
+  }
+  static int GetLoadedSchemaVersion() {
+    return loaded_schema_version;
+  }
  private:
   // OpSchemaRegistry should not need to be instantiated except statically
   // within this class
@@ -1078,6 +1091,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    */
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
   static OpName_Domain_Version_Schema_Map& map();
+  static int loaded_schema_version;
 
  public:
   static const std::vector<OpSchema> get_all_schemas_with_history() {
@@ -1104,12 +1118,15 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   }
 };
 
-void RegisterSchema(OpSchema&& schema);
+void RegisterSchema(OpSchema schema, int opset_version_to_load=0);
 
-// Registers all schema of a given operator set
+// Registers the latest opset schema before opset_version_to_load
+// By default opset_version_to_load=0 means it will register all versions
 template <class T>
-void RegisterOpSetSchema() {
-  T::ForEachSchema(RegisterSchema);
+void RegisterOpSetSchema(int opset_version_to_load=0) {
+  T::ForEachSchema([opset_version_to_load](OpSchema&& schema) {
+    RegisterSchema(schema, opset_version_to_load);
+  });
 };
 
 // Forward declaration for the non-specialized GetOpSchema method.  This
@@ -1152,7 +1169,6 @@ OpSchema GetOpSchema();
   size_t dbg_count_check_##name##_##domain##_ver##ver =                     \
       (dbg_included_in_static_opset) ? ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() \
                                      : 0;
-
 #ifdef NDEBUG
 #define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() 0
 #else
