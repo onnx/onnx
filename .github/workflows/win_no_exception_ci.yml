@@ -86,6 +86,7 @@ jobs:
           EXIT 1
         }
         
+        cd ..
         git clean -xdf
         echo "Build ONNX"
         cmake -G "Visual Studio 16 2019" -A $arch -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_DISABLE_EXCEPTIONS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=ON -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -S . -B .setuptools-cmake-build\
