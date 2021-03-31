@@ -3421,6 +3421,115 @@ class TestShapeInference(unittest.TestCase):
         # Inferred shape and existing shape differ in rank: (3) vs (2)
         self.assertRaises(onnx.shape_inference.InferenceError, onnx.shape_inference.infer_shapes, original_model, strict_mode=True)
 
+    def test_trilu_upper(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5)),
+             ('k', TensorProto.INT64, ())],
+            [make_node('Trilu', ['x', 'k'], ['y'])],
+            [],
+            initializer=[make_tensor('k', TensorProto.INT64, (), (2,))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 5))])  # type: ignore
+
+    def test_trilu_lower(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5)),
+             ('k', TensorProto.INT64, ())],
+            [make_node('Trilu', ['x', 'k'], ['y'], upper=0)],
+            [],
+            initializer=[make_tensor('k', TensorProto.INT64, (), (10,))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 5))])  # type: ignore
+
+    def test_trilu_upper_zero(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT64, (0, 5)),
+             ('k', TensorProto.INT64, ())],
+            [make_node('Trilu', ['x', 'k'], ['y'], upper=1)],
+            [],
+            initializer=[make_tensor('k', TensorProto.INT64, (), (5,))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (0, 5))])  # type: ignore
+
+    def test_trilu_lower_one(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (3, 1, 5))],
+            [make_node('Trilu', ['x'], ['y'], upper=0)],
+            [],)
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT32, (3, 1, 5))])  # type: ignore
+
+    def test_batch_norm_train(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
+             ('scale', TensorProto.FLOAT, (4,)),
+             ('b', TensorProto.FLOAT, (4,)),
+             ('input_mean', TensorProto.FLOAT, (4,)),
+             ('input_var', TensorProto.FLOAT, (4,))],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'input_mean', 'input_var'],
+                       ['out', 'output_mean', 'output_var', 'saved_mean', 'saved_var'], training_mode=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7)),  # type: ignore
+                                      make_tensor_value_info('output_mean', TensorProto.FLOAT, (4,)),  # type: ignore
+                                      make_tensor_value_info('output_var', TensorProto.FLOAT, (4,)),  # type: ignore
+                                      make_tensor_value_info('saved_mean', TensorProto.FLOAT, (4,)),  # type: ignore
+                                      make_tensor_value_info('saved_var', TensorProto.FLOAT, (4,))  # type: ignore
+                                      ])
+
+    def test_batch_norm_train_dim_param(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 'C', 5, 6, 7)),
+             ('scale', TensorProto.FLOAT, ('C',)),
+             ('b', TensorProto.FLOAT, ('C',)),
+             ('input_mean', TensorProto.FLOAT, ('C',)),
+             ('input_var', TensorProto.FLOAT, ('C',))],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'input_mean', 'input_var'],
+                       ['out', 'output_mean', 'output_var', 'saved_mean', 'saved_var'], training_mode=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 'C', 5, 6, 7)),  # type: ignore
+                                      make_tensor_value_info('output_mean', TensorProto.FLOAT, ('C',)),  # type: ignore
+                                      make_tensor_value_info('output_var', TensorProto.FLOAT, ('C',)),  # type: ignore
+                                      make_tensor_value_info('saved_mean', TensorProto.FLOAT, ('C',)),  # type: ignore
+                                      make_tensor_value_info('saved_var', TensorProto.FLOAT, ('C',))  # type: ignore
+                                      ])
+
+    def test_batch_norm_test(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
+             ('scale', TensorProto.FLOAT, (4,)),
+             ('b', TensorProto.FLOAT, (4,)),
+             ('input_mean', TensorProto.FLOAT, (4,)),
+             ('input_var', TensorProto.FLOAT, (4,))],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'input_mean', 'input_var'],
+                       ['out'], training_mode=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])  # type: ignore
+
+    def test_batch_norm_test_no_dim(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, None, None, None)),
+             ('scale', TensorProto.FLOAT, (4,)),
+             ('b', TensorProto.FLOAT, (4,)),
+             ('input_mean', TensorProto.FLOAT, (None,)),
+             ('input_var', TensorProto.FLOAT, (4,))],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'input_mean', 'input_var'],
+                       ['out'], training_mode=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, None, None, None))])  # type: ignore
+
+    def test_batch_norm_train_no_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, None),
+             ('scale', TensorProto.FLOAT, None),
+             ('b', TensorProto.FLOAT, None),
+             ('input_mean', TensorProto.FLOAT, ('C',)),
+             ('input_var', TensorProto.FLOAT, ('C',))],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'input_mean', 'input_var'],
+                       ['out', 'output_mean', 'output_var', 'saved_mean', 'saved_var'], training_mode=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, None),  # type: ignore
+                                      make_tensor_value_info('output_mean', TensorProto.FLOAT, ('C',)),  # type: ignore
+                                      make_tensor_value_info('output_var', TensorProto.FLOAT, ('C',)),  # type: ignore
+                                      make_tensor_value_info('saved_mean', TensorProto.FLOAT, ('C',)),  # type: ignore
+                                      make_tensor_value_info('saved_var', TensorProto.FLOAT, ('C',)),  # type: ignore
+                                      ])
+
 
 if __name__ == '__main__':
     unittest.main()
