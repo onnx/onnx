@@ -839,17 +839,6 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistr
   return map;
 }
 
-size_t OpSchemaRegistry::GetRegisteredSchemaCount() {
-  size_t count = 0;
-  for (auto& x : GetMapWithoutEnsuringRegistration()) {
-    for (auto& y : x.second) {
-      count += y.second.size();
-    }
-  }
-  return count;
-}
-
-
 OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
   auto& map = GetMapWithoutEnsuringRegistration();
 
@@ -861,7 +850,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       // In debug builds, the number of schema registered in this constructor
       // is compared against the number of calls to schema registration macros.
 #ifndef NDEBUG
-      size_t dbg_initial_schema_count = OpSchemaRegistry::GetRegisteredSchemaCount();
+      size_t dbg_initial_schema_count = GetRegisteredSchemaCount();
 #endif
 
       RegisterOnnxOperatorSetSchema();
@@ -888,6 +877,16 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
             ONNX_DBG_GET_COUNT_IN_OPSETS());
       }
 #endif
+    }
+  private:
+    static size_t GetRegisteredSchemaCount() {
+      size_t count = 0;
+      for (auto& x : GetMapWithoutEnsuringRegistration()) {
+        for (auto& y : x.second) {
+          count += y.second.size();
+        }
+      }
+      return count;
     }
   };
 
