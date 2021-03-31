@@ -978,9 +978,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
               << schema.file() << " line " << schema.line() << std::endl;
           fail_schema(err.str());
         }
-        // If opset_version_to_load != 0, only keep the latest one before specified version
+        // Return early if schema for the targeted opset version has already been loaded
         if (opset_version_to_load != 0 && !m[op_name][op_domain].empty()) {
-          // Stops early because there is another newer OpSchema has been registered
           return;
         }
 

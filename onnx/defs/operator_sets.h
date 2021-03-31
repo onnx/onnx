@@ -982,10 +982,10 @@ inline void RegisterOnnxOperatorSetSchema() {
 }
 
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
-  // Sets to record the loaded version/ prevent the full operator check in Debug mode
+  // Sets to record the loaded version and prevent the full operator check in Debug mode
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(target_version);
-  // Keep ordered by descending; return early if target_version has been reached
-  // Update here if opset_version bumps  
+  // Update here if opset_version bumps 
+  // These calls for schema registration here are required to be in descending order for this to work correctly
   RegisterOpSetSchema<OpSet_Onnx_ver14>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver13>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver12>(target_version);

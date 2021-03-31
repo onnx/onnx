@@ -20,7 +20,7 @@
 namespace ONNX_NAMESPACE {
 // -1 means ONNX schema hasn't been loaded yet
 // 0 means all versions of ONNX schema have been loaded
-// Other positive integer means the latest ONNX schemas before that version have been loaded
+// Other positive integer means the ONNX schemas for the specified version have been loaded
 int OpSchemaRegistry::loaded_schema_version = -1;
 
 // By default if opset_version_to_load=0, it registers all opset schema for all opset versions
@@ -878,7 +878,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count = OpSchemaRegistry::GetRegisteredSchemaCount() - dbg_initial_schema_count;
-      // Only checks if the schemas were entirely loaded
+      // Check enabled only if schemas for all opset versions are loaded
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),

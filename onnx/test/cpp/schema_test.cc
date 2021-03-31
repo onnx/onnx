@@ -27,15 +27,15 @@ TEST(SchemaTest, RegisterCertainOpsetSchema) {
     EXPECT_EQ(nullptr, opSchema);
 
     // Should not find opset 14
-    auto opSchema = OpSchemaRegistry::Schema("Trilu");
+    opSchema = OpSchemaRegistry::Schema("Trilu");
     EXPECT_EQ(nullptr, opSchema);
 
     // Acos-7 is the latest Acos before specified 13
-    auto opSchema = OpSchemaRegistry::Schema("Acos");
+    opSchema = OpSchemaRegistry::Schema("Acos");
     EXPECT_NE(nullptr, opSchema);
     EXPECT_EQ(opSchema->SinceVersion(), 7);
-
 #endif
 }
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE
