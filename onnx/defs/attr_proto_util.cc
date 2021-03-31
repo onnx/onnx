@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #include "attr_proto_util.h"
 
@@ -51,9 +53,16 @@ ADD_LIST_ATTR_IMPL(GraphProto, AttributeProto_AttributeType_GRAPHS, graphs)
 AttributeProto MakeRefAttribute(
     const std::string& attr_name,
     AttributeProto_AttributeType type) {
+  return MakeRefAttribute(attr_name, attr_name, type);
+}
+
+AttributeProto MakeRefAttribute(
+    const std::string& attr_name,
+    const std::string& referred_attr_name,
+    AttributeProto_AttributeType type) {
   AttributeProto a;
   a.set_name(attr_name);
-  a.set_ref_attr_name(attr_name);
+  a.set_ref_attr_name(referred_attr_name);
   a.set_type(type);
   return a;
 }

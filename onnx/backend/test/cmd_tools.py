@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -25,7 +27,13 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
             shutil.rmtree(path)
         os.makedirs(path)
 
-    cases = model_test.collect_testcases() + node_test.collect_testcases()
+    cases = model_test.collect_testcases()
+    if args.op_type is None:
+        # include all of the testcases
+        cases += node_test.collect_testcases()
+    else:
+        # only include those testcases including the given operator
+        cases += node_test.collect_testcases_by_operator(args.op_type)
     for case in cases:
         output_dir = os.path.join(
             args.output, case.kind, case.name)
@@ -45,18 +53,30 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                 data_set_dir = os.path.join(
                     output_dir, 'test_data_set_{}'.format(i))
                 prepare_dir(data_set_dir)
-                for j, input_np in enumerate(inputs):
-                    tensor = numpy_helper.from_array(
-                        input_np, case.model.graph.input[j].name)
+                for j, input in enumerate(inputs):
                     with open(os.path.join(
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
-                        f.write(tensor.SerializeToString())
-                for j, output_np in enumerate(outputs):
-                    tensor = numpy_helper.from_array(
-                        output_np, case.model.graph.output[j].name)
+                        if isinstance(input, dict):
+                            f.write(numpy_helper.from_dict(
+                                input, case.model.graph.input[j].name).SerializeToString())
+                        elif isinstance(input, list):
+                            f.write(numpy_helper.from_list(
+                                input, case.model.graph.input[j].name).SerializeToString())
+                        else:
+                            f.write(numpy_helper.from_array(
+                                input, case.model.graph.input[j].name).SerializeToString())
+                for j, output in enumerate(outputs):
                     with open(os.path.join(
                             data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
-                        f.write(tensor.SerializeToString())
+                        if isinstance(output, dict):
+                            f.write(numpy_helper.from_dict(
+                                output, case.model.graph.output[j].name).SerializeToString())
+                        elif isinstance(output, list):
+                            f.write(numpy_helper.from_list(
+                                output, case.model.graph.output[j].name).SerializeToString())
+                        else:
+                            f.write(numpy_helper.from_array(
+                                output, case.model.graph.output[j].name).SerializeToString())
 
 
 def parse_args():  # type: () -> argparse.Namespace
@@ -66,6 +86,8 @@ def parse_args():  # type: () -> argparse.Namespace
     subparser = subparsers.add_parser('generate-data', help='convert testcases to test data')
     subparser.add_argument('-o', '--output', default=DATA_DIR,
                            help='output directory (default: %(default)s)')
+    subparser.add_argument('-t', '--op_type', default=None,
+                           help='op_type for test case generation. (generates test data for the specified op_type only.)')
     subparser.set_defaults(func=generate_data)
 
     return parser.parse_args()

@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Development
 
 You will need to install protobuf and numpy to build ONNX. An easy
@@ -88,7 +90,7 @@ python setup.py typecheck
 
 # License
 
-[MIT License](LICENSE)
+[Apache License v2.0](https://github.com/onnx/onnx/blob/master/LICENSE)
 
 # Code of Conduct
 

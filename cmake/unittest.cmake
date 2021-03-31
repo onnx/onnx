@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 set(UT_NAME ${PROJECT_NAME}_gtests)
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(ONNXIFI_TEST_DRIVER onnxifi_test_driver_gtests)
@@ -60,8 +62,20 @@ function(AddTest)
                                            # unsigned type, result still
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
+                                 /wd4244 # 'argument': conversion from 'google::
+                                         # protobuf::uint64' to 'int', possible 
+                                         # loss of data
+                                 /wd4267 # Conversion from 'size_t' to 'int', 
+                                         # possible loss of data
+                                 /wd4996 # The second parameter is ignored.
                            )
-
+      if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+        target_compile_options(${_UT_TARGET}
+                               PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
+                                               # have dll-interface to be used by
+                                               # clients of class 'type2'
+                              )
+      endif()
   endif()
 
   set(TEST_ARGS)

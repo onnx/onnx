@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -18,7 +20,7 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
         sorted_values = np.flip(sorted_values, axis=axis)
     topk_sorted_indices = np.take(sorted_indices, np.arange(k), axis=axis)
     topk_sorted_values = np.take(sorted_values, np.arange(k), axis=axis)
-    return topk_sorted_values, topk_sorted_indices
+    return topk_sorted_values, np.array(topk_sorted_indices, dtype=np.int64)
 
 
 class TopK(Base):
@@ -90,3 +92,35 @@ class TopK(Base):
 
         expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
                name='test_top_k_smallest')
+
+    @staticmethod
+    def export_top_k_negative_axis():  # type: () -> None
+        axis = -1
+        largest = 1
+
+        k = 3
+        node = onnx.helper.make_node(
+            'TopK',
+            inputs=['x', 'k'],
+            outputs=['values', 'indices'],
+            axis=axis
+        )
+        X = np.array([
+            [0, 1, 2, 3],
+            [4, 5, 6, 7],
+            [8, 9, 10, 11],
+        ], dtype=np.float32)
+        K = np.array([k], dtype=np.int64)
+        values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+        # print(values_ref)
+        #[[ 3.  2.  1.]
+        # [ 7.  6.  5.]
+        # [11. 10.  9.]]
+        # print(indices_ref)
+        #[[3 2 1]
+        # [3 2 1]
+        # [3 2 1]]
+
+        expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
+               name='test_top_k_negative_axis')

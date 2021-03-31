@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <climits>
@@ -7,7 +11,6 @@
 #include "onnx/checker.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
-#include "onnx/optimizer/optimize.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
@@ -30,6 +33,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
   defs.doc() = "Schema submodule";
+  py::register_exception<SchemaError>(defs, "SchemaError");
 
   py::class_<OpSchema> op_schema(defs, "OpSchema");
   op_schema.def_property_readonly("file", &OpSchema::file)
@@ -62,7 +66,30 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         if (op->HasFunction())
           op->GetFunction()->SerializeToString(&bytes);
         return py::bytes(bytes);
-      });
+      })
+      .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
+      .def(
+          "get_context_dependent_function",
+          [](OpSchema* op, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes) -> py::bytes {
+            NodeProto proto{};
+            ParseProtoFromPyBytes(&proto, bytes);
+            std::string func_bytes = "";
+            if (op->HasContextDependentFunction()) {
+              std::vector<TypeProto> input_types;
+              input_types.reserve(input_types_bytes.size());
+              for (auto& type_bytes : input_types_bytes) {
+                TypeProto type_proto{};
+                ParseProtoFromPyBytes(&type_proto, type_bytes);
+                input_types.push_back(type_proto);
+              }
+              FunctionBodyBuildContextImpl ctx(proto, input_types);
+              FunctionProto func_proto;
+              op->BuildContextDependentFunction(ctx, func_proto);
+              func_proto.SerializeToString(&func_bytes);
+            }
+            return py::bytes(func_bytes);
+          });
+;
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
@@ -90,6 +117,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("Optional", OpSchema::Optional)
       .value("Variadic", OpSchema::Variadic);
 
+  py::enum_<OpSchema::DifferentiationCategory>(op_schema, "DifferentiationCategory")
+      .value("Unknown", OpSchema::Unknown)
+      .value("Differentiable", OpSchema::Differentiable)
+      .value("NonDifferentiable", OpSchema::NonDifferentiable);
+
   py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
       .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
@@ -98,7 +130,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "description", &OpSchema::FormalParameter::GetDescription)
       .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
       .def_property_readonly(
-          "isHomogeneous", &OpSchema::FormalParameter::GetIsHomogeneous);
+          "isHomogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
+      .def_property_readonly(
+        "differentiationCategory",
+        &OpSchema::FormalParameter::GetDifferentiationCategory);
 
   py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
       .value("FLOAT", AttributeProto::FLOAT)
@@ -138,8 +173,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             const auto* schema = OpSchemaRegistry::Schema(
                 op_type, max_inclusive_version, domain);
             if (!schema) {
-              throw std::runtime_error(
-                  "No schema registered for '" + op_type + "'!");
+              fail_schema("No schema registered for '" + op_type + "'!");
             }
             return *schema;
           },
@@ -152,8 +186,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, domain);
             if (!schema) {
-              throw std::runtime_error(
-                  "No schema registered for '" + op_type + "'!");
+              fail_schema("No schema registered for '" + op_type + "'!");
             }
             return *schema;
           },
@@ -246,38 +279,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "check_model_path",
       (void (*)(const std::string&)) & checker::check_model);
 
-  // Submodule `optimizer`
-  auto optimizer = onnx_cpp2py_export.def_submodule("optimizer");
-  optimizer.doc() = "Optimizer submodule";
-
-  optimizer.def(
-      "optimize",
-      [](const py::bytes& bytes, const std::vector<std::string>& names) {
-        ModelProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
-        auto const result = optimization::Optimize(std::move(proto), names);
-        std::string out;
-        result.SerializeToString(&out);
-        return py::bytes(out);
-      });
-
-  optimizer.def(
-      "optimize_fixedpoint",
-      [](const py::bytes& bytes, const std::vector<std::string>& names) {
-        ModelProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
-        auto const result =
-            optimization::OptimizeFixed(std::move(proto), names);
-        std::string out;
-        result.SerializeToString(&out);
-        return py::bytes(out);
-      });
-  optimizer.def("get_available_passes", &optimization::GetAvailablePasses);
-
   // Submodule `version_converter`
   auto version_converter =
       onnx_cpp2py_export.def_submodule("version_converter");
   version_converter.doc() = "VersionConverter submodule";
+  py::register_exception<ConvertError>(version_converter, "ConvertError");
+
 
   version_converter.def(
       "convert_version", [](const py::bytes& bytes, py::int_ target) {
@@ -293,15 +300,27 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `shape_inference`
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
+  py::register_exception<InferenceError>(shape_inference, "InferenceError");
 
-  shape_inference.def("infer_shapes", [](const py::bytes& bytes) {
+
+  shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type, bool strict_mode) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
-    shape_inference::InferShapes(proto);
+    shape_inference::InferShapes(proto, check_type, 
+                                 OpSchemaRegistry::Instance(),
+                                 strict_mode == true ? 1 : 0);
     std::string out;
     proto.SerializeToString(&out);
     return py::bytes(out);
-  });
+  }, "bytes"_a, "check_type"_a = false, "strict_mode"_a = false);
+
+  shape_inference.def(
+      "infer_shapes_path",
+      [](const std::string& model_path, const std::string& output_path, bool check_type, bool strict_mode)  -> void {
+        shape_inference::InferShapes(model_path, check_type, output_path, 
+                                     OpSchemaRegistry::Instance(),
+                                     strict_mode == true ? 1 : 0);
+      });
 }
 
 } // namespace ONNX_NAMESPACE

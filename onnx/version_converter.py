@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """onnx version converter
 
 This enables users to convert their models between different opsets within the
@@ -60,6 +62,12 @@ Supported adapters:
     --Dropout from Opset 6 to Opset 5
     --Dropout from Opset 6 to Opset 7
     --Dropout from Opset 5 to Opset 6
+    --RNN from Opset 13 to Opset 14
+    --RNN from Opset 14 to Opset 13
+    --GRU from Opset 13 to Opset 14
+    --GRU from Opset 14 to Opset 13
+    --LSTM from Opset 13 to Opset 14
+    --LSTM from Opset 14 to Opset 13
 
 Unsupported adapters:
     --Min from Opset 8 to Opset 7
@@ -165,3 +173,6 @@ def convert_version(model, target_version):  # type: (ModelProto, int) -> ModelP
     model_str = model.SerializeToString()
     converted_model_str = C.convert_version(model_str, target_version)
     return onnx.load_from_string(converted_model_str)
+
+
+ConvertError = C.ConvertError

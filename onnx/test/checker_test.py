@@ -1,13 +1,15 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 import unittest
 
-from typing import Sequence
+from typing import Sequence, Text
 import numpy as np  # type: ignore
 
-from onnx import checker, helper
+from onnx import checker, helper, shape_inference
 from onnx import TensorProto, GraphProto, SparseTensorProto
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
@@ -23,6 +25,21 @@ class TestChecker(unittest.TestCase):
             dims=(2, 3),
             vals=np_array.reshape(6).tolist()
         )
+
+    def make_sparse(self,
+                    shape,  # type: Sequence[int]
+                    values,  # type: Sequence[int]
+                    indices_shape,  # type: Sequence[int]
+                    indices,  # type: Sequence[int]
+                    name='spval'  # type: Text
+                    ):  # type: (...) -> SparseTensorProto
+        sparse = SparseTensorProto()
+        sparse.dims.extend(shape)
+        nnz = len(values)
+
+        sparse.values.CopyFrom(helper.make_tensor(name, TensorProto.INT64, (nnz,), values))
+        sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, indices_shape, indices))
+        return sparse
 
     def test_check_node(self):  # type: () -> None
         node = helper.make_node(
@@ -88,6 +105,54 @@ class TestChecker(unittest.TestCase):
 
         graph.initializer[0].name = 'X'
         checker.check_graph(graph)
+
+    def test_check_graph_empty_initializer_name(self):  # type: () -> None
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        checker.check_graph(graph)
+
+        # Supply no name for the initializer
+        graph.initializer.extend([self._sample_float_tensor])
+        graph.initializer[0].name = ''
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+
+    def test_check_graph_empty_sparse_initializer_name(self):  # type: () -> None
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        checker.check_graph(graph)
+
+        # Supply no name for the sparse_initializer
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], '')
+        graph.sparse_initializer.extend([sparse])
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+
+    def test_check_graph_duplicate_init_names(self):  # type: () -> None
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        checker.check_graph(graph)
+
+        graph.initializer.extend([self._sample_float_tensor])
+        graph.initializer[0].name = 'X'
+
+        # Add sparse initializer with the same name as above
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], 'X')
+        graph.sparse_initializer.extend([sparse])
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
     def test_check_graph_optional_input(self):  # type: () -> None
         # GivenTensorFill's input is marked optional, hence it is used in this test.
@@ -285,19 +350,6 @@ class TestChecker(unittest.TestCase):
                                   opset_imports=[onnx_id])
         checker.check_model(model)
 
-    def make_sparse(self,
-                    shape,  # type: Sequence[int]
-                    values,  # type: Sequence[int]
-                    indices_shape,  # type: Sequence[int]
-                    indices  # type: Sequence[int]
-                    ):  # type: (...) -> SparseTensorProto
-        sparse = SparseTensorProto()
-        sparse.dims.extend(shape)
-        nnz = len(values)
-        sparse.values.CopyFrom(helper.make_tensor('spval', TensorProto.INT64, (nnz,), values))
-        sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, indices_shape, indices))
-        return sparse
-
     def test_check_sparse_tensor(self):  # type: () -> None
         sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81])
         checker.check_sparse_tensor(sparse)
@@ -344,6 +396,39 @@ class TestChecker(unittest.TestCase):
         graph = helper.make_graph([node1, node2], "sparse_matmul", [X], [Y])
         # check graph
         checker.check_graph(graph)
+
+    def test_check_model_unsupported_input_type(self):  # type: () -> None
+        N = 10
+        X = helper.make_tensor_value_info('X', TensorProto.BOOL, [N])
+        Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [N])
+        Z = helper.make_tensor_value_info('Z', TensorProto.FLOAT, [N])
+        onnx_id = helper.make_opsetid("", 6)
+        node = helper.make_node('Add', ['X', 'Y'], ['Z'])
+        graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
+        model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
+
+    def test_check_model_inconsistent_type(self):  # type: () -> None
+        N = 10
+        X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [N])
+        Y = helper.make_tensor_value_info('Y', TensorProto.INT32, [N])
+        Z = helper.make_tensor_value_info('Z', TensorProto.FLOAT, [N])
+        onnx_id = helper.make_opsetid("", 6)
+        node = helper.make_node('Add', ['X', 'Y'], ['Z'])
+        graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
+        model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
+
+    def test_check_model_unsupported_output_type(self):  # type: () -> None
+        N = 10
+        X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [N])
+        Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [N])
+        Z = helper.make_tensor_value_info('Z', TensorProto.BOOL, [N])
+        onnx_id = helper.make_opsetid("", 6)
+        node = helper.make_node('Add', ['X', 'Y'], ['Z'])
+        graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
+        model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
 
 if __name__ == '__main__':

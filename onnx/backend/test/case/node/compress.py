@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -64,3 +66,21 @@ class Compress(Base):
 
         expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
                name='test_compress_default_axis')
+
+    @staticmethod
+    def export_compress_negative_axis():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Compress',
+            inputs=['input', 'condition'],
+            outputs=['output'],
+            axis=-1,
+        )
+        input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+        condition = np.array([0, 1])
+        output = np.compress(condition, input, axis=-1)
+        # print(output)
+        #[[ 2.]
+        # [ 4.]
+        # [ 6.]]
+        expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+               name='test_compress_negative_axis')

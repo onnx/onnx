@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -20,6 +22,7 @@ class GRU_Helper():
         B = str('B')
         H_0 = str('initial_h')
         LBR = str('linear_before_reset')
+        LAYOUT = str('layout')
         number_of_gates = 3
 
         required_inputs = [X, W, R]
@@ -36,16 +39,20 @@ class GRU_Helper():
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
 
+            layout = params[LAYOUT] if LAYOUT in params else 0
+            x = params[X]
+            x = x if layout == 0 else np.swapaxes(x, 0, 1)
             b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
             lbr = params[LBR] if LBR in params else 0
 
-            self.X = params[X]
+            self.X = x
             self.W = params[W]
             self.R = params[R]
             self.B = b
             self.H_0 = h_0
             self.LBR = lbr
+            self.LAYOUT = layout
 
         else:
             raise NotImplementedError()
@@ -57,7 +64,13 @@ class GRU_Helper():
         return np.tanh(x)
 
     def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
+        seq_length = self.X.shape[0]
+        hidden_size = self.H_0.shape[-1]
+        batch_size = self.X.shape[1]
+
+        Y = np.empty([seq_length, self.num_directions, batch_size, hidden_size])
         h_list = []
+
         [w_z, w_r, w_h] = np.split(self.W, 3)
         [r_z, r_r, r_h] = np.split(self.R, 3)
         [w_bz, w_br, w_bh, r_bz, r_br, r_bh] = np.split(self.B, 6)
@@ -77,10 +90,18 @@ class GRU_Helper():
             H = (1 - z) * h + z * H_t
             h_list.append(H)
             H_t = H
+
         concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
-            output = np.expand_dims(concatenated, 1)
-        return output, h_list[-1]
+            Y[:, 0, :, :] = concatenated
+
+        if self.LAYOUT == 0:
+            Y_h = Y[-1]
+        else:
+            Y = np.transpose(Y, [2, 0, 1, 3])
+            Y_h = Y[:, :, -1, :]
+
+        return Y, Y_h
 
 
 class GRU(Base):
@@ -97,7 +118,7 @@ class GRU(Base):
         node = onnx.helper.make_node(
             'GRU',
             inputs=['X', 'W', 'R'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -121,7 +142,7 @@ class GRU(Base):
         node = onnx.helper.make_node(
             'GRU',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -149,7 +170,7 @@ class GRU(Base):
         node = onnx.helper.make_node(
             'GRU',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -164,3 +185,28 @@ class GRU(Base):
         gru = GRU_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = gru.step()
         expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_seq_length')
+
+    @staticmethod
+    def export_batchwise():  # type: () -> None
+        input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 6
+        number_of_gates = 3
+        weight_scale = 0.2
+        layout = 1
+
+        node = onnx.helper.make_node(
+            'GRU',
+            inputs=['X', 'W', 'R'],
+            outputs=['Y', 'Y_h'],
+            hidden_size=hidden_size,
+            layout=layout
+        )
+
+        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+        gru = GRU_Helper(X=input, W=W, R=R, layout=layout)
+        Y, Y_h = gru.step()
+        expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_gru_batchwise')

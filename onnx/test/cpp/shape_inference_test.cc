@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <iostream>
 #include "gtest/gtest.h"
 #include "onnx/defs/schema.h"
@@ -179,6 +183,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
 }
 
 TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
+#ifndef ONNX_NO_EXCEPTIONS
   // mismatched num dims
   {
     TypeProto_Tensor source;
@@ -208,7 +213,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
     EXPECT_THROW(
         mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
   }
-
+#endif
   // mismatched param value. prefer target
   {
     TypeProto_Tensor source;

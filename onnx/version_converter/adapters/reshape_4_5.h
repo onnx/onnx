@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Reshape in default domain from version 4 to 5
 
 #pragma once

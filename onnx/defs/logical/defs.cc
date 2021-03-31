@@ -1,12 +1,17 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
+
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 
 inline void unaryLogicalOpInference(InferenceContext& ctx) {
+  // Type inference
   updateOutputElemType(ctx, 0, TensorProto::BOOL);
+  // Shape inference
   if (hasInputShape(ctx, 0)) {
     propagateShapeFromInputToOutput(ctx, 0, 0);
   }
@@ -14,20 +19,49 @@ inline void unaryLogicalOpInference(InferenceContext& ctx) {
 
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+    std::string doc;
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 )DOC";
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(
+            doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
-    schema.Input(0, "A", "First input operand for the logical operator.", "T");
-    schema.Input(1, "B", "Second input operand for the logical operator.", "T");
-    schema.Output(0, "C", "Result tensor.", "T1");
+    schema.Input(
+        0,
+        "A",
+        "First input operand for the logical operator.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+    schema.Input(
+        1,
+        "B",
+        "Second input operand for the logical operator.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+    schema.Output(
+        0,
+        "C",
+        "Result tensor.",
+        "T1",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // Type inference
       updateOutputElemType(ctx, 0, TensorProto::BOOL);
+      // Shape inference
       if (hasNInputShapes(ctx, 2))
         bidirectionalBroadcastShapeInference(
             ctx.getInputType(0)->tensor_type().shape(),
@@ -81,12 +115,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Greater,
-    9,
+    13,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("greater"))
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
+            OpSchema::all_numeric_types_with_bfloat(),
             "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
@@ -95,12 +129,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Less,
-    9,
+    13,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("less"))
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
+            OpSchema::all_numeric_types_with_bfloat(),
             "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
@@ -109,7 +143,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,
-    11,
+    13,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("equal"))
         .TypeConstraint(
@@ -125,7 +159,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int64)",
              "tensor(float16)",
              "tensor(float)",
-             "tensor(double)"},
+             "tensor(double)",
+             "tensor(bfloat16)"},
             "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
@@ -141,8 +176,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Not_ver1_doc)
-        .Input(0, "X", "Input tensor", "T")
-        .Output(0, "Y", "Output tensor", "T")
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
@@ -158,7 +209,7 @@ Bitwise shift operator performs element-wise operation. For each input element, 
  Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
  and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
  X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
- 
+
  Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
  not necessarily identical.
 )DOC";
@@ -167,10 +218,35 @@ ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
     11,
     OpSchema()
-        .SetDoc(std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul())
-        .Input(0, "X", "First operand, input to be shifted.", "T")
-        .Input(1, "Y", "Second operand, amounts of shift.", "T")
-        .Output(0, "Z", "Output tensor", "T")
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
+        .Input(
+            0,
+            "X",
+            "First operand, input to be shifted.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "Y",
+            "Second operand, amounts of shift.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Z",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(uint8)",
@@ -184,12 +260,54 @@ ONNX_OPERATOR_SET_SCHEMA(
             "or \"LEFT\" (for left shift).",
             AttributeProto::STRING)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape inference
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
                 ctx.getInputType(0)->tensor_type().shape(),
                 ctx.getInputType(1)->tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LessOrEqual,
+    12,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator("less_equal"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input types to all numeric tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor.")
+        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"O1"}, "Less", {"A", "B"}},
+             {{"O2"}, "Equal", {"A", "B"}},
+             {{"C"}, "Or", {"O1", "O2"}}})));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GreaterOrEqual,
+    12,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator("greater_equal"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input types to all numeric tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor.")
+        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             {{"O1"}, "Greater", {"A", "B"}},
+             {{"O2"}, "Equal", {"A", "B"}},
+             {{"C"}, "Or", {"O1", "O2"}}})));
 
 } // namespace ONNX_NAMESPACE

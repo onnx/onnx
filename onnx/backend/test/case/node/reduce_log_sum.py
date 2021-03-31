@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -49,3 +51,17 @@ class ReduceLogSum(Base):
         reduced = np.log(np.sum(data, keepdims=True))
         expect(node, inputs=[data], outputs=[reduced],
                name='test_reduce_log_sum_default')
+
+    @staticmethod
+    def export_negative_axes_keepdims():  # type: () -> None
+        node = onnx.helper.make_node(
+            'ReduceLogSum',
+            inputs=['data'],
+            outputs=["reduced"],
+            axes=[-2]
+        )
+        data = np.random.ranf([3, 4, 5]).astype(np.float32)
+        reduced = np.log(np.sum(data, axis=(-2), keepdims=True))
+        # print(reduced)
+        expect(node, inputs=[data], outputs=[reduced],
+               name='test_reduce_log_sum_negative_axes')

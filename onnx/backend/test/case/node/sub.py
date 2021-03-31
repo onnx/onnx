@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -31,6 +33,12 @@ class Sub(Base):
         z = x - y
         expect(node, inputs=[x, y], outputs=[z],
                name='test_sub')
+
+        x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint8)
+        y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint8)
+        z = x - y
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_sub_uint8')
 
     @staticmethod
     def export_sub_broadcast():  # type: () -> None

@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX release management
 
 This describes the process by which versions of ONNX are officially released to the public.
