@@ -866,7 +866,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       RegisterOnnxPreviewOperatorSetSchema();
 
 #ifndef NDEBUG
-      size_t dbg_registered_schema_count = OpSchemaRegistry::GetRegisteredSchemaCount() - dbg_initial_schema_count;
+      size_t dbg_registered_schema_count = GetRegisteredSchemaCount() - dbg_initial_schema_count;
       // Check enabled only if schemas for all opset versions are loaded
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
@@ -878,6 +878,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       }
 #endif
     }
+
   private:
     static size_t GetRegisteredSchemaCount() {
       size_t count = 0;

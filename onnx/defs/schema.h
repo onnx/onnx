@@ -1116,8 +1116,6 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     }
     return r;
   }
-
-  static size_t GetRegisteredSchemaCount();
 };
 
 void RegisterSchema(OpSchema schema, int opset_version_to_load=0);
