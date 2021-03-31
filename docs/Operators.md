@@ -7737,8 +7737,7 @@ data = [
         [1, 5],
     ]]], dtype=np.float32)]
 
-expect(node, inputs=[data], outputs=[data], name='test_identity_sequence',
-    opset_imports=[onnx.helper.make_opsetid("", 13)])
+expect(node, inputs=[data], outputs=[data], name='test_identity_sequence')
 ```
 
 </details>
