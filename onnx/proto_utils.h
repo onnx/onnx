@@ -20,7 +20,7 @@ namespace ONNX_NAMESPACE {
 #ifdef ONNX_USE_LITE_PROTO
 using ::google::protobuf::MessageLite;
 inline std::string ProtoDebugString(const MessageLite& proto) {
-  return proto.SerializeAsString();
+  return proto.ShortDebugString();
 }
 #else
 using ::google::protobuf::Message;
