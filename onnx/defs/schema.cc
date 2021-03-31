@@ -879,7 +879,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 #endif
     }
 
-  private:
+   private:
     static size_t GetRegisteredSchemaCount() {
       size_t count = 0;
       for (auto& x : GetMapWithoutEnsuringRegistration()) {
