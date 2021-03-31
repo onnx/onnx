@@ -1090,11 +1090,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    * fiasco.
    */
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
-
+  static OpName_Domain_Version_Schema_Map& map();
   static int loaded_schema_version;
 
  public:
-  static OpName_Domain_Version_Schema_Map& map();
   static const std::vector<OpSchema> get_all_schemas_with_history() {
     std::vector<OpSchema> r;
     for (auto& x : map()) {

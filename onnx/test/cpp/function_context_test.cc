@@ -79,9 +79,6 @@ BuildFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& sche
 
 void RegisterCustomFuncFloatSchema() {
   ONNX_NAMESPACE::OpSchema schema;
-#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
-  RegisterOnnxOperatorSetSchema();
-#endif
   schema.SetName("CustomFuncFloat")
       .SetDomain(ONNX_DOMAIN)
       .SinceVersion(12)

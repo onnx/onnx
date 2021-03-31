@@ -21,7 +21,7 @@ function(add_onnx_global_defines target)
   endif()
 
   if(ONNX_DISABLE_STATIC_REGISTRATION)
-    target_compile_definitions(${target} PUBLIC "__ONNX_DISABLE_STATIC_REGISTRATION=1")
+    target_compile_definitions(${target} PUBLIC "__ONNX_DISABLE_STATIC_REGISTRATION")
   endif()  
 endfunction()
 
