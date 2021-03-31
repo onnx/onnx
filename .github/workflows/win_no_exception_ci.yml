@@ -94,7 +94,7 @@ jobs:
         msbuild onnx.sln /m /p:Configuration=Release
 
         echo "Only test selective ONNX schema loading"
-        Release\onnx_gtests.exe --gtest_filter="SchemaTest"
+        Release\onnx_gtests.exe --gtest_filter="SchemaTest*"
         if($lastexitcode -ne 0) {
           EXIT 1
         }
