@@ -56,6 +56,7 @@ jobs:
         if ('${{ matrix.architecture }}' -eq 'x86') {
           $arch = 'Win32'
         }
+        set ONNX_REPO_PATH=%cd%\onnx
         echo "Install protobuf"
         cd ./protobuf_root
         $protobuf_root_dir = Get-Location
@@ -73,7 +74,7 @@ jobs:
         $protobuf_include_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\include"
         $Env:PATH="$ENV:PATH;$protoc_path;$protoc_lib_path;$protobuf_include_path"
 
-        cd ../../../onnx
+        cd %ONNX_REPO_PATH%
 
         echo "Build ONNX with non-static registration for testing selective ONNX schema loading"
         cmake -G "Visual Studio 16 2019" -A $arch -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=ON -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -DONNX_DISABLE_STATIC_REGISTRATION=ON -S . -B .setuptools-cmake-build\
@@ -81,12 +82,12 @@ jobs:
         msbuild onnx.sln /m /p:Configuration=Release
 
         echo "Only test selective ONNX schema loading"
-        Release\onnx_gtests.exe --gtest_filter=RegisterCertainOpsetSchema
+        Release\onnx_gtests.exe --gtest_filter="SchemaTest"
         if($lastexitcode -ne 0) {
           EXIT 1
         }
-        
-        cd ..
+
+        cd %ONNX_REPO_PATH%
         git clean -xdf
         echo "Build ONNX"
         cmake -G "Visual Studio 16 2019" -A $arch -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_DISABLE_EXCEPTIONS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=ON -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -S . -B .setuptools-cmake-build\
