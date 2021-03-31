@@ -19,7 +19,7 @@ TEST(SchemaTest, RegisterCertainOpsetSchema) {
     EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 13);
 
     auto opSchema = OpSchemaRegistry::Schema("Add");
-    EXPECT_NE(nullptr != opSchema);
+    EXPECT_NE(nullptr, opSchema);
     EXPECT_EQ(opSchema->SinceVersion, 13);
 
 #endif
