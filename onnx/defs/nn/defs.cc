@@ -1598,20 +1598,24 @@ statistics in inference mode (training_mode=False, default),
 and the running statistics in training mode (training_mode=True).
 There are multiple cases for the number of outputs, which we list below:
 
-Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
+Output case #1: Y, running_mean, running_var, saved_tensor_1, saved_tensor_2 (training_mode=True)
 Output case #2: Y (training_mode=False)
 
 When training_mode=False, extra outputs are invalid.
 The outputs are updated as follows when training_mode=True:
 ```
-current_mean = ReduceMean(X, axis=all_except_channel_index)
-current_var =  ReduceVar(X, axis=all_except_channel_index)
-
 running_mean = input_mean * momentum + current_mean * (1 - momentum)
 running_var = input_var * momentum + current_var * (1 - momentum)
 
 Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+
+where:
+
+current_mean = ReduceMean(X, axis=all_except_channel_index)
+current_var =  ReduceVar(X, axis=all_except_channel_index)
 ```
+Outputs 'saved_tensor_1' and 'saved_tensor_2' are to be used for backend implementation only,
+and their values are implementation dependent. Users should not depend on these outputs.
 
 When training_mode=False:
 ```
@@ -1724,9 +1728,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Output(
             3,
-            "current_mean",
-            "Current mean used during training to speed up gradient "
-            "computation.",
+            "saved_tensor_1",
+            "It is to be used for backend implementation only. Its value is implementation dependent",
             "T",
             OpSchema::Optional,
             true,
@@ -1734,9 +1737,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Output(
             4,
-            "current_var",
-            "Current variance used during training to speed up "
-            "gradient computation.",
+            "saved_tensor_2",
+            "It is to be used for backend implementation only. Its value is implementation dependent",
             "T",
             OpSchema::Optional,
             true,
@@ -1755,8 +1757,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           unifyInputDim(ctx, 0, 1, num_channels);
           unifyInputDim(ctx, 1, 0, num_channels);
           unifyInputDim(ctx, 2, 0, num_channels);
-          unifyInputDim(ctx, 3, 0, num_channels);
-          unifyInputDim(ctx, 4, 0, num_channels);
 
           if (ctx.getAttribute("training_mode") &&
                static_cast<int>(ctx.getAttribute("training_mode")->i()) != 0) {
@@ -1779,16 +1779,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (ctx.getNumOutputs() > 2) {
               propagateElemTypeFromInputToOutput(ctx, 0, 2);
               updateOutputShape(ctx, 2, outputs_shape);
-            }
-
-            if (ctx.getNumOutputs() > 3) {
-              propagateElemTypeFromInputToOutput(ctx, 0, 3);
-              updateOutputShape(ctx, 3, outputs_shape);
-            }
-
-            if (ctx.getNumOutputs() > 4) {
-              propagateElemTypeFromInputToOutput(ctx, 0, 4);
-              updateOutputShape(ctx, 4, outputs_shape);
             }
           }
         }));
