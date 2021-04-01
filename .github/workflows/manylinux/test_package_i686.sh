@@ -23,10 +23,7 @@ $PIP_COMMAND dist/*-manylinux2010_i686.whl
 $PIP_COMMAND pytest==5.4.3 nbval ipython==7.16.1
 /opt/python/${PY_VER}/bin/pytest
 
-# Test backend test data
-# onnx.checker all existing backend data
-$PYTHON_COMAND workflow_scripts/test_generated_backend.py
-# onnx.checker all generated backend data
+#  Test generated backend test data
 $PYTHON_COMAND onnx/backend/test/cmd_tools.py generate-data
 $PYTHON_COMAND workflow_scripts/test_generated_backend.py
 

@@ -51,10 +51,8 @@ jobs:
         python -m pip install pytest==5.4.3 nbval ipython==7.16.1
         pytest
 
-    - name: Test backend test data
+    - name: Test generated backend test data
       run: |
-        # onnx.checker all existing backend data
-        python workflow_scripts/test_generated_backend.py
         # onnx.checker all generated backend data
         python onnx/backend/test/cmd_tools.py generate-data
         python workflow_scripts/test_generated_backend.py
