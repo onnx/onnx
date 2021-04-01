@@ -1598,7 +1598,7 @@ statistics in inference mode (training_mode=False, default),
 and the running statistics in training mode (training_mode=True).
 There are multiple cases for the number of outputs, which we list below:
 
-Output case #1: Y, running_mean, running_var, saved_tensor_1, saved_tensor_2 (training_mode=True)
+Output case #1: Y, running_mean, running_var (training_mode=True)
 Output case #2: Y (training_mode=False)
 
 When training_mode=False, extra outputs are invalid.
@@ -1614,8 +1614,6 @@ where:
 current_mean = ReduceMean(X, axis=all_except_channel_index)
 current_var =  ReduceVar(X, axis=all_except_channel_index)
 ```
-Outputs 'saved_tensor_1' and 'saved_tensor_2' are to be used for backend implementation only,
-and their values are implementation dependent. Users should not depend on these outputs.
 
 When training_mode=False:
 ```
@@ -1630,7 +1628,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     14,
     OpSchema()
-        .NumOutputs({1, 5})
+        .NumOutputs({1, 3})
         .SetDoc(BatchNormalization_ver14_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
@@ -1726,24 +1724,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .Output(
-            3,
-            "saved_tensor_1",
-            "It is to be used for backend implementation only. Its value is implementation dependent",
-            "T",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            4,
-            "saved_tensor_2",
-            "It is to be used for backend implementation only. Its value is implementation dependent",
-            "T",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1757,12 +1737,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           unifyInputDim(ctx, 0, 1, num_channels);
           unifyInputDim(ctx, 1, 0, num_channels);
           unifyInputDim(ctx, 2, 0, num_channels);
+          unifyInputDim(ctx, 3, 0, num_channels);
+          unifyInputDim(ctx, 4, 0, num_channels);
 
           if (ctx.getAttribute("training_mode") &&
                static_cast<int>(ctx.getAttribute("training_mode")->i()) != 0) {
-            if (ctx.getNumOutputs() != 5)
+            if (ctx.getNumOutputs() != 3)
               fail_shape_inference(
-                "This number of op outputs should be 5 when Training_mode = True, but it is not.");
+                "This number of op outputs should be 3 when Training_mode = True, but it is not.");
           } else {
             if (ctx.getNumOutputs() != 1)
               fail_shape_inference(

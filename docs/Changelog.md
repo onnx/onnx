@@ -18633,7 +18633,7 @@ This version of the operator has been available since version 14 of the default 
   and the running statistics in training mode (training_mode=True).
   There are multiple cases for the number of outputs, which we list below:
   
-  Output case #1: Y, running_mean, running_var, saved_tensor_1, saved_tensor_2 (training_mode=True)
+  Output case #1: Y, running_mean, running_var (training_mode=True)
   Output case #2: Y (training_mode=False)
   
   When training_mode=False, extra outputs are invalid.
@@ -18649,8 +18649,6 @@ This version of the operator has been available since version 14 of the default 
   current_mean = ReduceMean(X, axis=all_except_channel_index)
   current_var =  ReduceVar(X, axis=all_except_channel_index)
   ```
-  Outputs 'saved_tensor_1' and 'saved_tensor_2' are to be used for backend implementation only,
-  and their values are implementation dependent. Users should not depend on these outputs.
   
   When training_mode=False:
   ```
@@ -18691,7 +18689,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
-#### Outputs (1 - 5)
+#### Outputs (1 - 3)
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
@@ -18700,10 +18698,6 @@ This version of the operator has been available since version 14 of the default 
 <dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
 <dd>The running variance after the BatchNormalization operator.</dd>
-<dt><tt>saved_tensor_1</tt> (optional, non-differentiable) : T</dt>
-<dd>It is to be used for backend implementation only. Its value is implementation dependent</dd>
-<dt><tt>saved_tensor_2</tt> (optional, non-differentiable) : T</dt>
-<dd>It is to be used for backend implementation only. Its value is implementation dependent</dd>
 </dl>
 
 #### Type Constraints
