@@ -1,12 +1,11 @@
-backend-test:ž
-‡
+backend-test:Ó
+p
 x
 s
 bias
 mean
 varyoutput_mean
-output_var
-saved_mean	saved_var"BatchNormalization*
+output_var"BatchNormalization*
 epsilon
 ×#< *
 training_mode $test_batchnorm_epsilon_training_modeZ
@@ -44,15 +43,6 @@ saved_mean	saved_var"BatchNormalization*
 b
 
 output_var
-
-
-b
-
-saved_mean
-
-
-b
-	saved_var
 
 
 B
