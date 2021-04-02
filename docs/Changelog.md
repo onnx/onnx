@@ -18633,19 +18633,21 @@ This version of the operator has been available since version 14 of the default 
   and the running statistics in training mode (training_mode=True).
   There are multiple cases for the number of outputs, which we list below:
   
-  Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
+  Output case #1: Y, running_mean, running_var (training_mode=True)
   Output case #2: Y (training_mode=False)
   
   When training_mode=False, extra outputs are invalid.
   The outputs are updated as follows when training_mode=True:
   ```
-  current_mean = ReduceMean(X, axis=all_except_channel_index)
-  current_var =  ReduceVar(X, axis=all_except_channel_index)
-  
   running_mean = input_mean * momentum + current_mean * (1 - momentum)
   running_var = input_var * momentum + current_var * (1 - momentum)
   
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+  
+  where:
+  
+  current_mean = ReduceMean(X, axis=all_except_channel_index)
+  current_var =  ReduceVar(X, axis=all_except_channel_index)
   ```
   
   When training_mode=False:
@@ -18687,7 +18689,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
-#### Outputs (1 - 5)
+#### Outputs (1 - 3)
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
@@ -18696,10 +18698,6 @@ This version of the operator has been available since version 14 of the default 
 <dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
 <dd>The running variance after the BatchNormalization operator.</dd>
-<dt><tt>current_mean</tt> (optional, non-differentiable) : T</dt>
-<dd>Current mean used during training to speed up gradient computation.</dd>
-<dt><tt>current_var</tt> (optional, non-differentiable) : T</dt>
-<dd>Current variance used during training to speed up gradient computation.</dd>
 </dl>
 
 #### Type Constraints

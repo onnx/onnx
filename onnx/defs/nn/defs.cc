@@ -1598,19 +1598,21 @@ statistics in inference mode (training_mode=False, default),
 and the running statistics in training mode (training_mode=True).
 There are multiple cases for the number of outputs, which we list below:
 
-Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
+Output case #1: Y, running_mean, running_var (training_mode=True)
 Output case #2: Y (training_mode=False)
 
 When training_mode=False, extra outputs are invalid.
 The outputs are updated as follows when training_mode=True:
 ```
-current_mean = ReduceMean(X, axis=all_except_channel_index)
-current_var =  ReduceVar(X, axis=all_except_channel_index)
-
 running_mean = input_mean * momentum + current_mean * (1 - momentum)
 running_var = input_var * momentum + current_var * (1 - momentum)
 
 Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+
+where:
+
+current_mean = ReduceMean(X, axis=all_except_channel_index)
+current_var =  ReduceVar(X, axis=all_except_channel_index)
 ```
 
 When training_mode=False:
@@ -1626,7 +1628,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     14,
     OpSchema()
-        .NumOutputs({1, 5})
+        .NumOutputs({1, 3})
         .SetDoc(BatchNormalization_ver14_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
@@ -1722,26 +1724,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .Output(
-            3,
-            "current_mean",
-            "Current mean used during training to speed up gradient "
-            "computation.",
-            "T",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            4,
-            "current_var",
-            "Current variance used during training to speed up "
-            "gradient computation.",
-            "T",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1760,9 +1742,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (ctx.getAttribute("training_mode") &&
                static_cast<int>(ctx.getAttribute("training_mode")->i()) != 0) {
-            if (ctx.getNumOutputs() != 5)
+            if (ctx.getNumOutputs() != 3)
               fail_shape_inference(
-                "This number of op outputs should be 5 when Training_mode = True, but it is not.");
+                "This number of op outputs should be 3 when Training_mode = True, but it is not.");
           } else {
             if (ctx.getNumOutputs() != 1)
               fail_shape_inference(
@@ -1779,16 +1761,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (ctx.getNumOutputs() > 2) {
               propagateElemTypeFromInputToOutput(ctx, 0, 2);
               updateOutputShape(ctx, 2, outputs_shape);
-            }
-
-            if (ctx.getNumOutputs() > 3) {
-              propagateElemTypeFromInputToOutput(ctx, 0, 3);
-              updateOutputShape(ctx, 3, outputs_shape);
-            }
-
-            if (ctx.getNumOutputs() > 4) {
-              propagateElemTypeFromInputToOutput(ctx, 0, 4);
-              updateOutputShape(ctx, 4, outputs_shape);
             }
           }
         }));
