@@ -7,7 +7,7 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*]
+    branches: [rel-*, master] # TODO: remove before merge
 
 jobs:
   build:
@@ -112,7 +112,8 @@ jobs:
         cd onnx
         # onnx.checker all generated backend data
         python onnx\backend\test\cmd_tools.py generate-data
-        python workflow_scripts\test_generated_backend.py
+        # Only test generated backend node test data
+        pytest onnx\test\test_backend_test.py -k OnnxBackendNodeModelTest
 
     - uses: actions/upload-artifact@v1
       with:
