@@ -70,7 +70,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 **Partner Validation**
 
- * Test with onnxruntime package: To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model. For example, run the test script from ``.github/workflows/test_with_ort.py`` with installed onnxruntime package.
+ * Test with onnxruntime package: To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model. For example, run the test script from [test_with_ort.py](../onnx/test/test_with_ort.py) with installed onnxruntime package.
 
  * Test with ONNX converters: Create GitHub issues in converters repos to provide them the package links and have them test the TestPyPI packages.
    * https://github.com/pytorch/pytorch
