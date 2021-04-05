@@ -318,18 +318,17 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
               TensorProto::INT64);
-
+          auto* output_shape = 
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto* output_length = output_shape->add_dim();
+		
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
 
           if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            ctx.getOutputType(0)
-                ->mutable_tensor_type()
-                ->mutable_shape()
-                ->add_dim()
-                ->set_dim_value(
-                    ctx.getInputType(0)->tensor_type().shape().dim_size());
+            output_length->set_dim_value(
+                ctx.getInputType(0)->tensor_type().shape().dim_size());
           }
         }));
 
