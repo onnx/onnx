@@ -2693,6 +2693,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::INT64);
+          TensorShapeProto output_shape;
+          auto* dim = output_shape.add_dim();
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& input_shape = getInputShape(ctx, 0);
+            dim->set_dim_value(input_shape.dim_size());
+          }
+          output_shape.add_dim();
+          updateOutputShape(ctx, 0, output_shape);
         }));
 
 static const char* ReverseSequence_ver10_doc = R"DOC(
