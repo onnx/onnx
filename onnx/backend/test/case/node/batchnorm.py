@@ -29,7 +29,7 @@ def _batchnorm_training_mode(x, s, bias, mean, var, momentum=0.9, epsilon=1e-5):
     output_mean = mean * momentum + saved_mean * (1 - momentum)
     output_var = var * momentum + saved_var * (1 - momentum)
     y = _batchnorm_test_mode(x, s, bias, saved_mean, saved_var, epsilon=epsilon)
-    return y.astype(np.float32), saved_mean, saved_var, output_mean, output_var
+    return y.astype(np.float32), output_mean, output_var
 
 
 class BatchNormalization(Base):
@@ -84,18 +84,18 @@ class BatchNormalization(Base):
         # using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
         # working around by using np.byte(1).astype(bool)
         training_mode = 1
-        y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
+        y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
 
         node = onnx.helper.make_node(
             'BatchNormalization',
             inputs=['x', 's', 'bias', 'mean', 'var'],
-            outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+            outputs=['y', 'output_mean', 'output_var'],
             training_mode=training_mode
         )
 
         # output size: (1, 2, 1, 3)
         expect(node, inputs=[x, s, bias, mean, var],
-               outputs=[y, output_mean, output_var, saved_mean, saved_var],
+               outputs=[y, output_mean, output_var],
                name='test_batchnorm_example_training_mode')
 
         # input size: (2, 3, 4, 5)
@@ -107,18 +107,18 @@ class BatchNormalization(Base):
         training_mode = 1
         momentum = 0.9
         epsilon = 1e-2
-        y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
-                                                                                    epsilon)
+        y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
+                                                              epsilon)
 
         node = onnx.helper.make_node(
             'BatchNormalization',
             inputs=['x', 's', 'bias', 'mean', 'var'],
-            outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+            outputs=['y', 'output_mean', 'output_var'],
             epsilon=epsilon,
             training_mode=training_mode
         )
 
         # output size: (2, 3, 4, 5)
         expect(node, inputs=[x, s, bias, mean, var],
-               outputs=[y, output_mean, output_var, saved_mean, saved_var],
+               outputs=[y, output_mean, output_var],
                name='test_batchnorm_epsilon_training_mode')
