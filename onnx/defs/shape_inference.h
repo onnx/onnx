@@ -569,7 +569,7 @@ inline void updateOutputShape(
     size_t outputIndex,
     std::initializer_list<TensorShapeProto::Dimension> dims,
     TypeProto::ValueCase default_type = TypeProto::kTensorType) {
-  auto* output_shape = getOutputShape(ctx, outputIndex);
+  auto* output_shape = getOutputShape(ctx, outputIndex, default_type);
   for (auto& d : dims) {
     auto* dim = output_shape->add_dim();
     *dim = d;
