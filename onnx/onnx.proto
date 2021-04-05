@@ -697,6 +697,7 @@ message TypeProto {
 
     // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;
+
   }
 
   // An optional denotation can be used to denote the whole

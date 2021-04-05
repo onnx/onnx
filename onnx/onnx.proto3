@@ -675,9 +675,10 @@ message TypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST have a valid TensorProto.DataType value
     // This field MUST be present for this version of the IR.
-    optional int32 elem_type = 1;
-    optional TensorShapeProto shape = 2;
+    int32 elem_type = 1;
+    TensorShapeProto shape = 2;
   }
+
 
   oneof value {
     // The type of a tensor.
@@ -696,6 +697,7 @@ message TypeProto {
 
     // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;
+
   }
 
   // An optional denotation can be used to denote the whole

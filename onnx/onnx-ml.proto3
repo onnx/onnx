@@ -673,7 +673,6 @@ message TypeProto {
     TypeProto value_type = 2;
   };
 
-
   message SparseTensor {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST have a valid TensorProto.DataType value
@@ -681,6 +680,7 @@ message TypeProto {
     int32 elem_type = 1;
     TensorShapeProto shape = 2;
   }
+
 
   message Opaque {
     // When missing, the domain is the same as the model's.
@@ -710,6 +710,7 @@ message TypeProto {
 
     // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;
+
 
     Opaque opaque_type = 7;
 
