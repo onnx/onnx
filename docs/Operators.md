@@ -64,7 +64,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
-|<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
+|<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
 |<a href="#If">If</a>|<a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
 |<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-10">10</a>|
@@ -1863,19 +1863,21 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   and the running statistics in training mode (training_mode=True).
   There are multiple cases for the number of outputs, which we list below:
   
-  Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
+  Output case #1: Y, running_mean, running_var (training_mode=True)
   Output case #2: Y (training_mode=False)
   
   When training_mode=False, extra outputs are invalid.
   The outputs are updated as follows when training_mode=True:
   ```
-  current_mean = ReduceMean(X, axis=all_except_channel_index)
-  current_var =  ReduceVar(X, axis=all_except_channel_index)
-  
   running_mean = input_mean * momentum + current_mean * (1 - momentum)
   running_var = input_var * momentum + current_var * (1 - momentum)
   
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+  
+  where:
+  
+  current_mean = ReduceMean(X, axis=all_except_channel_index)
+  current_var =  ReduceVar(X, axis=all_except_channel_index)
   ```
   
   When training_mode=False:
@@ -1919,7 +1921,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
-#### Outputs (1 - 5)
+#### Outputs (1 - 3)
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
@@ -1928,10 +1930,6 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
 <dd>The running variance after the BatchNormalization operator.</dd>
-<dt><tt>current_mean</tt> (optional, non-differentiable) : T</dt>
-<dd>Current mean used during training to speed up gradient computation.</dd>
-<dt><tt>current_var</tt> (optional, non-differentiable) : T</dt>
-<dd>Current variance used during training to speed up gradient computation.</dd>
 </dl>
 
 #### Type Constraints
@@ -2003,18 +2001,18 @@ var = np.array([1, 1.5]).astype(np.float32)
 # using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
 # working around by using np.byte(1).astype(bool)
 training_mode = 1
-y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
+y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
     inputs=['x', 's', 'bias', 'mean', 'var'],
-    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+    outputs=['y', 'output_mean', 'output_var'],
     training_mode=training_mode
 )
 
 # output size: (1, 2, 1, 3)
 expect(node, inputs=[x, s, bias, mean, var],
-       outputs=[y, output_mean, output_var, saved_mean, saved_var],
+       outputs=[y, output_mean, output_var],
        name='test_batchnorm_example_training_mode')
 
 # input size: (2, 3, 4, 5)
@@ -2026,20 +2024,20 @@ var = np.random.rand(3).astype(np.float32)
 training_mode = 1
 momentum = 0.9
 epsilon = 1e-2
-y, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
-                                                                            epsilon)
+y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
+                                                      epsilon)
 
 node = onnx.helper.make_node(
     'BatchNormalization',
     inputs=['x', 's', 'bias', 'mean', 'var'],
-    outputs=['y', 'output_mean', 'output_var', 'saved_mean', 'saved_var'],
+    outputs=['y', 'output_mean', 'output_var'],
     epsilon=epsilon,
     training_mode=training_mode
 )
 
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var],
-       outputs=[y, output_mean, output_var, saved_mean, saved_var],
+       outputs=[y, output_mean, output_var],
        name='test_batchnorm_epsilon_training_mode')
 ```
 
@@ -7667,9 +7665,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 14 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a href="Changelog.md#Identity-13">13</a>
 
 #### Inputs
 
@@ -7737,8 +7735,7 @@ data = [
         [1, 5],
     ]]], dtype=np.float32)]
 
-expect(node, inputs=[data], outputs=[data], name='test_identity_sequence',
-    opset_imports=[onnx.helper.make_opsetid("", 13)])
+expect(node, inputs=[data], outputs=[data], name='test_identity_sequence')
 ```
 
 </details>

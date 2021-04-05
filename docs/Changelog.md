@@ -16069,22 +16069,22 @@ This version of the operator has been available since version 13 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> (differentiable) : V</dt>
+<dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> (differentiable) : V</dt>
+<dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Tensor to copy input into.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
-<dd>Constrain input and output types to all tensor and sequence types.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ### <a name="If-13"></a>**If-13**</a>
@@ -18633,19 +18633,21 @@ This version of the operator has been available since version 14 of the default 
   and the running statistics in training mode (training_mode=True).
   There are multiple cases for the number of outputs, which we list below:
   
-  Output case #1: Y, running_mean, running_var, current_mean, current_var (training_mode=True)
+  Output case #1: Y, running_mean, running_var (training_mode=True)
   Output case #2: Y (training_mode=False)
   
   When training_mode=False, extra outputs are invalid.
   The outputs are updated as follows when training_mode=True:
   ```
-  current_mean = ReduceMean(X, axis=all_except_channel_index)
-  current_var =  ReduceVar(X, axis=all_except_channel_index)
-  
   running_mean = input_mean * momentum + current_mean * (1 - momentum)
   running_var = input_var * momentum + current_var * (1 - momentum)
   
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+  
+  where:
+  
+  current_mean = ReduceMean(X, axis=all_except_channel_index)
+  current_var =  ReduceVar(X, axis=all_except_channel_index)
   ```
   
   When training_mode=False:
@@ -18687,7 +18689,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
-#### Outputs (1 - 5)
+#### Outputs (1 - 3)
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
@@ -18696,10 +18698,6 @@ This version of the operator has been available since version 14 of the default 
 <dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
 <dd>The running variance after the BatchNormalization operator.</dd>
-<dt><tt>current_mean</tt> (optional, non-differentiable) : T</dt>
-<dd>Current mean used during training to speed up gradient computation.</dd>
-<dt><tt>current_var</tt> (optional, non-differentiable) : T</dt>
-<dd>Current variance used during training to speed up gradient computation.</dd>
 </dl>
 
 #### Type Constraints
@@ -18970,6 +18968,35 @@ This version of the operator has been available since version 14 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Identity-14"></a>**Identity-14**</a>
+
+  Identity operator
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : V</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : V</dt>
+<dd>Tensor to copy input into.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain input and output types to all tensor and sequence types.</dd>
 </dl>
 
 ### <a name="LSTM-14"></a>**LSTM-14**</a>

@@ -338,6 +338,8 @@ setuptools.setup(
     name=PACKAGE_NAME,
     version=VersionInfo.version,
     description="Open Neural Network Exchange",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     packages=packages,

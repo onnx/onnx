@@ -619,7 +619,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
             "Nodes in a graph must be topologically sorted, however input '",
             input,
             "' of node: \n",
-            ProtoDebugString(node),
+            "name: ", node.name(), " OpType: ", node.op_type(),
             "\n is not output of any previous nodes.");
       }
     }
@@ -633,7 +633,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     }
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
-        ex.AppendContext("Bad node spec: " + ProtoDebugString(node));
+        ex.AppendContext(
+            "Bad node spec for node. Name: " + node.name() + " OpType: " + node.op_type());
         ONNX_THROW_EX(ex);
       });
     }
@@ -732,7 +733,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
             "Nodes in a function must be topologically sorted, however input '",
             input,
             "' of node: \n",
-            ProtoDebugString(node),
+            "Name: ", node.name(), " OpType: ", node.op_type(),
             "\n is neither output of any previous nodes nor input of the function.");
       }
     }
