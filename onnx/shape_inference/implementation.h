@@ -177,14 +177,6 @@ struct InferenceContextImpl : public InferenceContext {
 };
 
 void checkShapesAndTypes(
-    const TypeProto_Tensor& inferredType,
-    const TypeProto_Tensor& existingType);
-
-void checkShapesAndTypes(
-  const TypeProto_SparseTensor& inferredType,
-  const TypeProto_SparseTensor& existingType);
-
-void checkShapesAndTypes(
     const TypeProto_Sequence& inferredType,
     const TypeProto_Sequence& existingType);
 

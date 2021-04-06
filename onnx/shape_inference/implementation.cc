@@ -4,6 +4,7 @@
 
 #include "onnx/shape_inference/implementation.h"
 #include <fstream>
+#include <list>
 #include "onnx/checker.h"
 #include "onnx/string_utils.h"
 
@@ -54,40 +55,8 @@ std::string getElemTypeString(const TypeProto_SparseTensor& type) {
 
 } // namespace
 
-void checkShapesAndTypes(const TypeProto_Tensor& inferredType, const TypeProto_Tensor& existingType) {
-  if (inferredType.elem_type() != TensorProto::UNDEFINED && existingType.elem_type() != TensorProto::UNDEFINED &&
-      existingType.elem_type() != inferredType.elem_type()) {
-    std::stringstream ss;
-    ss << "Inferred elem type differs from existing elem type: (" << getElemTypeString(inferredType) << ") vs ("
-       << getElemTypeString(existingType) << ")";
-    fail_type_inference(ss.str());
-  }
-
-  if (!inferredType.has_shape() || !existingType.has_shape()) {
-    return;
-  }
-
-  if (inferredType.shape().dim_size() != existingType.shape().dim_size()) {
-    std::stringstream ss;
-    ss << "Inferred shape and existing shape differ in rank: (" << inferredType.shape().dim_size() << ") vs ("
-       << existingType.shape().dim_size() << ")";
-    fail_shape_inference(ss.str());
-  }
-
-  for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
-    const auto& inferredDim = inferredType.shape().dim(i);
-    const auto& existingDim = existingType.shape().dim(i);
-    if (inferredDim.has_dim_value() && existingDim.has_dim_value() &&
-        inferredDim.dim_value() != existingDim.dim_value()) {
-      std::stringstream ss;
-      ss << "Inferred shape and existing shape differ in dimension " << i << ": (" << inferredDim.dim_value()
-         << ") vs (" << existingDim.dim_value() << ")";
-      fail_shape_inference(ss.str());
-    }
-  }
-}
-
-void checkShapesAndTypes(const TypeProto_SparseTensor& inferredType, const TypeProto_SparseTensor& existingType) {
+template<class TensorTypeProto>
+void checkTensorShapesAndTypes(const TensorTypeProto& inferredType, const TensorTypeProto& existingType) {
   if (inferredType.elem_type() != TensorProto::UNDEFINED && existingType.elem_type() != TensorProto::UNDEFINED &&
       existingType.elem_type() != inferredType.elem_type()) {
     std::stringstream ss;
@@ -137,9 +106,9 @@ void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existin
   }
 
   if (inferredTypeCase == TypeProto::kTensorType && existingTypeCase == TypeProto::kTensorType) {
-    checkShapesAndTypes(inferredType.tensor_type(), existingType.tensor_type());
+    checkTensorShapesAndTypes(inferredType.tensor_type(), existingType.tensor_type());
   } else if (inferredTypeCase == TypeProto::kSparseTensorType && existingTypeCase == TypeProto::kSparseTensorType) {
-    checkShapesAndTypes(inferredType.sparse_tensor_type(), existingType.sparse_tensor_type());
+    checkTensorShapesAndTypes(inferredType.sparse_tensor_type(), existingType.sparse_tensor_type());
   } else if (inferredTypeCase == TypeProto::kSequenceType && existingTypeCase == TypeProto::kSequenceType) {
     checkShapesAndTypes(inferredType.sequence_type().elem_type(), existingType.sequence_type().elem_type());
   } else {
@@ -251,15 +220,16 @@ static void InferShapesImpl(
     }
   }
 
-  // save for free memory
-  std::vector<std::unique_ptr<TypeProto>> initializerTypeList;
+  // save for free memory and preserve the address of the dynamically allocated
+  // TypeProto
+  std::list<TypeProto> initializerTypeList;
 
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
   for (const auto& tp : g->initializer()) {
     inputDataByName[tp.name()] = &tp;
     // Consider the tensors from the initializer
-    std::unique_ptr<TypeProto> initializerType(new TypeProto());
-    TypeProto_Tensor* initializerTensorType = initializerType->mutable_tensor_type();
+    TypeProto initializerType;
+    TypeProto_Tensor* initializerTensorType = initializerType.mutable_tensor_type();
     initializerTensorType->set_elem_type(tp.data_type());
     // set the shape according to the initializer shape info
     TensorShapeProto* shape = initializerTensorType->mutable_shape();
@@ -271,14 +241,14 @@ static void InferShapesImpl(
     // If it already exists in input, check input and initializer is sync
     // use shape info from input (input has priority over initializer)
     if (iter != valueTypesByName.end()) {
-      checkShapesAndTypes(*initializerTensorType, *iter->second->mutable_tensor_type());
+      checkTensorShapesAndTypes(*initializerTensorType, *iter->second->mutable_tensor_type());
     }
     // Support IR>=4: some tensors can only exist in initializer and not in input
     // So shape_inference should make use of initializer shapes
     // Store initializer shape info in value_info as well
     else if (ir_version >= 4) {
-      valueTypesByName[tp.name()] = initializerType.get();
       initializerTypeList.push_back(std::move(initializerType));
+      valueTypesByName[tp.name()] = &initializerTypeList.back();
     }
   }
 
@@ -287,8 +257,8 @@ static void InferShapesImpl(
     const auto& name = tp.values().name();
     inputSparseDataByName[name] = &tp;
     // Consider the tensors from the initializer
-    std::unique_ptr<TypeProto> initializerType(new TypeProto());
-    TypeProto_SparseTensor* initializerSparseTensorType = initializerType->mutable_sparse_tensor_type();
+    TypeProto initializerType;
+    TypeProto_SparseTensor* initializerSparseTensorType = initializerType.mutable_sparse_tensor_type();
     initializerSparseTensorType->set_elem_type(tp.values().data_type());
     // set the shape according to the initializer shape info
     TensorShapeProto* shape = initializerSparseTensorType->mutable_shape();
@@ -300,14 +270,14 @@ static void InferShapesImpl(
     // If it already exists in input, check input and initializer is sync
     // use shape info from input (input has priority over initializer)
     if (iter != valueTypesByName.end()) {
-      checkShapesAndTypes(*initializerSparseTensorType, *iter->second->mutable_sparse_tensor_type());
+      checkTensorShapesAndTypes(*initializerSparseTensorType, *iter->second->mutable_sparse_tensor_type());
     }
     // Support IR>=4: some tensors can only exist in initializer and not in input
     // So shape_inference should make use of initializer shapes
     // Store initializer shape info in value_info as well
     else if (ir_version >= 4) {
-      valueTypesByName[name] = initializerType.get();
       initializerTypeList.push_back(std::move(initializerType));
+      valueTypesByName[name] = &initializerTypeList.back();
     }
   }
 
