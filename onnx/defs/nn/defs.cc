@@ -1613,6 +1613,8 @@ where:
 
 current_mean = ReduceMean(X, axis=all_except_channel_index)
 current_var =  ReduceVar(X, axis=all_except_channel_index)
+
+And ReduceVar refers to the population variance.
 ```
 
 When training_mode=False:
