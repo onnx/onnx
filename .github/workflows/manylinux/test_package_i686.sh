@@ -35,12 +35,12 @@ $PYTHON_COMAND workflow_scripts/test_generated_backend.py
 
 # Verify ONNX with the latest numpy
 $PIP_UNINTALL_COMMAND numpy onnx && $PIP_INTALL_COMMAND numpy
-$PIP_INTALL_COMMAND dist/*-manylinux2010_x86_64.whl
+$PIP_INTALL_COMMAND dist/*-manylinux2010_i686.whl
 $PYTEST_COMMAND
 
 # Verify ONNX with the latest protobuf
 $PIP_UNINTALL_COMMAND protobuf onnx && $PIP_INTALL_COMMAND protobuf
-$PIP_INTALL_COMMAND dist/*-manylinux2010_x86_64.whl
+$PIP_INTALL_COMMAND dist/*-manylinux2010_i686.whl
 $PYTEST_COMMAND
 
 echo "Succesfully test the wheel"
