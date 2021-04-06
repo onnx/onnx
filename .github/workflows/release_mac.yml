@@ -103,7 +103,6 @@ jobs:
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
@@ -111,7 +110,6 @@ jobs:
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest        

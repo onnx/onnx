@@ -73,7 +73,6 @@ jobs:
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         python -m pip install dist/*-manylinux2010_x86_64.whl
         pytest
@@ -81,7 +80,6 @@ jobs:
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
         python -m pip install dist/*-manylinux2010_x86_64.whl
         pytest        
