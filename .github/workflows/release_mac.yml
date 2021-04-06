@@ -118,4 +118,4 @@ jobs:
       if: ${{ always() }}
       run: |
         python -m pip install -i https://test.pypi.org/simple/ ort-nightly
-        python onnx/onnx/test/test_with_ort.py
+        python onnx/test/test_with_ort.py
