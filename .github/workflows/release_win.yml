@@ -151,14 +151,3 @@ jobs:
           python -m pip install -i https://test.pypi.org/simple/ ort-nightly
           python onnx\onnx\test\test_with_ort.py
         }
-
-    - name: Verify ONNX with the latest tensorflow-onnx
-      if: ${{ always() }}
-      run: |
-        if ('${{ matrix.architecture }}' -eq 'x64') {
-          python -m pip install tensorflow
-          git clone https://github.com/onnx/tensorflow-onnx
-          cd tensorflow-onnx
-          python setup.py install
-          python setup.py test
-        }
