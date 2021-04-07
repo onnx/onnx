@@ -145,6 +145,18 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n) {
       n->ts_(sym, std::move(tensors));
       break;
     }
+    case ONNX_NAMESPACE::AttributeProto_AttributeType_TYPE_PROTO:
+      n->tp_(sym, ap.tp());
+      break;
+    case ONNX_NAMESPACE::AttributeProto_AttributeType_TYPE_PROTOS: {
+      std::vector<TypeProto> types;
+      types.reserve(ap.type_protos_size());
+      for (int i = 0; i < ap.type_protos_size(); i++) {
+        types.push_back(ap.type_protos(i));
+      }
+      n->tps_(sym, std::move(types));
+      break;
+    }
     case ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPH:
       n->g_(sym, graphProtoToGraph(ap.g(), true));
       break;
@@ -496,6 +508,18 @@ void addAttribute(ONNX_NAMESPACE::NodeProto* n_p, Node* n, Symbol name) {
       for (auto& v : n->gs(name)) {
         auto g = attr->add_graphs();
         encodeGraph(g, v);
+      }
+      break;
+    case AttributeKind::tp: {
+      attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_TYPE_PROTO);
+      auto tp = attr->mutable_tp();
+//      encodeTypeProto(tp, n->tp(name));
+    } break;
+    case AttributeKind::tps:
+      attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_TYPE_PROTOS);
+      for (auto& v : n->tps(name)) {
+        auto tp = attr->add_type_protos();
+//        encodeTypeProto(tp, v);
       }
       break;
   }
