@@ -18648,6 +18648,11 @@ This version of the operator has been available since version 14 of the default 
   
   current_mean = ReduceMean(X, axis=all_except_channel_index)
   current_var =  ReduceVar(X, axis=all_except_channel_index)
+  
+  Notice that ReduceVar refers to the population variance, and it equals to
+  sum(sqrd(x_i - x_avg)) / N
+  where N is the population size (this formula does not use sample size N - 1).
+  
   ```
   
   When training_mode=False:
@@ -18697,7 +18702,7 @@ This version of the operator has been available since version 14 of the default 
 <dt><tt>running_mean</tt> (optional, non-differentiable) : T</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
-<dd>The running variance after the BatchNormalization operator.</dd>
+<dd>The running variance after the BatchNormalization operator. This op uses the population size (N) for calculating variance, and not the sample size N-1.</dd>
 </dl>
 
 #### Type Constraints
