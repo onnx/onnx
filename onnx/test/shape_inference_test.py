@@ -3421,6 +3421,15 @@ class TestShapeInference(unittest.TestCase):
         # Inferred shape and existing shape differ in rank: (3) vs (2)
         self.assertRaises(onnx.shape_inference.InferenceError, onnx.shape_inference.infer_shapes, original_model, strict_mode=True)
 
+    def test_infer_initializer_input_consistency_all_none_serialized(self):  # type: () -> None
+        # Reuse test_infer_initializer_input_consistency_all_none test case and check with
+        # Serialized model
+        initializer_shape = (8, 7)
+        input_shape = (None, None)  # accepatble
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
+
+        onnx.shape_inference.infer_shapes(original_model.SerializeToString(), strict_mode=True)
+
     def test_trilu_upper(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5)),
