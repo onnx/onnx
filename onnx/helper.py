@@ -12,7 +12,7 @@ from six import text_type, integer_types, binary_type
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
     TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
-    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto
+    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto
 from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
@@ -311,6 +311,22 @@ def make_map(
     return map
 
 
+def make_optional(
+        name,   # type: Text
+        elem_type,   # type: int
+        values,   # type: Optional[Any]
+):  # type: (...) -> OptionalProto
+    '''
+    Make a Sequence with specified value arguments.
+    '''
+    optional = OptionalProto()
+    optional.name = name
+    optional.elem_type = elem_type
+    values_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+    getattr(optional, values_field)#.CopyFrom(values)
+    return optional
+
+
 def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     """An internal graph to convert the input to a bytes or to False.
 
@@ -364,6 +380,9 @@ def make_attribute(
     elif isinstance(value, GraphProto):
         attr.g.CopyFrom(value)
         attr.type = AttributeProto.GRAPH
+    elif isinstance(value, TypeProto):
+        attr.tp.CopyFrom(value)
+        attr.type = AttributeProto.TYPE_PROTO
     # third, iterable cases
     elif is_iterable:
         byte_array = [_to_bytes_or_false(v) for v in value]
@@ -388,6 +407,9 @@ def make_attribute(
         elif all(isinstance(v, GraphProto) for v in value):
             attr.graphs.extend(value)
             attr.type = AttributeProto.GRAPHS
+        elif all(isinstance(tp, TypeProto) for tp in value):
+            attr.type_protos.extend(value)
+            attr.type = AttributeProto.TYPE_PROTO
         else:
             raise ValueError(
                 "You passed in an iterable attribute but I cannot figure out "
@@ -409,6 +431,8 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
         return attr.t
     if attr.type == AttributeProto.GRAPH:
         return attr.g
+    if attr.type == AttributeProto.TYPE_PTORO:
+        return attr.tp
     if attr.type == AttributeProto.FLOATS:
         return list(attr.floats)
     if attr.type == AttributeProto.INTS:
@@ -419,6 +443,8 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
         return list(attr.tensors)
     if attr.type == AttributeProto.GRAPHS:
         return list(attr.graphs)
+    if attr.type == AttributeProto.TYPE_PROTOS:
+        return list(attr.type_protos)
     raise ValueError("Unsupported ONNX attribute: {}".format(attr))
 
 
@@ -565,6 +591,8 @@ def printable_attribute(attr, subgraphs=False):  # type: (AttributeProto, bool) 
     elif attr.HasField("g"):
         content.append("<graph {}>".format(attr.g.name))
         graphs.append(attr.g)
+    elif attr.HasField("tp"):
+        content.append("<Type Proto {}>".format(attr.tp.name))
     elif attr.floats:
         content.append(str_list(str_float, attr.floats))
     elif attr.ints:
@@ -574,6 +602,12 @@ def printable_attribute(attr, subgraphs=False):  # type: (AttributeProto, bool) 
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
+    elif attr.type_protos:
+        content.append('[')
+        for i, tp in enumerate(attr.type_protos):
+            comma = ',' if i != len(attr.type_protos) - 1 else ''
+            content.append('<Type Proto {}>{}'.format(tp.name, comma))
+        content.append(']')
     elif attr.graphs:
         content.append('[')
         for i, g in enumerate(attr.graphs):

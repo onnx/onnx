@@ -10,7 +10,7 @@ import random
 import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
-from onnx import AttributeProto, TensorProto, GraphProto, ModelProto
+from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto
 from typing import Text, Any, List, Tuple
 
 import unittest
@@ -133,6 +133,20 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.name, "graphs")
         self.assertEqual(list(attr.graphs), graphs)
         checker.check_attribute(attr)
+
+    def test_attr_type_proto(self):  # type: () -> None
+        # type_proto
+        type = TypeProto()
+        attr = helper.make_attribute("type_proto", type)
+        self.assertEqual(attr.name, "type_proto")
+        self.assertEqual(attr.tp, type)
+        self.assertEqual(attr.type, AttributeProto.TYPE_PROTO)
+        # type_protos
+        types = [TypeProto(), TypeProto()]
+        attr = helper.make_attribute("type_proto", types)
+        self.assertEqual(attr.name, "type_proto")
+        self.assertEqual(list(attr.type_protos), types)
+        self.assertEqual(attr.type, AttributeProto.TYPE_PROTO)
 
     def test_is_attr_legal(self):  # type: () -> None
         # no name, no field
@@ -364,6 +378,26 @@ class TestHelperTensorFunctions(unittest.TestCase):
         # scalar value
         vi = helper.make_tensor_value_info('Y', TensorProto.FLOAT, ())
         checker.check_value_info(vi)
+
+
+class TestHelperOptionalFunctions(unittest.TestCase):
+    def test_make_optional(self):  # type: () -> None
+        np_array = np.random.randn(2, 3).astype(np.float32)
+
+        optional = helper.make_optional(
+            name='test',
+            elem_type=OptionalProto.TENSOR,
+            values=np_array.reshape(6).tolist()
+        )
+        self.assertEqual(optional.name, 'test')
+        self.assertEqual(optional.elem_type, 1)
+        optional_list = helper.make_optional(
+            name='test',
+            elem_type=OptionalProto.SEQUENCE,
+            values=np_array.tolist(),
+        )
+        self.assertEqual(optional_list.name, 'test')
+        self.assertEqual(optional_list.elem_type, 3)
 
 
 class TestPrintableGraph(unittest.TestCase):

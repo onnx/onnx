@@ -99,3 +99,40 @@ message MapProto {
   // TENSOR, SPARSE_TENSOR, MAP, SEQUENCE.
   optional SequenceProto values = 5;
 }
+
+// Optional
+//
+//
+message OptionalProto {
+
+  optional string name = 1;
+
+  enum DataType {
+    UNDEFINED = 0;
+    TENSOR = 1;
+    SPARSE_TENSOR = 2;
+    SEQUENCE = 3;
+    MAP = 4;
+  }
+
+  // The data type of the element.
+  // This field MUST have a valid SequenceProto.DataType value
+  optional int32 elem_type = 2;
+
+  // For TensorProto values.
+  // When this field is present, the elem_type field MUST be TENSOR.
+  repeated TensorProto tensor_values = 3;
+
+  // For SparseTensorProto values.
+  // When this field is present, the elem_type field MUST be SPARSE_TENSOR.
+  repeated SparseTensorProto sparse_tensor_values = 4;
+
+  // For SequenceProto values, allowing sequences to be of themselves.
+  // When this field is present, the elem_type field MUST be SEQUENCE.
+  repeated SequenceProto sequence_values = 5;
+
+  // For MapProto values.
+  // When this field is present, the elem_type field MUST be MAP.
+  repeated MapProto map_values = 6;
+
+}
