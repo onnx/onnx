@@ -9,38 +9,38 @@ output_var"BatchNormalization*
 training_mode $test_batchnorm_example_training_modeZ
 x
 
-
 
-
-Z
+
+
+Z
 s
 
 
-Z
+Z
 bias
 
 
-Z
+Z
 mean
 
 
-Z
+Z
 var
 
 
-b
+b
 y
 
-
 
-
-b
+
+
+b
 output_mean
 
 
-b
+b
 
 output_var
 
 
-B
+B
