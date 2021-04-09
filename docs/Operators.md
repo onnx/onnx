@@ -1943,7 +1943,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>U</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain mean and variance types to float tensors. It allows all float type for U, but backend would only implement for fp32.</dd>
+<dd>Constrain mean and variance types to float tensors. It allows all float type for U.</dd>
 </dl>
 
 

@@ -1737,7 +1737,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "U",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
-            "Constrain mean and variance types to float tensors. It allows all float type for U, but backend would only implement for fp32.")
+            "Constrain mean and variance types to float tensors. It allows all float type for U.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           propagateShapeFromInputToOutput(ctx, 0, 0);
