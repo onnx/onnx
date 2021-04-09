@@ -382,22 +382,30 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
 class TestHelperOptionalFunctions(unittest.TestCase):
     def test_make_optional(self):  # type: () -> None
-        np_array = np.random.randn(2, 3).astype(np.float32)
-
+        values = [1.1, 2.2, 3.3, 4.4, 5.5]
+        values_tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(5,),
+            vals=values
+        )
         optional = helper.make_optional(
             name='test',
             elem_type=OptionalProto.TENSOR,
-            values=np_array.reshape(6).tolist()
+            values=values_tensor
         )
         self.assertEqual(optional.name, 'test')
         self.assertEqual(optional.elem_type, 1)
-        optional_list = helper.make_optional(
+        self.assertEqual(optional.tensor_values, values_tensor)
+
+        # Test None
+        optional_none = helper.make_optional(
             name='test',
-            elem_type=OptionalProto.SEQUENCE,
-            values=np_array.tolist(),
+            elem_type=OptionalProto.UNDEFINED,
+            values=None
         )
-        self.assertEqual(optional_list.name, 'test')
-        self.assertEqual(optional_list.elem_type, 3)
+        self.assertEqual(optional_none.name, 'test')
+        self.assertEqual(optional_none.elem_type, 0)
 
 
 class TestPrintableGraph(unittest.TestCase):

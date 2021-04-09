@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import sys
 
 import numpy as np  # type: ignore
-from onnx import TensorProto, MapProto, SequenceProto, TypeProto
+from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List, Dict
@@ -270,6 +270,67 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
         map.keys.extend(keys)
     map.values.CopyFrom(value_seq)
     return map
+
+
+def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
+    """Converts an optional def to a Python list.
+
+    Inputs:
+        optional: an OptionalProto object.
+    Returns:
+        lst: the converted list.
+    """
+    opt = None  # type: Optional[Any]
+    elem_type = optional.elem_type
+    value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+    values = getattr(optional, value_field)
+    for value in values:
+        if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:
+            opt = to_array(value)
+        elif elem_type == OptionalProto.SEQUENCE:
+            opt = to_list(value)
+        elif elem_type == OptionalProto.MAP:
+            opt = to_dict(value)
+        else:
+            raise TypeError("The element type in the input optional is not supported.")
+    return opt
+
+
+def from_optional(opt, name=None, dtype=None):  # type: (Optional[Any], Optional[Text], Optional[int]) -> OptionalProto
+    """Converts a list into a Optional def.
+
+    Inputs:
+        lst: a Python list
+        name: (optional) the name of the optional.
+        dtype: (optional) type of element in the input, used for specifying
+                          optional values when converting empty none.
+    Returns:
+        optional: the converted optional def.
+    """
+    optional = OptionalProto()
+    if name:
+        optional.name = name
+
+    if dtype:
+        elem_type = dtype
+    elif isinstance(opt, dict):
+        elem_type = SequenceProto.MAP
+    elif isinstance(opt, list):
+        elem_type = SequenceProto.SEQUENCE
+    else:
+        elem_type = SequenceProto.TENSOR
+    opt.elem_type = elem_type
+
+    if elem_type == OptionalProto.TENSOR:
+        optional.tensor_values.extend([from_array(opt)])
+    elif elem_type == OptionalProto.SEQUENCE:
+        optional.sequence_values.extend([from_list(opt)])
+    elif elem_type == OptionalProto.MAP:
+        optional.map_values.extend([from_dict(opt)])
+    else:
+        raise TypeError("The element type in the input is not a tensor, "
+                        "sequence, or map and is not supported.")
+    return opt
 
 
 def convert_endian(tensor):  # type: (TensorProto) -> None

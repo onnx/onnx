@@ -455,6 +455,34 @@ void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
   }
 }
 
+void encodeTypeProto(
+    ONNX_NAMESPACE::TypeProto* type_proto,
+    const TypeProto& target_type) {
+  switch (target_type.value_case()) {
+    case TypeProto::kTensorType: {
+      *type_proto->mutable_tensor_type() = target_type.tensor_type();
+    } break;
+    case TypeProto::kSequenceType: {
+      *type_proto->mutable_sequence_type() = target_type.sequence_type();
+    } break;
+    case TypeProto::kMapType: {
+      *type_proto->mutable_map_type() = target_type.map_type();
+    } break;
+    case TypeProto::kOptionalType: {
+      *type_proto->mutable_optional_type() = target_type.optional_type();
+    } break;
+#ifdef ONNX_ML
+    case TypeProto::kOpaqueType:
+      break;
+    case TypeProto::kSparseTensorType: {
+      *type_proto->mutable_sparse_tensor_type() = target_type.sparse_tensor_type();
+    } break;
+#endif
+    case TypeProto::VALUE_NOT_SET: {
+    } break;
+  }
+}
+
 void addAttribute(ONNX_NAMESPACE::NodeProto* n_p, Node* n, Symbol name) {
   auto attr = n_p->add_attribute();
   attr->set_name(name.toString());
@@ -513,13 +541,13 @@ void addAttribute(ONNX_NAMESPACE::NodeProto* n_p, Node* n, Symbol name) {
     case AttributeKind::tp: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_TYPE_PROTO);
       auto tp = attr->mutable_tp();
-//      encodeTypeProto(tp, n->tp(name));
+      encodeTypeProto(tp, n->tp(name));
     } break;
     case AttributeKind::tps:
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_TYPE_PROTOS);
       for (auto& v : n->tps(name)) {
         auto tp = attr->add_type_protos();
-//        encodeTypeProto(tp, v);
+        encodeTypeProto(tp, v);
       }
       break;
   }
