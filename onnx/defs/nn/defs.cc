@@ -1688,7 +1688,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "input_mean",
             "running (training) or estimated (testing) mean tensor of shape (C).",
-            "T",
+            "U",
             OpSchema::Single,
             true,
             1,
@@ -1697,7 +1697,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             4,
             "input_var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
-            "T",
+            "U",
             OpSchema::Single,
             true,
             1,
@@ -1715,7 +1715,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "running_mean",
             "The running mean after the BatchNormalization operator.",
-            "T",
+            "U",
             OpSchema::Optional,
             true,
             1,
@@ -1725,15 +1725,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             "running_var",
             "The running variance after the BatchNormalization operator. This op uses the population size (N) for "
             "calculating variance, and not the sample size N-1.",
-            "T",
+            "U",
             OpSchema::Optional,
             true,
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "U",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain mean and variance types to float tensors. It allows all float type for U, but backend would only implement for fp32.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           propagateShapeFromInputToOutput(ctx, 0, 0);
