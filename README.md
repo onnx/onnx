@@ -1,6 +1,6 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-<p align="center"><img width="40%" src="https://github.com/onnx/onnx/blob/master/docs/ONNX_logo_main.png" /></p>
+<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/master/docs/ONNX_logo_main.png" /></p>
 
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=master)
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=master)
