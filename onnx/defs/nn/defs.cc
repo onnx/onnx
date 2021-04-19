@@ -1765,11 +1765,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto outputs_shape;
             *outputs_shape.add_dim() = num_channels; // channel
 
-            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+            propagateElemTypeFromInputToOutput(ctx, 3, 1);
             updateOutputShape(ctx, 1, outputs_shape);
 
             if (ctx.getNumOutputs() > 2) {
-              propagateElemTypeFromInputToOutput(ctx, 0, 2);
+              propagateElemTypeFromInputToOutput(ctx, 4, 2);
               updateOutputShape(ctx, 2, outputs_shape);
             }
           }
