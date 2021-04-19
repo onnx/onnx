@@ -1878,6 +1878,11 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   
   current_mean = ReduceMean(X, axis=all_except_channel_index)
   current_var =  ReduceVar(X, axis=all_except_channel_index)
+  
+  Notice that ReduceVar refers to the population variance, and it equals to
+  sum(sqrd(x_i - x_avg)) / N
+  where N is the population size (this formula does not use sample size N - 1).
+  
   ```
   
   When training_mode=False:
@@ -1915,9 +1920,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dd>Scale tensor of shape (C).</dd>
 <dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Bias tensor of shape (C).</dd>
-<dt><tt>input_mean</tt> (differentiable) : T</dt>
+<dt><tt>input_mean</tt> (differentiable) : U</dt>
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
-<dt><tt>input_var</tt> (differentiable) : T</dt>
+<dt><tt>input_var</tt> (differentiable) : U</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
@@ -1926,17 +1931,19 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>running_mean</tt> (optional, non-differentiable) : T</dt>
+<dt><tt>running_mean</tt> (optional, non-differentiable) : U</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
-<dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
-<dd>The running variance after the BatchNormalization operator.</dd>
+<dt><tt>running_var</tt> (optional, non-differentiable) : U</dt>
+<dd>The running variance after the BatchNormalization operator. This op uses the population size (N) for calculating variance, and not the sample size N-1.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>U</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain mean and variance types to float tensors. It allows all float type for U.</dd>
 </dl>
 
 
@@ -1946,12 +1953,12 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <summary>batchnormalization</summary>
 
 ```python
-# input size: (1, 2, 1, 3)
-x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
-s = np.array([1.0, 1.5]).astype(np.float32)
-bias = np.array([0, 1]).astype(np.float32)
-mean = np.array([0, 3]).astype(np.float32)
-var = np.array([1, 1.5]).astype(np.float32)
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
 y = _batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
 
 node = onnx.helper.make_node(
@@ -1960,7 +1967,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-# output size: (1, 2, 1, 3)
+# output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
        name='test_batchnorm_example')
 
@@ -1992,12 +1999,12 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
 <summary>train</summary>
 
 ```python
-# input size: (1, 2, 1, 3)
-x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
-s = np.array([1.0, 1.5]).astype(np.float32)
-bias = np.array([0, 1]).astype(np.float32)
-mean = np.array([0, 3]).astype(np.float32)
-var = np.array([1, 1.5]).astype(np.float32)
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
 # using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
 # working around by using np.byte(1).astype(bool)
 training_mode = 1
@@ -2010,7 +2017,7 @@ node = onnx.helper.make_node(
     training_mode=training_mode
 )
 
-# output size: (1, 2, 1, 3)
+# output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var],
        outputs=[y, output_mean, output_var],
        name='test_batchnorm_example_training_mode')

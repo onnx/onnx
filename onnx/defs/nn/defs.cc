@@ -1613,6 +1613,11 @@ where:
 
 current_mean = ReduceMean(X, axis=all_except_channel_index)
 current_var =  ReduceVar(X, axis=all_except_channel_index)
+
+Notice that ReduceVar refers to the population variance, and it equals to
+sum(sqrd(x_i - x_avg)) / N
+where N is the population size (this formula does not use sample size N - 1).
+
 ```
 
 When training_mode=False:
@@ -1683,7 +1688,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "input_mean",
             "running (training) or estimated (testing) mean tensor of shape (C).",
-            "T",
+            "U",
             OpSchema::Single,
             true,
             1,
@@ -1692,7 +1697,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             4,
             "input_var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
-            "T",
+            "U",
             OpSchema::Single,
             true,
             1,
@@ -1710,7 +1715,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "running_mean",
             "The running mean after the BatchNormalization operator.",
-            "T",
+            "U",
             OpSchema::Optional,
             true,
             1,
@@ -1718,16 +1723,21 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             2,
             "running_var",
-            "The running variance after the BatchNormalization operator.",
-            "T",
+            "The running variance after the BatchNormalization operator. This op uses the population size (N) for "
+            "calculating variance, and not the sample size N-1.",
+            "U",
             OpSchema::Optional,
             true,
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "U",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain mean and variance types to float tensors. It allows all float type for U.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           propagateShapeFromInputToOutput(ctx, 0, 0);
@@ -1755,11 +1765,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto outputs_shape;
             *outputs_shape.add_dim() = num_channels; // channel
 
-            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+            propagateElemTypeFromInputToOutput(ctx, 3, 1);
             updateOutputShape(ctx, 1, outputs_shape);
 
             if (ctx.getNumOutputs() > 2) {
-              propagateElemTypeFromInputToOutput(ctx, 0, 2);
+              propagateElemTypeFromInputToOutput(ctx, 4, 2);
               updateOutputShape(ctx, 2, outputs_shape);
             }
           }
