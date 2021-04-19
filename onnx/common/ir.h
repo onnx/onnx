@@ -318,6 +318,11 @@ public:
     sizes_ = std::move(sizes);
     return this;
   }
+  Value* wipeSizes() {
+    has_sizes_ = false;
+    sizes_ = std::vector<Dimension>();
+    return this;
+  }
   const std::vector<Dimension>& sizes() const {
     return sizes_;
   }

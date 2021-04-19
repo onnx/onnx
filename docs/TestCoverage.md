@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 147/161 (91.30%, 5 generators excluded) common operators.
+Node tests have covered 149/163 (91.41%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -274,7 +274,7 @@ expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2, h1, h2],
 
 
 ### Add
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>add</summary>
 
@@ -306,6 +306,23 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y],
        name='test_add_bcast')
+```
+
+</details>
+<details>
+<summary>add_uint8</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+)
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add_uint8')
 ```
 
 </details>
@@ -1301,26 +1318,17 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 
 ### BatchNormalization
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>batchnormalization</summary>
 
 ```python
-def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
-    dims_x = len(x.shape)
-    dim_ones = (1,) * (dims_x - 2)
-    s = s.reshape(-1, *dim_ones)
-    bias = bias.reshape(-1, *dim_ones)
-    mean = mean.reshape(-1, *dim_ones)
-    var = var.reshape(-1, *dim_ones)
-    return s * (x - mean) / np.sqrt(var + epsilon) + bias
-
-# input size: (1, 2, 1, 3)
-x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
-s = np.array([1.0, 1.5]).astype(np.float32)
-bias = np.array([0, 1]).astype(np.float32)
-mean = np.array([0, 3]).astype(np.float32)
-var = np.array([1, 1.5]).astype(np.float32)
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
 y = _batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
 
 node = onnx.helper.make_node(
@@ -1329,7 +1337,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-# output size: (1, 2, 1, 3)
+# output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
        name='test_batchnorm_example')
 
@@ -1352,6 +1360,60 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
        name='test_batchnorm_epsilon')
+```
+
+</details>
+<details>
+<summary>train</summary>
+
+```python
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
+# using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
+# working around by using np.byte(1).astype(bool)
+training_mode = 1
+y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y', 'output_mean', 'output_var'],
+    training_mode=training_mode
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias, mean, var],
+       outputs=[y, output_mean, output_var],
+       name='test_batchnorm_example_training_mode')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
+training_mode = 1
+momentum = 0.9
+epsilon = 1e-2
+y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
+                                                      epsilon)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y', 'output_mean', 'output_var'],
+    epsilon=epsilon,
+    training_mode=training_mode
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias, mean, var],
+       outputs=[y, output_mean, output_var],
+       name='test_batchnorm_epsilon_training_mode')
 ```
 
 </details>
@@ -2168,9 +2230,31 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 
 
 ### ConvInteger
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
-<summary>convinteger</summary>
+<summary>with_padding</summary>
+
+```python
+
+x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
+x_zero_point = np.uint8(1)
+w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
+
+y = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
+
+# ConvInteger with padding
+convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
+    inputs=['x', 'w', 'x_zero_point'],
+    outputs=['y'],
+    pads=[1, 1, 1, 1],)
+
+expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y],
+       name='test_convinteger_with_padding')
+```
+
+</details>
+<details>
+<summary>without_padding</summary>
 
 ```python
 
@@ -2186,18 +2270,7 @@ convinteger_node = onnx.helper.make_node('ConvInteger',
     outputs=['y'])
 
 expect(convinteger_node, inputs=[x, w, x_zero_point], outputs=[y],
-       name='test_basic_convinteger')
-
-# ConvInteger with padding
-y_with_padding = np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9]).astype(np.int32).reshape((1, 1, 4, 4))
-
-convinteger_node_with_padding = onnx.helper.make_node('ConvInteger',
-    inputs=['x', 'w', 'x_zero_point'],
-    outputs=['y'],
-    pads=[1, 1, 1, 1],)
-
-expect(convinteger_node_with_padding, inputs=[x, w, x_zero_point], outputs=[y_with_padding],
-       name='test_convinteger_with_padding')
+       name='test_convinteger_without_padding')
 ```
 
 </details>
@@ -2910,6 +2983,12 @@ y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div')
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_div_uint8')
 ```
 
 </details>
@@ -4532,6 +4611,27 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### HardSwish
+There are 1 test cases, listed as following:
+<details>
+<summary>hardswish</summary>
+
+```python
+node = onnx.helper.make_node(
+    'HardSwish',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = hardswish(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardswish')
+```
+
+</details>
+
+
 ### Hardmax
 There are 2 test cases, listed as following:
 <details>
@@ -4665,8 +4765,7 @@ data = [
         [1, 5],
     ]]], dtype=np.float32)]
 
-expect(node, inputs=[data], outputs=[data], name='test_identity_sequence',
-    opset_imports=[onnx.helper.make_opsetid("", 13)])
+expect(node, inputs=[data], outputs=[data], name='test_identity_sequence')
 ```
 
 </details>
@@ -6775,6 +6874,12 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mul')
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mul_uint8')
 ```
 
 </details>
@@ -7573,7 +7678,7 @@ node = onnx.helper.make_node(
 )
 
 condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
-result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+result = np.array(np.nonzero(condition), dtype=np.int64)  # expected output [[0, 1, 1], [0, 0, 1]]
 expect(node, inputs=[condition], outputs=[result],
        name='test_nonzero_example')
 ```
@@ -13009,6 +13114,12 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_sub')
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint8)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_sub_uint8')
 ```
 
 </details>
@@ -13578,6 +13689,515 @@ expect(node, inputs=[data], outputs=[transposed],
 </details>
 
 
+### Trilu
+There are 18 test cases, listed as following:
+<details>
+<summary>tril</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 0, 0, 0, 0],
+#   [1, 2, 0, 0, 0],
+#   [9, 4, 1, 0, 0],
+#   [4, 3, 4, 2, 0]]
+y = tril_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_tril')
+```
+
+</details>
+<details>
+<summary>tril_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+k = np.array(-1).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[0, 0, 0, 0, 0],
+#   [1, 0, 0, 0, 0],
+#   [9, 4, 0, 0, 0],
+#   [4, 3, 4, 0, 0]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_neg')
+```
+
+</details>
+<details>
+<summary>tril_one_row</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(3, 1, 5)).astype(np.int64)
+# X:
+# [[[6, 2, 4, 1, 6]],
+#
+#  [[8, 3, 8, 7, 0]],
+#
+#  [[2, 2, 9, 5, 9]]]
+# expect result:
+# [[[6, 0, 0, 0, 0]],
+#
+#  [[8, 0, 0, 0, 0]],
+#
+#  [[2, 0, 0, 0, 0]]]
+y = tril_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_tril_one_row_neg')
+```
+
+</details>
+<details>
+<summary>tril_out_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+k = np.array(-7).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_out_neg')
+```
+
+</details>
+<details>
+<summary>tril_out_pos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+k = np.array(6).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_out_pos')
+```
+
+</details>
+<details>
+<summary>tril_pos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+k = np.array(2).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 0, 0],
+#   [1, 2, 8, 6, 0],
+#   [9, 4, 1, 8, 7],
+#   [4, 3, 4, 2, 4]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_pos')
+```
+
+</details>
+<details>
+<summary>tril_square</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
+# X:
+# [[[0, 4, 3],
+#   [2, 0, 9],
+#   [8, 2, 5]],
+#
+#  [[2, 7, 2],
+#   [2, 6, 0],
+#   [2, 6, 5]]]
+# expect result:
+# [[[0, 0, 0],
+#   [2, 0, 0],
+#   [8, 2, 5]],
+#
+#  [[2, 0, 0],
+#   [2, 6, 0],
+#   [2, 6, 5]]]
+y = tril_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_tril_square')
+```
+
+</details>
+<details>
+<summary>tril_square_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
+k = np.array(-1).astype(np.int64)
+# X:
+# [[[0, 4, 3],
+#   [2, 0, 9],
+#   [8, 2, 5]],
+#
+#  [[2, 7, 2],
+#   [2, 6, 0],
+#   [2, 6, 5]]]
+# expect result:
+# [[[0, 0, 0],
+#   [2, 0, 0],
+#   [8, 2, 0]],
+#
+#  [[0, 0, 0],
+#   [2, 0, 0],
+#   [2, 6, 0]]]
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_square_neg')
+```
+
+</details>
+<details>
+<summary>tril_zero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+    upper=0,
+)
+
+x = np.random.randint(10, size=(3, 0, 5)).astype(np.int64)
+k = np.array(6).astype(np.int64)
+# X:
+# []
+# expect result:
+# []
+y = tril_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_tril_zero')
+```
+
+</details>
+<details>
+<summary>triu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 7, 9],
+#   [0, 2, 8, 6, 9],
+#   [0, 0, 0, 8, 7],
+#   [0, 0, 0, 2, 4]]
+y = triu_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_triu')
+```
+
+</details>
+<details>
+<summary>triu_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+k = np.array(-1).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [0, 4, 0, 8, 7],
+#   [0, 0, 4, 2, 4]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_neg')
+```
+
+</details>
+<details>
+<summary>triu_one_row</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(3, 1, 5)).astype(np.int64)
+k = np.array(1).astype(np.int64)
+# X:
+# [[[1, 4, 9, 7, 1]],
+#
+#  [[9, 2, 8, 8, 4]],
+#
+#  [[3, 9, 7, 4, 2]]]
+# expect result:
+# [[[0, 4, 9, 7, 1]],
+#
+#  [[0, 2, 8, 8, 4]],
+#
+#  [[0, 9, 7, 4, 2]]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_one_row')
+```
+
+</details>
+<details>
+<summary>triu_out_neg_out</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+k = np.array(-7).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_out_neg_out')
+```
+
+</details>
+<details>
+<summary>triu_out_pos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+k = np.array(6).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0],
+#   [0, 0, 0, 0, 0]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_out_pos')
+```
+
+</details>
+<details>
+<summary>triu_pos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(4, 5)).astype(np.int64)
+k = np.array(2).astype(np.int64)
+# X:
+#  [[4, 7, 3, 7, 9],
+#   [1, 2, 8, 6, 9],
+#   [9, 4, 0, 8, 7],
+#   [4, 3, 4, 2, 4]]
+# expect result:
+#  [[0, 0, 3, 7, 9],
+#   [0, 0, 0, 6, 9],
+#   [0, 0, 0, 0, 7],
+#   [0, 0, 0, 0, 0]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_pos')
+```
+
+</details>
+<details>
+<summary>triu_square</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
+y = triu_reference_implementation(x)
+# X:
+# [[[4, 6, 9],
+#   [7, 5, 4],
+#   [8, 1, 2]],
+#
+#  [[1, 4, 9],
+#   [9, 6, 3],
+#   [8, 9, 8]]]
+# expect result:
+# [[[4, 6, 9],
+#   [0, 5, 4],
+#   [0, 0, 2]],
+#
+#  [[1, 4, 9],
+#   [0, 6, 3],
+#   [0, 0, 8]]]
+expect(node, inputs=[x], outputs=[y], name='test_triu_square')
+```
+
+</details>
+<details>
+<summary>triu_square_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(2, 3, 3)).astype(np.int64)
+k = np.array(-1).astype(np.int64)
+# X:
+# [[[4, 6, 9],
+#   [7, 5, 4],
+#   [8, 1, 2]],
+#
+#  [[1, 4, 9],
+#   [9, 6, 3],
+#   [8, 9, 8]]]
+# expect result:
+# [[[4, 6, 9],
+#   [7, 5, 4],
+#   [0, 1, 2]],
+#
+#  [[1, 4, 9],
+#   [9, 6, 3],
+#   [0, 9, 8]]]
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_square_neg')
+```
+
+</details>
+<details>
+<summary>triu_zero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Trilu',
+    inputs=['x', 'k'],
+    outputs=['y'],
+)
+
+x = np.random.randint(10, size=(0, 5)).astype(np.int64)
+k = np.array(6).astype(np.int64)
+# X:
+# []
+# expect result:
+# []
+y = triu_reference_implementation(x, int(k))
+expect(node, inputs=[x, k], outputs=[y], name='test_triu_zero')
+```
+
+</details>
+
+
 ### Unique
 There are 5 test cases, listed as following:
 <details>
@@ -13604,6 +14224,7 @@ indices = indices[argsorted_indices]
 y = np.take(x, indices, axis=0)
 inverse_indices = np.asarray([inverse_indices_map[i] for i in inverse_indices], dtype=np.int64)
 counts = counts[argsorted_indices]
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 # print(y)
 # [2.0, 1.0, 3.0, 4.0]
 # print(indices)
@@ -13631,6 +14252,7 @@ node_sorted = onnx.helper.make_node(
 
 x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]], dtype=np.float32)
 y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 # print(y)
 # [[1. 0. 0.]
 #  [2. 3. 4.]]
@@ -13660,6 +14282,7 @@ node_sorted = onnx.helper.make_node(
 x = np.array([[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
               [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]], dtype=np.float32)
 y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 # print(y)
 # [[[0. 1.]
 #  [1. 1.]
@@ -13691,6 +14314,7 @@ node_sorted = onnx.helper.make_node(
 
 x = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 3]], dtype=np.float32)
 y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 # print(y)
 # [[0. 1.]
 #  [0. 1.]
@@ -13718,6 +14342,7 @@ node_sorted = onnx.helper.make_node(
 
 x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
 y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+indices, inverse_indices, counts = specify_int64(indices, inverse_indices, counts)
 expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_without_axis')
 ```
 
@@ -14128,10 +14753,11 @@ pads: 1
 strides: 1
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14206,10 +14832,11 @@ pads: 2
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14284,10 +14911,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14362,10 +14990,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14440,10 +15069,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14523,10 +15153,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14606,10 +15237,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -14689,10 +15321,11 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
+training_mode: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>

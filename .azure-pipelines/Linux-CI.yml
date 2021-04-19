@@ -44,9 +44,23 @@ jobs:
       python -m pip install virtualenv
       python -m virtualenv py$(python.version)
       source py$(python.version)/bin/activate
+
+      git clone https://github.com/protocolbuffers/protobuf.git
+      cd protobuf
+      git checkout 3.11.x
+      git submodule update --init --recursive
+      mkdir build_source && cd build_source
+
+      cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+      export NUM_PROCESSOR=`grep -c ^processor /proc/cpuinfo`
+      sudo make -j${NUM_PROCESSOR}
+      sudo make install
+      ldconfig
+      cd ../..
+
       python -m pip install --upgrade pip
-      python -m pip install numpy protobuf
-      sudo apt-get install protobuf-compiler libprotoc-dev
+      python -m pip install numpy protobuf==3.11.3
+
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
@@ -85,7 +99,6 @@ jobs:
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
       python onnx/backend/test/stat_coverage.py
-      backend-test-tools generate-data
 
       git status
       git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
@@ -103,7 +116,8 @@ jobs:
       # onnx python api tests
       # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
       # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-      python -m pip install --quiet pytest==5.4.3 nbval
+      # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
+      python -m pip install --quiet pytest==5.4.3 nbval ipython==7.16.1
 
       pytest
       if [ $? -ne 0 ]; then

@@ -20,25 +20,24 @@ class Clip_10_11 final : public Adapter {
 
       // Turn min/max attributes into tensor (if present) and add value as input
       if(has_min) {
-        attrToInput(graph, node, "min", node->f(kmin));
+        attrToInput(graph, node, node->f(kmin));
         node->removeAttribute(kmin);
       }
       if(has_max) {
-        if(!has_min) {attrToInput(graph, node, "min", std::numeric_limits<float>::lowest());}
-        attrToInput(graph, node, "max", node->f(kmax));
+        if(!has_min) {attrToInput(graph, node, std::numeric_limits<float>::lowest());}
+        attrToInput(graph, node, node->f(kmax));
         node->removeAttribute(kmax);
       }
     }
 
-    void attrToInput(std::shared_ptr<Graph> graph, Node *node, const std::string name,
-      float val) const {
+    void attrToInput(std::shared_ptr<Graph> graph, Node *node, float val) const {
       Tensor t;
       t.elem_type() = TensorProto_DataType_FLOAT;
       auto& data = t.floats();
       data.emplace_back(val);
       Value* v;
-      v = graph->addInitializerAndInput(t, name);
-      node->addInput(v);
+      v = graph->addInitializerAndInput(t);
+      node->addInput(v);      
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {

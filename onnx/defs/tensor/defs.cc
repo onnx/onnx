@@ -318,18 +318,17 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
               TensorProto::INT64);
-
+          auto* output_shape = 
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto* output_length = output_shape->add_dim();
+		
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
 
           if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            ctx.getOutputType(0)
-                ->mutable_tensor_type()
-                ->mutable_shape()
-                ->add_dim()
-                ->set_dim_value(
-                    ctx.getInputType(0)->tensor_type().shape().dim_size());
+            output_length->set_dim_value(
+                ctx.getInputType(0)->tensor_type().shape().dim_size());
           }
         }));
 
@@ -2216,7 +2215,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
-    13,
+    14,
     OpSchema()
         .SetDoc("Identity operator")
         .Input(
@@ -2694,6 +2693,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::INT64);
+          TensorShapeProto output_shape;
+          auto* dim = output_shape.add_dim();
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& input_shape = getInputShape(ctx, 0);
+            dim->set_dim_value(input_shape.dim_size());
+          }
+          output_shape.add_dim();
+          updateOutputShape(ctx, 0, output_shape);
         }));
 
 static const char* ReverseSequence_ver10_doc = R"DOC(
@@ -3379,6 +3386,77 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
           return;
+        }));
+
+static const char* Trilu_ver14_doc = R"DOC(
+Given a 2-D matrix or batches of 2-D matrices, returns the upper or lower triangular part of the tensor(s).
+The attribute "upper" determines whether the upper or lower part is retained. If set to true,
+the upper triangular matrix is retained. Lower triangular matrix is retained otherwise.
+Default value for the "upper" attribute is true.
+Trilu takes one input tensor of shape [*, N, M], where * is zero or more batch dimensions. The upper triangular part consists
+of the elements on and above the given diagonal (k). The lower triangular part consists of elements on and below the diagonal.
+All other elements in the matrix are set to zero.
+If k = 0, the triangular part on and above/below the main diagonal is retained.
+If upper is set to true, a positive k retains the upper triangular matrix excluding the main diagonal and (k-1) diagonals above it.
+A negative k value retains the main diagonal and |k| diagonals below it.
+If upper is set to false, a positive k retains the lower triangular matrix including the main diagonal and k diagonals above it.
+A negative k value excludes the main diagonal and (|k|-1) diagonals below it.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Trilu,
+    14,
+    OpSchema()
+        .SetDoc(Trilu_ver14_doc)
+        .Attr("upper",
+            "Boolean. Indicates whether upper or lower part of matrix is retained. Default is true.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Input(
+            0,
+            "input",
+            "Input tensor of rank 2 or higher.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "k",
+            "A 0-D tensor containing a single value corresponding to the number diagonals above or below the main diagonal to exclude or include. "
+            "Default value is 0 if it's not specified.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+	          "Output tensor of the same type and shape as the input tensor.",
+	          "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape inference needs the input data shape
+          if (hasInputShape(ctx, 0)) {
+	          const TensorShapeProto& input_shape =
+	              ctx.getInputType(0)->tensor_type().shape();
+	          const int rank = static_cast<int>(input_shape.dim_size());
+	          if (rank < 2) {
+	            fail_shape_inference("Input rank must be >= 2.")
+	          }
+	          propagateShapeFromInputToOutput(ctx, 0, 0);
+	        }
         }));
 
 } // namespace ONNX_NAMESPACE
