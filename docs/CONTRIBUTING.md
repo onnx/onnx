@@ -32,9 +32,11 @@ Then, after you have made changes to Python and C++ files:
 
 ## Generated operator documentation
 
-[Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions. To refresh these docs, remember to re-install (see above) and then run the following command from the repo root and commit the results:
+[Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh these docs, run the following commands from the repo root and commit the results. Note `ONNX_ML=0` updates Operators.md whereas `ONNX_ML=1` updates Operators-ml.md:
 
 ```
+set ONNX_ML=0
+pip install setup.py
 python onnx/defs/gen_doc.py
 ```
 
@@ -52,13 +54,19 @@ ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'
 pip install pytest nbval
 ```
 
-After installing pytest, run
+After installing pytest, run from the root of the repo:
 
 ```
 pytest
 ```
 
 to begin the tests.
+
+You'll need to regenerate test coverage too, by running this command from the root of the repo:
+
+```
+python onnx\backend\test\stat_coverage.py
+```
 
 # Static typing (mypy)
 
