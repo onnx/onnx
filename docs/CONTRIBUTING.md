@@ -54,13 +54,19 @@ ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'
 pip install pytest nbval
 ```
 
-After installing pytest, run
+After installing pytest, run from the root of the repo:
 
 ```
 pytest
 ```
 
 to begin the tests.
+
+You'll need to regenerate test coverage too, by running this command from the root of the repo:
+
+```
+python onnx\backend\test\stat_coverage.py
+```
 
 # Static typing (mypy)
 
