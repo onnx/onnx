@@ -7,7 +7,8 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*, master] # TODO: remove before merge
+    branches: [rel-*]
+  workflow_dispatch:
 
 jobs:
   build:

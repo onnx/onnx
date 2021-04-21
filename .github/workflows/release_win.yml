@@ -7,7 +7,8 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*, master] # TODO: remove before merge
+    branches: [rel-*]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -147,6 +148,7 @@ jobs:
       run: |
         # ort-nightly does not support x86
         if ('${{ matrix.architecture }}' -eq 'x64') {
+          python -m pip install flatbuffers
           python -m pip install -i https://test.pypi.org/simple/ ort-nightly
           python onnx\onnx\test\test_with_ort.py
         }
