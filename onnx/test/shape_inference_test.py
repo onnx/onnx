@@ -3485,6 +3485,21 @@ class TestShapeInference(unittest.TestCase):
                                       make_tensor_value_info('output_var', TensorProto.FLOAT, ('C',)),  # type: ignore
                                       ])
 
+    def test_batch_norm_train_with_diff_type(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT16, (3, 4, 5, 6, 7)),
+             ('scale', TensorProto.FLOAT16, (4,)),
+             ('b', TensorProto.FLOAT16, (4,)),
+             ('input_mean', TensorProto.FLOAT, (4,)),
+             ('input_var', TensorProto.FLOAT, (4,))],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'input_mean', 'input_var'],
+                       ['out', 'output_mean', 'output_var'], training_mode=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT16, (3, 4, 5, 6, 7)),  # type: ignore
+                                      make_tensor_value_info('output_mean', TensorProto.FLOAT, (4,)),  # type: ignore
+                                      make_tensor_value_info('output_var', TensorProto.FLOAT, (4,)),  # type: ignore
+                                      ])
+
     def test_batch_norm_test(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
@@ -3523,6 +3538,20 @@ class TestShapeInference(unittest.TestCase):
                                       make_tensor_value_info('running_mean', TensorProto.FLOAT, ('C',)),  # type: ignore
                                       make_tensor_value_info('running_var', TensorProto.FLOAT, ('C',)),  # type: ignore
                                       ])
+
+    def test_nonzero(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (None,))],
+            [make_node('NonZero', ['x'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (1, None))])  # type: ignore
+
+    def test_nonzero_no_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, None)],
+            [make_node('NonZero', ['x'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (None, None))])  # type: ignore
 
 
 if __name__ == '__main__':
