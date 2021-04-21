@@ -99,3 +99,23 @@ jobs:
       run: |
         python -m pip install -q twine
         twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+
+    - name: Verify ONNX with the latest numpy
+      if: ${{ always() }}
+      run: |
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
+
+    - name: Verify ONNX with the latest protobuf
+      if: ${{ always() }}
+      run: |
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest        
+
+    - name: Verify ONNX with ort-nightly
+      if: ${{ always() }}
+      run: |
+        python -m pip install -i https://test.pypi.org/simple/ ort-nightly
+        python onnx/test/test_with_ort.py
