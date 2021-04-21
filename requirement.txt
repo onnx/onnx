@@ -1,2 +1,4 @@
 numpy >= 1.16.6
 protobuf >= 3.11.3
+six
+typing-extensions>=3.6.2.1
