@@ -7,7 +7,7 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*]
+    branches: [rel-*, master]
   workflow_dispatch:
     inputs:
       tags:
