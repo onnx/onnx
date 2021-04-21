@@ -7,12 +7,8 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*, master]
+    branches: [rel-*,]
   workflow_dispatch:
-    inputs:
-      tags:
-        description: 'Manually trigger CI'
-        required: false
 
 jobs:
   build:
@@ -92,6 +88,6 @@ jobs:
     - name: Verify ONNX with ort-nightly
       if: ${{ always() }}
       run: |
-        pip install flatbuffer
+        python -m pip install flatbuffers
         python -m pip install -i https://test.pypi.org/simple/ ort-nightly
         python onnx/test/test_with_ort.py
