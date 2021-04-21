@@ -10,12 +10,9 @@ on:
     branches: [rel-*]
   workflow_dispatch:
     inputs:
-      purpose:
-        description: 'Purpose'     
-        required: false
-        default: 'What's your purpose to test?'
       tags:
-        description: 'Manually trigger CI'  
+        description: 'Manually trigger CI'
+        required: false
 
 jobs:
   build:
