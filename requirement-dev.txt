@@ -1,0 +1,8 @@
+numpy
+protobuf
+pytest
+pytest-cov
+nbval
+wheel
+jupyter
+pyzmq
