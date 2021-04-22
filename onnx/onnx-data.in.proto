@@ -118,7 +118,7 @@ message OptionalProto {
     SPARSE_TENSOR = 2;
     SEQUENCE = 3;
     MAP = 4;
-    OPTIONAL = 4;
+    OPTIONAL = 5;
   }
 
   // The data type of the element.

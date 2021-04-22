@@ -42,6 +42,7 @@ message SequenceProto {
     SPARSE_TENSOR = 2;
     SEQUENCE = 3;
     MAP = 4;
+    OPTIONAL = 5;
   }
 
   // The data type of the element.
@@ -63,6 +64,10 @@ message SequenceProto {
   // For MapProto values.
   // When this field is present, the elem_type field MUST be MAP.
   repeated MapProto map_values = 6;
+
+  // For OptionalProto values.
+  // When this field is present, the elem_type field MUST be Optional.
+  repeated OptionalProto optional_values = 7;
 
 }
 
@@ -114,6 +119,7 @@ message OptionalProto {
     SPARSE_TENSOR = 2;
     SEQUENCE = 3;
     MAP = 4;
+    OPTIONAL = 5;
   }
 
   // The data type of the element.
@@ -135,6 +141,10 @@ message OptionalProto {
   // For MapProto value.
   // When this field is present, the elem_type field MUST be MAP.
   optional MapProto map_value = 6;
+
+  // For OptionalProto values, allowing optional to be of itself.
+  // When this field is present, the elem_type field MUST be OPTIONAL.
+  optional SequenceProto values = 5;
 
 }
 
