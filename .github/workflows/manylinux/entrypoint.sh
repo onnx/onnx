@@ -6,7 +6,6 @@ set -e -x
 PY_VERSION=$1
 PLAT=$2
 GITHUB_EVENT_NAME=$3
-BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3'
 SYSTEM_PACKAGES='cmake3'
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
@@ -47,8 +46,11 @@ export CMAKE_ARGS="-DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${py
 # Update pip
 $PIP_COMMAND --upgrade pip
 
-# Check if requirements were passed
-if [ ! -z "$BUILD_REQUIREMENTS" ]; then
+# Install Python dependency
+if [ "$PLAT" == "manylinux2010_i686" ]; then
+    # pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
+    $PIP_COMMAND numpy==1.16.6 protobuf==3.11.3 || { echo "Installing Python requirements failed."; exit 1; }
+else
     $PIP_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 fi
 

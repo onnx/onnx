@@ -18,12 +18,11 @@ PYTHON_COMAND="${PYTHON_BIN}python"
 PYTEST_COMMAND="${PYTHON_BIN}pytest"
 
 $PIP_INTALL_COMMAND --upgrade pip
-$PIP_INTALL_COMMAND -r requirements-release.txt
+# pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
+$PIP_INTALL_COMMAND numpy==1.16.6 protobuf==3.11.3 pytest==5.4.3 nbval|| { echo "Installing Python requirements failed."; exit 1; }
 $PIP_INTALL_COMMAND dist/*-manylinux2010_i686.whl
 
 # pytest with the built wheel
-# TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
-$PIP_INTALL_COMMAND pytest==5.4.3 nbval ipython==7.16.1
 $PYTEST_COMMAND
 
 # Test backend test data
