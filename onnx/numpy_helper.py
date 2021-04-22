@@ -284,6 +284,7 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
     elem_type = optional.elem_type
     value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
     values = getattr(optional, value_field)
+    # TODO: create a map and replace conditional branches
     for value in values:
         if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:
             opt = to_array(value)
@@ -307,6 +308,7 @@ def from_optional(opt, name=None, dtype=None):  # type: (Optional[Any], Optional
     Returns:
         optional: the converted optional def.
     """
+    # TODO: create a map and replace conditional branches
     optional = OptionalProto()
     if name:
         optional.name = name
@@ -322,11 +324,11 @@ def from_optional(opt, name=None, dtype=None):  # type: (Optional[Any], Optional
     opt.elem_type = elem_type
 
     if elem_type == OptionalProto.TENSOR:
-        optional.tensor_values.extend([from_array(opt)])
+        optional.tensor_value.extend([from_array(opt)])
     elif elem_type == OptionalProto.SEQUENCE:
-        optional.sequence_values.extend([from_list(opt)])
+        optional.sequence_value.extend([from_list(opt)])
     elif elem_type == OptionalProto.MAP:
-        optional.map_values.extend([from_dict(opt)])
+        optional.map_value.extend([from_dict(opt)])
     else:
         raise TypeError("The element type in the input is not a tensor, "
                         "sequence, or map and is not supported.")

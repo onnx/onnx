@@ -411,7 +411,7 @@ def make_attribute(
             attr.type = AttributeProto.GRAPHS
         elif all(isinstance(tp, TypeProto) for tp in value):
             attr.type_protos.extend(value)
-            attr.type = AttributeProto.TYPE_PROTO
+            attr.type = AttributeProto.TYPE_PROTOS
         else:
             raise ValueError(
                 "You passed in an iterable attribute but I cannot figure out "

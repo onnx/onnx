@@ -120,21 +120,21 @@ message OptionalProto {
   // This field MUST have a valid OptionalProto.DataType value
   int32 elem_type = 2;
 
-  // For TensorProto values.
+  // For TensorProto value.
   // When this field is present, the elem_type field MUST be TENSOR.
-  TensorProto tensor_values = 3;
+  TensorProto tensor_value = 3;
 
-  // For SparseTensorProto values.
+  // For SparseTensorProto value.
   // When this field is present, the elem_type field MUST be SPARSE_TENSOR.
-  SparseTensorProto sparse_tensor_values = 4;
+  SparseTensorProto sparse_tensor_value = 4;
 
-  // For SequenceProto values.
+  // For SequenceProto value.
   // When this field is present, the elem_type field MUST be SEQUENCE.
-  SequenceProto sequence_values = 5;
+  SequenceProto sequence_value = 5;
 
-  // For MapProto values.
+  // For MapProto value.
   // When this field is present, the elem_type field MUST be MAP.
-  MapProto map_values = 6;
+  MapProto map_value = 6;
 
 }
 

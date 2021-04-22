@@ -143,10 +143,11 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.type, AttributeProto.TYPE_PROTO)
         # type_protos
         types = [TypeProto(), TypeProto()]
-        attr = helper.make_attribute("type_proto", types)
-        self.assertEqual(attr.name, "type_proto")
+        attr = helper.make_attribute("type_protos", types)
+
+        self.assertEqual(attr.name, "type_protos")
         self.assertEqual(list(attr.type_protos), types)
-        self.assertEqual(attr.type, AttributeProto.TYPE_PROTO)
+        self.assertEqual(attr.type, AttributeProto.TYPE_PROTOS)
 
     def test_is_attr_legal(self):  # type: () -> None
         # no name, no field
@@ -393,21 +394,21 @@ class TestHelperOptionalFunctions(unittest.TestCase):
         optional = helper.make_optional(
             name='test',
             elem_type=OptionalProto.TENSOR,
-            values=values_tensor
+            value=values_tensor
         )
         self.assertEqual(optional.name, 'test')
         self.assertEqual(optional.elem_type, OptionalProto.TENSOR)
-        self.assertEqual(optional.tensor_values, values_tensor)
+        self.assertEqual(optional.tensor_value, values_tensor)
 
         # Test None
         optional_none = helper.make_optional(
             name='test',
             elem_type=OptionalProto.UNDEFINED,
-            values=None
+            value=None
         )
         self.assertEqual(optional_none.name, 'test')
         self.assertEqual(optional_none.elem_type, OptionalProto.UNDEFINED)
-        self.assertFalse(optional_none.HasField('tensor_values'))
+        self.assertFalse(optional_none.HasField('tensor_value'))
 
 
 class TestPrintableGraph(unittest.TestCase):
