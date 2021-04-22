@@ -32,11 +32,7 @@ jobs:
   - script: |
       git submodule update --init --recursive
       python -m pip install -q --upgrade pip
-      conda install -y -c conda-forge pybind11
-      brew update
-      # Install protobuf 3.11.3 due to compatibility
-      wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
-      brew install protobuf.rb
+      conda install -y -c conda-forge pybind11 protobuf
       python -m pip install -q -r requirements-release.txt
       export ONNX_BUILD_TESTS=1
       if [ '$(onnx_debug)' == '1' ]; then
