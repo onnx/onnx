@@ -31,8 +31,8 @@ jobs:
 
   - script: |
       git submodule update --init --recursive
-      python -m pip install --upgrade setuptools
-      python -m pip install numpy
+      python -m pip install -q --upgrade pip
+      python -m pip install -q -r requirements-release.txt
       conda install -y -c conda-forge pybind11 protobuf
       brew update
       brew install protobuf
@@ -48,12 +48,12 @@ jobs:
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py --quiet install
+      python setup.py -q install
     displayName: 'Install dependencies and ONNX'
 
   - script: |
       # lint python code
-      pip install --quiet flake8
+      python -m pip install -q flake8
       flake8
       if [ $? -ne 0 ]; then
         echo "flake8 returned failures"
@@ -78,12 +78,6 @@ jobs:
       # in a private namespace.
       ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
-
-      # onnx python api tests
-      # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
-      # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-      # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
-      pip install --quiet pytest==5.4.3 nbval ipython==7.16.1
 
       pytest
       if [ $? -ne 0 ]; then

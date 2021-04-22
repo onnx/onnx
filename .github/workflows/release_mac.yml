@@ -36,11 +36,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
-    - name: Install Python dependencies
-      run: |
-        python -m pip install -q --upgrade pip
-        python -m pip install -q numpy==1.16.6 setuptools wheel
-
     - name: Install protobuf dependencies
       run: |
         # Install protobuf 3.11.3
@@ -60,6 +55,11 @@ jobs:
         export PATH=$(pwd)/bin:$PATH
         cd $ONNX_PATH
 
+    - name: Install Python dependencies
+      run: |
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements-release.txt
+
     - name: Build wheel and install
       env:
         CC: "clang"
@@ -77,8 +77,6 @@ jobs:
 
     - name: Test the installed wheel
       run: |
-        # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
-        python -m pip install -q pytest==5.4.3 nbval ipython==7.16.1
         pytest
 
     - name: Test backend test data
@@ -97,5 +95,4 @@ jobs:
     - name: Upload wheel to TestPyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
-        python -m pip install -q twine
         twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}

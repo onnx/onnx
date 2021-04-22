@@ -24,22 +24,23 @@ jobs:
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
+
     - name: Install dependencies
       shell: bash
       run: |
         set -e
-        python -m pip install --upgrade pip setuptools wheel
-        python -m pip install numpy
-        pip install --quiet pytest==5.4.3 nbval
+        python -m pip install -q --upgrade pip setuptools wheel pytest nbval
         # Install protobuf 3.11.3 due to compatibility
         wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
         brew install protobuf.rb
-        pip install protobuf==3.11.3           
+        python -m pip install -q -r requirements-release.txt
+  
     - name: Build, install and test ONNX
       shell: bash
       run: |
@@ -49,6 +50,7 @@ jobs:
         export ONNX_NAMESPACE=ONNX_REL_1_8
         export MACOSX_DEPLOYMENT_TARGET=10.15
         python setup.py --quiet install
+  
     - name: Test all models with onnx.checker and onnx.shape_inference
       run: |
         cd ..

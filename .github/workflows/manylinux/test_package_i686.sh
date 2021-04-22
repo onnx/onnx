@@ -11,11 +11,11 @@ PY_VER=${python_map[$PY_VERSION]}
 
 yum install -y protobuf-devel cmake3
 
-PIP_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir"
+PIP_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir -q"
 PYTHON_COMAND="/opt/python/"${PY_VER}"/bin/python"
 
 $PIP_COMMAND --upgrade pip
-$PIP_COMMAND numpy protobuf==3.11.3
+$PIP_COMMAND -r requirements-release.txt
 $PIP_COMMAND dist/*-manylinux2010_i686.whl
 
 # pytest with the built wheel

@@ -40,11 +40,8 @@ jobs:
 
   - script: |
       call activate py$(python.version)
-      python -m pip install --upgrade pip
-      # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
-      # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-      # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
-      python -m pip install --quiet pytest==5.4.3 nbval numpy ipython==7.16.1
+      python -m pip install -q --upgrade pip
+      python -m pip install -q -r requirements-release.txt
 
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1
@@ -53,7 +50,7 @@ jobs:
       set USE_MSVC_STATIC_RUNTIME=0
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
 
-      python setup.py --quiet install
+      python setup.py -q install
       pytest
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "pytest failed"
@@ -71,8 +68,8 @@ jobs:
       )
 
       rm -rf .setuptools-cmake-build
-      pip install --quiet -e .[mypy]
-      python setup.py typecheck
+      python -m pip install -q -e .[mypy]
+      python setup.py -q typecheck
 
 
     displayName: Install and test ONNX

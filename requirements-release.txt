@@ -1,0 +1,5 @@
+numpy == 1.16.6
+protobuf == 3.11.3
+pytest == 5.4.3
+nbval
+ipython == 7.16.1

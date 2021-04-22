@@ -37,7 +37,7 @@ cd $ONNX_PATH
 declare -A python_map=( ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
 declare -A python_include=( ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
 PY_VER=${python_map[$PY_VERSION]}
-PIP_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir"
+PIP_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir -q"
 PYTHON_COMAND="/opt/python/"${PY_VER}"/bin/python"
 
 # set ONNX build environments
@@ -45,11 +45,11 @@ export ONNX_ML=1
 export CMAKE_ARGS="-DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${python_include[$PY_VERSION]}"
 
 # Update pip
-$PIP_COMMAND --upgrade --no-cache-dir pip
+$PIP_COMMAND --upgrade pip
 
 # Check if requirements were passed
 if [ ! -z "$BUILD_REQUIREMENTS" ]; then
-    $PIP_COMMAND --no-cache-dir ${BUILD_REQUIREMENTS} || { echo "Installing requirements failed."; exit 1; }
+    $PIP_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 fi
 
 # Build wheels

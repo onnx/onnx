@@ -310,11 +310,11 @@ ext_modules = [
 packages = setuptools.find_packages()
 
 requirements_file = "requirements.txt"
-requirements_path = path.join(getcwd(), requirements_file)
-if not path.exists(requirements_path):
-    this = path.dirname(__file__)
-    requirements_path = path.join(this, requirements_file)
-if not path.exists(requirements_path):
+requirements_path = os.path.join(os.getcwd(), requirements_file)
+if not os.path.exists(requirements_path):
+    this = os.path.dirname(__file__)
+    requirements_path = os.path.join(this, requirements_file)
+if not os.path.exists(requirements_path):
     raise FileNotFoundError("Unable to find " + requirements_file)
 with open(requirements_path) as f:
     install_requires = f.read().splitlines()

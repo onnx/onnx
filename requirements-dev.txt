@@ -1,10 +1,10 @@
 numpy
 protobuf
+six
+typing-extensions
 pytest
 pytest-cov
 nbval
 wheel
 jupyter
 pyzmq
-six
-typing-extensions

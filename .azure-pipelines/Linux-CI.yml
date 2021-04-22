@@ -41,7 +41,7 @@ jobs:
       addToPath: true
 
   - script: |
-      python -m pip install virtualenv
+      python -m pip -q install virtualenv
       python -m virtualenv py$(python.version)
       source py$(python.version)/bin/activate
 
@@ -58,8 +58,8 @@ jobs:
       ldconfig
       cd ../..
 
-      python -m pip install --upgrade pip
-      python -m pip install numpy protobuf==3.11.3
+      python -m pip install -q --upgrade pip
+      python -m pip install -q -r requirements-release.txt
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
       git submodule update --init --recursive
@@ -82,7 +82,7 @@ jobs:
       source py$(python.version)/bin/activate
 
       # lint python code
-      python -m pip install --quiet flake8
+      python -m pip install -q flake8
       flake8 onnx
       if [ $? -ne 0 ]; then
         echo "flake8 returned failures"
@@ -113,12 +113,6 @@ jobs:
       ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
-      # onnx python api tests
-      # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
-      # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-      # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
-      python -m pip install --quiet pytest==5.4.3 nbval ipython==7.16.1
-
       pytest
       if [ $? -ne 0 ]; then
         echo "pytest failed"
@@ -141,7 +135,7 @@ jobs:
 
       # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
       python -m pip uninstall -y onnx
-      python -m pip install --no-use-pep517 -e .[mypy]
+      python -m pip install -q --no-use-pep517 -e .[mypy]
       python setup.py --quiet typecheck
       if [ $? -ne 0 ]; then
         echo "type check failed"
@@ -149,6 +143,6 @@ jobs:
       fi
       python -m pip uninstall -y onnx
       rm -rf .setuptools-cmake-build
-      python -m pip install .
+      python -m pip install -q .
 
     displayName: 'Run ONNX tests'
