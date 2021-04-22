@@ -6,3 +6,5 @@ nbval
 wheel
 jupyter
 pyzmq
+six
+typing-extensions
