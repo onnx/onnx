@@ -32,10 +32,10 @@ jobs:
   - script: |
       git submodule update --init --recursive
       python -m pip install -q --upgrade pip
-      python -m pip install -q -r requirements-release.txt
       conda install -y -c conda-forge pybind11 protobuf
       brew update
       brew install protobuf
+      python -m pip install -q -r requirements-release.txt
       export ONNX_BUILD_TESTS=1
       if [ '$(onnx_debug)' == '1' ]; then
         export DEBUG=1
