@@ -315,17 +315,17 @@ def make_map(
 def make_optional(
         name,   # type: Text
         elem_type,   # type: int
-        values,   # type: Optional[Any]
+        value,   # type: Optional[Any]
 ):  # type: (...) -> OptionalProto
     '''
-    Make a Sequence with specified value arguments.
+    Make an Optional with specified value arguments.
     '''
     optional = OptionalProto()
     optional.name = name
     optional.elem_type = elem_type
     if elem_type != 0:
         values_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
-        getattr(optional, values_field).CopyFrom(values)
+        getattr(optional, values_field).CopyFrom(value)
     return optional
 
 

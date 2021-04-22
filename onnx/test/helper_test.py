@@ -396,7 +396,7 @@ class TestHelperOptionalFunctions(unittest.TestCase):
             values=values_tensor
         )
         self.assertEqual(optional.name, 'test')
-        self.assertEqual(optional.elem_type, 1)
+        self.assertEqual(optional.elem_type, OptionalProto.TENSOR)
         self.assertEqual(optional.tensor_values, values_tensor)
 
         # Test None
@@ -406,7 +406,8 @@ class TestHelperOptionalFunctions(unittest.TestCase):
             values=None
         )
         self.assertEqual(optional_none.name, 'test')
-        self.assertEqual(optional_none.elem_type, 0)
+        self.assertEqual(optional_none.elem_type, OptionalProto.UNDEFINED)
+        self.assertFalse(optional_none.HasField('tensor_values'))
 
 
 class TestPrintableGraph(unittest.TestCase):

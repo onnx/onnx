@@ -487,69 +487,69 @@ void addAttribute(ONNX_NAMESPACE::NodeProto* n_p, Node* n, Symbol name) {
   auto attr = n_p->add_attribute();
   attr->set_name(name.toString());
   switch (n->kindOf(name)) {
-    case AttributeKind::f:
+    case AttributeKind::f: {
       attr->set_f(static_cast<float>(n->f(name)));
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_FLOAT);
-      break;
-    case AttributeKind::fs:
+    } break;
+    case AttributeKind::fs: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_FLOATS);
       for (auto& v : n->fs(name))
         attr->add_floats(static_cast<float>(v));
-      break;
-    case AttributeKind::i:
+    } break;
+    case AttributeKind::i: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_INT);
       attr->set_i(n->i(name));
-      break;
-    case AttributeKind::is:
+    } break;
+    case AttributeKind::is: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_INTS);
       for (auto& v : n->is(name))
         attr->add_ints(v);
-      break;
-    case AttributeKind::s:
+    } break;
+    case AttributeKind::s: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_STRING);
       attr->set_s(n->s(name));
-      break;
-    case AttributeKind::ss:
+    } break;
+    case AttributeKind::ss: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_STRINGS);
       for (auto& v : n->ss(name))
         attr->add_strings(v);
-      break;
+    } break;
     case AttributeKind::t: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_TENSOR);
       auto t = attr->mutable_t();
       encodeTensor(t, n->t(name));
     } break;
-    case AttributeKind::ts:
+    case AttributeKind::ts: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_TENSORS);
       for (auto& v : n->ts(name)) {
         auto t = attr->add_tensors();
         encodeTensor(t, v);
       }
-      break;
+    } break;
     case AttributeKind::g: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPH);
       auto g = attr->mutable_g();
       encodeGraph(g, n->g(name));
     } break;
-    case AttributeKind::gs:
+    case AttributeKind::gs: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPHS);
       for (auto& v : n->gs(name)) {
         auto g = attr->add_graphs();
         encodeGraph(g, v);
       }
-      break;
+    } break;
     case AttributeKind::tp: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_TYPE_PROTO);
       auto tp = attr->mutable_tp();
       encodeTypeProto(tp, n->tp(name));
     } break;
-    case AttributeKind::tps:
+    case AttributeKind::tps: {
       attr->set_type(ONNX_NAMESPACE::AttributeProto_AttributeType_TYPE_PROTOS);
       for (auto& v : n->tps(name)) {
         auto tp = attr->add_type_protos();
         encodeTypeProto(tp, v);
       }
-      break;
+    } break;
   }
 }
 
