@@ -8,3 +8,5 @@ nbval
 wheel
 jupyter
 pyzmq
+setuptools
+twine

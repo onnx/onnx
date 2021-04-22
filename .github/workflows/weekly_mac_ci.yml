@@ -36,7 +36,7 @@ jobs:
       shell: bash
       run: |
         set -e
-        python -m pip install -q --upgrade pip setuptools wheel pytest nbval
+        python -m pip install -q --upgrade pip
         # Install protobuf 3.11.3 due to compatibility
         wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
         brew install protobuf.rb
