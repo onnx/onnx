@@ -687,6 +687,7 @@ message TypeProto {
     TypeProto elem_type = 1;
   };
 
+
   message SparseTensor {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST have a valid TensorProto.DataType value
@@ -713,6 +714,7 @@ message TypeProto {
 
     // The type of an optional.
     Optional optional_type = 9;
+
 
     // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;

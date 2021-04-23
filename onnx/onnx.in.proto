@@ -686,7 +686,6 @@ message TypeProto {
     optional TypeProto elem_type = 1;
   };
 
-// #if ONNX-ML
 
   message SparseTensor {
     // This field MUST NOT have the value of UNDEFINED
@@ -728,7 +727,6 @@ message TypeProto {
     // The type of an optional.
     Optional optional_type = 9;
 
-// #if ONNX-ML
 
     // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;

@@ -728,7 +728,8 @@ message TypeProto {
     // The type of an optional.
     Optional optional_type = 9;
 
-    // The type of a sparse tensor.
+
+    // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;
 
 
