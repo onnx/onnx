@@ -44,6 +44,7 @@ if MYPY:
         Set,
         Text,
         cast,
+        Optional
     )
 else:
     # Provide minimal mypy identifiers to make code run without typing module present
@@ -75,7 +76,7 @@ class PkgWriter(object):
         self.locals = set()  # type: Set[Text]
 
     def _import(self, path, name, import_as=None):
-        # type: (Text, Text, Text) -> Text
+        # type: (Text, Text, Optional[Text]) -> Text
         """Imports a stdlib path and returns a handle to it
         eg. self._import("typing", "Optional") -> "Optional"
         """
