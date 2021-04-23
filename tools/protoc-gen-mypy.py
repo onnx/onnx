@@ -75,7 +75,7 @@ class PkgWriter(object):
         self.locals = set()  # type: Set[Text]
 
     def _import(self, path, name, import_as=None):
-        # type: (Text, Text) -> Text
+        # type: (Text, Text, Text) -> Text
         """Imports a stdlib path and returns a handle to it
         eg. self._import("typing", "Optional") -> "Optional"
         """
