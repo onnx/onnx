@@ -433,7 +433,7 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
         return attr.t
     if attr.type == AttributeProto.GRAPH:
         return attr.g
-    if attr.type == AttributeProto.TYPE_PTORO:
+    if attr.type == AttributeProto.TYPE_PROTO:
         return attr.tp
     if attr.type == AttributeProto.FLOATS:
         return list(attr.floats)
