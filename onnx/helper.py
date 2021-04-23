@@ -594,7 +594,7 @@ def printable_attribute(attr, subgraphs=False):  # type: (AttributeProto, bool) 
         content.append("<graph {}>".format(attr.g.name))
         graphs.append(attr.g)
     elif attr.HasField("tp"):
-        content.append("<Type Proto {}>".format(attr.tp.name))
+        content.append("<Type Proto {}>".format(attr.tp))
     elif attr.floats:
         content.append(str_list(str_float, attr.floats))
     elif attr.ints:
@@ -608,7 +608,7 @@ def printable_attribute(attr, subgraphs=False):  # type: (AttributeProto, bool) 
         content.append('[')
         for i, tp in enumerate(attr.type_protos):
             comma = ',' if i != len(attr.type_protos) - 1 else ''
-            content.append('<Type Proto {}>{}'.format(tp.name, comma))
+            content.append('<Type Proto {}>{}'.format(tp, comma))
         content.append(']')
     elif attr.graphs:
         content.append('[')

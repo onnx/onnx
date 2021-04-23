@@ -298,7 +298,7 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
 
 
 def from_optional(opt, name=None, dtype=None):  # type: (Optional[Any], Optional[Text], Optional[int]) -> OptionalProto
-    """Converts a list into a Optional def.
+    """Converts an optional value into a Optional def.
 
     Inputs:
         lst: a Python list
@@ -321,18 +321,19 @@ def from_optional(opt, name=None, dtype=None):  # type: (Optional[Any], Optional
         elem_type = SequenceProto.SEQUENCE
     else:
         elem_type = SequenceProto.TENSOR
-    opt.elem_type = elem_type
+
+    optional.elem_type = elem_type
 
     if elem_type == OptionalProto.TENSOR:
-        optional.tensor_value.extend([from_array(opt)])
+        optional.tensor_value = from_array(opt)
     elif elem_type == OptionalProto.SEQUENCE:
-        optional.sequence_value.extend([from_list(opt)])
+        optional.sequence_value = from_list(opt)
     elif elem_type == OptionalProto.MAP:
-        optional.map_value.extend([from_dict(opt)])
+        optional.map_value = from_dict(opt)
     else:
         raise TypeError("The element type in the input is not a tensor, "
                         "sequence, or map and is not supported.")
-    return opt
+    return optional
 
 
 def convert_endian(tensor):  # type: (TensorProto) -> None
