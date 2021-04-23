@@ -91,7 +91,7 @@ enum Version {
   //   - Add sparse initializers
   IR_VERSION_2019_9_19 = 0x0000000000000006;
 
-  // IR VERSION 7 published on <TBD>
+  // IR VERSION 7 published on May 8, 2020
   // - Add support to allow function body graph to rely on multiple external opreator sets.
   // - Add a list to promote inference graph's initializers to global and
   //   mutable variables. Global variables are visible in all graphs of the
@@ -100,7 +100,12 @@ enum Version {
   //   method and training algorithm. The execution of TrainingInfoProto
   //   can modify the values of mutable variables.
   // - Implicitly add inference graph into each TrainingInfoProto's algorithm.
-  IR_VERSION = 0x0000000000000007;
+  IR_VERSION_2020_5_8 = 0x0000000000000007;
+
+  // IR VERSION 8 published on <TBD>
+  // Introduce TypeProto.SparseTensor
+  IR_VERSION = 0x0000000000000008;
+
 }
 
 // Attributes
@@ -691,6 +696,8 @@ message TypeProto {
     optional TensorShapeProto shape = 2;
   }
 
+// #if ONNX-ML
+
   message Opaque {
     // When missing, the domain is the same as the model's.
     optional string domain = 1;
@@ -723,7 +730,10 @@ message TypeProto {
 
 // #if ONNX-ML
 
+    // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;
+
+// #if ONNX-ML
 
     Opaque opaque_type = 7;
 
