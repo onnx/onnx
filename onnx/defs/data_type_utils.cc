@@ -158,6 +158,7 @@ std::string DataTypeUtils::ToString(
       result.append(")").append(right);
       return result;
     }
+#endif
     case TypeProto::ValueCase::kSparseTensorType: {
       // Note: We do not distinguish tensors with zero rank (a shape consisting
       // of an empty sequence of dimensions) here.
@@ -165,7 +166,6 @@ std::string DataTypeUtils::ToString(
           ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" +
           right;
     }
-#endif
     default:
       ONNX_THROW_EX(std::invalid_argument("Unsuported type proto value case."));
   }
@@ -221,14 +221,14 @@ void DataTypeUtils::FromString(
         opaque_type->mutable_name()->assign(s.Data(), s.Size());
       }
     }
-  } else if (s.LStrip("sparse_tensor")) {
+  } else
+#endif
+  if (s.LStrip("sparse_tensor")) {
     s.ParensWhitespaceStrip();
     int32_t e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
     type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
-  } else
-#endif
-      if (s.LStrip("tensor")) {
+  } else if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
     int32_t e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
