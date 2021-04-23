@@ -144,7 +144,7 @@ message OptionalProto {
 
   // For OptionalProto values, allowing optional to be of itself.
   // When this field is present, the elem_type field MUST be OPTIONAL.
-  SequenceProto values = 5;
+  OptionalProto optional_values = 7;
 
 }
 
