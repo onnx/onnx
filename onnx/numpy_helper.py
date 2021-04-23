@@ -324,15 +324,16 @@ def from_optional(opt, name=None, dtype=None):  # type: (Optional[Any], Optional
 
     optional.elem_type = elem_type
 
-    if elem_type == OptionalProto.TENSOR:
-        optional.tensor_value = from_array(opt)
-    elif elem_type == OptionalProto.SEQUENCE:
-        optional.sequence_value = from_list(opt)
-    elif elem_type == OptionalProto.MAP:
-        optional.map_value = from_dict(opt)
-    else:
-        raise TypeError("The element type in the input is not a tensor, "
-                        "sequence, or map and is not supported.")
+    if opt is not None:
+        if elem_type == OptionalProto.TENSOR:
+            optional.tensor_value.CopyFrom(from_array(opt))
+        elif elem_type == OptionalProto.SEQUENCE:
+            optional.sequence_value.CopyFrom(from_list(opt))
+        elif elem_type == OptionalProto.MAP:
+            optional.map_value.CopyFrom(from_dict(opt))
+        else:
+            raise TypeError("The element type in the input is not a tensor, "
+                            "sequence, or map and is not supported.")
     return optional
 
 
