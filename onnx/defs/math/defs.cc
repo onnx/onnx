@@ -841,7 +841,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Pow_ver13_doc = R"DOC(
+static const char* Pow_ver15_doc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
@@ -849,10 +849,10 @@ is applied to the data tensor elementwise.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
-    13,
+    15,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(Pow_ver13_doc) + GenerateBroadcastingDocMul()))
+            std::string(Pow_ver15_doc) + GenerateBroadcastingDocMul()))
         .Input(0,
             "X",
             "First operand, base of the exponent.",
@@ -898,7 +898,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int64)",
              "tensor(float16)",
              "tensor(float)",
-             "tensor(double)"},
+             "tensor(double)",
+             "tensor(bfloat16)"},
             "Constrain input Y types to float/int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
