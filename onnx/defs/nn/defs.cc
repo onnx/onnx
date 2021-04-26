@@ -1327,7 +1327,7 @@ If the pads parameter is provided the shape of the output is calculated via the 
 output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
 
   total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
-  If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
+  If (auto_pads == SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
     )DOC";
@@ -1588,24 +1588,53 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver9_doc = R"DOC(
+static const char* BatchNormalization_ver14_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
+There are five required inputs 'X', 'scale', 'B', 'input_mean' and
+'input_var'.
+Note that 'input_mean' and 'input_var' are expected to be the estimated
+statistics in inference mode (training_mode=False, default),
+and the running statistics in training mode (training_mode=True).
+There are multiple cases for the number of outputs, which we list below:
 
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
+Output case #1: Y, running_mean, running_var (training_mode=True)
+Output case #2: Y (training_mode=False)
+
+When training_mode=False, extra outputs are invalid.
+The outputs are updated as follows when training_mode=True:
+```
+running_mean = input_mean * momentum + current_mean * (1 - momentum)
+running_var = input_var * momentum + current_var * (1 - momentum)
+
+Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+
+where:
+
+current_mean = ReduceMean(X, axis=all_except_channel_index)
+current_var =  ReduceVar(X, axis=all_except_channel_index)
+
+Notice that ReduceVar refers to the population variance, and it equals to
+sum(sqrd(x_i - x_avg)) / N
+where N is the population size (this formula does not use sample size N - 1).
+
+```
+
+When training_mode=False:
+```
+Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
+```
 
 For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    9,
+    14,
     OpSchema()
-        .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
+        .NumOutputs({1, 3})
+        .SetDoc(BatchNormalization_ver14_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1617,6 +1646,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "e.g., running_mean = running_mean * momentum + mean * (1 - momentum).",
             AttributeProto::FLOAT,
             0.9f)
+        .Attr(
+            "training_mode",
+            "If set to true, it indicates BatchNormalization is being used for training, and outputs 1, "
+            "2, 3, and 4 would be populated.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(
             0,
             "X",
@@ -1651,18 +1686,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .Input(
             3,
-            "mean",
+            "input_mean",
             "running (training) or estimated (testing) mean tensor of shape (C).",
-            "T",
+            "U",
             OpSchema::Single,
             true,
             1,
             OpSchema::Differentiable)
         .Input(
             4,
-            "var",
+            "input_var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
-            "T",
+            "U",
             OpSchema::Single,
             true,
             1,
@@ -1678,50 +1713,66 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .Output(
             1,
-            "mean",
+            "running_mean",
             "The running mean after the BatchNormalization operator.",
-            "T",
+            "U",
             OpSchema::Optional,
             true,
             1,
             OpSchema::NonDifferentiable)
         .Output(
             2,
-            "var",
-            "The running variance after the BatchNormalization operator.",
-            "T",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            3,
-            "saved_mean",
-            "Saved mean used during training to speed up gradient "
-            "computation.",
-            "T",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            4,
-            "saved_var",
-            "Saved variance used during training to speed up "
-            "gradient computation.",
-            "T",
+            "running_var",
+            "The running variance after the BatchNormalization operator. This op uses the population size (N) for "
+            "calculating variance, and not the sample size N-1.",
+            "U",
             OpSchema::Optional,
             true,
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "U",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain mean and variance types to float tensors. It allows all float type for U.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
-          // TODO in training mode, it may be possible to infer some of
-          // the other outputs as well.
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          Dim num_channels;
+
+          unifyInputDim(ctx, 0, 1, num_channels);
+          unifyInputDim(ctx, 1, 0, num_channels);
+          unifyInputDim(ctx, 2, 0, num_channels);
+          unifyInputDim(ctx, 3, 0, num_channels);
+          unifyInputDim(ctx, 4, 0, num_channels);
+
+          if (ctx.getAttribute("training_mode") &&
+               static_cast<int>(ctx.getAttribute("training_mode")->i()) != 0) {
+            if (ctx.getNumOutputs() != 3)
+              fail_shape_inference(
+                "This number of op outputs should be 3 when Training_mode = True, but it is not.");
+          } else {
+            if (ctx.getNumOutputs() != 1)
+              fail_shape_inference(
+                "This number of op outputs should be 1 when Training_mode = False, but it is not.");
+          }
+
+          if (ctx.getNumOutputs() > 1) {
+            TensorShapeProto outputs_shape;
+            *outputs_shape.add_dim() = num_channels; // channel
+
+            propagateElemTypeFromInputToOutput(ctx, 3, 1);
+            updateOutputShape(ctx, 1, outputs_shape);
+
+            if (ctx.getNumOutputs() > 2) {
+              propagateElemTypeFromInputToOutput(ctx, 4, 2);
+              updateOutputShape(ctx, 2, outputs_shape);
+            }
+          }
         }));
 
 static const char* InstanceNormalization_ver6_doc = R"DOC(

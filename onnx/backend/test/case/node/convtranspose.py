@@ -287,7 +287,7 @@ class ConvTranspose(Base):
                         [1., 1., 1.],
                         [1., 1., 1.]]]]).astype(np.float32)
 
-        node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], auto_pad="SAME_LOWER", strides=[2, 2])
+        node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], auto_pad="SAME_UPPER", strides=[2, 2])
 
         y = np.array([[[[0., 0., 1., 1., 3., 2.],
                         [0., 0., 1., 1., 3., 2.],

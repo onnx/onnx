@@ -1,6 +1,6 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-<p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
+<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/master/docs/ONNX_logo_main.png" /></p>
 
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=master)
 [![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=master)
@@ -18,24 +18,24 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Pre-trained ONNX models](https://github.com/onnx/models)
 
 # Learn about the ONNX spec
-* [Overview](docs/Overview.md)
-* [ONNX intermediate representation spec](docs/IR.md)
-* [Versioning principles of the spec](docs/Versioning.md)
-* [Operators documentation](docs/Operators.md)
-* [Python API Overview](docs/PythonAPIOverview.md)
+* [Overview][overview]
+* [ONNX intermediate representation spec][ir]
+* [Versioning principles of the spec][versioning]
+* [Operators documentation][operators]
+* [Python API Overview][python_api]
 
 # Programming utilities for working with ONNX Graphs
-* [Shape and Type Inference](docs/ShapeInference.md)
+* [Shape and Type Inference][shape_inference]
 * [Graph Optimization](https://github.com/onnx/optimizer)
-* [Opset Version Conversion](docs/VersionConverter.md)
+* [Opset Version Conversion][version_converter]
 
 # Contribute
-ONNX is a [community project](community). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [SIGs](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
+ONNX is a [community project][community]. We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [SIGs][sigs] and [Working Groups][wgs] to shape the future of ONNX.
 
-Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
+Check out our [contribution guide][contributing] to get started.
 
 If you think some operator should be added to ONNX specification, please read
-[this document](docs/AddNewOp.md).
+[this document][new_op].
 
 # Discuss
 We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://slack.lfai.foundation/) for more real-time discussion
@@ -60,7 +60,7 @@ conda install -c conda-forge onnx
 
 ## Source
 
-If you have installed onnx on your machine, please `pip uninstall onnx` first before the following process of build from source. 
+If you have installed onnx on your machine, please `pip uninstall onnx` first before the following process of build from source.
 
 ### Linux and MacOS
 You will need an install of Protobuf and NumPy to build ONNX.  One easy
@@ -95,7 +95,7 @@ pip install onnx
 ```
 
 ### Windows
-If you are building ONNX from source on Windows, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL and this is a conflict as ONNX expects it to be a static library.
+If you are building ONNX from source on Windows, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library.
 
 Note that the instructions in this README assume you are using Visual Studio. It is recommended that you run all the commands from a shell started from "Developer Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent.
 
@@ -188,9 +188,9 @@ If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must b
 
 Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
 
-Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/master/CMakeLists.txt#L124) and replace all instances of `/lib` with `/lib64`.
+Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
 
-If you want to build ONNX on Debug mode, remember to set the environment variable `DEBUG=1`. For debug versions of the dependencies, you need to open the [CMakeLists file](CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
+If you want to build ONNX on Debug mode, remember to set the environment variable `DEBUG=1`. For debug versions of the dependencies, you need to open the [CMakeLists file][CMakeLists] and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 
 You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-dev) for a Linux-based installation without having to worry about dependency versioning.
 
@@ -214,8 +214,29 @@ Check out the [contributor guide](https://github.com/onnx/onnx/blob/master/docs/
 
 # License
 
-[Apache License v2.0](LICENSE)
+[Apache License v2.0][license]
 
 # Code of Conduct
 
 [ONNX Open Source Code of Conduct](https://onnx.ai/codeofconduct.html)
+
+
+<!-- links
+NOTE: these are absolute rather than repo-relative because we
+this document is rendered by PyPI which doesn't seem to handle
+relative links properly. See https://github.com/dhimmel/obonet/issues/12.
+-->
+[overview]: https://github.com/onnx/onnx/blob/master/docs/Overview.md
+[ir]: https://github.com/onnx/onnx/blob/master/docs/IR.md
+[versioning]: https://github.com/onnx/onnx/blob/master/docs/Versioning.md
+[operators]: https://github.com/onnx/onnx/blob/master/docs/Operators.md
+[python_api]: https://github.com/onnx/onnx/blob/master/docs/PythonAPIOverview.md
+[shape_inference]: https://github.com/onnx/onnx/blob/master/docs/ShapeInference.md
+[version_converter]: https://github.com/onnx/onnx/blob/master/docs/VersionConverter.md
+[new_op]: https://github.com/onnx/onnx/blob/master/docs/AddNewOp.md
+[community]: https://github.com/onnx/onnx/tree/master/community
+[sigs]: https://github.com/onnx/onnx/tree/master/community/sigs.md
+[wgs]: https://github.com/onnx/onnx/tree/master/community/working-groups.md
+[contributing]: https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md
+[CMakeLists]: https://github.com/onnx/onnx/blob/master/CMakeLists.txt
+[license]: https://github.com/onnx/onnx/blob/master/LICENSE
