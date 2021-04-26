@@ -240,7 +240,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
         ONNX_NAMESPACE::checker::check_map(output, ctx);
       }
       for (auto output : proto_test_data.optional_outputs_) {
-        ONNX_NAMESPACE::checker::check_map(output, ctx);
+        ONNX_NAMESPACE::checker::check_optional(output, ctx);
       }
     }
     if (!ONNXIFI_DUMMY_BACKEND) {
