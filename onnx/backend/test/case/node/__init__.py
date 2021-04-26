@@ -116,7 +116,7 @@ def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], 
     elif input is None:
         return onnx.helper.make_optional_value_info(
             name=name,
-            elem_type=ele_type if ele_type else 0, # Undefined elem type
+            elem_type=ele_type if ele_type else 0,  # Undefined elem type
             shape=None
         )
     return onnx.helper.make_tensor_value_info(
