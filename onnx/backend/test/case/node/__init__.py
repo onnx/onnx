@@ -104,13 +104,19 @@ def function_testcase_helper(node, input_types, name):  # type: (NodeProto, List
     return node_list
 
 
-def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], np.ndarray], Text, np.dtype) -> onnx.ValueInfoProto
+def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], np.ndarray, None], Text, np.dtype) -> onnx.ValueInfoProto
     if isinstance(input, list):
         # TODO: Account for recursive sequence case. Right now, this function supports
         # Sequences of Tensors.
         return onnx.helper.make_sequence_value_info(
             name=name,
             elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype],
+            shape=None
+        )
+    elif input is None:
+        return onnx.helper.make_optional_value_info(
+            name=name,
+            elem_type=ele_type if ele_type else 0, # Undefined elem type
             shape=None
         )
     return onnx.helper.make_tensor_value_info(

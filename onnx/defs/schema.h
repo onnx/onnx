@@ -735,6 +735,41 @@ class OpSchema final {
     return all_tensor_sequence_types;
   }
 
+  static const std::vector<std::string>& all_optional_types() {
+    static const std::vector<std::string> all_optional_types = {
+        "optional(tensor(uint8))",
+        "optional(tensor(uint16))",
+        "optional(tensor(uint32))",
+        "optional(tensor(uint64))",
+        "optional(tensor(int8))",
+        "optional(tensor(int16))",
+        "optional(tensor(int32))",
+        "optional(tensor(int64))",
+        "optional(tensor(float16))",
+        "optional(tensor(float))",
+        "optional(tensor(double))",
+        "optional(tensor(string))",
+        "optional(tensor(bool))",
+        "optional(tensor(complex64))",
+        "optional(tensor(complex128))",
+        "optional(seq(tensor(uint8)))",
+        "optional(seq(tensor(uint16)))",
+        "optional(seq(tensor(uint32)))",
+        "optional(seq(tensor(uint64)))",
+        "optional(seq(tensor(int8)))",
+        "optional(seq(tensor(int16)))",
+        "optional(seq(tensor(int32)))",
+        "optional(seq(tensor(int64)))",
+        "optional(seq(tensor(float16)))",
+        "optional(seq(tensor(float)))",
+        "optional(seq(tensor(double)))",
+        "optional(seq(tensor(string)))",
+        "optional(seq(tensor(bool)))",
+        "optional(seq(tensor(complex64)))",
+        "optional(seq(tensor(complex128)))"};
+    return all_optional_types;
+  }
+
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
   OpSchema& FillUsing(const std::function<void(OpSchema&)>& populator);
