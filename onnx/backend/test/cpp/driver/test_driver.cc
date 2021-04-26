@@ -247,7 +247,7 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       } else if (output_info.type().has_optional_type()) {
         ONNX_NAMESPACE::OptionalProto output_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(&output_proto, output_data.c_str(), output_data.size());
-        proto_test_data.map_outputs_.emplace_back(std::move(output_proto));
+        proto_test_data.optional_outputs_.emplace_back(std::move(output_proto));
       }
       test_data_counter++;
     }
