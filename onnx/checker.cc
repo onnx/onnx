@@ -241,21 +241,13 @@ void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
 void check_optional(const OptionalProto& optional, const CheckerContext& ctx) {
   enforce_has_field(optional, elem_type);
   if (optional.elem_type() == OptionalProto::TENSOR) {
-    for (const TensorProto& tensor : optional.tensor_values()) {
-      check_tensor(tensor, ctx);
-    }
+    check_tensor(optional.tensor_value(), ctx);
   } else if (optional.elem_type() == OptionalProto::SPARSE_TENSOR) {
-    for (const SparseTensorProto& sparse_tensor : optional.sparse_tensor_values()) {
-      check_sparse_tensor(sparse_tensor, ctx);
-    }
+    check_sparse_tensor(optional.sparse_tensor_value(), ctx);
   } else if (optional.elem_type() == OptionalProto::SEQUENCE) {
-    for (const SequenceProto& seq : optional.sequence_values()) {
-      check_sequence(seq, ctx);
-    }
+    check_sequence(optional.sequence_value(), ctx);
   } else if (optional.elem_type() == OptionalProto::MAP) {
-    for (const MapProto& map : optional.map_values()) {
-      check_map(map, ctx);
-    }
+    check_map(optional.map_value(), ctx);
   } else {
     fail_check(
         "Optional ( Structure name: ",
