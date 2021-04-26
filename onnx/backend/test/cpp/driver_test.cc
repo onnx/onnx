@@ -228,7 +228,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
         ONNX_NAMESPACE::checker::check_map(input, ctx);
       }
       for (auto input : proto_test_data.optional_inputs_) {
-        ONNX_NAMESPACE::checker::check_map(input, ctx);
+        ONNX_NAMESPACE::checker::check_optional(input, ctx);
       }
       for (auto output : proto_test_data.outputs_) {
         ONNX_NAMESPACE::checker::check_tensor(output, ctx);
