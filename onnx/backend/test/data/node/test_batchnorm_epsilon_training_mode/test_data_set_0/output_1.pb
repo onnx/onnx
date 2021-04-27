@@ -1,1 +1,1 @@
-Boutput_meanJ™õÂ¾uØ?N2?
+Boutput_meanJXø¡¿·	2¾÷¥£¿
