@@ -964,6 +964,18 @@ class OpSet_Onnx_ver14 {
   }
 };
 
+
+// Forward declarations for ai.onnx version 15
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow);
+
+// Iterate over schema from ai.onnx version 15
+class OpSet_Onnx_ver15 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow)>());
+  }
+};
+
 inline void RegisterOnnxOperatorSetSchema() {
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
@@ -981,6 +993,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver12>();
   RegisterOpSetSchema<OpSet_Onnx_ver13>();
   RegisterOpSetSchema<OpSet_Onnx_ver14>();
+  RegisterOpSetSchema<OpSet_Onnx_ver15>();
 }
 
 inline void RegisterOnnxOperatorSetSchema(int target_version) {

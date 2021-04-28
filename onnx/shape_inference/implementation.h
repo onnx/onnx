@@ -50,6 +50,8 @@ struct InferenceContextImpl : public InferenceContext {
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
       const std::unordered_map<std::string, const TensorProto*>&
           inputDataByName,
+      const std::unordered_map<std::string, const SparseTensorProto*>& 
+          inputSparseDataByName,
       const GraphInferenceContext* graphInferenceContext = nullptr)
       : graphInferenceContext_{graphInferenceContext} {
     for (auto& attr : *n.mutable_attribute()) {
@@ -71,8 +73,15 @@ struct InferenceContextImpl : public InferenceContext {
       const auto inputDataIter = inputDataByName.find(input);
       if (inputDataIter != inputDataByName.cend()) {
         allInputData_.push_back(inputDataIter->second);
+        allInputSparseData_.push_back(nullptr);
       } else {
         allInputData_.push_back(nullptr);
+        const auto inputSparseDataIter = inputSparseDataByName.find(input);
+        if (inputSparseDataIter != inputSparseDataByName.cend()) {
+          allInputSparseData_.push_back(inputSparseDataIter->second);
+        } else {
+          allInputSparseData_.push_back(nullptr);
+        }
       }
     }
 
@@ -104,6 +113,13 @@ struct InferenceContextImpl : public InferenceContext {
       ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
     }
     return allInputData_[index];
+  }
+
+  const SparseTensorProto* getInputSparseData(size_t index) const override {
+    if (index >= allInputSparseData_.size()) {
+      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+    return allInputSparseData_[index];
   }
 
   size_t getNumOutputs() const override {
@@ -148,6 +164,7 @@ struct InferenceContextImpl : public InferenceContext {
   }
 
   std::vector<const TensorProto*> allInputData_;
+  std::vector<const SparseTensorProto*> allInputSparseData_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
   std::vector<const TypeProto*> allInputTypes_;
@@ -160,10 +177,6 @@ struct InferenceContextImpl : public InferenceContext {
 };
 
 void checkShapesAndTypes(
-    const TypeProto_Tensor& inferredType,
-    const TypeProto_Tensor& existingType);
-
-void checkShapesAndTypes(
     const TypeProto_Sequence& inferredType,
     const TypeProto_Sequence& existingType);
 
@@ -174,6 +187,10 @@ void checkShapesAndTypes(
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
     TypeProto_Tensor* existingType);
+
+void mergeShapesAndTypes(
+    const TypeProto_SparseTensor& inferredType,
+    TypeProto_SparseTensor* existingType);
 
 void mergeShapesAndTypes(
     const TypeProto_Sequence& inferredType,
@@ -218,8 +235,6 @@ void InferShapeForFunctionNode(
     InferenceContext& ctx);
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
-
-void deleteCreatedTypes(std::vector<TypeProto*> initializerTypeList);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE
