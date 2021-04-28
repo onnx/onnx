@@ -21,7 +21,7 @@ ONNX_PATH=$(pwd)
 cd ..
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout 3.11.x
+git checkout v3.11.3
 git submodule update --init --recursive
 mkdir build_source && cd build_source
 
