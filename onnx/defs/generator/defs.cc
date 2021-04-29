@@ -959,5 +959,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               return;
             }
             propagateShapeFromInputToOutput(ctx, 0, 0);
-        }));
+        })
+        .FunctionBody(FunctionBodyHelper::BuildNodes({
+            // nodes: {outputs, op, inputs, attributes}
+            {{"O1"}, 
+            "RandomUniform", 
+            {"input"},
+            {MakeAttribute("high", 1.0f), MakeAttribute("low", 0.f)}},
+            {{"O2"}, "Greater", {"01", "input"}},
+        })));
 } // namespace ONNX_NAMESPACE
