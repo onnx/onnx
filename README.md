@@ -104,7 +104,7 @@ Step 1: Build Protobuf locally
 ```
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout 3.11.x
+git checkout v3.11.3
 cd cmake
 # Explicitly set -Dprotobuf_MSVC_STATIC_RUNTIME=OFF to make sure protobuf does not statically link to runtime library
 cmake -G -A -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir>
