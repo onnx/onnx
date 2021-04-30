@@ -10744,7 +10744,7 @@ This version of the operator has been available since version 11 of the default 
   output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
   
     total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
-    If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
+    If (auto_pads == SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
   
       
@@ -19470,6 +19470,43 @@ This version of the operator has been available since version 14 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+## Version 15 of the default ONNX operator set
+### <a name="Pow-15"></a>**Pow-15**</a>
+
+  Pow takes input data (Tensor<T>) and exponent Tensor, and
+  produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
+  is applied to the data tensor elementwise.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>First operand, base of the exponent.</dd>
+<dt><tt>Y</tt> (differentiable) : T1</dt>
+<dd>Second operand, power of the exponent.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input X and output types to float/int tensors.</dd>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input Y types to float/int tensors.</dd>
 </dl>
 
 # ai.onnx.preview.training

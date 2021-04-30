@@ -1327,7 +1327,7 @@ If the pads parameter is provided the shape of the output is calculated via the 
 output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
 
   total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
-  If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
+  If (auto_pads == SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
     )DOC";
@@ -1765,11 +1765,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto outputs_shape;
             *outputs_shape.add_dim() = num_channels; // channel
 
-            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+            propagateElemTypeFromInputToOutput(ctx, 3, 1);
             updateOutputShape(ctx, 1, outputs_shape);
 
             if (ctx.getNumOutputs() > 2) {
-              propagateElemTypeFromInputToOutput(ctx, 0, 2);
+              propagateElemTypeFromInputToOutput(ctx, 4, 2);
               updateOutputShape(ctx, 2, outputs_shape);
             }
           }
