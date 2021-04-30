@@ -7,6 +7,7 @@
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
+#include <functional>
 
 namespace ONNX_NAMESPACE {
 
@@ -60,8 +61,6 @@ struct InferenceContext {
   virtual TypeProto* getOutputType(size_t index) = 0;
   virtual GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) = 0;
   virtual ~InferenceContext() {}
-  /// XXX: Putting at the end of vtable in case it matters?
-  /// XXX: Do we need default implementation here?
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
 };
 
@@ -899,45 +898,11 @@ inline void unifyDim(Dim& dim, int64_t value) {
 //    input1 shape: (2, 3, 4, 'x')
 //    input2 shape: (2, 3, 4)
 //    output shape: None
-inline void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& target_type) {
-  if (target_type.has_shape()) {
-    TensorShapeProto* target_shape = target_type.mutable_shape();
+void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& target_shape);
 
-    auto source_rank = source_shape.dim_size();
-    auto target_rank = target_shape->dim_size();
-    if (source_rank != target_rank) {
-      target_type.clear_shape();
-      return;
-    }
+void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& target_type);
 
-    for (int i = 0; i < source_rank; ++i) {
-      const auto source_dim = source_shape.dim(i);
-      const auto target_dim = target_shape->dim(i);
-      bool is_dims_conflict = [&]() {
-        if (source_dim.has_dim_value()) {
-          if (target_dim.has_dim_value() && target_dim.dim_value() == source_dim.dim_value()) {
-            return false;
-          }
-          return true;
-        }
-
-        if (source_dim.has_dim_param()) {
-          if (target_dim.has_dim_param() && target_dim.dim_param() == source_dim.dim_param()) {
-            return false;
-          }
-          return true;
-        }
-
-        return (target_dim.has_dim_value() || target_dim.has_dim_param());
-      }();
-      if (is_dims_conflict && (target_dim.has_dim_value() || target_dim.has_dim_param())) {
-        auto dim = target_shape->mutable_dim(i);
-        dim->clear_dim_value();
-        dim->clear_dim_param();
-      }
-    }
-  }
-}
+void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor& target_type);
 
 // target-type = Union (target-type, source-type)
 // target and source are required to have the same type.
@@ -949,30 +914,6 @@ inline void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tenso
 //    source: sequence of tensor, elem_type: float, shape: (2, 3, 4)
 //    target: sequence of tensor, elem_type: float, shape: None
 //    output: sequence of tensor, elem_type: float, shape: None
-inline void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
-  if (source_type.value_case() != target_type.value_case()) {
-    fail_type_inference("Mismatched type:", " source=", source_type.value_case(), " target=", target_type.value_case());
-  }
-
-  if (target_type.has_tensor_type()) {
-    auto source_elem_type = source_type.tensor_type().elem_type();
-    auto target_elem_type = target_type.tensor_type().elem_type();
-
-    if (source_elem_type != target_elem_type) {
-      fail_type_inference(
-          "Mismatched tensor element type:", " source=", source_elem_type, " target=", target_elem_type);
-    }
-
-    UnionShapeInfo(source_type.tensor_type().shape(), *target_type.mutable_tensor_type());
-  } else if (target_type.has_sequence_type()) {
-    if (!source_type.sequence_type().has_elem_type()) {
-      fail_type_inference("source sequence type missing element type.");
-    }
-    if (!target_type.sequence_type().has_elem_type()) {
-      fail_type_inference("target sequence type missing element type.");
-    }
-    UnionTypeInfo(source_type.sequence_type().elem_type(), *target_type.mutable_sequence_type()->mutable_elem_type());
-  }
-}
+void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type);
 
 } // namespace ONNX_NAMESPACE
