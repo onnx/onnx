@@ -6,6 +6,12 @@
 
 namespace ONNX_NAMESPACE {
 
+/// <summary>
+/// Utility function for UnionShapeInfoForTensor.
+/// Both shapes must be of the same rank
+/// </summary>
+/// <param name="source_shape"></param>
+/// <param name="target_shape">destination shape</param>
 void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& target_shape) {
   auto source_rank = source_shape.dim_size();
   for (int i = 0; i < source_rank; ++i) {
