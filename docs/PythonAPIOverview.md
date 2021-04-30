@@ -6,11 +6,11 @@
 ```python
 import onnx
 
+# onnx_model is an in-memory ModelProto
 onnx_model = onnx.load('path/to/the/model.onnx')
-# `onnx_model` is a ModelProto struct
 ```
 Runnable IPython notebooks:
-- [load_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/load_model.ipynb)
+- [load_model.ipynb](/onnx/examples/load_model.ipynb)
 
 ## Loading an ONNX Model with External Data
 
@@ -37,7 +37,8 @@ load_external_data_for_model(onnx_model, 'data/directory/path/')
 ```python
 from onnx.external_data_helper import convert_model_to_external_data
 
-onnx_model = ... # Your model in memory as ModelProto
+# onnx_model is an in-memory ModelProto
+onnx_model = ...
 convert_model_to_external_data(onnx_model, all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
 # Then the onnx_model has converted raw data as external data
 # Must be followed by save
@@ -47,20 +48,22 @@ convert_model_to_external_data(onnx_model, all_tensors_to_one_file=True, locatio
 ```python
 import onnx
 
-onnx_model = ... # Your model in memory as ModelProto
+# onnx_model is an in-memory ModelProto
+onnx_model = ...
 
 # Save the ONNX model
 onnx.save(onnx_model, 'path/to/the/model.onnx')
 ```
 Runnable IPython notebooks:
-- [save_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/save_model.ipynb)
+- [save_model.ipynb](/onnx/examples/save_model.ipynb)
 
 
 ## Converting and Saving an ONNX Model to External Data
 ```python
 import onnx
 
-onnx_model = ... # Your model in memory as ModelProto
+# onnx_model is an in-memory ModelProto
+onnx_model = ...
 onnx.save_model(onnx_model, 'path/to/save/the/model.onnx', save_as_external_data=True, all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
 # Then the onnx_model has converted raw data as external data and saved to specific directory
 ```
@@ -95,7 +98,7 @@ with open('tensor.pb', 'rb') as f:
 print('After saving and loading, new TensorProto:\n{}'.format(new_tensor))
 ```
 Runnable IPython notebooks:
-- [np_array_tensorproto.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/np_array_tensorproto.ipynb)
+- [np_array_tensorproto.ipynb](/onnx/examples/np_array_tensorproto.ipynb)
 
 ## Creating an ONNX Model Using Helper Functions
 ```python
@@ -120,18 +123,18 @@ Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [3, 4])
 
 # Create a node (NodeProto) - This is based on Pad-11
 node_def = helper.make_node(
-    'Pad', # node name
+    'Pad',                  # name
     ['X', 'pads', 'value'], # inputs
-    ['Y'], # outputs
-    mode='constant', # attributes
+    ['Y'],                  # outputs
+    mode='constant',        # attributes
 )
 
 # Create the graph (GraphProto)
 graph_def = helper.make_graph(
-    [node_def],
-    'test-model',
-    [X, pads, value],
-    [Y],
+    [node_def],        # nodes
+    'test-model',      # name
+    [X, pads, value],  # inputs
+    [Y],               # outputs
 )
 
 # Create the model (ModelProto)
@@ -142,8 +145,8 @@ onnx.checker.check_model(model_def)
 print('The model is checked!')
 ```
 Runnable IPython notebooks:
-- [make_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/make_model.ipynb)
-- [Protobufs.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/Protobufs.ipynb)
+- [make_model.ipynb](/onnx/examples/make_model.ipynb)
+- [Protobufs.ipynb](/onnx/examples/Protobufs.ipynb)
 
 ## Checking an ONNX Model
 ```python
@@ -156,11 +159,15 @@ onnx_model = onnx.load(model_path)
 print('The model is:\n{}'.format(onnx_model))
 
 # Check the model
-onnx.checker.check_model(onnx_model)
-print('The model is checked!')
+try:
+    onnx.checker.check_model(onnx_model)
+except onnx.checker.ValidationError as e:
+    print('The model is invalid: %s' % e)
+else:
+    print('The model is valid!')
 ```
 Runnable IPython notebooks:
-- [check_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/check_model.ipynb)
+- [check_model.ipynb](/onnx/examples/check_model.ipynb)
 
 ### Checking a Large ONNX Model >2GB
 Current checker supports checking models with external data, but for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory.
@@ -204,7 +211,7 @@ onnx.checker.check_model(inferred_model)
 print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model.graph.value_info))
 ```
 Runnable IPython notebooks:
-- [shape_inference.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/shape_inference.ipynb)
+- [shape_inference.ipynb](/onnx/examples/shape_inference.ipynb)
 
 ### Shape inference a Large ONNX Model >2GB
 Current shape_inference supports models with external data, but for those models larger than 2GB, please use the model path for onnx.shape_inference.infer_shapes_path and the external data needs to be under the same directory. You can specify the output path for saving the inferred model; otherwise, the default output path is same as the original model path.
