@@ -898,8 +898,6 @@ inline void unifyDim(Dim& dim, int64_t value) {
 //    input1 shape: (2, 3, 4, 'x')
 //    input2 shape: (2, 3, 4)
 //    output shape: None
-void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& target_shape);
-
 void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& target_type);
 
 void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor& target_type);
