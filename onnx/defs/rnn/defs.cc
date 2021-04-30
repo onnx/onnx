@@ -536,7 +536,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           "X.shape = [batch_size, seq_length, input_size], "
           "Y.shape = [batch_size, seq_length, num_directions, hidden_size], "
           "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
-          "[num_directions, batch_size, hidden_size].",
+          "[batch_size, num_directions, hidden_size].",
           AttributeProto::INT,
           static_cast<int64_t>(0))
         .Attr(
