@@ -1621,6 +1621,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           std::vector<int64_t> axes;
           size_t num_inputs = ctx.getNumInputs();
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_ndim = input_shape.dim_size();
+
           if ((num_inputs == 2) && ctx.getInputType(1)) { //'axes' is input
             auto axes_proto = ctx.getInputData(1);
             if (axes_proto == nullptr) {
@@ -1628,13 +1632,21 @@ ONNX_OPERATOR_SET_SCHEMA(
               return;
             }
             axes = ParseData<int64_t>(axes_proto);
-          } else { // axes not specified
+          } else {
+            // axes not specified
+            // keep shape if the dimension is not equal to one
+            for (int i = 0; i < input_ndim; ++i) {
+              if (input_shape.dim(i).has_dim_value() &&
+                    input_shape.dim(i).dim_value() != 1) {
+                *ctx.getOutputType(0)
+                    ->mutable_tensor_type()
+                    ->mutable_shape()
+                    ->add_dim() = input_shape.dim(i);
+              }
+            }
             return;
           }
 
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-          const auto input_ndim = input_shape.dim_size();
           std::transform(
               axes.begin(),
               axes.end(),
@@ -1643,7 +1655,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 return axis < 0 ? axis + input_ndim : axis;
               });
 
-          for (int i = 0, j = 0; i < input_ndim; ++i) {
+          for (int i = 0; i < input_ndim; ++i) {
             if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
               if (input_shape.dim(i).has_dim_value() &&
                   input_shape.dim(i).dim_value() != 1) {
@@ -1653,7 +1665,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                     " must be 1 instead of ",
                     input_shape.dim(i).dim_value());
               }
-              ++j;
             } else {
               *ctx.getOutputType(0)
                    ->mutable_tensor_type()
