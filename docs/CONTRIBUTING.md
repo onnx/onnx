@@ -32,11 +32,10 @@ Then, after you have made changes to Python and C++ files:
 
 ## Generated operator documentation
 
-[Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh these docs, run the following commands from the repo root and commit the results. Note `ONNX_ML=0` updates Operators.md whereas `ONNX_ML=1` updates Operators-ml.md:
+Operator docs ([Operators.md](Operators.md) and [Operators-ml.md](Operators-ml.md)) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh these docs, run the following commands from the repo root and commit the results.
 
 ```
-set ONNX_ML=0
-pip install setup.py
+pip install -e .
 python onnx/defs/gen_doc.py
 ```
 

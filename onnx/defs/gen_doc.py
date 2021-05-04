@@ -23,10 +23,6 @@ from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
 
 SNIPPETS = collect_snippets()
 SAMPLE_IMPLEMENTATIONS = collect_sample_implementations()
-ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
-
-
-ext = '-ml.md' if ONNX_ML else '.md'
 
 
 def display_number(v):  # type: (int) -> Text
@@ -35,10 +31,10 @@ def display_number(v):  # type: (int) -> Text
     return Text(v)
 
 
-def should_render_domain(domain):  # type: (Text) -> bool
-    if domain == ONNX_ML_DOMAIN and not ONNX_ML:
+def should_render_domain(domain, is_ml):  # type: (Text, bool) -> bool
+    if domain == ONNX_ML_DOMAIN and not is_ml:
         return False
-    if ONNX_ML and domain != ONNX_ML_DOMAIN:
+    if is_ml and domain != ONNX_ML_DOMAIN:
         return False
     return True
 
@@ -49,9 +45,10 @@ def format_name_with_domain(domain, schema_name):  # type: (Text, Text) -> Text
     return schema_name
 
 
-def format_versions(versions):  # type: (Sequence[OpSchema]) -> Text
+def format_versions(versions, fname_ext):  # type: (Sequence[OpSchema]) -> Text
     return '{}'.format(', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
-                                               v.since_version) for v in versions[::-1]))
+                                                      v.since_version,
+                                                      fname_ext) for v in versions[::-1]))
 
 
 def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
@@ -75,8 +72,8 @@ def display_domain_short(domain):  # type: (Text) -> Text
     return 'ai.onnx (default)'
 
 
-def display_version_link(name, version):  # type: (Text, int) -> Text
-    changelog_md = 'Changelog' + ext
+def display_version_link(name, version, fname_ext):  # type: (Text, int, Text) -> Text
+    changelog_md = 'Changelog' + fname_ext
     name_with_ver = '{}-{}'.format(name, version)
     return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, version)
 
@@ -100,7 +97,7 @@ def generate_formal_parameter_tags(formal_parameter):  # type: (OpSchema.FormalP
     return '' if len(tags) == 0 else ' (' + ', '.join(tags) + ')'
 
 
-def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) -> Text
+def display_schema(schema, versions, fname_ext):  # type: (OpSchema, Sequence[OpSchema], Text) -> Text
     s = ''
 
     # doc
@@ -121,7 +118,8 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             # TODO: link to the Changelog.md
             s += '\nOther versions of this operator: {}\n'.format(
                 ', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
-                                               v.since_version) for v in versions[:-1]))
+                                               v.since_version,
+                                               fname_ext) for v in versions[:-1]))
 
     # If this schema is deprecated, don't display any of the following sections
     if schema.deprecated:
@@ -222,8 +220,14 @@ def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
-def main(args):  # type: (Type[Args]) -> None
-    with io.open(args.changelog, 'w', newline='') as fout:
+def gen_doc(is_ml):  # type: (bool) -> None
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    docs_dir = os.path.join(base_dir, 'docs')
+    fname_ext = '-ml.md' if is_ml else '.md'
+    operator_doc_path = os.path.join(docs_dir, 'Operators' + fname_ext)
+    changelog_path = os.path.join(docs_dir, 'Changelog' + fname_ext)
+
+    with io.open(changelog_path, 'w', newline='') as fout:
         fout.write('<!--- SPDX-License-Identifier: Apache-2.0 -->\n')
         fout.write('## Operator Changelog\n')
         fout.write(
@@ -243,7 +247,7 @@ def main(args):  # type: (Type[Args]) -> None
         fout.write('\n')
 
         for domain, versionmap in sorted(dv_index.items()):
-            if not should_render_domain(domain):
+            if not should_render_domain(domain, is_ml):
                 continue
 
             s = '# {}\n'.format(display_domain_short(domain))
@@ -254,12 +258,12 @@ def main(args):  # type: (Type[Args]) -> None
                     name_with_ver = '{}-{}'.format(format_name_with_domain(domain, schema.name),
                                                    schema.since_version)
                     s += ('### <a name="{}"></a>**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(name_with_ver, name_with_ver)
-                    s += display_schema(schema, [schema])
+                    s += display_schema(schema, [schema], fname_ext)
                     s += '\n'
 
             fout.write(s)
 
-    with io.open(args.output, 'w', newline='', encoding="utf-8") as fout:
+    with io.open(operator_doc_path, 'w', newline='', encoding="utf-8") as fout:
         fout.write('<!--- SPDX-License-Identifier: Apache-2.0 -->\n')
         fout.write('## Operator Schemas\n')
         fout.write(
@@ -283,7 +287,7 @@ def main(args):  # type: (Type[Args]) -> None
         operator_schemas = list()  # type: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]]
         existing_ops = set()  # type: Set[Text]
         for domain, _supportmap in sorted(index.items()):
-            if not should_render_domain(domain):
+            if not should_render_domain(domain, is_ml):
                 continue
 
             processed_supportmap = list()
@@ -318,7 +322,7 @@ def main(args):  # type: (Type[Args]) -> None
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),
                         ' (deprecated)' if schema.deprecated else '',
-                        format_versions(versions))
+                        format_versions(versions, fname_ext))
                     fout.write(s)
             if len(function_ops):
                 fout.write('|**Function**|**Since version**|\n')
@@ -327,7 +331,7 @@ def main(args):  # type: (Type[Args]) -> None
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),
-                        format_versions(versions))
+                        format_versions(versions, fname_ext))
                     fout.write(s)
 
             fout.write('\n')
@@ -347,7 +351,7 @@ def main(args):  # type: (Type[Args]) -> None
                         format_name_with_domain(domain, op_type.lower()),
                         format_name_with_domain(domain, op_type))
 
-                    s += display_schema(schema, versions)
+                    s += display_schema(schema, versions, fname_ext)
 
                     s += '\n\n'
 
@@ -371,10 +375,5 @@ def main(args):  # type: (Type[Args]) -> None
 
 
 if __name__ == '__main__':
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-    docs_dir = os.path.join(base_dir, 'docs')
-
-    class Args(object):
-        output = os.path.join(docs_dir, 'Operators' + ext)
-        changelog = os.path.join(docs_dir, 'Changelog' + ext)
-    main(Args)
+    gen_doc(False)
+    gen_doc(True)
