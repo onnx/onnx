@@ -31,10 +31,10 @@ def display_number(v):  # type: (int) -> Text
     return Text(v)
 
 
-def should_render_domain(domain, is_ml):  # type: (Text, bool) -> bool
-    if domain == ONNX_ML_DOMAIN and not is_ml:
+def should_render_domain(domain, is_gen_ml_doc):  # type: (Text, bool) -> bool
+    if domain == ONNX_ML_DOMAIN and not is_gen_ml_doc:
         return False
-    if is_ml and domain != ONNX_ML_DOMAIN:
+    if is_gen_ml_doc and domain != ONNX_ML_DOMAIN:
         return False
     return True
 
@@ -45,7 +45,7 @@ def format_name_with_domain(domain, schema_name):  # type: (Text, Text) -> Text
     return schema_name
 
 
-def format_versions(versions, fname_ext):  # type: (Sequence[OpSchema]) -> Text
+def format_versions(versions, fname_ext):  # type: (Sequence[OpSchema], Text) -> Text
     return '{}'.format(', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
                                                       v.since_version,
                                                       fname_ext) for v in versions[::-1]))
@@ -220,10 +220,10 @@ def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
-def gen_doc(is_ml):  # type: (bool) -> None
+def gen_doc(is_gen_ml_doc):  # type: (bool) -> None
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     docs_dir = os.path.join(base_dir, 'docs')
-    fname_ext = '-ml.md' if is_ml else '.md'
+    fname_ext = '-ml.md' if is_gen_ml_doc else '.md'
     operator_doc_path = os.path.join(docs_dir, 'Operators' + fname_ext)
     changelog_path = os.path.join(docs_dir, 'Changelog' + fname_ext)
 
@@ -247,7 +247,7 @@ def gen_doc(is_ml):  # type: (bool) -> None
         fout.write('\n')
 
         for domain, versionmap in sorted(dv_index.items()):
-            if not should_render_domain(domain, is_ml):
+            if not should_render_domain(domain, is_gen_ml_doc):
                 continue
 
             s = '# {}\n'.format(display_domain_short(domain))
@@ -287,7 +287,7 @@ def gen_doc(is_ml):  # type: (bool) -> None
         operator_schemas = list()  # type: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]]
         existing_ops = set()  # type: Set[Text]
         for domain, _supportmap in sorted(index.items()):
-            if not should_render_domain(domain, is_ml):
+            if not should_render_domain(domain, is_gen_ml_doc):
                 continue
 
             processed_supportmap = list()
@@ -375,5 +375,5 @@ def gen_doc(is_ml):  # type: (bool) -> None
 
 
 if __name__ == '__main__':
-    gen_doc(False)
-    gen_doc(True)
+    gen_doc(is_gen_ml_doc=False)
+    gen_doc(is_gen_ml_doc=True)
