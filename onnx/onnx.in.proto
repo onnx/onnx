@@ -26,13 +26,6 @@ package {PACKAGE_NAME};
 
 // Notes
 //
-// Release
-//
-// We are still in the very early stage of defining ONNX. The current
-// version of ONNX is a starting point. While we are actively working
-// towards a complete spec, we would like to get the community involved
-// by sharing our working version of ONNX.
-//
 // Protobuf compatibility
 //
 // To simplify framework compatibility, ONNX is defined using the subset of protobuf
