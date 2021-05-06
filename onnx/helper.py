@@ -324,7 +324,7 @@ def make_optional(
     optional.name = name
     optional.elem_type = elem_type
     if elem_type != 0:
-        values_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+        values_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
         getattr(optional, values_field).CopyFrom(value)
     return optional
 

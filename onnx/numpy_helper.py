@@ -282,7 +282,7 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
     """
     opt = None  # type: Optional[Any]
     elem_type = optional.elem_type
-    value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+    value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
     values = getattr(optional, value_field)
     # TODO: create a map and replace conditional branches
     for value in values:

@@ -67,6 +67,9 @@ STORAGE_ELEMENT_TYPE_TO_FIELD = {
     int(SequenceProto.SPARSE_TENSOR): 'sparse_tensor_values',
     int(SequenceProto.SEQUENCE): 'sequence_values',
     int(SequenceProto.MAP): 'map_values',
+}
+
+OPTIONAL_ELEMENT_TYPE_TO_FIELD = {
     int(OptionalProto.TENSOR): 'tensor_value',
     int(OptionalProto.SPARSE_TENSOR): 'sparse_tensor_value',
     int(OptionalProto.SEQUENCE): 'sequence_value',
