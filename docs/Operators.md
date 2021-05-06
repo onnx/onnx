@@ -6384,10 +6384,8 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     ]
     axis = 1
     output = [
-        [
-          [1, 1],
-          [4, 3],
-        ],
+        [1, 1],
+        [4, 3],
     ]
   ```
   Example 2:
@@ -6403,10 +6401,8 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     ]
     axis = 0
     output = [
-        [
-          [4, 8, 3],
-          [7, 2, 3],
-        ],
+        [4, 8, 3],
+        [7, 2, 3],
     ]
   ```
 
