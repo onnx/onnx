@@ -22,23 +22,11 @@ ModelProto ConvertVersion(
   return v.convert_version(mp_in, initial_struct, target_struct);
 }
 
-ModelProto DefaultVersionConverter::convert_version(
-    const ModelProto& mp_in,
-    const OpSetID& initial_version,
-    const OpSetID& target_version) const {
-  const std::string& initial_domain = initial_version.domain();
-  const std::string& target_domain = target_version.domain();
-  assertDefaultDomain(initial_domain, target_domain);
-
-  for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import()
-      .end(); ++it) {
-    if (it->domain() == initial_version.domain()) {
-      ONNX_ASSERTM(initial_version.version() == it->version(),
-          "initial_version does not reflect current state of model");
-    }
-  }
-
-  std::shared_ptr<Graph> g(ImportModelProto(mp_in));
+void DefaultVersionConverter::convert_graph(
+  std::shared_ptr<Graph> g,
+  const OpSetID& initial_version,
+  const OpSetID& target_version
+  ) const {
   assertNonNull(g);
 
   // TODO: Move to Inter-Domain Converter
@@ -107,6 +95,28 @@ ModelProto DefaultVersionConverter::convert_version(
     curr_version += step;
     g->opset_versions_mutable()[domain_index].incrementVersion(step);
   }
+}
+
+ModelProto DefaultVersionConverter::convert_version(
+    const ModelProto& mp_in,
+    const OpSetID& initial_version,
+    const OpSetID& target_version) const {
+  const std::string& initial_domain = initial_version.domain();
+  const std::string& target_domain = target_version.domain();
+  assertDefaultDomain(initial_domain, target_domain);
+
+  for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import()
+      .end(); ++it) {
+    if (it->domain() == initial_version.domain()) {
+      ONNX_ASSERTM(initial_version.version() == it->version(),
+          "initial_version does not reflect current state of model");
+    }
+  }
+
+  std::shared_ptr<Graph> g(ImportModelProto(mp_in));
+
+  convert_graph(g, initial_version, target_version);
+
   // Export g as ModelProto
   debug("Finished conversion; returning model");
   ModelProto mp_out = PrepareOutput(mp_in);
