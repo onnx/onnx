@@ -10,7 +10,7 @@ import random
 import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
-from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto
+from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto, SequenceProto
 from typing import Text, Any, List, Tuple
 
 import unittest
@@ -409,6 +409,30 @@ class TestHelperOptionalFunctions(unittest.TestCase):
         self.assertEqual(optional_none.name, 'test')
         self.assertEqual(optional_none.elem_type, OptionalProto.UNDEFINED)
         self.assertFalse(optional_none.HasField('tensor_value'))
+
+    def test_make_optional_value_info(self):  # type: () -> None
+        optional_val_info = helper.make_optional_value_info(
+            name='test', 
+            elem_type=TensorProto.FLOAT, 
+            shape=[5])
+
+        self.assertEqual(optional_val_info.name, 'test')
+        self.assertTrue(optional_val_info.type.optional_type)
+        self.assertEqual(optional_val_info.type.optional_type.elem_type.tensor_type.elem_type, OptionalProto.TENSOR)
+
+        # # Test Sequence
+        optional_val_info = helper.make_optional_value_info(
+            name='test', 
+            elem_type=SequenceProto.SEQUENCE, 
+            shape=[5])
+
+        self.assertEqual(optional_val_info.name, 'test')
+        self.assertTrue(optional_val_info.type.optional_type)
+        sequence_value_info = helper.make_sequence_value_info(
+            name='test', 
+            elem_type=SequenceProto.SEQUENCE, 
+            shape=[5])
+        self.assertEqual(optional_val_info.type.optional_type.elem_type.sequence_type, sequence_value_info.type.sequence_type)
 
 
 class TestPrintableGraph(unittest.TestCase):

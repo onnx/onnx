@@ -142,9 +142,9 @@ message OptionalProto {
   // When this field is present, the elem_type field MUST be MAP.
   MapProto map_value = 6;
 
-  // For OptionalProto values, allowing optional to be of itself.
+  // For OptionalProto value, allowing optional to be of itself (completeness)
   // When this field is present, the elem_type field MUST be OPTIONAL.
-  OptionalProto optional_values = 7;
+  OptionalProto optional_value = 7;
 
 }
 

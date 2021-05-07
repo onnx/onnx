@@ -677,6 +677,7 @@ message TypeProto {
   message Optional {
     // The type and optional shape of the element wrapped.
     // This field MUST be present for this version of the IR.
+    // Possible values correspond to OptionalProto.DataType enum
     TypeProto elem_type = 1;
   };
 

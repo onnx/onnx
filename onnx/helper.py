@@ -314,7 +314,7 @@ def make_map(
 
 def make_optional(
         name,   # type: Text
-        elem_type,   # type: int
+        elem_type,   # type: OptionalProto.DataType
         value,   # type: Optional[Any]
 ):  # type: (...) -> OptionalProto
     '''
@@ -547,13 +547,14 @@ def make_optional_value_info(
         value_info_proto.doc_string = doc_string
 
     optional_type_proto = value_info_proto.type.optional_type
-    optional_type_proto.elem_type.tensor_type.elem_type = elem_type
-
-    tensor_value_info = make_tensor_value_info(name, elem_type, shape, doc_string, elem_shape_denotation)
-
-    if shape is not None:
-        optional_type_proto.elem_type.tensor_type.shape.CopyFrom(tensor_value_info.type.tensor_type.shape)
-
+    if elem_type == OptionalProto.TENSOR:
+        optional_type_proto.elem_type.tensor_type.elem_type = elem_type
+        tensor_value_info = make_tensor_value_info(name, elem_type, shape, doc_string, elem_shape_denotation)
+        if shape is not None:
+            optional_type_proto.elem_type.tensor_type.shape.CopyFrom(tensor_value_info.type.tensor_type.shape)
+    elif elem_type == OptionalProto.SEQUENCE:
+        sequence_value_info = make_sequence_value_info(name, elem_type, shape, doc_string, elem_shape_denotation)
+        optional_type_proto.elem_type.CopyFrom(sequence_value_info.type)
     return value_info_proto
 
 
