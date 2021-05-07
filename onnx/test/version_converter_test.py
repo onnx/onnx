@@ -1464,7 +1464,7 @@ class TestVersionConverter(unittest.TestCase):
         from_opset = 10
         to_opset = 11
         data_type = TensorProto.FLOAT
-        data_shape = [2];
+        data_shape = [2]
 
         subg1_node = [onnx.helper.make_node(
             'Clip',
@@ -1510,7 +1510,7 @@ class TestVersionConverter(unittest.TestCase):
             onnx.helper.make_tensor_value_info('out', data_type, data_shape)
         ]
         init = [helper.make_tensor('sub_in', data_type, data_shape, [4.0, 5.0])]
-        graph = helper.make_graph(node, 'test_subgraphs', input, output,init)
+        graph = helper.make_graph(node, 'test_subgraphs', input, output, init)
 
         converted = self._converted(graph, helper.make_operatorsetid('', from_opset), to_opset)
 
@@ -1518,6 +1518,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted.opset_import[0].version == to_opset
         assert len(converted.graph.node[0].attribute[0].g.node[0].attribute) == 0
         assert len(converted.graph.node[0].attribute[1].g.node[0].attribute) == 0
+
 
 if __name__ == '__main__':
     unittest.main()
