@@ -76,7 +76,7 @@ void DefaultVersionConverter::convert_graph(
         "experimental op." << std::endl;
         continue;
       }
-      if (op_name != "Undefined") {
+      if (op_name != "Undefined" && op_name != "Captured") {
         auto& op_domain_map = all_schemas.at(op_name);
         if (searchOpDomainMap(op_domain_map, curr_version, step)) {
           // Op is specifically defined for this domain and version
@@ -88,6 +88,12 @@ void DefaultVersionConverter::convert_graph(
           if (DEBUG) std::cerr << "Applying adapter" << std::endl;
           // adapt should handle replacing node in graph
           op_adapter.adapt(g, op);
+        }
+      }
+      // Recursively convert any subgraph attributes
+      for (const auto& attr : op->attributeNames()) {
+        if (op->kindOf(attr) == AttributeKind::g) {
+          convert_graph(op->g(attr), initial_version, target_version);
         }
       }
     }
