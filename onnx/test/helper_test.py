@@ -412,8 +412,8 @@ class TestHelperOptionalFunctions(unittest.TestCase):
 
     def test_make_optional_value_info(self):  # type: () -> None
         optional_val_info = helper.make_optional_value_info(
-            name='test', 
-            elem_type=TensorProto.FLOAT, 
+            name='test',
+            elem_type=TensorProto.FLOAT,
             shape=[5])
 
         self.assertEqual(optional_val_info.name, 'test')
@@ -422,15 +422,15 @@ class TestHelperOptionalFunctions(unittest.TestCase):
 
         # # Test Sequence
         optional_val_info = helper.make_optional_value_info(
-            name='test', 
-            elem_type=SequenceProto.SEQUENCE, 
+            name='test',
+            elem_type=SequenceProto.SEQUENCE,
             shape=[5])
 
         self.assertEqual(optional_val_info.name, 'test')
         self.assertTrue(optional_val_info.type.optional_type)
         sequence_value_info = helper.make_sequence_value_info(
-            name='test', 
-            elem_type=SequenceProto.SEQUENCE, 
+            name='test',
+            elem_type=SequenceProto.SEQUENCE,
             shape=[5])
         self.assertEqual(optional_val_info.type.optional_type.elem_type.sequence_type, sequence_value_info.type.sequence_type)
 
