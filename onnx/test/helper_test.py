@@ -400,6 +400,22 @@ class TestHelperOptionalFunctions(unittest.TestCase):
         self.assertEqual(optional.elem_type, OptionalProto.TENSOR)
         self.assertEqual(optional.tensor_value, values_tensor)
 
+        # Test Sequence
+        values = [values_tensor, values_tensor]
+        values_sequence = helper.make_sequence(
+            name='test',
+            elem_type=SequenceProto.TENSOR,
+            values=values
+        )
+        optional = helper.make_optional(
+            name='test',
+            elem_type=OptionalProto.SEQUENCE,
+            value=values_sequence
+        )
+        self.assertEqual(optional.name, 'test')
+        self.assertEqual(optional.elem_type, OptionalProto.SEQUENCE)
+        self.assertEqual(optional.sequence_value, values_sequence)
+
         # Test None
         optional_none = helper.make_optional(
             name='test',

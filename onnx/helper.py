@@ -280,7 +280,7 @@ def make_sequence(
     sequence.name = name
     sequence.elem_type = elem_type
     values_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
-    getattr(sequence, values_field).CopyFrom(values)
+    getattr(sequence, values_field).extend(values)
     return sequence
 
 
