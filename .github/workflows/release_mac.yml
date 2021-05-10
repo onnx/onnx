@@ -15,8 +15,19 @@ env:
   MACOSX_DEPLOYMENT_TARGET: 10.12
 
 jobs:
+  set-branch-name:
+    runs-on: macos-10.15
+    outputs:
+      TARGET_BRANCH_NAME: ${GITHUB_REF#refs/*/}
+    steps:
+      - name: Set target branch name
+        run: echo 'Set target branch name'
+
   build:
-    if: contains(steps.vars.outputs.short_ref, 'rel-') || github.event.label.name == 'run release CIs'
+    needs: set-branch-name
+    env:
+      TARGET_BRANCH_NAME: ${GITHUB_REF#refs/*/}
+    if: startsWith( needs.set-branch-name.outputs.TARGET_BRANCH_NAME, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: macos-10.15
     strategy:
       matrix:
