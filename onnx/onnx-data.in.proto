@@ -121,8 +121,10 @@ message OptionalProto {
     OPTIONAL = 5;
   }
 
-  // The data type of the element.
-  // This field MUST have a valid OptionalProto.DataType value
+  // The data type of the element, identifies if the OptionalProto value
+  // is Tensor, Sparse Tensor, Sequence, Map, or Optional.
+  // The type of the optional value MUST match the elem_type specified.
+  // This field MUST have a valid OptionalProto.DataType value.
   optional int32 elem_type = 2;
 
   // For TensorProto value.
