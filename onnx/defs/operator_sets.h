@@ -967,12 +967,20 @@ class OpSet_Onnx_ver14 {
 
 // Forward declarations for ai.onnx version 15
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, ScatterND);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, ScatterElements);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Gather);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, GatherElements);
 
 // Iterate over schema from ai.onnx version 15
 class OpSet_Onnx_ver15 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, ScatterND)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, ScatterElements)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Gather)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, GatherElements)>());
   }
 };
 
