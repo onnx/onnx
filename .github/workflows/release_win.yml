@@ -21,7 +21,7 @@ jobs:
 
   build:
     needs: set-branch-name
-    if: startsWith( needs.set-branch-name.outputs.TARGET_BRANCH_NAME, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || startsWith( needs.set-branch-name.outputs.TARGET_BRANCH_NAME, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: windows-latest
     strategy:
       matrix:
