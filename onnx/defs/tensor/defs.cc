@@ -1302,7 +1302,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ScatterND_ver13_doc = R"DOC(
+static const char* ScatterND_ver15_doc = R"DOC(
 ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
 and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
 is produced by creating a copy of the input `data`, and then updating its value to values
@@ -1363,9 +1363,13 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterND,
-    13,
+    15,
     OpSchema()
-        .SetDoc(ScatterND_ver13_doc)
+        .SetDoc(ScatterND_ver15_doc)
+        .Attr(
+            "accumulate",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(
             0,
             "data",
@@ -1413,7 +1417,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ScatterElements_ver13_doc = R"DOC(
+static const char* ScatterElements_ver15_doc = R"DOC(
 ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
 rank r >= 1 and an optional attribute axis that identifies an axis of `data`
 (by default, the outer-most axis, that is axis 0). The output of the operation
@@ -1469,13 +1473,17 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterElements,
-    13,
+    15,
     OpSchema()
-        .SetDoc(ScatterElements_ver13_doc)
+        .SetDoc(ScatterElements_ver15_doc)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "accumulate",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
@@ -1530,7 +1538,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Gather_ver13_doc = R"DOC(
+static const char* Gather_ver15_doc = R"DOC(
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
@@ -1590,13 +1598,17 @@ output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gather,
-    13,
+    15,
     OpSchema()
-        .SetDoc(Gather_ver13_doc)
+        .SetDoc(Gather_ver15_doc)
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "accumulate",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
@@ -1694,7 +1706,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* GatherElements_ver13_doc = R"DOC(
+static const char* GatherElements_ver15_doc = R"DOC(
 
 GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
 and an optional attribute `axis` that identifies an axis of `data`
@@ -1751,13 +1763,17 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     GatherElements,
-    13,
+    15,
     OpSchema()
-        .SetDoc(GatherElements_ver13_doc)
+        .SetDoc(GatherElements_ver15_doc)
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "accumulate",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
