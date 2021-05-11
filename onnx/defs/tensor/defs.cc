@@ -1645,6 +1645,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               [&](int64_t axis) -> int64_t {
                 return axis < 0 ? axis + input_ndim : axis;
               });
+          // if input consists a symbolic value, return early since shape cannot be inferred
+          for (int i = 0; i < input_ndim; ++i) {
+            if (!input_shape.dim(i).has_dim_value()) {
+              return;
+            }
+          }
 
           for (int i = 0; i < input_ndim; ++i) {
             if (not_specify_axes && input_shape.dim(i).has_dim_value() &&
