@@ -19469,8 +19469,7 @@ This version of the operator has been available since version 14 of the default 
 ### <a name="Bernoulli-15"></a>**Bernoulli-15**</a>
 
   Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be
-      a tensor containing probabilities to be used for drawing the binary random number.
-
+  a tensor containing probabilities to be used for drawing the binary random number.
 
 #### Version
 
@@ -19518,15 +19517,6 @@ This version of the operator has been available since version 15 of the default 
 #### Version
 
 This version of the operator has been available since version 15 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>dtype</tt> : int</dt>
-<dd>The data type for the elements of the output tensor. if not specified, we will use the data type of the input tensor.</dd>
-<dt><tt>seed</tt> : float</dt>
-<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
-</dl>
 
 #### Inputs
 
