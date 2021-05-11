@@ -15727,10 +15727,8 @@ This version of the operator has been available since version 13 of the default 
     ]
     axis = 1
     output = [
-        [
-          [1, 1],
-          [4, 3],
-        ],
+        [1, 1],
+        [4, 3],
     ]
   ```
   Example 2:
@@ -15746,10 +15744,8 @@ This version of the operator has been available since version 13 of the default 
     ]
     axis = 0
     output = [
-        [
-          [4, 8, 3],
-          [7, 2, 3],
-        ],
+        [4, 8, 3],
+        [7, 2, 3],
     ]
   ```
 
