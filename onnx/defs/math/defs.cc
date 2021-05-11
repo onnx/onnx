@@ -76,9 +76,8 @@ The operator computes the {description} values for the given input:
 
  {equation}
 
-The input does not need to explicitly be a 2D vector. The "axis" attribute
-indicates the dimension along which {name} will be performed.
-The output tensor has the same shape
+The "axis" attribute indicates the dimension along which {name}
+will be performed. The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
                         ReplaceAll(doc, "{name}", name);
@@ -88,7 +87,7 @@ and contains the {name} values of the corresponding input.
     POPULATE_OP_DOC_STR(axis_attr = R"DOC(
 Describes the dimension {name} will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).,
+from the back. Accepted range is [-r, r-1] where r = rank(input).
 )DOC";
                         ReplaceAll(axis_attr, "{name}", name););
     schema.SetDoc(doc);
@@ -97,8 +96,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
     schema.Input(
         0,
         "input",
-        "The input tensor that's coerced into a 2D matrix of size (NxD) "
-        "as described above.",
+        "The input tensor of rank >= axis.",
         "T",
         OpSchema::Single,
         true,
@@ -107,8 +105,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
     schema.Output(
         0,
         "output",
-        "The output values with the same "
-        "shape as input tensor (the original size without coercion).",
+        "The output values with the same shape as the input tensor.",
         "T",
         OpSchema::Single,
         true,

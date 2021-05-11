@@ -7525,9 +7525,8 @@ expect(node, inputs=[x], outputs=[y],
   
    Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
   
-  The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which Hardmax will be performed.
-  The output tensor has the same shape
+  The "axis" attribute indicates the dimension along which Hardmax
+  will be performed. The output tensor has the same shape
   and contains the Hardmax values of the corresponding input.
 
 #### Version
@@ -7543,7 +7542,7 @@ Other versions of this operator: <a href="Changelog.md#Hardmax-1">1</a>, <a href
 <dd>
 Describes the dimension Hardmax will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).,
+from the back. Accepted range is [-r, r-1] where r = rank(input).
 </dd>
 </dl>
 
@@ -7551,14 +7550,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
+<dd>The input tensor of rank >= axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
+<dd>The output values with the same shape as the input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -8886,9 +8885,8 @@ expect(node, inputs=[x], outputs=[y],
   
    LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
   
-  The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which LogSoftmax will be performed.
-  The output tensor has the same shape
+  The "axis" attribute indicates the dimension along which LogSoftmax
+  will be performed. The output tensor has the same shape
   and contains the LogSoftmax values of the corresponding input.
 
 #### Version
@@ -8904,7 +8902,7 @@ Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a h
 <dd>
 Describes the dimension LogSoftmax will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).,
+from the back. Accepted range is [-r, r-1] where r = rank(input).
 </dd>
 </dl>
 
@@ -8912,14 +8910,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
+<dd>The input tensor of rank >= axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
+<dd>The output values with the same shape as the input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -19182,9 +19180,8 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
   
    Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
   
-  The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which Softmax will be performed.
-  The output tensor has the same shape
+  The "axis" attribute indicates the dimension along which Softmax
+  will be performed. The output tensor has the same shape
   and contains the Softmax values of the corresponding input.
 
 #### Version
@@ -19200,7 +19197,7 @@ Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href
 <dd>
 Describes the dimension Softmax will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).,
+from the back. Accepted range is [-r, r-1] where r = rank(input).
 </dd>
 </dl>
 
@@ -19208,14 +19205,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
+<dd>The input tensor of rank >= axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
+<dd>The output values with the same shape as the input tensor.</dd>
 </dl>
 
 #### Type Constraints
