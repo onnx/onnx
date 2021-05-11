@@ -39,7 +39,7 @@ message FunctionProto {
   // The first version of a function set which contains this function.
   // When there's any breaking change for this function, the function set
   // contains the function needs to bump its version, and since_version of
-  // the updated function will be changed to the updated function set version.  
+  // the updated function will be changed to the updated function set version.
   optional int64 since_version = 2;
 
   // This field indicates whether the syntax, semantics, or presence
@@ -162,9 +162,9 @@ message OperatorSetProto {
   optional string domain = 4;
 
   // The version of the set of operators. This is a simple int value
-  // that is monotonically increasing as new versions of operator set
-  // are published. All operators in this set MUST have version
-  // numbers no greater than opset_version.
+  // that is monotonically increasing as new versions of the operator set
+  // are published. All operators in this set MUST have since_version
+  // <= opset_version.
   optional int64 opset_version = 5;
 
   // A human-readable documentation for this set of operators. Markdown is allowed.
