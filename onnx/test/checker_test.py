@@ -214,6 +214,18 @@ class TestChecker(unittest.TestCase):
 
         checker.check_model(model)
 
+    def test_check_serialized_model(self):  # type: () -> None
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        model = helper.make_model(graph, producer_name='test')
+
+        checker.check_model(model.SerializeToString())
+
     def test_check_old_model(self):  # type: () -> None
         node = helper.make_node(
             "Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))

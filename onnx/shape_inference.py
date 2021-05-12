@@ -12,8 +12,8 @@ from __future__ import unicode_literals
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C
 from onnx import ModelProto
-from six import string_types
-from typing import Text
+from six import string_types, binary_type
+from typing import Text, Union
 
 """Apply shape inference to the provided ModelProto.
 
@@ -24,23 +24,23 @@ graph, that means that the provided values are invalid (or there is a
 bug in shape inference), and the result is unspecified.
 
 Arguments:
-    input (Union[ModelProto, Text], Text, bool) -> ModelProto
+    input (Union[ModelProto, Text, bytes], Text, bool) -> ModelProto
 
 Return:
     return (ModelProto) model with inferred shape information
 """
 
 
-def infer_shapes(model, check_type=False, strict_mode=False):  # type: (ModelProto, bool, bool) -> ModelProto
-    if isinstance(model, ModelProto):
-        model_str = model.SerializeToString()
+def infer_shapes(model, check_type=False, strict_mode=False):  # type: (Union[ModelProto, bytes], bool, bool) -> ModelProto
+    if isinstance(model, (ModelProto, binary_type)):
+        model_str = model if isinstance(model, binary_type) else model.SerializeToString()
         inferred_model_str = C.infer_shapes(model_str, check_type, strict_mode)
         return onnx.load_from_string(inferred_model_str)
     elif isinstance(model, string_types):
-        raise TypeError('infer_shapes only accepts ModelProto,'
+        raise TypeError('infer_shapes only accepts ModelProto or bytes,'
                         'you can use infer_shapes_path for the model path (String).')
     else:
-        raise TypeError('infer_shapes only accepts ModelProto, '
+        raise TypeError('infer_shapes only accepts ModelProto or bytes, '
                          'incorrect type: {}'.format(type(model)))
 
 
