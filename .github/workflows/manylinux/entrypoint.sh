@@ -27,6 +27,7 @@ mkdir build_source && cd build_source
 cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 make install
+ldconfig
 cd $ONNX_PATH
 
 # Compile wheels
