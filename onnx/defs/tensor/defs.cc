@@ -1617,7 +1617,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           std::vector<int64_t> axes;
           size_t num_inputs = ctx.getNumInputs();
-          bool not_specify_axes = false;
+          bool axes_not_specified = false;
 
           if ((num_inputs == 2) && ctx.getInputType(1)) { //'axes' is input
             auto axes_proto = ctx.getInputData(1);
@@ -1628,7 +1628,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axes = ParseData<int64_t>(axes_proto);
           } else {
               // axes not specified
-              not_specify_axes = true;
+              axes_not_specified = true;
           }
   
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -1649,7 +1649,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           for (int i = 0; i < input_ndim; ++i) {
-            if (not_specify_axes && input_shape.dim(i).has_dim_value() &&
+            if (axes_not_specified && input_shape.dim(i).has_dim_value() &&
                 input_shape.dim(i).dim_value() == 1) {
                 // if axes not specified, do not keep shape if the dimension is equal to one
                 continue;
