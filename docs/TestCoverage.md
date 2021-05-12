@@ -3939,6 +3939,9 @@ y = np.take(data, indices, axis=0)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_negative_indices')
+
+# print(y)
+# [0. 1. 0.]
 ```
 
 </details>
@@ -4314,10 +4317,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(1, 3, 5, 5).astype(np.float32)
-spatial_shape = np.ndim(x) - 2
-y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
-for _ in range(spatial_shape):
-    y = np.expand_dims(y, -1)
+y = np.mean(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
 expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
 ```
 
@@ -4357,10 +4357,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(1, 3, 5, 5).astype(np.float32)
-spatial_shape = np.ndim(x) - 2
-y = np.max(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
-for _ in range(spatial_shape):
-    y = np.expand_dims(y, -1)
+y = np.max(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
 expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool')
 ```
 
@@ -7788,6 +7785,11 @@ values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
 expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_negative_indices')
+
+# print(y)
+# [[3. 1. 1. 1. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 1. 3. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 3. 1. 1. 1. 1. 1. 1. 1.]]
 ```
 
 </details>
