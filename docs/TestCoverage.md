@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 149/163 (91.41%, 5 generators excluded) common operators.
+Node tests have covered 150/164 (91.46%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1414,6 +1414,42 @@ node = onnx.helper.make_node(
 expect(node, inputs=[x, s, bias, mean, var],
        outputs=[y, output_mean, output_var],
        name='test_batchnorm_epsilon_training_mode')
+```
+
+</details>
+
+
+### Bernoulli
+There are 2 test cases, listed as following:
+<details>
+<summary>bernoulli</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
+y = bernoulli_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli')
+```
+
+</details>
+<details>
+<summary>bernoulli_double</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.double)
+y = bernoulli_reference_implementation(x)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli_double')
 ```
 
 </details>

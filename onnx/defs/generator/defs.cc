@@ -897,9 +897,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Bernoulli_ver15_doc = R"DOC(
-    Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be
-    a tensor containing probabilities to be used for drawing the binary random number.
-    )DOC";
+Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be
+a tensor containing probabilities values range [0, 1] to be used for drawing the binary random number.
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Bernoulli,
@@ -960,12 +960,45 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             propagateShapeFromInputToOutput(ctx, 0, 0);
         })
-        .FunctionBody(FunctionBodyHelper::BuildNodes({
-            // nodes: {outputs, op, inputs, attributes}
-            {{"O1"}, 
-            "RandomUniform", 
-            {"input"},
-            {MakeAttribute("high", 1.0f), MakeAttribute("low", 0.f)}},
-            {{"O2"}, "Greater", {"01", "input"}},
-        })));
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx,
+                const OpSchema& schema,
+                FunctionProto& functionProto) -> bool {
+              auto dtype = ctx.getAttribute("dtype") != nullptr
+              ? static_cast<TensorProto_DataType>(ctx.getAttribute("dtype")->i())
+              : TensorProto_DataType::TensorProto_DataType_FLOAT;
+              auto func_nodes = FunctionBodyHelper::BuildNodes({
+                  // nodes: {outputs, op, inputs, attributes}
+                  // clang-format off
+                {
+                    {"X_random"}, 
+                    "RandomUniformLike",
+                    {"input"},
+                    {
+                        MakeAttribute("high", 1.0f),
+                        MakeAttribute("low", 0.f),
+                        MakeAttribute("dtype", (int64_t)dtype)
+                    }
+                },
+                {
+                    {"X_greater"},
+                    "Greater",
+                    {"X_random", "input"}
+                },
+                {
+                    {"output"},
+                    "Cast",
+                    {"X_greater"},
+                    {MakeAttribute("to", (int64_t)(dtype))}
+                }
+                  // clang-format on
+              });
+              for (const auto& node : func_nodes) {
+                auto new_node = functionProto.add_node();
+                new_node->CopyFrom(node);
+              }
+
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 } // namespace ONNX_NAMESPACE
