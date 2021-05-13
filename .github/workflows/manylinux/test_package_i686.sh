@@ -16,7 +16,7 @@ PYTHON_COMAND="/opt/python/"${PY_VER}"/bin/python"
 
 $PIP_COMMAND --upgrade pip
 $PIP_COMMAND numpy protobuf==3.11.3
-$PIP_COMMAND dist/*-manylinux2010_i686.whl
+$PIP_COMMAND dist/*manylinux2010_i686.whl
 
 # pytest with the built wheel
 # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
