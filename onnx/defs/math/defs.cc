@@ -2852,14 +2852,13 @@ Example 3:
 bool BuildContextDependentFunctionBody(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
-    FunctionProto& functionProto) {
-  bool float_input = true;
-  if (ctx.getInputType(0) != nullptr) {
-    float_input = ctx.getInputType(0)->tensor_type().elem_type() == TensorProto_DataType_FLOAT;
-  } else {
+    FunctionProto& functionProto) {  
+  if (ctx.getInputType(0) == nullptr) {
     // we cannot create a correct function body without knowing the input type
     return false;
   }
+  auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
+  bool float_input = input_type == TensorProto_DataType_FLOAT;
   std::vector<FunctionBodyHelper::NodeDef> body;
   body.push_back(
       {{"const_zero"},
@@ -2998,7 +2997,7 @@ bool BuildContextDependentFunctionBody(
           {{"const_zero_casted"}, 
           "Cast", 
           {"const_zero_float"}, 
-          {MakeAttribute("to", static_cast<int64_t>(ctx.getInputType(0)->tensor_type().elem_type()))}});
+          {MakeAttribute("to", static_cast<int64_t>(input_type))}});
     }
     body.push_back(
         {{"input_gather_element_transform"},
@@ -3026,7 +3025,7 @@ bool BuildContextDependentFunctionBody(
           {{"const_one_casted"}, 
            "Cast", 
            {"const_one_float"}, 
-           {MakeAttribute("to", static_cast<int64_t>(ctx.getInputType(0)->tensor_type().elem_type()))}});
+           {MakeAttribute("to", static_cast<int64_t>(input_type))}});
       }
       body.push_back(
           {{"weight_gather"},
@@ -3434,28 +3433,16 @@ bool BuildContextDependentFunctionBodySCE(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-  body.push_back(
-      {{"axes"},
-       "Constant",
-       {},
-       {MakeAttribute("value", ToDimensionOneInt64Tensor(-1))}});
-
   // Using stable implementation of LogSoftmax
-  // We need to unsqueeze the inputs on the last axis if they are 2D in order to make the 
-  // further Reshape and transpose valid.
   body.push_back(
-      {{"X_unsqueezed"},
-        "Unsqueeze",
-       {"scores", "axes"}});
-  body.push_back(
-      {{"3D_shape"},
+      {{"Shape3D"},
         "Constant",
         {},
         {MakeAttribute("value", ToDimensionOneInt64Tensor({0,0,-1}))}});
   body.push_back(
       {{"X_NCD"},
        "Reshape",
-       {"X_unsqueezed", "3D_shape"}});
+       {"scores", "Shape3D"}});
   body.push_back(
       {{"X_NDC"},
        "Transpose",
