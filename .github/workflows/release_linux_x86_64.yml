@@ -46,7 +46,7 @@ jobs:
 
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |
-        python -m pip install dist/*-manylinux2010_x86_64.whl
+        python -m pip install dist/*manylinux2010_x86_64.whl
         # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
         python -m pip install pytest==5.4.3 nbval ipython==7.16.1
         pytest
