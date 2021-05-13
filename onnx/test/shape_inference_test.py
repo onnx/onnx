@@ -906,6 +906,20 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (2, 3, 4))])
 
+    def test_bernoulli(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4))],
+            [make_node('Bernoulli', ['x'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4))])  # type: ignore
+
+    def test_bernoulli_with_dtype(self):  # type: () -> None
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('Bernoulli', ['x'], ['out'], dtype=TensorProto.DOUBLE,)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (2, 3, 4))])  # type: ignore
+
     def _logical_binary_op(self, op, input_type):  # type: (Text, TensorProto.DataType) -> None
         graph = self._make_graph(
             [('x', input_type, (30, 4, 5)),

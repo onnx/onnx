@@ -19469,7 +19469,7 @@ This version of the operator has been available since version 14 of the default 
 ### <a name="Bernoulli-15"></a>**Bernoulli-15**</a>
 
   Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be
-  a tensor containing probabilities to be used for drawing the binary random number.
+  a tensor containing probabilities values range [0, 1] to be used for drawing the binary random number.
 
 #### Version
 
