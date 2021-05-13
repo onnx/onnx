@@ -1652,7 +1652,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (axes_not_specified && input_shape.dim(i).dim_value() == 1) {
                 // if axes not specified, do not keep shape if the dimension is equal to one
                 continue;
-            } else if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
+            } else if (!axes_not_specified && std::find(axes.begin(), axes.end(), i) != axes.end()) {
               if (input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
                     "Dimension of input ",
