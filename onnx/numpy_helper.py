@@ -273,27 +273,26 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
 
 
 def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
-    """Converts an optional def to a Python list.
+    """Converts an optional def to a Python optional.
 
     Inputs:
         optional: an OptionalProto object.
     Returns:
-        lst: the converted list.
+        opt: the converted optional.
     """
     opt = None  # type: Optional[Any]
     elem_type = optional.elem_type
     value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
-    values = getattr(optional, value_field)
+    value = getattr(optional, value_field)
     # TODO: create a map and replace conditional branches
-    for value in values:
-        if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:
-            opt = to_array(value)
-        elif elem_type == OptionalProto.SEQUENCE:
-            opt = to_list(value)
-        elif elem_type == OptionalProto.MAP:
-            opt = to_dict(value)
-        else:
-            raise TypeError("The element type in the input optional is not supported.")
+    if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:
+        opt = to_array(value)
+    elif elem_type == OptionalProto.SEQUENCE:
+        opt = to_list(value)
+    elif elem_type == OptionalProto.MAP:
+        opt = to_dict(value)
+    else:
+        raise TypeError("The element type in the input optional is not supported.")
     return opt
 
 
@@ -301,7 +300,7 @@ def from_optional(opt, name=None, dtype=None):  # type: (Optional[Any], Optional
     """Converts an optional value into a Optional def.
 
     Inputs:
-        lst: a Python list
+        opt: a Python optional
         name: (optional) the name of the optional.
         dtype: (optional) type of element in the input, used for specifying
                           optional values when converting empty none.
@@ -316,11 +315,11 @@ def from_optional(opt, name=None, dtype=None):  # type: (Optional[Any], Optional
     if dtype:
         elem_type = dtype
     elif isinstance(opt, dict):
-        elem_type = SequenceProto.MAP
+        elem_type = OptionalProto.MAP
     elif isinstance(opt, list):
-        elem_type = SequenceProto.SEQUENCE
+        elem_type = OptionalProto.SEQUENCE
     else:
-        elem_type = SequenceProto.TENSOR
+        elem_type = OptionalProto.TENSOR
 
     optional.elem_type = elem_type
 
