@@ -1617,6 +1617,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           std::vector<int64_t> axes;
           size_t num_inputs = ctx.getNumInputs();
+          bool axes_not_specified = false;
+
           if ((num_inputs == 2) && ctx.getInputType(1)) { //'axes' is input
             auto axes_proto = ctx.getInputData(1);
             if (axes_proto == nullptr) {
@@ -1624,10 +1626,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               return;
             }
             axes = ParseData<int64_t>(axes_proto);
-          } else { // axes not specified
-            return;
+          } else {
+              // axes not specified
+              axes_not_specified = true;
           }
-
+  
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
@@ -1638,18 +1641,25 @@ ONNX_OPERATOR_SET_SCHEMA(
               [&](int64_t axis) -> int64_t {
                 return axis < 0 ? axis + input_ndim : axis;
               });
+          // if input consists a symbolic value, return early since shape cannot be inferred
+          for (int i = 0; i < input_ndim; ++i) {
+            if (!input_shape.dim(i).has_dim_value()) {
+              return;
+            }
+          }
 
-          for (int i = 0, j = 0; i < input_ndim; ++i) {
-            if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
-              if (input_shape.dim(i).has_dim_value() &&
-                  input_shape.dim(i).dim_value() != 1) {
+          for (int i = 0; i < input_ndim; ++i) {
+            if (axes_not_specified && input_shape.dim(i).dim_value() == 1) {
+                // if axes not specified, do not keep shape if the dimension is equal to one
+                continue;
+            } else if (!axes_not_specified && std::find(axes.begin(), axes.end(), i) != axes.end()) {
+              if (input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
                     "Dimension of input ",
                     i,
                     " must be 1 instead of ",
                     input_shape.dim(i).dim_value());
               }
-              ++j;
             } else {
               *ctx.getOutputType(0)
                    ->mutable_tensor_type()
