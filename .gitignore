@@ -98,3 +98,7 @@ test_report
 .mypy_cache
 virtualenv
 venv
+
+# direnv, posh-direnv
+.envrc
+.psenvrc
