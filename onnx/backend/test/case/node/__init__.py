@@ -173,9 +173,9 @@ def expect(node,  # type: onnx.NodeProto
     def merge(node_inputs, present_value_info):  # type: (List[Text], List[onnx.ValueInfoProto]) -> List[TypeProto]
         if (node_inputs):
             if (node_inputs[0] != ''):
-                [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
+                return [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
             else:
-                [TypeProto()] + merge(node_inputs[1:], present_value_info)
+                return [TypeProto()] + merge(node_inputs[1:], present_value_info)
         return []
     merged_types = merge(list(node.input), inputs_vi)
     expanded_function_nodes = function_testcase_helper(node, merged_types, name)
