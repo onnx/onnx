@@ -11,17 +11,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  set-branch-name:
-    runs-on: windows-latest
-    outputs:
-      TARGET_BRANCH_NAME: ${GITHUB_REF#refs/*/}
-    steps:
-      - name: Set target branch name
-        run: echo 'Set target branch name'
-
   build:
-    needs: set-branch-name
-    if: github.event_name != 'pull_request' || startsWith( needs.set-branch-name.outputs.TARGET_BRANCH_NAME, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: windows-latest
     strategy:
       matrix:
