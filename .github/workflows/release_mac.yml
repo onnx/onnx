@@ -7,7 +7,7 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*]
+    branches: [master, rel-*]
   workflow_dispatch:
 
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
@@ -16,6 +16,7 @@ env:
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: macos-10.15
     strategy:
       matrix:
