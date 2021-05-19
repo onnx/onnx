@@ -478,7 +478,7 @@ def make_tensor_value_info(
             else:
                 raise ValueError(
                     'Invalid item in shape: {}. '
-                    'Needs to of integer_types or text_type.'.format(d))
+                    'Needs to be of integer_types or text_type.'.format(d))
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
@@ -531,7 +531,7 @@ def make_sparse_tensor_value_info(
             else:
                 raise ValueError(
                     'Invalid item in shape: {}. '
-                    'Needs to of integer_types or text_type.'.format(d))
+                    'Needs to be of integer_types or text_type.'.format(d))
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
