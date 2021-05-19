@@ -408,6 +408,8 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
         return attr.s
     if attr.type == AttributeProto.TENSOR:
         return attr.t
+    if attr.type == AttributeProto.SPARSE_TENSOR:
+        return attr.sparse_tensor
     if attr.type == AttributeProto.GRAPH:
         return attr.g
     if attr.type == AttributeProto.FLOATS:
@@ -418,6 +420,8 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
         return list(attr.strings)
     if attr.type == AttributeProto.TENSORS:
         return list(attr.tensors)
+    if attr.type == AttributeProto.SPARSE_TENSORS:
+        return list(attr.sparse_tensors)
     if attr.type == AttributeProto.GRAPHS:
         return list(attr.graphs)
     raise ValueError("Unsupported ONNX attribute: {}".format(attr))

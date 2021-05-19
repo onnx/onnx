@@ -125,6 +125,44 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.tensors), tensors)
         checker.check_attribute(attr)
 
+    def test_attr_sparse_tensor_proto(self):  # type: () -> None
+        dense_shape = [3, 3]
+        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
+        values_tensor = helper.make_tensor(name='sparse_values', data_type=TensorProto.FLOAT,
+                                        dims=[len(sparse_values)],
+                                        vals=np.array(sparse_values).astype(np.float32), raw=False)
+
+        linear_indicies = [2, 3, 5]
+        indicies_tensor = helper.make_tensor(name='indicies', data_type=TensorProto.INT64,
+                                        dims=[len(linear_indicies)],
+                                        vals=np.array(linear_indicies).astype(np.int64), raw=False)
+        sparse_tensor = helper.make_sparse_tensor(values_tensor, indicies_tensor, dense_shape)
+
+        attr = helper.make_attribute("sparse_attr", sparse_tensor)
+        self.assertEqual(attr.name, "sparse_attr")
+        checker.check_sparse_tensor(helper.get_attribute_value(attr))
+        checker.check_attribute(attr)
+
+    def test_attr_sparse_tensor_repeated_protos(self):  # type: () -> None
+        dense_shape = [3, 3]
+        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
+        values_tensor = helper.make_tensor(name='sparse_values', data_type=TensorProto.FLOAT,
+                                        dims=[len(sparse_values)],
+                                        vals=np.array(sparse_values).astype(np.float32), raw=False)
+
+        linear_indicies = [2, 3, 5]
+        indicies_tensor = helper.make_tensor(name='indicies', data_type=TensorProto.INT64,
+                                        dims=[len(linear_indicies)],
+                                        vals=np.array(linear_indicies).astype(np.int64), raw=False)
+        sparse_tensor = helper.make_sparse_tensor(values_tensor, indicies_tensor, dense_shape)
+
+        repeated_sparse = [sparse_tensor, sparse_tensor]
+        attr = helper.make_attribute("sparse_attrs", repeated_sparse)
+        self.assertEqual(attr.name, "sparse_attrs")
+        checker.check_attribute(attr)
+        for s in helper.get_attribute_value(attr):
+            checker.check_sparse_tensor(s)
+
     def test_attr_repeated_graph_proto(self):  # type: () -> None
         graphs = [GraphProto(), GraphProto()]
         graphs[0].name = "a"
