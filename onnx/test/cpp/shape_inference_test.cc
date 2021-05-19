@@ -20,7 +20,8 @@ void ScanInferenceFunction(InferenceContext& ctx);
 
 namespace Test {
 
-static void CreateDims(TypeProto_Tensor& proto, int num_dims) {
+template<class Type>
+void CreateDims(Type& proto, int num_dims) {
   auto mutable_shape = proto.mutable_shape();
   mutable_shape->clear_dim();
 
@@ -28,8 +29,9 @@ static void CreateDims(TypeProto_Tensor& proto, int num_dims) {
     mutable_shape->add_dim();
 }
 
-static void SetDimValues(
-    TypeProto_Tensor& proto,
+template <class Type>
+void SetDimValues(
+    Type& proto,
     const std::vector<int>& values) {
   auto* mutable_shape = proto.mutable_shape();
   EXPECT_TRUE(mutable_shape->dim_size() == values.size());
@@ -42,8 +44,9 @@ static void SetDimValues(
   }
 }
 
-static void SetDimParams(
-    TypeProto_Tensor& proto,
+template <class Type>
+void SetDimParams(
+    Type& proto,
     const std::vector<const std::string*>& values) {
   auto mutable_shape = proto.mutable_shape();
   EXPECT_TRUE(mutable_shape->dim_size() == values.size());
@@ -56,7 +59,8 @@ static void SetDimParams(
   }
 }
 
-static void Dump(TypeProto_Tensor& t) {
+template <class Type>
+void Dump(const Type& t) {
   auto& s_shape = t.shape();
   auto num_dims = s_shape.dim_size();
   std::cout << num_dims << " dims. ";
@@ -90,6 +94,33 @@ TEST(ShapeInferenceTest, mergeShapeInfo_HasShape) {
   {
     TypeProto_Tensor source;
     TypeProto_Tensor target;
+
+    CreateDims(target, 1);
+    SetDimValues(target, {1});
+    mergeInShapeInfo(source, target);
+
+    Dump(target);
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim_size() == 1 && shape.dim(0).dim_value() == 1);
+  }
+  // source has shape, target doesn't
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
+
+    CreateDims(source, 1);
+    SetDimValues(source, {1});
+    mergeInShapeInfo(source, target);
+
+    Dump(target);
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim_size() == 1 && shape.dim(0).dim_value() == 1);
+  }
+
+  // source has no shape, target does
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
 
     CreateDims(target, 1);
     SetDimValues(target, {1});
@@ -159,10 +190,48 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
     EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
   }
 
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
+
+    CreateDims(source, 2);
+    SetDimValues(source, {-1, 2});
+
+    CreateDims(target, 2);
+    SetDimValues(target, {1, -1});
+
+    mergeInShapeInfo(source, target);
+
+    Dump(target);
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
+  }
+
+
   // prefer value over param,
   {
     TypeProto_Tensor source;
     TypeProto_Tensor target;
+
+    CreateDims(source, 2);
+    SetDimValues(source, {-1, 2});
+
+    CreateDims(target, 2);
+    SetDimValues(target, {1, 0});
+    // replace second dim with a param. the value from the source should be
+    // preferred
+    const std::string param = "A";
+    target.mutable_shape()->mutable_dim(1)->set_dim_param(param);
+
+    mergeInShapeInfo(source, target);
+
+    Dump(target);
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
+  }
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
 
     CreateDims(source, 2);
     SetDimValues(source, {-1, 2});
@@ -199,6 +268,20 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
         mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
   }
 
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
+
+    CreateDims(source, 2);
+    SetDimValues(source, {-1, 2});
+
+    CreateDims(target, 3);
+    SetDimValues(target, {1, -1, 1});
+
+    EXPECT_THROW(mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
+  }
+
+
   // mismatched dim values
   {
     TypeProto_Tensor source;
@@ -213,11 +296,41 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
     EXPECT_THROW(
         mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
   }
+
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
+
+    CreateDims(source, 2);
+    SetDimValues(source, {2, 2});
+
+    CreateDims(target, 2);
+    SetDimValues(target, {2, 1});
+
+    EXPECT_THROW(mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
+  }
 #endif
   // mismatched param value. prefer target
   {
     TypeProto_Tensor source;
     TypeProto_Tensor target;
+    const std::string param_a = "A";
+    const std::string param_b = "B";
+
+    CreateDims(source, 1);
+    SetDimParams(source, {&param_a});
+
+    CreateDims(target, 1);
+    SetDimParams(target, {&param_b});
+
+    mergeInShapeInfo(source, target);
+
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim(0).dim_param() == "B");
+  }
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
     const std::string param_a = "A";
     const std::string param_b = "B";
 
@@ -381,7 +494,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   valueTypesByName["loop_state_start"] = &loop_state_in_tensor;
   valueTypesByName["scan_op_in"] = &scan_in_tensor;
 
-  InferenceContextImpl ctx(scan, valueTypesByName, {}, &graphInfCtx);
+  InferenceContextImpl ctx(scan, valueTypesByName, {}, {} , & graphInfCtx);
   if (use_scan_opset8)
     ScanInferenceFunctionOpset8(ctx);
   else

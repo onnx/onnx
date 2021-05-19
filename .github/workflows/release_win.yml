@@ -7,10 +7,12 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*]
+    branches: [master, rel-*]
+  workflow_dispatch:
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: windows-latest
     strategy:
       matrix:
@@ -57,7 +59,7 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install numpy==1.16.6 wheel          
+        python -m pip install numpy==1.16.6 wheel          
             
     - name: Build ONNX wheel
       run: |        
@@ -97,13 +99,14 @@ jobs:
         } else {
           python setup.py bdist_wheel
         }
-        Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname} 
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname} 
   
 
     - name: Test the installed wheel
       run: |
         cd onnx
-        python -m pip install -q pytest==5.4.3 nbval
+        # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
+        python -m pip install -q pytest==5.4.3 nbval ipython==7.16.1
         pytest
 
     - name: Test the uploaded backend test data
@@ -125,3 +128,29 @@ jobs:
       run: |
         python -m pip install -q twine
         twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+
+    - name: Verify ONNX with the latest numpy
+      if: ${{ always() }}
+      run: |
+        cd onnx
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest
+
+    - name: Verify ONNX with the latest protobuf
+      if: ${{ always() }}
+      run: |
+        cd onnx
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest        
+
+    - name: Verify ONNX with ort-nightly
+      if: ${{ always() }}
+      run: |
+        # ort-nightly does not support x86
+        if ('${{ matrix.architecture }}' -eq 'x64') {
+          python -m pip install flatbuffers
+          python -m pip install -i https://test.pypi.org/simple/ ort-nightly
+          python onnx\onnx\test\test_with_ort.py
+        }
