@@ -404,6 +404,14 @@ class TestHelperTensorFunctions(unittest.TestCase):
         vi = helper.make_tensor_value_info('Y', TensorProto.FLOAT, ())
         checker.check_value_info(vi)
 
+    def test_make_sparse_tensor_value_info(self):  # type: () -> None
+        vi = helper.make_sparse_tensor_value_info('X', TensorProto.FLOAT, (2, 3))
+        checker.check_value_info(vi)
+
+        # scalar value
+        vi = helper.make_sparse_tensor_value_info('Y', TensorProto.FLOAT, ())
+        checker.check_value_info(vi)
+
 
 class TestPrintableGraph(unittest.TestCase):
 
