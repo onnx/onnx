@@ -2054,8 +2054,9 @@ expect(node, inputs=[x, s, bias, mean, var],
 
 ### <a name="Bernoulli"></a><a name="bernoulli">**Bernoulli**</a>
 
-  Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be
-  a tensor containing probabilities values range [0, 1] to be used for drawing the binary random number.
+  Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
+  containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
+  where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
 
 #### Version
 
@@ -2097,24 +2098,6 @@ This version of the operator has been available since version 15 of the default 
 #### Examples
 
 <details>
-<summary>bernoulli_wihout_dtype</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Bernoulli',
-    inputs=['x'],
-    outputs=['y'],
-)
-
-x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
-y = bernoulli_reference_implementation(x, np.float)
-expect(node, inputs=[x], outputs=[y], name='test_bernoulli')
-```
-
-</details>
-
-
-<details>
 <summary>bernoulli_with_dtype</summary>
 
 ```python
@@ -2128,6 +2111,24 @@ node = onnx.helper.make_node(
 x = np.random.uniform(0.0, 1.0, 10).astype(np.double)
 y = bernoulli_reference_implementation(x, np.double)
 expect(node, inputs=[x], outputs=[y], name='test_bernoulli_double')
+```
+
+</details>
+
+
+<details>
+<summary>bernoulli_without_dtype</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
+y = bernoulli_reference_implementation(x, np.float)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli')
 ```
 
 </details>
