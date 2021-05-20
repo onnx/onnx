@@ -1,6 +1,7 @@
-backend-test:L
-
-xy"	Bernoullitest_bernoulli_doubleZ
+backend-test:Z
+
+xy"	Bernoulli*
+dtype test_bernoulli_doubleZ
 x
 
 
@@ -8,6 +9,6 @@
 b
 y
 
-
+
 
 B

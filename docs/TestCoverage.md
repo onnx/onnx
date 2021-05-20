@@ -1422,7 +1422,7 @@ expect(node, inputs=[x, s, bias, mean, var],
 ### Bernoulli
 There are 2 test cases, listed as following:
 <details>
-<summary>bernoulli</summary>
+<summary>bernoulli_wihout_dtype</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -1432,23 +1432,24 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
-y = bernoulli_reference_implementation(x)
+y = bernoulli_reference_implementation(x, np.float)
 expect(node, inputs=[x], outputs=[y], name='test_bernoulli')
 ```
 
 </details>
 <details>
-<summary>bernoulli_double</summary>
+<summary>bernoulli_with_dtype</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Bernoulli',
     inputs=['x'],
     outputs=['y'],
+    dtype=onnx.TensorProto.DOUBLE,
 )
 
 x = np.random.uniform(0.0, 1.0, 10).astype(np.double)
-y = bernoulli_reference_implementation(x)
+y = bernoulli_reference_implementation(x, np.double)
 expect(node, inputs=[x], outputs=[y], name='test_bernoulli_double')
 ```
 

@@ -964,40 +964,45 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx,
                 const OpSchema& schema,
                 FunctionProto& functionProto) -> bool {
+              if (ctx.getInputType(0) == nullptr) {
+                // we cannot create a correct function body without knowing the input type
+                return false;
+              }
+              auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
               auto dtype = ctx.getAttribute("dtype") != nullptr
               ? static_cast<TensorProto_DataType>(ctx.getAttribute("dtype")->i())
-              : TensorProto_DataType::TensorProto_DataType_FLOAT;
+              : input_type;
               auto func_nodes = FunctionBodyHelper::BuildNodes({
-                  // nodes: {outputs, op, inputs, attributes}
-                  // clang-format off
-                {
-                    {"X_random"}, 
-                    "RandomUniformLike",
-                    {"input"},
-                    {
-                        MakeAttribute("high", 1.0f),
-                        MakeAttribute("low", 0.f),
-                        MakeAttribute("dtype", (int64_t)dtype)
-                    }
-                },
-                {
-                    {"X_greater"},
-                    "Greater",
-                    {"X_random", "input"}
-                },
-                {
-                    {"output"},
-                    "Cast",
-                    {"X_greater"},
-                    {MakeAttribute("to", (int64_t)(dtype))}
-                }
-                  // clang-format on
-              });
+                    // nodes: {outputs, op, inputs, attributes}
+                    // clang-format off
+                  {
+                      {"X_random"},
+                      "RandomUniformLike",
+                      {"input"},
+                      {
+                          MakeAttribute("high", 1.0f),
+                          MakeAttribute("low", 0.f),
+                          MakeAttribute("dtype", (int64_t)(dtype))
+                      }
+                  },
+                  {
+                      {"X_greater"},
+                      "Greater",
+                      {"X_random", "input"}
+                  },
+                  {
+                      {"output"},
+                      "Cast",
+                      {"X_greater"},
+                      {MakeAttribute("to", (int64_t)(dtype))}
+                  }
+                    // clang-format on
+                });
+
               for (const auto& node : func_nodes) {
                 auto new_node = functionProto.add_node();
                 new_node->CopyFrom(node);
               }
-
               schema.BuildFunction(functionProto);
               return true;
             }));
