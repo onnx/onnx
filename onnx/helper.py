@@ -408,6 +408,8 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
         return attr.s
     if attr.type == AttributeProto.TENSOR:
         return attr.t
+    if attr.type == AttributeProto.SPARSE_TENSOR:
+        return attr.sparse_tensor
     if attr.type == AttributeProto.GRAPH:
         return attr.g
     if attr.type == AttributeProto.FLOATS:
@@ -418,6 +420,8 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
         return list(attr.strings)
     if attr.type == AttributeProto.TENSORS:
         return list(attr.tensors)
+    if attr.type == AttributeProto.SPARSE_TENSORS:
+        return list(attr.sparse_tensors)
     if attr.type == AttributeProto.GRAPHS:
         return list(attr.graphs)
     raise ValueError("Unsupported ONNX attribute: {}".format(attr))
@@ -474,7 +478,60 @@ def make_tensor_value_info(
             else:
                 raise ValueError(
                     'Invalid item in shape: {}. '
-                    'Needs to of integer_types or text_type.'.format(d))
+                    'Needs to be of integer_types or text_type.'.format(d))
+
+            if shape_denotation:
+                dim.denotation = shape_denotation[i]
+
+    return value_info_proto
+
+
+def make_sparse_tensor_value_info(
+        name,  # type: Text
+        elem_type,  # type: int
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        doc_string="",  # type: Text
+        shape_denotation=None,  # type: Optional[List[Text]]
+):  # type: (...) -> ValueInfoProto
+    """Makes a ValueInfoProto based on the data type and shape."""
+    value_info_proto = ValueInfoProto()
+    value_info_proto.name = name
+    if doc_string:
+        value_info_proto.doc_string = doc_string
+
+    sparse_tensor_type_proto = value_info_proto.type.sparse_tensor_type
+    sparse_tensor_type_proto.elem_type = elem_type
+
+    sparse_tensor_shape_proto = sparse_tensor_type_proto.shape
+
+    if shape is not None:
+        # You might think this is a no-op (extending a normal Python
+        # list by [] certainly is), but protobuf lists work a little
+        # differently; if a field is never set, it is omitted from the
+        # resulting protobuf; a list that is explicitly set to be
+        # empty will get an (empty) entry in the protobuf. This
+        # difference is visible to our consumers, so make sure we emit
+        # an empty shape!
+        sparse_tensor_shape_proto.dim.extend([])
+
+        if shape_denotation:
+            if len(shape_denotation) != len(shape):
+                raise ValueError(
+                    'Invalid shape_denotation. '
+                    'Must be of the same length as shape.')
+
+        for i, d in enumerate(shape):
+            dim = sparse_tensor_shape_proto.dim.add()
+            if d is None:
+                pass
+            elif isinstance(d, integer_types):
+                dim.dim_value = d
+            elif isinstance(d, text_type):
+                dim.dim_param = d
+            else:
+                raise ValueError(
+                    'Invalid item in shape: {}. '
+                    'Needs to be of integer_types or text_type.'.format(d))
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
