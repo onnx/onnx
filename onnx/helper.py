@@ -532,7 +532,7 @@ def make_sparse_tensor_value_info(
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
-    """Makes a ValueInfoProto based on the data type and shape."""
+    """Makes a SparseTensor ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
     if doc_string:
@@ -615,7 +615,7 @@ def make_value_info(
         type_proto,  # type: TypeProto
         doc_string="",  # type: Text
 ):  # type: (...) -> ValueInfoProto
-    """Makes a ValueInfoProto based on the type_protos, with element type and shape."""
+    """Makes a ValueInfoProto with the given type_proto."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
     if doc_string:
@@ -644,7 +644,7 @@ def make_tensor_sequence_value_info(
         doc_string="",  # type: Text
         elem_shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
-    """Makes a ValueInfoProto based on the data type and shape for Sequence."""
+    """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
     if doc_string:
