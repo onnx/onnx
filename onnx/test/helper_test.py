@@ -427,6 +427,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         vi = helper.make_sparse_tensor_value_info('Y', TensorProto.FLOAT, ())
         checker.check_value_info(vi)
 
+
 class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
     def test_make_optional(self):  # type: () -> None
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
