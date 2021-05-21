@@ -50,6 +50,18 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 # Installation
 
+## Prerequisites
+
+```
+numpy >= 1.16.6
+protobuf >= 3.11.3
+six
+typing-extensions>=3.6.2.1
+```
+
+Using older protobuf or numpy might cause compatibility issues so using the version here is highly recommended.
+
+
 ## Binaries
 
 A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
