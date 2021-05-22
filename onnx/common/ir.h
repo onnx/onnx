@@ -601,6 +601,10 @@ public:
     return outputs_.back();
   }
 
+  void popOutput() {
+    outputs_.pop_back();
+  }
+
   void eraseOutput(size_t i);
 
   // Insert unattached 'this' node after 'n' in the topological order.
@@ -1046,9 +1050,18 @@ public:
     return output_;
   }
 
+  // To add a input into a graph
+  // Push one more output Value into the graph's input_
   Value * addInput() {
     return input_->addOutput();
   }
+  
+  // For addInput, it does addOutput to the input_
+  // So for removeInput, it does popOutput to the input_
+  void removeLastInput() {
+    input_->popOutput();
+  }
+
   void eraseInput(size_t i) {
     input_->eraseOutput(i);
   }

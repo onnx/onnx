@@ -11,7 +11,7 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested);
+std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, const int ir_version);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   Tensor ret;
@@ -94,7 +94,7 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   return ret;
 }
 
-void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n) {
+void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, const int ir_version) {
   Symbol sym = Symbol(ap.name());
   switch (ap.type()) {
     case ONNX_NAMESPACE::AttributeProto_AttributeType_FLOAT:
@@ -146,13 +146,13 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n) {
       break;
     }
     case ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPH:
-      n->g_(sym, graphProtoToGraph(ap.g(), true));
+      n->g_(sym, graphProtoToGraph(ap.g(), true, ir_version));
       break;
     case ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPHS: {
       std::vector<std::shared_ptr<Graph>> graphs;
       graphs.reserve(ap.graphs_size());
       for (int i = 0; i < ap.graphs_size(); i++) {
-        graphs.push_back(graphProtoToGraph(ap.graphs(i), true));
+        graphs.push_back(graphProtoToGraph(ap.graphs(i), true, ir_version));
       }
       n->gs_(sym, std::move(graphs));
       break;
@@ -167,9 +167,9 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n) {
   }
 }
 
-void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n) {
+void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version) {
   for (int i = 0; i < np.attribute_size(); i++) {
-    convertAttribute(np.attribute(i), n);
+    convertAttribute(np.attribute(i), n, ir_version);
   }
 }
 
@@ -193,7 +193,8 @@ std::vector<Dimension> tensorShapeProtoToDimensions(
 
 std::unique_ptr<Graph> graphProtoToGraph(
     const ONNX_NAMESPACE::GraphProto& gp,
-    bool nested) {
+    bool nested,
+    const int ir_version) {
   std::unique_ptr<Graph> g(new Graph());
 
   if (gp.has_name()) {
@@ -262,7 +263,7 @@ std::unique_ptr<Graph> graphProtoToGraph(
       out->setUniqueName(np.output(j));
       value_by_name_of[np.output(j)] = out;
     }
-    convertAttributes(np, n);
+    convertAttributes(np, n, ir_version);
     std::vector<std::string> inputs;
     inputs.reserve(np.input_size());
     for (int j = 0; j < np.input_size(); j++) {
@@ -279,7 +280,21 @@ std::unique_ptr<Graph> graphProtoToGraph(
       n->setDomain(np.domain());
     }
   }
-
+  // If ir_version >= 4, initializer does not have to be included in input
+  // Add value_info from initializer
+  // Store for input recovery
+  size_t original_input_size = g->inputs().size();
+  if (ir_version >= 4) {
+    for (int i = 0; i < gp.initializer_size(); ++i) {
+      auto vip = tensorProtoToTensor(gp.initializer(i));
+      // Only update input if input does not exists
+      if (value_by_name_of.count(vip.name()) == 0) {
+        // Add temp input from initializer to get valid value_info
+        Value* added_input = g->addInitializerAndInput(vip);
+        value_by_name_of[vip.name()] = added_input;
+      }
+    }
+  }
   for (auto n : g->nodes()) {
     auto search = inputs_by_node.find(n);
     if (search == inputs_by_node.end()) {
@@ -345,7 +360,11 @@ std::unique_ptr<Graph> graphProtoToGraph(
     auto init = tensorProtoToTensor(gp.initializer(i));
     g->addInitializer(init, init.name());
   }
-
+  // Remove those inputs come from initializer
+  // Stop removing when the input size is same as the original one
+  while (g->inputs().size() != original_input_size) {
+    g->removeLastInput();
+  }
   return g;
 }
 
@@ -356,7 +375,7 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
     return nullptr;
   }
 
-  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
+  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false, mp.ir_version()));
   for (int i = 0; i < mp.opset_import_size(); i++) {
     OpSetID new_opset_version(
       mp.opset_import(i).domain(), mp.opset_import(i).version());
