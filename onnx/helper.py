@@ -484,9 +484,9 @@ def make_tensor_type_proto(
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> TypeProto
     """Makes a Tensor TypeProto based on the data type and shape."""
-    value_info_proto = ValueInfoProto()
 
-    tensor_type_proto = value_info_proto.type.tensor_type
+    type_proto = TypeProto()
+    tensor_type_proto = type_proto.tensor_type
     tensor_type_proto.elem_type = elem_type
     tensor_shape_proto = tensor_type_proto.shape
 
@@ -522,7 +522,7 @@ def make_tensor_type_proto(
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
 
-    return value_info_proto.type
+    return type_proto
 
 
 def make_sparse_tensor_value_info(
@@ -549,9 +549,9 @@ def make_sparse_tensor_type_proto(
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> TypeProto
     """Makes a SparseTensor TypeProto based on the data type and shape."""
-    value_info_proto = ValueInfoProto()
 
-    sparse_tensor_type_proto = value_info_proto.type.sparse_tensor_type
+    type_proto = TypeProto()
+    sparse_tensor_type_proto = type_proto.sparse_tensor_type
     sparse_tensor_type_proto.elem_type = elem_type
     sparse_tensor_shape_proto = sparse_tensor_type_proto.shape
 
@@ -587,15 +587,14 @@ def make_sparse_tensor_type_proto(
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
 
-    return value_info_proto.type
+    return type_proto
 
 
 def make_sequence_type_proto(
         inner_type_proto,  # type: TypeProto
 ):  # type: (...) -> TypeProto
     """Makes a sequence TypeProto."""
-    value_info_proto = ValueInfoProto()
-    type_proto = value_info_proto.type
+    type_proto = TypeProto()
     type_proto.sequence_type.elem_type.CopyFrom(inner_type_proto)
     return type_proto
 
@@ -604,8 +603,7 @@ def make_optional_type_proto(
         inner_type_proto,  # type: TypeProto
 ):  # type: (...) -> TypeProto
     """Makes an optional TypeProto."""
-    value_info_proto = ValueInfoProto()
-    type_proto = value_info_proto.type
+    type_proto = TypeProto()
     type_proto.optional_type.elem_type.CopyFrom(inner_type_proto)
     return type_proto
 
