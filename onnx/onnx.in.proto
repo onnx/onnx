@@ -97,6 +97,7 @@ enum Version {
 
   // IR VERSION 8 published on <TBD>
   // Introduce TypeProto.SparseTensor
+  // Introduce TypeProto.Optional
   IR_VERSION = 0x0000000000000008;
 
 }

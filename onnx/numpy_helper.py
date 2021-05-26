@@ -299,7 +299,7 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
 def from_optional(
         opt,  # type: Optional[Any]
         name=None,  # type: Optional[Text]
-        dtype=None  # type: Optional[OptionalProto.DataType]
+        dtype=None  # type: Optional[int]
 ):  # type: (...) -> OptionalProto
     """Converts an optional value into a Optional def.
 
@@ -308,7 +308,7 @@ def from_optional(
         name: (optional) the name of the optional.
         dtype: (optional) type of element in the input, used for specifying
                           optional values when converting empty none. dtype must
-                          be a valid OptionalProto.DataType
+                          be a valid OptionalProto.DataType value
     Returns:
         optional: the converted optional def.
     """
@@ -319,6 +319,8 @@ def from_optional(
 
     if dtype:
         # dtype must be a valid OptionalProto.DataType
+        valid_dtypes = [v for v in OptionalProto.DataType.values()]
+        assert dtype in valid_dtypes
         elem_type = dtype
     elif isinstance(opt, dict):
         elem_type = OptionalProto.MAP
