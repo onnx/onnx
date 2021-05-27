@@ -460,24 +460,6 @@ def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
     return value_info_proto
 
 
-def make_tensor_value_info(
-        name,  # type: Text
-        elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int]]]
-        doc_string="",  # type: Text
-        shape_denotation=None,  # type: Optional[List[Text]]
-):  # type: (...) -> ValueInfoProto
-    """Makes a ValueInfoProto based on the data type and shape."""
-    value_info_proto = ValueInfoProto()
-    value_info_proto.name = name
-    if doc_string:
-        value_info_proto.doc_string = doc_string
-
-    tensor_type_proto = make_tensor_type_proto(elem_type, shape, shape_denotation)
-    value_info_proto.type.CopyFrom(tensor_type_proto)
-    return value_info_proto
-
-
 def make_tensor_type_proto(
         elem_type,  # type: int
         shape,  # type: Optional[Sequence[Union[Text, int]]]
@@ -525,21 +507,21 @@ def make_tensor_type_proto(
     return type_proto
 
 
-def make_sparse_tensor_value_info(
+def make_tensor_value_info(
         name,  # type: Text
         elem_type,  # type: int
         shape,  # type: Optional[Sequence[Union[Text, int]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
-    """Makes a SparseTensor ValueInfoProto based on the data type and shape."""
+    """Makes a ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
     if doc_string:
         value_info_proto.doc_string = doc_string
 
-    sparse_tensor_type_proto = make_sparse_tensor_type_proto(elem_type, shape, shape_denotation)
-    value_info_proto.type.sparse_tensor_type.CopyFrom(sparse_tensor_type_proto.sparse_tensor_type)
+    tensor_type_proto = make_tensor_type_proto(elem_type, shape, shape_denotation)
+    value_info_proto.type.CopyFrom(tensor_type_proto)
     return value_info_proto
 
 
@@ -588,6 +570,24 @@ def make_sparse_tensor_type_proto(
                 dim.denotation = shape_denotation[i]
 
     return type_proto
+
+
+def make_sparse_tensor_value_info(
+        name,  # type: Text
+        elem_type,  # type: int
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        doc_string="",  # type: Text
+        shape_denotation=None,  # type: Optional[List[Text]]
+):  # type: (...) -> ValueInfoProto
+    """Makes a SparseTensor ValueInfoProto based on the data type and shape."""
+    value_info_proto = ValueInfoProto()
+    value_info_proto.name = name
+    if doc_string:
+        value_info_proto.doc_string = doc_string
+
+    sparse_tensor_type_proto = make_sparse_tensor_type_proto(elem_type, shape, shape_denotation)
+    value_info_proto.type.sparse_tensor_type.CopyFrom(sparse_tensor_type_proto.sparse_tensor_type)
+    return value_info_proto
 
 
 def make_sequence_type_proto(
