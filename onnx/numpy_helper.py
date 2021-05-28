@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import sys
 
 import numpy as np  # type: ignore
-from onnx import TensorProto, MapProto, SequenceProto, TypeProto
+from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List, Dict
@@ -270,6 +270,78 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
         map.keys.extend(keys)
     map.values.CopyFrom(value_seq)
     return map
+
+
+def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
+    """Converts an optional def to a Python optional.
+
+    Inputs:
+        optional: an OptionalProto object.
+    Returns:
+        opt: the converted optional.
+    """
+    opt = None  # type: Optional[Any]
+    elem_type = optional.elem_type
+    value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
+    value = getattr(optional, value_field)
+    # TODO: create a map and replace conditional branches
+    if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:
+        opt = to_array(value)
+    elif elem_type == OptionalProto.SEQUENCE:
+        opt = to_list(value)
+    elif elem_type == OptionalProto.MAP:
+        opt = to_dict(value)
+    else:
+        raise TypeError("The element type in the input optional is not supported.")
+    return opt
+
+
+def from_optional(
+        opt,  # type: Optional[Any]
+        name=None,  # type: Optional[Text]
+        dtype=None  # type: Optional[int]
+):  # type: (...) -> OptionalProto
+    """Converts an optional value into a Optional def.
+
+    Inputs:
+        opt: a Python optional
+        name: (optional) the name of the optional.
+        dtype: (optional) type of element in the input, used for specifying
+                          optional values when converting empty none. dtype must
+                          be a valid OptionalProto.DataType value
+    Returns:
+        optional: the converted optional def.
+    """
+    # TODO: create a map and replace conditional branches
+    optional = OptionalProto()
+    if name:
+        optional.name = name
+
+    if dtype:
+        # dtype must be a valid OptionalProto.DataType
+        valid_dtypes = [v for v in OptionalProto.DataType.values()]
+        assert dtype in valid_dtypes
+        elem_type = dtype
+    elif isinstance(opt, dict):
+        elem_type = OptionalProto.MAP
+    elif isinstance(opt, list):
+        elem_type = OptionalProto.SEQUENCE
+    else:
+        elem_type = OptionalProto.TENSOR
+
+    optional.elem_type = elem_type
+
+    if opt is not None:
+        if elem_type == OptionalProto.TENSOR:
+            optional.tensor_value.CopyFrom(from_array(opt))
+        elif elem_type == OptionalProto.SEQUENCE:
+            optional.sequence_value.CopyFrom(from_list(opt))
+        elif elem_type == OptionalProto.MAP:
+            optional.map_value.CopyFrom(from_dict(opt))
+        else:
+            raise TypeError("The element type in the input is not a tensor, "
+                            "sequence, or map and is not supported.")
+    return optional
 
 
 def convert_endian(tensor):  # type: (TensorProto) -> None

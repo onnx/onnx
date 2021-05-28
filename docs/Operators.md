@@ -96,7 +96,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
 |<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
-|<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
+|<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
 |<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
@@ -1878,6 +1878,11 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   
   current_mean = ReduceMean(X, axis=all_except_channel_index)
   current_var =  ReduceVar(X, axis=all_except_channel_index)
+  
+  Notice that ReduceVar refers to the population variance, and it equals to
+  sum(sqrd(x_i - x_avg)) / N
+  where N is the population size (this formula does not use sample size N - 1).
+  
   ```
   
   When training_mode=False:
@@ -1915,9 +1920,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dd>Scale tensor of shape (C).</dd>
 <dt><tt>B</tt> (differentiable) : T</dt>
 <dd>Bias tensor of shape (C).</dd>
-<dt><tt>input_mean</tt> (differentiable) : T</dt>
+<dt><tt>input_mean</tt> (differentiable) : U</dt>
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
-<dt><tt>input_var</tt> (differentiable) : T</dt>
+<dt><tt>input_var</tt> (differentiable) : U</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
@@ -1926,17 +1931,19 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>running_mean</tt> (optional, non-differentiable) : T</dt>
+<dt><tt>running_mean</tt> (optional, non-differentiable) : U</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
-<dt><tt>running_var</tt> (optional, non-differentiable) : T</dt>
-<dd>The running variance after the BatchNormalization operator.</dd>
+<dt><tt>running_var</tt> (optional, non-differentiable) : U</dt>
+<dd>The running variance after the BatchNormalization operator. This op uses the population size (N) for calculating variance, and not the sample size N-1.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>U</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain mean and variance types to float tensors. It allows all float type for U.</dd>
 </dl>
 
 
@@ -1946,12 +1953,12 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <summary>batchnormalization</summary>
 
 ```python
-# input size: (1, 2, 1, 3)
-x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
-s = np.array([1.0, 1.5]).astype(np.float32)
-bias = np.array([0, 1]).astype(np.float32)
-mean = np.array([0, 3]).astype(np.float32)
-var = np.array([1, 1.5]).astype(np.float32)
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
 y = _batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
 
 node = onnx.helper.make_node(
@@ -1960,7 +1967,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-# output size: (1, 2, 1, 3)
+# output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
        name='test_batchnorm_example')
 
@@ -1992,12 +1999,12 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
 <summary>train</summary>
 
 ```python
-# input size: (1, 2, 1, 3)
-x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
-s = np.array([1.0, 1.5]).astype(np.float32)
-bias = np.array([0, 1]).astype(np.float32)
-mean = np.array([0, 3]).astype(np.float32)
-var = np.array([1, 1.5]).astype(np.float32)
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
 # using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
 # working around by using np.byte(1).astype(bool)
 training_mode = 1
@@ -2010,7 +2017,7 @@ node = onnx.helper.make_node(
     training_mode=training_mode
 )
 
-# output size: (1, 2, 1, 3)
+# output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias, mean, var],
        outputs=[y, output_mean, output_var],
        name='test_batchnorm_example_training_mode')
@@ -3501,7 +3508,7 @@ expect(convinteger_node, inputs=[x, w, x_zero_point], outputs=[y],
   output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
   
     total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
-    If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
+    If (auto_pads == SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
   
       
@@ -3807,7 +3814,7 @@ W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
                 [1., 1., 1.],
                 [1., 1., 1.]]]]).astype(np.float32)
 
-node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], auto_pad="SAME_LOWER", strides=[2, 2])
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], auto_pad="SAME_UPPER", strides=[2, 2])
 
 y = np.array([[[[0., 0., 1., 1., 3., 2.],
                 [0., 0., 1., 1., 3., 2.],
@@ -6377,10 +6384,8 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     ]
     axis = 1
     output = [
-        [
-          [1, 1],
-          [4, 3],
-        ],
+        [1, 1],
+        [4, 3],
     ]
   ```
   Example 2:
@@ -6396,10 +6401,8 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     ]
     axis = 0
     output = [
-        [
-          [4, 8, 3],
-          [7, 2, 3],
-        ],
+        [4, 8, 3],
+        [7, 2, 3],
     ]
   ```
 
@@ -7064,10 +7067,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(1, 3, 5, 5).astype(np.float32)
-spatial_shape = np.ndim(x) - 2
-y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
-for _ in range(spatial_shape):
-    y = np.expand_dims(y, -1)
+y = np.mean(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
 expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
 ```
 
@@ -7182,10 +7182,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(1, 3, 5, 5).astype(np.float32)
-spatial_shape = np.ndim(x) - 2
-y = np.max(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
-for _ in range(spatial_shape):
-    y = np.expand_dims(y, -1)
+y = np.max(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
 expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool')
 ```
 
@@ -7522,9 +7519,8 @@ expect(node, inputs=[x], outputs=[y],
   
    Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
   
-  The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which Hardmax will be performed.
-  The output tensor has the same shape
+  The "axis" attribute indicates the dimension along which Hardmax
+  will be performed. The output tensor has the same shape
   and contains the Hardmax values of the corresponding input.
 
 #### Version
@@ -7540,7 +7536,7 @@ Other versions of this operator: <a href="Changelog.md#Hardmax-1">1</a>, <a href
 <dd>
 Describes the dimension Hardmax will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).,
+from the back. Accepted range is [-r, r-1] where r = rank(input).
 </dd>
 </dl>
 
@@ -7548,14 +7544,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
+<dd>The input tensor of rank >= axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
+<dd>The output values with the same shape as the input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -7851,8 +7847,8 @@ expect(if_node, inputs=[cond], outputs=[res], name='test_if',
 # Given a bool scalar input cond.
 # return constant sequence x if cond is True, otherwise return constant sequence y.
 
-then_out = onnx.helper.make_sequence_value_info('then_out', onnx.TensorProto.FLOAT, shape=[5])
-else_out = onnx.helper.make_sequence_value_info('else_out', onnx.TensorProto.FLOAT, shape=[5])
+then_out = onnx.helper.make_tensor_sequence_value_info('then_out', onnx.TensorProto.FLOAT, shape=[5])
+else_out = onnx.helper.make_tensor_sequence_value_info('else_out', onnx.TensorProto.FLOAT, shape=[5])
 
 x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
 y = [np.array([5, 4, 3, 2, 1]).astype(np.float32)]
@@ -8883,9 +8879,8 @@ expect(node, inputs=[x], outputs=[y],
   
    LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
   
-  The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which LogSoftmax will be performed.
-  The output tensor has the same shape
+  The "axis" attribute indicates the dimension along which LogSoftmax
+  will be performed. The output tensor has the same shape
   and contains the LogSoftmax values of the corresponding input.
 
 #### Version
@@ -8901,7 +8896,7 @@ Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a h
 <dd>
 Describes the dimension LogSoftmax will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).,
+from the back. Accepted range is [-r, r-1] where r = rank(input).
 </dd>
 </dl>
 
@@ -8909,14 +8904,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
+<dd>The input tensor of rank >= axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
+<dd>The output values with the same shape as the input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -9327,8 +9322,8 @@ expect(node, inputs=[trip_count, cond, y], outputs=[res_y, res_scan],
 # Return a sequence of tensors of
 #   [[x1], [x1, x2], ..., [x1, ..., xN]]
 
-seq_in = onnx.helper.make_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, None)
-seq_out = onnx.helper.make_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+seq_in = onnx.helper.make_tensor_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, None)
+seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
 cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
 cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
 iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
@@ -12919,9 +12914,9 @@ for mode in ['edge', 'reflect']:
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 15 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pow-1">1</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-12">12</a>
+Other versions of this operator: <a href="Changelog.md#Pow-1">1</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-13">13</a>
 
 #### Inputs
 
@@ -12944,7 +12939,7 @@ Other versions of this operator: <a href="Changelog.md#Pow-1">1</a>, <a href="Ch
 <dl>
 <dt><tt>T</tt> : tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input X and output types to float/int tensors.</dd>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input Y types to float/int tensors.</dd>
 </dl>
 
@@ -19179,9 +19174,8 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
   
    Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
   
-  The input does not need to explicitly be a 2D vector. The "axis" attribute
-  indicates the dimension along which Softmax will be performed.
-  The output tensor has the same shape
+  The "axis" attribute indicates the dimension along which Softmax
+  will be performed. The output tensor has the same shape
   and contains the Softmax values of the corresponding input.
 
 #### Version
@@ -19197,7 +19191,7 @@ Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href
 <dd>
 Describes the dimension Softmax will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).,
+from the back. Accepted range is [-r, r-1] where r = rank(input).
 </dd>
 </dl>
 
@@ -19205,14 +19199,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
+<dd>The input tensor of rank >= axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
+<dd>The output values with the same shape as the input tensor.</dd>
 </dl>
 
 #### Type Constraints

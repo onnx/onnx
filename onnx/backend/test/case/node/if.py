@@ -71,8 +71,8 @@ class If(Base):
         # Given a bool scalar input cond.
         # return constant sequence x if cond is True, otherwise return constant sequence y.
 
-        then_out = onnx.helper.make_sequence_value_info('then_out', onnx.TensorProto.FLOAT, shape=[5])
-        else_out = onnx.helper.make_sequence_value_info('else_out', onnx.TensorProto.FLOAT, shape=[5])
+        then_out = onnx.helper.make_tensor_sequence_value_info('then_out', onnx.TensorProto.FLOAT, shape=[5])
+        else_out = onnx.helper.make_tensor_sequence_value_info('else_out', onnx.TensorProto.FLOAT, shape=[5])
 
         x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
         y = [np.array([5, 4, 3, 2, 1]).astype(np.float32)]

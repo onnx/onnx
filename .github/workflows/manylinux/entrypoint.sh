@@ -16,20 +16,17 @@ if [ ! -z "$SYSTEM_PACKAGES" ]; then
 fi
 
 # Build protobuf
-export NUM_PROCESSOR=`grep -c ^processor /proc/cpuinfo`
-
 ONNX_PATH=$(pwd)
 cd ..
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout 3.11.x
+git checkout v3.11.3
 git submodule update --init --recursive
 mkdir build_source && cd build_source
 
 cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j${NUM_PROCESSOR}
+make -j$(nproc)
 make install
-ldconfig
 cd $ONNX_PATH
 
 # Compile wheels
@@ -72,8 +69,8 @@ if [[ -f "$failed_wheels" ]]; then
     exit 1
 fi
 
-# Remove useless *-linux*.whl; only keep -manylinux*.whl
+# Remove useless *-linux*.whl; only keep manylinux*.whl
 rm -f dist/*-linux*.whl
 
 echo "Succesfully build wheels:"
-find . -type f -iname "*-manylinux*.whl"
+find . -type f -iname "*manylinux*.whl"

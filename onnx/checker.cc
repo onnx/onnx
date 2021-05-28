@@ -68,12 +68,12 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
 #ifdef ONNX_ML
     case TypeProto::kOpaqueType:
       break;
+#endif
     case TypeProto::kSparseTensorType: {
       const auto& type = value_info.type().sparse_tensor_type();
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
-#endif
 
     default:
       fail_check("Unrecognized type value case (value_info name: ", value_info.name(), "): ", value_case);
@@ -234,6 +234,26 @@ void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
         sequence.name(),
         ", elem_type: ",
         sequence.elem_type(),
+        ") is not have a valid element type.");
+  }
+}
+
+void check_optional(const OptionalProto& optional, const CheckerContext& ctx) {
+  enforce_has_field(optional, elem_type);
+  if (optional.elem_type() == OptionalProto::TENSOR) {
+    check_tensor(optional.tensor_value(), ctx);
+  } else if (optional.elem_type() == OptionalProto::SPARSE_TENSOR) {
+    check_sparse_tensor(optional.sparse_tensor_value(), ctx);
+  } else if (optional.elem_type() == OptionalProto::SEQUENCE) {
+    check_sequence(optional.sequence_value(), ctx);
+  } else if (optional.elem_type() == OptionalProto::MAP) {
+    check_map(optional.map_value(), ctx);
+  } else {
+    fail_check(
+        "Optional ( Structure name: ",
+        optional.name(),
+        ", elem_type: ",
+        optional.elem_type(),
         ") is not have a valid element type.");
   }
 }
