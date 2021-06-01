@@ -48,6 +48,7 @@
 #include "onnx/version_converter/adapters/topk_9_10.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
 #include "onnx/version_converter/adapters/softmax_12_13.h"
+#include "onnx/version_converter/adapters/batch_normalization_13_14.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -733,6 +734,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<AddLayout>("GRU"));
       registerAdapter(make_unique<AddLayout>("LSTM"));
       registerAdapter(make_unique<AddLayout>("RNN"));
+      registerAdapter(make_unique<BatchNormalization_13_14>());
 
       /******** 14 -> 13 ********/
       registerAdapter(make_unique<RemoveLayout>("GRU"));
