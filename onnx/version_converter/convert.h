@@ -356,8 +356,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(9), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(9), OpSetID(10)));
-      registerAdapter(make_unique<CompatibleAdapter>("Upsample",
-        OpSetID(9), OpSetID(10)));
       registerAdapter(make_unique<Slice_9_10>());
       registerAdapter(make_unique<TopK_9_10>());
 
@@ -431,8 +429,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>("ReduceSumSquare",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Scan",
-        OpSetID(10), OpSetID(11)));
-      registerAdapter(make_unique<CompatibleAdapter>("Scatter",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Softmax",
         OpSetID(10), OpSetID(11)));
