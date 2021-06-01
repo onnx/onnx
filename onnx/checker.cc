@@ -68,12 +68,12 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
 #ifdef ONNX_ML
     case TypeProto::kOpaqueType:
       break;
+#endif
     case TypeProto::kSparseTensorType: {
       const auto& type = value_info.type().sparse_tensor_type();
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
-#endif
 
     default:
       fail_check("Unrecognized type value case (value_info name: ", value_info.name(), "): ", value_case);
@@ -234,6 +234,26 @@ void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
         sequence.name(),
         ", elem_type: ",
         sequence.elem_type(),
+        ") is not have a valid element type.");
+  }
+}
+
+void check_optional(const OptionalProto& optional, const CheckerContext& ctx) {
+  enforce_has_field(optional, elem_type);
+  if (optional.elem_type() == OptionalProto::TENSOR) {
+    check_tensor(optional.tensor_value(), ctx);
+  } else if (optional.elem_type() == OptionalProto::SPARSE_TENSOR) {
+    check_sparse_tensor(optional.sparse_tensor_value(), ctx);
+  } else if (optional.elem_type() == OptionalProto::SEQUENCE) {
+    check_sequence(optional.sequence_value(), ctx);
+  } else if (optional.elem_type() == OptionalProto::MAP) {
+    check_map(optional.map_value(), ctx);
+  } else {
+    fail_check(
+        "Optional ( Structure name: ",
+        optional.name(),
+        ", elem_type: ",
+        optional.elem_type(),
         ") is not have a valid element type.");
   }
 }
@@ -619,7 +639,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
             "Nodes in a graph must be topologically sorted, however input '",
             input,
             "' of node: \n",
-            ProtoDebugString(node),
+            "name: ", node.name(), " OpType: ", node.op_type(),
             "\n is not output of any previous nodes.");
       }
     }
@@ -633,7 +653,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     }
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
-        ex.AppendContext("Bad node spec: " + ProtoDebugString(node));
+        ex.AppendContext(
+            "Bad node spec for node. Name: " + node.name() + " OpType: " + node.op_type());
         ONNX_THROW_EX(ex);
       });
     }
@@ -732,7 +753,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
             "Nodes in a function must be topologically sorted, however input '",
             input,
             "' of node: \n",
-            ProtoDebugString(node),
+            "Name: ", node.name(), " OpType: ", node.op_type(),
             "\n is neither output of any previous nodes nor input of the function.");
       }
     }
