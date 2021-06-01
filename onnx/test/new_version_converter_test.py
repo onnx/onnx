@@ -31,7 +31,7 @@ class TestVersionConverterNew(unittest.TestCase):
         attrs={},  # type: Dict[Text, Any]
         seq_inputs=[],  # type: List[int]
         seq_outputs=[],  # type: List[int]
-        to_opset=None  # type: int
+        to_opset=None  # type: Union[int, None]
     ):  # type: (...) -> None
         global tested_ops
         tested_ops.append(op)
@@ -50,9 +50,9 @@ class TestVersionConverterNew(unittest.TestCase):
                 [[0] if isinstance(shape, str) else shape for shape in input_shapes]
         )
         inputs = [
-            helper.make_tensor_value_info(name, ttype, shape) if is_seq == 0
-            else helper.make_sequence_value_info(name, ttype, shape)
-            for (name, ttype, shape, is_seq)
+            helper.make_tensor_value_info(name, ttype, shape) if is_sequence == 0
+            else helper.make_tensor_sequence_value_info(name, ttype, shape)
+            for (name, ttype, shape, is_sequence)
             in zip(input_names, input_types, input_shapes_cast, is_sequence) if name != ''
         ]
 
@@ -65,9 +65,9 @@ class TestVersionConverterNew(unittest.TestCase):
                 [[0] if isinstance(shape, str) else shape for shape in output_shapes]
         )
         outputs = [
-            helper.make_tensor_value_info(name, ttype, shape) if is_seq == 0
-            else helper.make_sequence_value_info(name, ttype, shape)
-            for (name, ttype, shape, is_seq)
+            helper.make_tensor_value_info(name, ttype, shape) if is_sequence == 0
+            else helper.make_tensor_sequence_value_info(name, ttype, shape)
+            for (name, ttype, shape, is_sequence)
             in zip(output_names, output_types, output_shapes_cast, is_sequence)
         ]
 
