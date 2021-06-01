@@ -13,7 +13,7 @@ import unittest
 # shape inference on the upgraded model.
 ####################################################################################
 
-target_opset = onnx.defs.onnx_opset_version()
+latest_opset = onnx.defs.onnx_opset_version()
 tested_ops = []
 
 
@@ -30,7 +30,8 @@ class TestVersionConverterNew(unittest.TestCase):
         initializer=[],  # type: List[Any]
         attrs={},  # type: Dict[Text, Any]
         seq_inputs=[],  # type: List[int]
-        seq_outputs=[]  # type: List[int]
+        seq_outputs=[],  # type: List[int]
+        to_opset=None  # type: int
     ):  # type: (...) -> None
         global tested_ops
         tested_ops.append(op)
@@ -80,7 +81,10 @@ class TestVersionConverterNew(unittest.TestCase):
         onnx.checker.check_model(original)
         shape_inference.infer_shapes(original)
 
-        converted = version_converter.convert_version(original, target_opset)
+        if to_opset is None:
+            to_opset = latest_opset
+
+        converted = version_converter.convert_version(original, to_opset)
         onnx.checker.check_model(converted)
         shape_inference.infer_shapes(converted)
 
@@ -168,7 +172,8 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_BatchNormalization_2(self):  # type: () -> None
         self._test_op_upgrade('BatchNormalization', 1,
             [[1, 3], [3], [3], [3], [3]], [[1, 3], [3], [3], [3], [3]],
-            attrs={'consumed_inputs': [1, 1], 'is_test': 1, 'spatial': 1}
+            attrs={'consumed_inputs': [1, 1], 'is_test': 1, 'spatial': 1},
+            to_opset=13
         )
 
     def test_Cast(self):  # type: () -> None
