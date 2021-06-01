@@ -377,6 +377,9 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_HardSigmoid(self):  # type: () -> None
         self._test_op_upgrade('HardSigmoid', 1, attrs={'consumed_inputs': [0]})
 
+    def test_HardSwish(self):  # type: () -> None
+        self._test_op_upgrade('HardSwish', 14)
+
     def test_Hardmax(self):  # type: () -> None
         self._test_op_upgrade('Hardmax', 1)
 
@@ -975,7 +978,8 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_ops_tested(self):  # type: () -> None
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
-        seq_ops = [
+        excluded_ops = [
+            # Sequence-based ops disabled because the version converter doesn't play nicely with sequences
             'ConcatFromSequence',
             'SequenceAt',
             'SequenceConstruct',
@@ -984,11 +988,13 @@ class TestVersionConverterNew(unittest.TestCase):
             'SequenceInsert',
             'SequenceLength',
             'SplitToSequence',
+            # Shape inference crashes for NegativeLogLikelihoodLoss (issue 3512)
             'NegativeLogLikelihoodLoss',
+            # The version converter should replace these deprecated ops with other operators. Is it possible?
             'Scatter',
             'Upsample'
         ]
-        all_op_names = [op for op in all_op_names if op not in seq_ops]
+        all_op_names = [op for op in all_op_names if op not in excluded_ops]
 
         untested_ops = set(all_op_names) - set(tested_ops)
         assert len(untested_ops) == 0
