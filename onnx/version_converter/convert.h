@@ -719,11 +719,21 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
       /******** 13 -> 14 ********/
       registerAdapter(make_unique<CompatibleAdapter>(
+          "Add", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
           "CumSum", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Div", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Identity", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Mul", OpSetID(13), OpSetID(14)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Relu", OpSetID(13), OpSetID(14)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Reshape", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Sub", OpSetID(13), OpSetID(14)));
       registerAdapter(make_unique<AddLayout>("GRU"));
       registerAdapter(make_unique<AddLayout>("LSTM"));
       registerAdapter(make_unique<AddLayout>("RNN"));
@@ -732,6 +742,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<RemoveLayout>("GRU"));
       registerAdapter(make_unique<RemoveLayout>("LSTM"));
       registerAdapter(make_unique<RemoveLayout>("RNN"));
+
+      /******** 14 -> 15 ********/
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Pow", OpSetID(14), OpSetID(15)));
     }
 
     ModelProto convert_version(
