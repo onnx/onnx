@@ -173,7 +173,7 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('BatchNormalization', 1,
             [[1, 3], [3], [3], [3], [3]], [[1, 3], [3], [3], [3], [3]],
             attrs={'consumed_inputs': [1, 1], 'is_test': 1, 'spatial': 1},
-            to_opset=13
+            to_opset=13 # only 3 outputs are supported from opset 14
         )
 
     def test_Cast(self):  # type: () -> None
@@ -782,11 +782,12 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_Round(self):  # type: () -> None
         self._test_op_upgrade('Round', 11)
 
-    # def test_Scatter(self):  # type: () -> None
-    #     self._test_op_upgrade('Scatter', 9, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
-    #         [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
-    #         [TensorProto.FLOAT]
-    #     )
+    def test_Scatter(self):  # type: () -> None
+        self._test_op_upgrade('Scatter', 9, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
+            [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+            to_opset=10 # op is deprecated in opset 11
+        )
 
     def test_ScatterElements(self):  # type: () -> None
         self._test_op_upgrade('ScatterElements', 11, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
@@ -963,11 +964,11 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_Unsqueeze(self):  # type: () -> None
         self._test_op_upgrade('Unsqueeze', 1, [[3, 4, 5]], [[3, 4, 1, 5]], attrs={'axes': [2]})
 
-    # def test_Upsample(self):  # type: () -> None
-    #     # 6->7 adapter is missing
-    #     self._test_op_upgrade('Upsample', 7, [[3, 4, 5]], [[6, 6, 10]],
-    #         attrs={'scales': [2., 1.5, 2.]}
-    #     )
+    def test_Upsample(self):  # type: () -> None
+        self._test_op_upgrade('Upsample', 1, [[1, 3, 4, 5]], [[1, 3, 6, 10]],
+            attrs={'width_scale': 2., 'height_scale': 1.5},
+            to_opset=9 # op is deprecated in opset 10
+        )
 
     def test_Where(self):  # type: () -> None
         self._test_op_upgrade('Where', 9, [[2, 3], [2, 3], [2, 3]], [[2, 3]],
@@ -994,10 +995,7 @@ class TestVersionConverterNew(unittest.TestCase):
             'SequenceLength',
             'SplitToSequence',
             # Shape inference crashes for NegativeLogLikelihoodLoss (issue 3512)
-            'NegativeLogLikelihoodLoss',
-            # The version converter should replace these deprecated ops with other operators. Is it possible?
-            'Scatter',
-            'Upsample'
+            'NegativeLogLikelihoodLoss'
         ]
         all_op_names = [op for op in all_op_names if op not in excluded_ops]
 
