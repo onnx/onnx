@@ -173,7 +173,7 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('BatchNormalization', 1,
             [[1, 3], [3], [3], [3], [3]], [[1, 3], [3], [3], [3], [3]],
             attrs={'consumed_inputs': [1, 1], 'is_test': 1, 'spatial': 1},
-            to_opset=13 # only 3 outputs are supported from opset 14
+            to_opset=13  # only 3 outputs are supported from opset 14
         )
 
     def test_Cast(self):  # type: () -> None
@@ -786,7 +786,7 @@ class TestVersionConverterNew(unittest.TestCase):
         self._test_op_upgrade('Scatter', 9, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
             [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
             [TensorProto.FLOAT],
-            to_opset=10 # op is deprecated in opset 11
+            to_opset=10  # op is deprecated in opset 11
         )
 
     def test_ScatterElements(self):  # type: () -> None
@@ -967,7 +967,7 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_Upsample(self):  # type: () -> None
         self._test_op_upgrade('Upsample', 1, [[1, 3, 4, 5]], [[1, 3, 6, 10]],
             attrs={'width_scale': 2., 'height_scale': 1.5},
-            to_opset=9 # op is deprecated in opset 10
+            to_opset=9  # op is deprecated in opset 10
         )
 
     def test_Where(self):  # type: () -> None
