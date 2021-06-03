@@ -47,15 +47,13 @@ jobs:
 
       git clone https://github.com/protocolbuffers/protobuf.git
       cd protobuf
-      git checkout 3.11.x
+      git checkout v3.11.3
       git submodule update --init --recursive
       mkdir build_source && cd build_source
 
       cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-      export NUM_PROCESSOR=`grep -c ^processor /proc/cpuinfo`
-      sudo make -j${NUM_PROCESSOR}
+      make -j$(nproc)
       sudo make install
-      ldconfig
       cd ../..
 
       python -m pip install --upgrade pip
