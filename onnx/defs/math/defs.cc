@@ -2859,6 +2859,7 @@ bool BuildContextDependentFunctionBody(
   }
   auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
   bool float_input = input_type == TensorProto_DataType_FLOAT;
+  std::string reduction_attr = ctx.getAttribute("reduction") == nullptr ? "mean" : ctx.getAttribute("reduction")->s();
   std::vector<FunctionBodyHelper::NodeDef> body;
   body.push_back(
       {{"const_zero"},
@@ -2898,7 +2899,7 @@ bool BuildContextDependentFunctionBody(
          {"loss_NCdd", "const_zero", "const_one", "const_one"}});
 
     if (!ctx.hasInput(2)) {
-      if (ctx.getAttribute("reduction")->s() == "none") {
+      if (reduction_attr == "none") {
         body.push_back(
             {{"loss"},
              "Squeeze",
@@ -2908,7 +2909,7 @@ bool BuildContextDependentFunctionBody(
             {{"loss_Ndd"},
              "Squeeze",
              {"loss_N1dd", "axes"}});
-        if (ctx.getAttribute("reduction")->s() == "mean") {
+        if (reduction_attr == "mean") {
           body.push_back(
               {{"loss"},
                "ReduceMean",
@@ -2928,12 +2929,12 @@ bool BuildContextDependentFunctionBody(
           {{"loss_unweighted"},
            "Squeeze",
            {"loss_N1dd", "axes"}});
-      if (ctx.getAttribute("reduction")->s() == "none") {
+      if (reduction_attr == "none") {
         body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
       } else {
         body.push_back(
             {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-        if (ctx.getAttribute("reduction")->s() == "mean") {
+        if (reduction_attr == "mean") {
           body.push_back(
               {{"loss_sum"},
                "ReduceSum",
@@ -3052,12 +3053,12 @@ bool BuildContextDependentFunctionBody(
         {{"loss_unweighted"},
          "Squeeze",
          {"loss_N1dd", "axes"}});
-    if (ctx.getAttribute("reduction")->s() == "none") {
+    if (reduction_attr == "none") {
       body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
     } else {
       body.push_back(
           {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-      if (ctx.getAttribute("reduction")->s() == "mean") {
+      if (reduction_attr == "mean") {
         body.push_back(
             {{"loss_sum"},
              "ReduceSum",
@@ -3201,7 +3202,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto* output_shape =
                 ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-            if (ctx.getAttribute("reduction")->s() == "none") {
+            if (ctx.getAttribute("reduction") != nullptr && ctx.getAttribute("reduction")->s() == "none") {
               // output tensor is of shape (N, d1, d2, ..., dk) if
               // reduction attribute is "none".
               for (int i = 0; i < input_rank - 1; i++) {
