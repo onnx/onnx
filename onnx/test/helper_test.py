@@ -10,7 +10,7 @@ import random
 import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
-from onnx import AttributeProto, TensorProto, GraphProto, ModelProto
+from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto, SequenceProto
 from typing import Text, Any, List, Tuple
 
 import unittest
@@ -125,6 +125,44 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.tensors), tensors)
         checker.check_attribute(attr)
 
+    def test_attr_sparse_tensor_proto(self):  # type: () -> None
+        dense_shape = [3, 3]
+        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
+        values_tensor = helper.make_tensor(name='sparse_values', data_type=TensorProto.FLOAT,
+                                        dims=[len(sparse_values)],
+                                        vals=np.array(sparse_values).astype(np.float32), raw=False)
+
+        linear_indicies = [2, 3, 5]
+        indicies_tensor = helper.make_tensor(name='indicies', data_type=TensorProto.INT64,
+                                        dims=[len(linear_indicies)],
+                                        vals=np.array(linear_indicies).astype(np.int64), raw=False)
+        sparse_tensor = helper.make_sparse_tensor(values_tensor, indicies_tensor, dense_shape)
+
+        attr = helper.make_attribute("sparse_attr", sparse_tensor)
+        self.assertEqual(attr.name, "sparse_attr")
+        checker.check_sparse_tensor(helper.get_attribute_value(attr))
+        checker.check_attribute(attr)
+
+    def test_attr_sparse_tensor_repeated_protos(self):  # type: () -> None
+        dense_shape = [3, 3]
+        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
+        values_tensor = helper.make_tensor(name='sparse_values', data_type=TensorProto.FLOAT,
+                                        dims=[len(sparse_values)],
+                                        vals=np.array(sparse_values).astype(np.float32), raw=False)
+
+        linear_indicies = [2, 3, 5]
+        indicies_tensor = helper.make_tensor(name='indicies', data_type=TensorProto.INT64,
+                                        dims=[len(linear_indicies)],
+                                        vals=np.array(linear_indicies).astype(np.int64), raw=False)
+        sparse_tensor = helper.make_sparse_tensor(values_tensor, indicies_tensor, dense_shape)
+
+        repeated_sparse = [sparse_tensor, sparse_tensor]
+        attr = helper.make_attribute("sparse_attrs", repeated_sparse)
+        self.assertEqual(attr.name, "sparse_attrs")
+        checker.check_attribute(attr)
+        for s in helper.get_attribute_value(attr):
+            checker.check_sparse_tensor(s)
+
     def test_attr_repeated_graph_proto(self):  # type: () -> None
         graphs = [GraphProto(), GraphProto()]
         graphs[0].name = "a"
@@ -133,6 +171,21 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.name, "graphs")
         self.assertEqual(list(attr.graphs), graphs)
         checker.check_attribute(attr)
+
+    def test_attr_type_proto(self):  # type: () -> None
+        # type_proto
+        type = TypeProto()
+        attr = helper.make_attribute("type_proto", type)
+        self.assertEqual(attr.name, "type_proto")
+        self.assertEqual(attr.tp, type)
+        self.assertEqual(attr.type, AttributeProto.TYPE_PROTO)
+        # type_protos
+        types = [TypeProto(), TypeProto()]
+        attr = helper.make_attribute("type_protos", types)
+
+        self.assertEqual(attr.name, "type_protos")
+        self.assertEqual(list(attr.type_protos), types)
+        self.assertEqual(attr.type, AttributeProto.TYPE_PROTOS)
 
     def test_is_attr_legal(self):  # type: () -> None
         # no name, no field
@@ -365,6 +418,100 @@ class TestHelperTensorFunctions(unittest.TestCase):
         # scalar value
         vi = helper.make_tensor_value_info('Y', TensorProto.FLOAT, ())
         checker.check_value_info(vi)
+
+    def test_make_sparse_tensor_value_info(self):  # type: () -> None
+        vi = helper.make_sparse_tensor_value_info('X', TensorProto.FLOAT, (2, 3))
+        checker.check_value_info(vi)
+
+        # scalar value
+        vi = helper.make_sparse_tensor_value_info('Y', TensorProto.FLOAT, ())
+        checker.check_value_info(vi)
+
+
+class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
+    def test_make_optional(self):  # type: () -> None
+        values = [1.1, 2.2, 3.3, 4.4, 5.5]
+        values_tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(5,),
+            vals=values
+        )
+        optional = helper.make_optional(
+            name='test',
+            elem_type=OptionalProto.TENSOR,
+            value=values_tensor
+        )
+        self.assertEqual(optional.name, 'test')
+        self.assertEqual(optional.elem_type, OptionalProto.TENSOR)
+        self.assertEqual(optional.tensor_value, values_tensor)
+
+        # Test Sequence
+        values_sequence = helper.make_sequence(
+            name='test',
+            elem_type=SequenceProto.TENSOR,
+            values=[values_tensor, values_tensor]
+        )
+        optional = helper.make_optional(
+            name='test',
+            elem_type=OptionalProto.SEQUENCE,
+            value=values_sequence
+        )
+        self.assertEqual(optional.name, 'test')
+        self.assertEqual(optional.elem_type, OptionalProto.SEQUENCE)
+        self.assertEqual(optional.sequence_value, values_sequence)
+
+        # Test None
+        optional_none = helper.make_optional(
+            name='test',
+            elem_type=OptionalProto.UNDEFINED,
+            value=None
+        )
+        self.assertEqual(optional_none.name, 'test')
+        self.assertEqual(optional_none.elem_type, OptionalProto.UNDEFINED)
+        self.assertFalse(optional_none.HasField('tensor_value'))
+
+    def test_make_optional_value_info(self):  # type: () -> None
+        tensor_type_proto = helper.make_tensor_type_proto(elem_type=2, shape=[5])
+        tensor_val_into = helper.make_value_info(
+            name='test',
+            type_proto=tensor_type_proto)
+        optional_type_proto = helper.make_optional_type_proto(tensor_type_proto)
+        optional_val_info = helper.make_value_info(
+            name='test',
+            type_proto=optional_type_proto)
+
+        self.assertEqual(optional_val_info.name, 'test')
+        self.assertTrue(optional_val_info.type.optional_type)
+        self.assertEqual(optional_val_info.type.optional_type.elem_type, tensor_val_into.type)
+
+        # Test Sequence
+        sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
+        optional_type_proto = helper.make_optional_type_proto(sequence_type_proto)
+        optional_val_info = helper.make_value_info(
+            name='test',
+            type_proto=optional_type_proto)
+
+        self.assertEqual(optional_val_info.name, 'test')
+        self.assertTrue(optional_val_info.type.optional_type)
+        sequence_value_info = helper.make_value_info(
+            name='test',
+            type_proto=tensor_type_proto)
+        self.assertEqual(optional_val_info.type.optional_type.elem_type.sequence_type.elem_type, sequence_value_info.type)
+
+    def test_make_seuence_value_info(self):  # type: () -> None
+        tensor_type_proto = helper.make_tensor_type_proto(elem_type=2, shape=None)
+        sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
+        sequence_val_info = helper.make_value_info(
+            name='test',
+            type_proto=sequence_type_proto
+        )
+        sequence_val_info_prim = helper.make_tensor_sequence_value_info(
+            name='test',
+            elem_type=2,
+            shape=None)
+
+        self.assertEqual(sequence_val_info, sequence_val_info_prim)
 
 
 class TestPrintableGraph(unittest.TestCase):
