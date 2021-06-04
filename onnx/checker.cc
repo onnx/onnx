@@ -56,6 +56,10 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
+    case TypeProto::kOptionalType: {
+      const auto& type = value_info.type().optional_type();
+      enforce_has_field(type, elem_type);
+    } break;
     case TypeProto::kSequenceType: {
       const auto& type = value_info.type().sequence_type();
       enforce_has_field(type, elem_type);
@@ -452,6 +456,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   check_singular_field(s, AttributeProto::STRING);
   check_singular_field(t, AttributeProto::TENSOR);
   check_singular_field(g, AttributeProto::GRAPH);
+  check_singular_field(tp, AttributeProto::TYPE_PROTO);
   check_singular_field(sparse_tensor, AttributeProto::SPARSE_TENSOR);
   check_repeated_field(floats, AttributeProto::FLOATS);
   check_repeated_field(ints, AttributeProto::INTS);
@@ -459,6 +464,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   check_repeated_field(tensors, AttributeProto::TENSORS);
   check_repeated_field(graphs, AttributeProto::GRAPHS);
   check_repeated_field(sparse_tensors, AttributeProto::SPARSE_TENSORS);
+  check_repeated_field(type_protos, AttributeProto::TYPE_PROTOS);
 
 #undef check_type
 #undef check_singular_field

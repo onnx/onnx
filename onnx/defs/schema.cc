@@ -288,6 +288,11 @@ void OpSchema::Verify(const NodeProto& node) const {
           fail_check("Attribute '", name, "' is expected to have field 'g'");
         }
         break;
+      case AttributeProto::TYPE_PROTO:
+        if (!attr_proto.has_tp()) {
+          fail_check("Attribute '", name, "' is expected to have field 'type_proto'");
+        }
+        break;
       case AttributeProto::FLOATS:
         if (!attr_proto.floats_size()) {
           fail_check("Attribute '", name, "' is expected to have field 'floats'");
@@ -316,6 +321,11 @@ void OpSchema::Verify(const NodeProto& node) const {
       case AttributeProto::GRAPHS:
         if (!attr_proto.graphs_size()) {
           fail_check("Attribute '", name, "' is expected to have field 'graphs'");
+        }
+        break;
+      case AttributeProto::TYPE_PROTOS:
+        if (!attr_proto.type_protos_size()) {
+          fail_check("Attribute '", name, "' is expected to have field 'type_protos'");
         }
         break;
       default:
@@ -489,11 +499,13 @@ ATTR_SETTER_WITH_SINGLE_VALUE(float, f, AttributeProto::FLOAT)
 ATTR_SETTER_WITH_SINGLE_VALUE(std::string, s, AttributeProto::STRING)
 ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(TensorProto, t, AttributeProto::TENSOR)
 ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(GraphProto, g, AttributeProto::GRAPH)
+// ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(TypeProto, tp, AttributeProto::TYPE_PROTO)
 ATTR_SETTER_WITH_LIST_VALUE(int64_t, ints, AttributeProto::INTS)
 ATTR_SETTER_WITH_LIST_VALUE(float, floats, AttributeProto::FLOATS)
 ATTR_SETTER_WITH_LIST_COMPLEXVALUE(std::string, strings, AttributeProto::STRINGS)
 ATTR_SETTER_WITH_LIST_COMPLEXVALUE(TensorProto, tensors, AttributeProto::TENSORS)
 ATTR_SETTER_WITH_LIST_COMPLEXVALUE(GraphProto, graphs, AttributeProto::GRAPHS)
+ATTR_SETTER_WITH_LIST_COMPLEXVALUE(TypeProto, type_protos, AttributeProto::TYPE_PROTOS)
 
 OpSchema& OpSchema::AllowUncheckedAttributes() {
   allows_unchecked_attributes_ = true;
