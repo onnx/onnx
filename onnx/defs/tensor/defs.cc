@@ -1641,10 +1641,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               [&](int64_t axis) -> int64_t {
                 return axis < 0 ? axis + input_ndim : axis;
               });
-          // if input consists a symbolic value, return early since shape cannot be inferred
+
           for (int i = 0; i < input_ndim; ++i) {
-            if (!input_shape.dim(i).has_dim_value()) {
-              return;
+            if(!input_shape.dim(i).has_dim_value() && (axes_not_specified || std::find(axes.begin(), axes.end(), i) != axes.end())) {
+                // if dim has a symbolic value and the axes spec want to act on dim, return early because we can't infer the shape
+                return;
             }
           }
 
