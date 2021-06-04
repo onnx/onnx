@@ -614,6 +614,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>(
           "LRN", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<CompatibleAdapter>(
+          "NegativeLogLikelihoodLoss", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
           "MatMul", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Max", OpSetID(12), OpSetID(13)));

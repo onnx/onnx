@@ -611,15 +611,15 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_Neg(self):  # type: () -> None
         self._test_op_upgrade('Neg', 1, attrs={'consumed_inputs': [0]})
 
-    # def test_NegativeLogLikelihoodLoss_1(self):  # type: () -> None
-    #     self._test_op_upgrade('NegativeLogLikelihoodLoss', 12, [[3, 4, 5], [3, 5]], [[]],
-    #         [TensorProto.FLOAT, TensorProto.INT64]
-    #     )
+    def test_NegativeLogLikelihoodLoss_1(self):  # type: () -> None
+        self._test_op_upgrade('NegativeLogLikelihoodLoss', 12, [[3, 4, 5], [3, 5]], [[]],
+            [TensorProto.FLOAT, TensorProto.INT64]
+        )
 
-    # def test_NegativeLogLikelihoodLoss_2(self):  # type: () -> None
-    #     self._test_op_upgrade('NegativeLogLikelihoodLoss', 12, [[3, 4, 5], [3, 5], [4]], [[]],
-    #         [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT]
-    #     )
+    def test_NegativeLogLikelihoodLoss_2(self):  # type: () -> None
+        self._test_op_upgrade('NegativeLogLikelihoodLoss', 12, [[3, 4, 5], [3, 5], [4]], [[]],
+            [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT]
+        )
 
     def test_NonMaxSuppression(self):  # type: () -> None
         self._test_op_upgrade('NonMaxSuppression', 10, [[2, 3, 4], [3, 5, 6]], [[2, 3]],
@@ -993,9 +993,7 @@ class TestVersionConverterNew(unittest.TestCase):
             'SequenceErase',
             'SequenceInsert',
             'SequenceLength',
-            'SplitToSequence',
-            # Shape inference crashes for NegativeLogLikelihoodLoss (issue 3512)
-            'NegativeLogLikelihoodLoss'
+            'SplitToSequence'
         ]
         all_op_names = [op for op in all_op_names if op not in excluded_ops]
 
