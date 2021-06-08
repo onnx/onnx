@@ -15,13 +15,14 @@ namespace shape_inference {
 struct SymbolicShape {
   SymbolicShape() : index_(0){}
   std::string createNew() {
-    return "unk_" + std::to_string(index_++);
+    return symbol_prefix + std::to_string(index_++);
   };
   void init() {
     index_ = 0;
   }
   private:
     unsigned int index_;
+    const std::string symbol_prefix = "unk_";
 };
 
 struct GraphInferenceContext {

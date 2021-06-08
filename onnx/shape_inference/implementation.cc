@@ -12,7 +12,6 @@ namespace ONNX_NAMESPACE {
 namespace shape_inference {
 namespace {
 
-// initialize index for symbolic shape
 SymbolicShape symbolicShape;
 
 std::string getValueCaseString(const TypeProto& type) {
@@ -206,7 +205,7 @@ static void InferShapesImpl(
   std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{outer_scope_value_types_by_name};
 
   GraphInferenceContext graphInferenceContext{valueTypesByName, opset_imports, schema_registry};
-
+  // initialize index of symbolic shape for new graph-level shape_inference
   symbolicShape.init();
 
   for (auto& vi : *g->mutable_value_info()) {
