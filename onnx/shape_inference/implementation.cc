@@ -134,12 +134,15 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor*
       existingType->mutable_shape()->add_dim();
     }
   }
-
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
     const auto& inferredDim = inferredType.shape().dim(i);
     auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
     if (!existingDim->has_dim_value()) {
       *existingDim = inferredDim;
+      // If shape cannot be inferred; set it as a symbolic shape
+      if (inferredType.shape().dim(i).dim_value() == 0 && !inferredType.shape().dim(i).has_dim_param()) {
+        existingDim->set_dim_param(SymbolicShape::createNew());
+      }
     }
   }
 }
