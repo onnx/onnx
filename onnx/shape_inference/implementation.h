@@ -12,6 +12,18 @@
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
+struct SymbolicShape {
+  SymbolicShape() : index_(0){}
+  std::string createNew() {
+    return "unk_" + std::to_string(index_++);
+  };
+  void init() {
+    index_ = 0;
+  }
+  private:
+    unsigned int index_;
+};
+
 struct GraphInferenceContext {
   GraphInferenceContext(
       const std::unordered_map<std::string, TypeProto*>&

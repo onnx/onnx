@@ -12,15 +12,8 @@ namespace ONNX_NAMESPACE {
 namespace shape_inference {
 namespace {
 
-struct SymbolicShape {
-  static std::string createNew() {
-    return "unk_" + std::to_string(index_++);
-  };
-  private:
-    static unsigned int index_;
-};
-
-unsigned int SymbolicShape::index_ = 0;
+// initialize index for symbolic shape
+SymbolicShape symbolicShape;
 
 std::string getValueCaseString(const TypeProto& type) {
   switch (type.value_case()) {
@@ -152,7 +145,7 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor*
       *existingDim = inferredDim;
       // If shape cannot be inferred; set it as a symbolic shape
       if (inferredType.shape().dim(i).dim_value() == 0 && !inferredType.shape().dim(i).has_dim_param()) {
-        existingDim->set_dim_param(SymbolicShape::createNew());
+        existingDim->set_dim_param(symbolicShape.createNew());
       }
     }
   }
@@ -213,6 +206,8 @@ static void InferShapesImpl(
   std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{outer_scope_value_types_by_name};
 
   GraphInferenceContext graphInferenceContext{valueTypesByName, opset_imports, schema_registry};
+
+  symbolicShape.init();
 
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type()) {
