@@ -76,9 +76,8 @@ The operator computes the {description} values for the given input:
 
  {equation}
 
-The input does not need to explicitly be a 2D vector. The "axis" attribute
-indicates the dimension along which {name} will be performed.
-The output tensor has the same shape
+The "axis" attribute indicates the dimension along which {name}
+will be performed. The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
                         ReplaceAll(doc, "{name}", name);
@@ -88,7 +87,7 @@ and contains the {name} values of the corresponding input.
     POPULATE_OP_DOC_STR(axis_attr = R"DOC(
 Describes the dimension {name} will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).,
+from the back. Accepted range is [-r, r-1] where r = rank(input).
 )DOC";
                         ReplaceAll(axis_attr, "{name}", name););
     schema.SetDoc(doc);
@@ -97,8 +96,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
     schema.Input(
         0,
         "input",
-        "The input tensor that's coerced into a 2D matrix of size (NxD) "
-        "as described above.",
+        "The input tensor of rank >= axis.",
         "T",
         OpSchema::Single,
         true,
@@ -107,8 +105,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).,
     schema.Output(
         0,
         "output",
-        "The output values with the same "
-        "shape as input tensor (the original size without coercion).",
+        "The output values with the same shape as the input tensor.",
         "T",
         OpSchema::Single,
         true,
@@ -667,6 +664,12 @@ TensorProto ToDimensionOneTensor(int32_t value) {
 TensorProto ToDimensionOneInt64Tensor(int64_t value) {
   auto t = ToTensor(std::vector<int64_t>({value}));
   t.add_dims(1);
+  return t;
+}
+
+TensorProto ToDimensionOneInt64Tensor(std::vector<int64_t> value) {
+  auto t = ToTensor(value);
+  t.add_dims(value.size());
   return t;
 }
 
@@ -2849,7 +2852,16 @@ Example 3:
 bool BuildContextDependentFunctionBody(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
-    FunctionProto& functionProto) {
+    FunctionProto& functionProto) {  
+  if (ctx.getInputType(0) == nullptr) {
+    // we cannot create a correct function body without knowing the input type
+    return false;
+  }
+  auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
+  bool float_input = input_type == TensorProto_DataType_FLOAT;
+  auto reduction_attr_proto = ctx.getAttribute("reduction");
+  std::string reduction_attr =
+      reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
   std::vector<FunctionBodyHelper::NodeDef> body;
   body.push_back(
       {{"const_zero"},
@@ -2889,7 +2901,7 @@ bool BuildContextDependentFunctionBody(
          {"loss_NCdd", "const_zero", "const_one", "const_one"}});
 
     if (!ctx.hasInput(2)) {
-      if (ctx.getAttribute("reduction")->s() == "none") {
+      if (reduction_attr == "none") {
         body.push_back(
             {{"loss"},
              "Squeeze",
@@ -2899,7 +2911,7 @@ bool BuildContextDependentFunctionBody(
             {{"loss_Ndd"},
              "Squeeze",
              {"loss_N1dd", "axes"}});
-        if (ctx.getAttribute("reduction")->s() == "mean") {
+        if (reduction_attr == "mean") {
           body.push_back(
               {{"loss"},
                "ReduceMean",
@@ -2919,12 +2931,12 @@ bool BuildContextDependentFunctionBody(
           {{"loss_unweighted"},
            "Squeeze",
            {"loss_N1dd", "axes"}});
-      if (ctx.getAttribute("reduction")->s() == "none") {
+      if (reduction_attr == "none") {
         body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
       } else {
         body.push_back(
             {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-        if (ctx.getAttribute("reduction")->s() == "mean") {
+        if (reduction_attr == "mean") {
           body.push_back(
               {{"loss_sum"},
                "ReduceSum",
@@ -2983,11 +2995,17 @@ bool BuildContextDependentFunctionBody(
          "Constant",
          {},
          {MakeAttribute("value", ToDimensionOneFloatTensor(0.0f))}});
-
+    if (!float_input) {
+      body.push_back(
+          {{"const_zero_casted"}, 
+          "Cast", 
+          {"const_zero_float"}, 
+          {MakeAttribute("to", static_cast<int64_t>(input_type))}});
+    }
     body.push_back(
         {{"input_gather_element_transform"},
          "Where",
-         {"mask", "const_zero_float", "input_gather_element"}});
+         {"mask", float_input ? "const_zero_float" : "const_zero_casted", "input_gather_element"}});
     body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element_transform"}});
     body.push_back(
         {{"loss_N1dd"},
@@ -3005,11 +3023,18 @@ bool BuildContextDependentFunctionBody(
            "Constant",
            {},
            {MakeAttribute("value", ToDimensionOneFloatTensor(1.0f))}});
-
+      if (!float_input) {
+        body.push_back(
+          {{"const_one_casted"}, 
+           "Cast", 
+           {"const_one_float"}, 
+           {MakeAttribute("to", static_cast<int64_t>(input_type))}});
+      }
       body.push_back(
           {{"weight_gather"},
            "Where",
-           {"squeeze_mask", "const_zero_float", "const_one_float"}});
+           {"squeeze_mask", float_input ? "const_zero_float" : "const_zero_casted", 
+           float_input ? "const_one_float" :"const_one_casted"}});
 
     } else {
       body.push_back(
@@ -3018,7 +3043,7 @@ bool BuildContextDependentFunctionBody(
       body.push_back(
           {{"weight_gather_temp_1"},
            "Where",
-           {"mask", "const_zero_float", "weight_gather_temp"}});
+           {"mask", float_input ? "const_zero_float" : "const_zero_casted", "weight_gather_temp"}});
 
       body.push_back(
           {{"weight_gather"},
@@ -3030,12 +3055,12 @@ bool BuildContextDependentFunctionBody(
         {{"loss_unweighted"},
          "Squeeze",
          {"loss_N1dd", "axes"}});
-    if (ctx.getAttribute("reduction")->s() == "none") {
+    if (reduction_attr == "none") {
       body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
     } else {
       body.push_back(
           {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-      if (ctx.getAttribute("reduction")->s() == "mean") {
+      if (reduction_attr == "mean") {
         body.push_back(
             {{"loss_sum"},
              "ReduceSum",
@@ -3179,7 +3204,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto* output_shape =
                 ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-            if (ctx.getAttribute("reduction")->s() == "none") {
+            if (getAttribute(ctx, "reduction", "mean") == "none") {
               // output tensor is of shape (N, d1, d2, ..., dk) if
               // reduction attribute is "none".
               for (int i = 0; i < input_rank - 1; i++) {
@@ -3411,23 +3436,39 @@ bool BuildContextDependentFunctionBodySCE(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
+  // Using stable implementation of LogSoftmax
   body.push_back(
-      {{"axes"},
-       "Constant",
-       {},
-       {MakeAttribute("value", ToDimensionOneInt64Tensor(1))}});
-
+      {{"Shape3D"},
+        "Constant",
+        {},
+        {MakeAttribute("value", ToDimensionOneInt64Tensor({0,0,-1}))}});
   body.push_back(
-      {{"X_Max"},
-       "ReduceMax",
-       {"scores"},
-       {MakeAttribute("axes", std::vector<int64_t>({1}))}});
-
-  body.push_back({{"X_Sub"}, "Sub", {"scores", "X_Max"}});
-  body.push_back({{"X_Exp"}, "Exp", {"X_Sub"}});
-  body.push_back({{"X_RS"}, "ReduceSum", {"X_Exp", "axes"}});
-  body.push_back({{"X_Div"}, "Div", {"X_Exp", "X_RS"}});
-  body.push_back({{"X_Log"}, "Log", {"X_Div"}});
+      {{"X_NCD"},
+       "Reshape",
+       {"scores", "Shape3D"}});
+  body.push_back(
+      {{"X_NDC"},
+       "Transpose",
+       {"X_NCD"},
+       {MakeAttribute("perm", std::vector<int64_t>({0,2,1}))}});
+  body.push_back(
+      {{"X_LogSM"},
+       "LogSoftmax",
+       {"X_NDC"},
+       {MakeAttribute("axis", (int64_t)2)}});
+  body.push_back(
+      {{"X_LogSM_NCD"},
+       "Transpose",
+       {"X_LogSM"},
+       {MakeAttribute("perm", std::vector<int64_t>({0,2,1}))}});
+  body.push_back(
+      {{"X_shape"},
+       "Shape",
+       {"scores"}});
+  body.push_back(
+      {{"X_Log"},
+       "Reshape",
+       {"X_LogSM_NCD", "X_shape"}});
 
   // Review(mzs): Ideally we want to reuse the output from Log for sub-graph
   // output as well but looking at the graph resolve code it does not include

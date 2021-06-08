@@ -104,15 +104,23 @@ def function_testcase_helper(node, input_types, name):  # type: (NodeProto, List
     return node_list
 
 
-def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], np.ndarray], Text, np.dtype) -> onnx.ValueInfoProto
+def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], np.ndarray, None], Text, np.dtype) -> onnx.ValueInfoProto
     if isinstance(input, list):
         # TODO: Account for recursive sequence case. Right now, this function supports
         # Sequences of Tensors.
-        return onnx.helper.make_sequence_value_info(
+        return onnx.helper.make_tensor_sequence_value_info(
             name=name,
             elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype],
             shape=None
         )
+    elif input is None:
+        if ele_type is None:
+            raise NotImplementedError("extract_value for optional tensor with no data type not "
+                                      "supported.")
+        else:
+            tensor_type_proto = onnx.helper.make_tensor_type_proto(ele_type, shape=None)
+            optional_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+            return onnx.helper.make_value_info(name=name, type_proto=optional_type_proto)
     return onnx.helper.make_tensor_value_info(
         name=name,
         elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype],
@@ -173,9 +181,9 @@ def expect(node,  # type: onnx.NodeProto
     def merge(node_inputs, present_value_info):  # type: (List[Text], List[onnx.ValueInfoProto]) -> List[TypeProto]
         if (node_inputs):
             if (node_inputs[0] != ''):
-                [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
+                return [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
             else:
-                [TypeProto()] + merge(node_inputs[1:], present_value_info)
+                return [TypeProto()] + merge(node_inputs[1:], present_value_info)
         return []
     merged_types = merge(list(node.input), inputs_vi)
     expanded_function_nodes = function_testcase_helper(node, merged_types, name)

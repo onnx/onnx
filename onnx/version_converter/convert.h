@@ -90,6 +90,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
           "initial_version and target_version must have the same domains");
     }
 
+  void convert_graph(std::shared_ptr<Graph> g, const OpSetID& initial_version,
+    const OpSetID& target_version) const;
+
   public:
     DefaultVersionConverter() {
       const std::unordered_map<std::string, std::pair<int, int>>& versions_map =

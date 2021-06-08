@@ -238,6 +238,26 @@ void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
   }
 }
 
+void check_optional(const OptionalProto& optional, const CheckerContext& ctx) {
+  enforce_has_field(optional, elem_type);
+  if (optional.elem_type() == OptionalProto::TENSOR) {
+    check_tensor(optional.tensor_value(), ctx);
+  } else if (optional.elem_type() == OptionalProto::SPARSE_TENSOR) {
+    check_sparse_tensor(optional.sparse_tensor_value(), ctx);
+  } else if (optional.elem_type() == OptionalProto::SEQUENCE) {
+    check_sequence(optional.sequence_value(), ctx);
+  } else if (optional.elem_type() == OptionalProto::MAP) {
+    check_map(optional.map_value(), ctx);
+  } else {
+    fail_check(
+        "Optional ( Structure name: ",
+        optional.name(),
+        ", elem_type: ",
+        optional.elem_type(),
+        ") is not have a valid element type.");
+  }
+}
+
 void check_map(const MapProto& map, const CheckerContext& ctx) {
   enforce_has_field(map, key_type);
   if (map.key_type() == TensorProto::UNDEFINED) {

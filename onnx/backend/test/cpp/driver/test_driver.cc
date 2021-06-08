@@ -219,6 +219,10 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
         ONNX_NAMESPACE::MapProto input_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(&input_proto, input_data.c_str(), input_data.size());
         proto_test_data.map_inputs_.emplace_back(std::move(input_proto));
+      } else if (input_info.type().has_optional_type()) {
+        ONNX_NAMESPACE::OptionalProto input_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(&input_proto, input_data.c_str(), input_data.size());
+        proto_test_data.optional_inputs_.emplace_back(std::move(input_proto));
       }
       test_data_counter++;
     }
@@ -240,6 +244,10 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
         ONNX_NAMESPACE::MapProto output_proto;
         ONNX_NAMESPACE::ParseProtoFromBytes(&output_proto, output_data.c_str(), output_data.size());
         proto_test_data.map_outputs_.emplace_back(std::move(output_proto));
+      } else if (output_info.type().has_optional_type()) {
+        ONNX_NAMESPACE::OptionalProto output_proto;
+        ONNX_NAMESPACE::ParseProtoFromBytes(&output_proto, output_data.c_str(), output_data.size());
+        proto_test_data.optional_outputs_.emplace_back(std::move(output_proto));
       }
       test_data_counter++;
     }

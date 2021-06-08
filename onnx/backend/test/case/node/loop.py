@@ -129,8 +129,8 @@ class Loop(Base):
         # Return a sequence of tensors of
         #   [[x1], [x1, x2], ..., [x1, ..., xN]]
 
-        seq_in = onnx.helper.make_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, None)
-        seq_out = onnx.helper.make_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+        seq_in = onnx.helper.make_tensor_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, None)
+        seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
         cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
         cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
         iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
