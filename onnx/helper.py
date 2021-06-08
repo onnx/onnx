@@ -510,7 +510,7 @@ def make_tensor_type_proto(
 def make_tensor_value_info(
         name,  # type: Text
         elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
