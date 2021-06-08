@@ -12,6 +12,16 @@ namespace ONNX_NAMESPACE {
 namespace shape_inference {
 namespace {
 
+struct SymbolicShape {
+  static std::string createNew() {
+    return "unk_" + std::to_string(index_++);
+  };
+  private:
+    static unsigned int index_;
+};
+
+unsigned int SymbolicShape::index_ = 0;
+
 std::string getValueCaseString(const TypeProto& type) {
   switch (type.value_case()) {
     case TypeProto::ValueCase::kTensorType:
@@ -134,6 +144,7 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor*
       existingType->mutable_shape()->add_dim();
     }
   }
+
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
     const auto& inferredDim = inferredType.shape().dim(i);
     auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
