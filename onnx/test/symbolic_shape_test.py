@@ -46,16 +46,16 @@ class TestSymbolicShape(unittest.TestCase):
             to=getattr(TensorProto, 'FLOAT'))
         graph_def = helper.make_graph(name='test_graph',
             nodes=[clip, cast],
-            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'unk_0']),
+            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'unk_1']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3])],
-            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'unk_1'])]
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'unk_2'])]
         )
 
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         vis = list(inferred_model.graph.value_info)
         # unk_0 and unk_1 have been used so it will use unk_2
-        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk_2'))]
+        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk_3'))]
 
         assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
 

@@ -19,7 +19,8 @@ class GraphInferencer {
   // Returns the graph output types post-inferencing.
   virtual std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData) = 0;
+      const std::vector<const TensorProto*>& inputData,
+      const bool enable_symbolic = true) = 0;
   virtual ~GraphInferencer() = default;
 };
 

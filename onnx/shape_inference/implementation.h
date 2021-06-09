@@ -70,7 +70,8 @@ class GraphInferencerImpl : public GraphInferencer {
 
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData) override;
+      const std::vector<const TensorProto*>& inputData,
+      const bool enable_symbilic = true) override;
 
  private:
   GraphProto* g_;
@@ -219,25 +220,30 @@ void checkShapesAndTypes(
 
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
-    TypeProto_Tensor* existingType);
+    TypeProto_Tensor* existingType,
+    const bool enable_symbolic);
 
 void mergeShapesAndTypes(
     const TypeProto_SparseTensor& inferredType,
-    TypeProto_SparseTensor* existingType);
+    TypeProto_SparseTensor* existingType,
+    const bool enable_symbolic);
 
 void mergeShapesAndTypes(
     const TypeProto_Sequence& inferredType,
-    TypeProto_Tensor* existingType);
+    TypeProto_Tensor* existingType,
+    const bool enable_symbolic);
 
 void mergeShapesAndTypes(
     const TypeProto& inferredType,
-    TypeProto* existingType);
+    TypeProto* existingType,
+    const bool enable_symbolic);
 
 void InferShapes(
     ModelProto& m,
     const bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int error_mode = 0
+    const int error_mode = 0,
+    const bool enable_symbolic = true
     );
 
 void InferShapes(
@@ -245,7 +251,8 @@ void InferShapes(
     const std::unordered_map<std::string, int>& opset_imports,
     const bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int error_mode = 0
+    const int error_mode = 0,
+    const bool enable_symbolic = true
     );
 
 void InferShapes(
@@ -253,19 +260,22 @@ void InferShapes(
     const bool check_type = false,
     const std::string& save_path = "",
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int error_mode = 0
+    const int error_mode = 0,
+    const bool enable_symbolic = true
     );
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
-    InferenceContext& ctx);
+    InferenceContext& ctx,
+    const bool enable_symbolic);
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
-    InferenceContext& ctx);
+    InferenceContext& ctx,
+    const bool enable_symbolic);
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 
