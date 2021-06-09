@@ -33,10 +33,31 @@ class TestSymbolicShape(unittest.TestCase):
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         vis = list(inferred_model.graph.value_info)
-        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk_0'))]
+        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk_1'))]
 
         assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
 
+    def test_duplicate_shape(self):  # type: () -> None
+
+        clip = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
+        cast = onnx.helper.make_node('Cast',
+            inputs=['C'],
+            outputs=['output'],
+            to=getattr(TensorProto, 'FLOAT'))
+        graph_def = helper.make_graph(name='test_graph',
+            nodes=[clip, cast],
+            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'unk_0']),
+                helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3])],
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'unk_1'])]
+        )
+
+        onnx_model = make_model(graph_def)
+        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
+        vis = list(inferred_model.graph.value_info)
+        # unk_0 and unk_1 have been used so it will use unk_2
+        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk_2'))]
+
+        assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
 
 if __name__ == '__main__':
     unittest.main()

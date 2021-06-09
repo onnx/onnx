@@ -206,7 +206,7 @@ static void InferShapesImpl(
 
   GraphInferenceContext graphInferenceContext{valueTypesByName, opset_imports, schema_registry};
   // initialize index of symbolic shape for new graph-level shape_inference
-  symbolicShape.init();
+  symbolicShape.init(g);
 
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type()) {

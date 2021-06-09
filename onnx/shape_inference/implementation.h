@@ -15,14 +15,34 @@ namespace shape_inference {
 struct SymbolicShape {
   SymbolicShape() : index_(0){}
   std::string createNew() {
-    return symbol_prefix + std::to_string(index_++);
+    return symbol_prefix + std::to_string(++index_);
   };
-  void init() {
+  void init(GraphProto* g) {
     index_ = 0;
+    checkExistingSymbolicShape(*g->mutable_input());
+    checkExistingSymbolicShape(*g->mutable_output());
+    checkExistingSymbolicShape(*g->mutable_value_info());
   }
   private:
     unsigned int index_;
     const std::string symbol_prefix = "unk_";
+    template<class T>
+    void checkExistingSymbolicShape(T protos) {
+      for (auto& proto : protos) {
+        auto tensorType = proto.mutable_type()->mutable_tensor_type();
+        if (tensorType->has_shape()) {
+          for (int j = 0; j < tensorType->shape().dim_size(); ++j) {
+            if (tensorType->shape().dim(j).has_dim_param()) {
+              unsigned int existingIndex = 0;
+              sscanf(tensorType->shape().dim(j).dim_param().c_str(), (symbol_prefix + "%d").c_str(), &existingIndex);
+              // record the maximum index
+              // make sure generated index (>maximum) won't exist 
+              index_ = std::max(index_, existingIndex);
+            }
+          }
+        }
+      }
+    }
 };
 
 struct GraphInferenceContext {
