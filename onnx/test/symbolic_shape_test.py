@@ -59,5 +59,6 @@ class TestSymbolicShape(unittest.TestCase):
 
         assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
 
+
 if __name__ == '__main__':
     unittest.main()
