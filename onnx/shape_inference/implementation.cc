@@ -12,8 +12,6 @@ namespace ONNX_NAMESPACE {
 namespace shape_inference {
 namespace {
 
-SymbolicShape symbolicShape;
-
 std::string getValueCaseString(const TypeProto& type) {
   switch (type.value_case()) {
     case TypeProto::ValueCase::kTensorType:
@@ -118,7 +116,7 @@ void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existin
   }
 }
 
-void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor* existingType, const bool enable_symbolic) {
+void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor* existingType, SymbolicShape* symbolicShape) {
   if (existingType->elem_type() == TensorProto::UNDEFINED) {
     existingType->set_elem_type(inferredType.elem_type());
   }
@@ -142,17 +140,17 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor*
     auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
     if (!existingDim->has_dim_value()) {
       *existingDim = inferredDim;
-      if (enable_symbolic) {
+      if (symbolicShape != NULL) {
         // If shape cannot be inferred; set it as a symbolic shape
         if (inferredType.shape().dim(i).dim_value() == 0 && !inferredType.shape().dim(i).has_dim_param()) {
-          existingDim->set_dim_param(symbolicShape.createNew());
+          existingDim->set_dim_param(symbolicShape->createNew());
         }
       }
     }
   }
 }
 
-void mergeShapesAndTypes(const TypeProto_SparseTensor& inferredType, TypeProto_SparseTensor* existingType, const bool enable_symbolic) {
+void mergeShapesAndTypes(const TypeProto_SparseTensor& inferredType, TypeProto_SparseTensor* existingType, SymbolicShape* symbolicShape) {
   if (existingType->elem_type() == TensorProto::UNDEFINED) {
     existingType->set_elem_type(inferredType.elem_type());
   }
@@ -176,27 +174,27 @@ void mergeShapesAndTypes(const TypeProto_SparseTensor& inferredType, TypeProto_S
     auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
     if (!existingDim->has_dim_value()) {
       *existingDim = inferredDim;
-      if (enable_symbolic) {
+      if (symbolicShape != NULL) {
         // If shape cannot be inferred; set it as a symbolic shape
         if (inferredType.shape().dim(i).dim_value() == 0 && !inferredType.shape().dim(i).has_dim_param()) {
-          existingDim->set_dim_param(symbolicShape.createNew());
+          existingDim->set_dim_param(symbolicShape->createNew());
         }
       }
     }
   }
 }
 
-void mergeShapesAndTypes(const TypeProto& inferredType, TypeProto* existingType, const bool enable_symbolic) {
+void mergeShapesAndTypes(const TypeProto& inferredType, TypeProto* existingType, SymbolicShape* symbolicShape) {
   // Check before merge
   checkShapesAndTypes(inferredType, *existingType);
   const auto inferred_val_case = inferredType.value_case();
   if (inferred_val_case == TypeProto::kTensorType) {
-    mergeShapesAndTypes(inferredType.tensor_type(), existingType->mutable_tensor_type(), enable_symbolic);
+    mergeShapesAndTypes(inferredType.tensor_type(), existingType->mutable_tensor_type(), symbolicShape);
   } else if (inferred_val_case == TypeProto::kSparseTensorType) {
-    mergeShapesAndTypes(inferredType.sparse_tensor_type(), existingType->mutable_sparse_tensor_type(), enable_symbolic);
+    mergeShapesAndTypes(inferredType.sparse_tensor_type(), existingType->mutable_sparse_tensor_type(), symbolicShape);
   } else if (inferred_val_case == TypeProto::kSequenceType) {
     mergeShapesAndTypes(
-        inferredType.sequence_type().elem_type(), existingType->mutable_sequence_type()->mutable_elem_type(), enable_symbolic);
+        inferredType.sequence_type().elem_type(), existingType->mutable_sequence_type()->mutable_elem_type(), symbolicShape);
   }
 }
 
@@ -214,9 +212,9 @@ static void InferShapesImpl(
   std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{outer_scope_value_types_by_name};
 
   GraphInferenceContext graphInferenceContext{valueTypesByName, opset_imports, schema_registry};
+  SymbolicShape *symbolicShape = NULL;
   if (enable_symbolic) {
-    // initialize index of symbolic shape for new graph-level shape_inference
-    symbolicShape.init(g);
+    symbolicShape = new SymbolicShape(g);
   }
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type()) {
@@ -380,10 +378,10 @@ static void InferShapesImpl(
               }
             }
           }
-          InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx, enable_symbolic);
+          InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx, symbolicShape);
         } else {
           // If the function proto does not import operator sets then simply use the model level opset imports.
-          InferShapeForFunctionNode(func_proto, opset_imports, schema_registry, ctx, enable_symbolic);
+          InferShapeForFunctionNode(func_proto, opset_imports, schema_registry, ctx, symbolicShape);
         }
       }
       ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
@@ -434,7 +432,7 @@ static void InferShapesImpl(
         }
 
         // Now we can merge pre-existing and inferred info
-        mergeShapesAndTypes(*inferredType, existingType, enable_symbolic);
+        mergeShapesAndTypes(*inferredType, existingType, symbolicShape);
 
         // Make merged info available to further inference.
         valueTypesByName[n.output(i)] = existingType;
@@ -531,7 +529,7 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    const bool enable_symbolic) {
+    SymbolicShape* symbolicShape) {
   GraphProto g;
   // Get a temporary tensor-shape map
   const auto num_func_inputs = func->input_size();
@@ -621,7 +619,7 @@ void InferShapeForFunctionNode(
         vi->set_name(copy_n.output(i));
         existingType = vi->mutable_type();
       }
-      mergeShapesAndTypes(*inferred_output_type, existingType, enable_symbolic);
+      mergeShapesAndTypes(*inferred_output_type, existingType, symbolicShape);
       // Make merged info available to further inference.
       temp_valueTypesByName[copy_n.output(i)] = existingType;
     }
@@ -648,18 +646,22 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    const bool enable_symbolic) {
+    SymbolicShape* symbolicShape) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : func->opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
-  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, enable_symbolic);
+  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, symbolicShape);
 }
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inputTypes,
     const std::vector<const TensorProto*>& inputData,
     const bool enable_symbolic) {
+  SymbolicShape *symbolicShape = NULL;
+  if (enable_symbolic) {
+    symbolicShape = new SymbolicShape(g_);
+  }
   int numInputs = int(inputTypes.size());
 
   if (g_->input_size() != numInputs) {
@@ -691,7 +693,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     }
 
     // Even if graphInput doesn't have defined type, it will assign inferredType to it
-    mergeShapesAndTypes(*inferredInput, graphInput, enable_symbolic);
+    mergeShapesAndTypes(*inferredInput, graphInput, symbolicShape);
   }
 
   // future: pass inputData into InferShapes either directly, or indirectly by

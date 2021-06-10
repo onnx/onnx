@@ -13,18 +13,22 @@ namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
 struct SymbolicShape {
-  SymbolicShape() : index_(0){}
-  std::string createNew() {
-    return symbol_prefix + std::to_string(++index_);
-  };
-  void init(GraphProto* g) {
-    index_ = 0;
+  SymbolicShape(GraphProto* g) : index_(0){
+    existing_shape_set.clear();
     checkExistingSymbolicShape(*g->mutable_input());
     checkExistingSymbolicShape(*g->mutable_output());
     checkExistingSymbolicShape(*g->mutable_value_info());
   }
+  std::string createNew() {
+    std::string newSymbol;
+    do {
+      newSymbol = symbol_prefix + std::to_string(index_++);
+    } while(existing_shape_set.count(newSymbol) > 0);
+    return newSymbol;
+  };
   private:
     unsigned int index_;
+    std::unordered_set<std::string> existing_shape_set;
     const std::string symbol_prefix = "unk_";
     template<class T>
     void checkExistingSymbolicShape(T protos) {
@@ -33,11 +37,7 @@ struct SymbolicShape {
         if (tensorType->has_shape()) {
           for (int j = 0; j < tensorType->shape().dim_size(); ++j) {
             if (tensorType->shape().dim(j).has_dim_param()) {
-              unsigned int existingIndex = 0;
-              sscanf(tensorType->shape().dim(j).dim_param().c_str(), (symbol_prefix + "%d").c_str(), &existingIndex);
-              // record the maximum index
-              // make sure generated index (>maximum) won't exist 
-              index_ = std::max(index_, existingIndex);
+              existing_shape_set.insert(tensorType->shape().dim(j).dim_param());
             }
           }
         }
@@ -221,22 +221,22 @@ void checkShapesAndTypes(
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
     TypeProto_Tensor* existingType,
-    const bool enable_symbolic);
+    SymbolicShape* symbolicShape);
 
 void mergeShapesAndTypes(
     const TypeProto_SparseTensor& inferredType,
     TypeProto_SparseTensor* existingType,
-    const bool enable_symbolic);
+    SymbolicShape* symbolicShape);
 
 void mergeShapesAndTypes(
     const TypeProto_Sequence& inferredType,
     TypeProto_Tensor* existingType,
-    const bool enable_symbolic);
+    SymbolicShape* symbolicShape);
 
 void mergeShapesAndTypes(
     const TypeProto& inferredType,
     TypeProto* existingType,
-    const bool enable_symbolic);
+    SymbolicShape* symbolicShape);
 
 void InferShapes(
     ModelProto& m,
@@ -268,14 +268,14 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    const bool enable_symbolic);
+    SymbolicShape* symbolicShape);
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    const bool enable_symbolic);
+    SymbolicShape* symbolicShape);
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 
