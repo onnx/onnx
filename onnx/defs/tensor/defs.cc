@@ -1631,7 +1631,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               axes_not_specified = true;
           }
   
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           std::transform(
@@ -1648,6 +1647,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 return;
             }
           }
+
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           for (int i = 0; i < input_ndim; ++i) {
             if (axes_not_specified && input_shape.dim(i).dim_value() == 1) {
