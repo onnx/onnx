@@ -29,7 +29,7 @@ struct SymbolicShape {
   private:
     unsigned int index_;
     std::unordered_set<std::string> existing_shape_set;
-    const std::string symbol_prefix = "unk_";
+    const std::string symbol_prefix = "unk__";
     template<class T>
     void checkExistingSymbolicShape(T protos) {
       for (auto& proto : protos) {

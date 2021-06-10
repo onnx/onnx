@@ -33,7 +33,7 @@ class TestSymbolicShape(unittest.TestCase):
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         vis = list(inferred_model.graph.value_info)
-        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk_0'))]
+        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk__0'))]
 
         assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
 
@@ -58,6 +58,30 @@ class TestSymbolicShape(unittest.TestCase):
 
         assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
 
+    def testc_two_symbolic_clip(self):  # type: () -> None
+
+        clip1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
+        clip2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
+        cast = onnx.helper.make_node('Cast',
+            inputs=['E'],
+            outputs=['output'],
+            to=getattr(TensorProto, 'FLOAT'))
+        graph_def = helper.make_graph(name='test_graph',
+            nodes=[clip1, clip2, cast],
+            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'A']),
+                helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3]),
+                helper.make_tensor_value_info('D', TensorProto.FLOAT, [2, 'D'])],
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'M'])]
+        )
+
+        onnx_model = make_model(graph_def)
+        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
+        vis = list(inferred_model.graph.value_info)
+        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk__0')),
+                    make_tensor_value_info("E", TensorProto.FLOAT, (2, 'unk__1'))]
+
+        assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
+
     def test_duplicate_symbolic_shape(self):  # type: () -> None
 
         clip = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
@@ -67,16 +91,16 @@ class TestSymbolicShape(unittest.TestCase):
             to=getattr(TensorProto, 'FLOAT'))
         graph_def = helper.make_graph(name='test_graph',
             nodes=[clip, cast],
-            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'unk_0']),
+            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'unk__0']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3])],
-            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'unk_1'])]
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'unk__1'])]
         )
 
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         vis = list(inferred_model.graph.value_info)
-        # unk_0 and unk_1 have been used so it will use unk_2
-        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk_2'))]
+        # unk__0 and unk__1 have been used so it will use unk__2
+        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk__2'))]
 
         assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
 
