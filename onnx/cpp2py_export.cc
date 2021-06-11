@@ -303,25 +303,23 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   py::register_exception<InferenceError>(shape_inference, "InferenceError");
 
 
-  shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type, bool strict_mode, bool enable_symbolic) {
+  shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type, bool strict_mode) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
     shape_inference::InferShapes(proto, check_type, 
                                  OpSchemaRegistry::Instance(),
-                                 strict_mode == true ? 1 : 0,
-                                 enable_symbolic);
+                                 strict_mode == true ? 1 : 0);
     std::string out;
     proto.SerializeToString(&out);
     return py::bytes(out);
-  }, "bytes"_a, "check_type"_a = false, "strict_mode"_a = false, "enable_symbolic"_a = true);
+  }, "bytes"_a, "check_type"_a = false, "strict_mode"_a = false);
 
   shape_inference.def(
       "infer_shapes_path",
       [](const std::string& model_path, const std::string& output_path, bool check_type, bool strict_mode, bool enable_symbolic)  -> void {
         shape_inference::InferShapes(model_path, check_type, output_path, 
                                      OpSchemaRegistry::Instance(),
-                                     strict_mode == true ? 1 : 0,
-                                     enable_symbolic);
+                                     strict_mode == true ? 1 : 0);
       });
 }
 

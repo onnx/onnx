@@ -16,7 +16,7 @@ import numpy as np  # type: ignore
 
 class TestSymbolicShape(unittest.TestCase):
 
-    def testc_clip_enable_symbolic(self):  # type: () -> None
+    def test_clip_enable_symbolic(self):  # type: () -> None
 
         clip = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
@@ -34,31 +34,10 @@ class TestSymbolicShape(unittest.TestCase):
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         vis = list(inferred_model.graph.value_info)
         inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk__0'))]
-
+        onnx.save(onnx_model, 't.onnx')
         assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
 
-    def test_clip_disable_symbolic(self):  # type: () -> None
-
-        clip = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
-        cast = onnx.helper.make_node('Cast',
-            inputs=['C'],
-            outputs=['output'],
-            to=getattr(TensorProto, 'FLOAT'))
-        graph_def = helper.make_graph(name='test_graph',
-            nodes=[clip, cast],
-            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'A']),
-                helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3])],
-            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'M'])]
-        )
-
-        onnx_model = make_model(graph_def)
-        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True, enable_symbolic=False)
-        vis = list(inferred_model.graph.value_info)
-        inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, None))]
-
-        assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
-
-    def testc_two_symbolic_clip(self):  # type: () -> None
+    def test_two_symbolic_clip(self):  # type: () -> None
 
         clip1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         clip2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
