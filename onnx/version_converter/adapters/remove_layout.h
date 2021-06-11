@@ -20,8 +20,9 @@ struct RemoveLayout final : public Adapter {
       }
   }
 
-  void adapt(std::shared_ptr<Graph> , Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> , Node* node) const override {
     adapt_remove_layout(node);
+    return node;
   }
 };
 

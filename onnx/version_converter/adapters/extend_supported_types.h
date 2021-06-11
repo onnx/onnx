@@ -98,8 +98,9 @@ struct ExtendSupportedTypes final : public Adapter {
         }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
         adapt_type_extension(graph, node);
+        return node;
     }
 };
 

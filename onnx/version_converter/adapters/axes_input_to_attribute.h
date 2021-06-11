@@ -19,7 +19,7 @@ class AxesInputToAttribute : public Adapter {
       const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     // Identify if axes is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
     // Get axes from initializer or constant operator
@@ -66,6 +66,7 @@ class AxesInputToAttribute : public Adapter {
     ONNX_ASSERTM(
         node->hasAttribute(kaxes),
         "No initializer or constant input to node found");
+    return node;
   }
 };
 

@@ -40,8 +40,9 @@ class Clip_10_11 final : public Adapter {
       node->addInput(v);      
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_clip_10_11(graph, node);
+      return node;
     }
 };
 

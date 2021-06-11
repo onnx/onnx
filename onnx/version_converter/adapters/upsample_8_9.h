@@ -35,8 +35,9 @@ struct Upsample_8_9 final: public Adapter {
       }
     }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_upsample_8_9(graph, node);
+    return node;
   }
 };
 

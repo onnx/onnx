@@ -33,9 +33,10 @@ class Reshape_4_5 final : public RemoveConsumedInputs {
       node->removeAttribute(kshape);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       RemoveConsumedInputs::adapt(graph, node);
 	    adapt_reshape_4_5(graph, node);
+      return node;
     }
 };
 

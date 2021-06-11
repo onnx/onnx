@@ -28,8 +28,9 @@ class TypeRestriction : public Adapter {
       }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_type_restriction(graph, node);
+      return node;
     }
 
   private:

@@ -67,8 +67,9 @@ class BroadcastForwardCompatibility final : public Adapter {
       assert_numpy_multibroadcastable(inputs[0]->sizes(), inputs[1]->sizes());
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_broadcast_forward_compatibility(graph, node);
+      return node;
     }
 };
 

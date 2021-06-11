@@ -25,8 +25,9 @@ class Sum_8_7 final : public Adapter {
       }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_sum_8_7(graph, node);
+      return node;
     }
 };
 

@@ -74,8 +74,9 @@ class Softmax_12_13 final : public Adapter {
       }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_softmax_12_13(graph, node);
+      return node;
     }
 };
 

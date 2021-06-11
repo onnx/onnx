@@ -15,7 +15,7 @@ class Split_13_12 : public Adapter {
  public:
   explicit Split_13_12() : Adapter("Split", OpSetID(13), OpSetID(12)) {}
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     // Identify if 'split' is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
     // Get 'split' from initializer or constant operator
@@ -62,6 +62,7 @@ class Split_13_12 : public Adapter {
     ONNX_ASSERTM(
         node->hasAttribute(ksplit),
         "No initializer or constant input to node found");
+    return node;
   }
 };
 

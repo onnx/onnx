@@ -36,8 +36,9 @@ class Pad_10_11 final : public Adapter {
       node->removeAttribute(kvalue);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
 	    adapt_pad_10_11(graph, node);
+      return node;
     }
 };
 

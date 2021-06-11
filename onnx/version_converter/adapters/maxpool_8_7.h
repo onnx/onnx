@@ -22,8 +22,9 @@ class MaxPool_8_7 final : public Adapter {
       if (node->hasAttribute(kstorage_order)) node->removeAttribute(kstorage_order);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_maxpool_8_7(graph, node);
+      return node;
     }
 };
 

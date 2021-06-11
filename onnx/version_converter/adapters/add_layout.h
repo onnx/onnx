@@ -16,8 +16,9 @@ struct AddLayout final : public Adapter {
       node->i_(klayout, 0);
   }
 
-  void adapt(std::shared_ptr<Graph> , Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> , Node* node) const override {
     adapt_add_layout(node);
+    return node;
   }
 };
 

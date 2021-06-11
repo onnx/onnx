@@ -35,8 +35,9 @@ class Resize_10_11 final : public Adapter {
       node->replaceInput(1, roi_input);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_resize_10_11(graph, node);
+      return node;
     }
 };
 

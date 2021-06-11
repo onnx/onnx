@@ -87,7 +87,7 @@ void DefaultVersionConverter::convert_graph(
           // Error thrown by adapter_lookup
           if (DEBUG) std::cerr << "Applying adapter" << std::endl;
           // adapt should handle replacing node in graph
-          op_adapter.adapt(g, op);
+          op = op_adapter.adapt(g, op);
         }
       }
       // Recursively convert any subgraph attributes

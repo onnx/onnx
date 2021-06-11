@@ -35,11 +35,12 @@ class AxesAttributeToInput : public Adapter {
     node->addInput(v);
   }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     if (node->hasAttribute(kaxes)){
       attrToInput(graph, node, node->is(kaxes));
       node->removeAttribute(kaxes);
     }
+    return node;
   }
 };
 

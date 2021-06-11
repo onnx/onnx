@@ -41,8 +41,9 @@ class Slice_9_10 final : public Adapter {
       }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_slice_9_10(graph, node);
+      return node;
     }
 };
 

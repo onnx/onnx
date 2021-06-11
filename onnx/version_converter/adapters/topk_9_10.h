@@ -27,8 +27,9 @@ class TopK_9_10 final : public Adapter {
       node->removeAttribute(kk);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_topk_9_10(graph, node);
+      return node;
     }
 };
 

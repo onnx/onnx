@@ -32,8 +32,9 @@ class Dropout_11_12 final : public Adapter {
       node->addInput(v_ratio);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
 	    adapt_dropout_11_12(graph, node);
+      return node;
     }
 };
 
