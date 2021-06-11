@@ -79,14 +79,14 @@ class TestVersionConverterNew(unittest.TestCase):
             opset_imports=[helper.make_opsetid('', from_opset)]
         )
         onnx.checker.check_model(original)
-        shape_inference.infer_shapes(original)
+        shape_inference.infer_shapes(original, strict_mode=True)
 
         if to_opset is None:
             to_opset = latest_opset
 
         converted = version_converter.convert_version(original, to_opset)
         onnx.checker.check_model(converted)
-        shape_inference.infer_shapes(converted)
+        shape_inference.infer_shapes(converted, strict_mode=True)
 
     def test_Abs(self):  # type: () -> None
         self._test_op_upgrade('Abs', 1, attrs={'consumed_inputs': [0]})
