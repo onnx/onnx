@@ -1354,11 +1354,11 @@ expect(node, inputs=[x], outputs=[y],
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] - 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] - 1)
    ```
    if ceil_mode is enabled
   
@@ -9773,11 +9773,11 @@ for op_dtype in all_numeric_dtypes:
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] - 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] - 1)
    ```
    if ceil_mode is enabled
   
