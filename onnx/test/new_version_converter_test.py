@@ -30,8 +30,7 @@ class TestVersionConverterNew(unittest.TestCase):
         initializer=[],  # type: List[Any]
         attrs={},  # type: Dict[Text, Any]
         seq_inputs=[],  # type: List[int]
-        seq_outputs=[],  # type: List[int]
-        to_opset=None  # type: Union[int, None]
+        seq_outputs=[]  # type: List[int]
     ):  # type: (...) -> None
         global tested_ops
         tested_ops.append(op)
@@ -81,10 +80,7 @@ class TestVersionConverterNew(unittest.TestCase):
         onnx.checker.check_model(original)
         shape_inference.infer_shapes(original, strict_mode=True)
 
-        if to_opset is None:
-            to_opset = latest_opset
-
-        converted = version_converter.convert_version(original, to_opset)
+        converted = version_converter.convert_version(original, latest_opset)
         onnx.checker.check_model(converted)
         shape_inference.infer_shapes(converted, strict_mode=True)
 
@@ -170,10 +166,9 @@ class TestVersionConverterNew(unittest.TestCase):
         )
 
     def test_BatchNormalization_2(self):  # type: () -> None
-        self._test_op_upgrade('BatchNormalization', 1,
-            [[1, 3], [3], [3], [3], [3]], [[1, 3], [3], [3], [3], [3]],
-            attrs={'consumed_inputs': [1, 1], 'is_test': 1, 'spatial': 1},
-            to_opset=13  # only 3 outputs are supported from opset 14
+        self._test_op_upgrade('BatchNormalization', 14,
+            [[1, 3], [3], [3], [3], [3]], [[1, 3], [3], [3]],
+            attrs={'training_mode': 1}
         )
 
     def test_Cast(self):  # type: () -> None
