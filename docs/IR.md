@@ -309,7 +309,7 @@ More details can be found in [External Data](ExternalData.md).
 
 There are two official ONNX variants; the main distinction between the two is found in the supported types and the supported operators.
 
-With respect to supported types, both __ONNX__ and __ONNX-ML__ definition recognize tensors, sparse tensors, sequences, maps, and optionals as input and output types.
+With respect to supported types, both __ONNX__ and __ONNX-ML__ definition recognize tensors, sparse tensors, sequences, maps, and optionals as input and output types. Sequences and maps were supported from the IR version 6 (ONNX 1.6.0 release). Optional type was supported from IR vesion 8 (ONNX 1.10.0 release).
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the initializers of a graph.
 
@@ -335,7 +335,7 @@ The following types are used to define the types of graph and node inputs and ou
 ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
 ONNX|sequence|Sequences are dense, ordered, collections of elements that are of homogeneous types.
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
-ONNX|optional|Optionals are a wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none).
+ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](docs/ONNXTypes.md)
 
 ONNX currently does not define a sparse tensor type.
 

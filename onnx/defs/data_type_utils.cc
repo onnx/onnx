@@ -193,7 +193,7 @@ void DataTypeUtils::FromString(
     return FromString(
         std::string(s.Data(), s.Size()),
         *type_proto.mutable_sequence_type()->mutable_elem_type());
-  } if (s.LStrip("optional")) {
+  } else if (s.LStrip("optional")) {
     s.ParensWhitespaceStrip();
     return FromString(
         std::string(s.Data(), s.Size()),
