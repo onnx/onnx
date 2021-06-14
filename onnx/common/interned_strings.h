@@ -176,7 +176,8 @@ namespace ONNX_NAMESPACE {
   _(layout)                       \
   _(k)                            \
   _(Flatten)                      \
-  _(ScatterElements)
+  _(ScatterElements)              \
+  _(Resize)
 
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,

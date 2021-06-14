@@ -965,8 +965,7 @@ class TestVersionConverterNew(unittest.TestCase):
 
     def test_Upsample(self):  # type: () -> None
         self._test_op_upgrade('Upsample', 1, [[1, 3, 4, 5]], [[1, 3, 6, 10]],
-            attrs={'width_scale': 2., 'height_scale': 1.5},
-            to_opset=9  # op is deprecated in opset 10
+            attrs={'width_scale': 2., 'height_scale': 1.5}
         )
 
     def test_Where(self):  # type: () -> None

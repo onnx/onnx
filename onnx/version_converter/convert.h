@@ -50,6 +50,7 @@
 #include "onnx/version_converter/adapters/scatter_10_11.h"
 #include "onnx/version_converter/adapters/softmax_12_13.h"
 #include "onnx/version_converter/adapters/batch_normalization_13_14.h"
+#include "onnx/version_converter/adapters/upsample_9_10.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -360,6 +361,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(9), OpSetID(10)));
       registerAdapter(make_unique<Slice_9_10>());
       registerAdapter(make_unique<TopK_9_10>());
+      registerAdapter(make_unique<Upsample_9_10>());
 
       /******** 10 -> 9 ********/
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
