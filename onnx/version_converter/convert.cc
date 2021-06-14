@@ -44,9 +44,6 @@ void DefaultVersionConverter::convert_graph(
   assertInVersionRange(initial_version.version());
   assertInVersionRange(target_version.version());
 
-  // Compile list of all ops used in the model
-  graph_node_list nodes = g->nodes();
-
   // Iterate over all versions to target_version for specified
   int64_t curr_version = initial_version.version();
   int64_t step;
@@ -65,10 +62,15 @@ void DefaultVersionConverter::convert_graph(
   while (curr_version != target_version.version()) {
     debug("curr_version: " + ONNX_NAMESPACE::to_string(curr_version) + ", next_version: " +
         ONNX_NAMESPACE::to_string(curr_version + step));
-    // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
-    for (Node* op : nodes) {
-      debug(std::string("Finding schema for ") + std::string(op->kind().toString()));
-      const std::string op_name = op->kind().toString();
+    Node *cur_op;
+    graph_node_list_iterator it = g->begin();
+    // Iterate through and call adapter returned by adapter_lookup for ops from 
+    // current_version opset. We have to manipulate the iterator explicitly because cur_op 
+    // might change when applying the adapter (e.g. for deprecated ops)
+    while ( it != g->end() ) {
+      cur_op = *it;
+      debug(std::string("Finding schema for ") + std::string(cur_op->kind().toString()));
+      const std::string op_name = cur_op->kind().toString();
       if (op_name == "ConstantFill")
       {
         std::cerr << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
@@ -82,20 +84,22 @@ void DefaultVersionConverter::convert_graph(
           // Op is specifically defined for this domain and version
           OpSetID curr_id(curr_version);
           OpSetID next_id(curr_version + step);
-          auto& op_adapter = adapter_lookup(op, curr_id, next_id);
+          auto& op_adapter = adapter_lookup(cur_op, curr_id, next_id);
           // If adapter_lookup returns null, no adapter is present.
           // Error thrown by adapter_lookup
           if (DEBUG) std::cerr << "Applying adapter" << std::endl;
           // adapt should handle replacing node in graph
-          op = op_adapter.adapt(g, op);
+          cur_op = op_adapter.adapt(g, cur_op);
+          it = graph_node_list_iterator(cur_op, kNextDirection);
         }
       }
       // Recursively convert any subgraph attributes
-      for (const auto& attr : op->attributeNames()) {
-        if (op->kindOf(attr) == AttributeKind::g) {
-          convert_graph(op->g(attr), initial_version, target_version);
+      for (const auto& attr : cur_op->attributeNames()) {
+        if (cur_op->kindOf(attr) == AttributeKind::g) {
+          convert_graph(cur_op->g(attr), initial_version, target_version);
         }
       }
+      it++;
     }
     // Update model version
     curr_version += step;
