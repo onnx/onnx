@@ -785,8 +785,7 @@ class TestVersionConverterNew(unittest.TestCase):
     def test_Scatter(self):  # type: () -> None
         self._test_op_upgrade('Scatter', 9, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
             [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
-            [TensorProto.FLOAT],
-            to_opset=10  # op is deprecated in opset 11
+            [TensorProto.FLOAT]
         )
 
     def test_ScatterElements(self):  # type: () -> None
