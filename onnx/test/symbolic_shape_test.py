@@ -16,7 +16,14 @@ import numpy as np  # type: ignore
 
 class TestSymbolicShape(unittest.TestCase):
 
-    def _assert_valueInfo_shape(self, onnx_model, nameShape):
+    def _assert_valueInfo_shape(self, onnx_model, valueInfo):
+        nameShape = {}
+        for v in valueInfo:
+            shape = []
+            for dim_i in range(len(v.type.tensor_type.shape.dim)):
+                shape.append(v.type.tensor_type.shape.dim[dim_i].dim_value)
+            nameShape[v.name] = shape
+
         for v in onnx_model.graph.value_info:
             if v.name in nameShape:
                 for dim_i in range(len(nameShape[v.name])):
@@ -63,7 +70,7 @@ class TestSymbolicShape(unittest.TestCase):
 
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
-        self._assert_valueInfo_shape(inferred_model, {"C": (2, -1)})
+        self._assert_valueInfo_shape(inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (2, -1))])
 
     def test_two_symbolic_clip(self):  # type: () -> None
 
@@ -83,7 +90,9 @@ class TestSymbolicShape(unittest.TestCase):
 
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
-        self._assert_valueInfo_shape(inferred_model, {"C": (2, -1), "E": (2, -1)})
+        self._assert_valueInfo_shape(inferred_model, [
+            make_tensor_value_info("C", TensorProto.FLOAT, (2, -1)),
+            make_tensor_value_info("E", TensorProto.FLOAT, (2, -1))])
 
     def test_duplicate_symbolic_shape(self):  # type: () -> None
 

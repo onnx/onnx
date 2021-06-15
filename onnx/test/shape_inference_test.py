@@ -65,9 +65,9 @@ class TestShapeInference(unittest.TestCase):
             for dim_i in range(len(vis[i].type.tensor_type.shape.dim)):
                 dim = vis[i].type.tensor_type.shape.dim[dim_i]
                 inferred_dim = inferred_vis[i].type.tensor_type.shape.dim[dim_i]
-                # if it is a symbolic shape, make sure the inferred symbol has generated
+                # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
                 if dim.dim_param:
-                    assert inferred_dim.dim_param != '', '\n%s\n%s\n' % (vis, inferred_vis)
+                    assert inferred_dim.dim_param, '\n%s\n%s\n' % (vis, inferred_vis)
                 else:
                     assert dim.dim_value == inferred_dim.dim_value, '\n%s\n%s\n' % (vis, inferred_vis)
 
