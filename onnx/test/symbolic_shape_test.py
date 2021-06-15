@@ -18,13 +18,13 @@ class TestSymbolicShape(unittest.TestCase):
 
     def test_clip_enable_symbolic(self):  # type: () -> None
 
-        clip = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
+        concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
             inputs=['C'],
             outputs=['output'],
             to=getattr(TensorProto, 'FLOAT'))
         graph_def = helper.make_graph(name='test_graph',
-            nodes=[clip, cast],
+            nodes=[concat, cast],
             inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'A']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3])],
             outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'M'])]
@@ -34,19 +34,18 @@ class TestSymbolicShape(unittest.TestCase):
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         vis = list(inferred_model.graph.value_info)
         inferred_vis = [make_tensor_value_info("C", TensorProto.FLOAT, (2, 'unk__0'))]
-        onnx.save(onnx_model, 't.onnx')
         assert vis == inferred_vis, '\n%s\n%s\n' % (vis, inferred_vis)
 
     def test_two_symbolic_clip(self):  # type: () -> None
 
-        clip1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
-        clip2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
+        concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
+        concat2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
             inputs=['E'],
             outputs=['output'],
             to=getattr(TensorProto, 'FLOAT'))
         graph_def = helper.make_graph(name='test_graph',
-            nodes=[clip1, clip2, cast],
+            nodes=[concat1, concat2, cast],
             inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'A']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3]),
                 helper.make_tensor_value_info('D', TensorProto.FLOAT, [2, 'D'])],
@@ -63,13 +62,13 @@ class TestSymbolicShape(unittest.TestCase):
 
     def test_duplicate_symbolic_shape(self):  # type: () -> None
 
-        clip = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
+        concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
             inputs=['C'],
             outputs=['output'],
             to=getattr(TensorProto, 'FLOAT'))
         graph_def = helper.make_graph(name='test_graph',
-            nodes=[clip, cast],
+            nodes=[concat, cast],
             inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'unk__0']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3])],
             outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'unk__1'])]

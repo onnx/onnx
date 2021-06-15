@@ -12,32 +12,30 @@
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
-struct SymbolicShape {
-  SymbolicShape(GraphProto* g) : index_(0){
-    existing_shape_set.clear();
-    checkExistingSymbolicShape(*g->mutable_input());
-    checkExistingSymbolicShape(*g->mutable_output());
-    checkExistingSymbolicShape(*g->mutable_value_info());
+struct SymbolTable {
+  SymbolTable(GraphProto* g) : index_(0){
+    existing_symbols.clear();
+    AddExistingSymbolicDims(*g->mutable_input());
+    AddExistingSymbolicDims(*g->mutable_output());
+    AddExistingSymbolicDims(*g->mutable_value_info());
   }
-  std::string createNew() {
+  std::string createNew(std::string symbol_prefix="unk__") {
     std::string newSymbol;
     do {
       newSymbol = symbol_prefix + std::to_string(index_++);
-    } while(existing_shape_set.count(newSymbol) > 0);
+    } while(existing_symbols.count(newSymbol) > 0);
     return newSymbol;
   };
   private:
     unsigned int index_;
-    std::unordered_set<std::string> existing_shape_set;
-    const std::string symbol_prefix = "unk__";
-    template<class T>
-    void checkExistingSymbolicShape(T protos) {
+    std::unordered_set<std::string> existing_symbols;
+    void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField< ::onnx::ValueInfoProto> protos) {
       for (auto& proto : protos) {
         auto tensorType = proto.mutable_type()->mutable_tensor_type();
         if (tensorType->has_shape()) {
           for (int j = 0; j < tensorType->shape().dim_size(); ++j) {
             if (tensorType->shape().dim(j).has_dim_param()) {
-              existing_shape_set.insert(tensorType->shape().dim(j).dim_param());
+              existing_symbols.insert(tensorType->shape().dim(j).dim_param());
             }
           }
         }
@@ -217,7 +215,10 @@ void checkShapesAndTypes(
     const TypeProto& inferredType,
     const TypeProto& existingType);
 
-//const TypeProto generateSymbolicShape(const TypeProto& origin, SymbolicShape* symbolicShape);
+template <typename T>
+void generateSymbolicShape(T inferredType, T* symbolicInferredType, SymbolTable symbolTable);
+
+const TypeProto* materializeSymbolicShapeShape(TypeProto* inferredType, SymbolTable symbolTable);
 
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,

@@ -462,7 +462,7 @@ def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
 
 def make_tensor_type_proto(
         elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> TypeProto
     """Makes a Tensor TypeProto based on the data type and shape."""
@@ -510,7 +510,7 @@ def make_tensor_type_proto(
 def make_tensor_value_info(
         name,  # type: Text
         elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto

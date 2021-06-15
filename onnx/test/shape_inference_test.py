@@ -253,7 +253,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node("Reshape", ['x', 'shape'], ['y'], allowzero=1)],
             [],
             initializer=[make_tensor('shape', TensorProto.INT64, (3,), (0, 1, 1))])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (None, 1, 1))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (0, 1, 1))])
 
     def test_reshape_static_shape_constant(self):  # type: () -> None
         graph = self._make_graph(
@@ -2056,7 +2056,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('shape', TensorProto.INT64, (1,)),
-             make_tensor_value_info('y', TensorProto.INT32, (None,))])  # type: ignore
+             make_tensor_value_info('y', TensorProto.INT32, (0,))])  # type: ignore
 
     def test_convinteger(self):  # type: () -> None
         graph = self._make_graph(
@@ -3458,7 +3458,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Trilu', ['x', 'k'], ['y'], upper=1)],
             [],
             initializer=[make_tensor('k', TensorProto.INT64, (), (5,))])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (None, 5))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (0, 5))])  # type: ignore
 
     def test_trilu_lower_one(self):  # type: () -> None
         graph = self._make_graph(

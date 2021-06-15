@@ -316,7 +316,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   shape_inference.def(
       "infer_shapes_path",
-      [](const std::string& model_path, const std::string& output_path, bool check_type, bool strict_mode, bool enable_symbolic)  -> void {
+      [](const std::string& model_path, const std::string& output_path, bool check_type, bool strict_mode)  -> void {
         shape_inference::InferShapes(model_path, check_type, output_path, 
                                      OpSchemaRegistry::Instance(),
                                      strict_mode == true ? 1 : 0);
