@@ -16,9 +16,9 @@ import numpy as np  # type: ignore
 
 class TestSymbolicShape(unittest.TestCase):
 
-    def _assert_valueInfo_shape(self, onnx_model, valueInfo):
+    def _assert_valueinfo_shape(self, onnx_model, valueinfo):  # type: (ModelProto, List[ValueInfoProto]) -> None
         nameShape = {}
-        for v in valueInfo:
+        for v in valueinfo:
             shape = []
             for dim_i in range(len(v.type.tensor_type.shape.dim)):
                 shape.append(v.type.tensor_type.shape.dim[dim_i].dim_value)
@@ -35,27 +35,35 @@ class TestSymbolicShape(unittest.TestCase):
                     else:
                         assert dim.dim_value == nameShape[v.name][dim_i], '%s' % (onnx_model)
 
-    def _count_unqiue_dim_param_number(self, onnx_model):
+    def _count_unqiue_dim_param_number(self, onnx_model):  # type: (ModelProto) -> int
         symbol_shape_set = set()
-        for input in onnx_model.graph.input:
-            for dim_i in range(len(input.type.tensor_type.shape.dim)):
-                dim = input.type.tensor_type.shape.dim[dim_i]
-                if dim.dim_param:
-                    symbol_shape_set.add(dim.dim_param)
-        for output in onnx_model.graph.output:
-            for dim_i in range(len(output.type.tensor_type.shape.dim)):
-                dim = output.type.tensor_type.shape.dim[dim_i]
-                if dim.dim_param:
-                    symbol_shape_set.add(dim.dim_param)
-        for v in onnx_model.graph.value_info:
+        inputs = list(onnx_model.graph.input)
+        outputs = list(onnx_model.graph.output)
+        valueinfos = list(onnx_model.graph.value_info)
+        for v in inputs + outputs + valueinfos:
             for dim_i in range(len(v.type.tensor_type.shape.dim)):
                 dim = v.type.tensor_type.shape.dim[dim_i]
                 if dim.dim_param:
                     symbol_shape_set.add(dim.dim_param)
         return len(symbol_shape_set)
 
-    def test_clip_enable_symbolic(self):  # type: () -> None
+    def _get_shape_from_name(self, onnx_model, name):  # type: (ModelProto, Text) -> List[Union[int, Text]]
+        shape = []
+        inputs = list(onnx_model.graph.input)
+        outputs = list(onnx_model.graph.output)
+        valueinfos = list(onnx_model.graph.value_info)
+        for v in inputs + outputs + valueinfos:
+            if v.name == name:
+                for dim_i in range(len(v.type.tensor_type.shape.dim)):
+                    dim_param = v.type.tensor_type.shape.dim[dim_i].dim_param
+                    dim_value = v.type.tensor_type.shape.dim[dim_i].dim_value
+                    if dim_param:
+                        shape.append(dim_param)
+                    else:
+                        shape.append(dim_value)
+        return shape
 
+    def test_clip_enable_symbolic(self):  # type: () -> None
         concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
             inputs=['C'],
@@ -70,10 +78,11 @@ class TestSymbolicShape(unittest.TestCase):
 
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
-        self._assert_valueInfo_shape(inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (2, -1))])
+        self._assert_valueinfo_shape(inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (2, -1))])
+        # the symbolic shape of C and output should be the same
+        assert self._get_shape_from_name(inferred_model, 'C') == self._get_shape_from_name(inferred_model, 'output')
 
     def test_two_symbolic_clip(self):  # type: () -> None
-
         concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         concat2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
@@ -90,12 +99,13 @@ class TestSymbolicShape(unittest.TestCase):
 
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
-        self._assert_valueInfo_shape(inferred_model, [
+        self._assert_valueinfo_shape(inferred_model, [
             make_tensor_value_info("C", TensorProto.FLOAT, (2, -1)),
             make_tensor_value_info("E", TensorProto.FLOAT, (2, -1))])
+        # the symbolic shape of E and output should be the same
+        assert self._get_shape_from_name(inferred_model, 'E') == self._get_shape_from_name(inferred_model, 'output')
 
     def test_duplicate_symbolic_shape(self):  # type: () -> None
-
         concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         concat2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
