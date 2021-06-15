@@ -29,7 +29,7 @@ struct SymbolTable {
   private:
     unsigned int index_;
     std::unordered_set<std::string> existing_symbols;
-    void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField< ::onnx::ValueInfoProto> protos) {
+    void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField<ValueInfoProto> protos) {
       for (auto& proto : protos) {
         auto tensorType = proto.mutable_type()->mutable_tensor_type();
         if (tensorType->has_shape()) {
