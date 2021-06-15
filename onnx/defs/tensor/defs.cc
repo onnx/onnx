@@ -1642,8 +1642,9 @@ ONNX_OPERATOR_SET_SCHEMA(
               });
 
           for (int i = 0; i < input_ndim; ++i) {
-            if(!input_shape.dim(i).has_dim_value() && (axes_not_specified || std::find(axes.begin(), axes.end(), i) != axes.end())) {
-                // if dim has a symbolic value and the axes spec want to act on dim, return early because we can't infer the shape
+            if(!input_shape.dim(i).has_dim_value() && axes_not_specified) {
+                // if dim has a symbolic value and the axes spec want to act on all dims, 
+                // return early because we can't infer the shape
                 return;
             }
           }
@@ -1655,7 +1656,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 // if axes not specified, do not keep shape if the dimension is equal to one
                 continue;
             } else if (!axes_not_specified && std::find(axes.begin(), axes.end(), i) != axes.end()) {
-              if (input_shape.dim(i).dim_value() != 1) {
+              // if axes wants to explictly act on this dim, fail explicitly only if the 
+              // dim is numerical and != 1. If the dim is 1 or symbolic, remove it. If 
+              // the dim is symbolic, runtime engines should check that the dimension is 
+              // actually 1 when the op is evaluated
+              if (input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
                     "Dimension of input ",
                     i,
