@@ -101,6 +101,7 @@ enum Version {
   // IR VERSION 8 published on <TBD>
   // Introduce TypeProto.SparseTensor
   // Introduce TypeProto.Optional
+  // Added a list of FunctionProtos local to the model
   IR_VERSION = 0x0000000000000008;
 
 }
@@ -398,7 +399,7 @@ message ModelProto {
   // The opset imports in FunctionProto should not conflict with the ones in 
   // model proto and should be mergeable. Example, if the function proto imports domain  
   // 'A' opset 10 whereas model proto also imports domain 'A' but with a different opset
-  // then this is a merge conflict and it will lead to model load failure.
+  // then this is a merge conflict.
   repeated FunctionProto functions = 25;
 
 };

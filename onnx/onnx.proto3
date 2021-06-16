@@ -99,6 +99,7 @@ enum Version {
   // IR VERSION 8 published on <TBD>
   // Introduce TypeProto.SparseTensor
   // Introduce TypeProto.Optional
+  // Added a list of FunctionProtos local to the model
   IR_VERSION = 0x0000000000000008;
 
 }
