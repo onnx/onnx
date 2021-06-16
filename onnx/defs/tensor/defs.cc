@@ -1631,7 +1631,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               axes_not_specified = true;
           }
   
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           std::transform(
@@ -1641,19 +1640,27 @@ ONNX_OPERATOR_SET_SCHEMA(
               [&](int64_t axis) -> int64_t {
                 return axis < 0 ? axis + input_ndim : axis;
               });
-          // if input consists a symbolic value, return early since shape cannot be inferred
+
           for (int i = 0; i < input_ndim; ++i) {
-            if (!input_shape.dim(i).has_dim_value()) {
-              return;
+            if(!input_shape.dim(i).has_dim_value() && axes_not_specified) {
+                // if dim has a symbolic value and the axes spec want to act on all dims, 
+                // return early because we can't infer the shape
+                return;
             }
           }
+
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           for (int i = 0; i < input_ndim; ++i) {
             if (axes_not_specified && input_shape.dim(i).dim_value() == 1) {
                 // if axes not specified, do not keep shape if the dimension is equal to one
                 continue;
             } else if (!axes_not_specified && std::find(axes.begin(), axes.end(), i) != axes.end()) {
-              if (input_shape.dim(i).dim_value() != 1) {
+              // if axes wants to explictly act on this dim, fail explicitly only if the 
+              // dim is numerical and != 1. If the dim is 1 or symbolic, remove it. If 
+              // the dim is symbolic, runtime engines should check that the dimension is 
+              // actually 1 when the op is evaluated
+              if (input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
                     "Dimension of input ",
                     i,
