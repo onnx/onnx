@@ -83,6 +83,7 @@ Each model has the following components:
 |graph|Graph|The parameterized graph that is evaluated to execute the model.|
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
 |training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
+|functions|FunctionProto[]|An optional list functions local to the model.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 

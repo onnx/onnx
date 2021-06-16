@@ -813,6 +813,10 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
   check_graph(model.graph(), ctx, lex_ctx);
+
+  for (const auto& function_proto : model.functions()) {
+    check_function(function_proto, ctx, lex_ctx);
+  }
 }
 
 void check_model(const std::string& model_path) {

@@ -21,8 +21,7 @@ from ..test_case import TestCase
 _NodeTestCases = []
 _TargetOpType = ""
 
-from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto
-from onnx.onnx_operators_pb import FunctionProto
+from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto
 
 
 # FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
