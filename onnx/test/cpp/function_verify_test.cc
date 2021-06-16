@@ -281,7 +281,7 @@ agraph (float[N] x) => (float[N] w)
     new_node->CopyFrom(node);
   }
 
-  function_proto->set_name("custom_domain.foo");
+  function_proto->set_name("foo");
   function_proto->set_doc_string("Test function proto");
   function_proto->set_since_version(13);
   function_proto->set_status(OperatorStatus::STABLE);
