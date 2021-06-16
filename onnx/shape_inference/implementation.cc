@@ -115,41 +115,34 @@ void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existin
     fail_type_inference("type case unsupported. existing=", existingTypeCase, " inferred=", inferredTypeCase);
   }
 }
-// after symbolic shape_inference from inferredType, assign it to existingTensorType
+
 // TypeProto_Tensor or TypeProto_SparseTensor
 template <typename T>
-void generateSymbolicShape(T inferredType, T* existingTensorType, SymbolTable symbolTable) {
-  if (!inferredType.has_shape()) {
-    // No need to consider symbolic shape
-    *existingTensorType = inferredType;
+void generateSymbolicShape(T* inferredType, SymbolTable& symbolTable) {
+  if (!inferredType->has_shape()) {
     return;
   }
-  for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
-    const auto& inferredDim = inferredType.shape().dim(i);
-    auto* typeAfterSymbolicShapeDim = existingTensorType->mutable_shape()->mutable_dim(i);
-    *typeAfterSymbolicShapeDim = inferredDim;
+  for (int i = 0; i < inferredType->shape().dim_size(); ++i) {
+    const auto& inferredDim = inferredType->shape().dim(i);
+    auto* typeAfterSymbolicShapeDim = inferredType->mutable_shape()->mutable_dim(i);
     // set a symbol if it doesn't have dim_value and dim_param
-    if (!inferredType.shape().dim(i).has_dim_value() && !inferredType.shape().dim(i).has_dim_param()) {
+    if (!inferredType->shape().dim(i).has_dim_value() && !inferredType->shape().dim(i).has_dim_param()) {
       typeAfterSymbolicShapeDim->set_dim_param(symbolTable.createNew());
     }
   }
 }
 
-const TypeProto* materializeSymbolicShapeShape(TypeProto* inferredType, SymbolTable symbolTable) {
+void materializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable) {
   const auto inferred_val_case = inferredType->value_case();
-  TypeProto* symbolicInferredType = inferredType;
   if (inferred_val_case == TypeProto::kTensorType) {
-    generateSymbolicShape(inferredType->tensor_type(), symbolicInferredType->mutable_tensor_type(), symbolTable);
+    generateSymbolicShape(inferredType->mutable_tensor_type(), symbolTable);
   } else if (inferred_val_case == TypeProto::kSparseTensorType) {
-    generateSymbolicShape(inferredType->sparse_tensor_type(), symbolicInferredType->mutable_sparse_tensor_type(), symbolTable);
+    generateSymbolicShape(inferredType->mutable_sparse_tensor_type(), symbolTable);
   } else if (inferred_val_case == TypeProto::kSequenceType) {
-    TypeProto* sequenceTypeProto = symbolicInferredType->mutable_sequence_type()->mutable_elem_type();
-    TypeProto* innerTypeProto = const_cast<TypeProto*>(&(inferredType->sequence_type().elem_type()));
-    *sequenceTypeProto = *materializeSymbolicShapeShape(innerTypeProto, symbolTable);
+    materializeSymbolicShape(inferredType->mutable_sequence_type()->mutable_elem_type(), symbolTable);
   } else {
-    fail_type_inference("type case unsupported for symbolic shape inference. inferred=", inferred_val_case);
+    fail_shape_inference("type case unsupported for symbolic shape inference. inferred=", inferred_val_case);
   }
-  return symbolicInferredType;
 }
 
 void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor* existingType) {
@@ -425,7 +418,7 @@ static void InferShapesImpl(
         schema->CheckInputOutputType(ctx);
       }
       for (int i = 0; i < n.output_size(); ++i) {
-        const auto* inferredType = ctx.getOutputType(i);
+        auto* inferredType = ctx.getOutputType(i);
         if (inferredType->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
           continue;
         }
@@ -451,7 +444,8 @@ static void InferShapesImpl(
         }
         // Check existing symbolic shape and generate new symbolic shape
         SymbolTable symbolTable(g);
-        inferredType = materializeSymbolicShapeShape(const_cast<TypeProto*>(inferredType), symbolTable);
+        //inferredType = const_cast<TypeProto*>(inferredType);
+        materializeSymbolicShape(inferredType, symbolTable);
         // Now we can merge pre-existing and inferred info
         mergeShapesAndTypes(*inferredType, existingType);
 
@@ -604,7 +598,7 @@ void InferShapeForFunctionNode(
         copy_n, temp_valueTypesByName, temp_initializersByName, temp_SparseInitializersByName);
     schema->GetTypeAndShapeInferenceFunction()(temp_ctx);
     for (int i = 0; i < copy_n.output_size(); ++i) {
-      const TypeProto* inferred_output_type = temp_ctx.getOutputType(i);
+      TypeProto* inferred_output_type = temp_ctx.getOutputType(i);
       const auto type_value_case = inferred_output_type->value_case();
       if (type_value_case == TypeProto::kTensorType) {
         const auto& tensor_type = inferred_output_type->tensor_type();
@@ -637,7 +631,7 @@ void InferShapeForFunctionNode(
       }
       // check existing symbolic shape and generate new symbolic shape
       SymbolTable symbolTable(&g);
-      inferred_output_type = materializeSymbolicShapeShape(const_cast<TypeProto*>(inferred_output_type), symbolTable);
+      materializeSymbolicShape(inferred_output_type, symbolTable);
       mergeShapesAndTypes(*inferred_output_type, existingType);
       // Make merged info available to further inference.
       temp_valueTypesByName[copy_n.output(i)] = existingType;
@@ -682,7 +676,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   }
 
   for (int i = 0, end = numInputs; i < end; ++i) {
-    const TypeProto* inferredInput = inputTypes[i];
+    TypeProto* inferredInput = const_cast<TypeProto*>(inputTypes[i]);
 
     if (!inferredInput)
       continue;
@@ -706,7 +700,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     }
     // check existing symbolic shape and generate new symbolic shape
     SymbolTable symbolTable(g_);
-    inferredInput = materializeSymbolicShapeShape(const_cast<TypeProto*>(inferredInput), symbolTable);
+    materializeSymbolicShape(inferredInput, symbolTable);
     // Even if graphInput doesn't have defined type, it will assign inferredType to it
     mergeShapesAndTypes(*inferredInput, graphInput);
   }

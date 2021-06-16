@@ -24,18 +24,19 @@ struct SymbolTable {
     do {
       newSymbol = symbol_prefix + std::to_string(index_++);
     } while(existing_symbols.count(newSymbol) > 0);
+    existing_symbols.insert(newSymbol);
     return newSymbol;
   };
   private:
     unsigned int index_;
     std::unordered_set<std::string> existing_symbols;
     void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField<ValueInfoProto> protos) {
-      for (auto& proto : protos) {
-        auto tensorType = proto.mutable_type()->mutable_tensor_type();
-        if (tensorType->has_shape()) {
-          for (int j = 0; j < tensorType->shape().dim_size(); ++j) {
-            if (tensorType->shape().dim(j).has_dim_param()) {
-              existing_symbols.insert(tensorType->shape().dim(j).dim_param());
+      for (const auto& proto : protos) {
+        auto tensorType = proto.type().tensor_type();
+        if (tensorType.has_shape()) {
+          for (int j = 0; j < tensorType.shape().dim_size(); ++j) {
+            if (tensorType.shape().dim(j).has_dim_param()) {
+              existing_symbols.insert(tensorType.shape().dim(j).dim_param());
             }
           }
         }
@@ -216,9 +217,9 @@ void checkShapesAndTypes(
     const TypeProto& existingType);
 
 template <typename T>
-void generateSymbolicShape(T inferredType, T* symbolicInferredType, SymbolTable symbolTable);
+void generateSymbolicShape(T* inferredType, SymbolTable& symbolTable);
 
-const TypeProto* materializeSymbolicShapeShape(TypeProto* inferredType, SymbolTable symbolTable);
+void materializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable);
 
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,

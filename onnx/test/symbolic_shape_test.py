@@ -41,13 +41,12 @@ class TestSymbolicShape(unittest.TestCase):
         outputs = list(onnx_model.graph.output)
         valueinfos = list(onnx_model.graph.value_info)
         for v in inputs + outputs + valueinfos:
-            for dim_i in range(len(v.type.tensor_type.shape.dim)):
-                dim = v.type.tensor_type.shape.dim[dim_i]
+            for dim in v.type.tensor_type.shape.dim:
                 if dim.dim_param:
                     symbol_shape_set.add(dim.dim_param)
         return len(symbol_shape_set)
 
-    def _get_shape_from_name(self, onnx_model, name):  # type: (ModelProto, Text) -> List[Union[int, Text]]
+    def _get_shape_from_name(self, onnx_model, name):  # type: (ModelProto, Text) -> List[Union[int, str]]
         shape = []
         inputs = list(onnx_model.graph.input)
         outputs = list(onnx_model.graph.output)
