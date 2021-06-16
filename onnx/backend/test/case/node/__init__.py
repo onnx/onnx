@@ -23,6 +23,7 @@ _TargetOpType = ""
 
 from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto
 
+
 # FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
 def function_expand_helper(node,  # type: NodeProto
                            function_proto,  # type: FunctionProto
