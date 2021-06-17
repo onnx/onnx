@@ -57,9 +57,9 @@ class TestSymbolicShape(unittest.TestCase):
                     dim_param = v.type.tensor_type.shape.dim[dim_i].dim_param
                     dim_value = v.type.tensor_type.shape.dim[dim_i].dim_value
                     if dim_param:
-                        shape.append(dim_param)
+                        shape.append(dim_param)  # type: ignore
                     else:
-                        shape.append(dim_value)
+                        shape.append(dim_value)  # type: ignore
         return shape
 
     def test_clip_enable_symbolic(self):  # type: () -> None

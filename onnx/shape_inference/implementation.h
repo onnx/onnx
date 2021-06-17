@@ -35,16 +35,20 @@ struct GraphInferenceContext {
 class GraphInferencerImpl : public GraphInferencer {
  public:
   GraphInferencerImpl(GraphProto& g, const GraphInferenceContext& context)
-      : g_{&g}, context_{&context}, symbolTable_{const_cast<GraphInferenceContext*>(context_)->symbolTable} {}
+      : g_{&g}, context_{&context} {}
 
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
       const std::vector<const TensorProto*>& inputData) override;
 
+  SymbolTable& getSymbolTable() {
+    auto* contextForSymbol = const_cast<GraphInferenceContext*>(context_);
+    return contextForSymbol->symbolTable;
+  }
+
  private:
   GraphProto* g_;
   const GraphInferenceContext* context_;
-  SymbolTable& symbolTable_;
 };
 
 struct InferenceContextImpl : public InferenceContext {
