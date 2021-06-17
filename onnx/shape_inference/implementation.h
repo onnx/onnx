@@ -190,8 +190,8 @@ void checkShapesAndTypes(
     const TypeProto& inferredType,
     const TypeProto& existingType);
 
-template <typename T>
-void generateSymbolicShape(T* inferredType, SymbolTable& symbolTable);
+template <typename TensorTypeProto>
+void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTable);
 
 void materializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable);
 
