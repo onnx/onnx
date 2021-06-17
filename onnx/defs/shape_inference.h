@@ -13,6 +13,40 @@ namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
 
+struct SymbolTable {
+  SymbolTable(GraphProto& g) : index_(0){
+    addFromGraph(g);
+  }
+  void addFromGraph(GraphProto& g) {
+    AddExistingSymbolicDims(*g.mutable_input());
+    AddExistingSymbolicDims(*g.mutable_output());
+    AddExistingSymbolicDims(*g.mutable_value_info());
+  }
+  std::string createNew(std::string symbol_prefix="unk__") {
+    std::string newSymbol;
+    do {
+      newSymbol = symbol_prefix + std::to_string(index_++);
+    } while(existing_symbols.count(newSymbol) > 0);
+    existing_symbols.insert(newSymbol);
+    return newSymbol;
+  }
+  private:
+    unsigned int index_;
+    std::unordered_set<std::string> existing_symbols;
+    void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField<ValueInfoProto> protos) {
+      for (const auto& proto : protos) {
+        auto tensorType = proto.type().tensor_type();
+        if (tensorType.has_shape()) {
+          for (int i = 0; i < tensorType.shape().dim_size(); ++i) {
+            if (tensorType.shape().dim(i).has_dim_param()) {
+              existing_symbols.insert(tensorType.shape().dim(i).dim_param());
+            }
+          }
+        }
+      }
+    }
+};
+
 class GraphInferencer {
  public:
   // Perform inferencing on the graph contained in GraphInferencer.

@@ -12,60 +12,37 @@
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
-struct SymbolTable {
-  SymbolTable(GraphProto* g) : index_(0){
-    existing_symbols.clear();
-    AddExistingSymbolicDims(*g->mutable_input());
-    AddExistingSymbolicDims(*g->mutable_output());
-    AddExistingSymbolicDims(*g->mutable_value_info());
-  }
-  std::string createNew(std::string symbol_prefix="unk__") {
-    std::string newSymbol;
-    do {
-      newSymbol = symbol_prefix + std::to_string(index_++);
-    } while(existing_symbols.count(newSymbol) > 0);
-    existing_symbols.insert(newSymbol);
-    return newSymbol;
-  };
-  private:
-    unsigned int index_;
-    std::unordered_set<std::string> existing_symbols;
-    void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField<ValueInfoProto> protos) {
-      for (const auto& proto : protos) {
-        auto tensorType = proto.type().tensor_type();
-        if (tensorType.has_shape()) {
-          for (int j = 0; j < tensorType.shape().dim_size(); ++j) {
-            if (tensorType.shape().dim(j).has_dim_param()) {
-              existing_symbols.insert(tensorType.shape().dim(j).dim_param());
-            }
-          }
-        }
-      }
-    }
-};
-
 struct GraphInferenceContext {
   GraphInferenceContext(
       const std::unordered_map<std::string, TypeProto*>&
           outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int> opset_imports_in,
+      SymbolTable& symbolTable_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance())
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
-        schema_registry{schema_registry_in} {}
+        schema_registry{schema_registry_in},
+        symbolTable{symbolTable_in} {}
 
 
   const std::unordered_map<std::string, TypeProto*>*
       outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
+  SymbolTable& symbolTable;
 
+  SymbolTable* mutableSymbolTable() {
+    return &symbolTable;
+  }
 };
 
 class GraphInferencerImpl : public GraphInferencer {
  public:
   GraphInferencerImpl(GraphProto& g, const GraphInferenceContext& context)
-      : g_{&g}, context_{&context} {}
+      : g_{&g}, context_{&context} {
+        auto* contextForSymbol = const_cast<GraphInferenceContext*>(context_);
+        symbolTable_ = contextForSymbol->mutableSymbolTable();
+      }
 
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
@@ -74,6 +51,7 @@ class GraphInferencerImpl : public GraphInferencer {
  private:
   GraphProto* g_;
   const GraphInferenceContext* context_;
+  SymbolTable* symbolTable_;
 };
 
 struct InferenceContextImpl : public InferenceContext {
@@ -194,7 +172,6 @@ struct InferenceContextImpl : public InferenceContext {
 
     return inferencer;
   }
-
   std::vector<const TensorProto*> allInputData_;
   std::vector<const SparseTensorProto*> allInputSparseData_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
@@ -263,13 +240,15 @@ void InferShapes(
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
-    InferenceContext& ctx);
+    InferenceContext& ctx,
+    SymbolTable &symbolTable);
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
-    InferenceContext& ctx);
+    InferenceContext& ctx,
+    SymbolTable &symbolTable);
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 
