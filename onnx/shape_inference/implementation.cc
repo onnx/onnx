@@ -117,8 +117,8 @@ void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existin
 }
 
 // TypeProto_Tensor or TypeProto_SparseTensor
-template <typename T>
-void generateSymbolicShape(T* inferredType, SymbolTable& symbolTable) {
+template <typename TensorTypeProto>
+void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTable) {
   if (!inferredType->has_shape()) {
     return;
   }

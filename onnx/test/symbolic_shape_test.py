@@ -46,7 +46,7 @@ class TestSymbolicShape(unittest.TestCase):
                     symbol_shape_set.add(dim.dim_param)
         return len(symbol_shape_set)
 
-    def _get_shape_from_name(self, onnx_model, name):  # type: (ModelProto, Text) -> List[Union[int, str]]
+    def _get_shape_from_name(self, onnx_model, name):  # type: (ModelProto, Text) -> List[Any]
         shape = []
         inputs = list(onnx_model.graph.input)
         outputs = list(onnx_model.graph.output)

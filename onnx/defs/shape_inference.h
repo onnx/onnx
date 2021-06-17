@@ -33,16 +33,36 @@ struct SymbolTable {
   private:
     unsigned int index_;
     std::unordered_set<std::string> existing_symbols;
-    void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField<ValueInfoProto> protos) {
-      for (const auto& proto : protos) {
-        auto tensorType = proto.type().tensor_type();
-        if (tensorType.has_shape()) {
-          for (int i = 0; i < tensorType.shape().dim_size(); ++i) {
-            if (tensorType.shape().dim(i).has_dim_param()) {
-              existing_symbols.insert(tensorType.shape().dim(i).dim_param());
-            }
+    // TypeProto_Tensor or TypeProto_SparseTensor
+    template <typename TensorTypeProto>
+    void AddExistingSymbolicDims(TensorTypeProto tensorType) {
+      if (tensorType.has_shape()) {
+        for (int i = 0; i < tensorType.shape().dim_size(); ++i) {
+          if (tensorType.shape().dim(i).has_dim_param()) {
+            existing_symbols.insert(tensorType.shape().dim(i).dim_param());
           }
         }
+      }
+    }
+    void AddExistingSymbolicDims(TypeProto typeProto) {
+        const auto val_case = typeProto.value_case();
+        switch (val_case) {
+          case TypeProto::kTensorType:
+            AddExistingSymbolicDims(typeProto.tensor_type());
+            break;
+          case TypeProto::kSparseTensorType:
+            AddExistingSymbolicDims(typeProto.sparse_tensor_type());
+            break;
+          case TypeProto::kSequenceType:
+            AddExistingSymbolicDims(typeProto.sequence_type().elem_type());
+            break;
+          default:
+            break;
+      }
+    }
+    void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField<ValueInfoProto> protos) {
+      for (const auto& proto : protos) {
+        AddExistingSymbolicDims(proto.type());
       }
     }
 };
