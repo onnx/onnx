@@ -1420,7 +1420,7 @@ expect(node, inputs=[x, s, bias, mean, var],
 
 
 ### Bernoulli
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>bernoulli_with_dtype</summary>
 
@@ -1432,9 +1432,27 @@ node = onnx.helper.make_node(
     dtype=onnx.TensorProto.DOUBLE,
 )
 
-x = np.random.uniform(0.0, 1.0, 10).astype(np.double)
-y = bernoulli_reference_implementation(x, np.double)
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+y = bernoulli_reference_implementation(x, np.float64)
 expect(node, inputs=[x], outputs=[y], name='test_bernoulli_double')
+```
+
+</details>
+<details>
+<summary>bernoulli_with_seed</summary>
+
+```python
+seed = np.float(0)
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+    seed=seed,
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+y = bernoulli_reference_implementation(x, np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli_seed')
 ```
 
 </details>
@@ -3976,6 +3994,9 @@ y = np.take(data, indices, axis=0)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_negative_indices')
+
+# print(y)
+# [0. 1. 0.]
 ```
 
 </details>
@@ -7819,6 +7840,11 @@ values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
 expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_negative_indices')
+
+# print(y)
+# [[3. 1. 1. 1. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 1. 3. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 3. 1. 1. 1. 1. 1. 1. 1.]]
 ```
 
 </details>

@@ -14,6 +14,9 @@ from . import expect
 
 def bernoulli_reference_implementation(x, dtype):  # type: ignore
     # binomial n = 1 equal bernoulli
+    # This example and test-case is for informational purpose. The generator operator is
+    # non-deterministic and may not produce the same values in different implementations
+    # even if a seed is specified.
     return np.random.binomial(1, p=x).astype(dtype)
 
 
@@ -39,6 +42,20 @@ class Bernoulli(Base):
             dtype=onnx.TensorProto.DOUBLE,
         )
 
-        x = np.random.uniform(0.0, 1.0, 10).astype(np.double)
-        y = bernoulli_reference_implementation(x, np.double)
+        x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+        y = bernoulli_reference_implementation(x, np.float64)
         expect(node, inputs=[x], outputs=[y], name='test_bernoulli_double')
+
+    @staticmethod
+    def export_bernoulli_with_seed():  # type: () -> None
+        seed = np.float(0)
+        node = onnx.helper.make_node(
+            'Bernoulli',
+            inputs=['x'],
+            outputs=['y'],
+            seed=seed,
+        )
+
+        x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+        y = bernoulli_reference_implementation(x, np.float32)
+        expect(node, inputs=[x], outputs=[y], name='test_bernoulli_seed')

@@ -19471,6 +19471,9 @@ This version of the operator has been available since version 14 of the default 
   Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
   containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
   where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
+  
+  This example and test-case is for informational purpose. The operator is non-deterministic and may not produce
+  the same values in different implementations (even if a seed is specified).
 
 #### Version
 
@@ -19502,7 +19505,7 @@ This version of the operator has been available since version 15 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bool)</dt>
 <dd>Constrain output types to all numeric tensors and bool tensors.</dd>
