@@ -165,6 +165,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|
+|<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-12">12</a>|
@@ -2046,6 +2047,111 @@ node = onnx.helper.make_node(
 expect(node, inputs=[x, s, bias, mean, var],
        outputs=[y, output_mean, output_var],
        name='test_batchnorm_epsilon_training_mode')
+```
+
+</details>
+
+
+### <a name="Bernoulli"></a><a name="bernoulli">**Bernoulli**</a>
+
+  Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
+  containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
+  where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
+  
+  This operator is non-deterministic and may not produce the same values in different
+  implementations (even if a seed is specified).
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>The data type for the elements of the output tensor. if not specified, we will use the data type of the input tensor.</dd>
+<dt><tt>seed</tt> : float</dt>
+<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>All values in input have to be in the range:[0, 1].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>The returned output tensor only has values 0 or 1, same shape as input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bool)</dt>
+<dd>Constrain output types to all numeric tensors and bool tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>bernoulli_with_dtype</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+    dtype=onnx.TensorProto.DOUBLE,
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+y = bernoulli_reference_implementation(x, np.float64)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli_double')
+```
+
+</details>
+
+
+<details>
+<summary>bernoulli_with_seed</summary>
+
+```python
+seed = np.float(0)
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+    seed=seed,
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+y = bernoulli_reference_implementation(x, np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli_seed')
+```
+
+</details>
+
+
+<details>
+<summary>bernoulli_without_dtype</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
+y = bernoulli_reference_implementation(x, np.float)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli')
 ```
 
 </details>
