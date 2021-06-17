@@ -337,8 +337,6 @@ ONNX|sequence|Sequences are dense, ordered, collections of elements that are of 
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
 ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](docs/ONNXTypes.md)
 
-ONNX currently does not define a sparse tensor type.
-
 #### Static tensor shapes
 
 In addition to element type, tensor types have a **static** shape. The static shape of a tensor variable is related to, but different from, the runtime (dynamic) shape of a tensor value. A static tensor shape is a list of records that indicates whether the tensor is a vector, a matrix, or a higher-dimensional value. For example, a 100x100 matrix has the shape [100,100].
