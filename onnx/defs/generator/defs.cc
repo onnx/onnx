@@ -901,8 +901,8 @@ Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input te
 containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
 where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
 
-This example and test-case is for informational purpose. The operator is non-deterministic and may not produce
-the same values in different implementations (even if a seed is specified).
+This operator is non-deterministic and may not produce the same values in different
+implementations (even if a seed is specified).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
