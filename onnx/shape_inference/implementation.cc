@@ -671,7 +671,7 @@ void InferShapeForFunctionNode(
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inputTypes,
     const std::vector<const TensorProto*>& inputData) {
-  SymbolTable symbolTable = getSymbolTable();
+  SymbolTable& symbolTable = getSymbolTable();
   // add existing symbolic shape into symbol table from sub graph
   symbolTable.addFromGraph(*g_);
   int numInputs = int(inputTypes.size());
