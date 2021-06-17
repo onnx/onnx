@@ -42,6 +42,7 @@ message SequenceProto {
     SPARSE_TENSOR = 2;
     SEQUENCE = 3;
     MAP = 4;
+    OPTIONAL = 5;
   }
 
   // The data type of the element.
@@ -63,6 +64,10 @@ message SequenceProto {
   // For MapProto values.
   // When this field is present, the elem_type field MUST be MAP.
   repeated MapProto map_values = 6;
+
+  // For OptionalProto values.
+  // When this field is present, the elem_type field MUST be Optional.
+  repeated OptionalProto optional_values = 7;
 
 }
 
@@ -99,6 +104,50 @@ message MapProto {
   // repeated keys field and have to be one of the following data types
   // TENSOR, SPARSE_TENSOR, MAP, SEQUENCE.
   optional SequenceProto values = 5;
+}
+
+// Optional
+//
+//
+message OptionalProto {
+
+  optional string name = 1;
+
+  enum DataType {
+    UNDEFINED = 0;
+    TENSOR = 1;
+    SPARSE_TENSOR = 2;
+    SEQUENCE = 3;
+    MAP = 4;
+    OPTIONAL = 5;
+  }
+
+  // The data type of the element, identifies if the OptionalProto value
+  // is Tensor, Sparse Tensor, Sequence, Map, or Optional.
+  // The type of the optional value MUST match the elem_type specified.
+  // This field MUST have a valid OptionalProto.DataType value.
+  optional int32 elem_type = 2;
+
+  // For TensorProto value.
+  // When this field is present, the elem_type field MUST be TENSOR.
+  optional TensorProto tensor_value = 3;
+
+  // For SparseTensorProto value.
+  // When this field is present, the elem_type field MUST be SPARSE_TENSOR.
+  optional SparseTensorProto sparse_tensor_value = 4;
+
+  // For SequenceProto value.
+  // When this field is present, the elem_type field MUST be SEQUENCE.
+  optional SequenceProto sequence_value = 5;
+
+  // For MapProto value.
+  // When this field is present, the elem_type field MUST be MAP.
+  optional MapProto map_value = 6;
+
+  // For OptionalProto value, allowing optional to be of itself (completeness)
+  // When this field is present, the elem_type field MUST be OPTIONAL.
+  optional OptionalProto optional_value = 7;
+
 }
 
 // For using protobuf-lite

@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto
 from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
-from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_sequence_value_info
+from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
@@ -813,8 +813,8 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 4)),  # type: ignore
-             make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, None, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 4)),  # type: ignore
+             make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, None, 4))])  # type: ignore
 
     def test_add(self):  # type: () -> None
         graph = self._make_graph(
@@ -2606,7 +2606,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             [make_node('SequenceEmpty', [], ['output'])],
             [])
-        self._assert_inferred(graph, [make_sequence_value_info('output', TensorProto.FLOAT, None)])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_sequence_value_info('output', TensorProto.FLOAT, None)])  # type: ignore
 
     def test_sequence_construct(self):  # type: () -> None
         graph = self._make_graph(
@@ -2616,7 +2616,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['output_sequence'])],
             [])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, 4))])  # type: ignore
 
     def test_sequence_construct_one_input(self):  # type: () -> None
         graph = self._make_graph(
@@ -2624,7 +2624,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SequenceConstruct', ['input1'], ['output_sequence'])],
             [])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, 4))])  # type: ignore
 
     def test_sequence_construct_diff_rank(self):  # type: () -> None
         graph = self._make_graph(
@@ -2634,7 +2634,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['output_sequence'])],
             [])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, None)])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, None)])  # type: ignore
 
     def test_sequence_construct_diff_dim_size(self):  # type: () -> None
         graph = self._make_graph(
@@ -2644,7 +2644,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['output_sequence'])],
             [])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, None))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, None))])  # type: ignore
 
     def test_sequence_insert(self):  # type: () -> None
         graph = self._make_graph(
@@ -2657,8 +2657,8 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 4)),
-             make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 4)),
+             make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, 4))])  # type: ignore
 
     def test_sequence_insert_diff_rank(self):  # type: () -> None
         graph = self._make_graph(
@@ -2671,8 +2671,8 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 4)),
-             make_sequence_value_info('output_sequence', TensorProto.FLOAT, None)])  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 4)),
+             make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, None)])  # type: ignore
 
     def test_sequence_insert_diff_shape(self):  # type: () -> None
         graph = self._make_graph(
@@ -2685,8 +2685,8 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 4)),  # type: ignore
-             make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, None, None))])  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 4)),  # type: ignore
+             make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, None, None))])  # type: ignore
 
     def test_sequence_at(self):  # type: () -> None
         graph = self._make_graph(
@@ -2699,7 +2699,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 4)),
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 4)),
              make_tensor_value_info('output', TensorProto.FLOAT, (2, 3, 4))])  # type: ignore
 
     def test_sequence_at_unknown_shape(self):  # type: () -> None
@@ -2713,7 +2713,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, None),
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, None),
              make_tensor_value_info('output', TensorProto.FLOAT, None)])  # type: ignore
 
     def test_sequence_at_unknown_dim_size(self):  # type: () -> None
@@ -2727,7 +2727,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, None)),  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, None)),  # type: ignore
              make_tensor_value_info('output', TensorProto.FLOAT, (2, 3, None))])  # type: ignore
 
     def test_sequence_erase(self):  # type: () -> None
@@ -2741,8 +2741,8 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 4)),
-             make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 4)),
+             make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 3, 4))])  # type: ignore
 
     def test_sequence_erase_diff_dim_size(self):  # type: () -> None
         graph = self._make_graph(
@@ -2755,8 +2755,8 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 'x')),  # type: ignore
-             make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, None, 'x'))])  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 'x')),  # type: ignore
+             make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, None, 'x'))])  # type: ignore
 
     def test_sequence_length(self):  # type: () -> None
         graph = self._make_graph(
@@ -2768,7 +2768,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 'x')),
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 'x')),
              make_tensor_value_info('len', TensorProto.INT64, ())])  # type: ignore
 
     def test_split_to_sequence(self):  # type: () -> None
@@ -2779,7 +2779,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('split', TensorProto.INT32, (2,), (3, 3))])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (3, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (3, 4))])  # type: ignore
 
     def test_split_to_sequence_scalar(self):  # type: () -> None
         graph = self._make_graph(
@@ -2789,7 +2789,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('split', TensorProto.INT32, (), (2, ))])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, 4))])  # type: ignore
 
     def test_split_to_sequence_keepdims(self):  # type: () -> None
         graph = self._make_graph(
@@ -2797,7 +2797,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SplitToSequence', ['input'], ['output_sequence'], keepdims=1)],
             [])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (1, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (1, 4))])  # type: ignore
 
     def test_split_to_sequence_not_keepdims(self):  # type: () -> None
         graph = self._make_graph(
@@ -2805,7 +2805,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SplitToSequence', ['input'], ['output_sequence'], keepdims=0)],
             [])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (4, ))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (4, ))])  # type: ignore
 
     def test_split_to_sequence_ignore_keepdims(self):  # type: () -> None
         graph = self._make_graph(
@@ -2815,7 +2815,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('split', TensorProto.INT32, (2,), (3, 3))])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (3, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (3, 4))])  # type: ignore
 
     def test_split_to_sequence_axis(self):  # type: () -> None
         graph = self._make_graph(
@@ -2823,7 +2823,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SplitToSequence', ['input'], ['output_sequence'], axis=1)],
             [])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (6, 1))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (6, 1))])  # type: ignore
 
     def test_split_to_sequence_neg_axis(self):  # type: () -> None
         graph = self._make_graph(
@@ -2831,7 +2831,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('SplitToSequence', ['input'], ['output_sequence'], axis=-2)],
             [])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (1, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (1, 4))])  # type: ignore
 
     def test_split_to_sequence_split_sizes(self):  # type: () -> None
         graph = self._make_graph(
@@ -2841,7 +2841,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('split', TensorProto.INT32, (3,), (2, 1, 3))])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (None, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (None, 4))])  # type: ignore
 
     def test_split_to_sequence_non_divisible(self):  # type: () -> None
         graph = self._make_graph(
@@ -2851,7 +2851,7 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('split', TensorProto.INT32, (), (4, ))])
         self._assert_inferred(graph,
-            [make_sequence_value_info('output_sequence', TensorProto.FLOAT, (None, 4))])  # type: ignore
+            [make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (None, 4))])  # type: ignore
 
     def test_concat_from_sequence(self):  # type: () -> None
         graph = self._make_graph(
@@ -2863,7 +2863,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 'x')),
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 'x')),
              make_tensor_value_info('out', TensorProto.FLOAT, (None, 3, 'x'))])  # type: ignore
 
     def test_concat_from_sequence_unknown_shape(self):  # type: () -> None
@@ -2876,7 +2876,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, None),
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, None),
              make_tensor_value_info('out', TensorProto.FLOAT, None)])  # type: ignore
 
     def test_concat_from_sequence_unknown_dim_size(self):  # type: () -> None
@@ -2889,7 +2889,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 'x')),  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 'x')),  # type: ignore
              make_tensor_value_info('out', TensorProto.FLOAT, (None, None, 'x'))])  # type: ignore
 
     def test_concat_from_sequence_axis(self):  # type: () -> None
@@ -2902,7 +2902,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 'x')),  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 'x')),  # type: ignore
              make_tensor_value_info('out', TensorProto.FLOAT, (2, None, None))])  # type: ignore
 
     def test_concat_from_sequence_neg_axis(self):  # type: () -> None
@@ -2915,7 +2915,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 'x')),  # type: ignore
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 'x')),  # type: ignore
              make_tensor_value_info('out', TensorProto.FLOAT, (None, None, 'x'))])  # type: ignore
 
     def test_concat_from_sequence_new_axis(self):  # type: () -> None
@@ -2928,7 +2928,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 'x')),
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 'x')),
              make_tensor_value_info('out', TensorProto.FLOAT, (2, 3, None, 'x'))])  # type: ignore
 
     def test_concat_from_sequence_neg_new_axis(self):  # type: () -> None
@@ -2941,7 +2941,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 'x')),
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, 3, 'x')),
              make_tensor_value_info('out', TensorProto.FLOAT, (2, 3, 'x', None))])  # type: ignore
 
     def test_adagrad(self):  # type: () -> None

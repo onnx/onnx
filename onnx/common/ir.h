@@ -87,13 +87,13 @@ struct Dimension final {
 
 enum class AttributeKind : uint8_t {
   // float, float list, int, int list, string, string list,
-  // tensor, tensor list, subgraph, subgraph list
-  f, fs, i, is, s, ss, t, ts, g, gs
+  // tensor, tensor list, subgraph, subgraph list. type proto, type proto list
+  f, fs, i, is, s, ss, t, ts, g, gs, tp, tps
 };
 
 
 static inline const char * toString(AttributeKind kind) {
-  static constexpr const char* names[] = {"f","fs", "i", "is", "s", "ss", "t", "ts", "g", "gs"};
+  static constexpr const char* names[] = {"f","fs", "i", "is", "s", "ss", "t", "ts", "g", "gs", "tp", "tps"};
   ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(const char*));
   return names[int(kind)];
 }
@@ -158,6 +158,8 @@ using TensorAttr = ScalarAttributeValue<Tensor,AttributeKind::t>;
 using TensorsAttr = VectorAttributeValue<Tensor,AttributeKind::ts>;
 using GraphAttr = ScalarAttributeValue<std::shared_ptr<Graph>,AttributeKind::g>;
 using GraphsAttr = VectorAttributeValue<std::shared_ptr<Graph>,AttributeKind::gs>;
+using TypeProtoAttr = ScalarAttributeValue<TypeProto,AttributeKind::tp>;
+using TypeProtosAttr = VectorAttributeValue<TypeProto,AttributeKind::tps>;
 
 
 // CRTP so that Node which inherits Attributes can be return for
@@ -213,6 +215,8 @@ struct Attributes {
   CREATE_ACCESSOR(Tensors,ts)
   CREATE_ACCESSOR(Graph,g)
   CREATE_ACCESSOR(Graphs,gs)
+  CREATE_ACCESSOR(TypeProto,tp)
+  CREATE_ACCESSOR(TypeProtos,tps)
 
   #undef CREATE_ACCESSOR
 

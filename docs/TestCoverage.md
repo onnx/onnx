@@ -1442,7 +1442,7 @@ expect(node, inputs=[x], outputs=[y], name='test_bernoulli_double')
 <summary>bernoulli_with_seed</summary>
 
 ```python
-seed = np.float(0)
+seed = np.int64(0)
 node = onnx.helper.make_node(
     'Bernoulli',
     inputs=['x'],
@@ -3994,9 +3994,6 @@ y = np.take(data, indices, axis=0)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_negative_indices')
-
-# print(y)
-# [0. 1. 0.]
 ```
 
 </details>
@@ -7840,11 +7837,6 @@ values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
 expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_negative_indices')
-
-# print(y)
-# [[3. 1. 1. 1. 1. 1. 1. 1. 1. 1.]
-#  [1. 1. 1. 3. 1. 1. 1. 1. 1. 1.]
-#  [1. 1. 3. 1. 1. 1. 1. 1. 1. 1.]]
 ```
 
 </details>
