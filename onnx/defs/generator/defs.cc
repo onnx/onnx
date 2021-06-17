@@ -896,4 +896,116 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* Bernoulli_ver15_doc = R"DOC(
+Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
+containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
+where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
+
+This operator is non-deterministic and may not produce the same values in different
+implementations (even if a seed is specified).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Bernoulli,
+    15,
+    OpSchema()
+        .SetDoc(Bernoulli_ver15_doc)
+        .Attr(
+            "seed",
+            "(Optional) Seed to the random generator, if not specified we will auto generate one.",
+            AttributeProto::FLOAT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "dtype",
+            "The data type for the elements of the output tensor. if not specified, we will use "
+            "the data type of the input tensor.",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Input(
+            0,
+            "input",
+            "All values in input have to be in the range:[0, 1].",
+            "T1")
+        .Output(
+            0,
+            "output",
+            "The returned output tensor only has values 0 or 1, same shape as input tensor.",
+            "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+              "tensor(float)",
+              "tensor(double)"},
+              "Constrain input types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+              "tensor(float)",
+              "tensor(double)",
+              "tensor(bfloat16)",
+              "tensor(uint8)",
+              "tensor(uint16)",
+              "tensor(uint32)",
+              "tensor(uint64)",
+              "tensor(int8)",
+              "tensor(int16)",
+              "tensor(int32)",
+              "tensor(int64)",
+              "tensor(bool)"},
+            "Constrain output types to all numeric tensors and bool tensors.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          if (ctx.getAttribute("dtype") != nullptr)
+            propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          else
+            propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+        })
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx,
+               const OpSchema& schema,
+               FunctionProto& functionProto) -> bool {
+              if (ctx.getInputType(0) == nullptr) {
+                // we cannot create a correct function body without knowing the input type
+                return false;
+              }
+              auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
+              auto dtype = ctx.getAttribute("dtype") != nullptr
+                             ? static_cast<TensorProto_DataType>(ctx.getAttribute("dtype")->i())
+                             : input_type;
+              auto seed_attr = ctx.getAttribute("seed");
+              std::vector<FunctionBodyHelper::NodeDef> body{
+                  // nodes: {outputs, op, inputs, attributes}
+                  // clang-format off
+                {
+                    {"X_greater"},
+                    "Greater",
+                    {"X_random", "input"}
+                },
+                {
+                    {"output"},
+                    "Cast",
+                    {"X_greater"},
+                    {MakeAttribute("to", (int64_t)(dtype))}
+                }
+                  // clang-format on
+              };
+
+              if (seed_attr != nullptr) {
+                float seed = seed_attr->f();
+                body.insert(body.begin(), {{"X_random"}, "RandomUniformLike", {"input"}, {MakeAttribute("high", 1.0f), MakeAttribute("low", 0.f), MakeAttribute("seed", (float)(seed)), MakeAttribute("dtype", (int64_t)(input_type))}});
+              } else {
+                body.insert(body.begin(), {{"X_random"}, "RandomUniformLike", {"input"}, {MakeAttribute("high", 1.0f), MakeAttribute("low", 0.f), MakeAttribute("dtype", (int64_t)(input_type))}});
+              }
+
+              auto func_nodes = FunctionBodyHelper::BuildNodes(body);
+              for (const auto& node : func_nodes) {
+                auto new_node = functionProto.add_node();
+                new_node->CopyFrom(node);
+              }
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 } // namespace ONNX_NAMESPACE
