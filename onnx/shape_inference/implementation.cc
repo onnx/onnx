@@ -220,7 +220,7 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, int>& opset_imports,
     const bool check_type, // check the type-equality for input and output
     const int error_mode,
-    SymbolTable symbolTable,
+    SymbolTable& symbolTable,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
 ) {
@@ -542,7 +542,7 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTable &symbolTable) {
+    SymbolTable& symbolTable) {
   GraphProto g;
   // Get a temporary tensor-shape map
   const auto num_func_inputs = func->input_size();
@@ -672,7 +672,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inputTypes,
     const std::vector<const TensorProto*>& inputData) {
   // add existing symbolic shape into symbol table from sub graph
-  symbolTable_->addFromGraph(*g_);
+  symbolTable_.addFromGraph(*g_);
   int numInputs = int(inputTypes.size());
 
   if (g_->input_size() != numInputs) {
@@ -702,7 +702,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
         continue;
       }
     }
-    materializeSymbolicShape(inferredInput, *symbolTable_);
+    materializeSymbolicShape(inferredInput, symbolTable_);
     // Even if graphInput doesn't have defined type, it will assign inferredType to it
     mergeShapesAndTypes(*inferredInput, graphInput);
   }
@@ -717,7 +717,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       context_->opset_imports,
       false,
       false,
-      *symbolTable_,
+      symbolTable_,
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;

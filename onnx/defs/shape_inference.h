@@ -14,14 +14,17 @@ namespace ONNX_NAMESPACE {
 using Dim = TensorShapeProto_Dimension;
 
 struct SymbolTable {
+
   SymbolTable(GraphProto& g) : index_(0){
     addFromGraph(g);
   }
+
   void addFromGraph(GraphProto& g) {
     AddExistingSymbolicDims(*g.mutable_input());
     AddExistingSymbolicDims(*g.mutable_output());
     AddExistingSymbolicDims(*g.mutable_value_info());
   }
+
   std::string createNew(std::string symbol_prefix="unk__") {
     std::string newSymbol;
     do {
@@ -30,9 +33,11 @@ struct SymbolTable {
     existing_symbols.insert(newSymbol);
     return newSymbol;
   }
+
   private:
     unsigned int index_;
     std::unordered_set<std::string> existing_symbols;
+  
     // TypeProto_Tensor or TypeProto_SparseTensor
     template <typename TensorTypeProto>
     void AddExistingSymbolicDims(TensorTypeProto tensorType) {
@@ -44,6 +49,7 @@ struct SymbolTable {
         }
       }
     }
+  
     void AddExistingSymbolicDims(TypeProto typeProto) {
         const auto val_case = typeProto.value_case();
         switch (val_case) {
@@ -60,6 +66,7 @@ struct SymbolTable {
             break;
       }
     }
+
     void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField<ValueInfoProto> protos) {
       for (const auto& proto : protos) {
         AddExistingSymbolicDims(proto.type());

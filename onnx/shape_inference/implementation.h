@@ -30,19 +30,12 @@ struct GraphInferenceContext {
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
   SymbolTable& symbolTable;
-
-  SymbolTable* mutableSymbolTable() {
-    return &symbolTable;
-  }
 };
 
 class GraphInferencerImpl : public GraphInferencer {
  public:
   GraphInferencerImpl(GraphProto& g, const GraphInferenceContext& context)
-      : g_{&g}, context_{&context} {
-        auto* contextForSymbol = const_cast<GraphInferenceContext*>(context_);
-        symbolTable_ = contextForSymbol->mutableSymbolTable();
-      }
+      : g_{&g}, context_{&context}, symbolTable_{const_cast<GraphInferenceContext*>(context_)->symbolTable} {}
 
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
@@ -51,7 +44,7 @@ class GraphInferencerImpl : public GraphInferencer {
  private:
   GraphProto* g_;
   const GraphInferenceContext* context_;
-  SymbolTable* symbolTable_;
+  SymbolTable& symbolTable_;
 };
 
 struct InferenceContextImpl : public InferenceContext {
