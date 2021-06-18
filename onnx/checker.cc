@@ -676,6 +676,58 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   }
 }
 
+// Utilify function to get the imported version of domain from opset imports
+// Returns -1 if requested domain is not found in the opset_imports
+int get_version_for_domain(const std::string& domain, const std::unordered_map<std::string, int>& opset_imports) {
+  auto it = opset_imports.find(domain);
+  if (it == opset_imports.end()) {
+    return -1;
+  }
+
+  return it->second;
+}
+
+// Utility function to check compatibility of schema for 2 opsett versions for a given node.
+// Checks whether the schema for 2 versions is same. This is true when the opschema
+// does not change between versions.
+void check_opset_compatibility(
+    const NodeProto& node,
+    const CheckerContext& ctx,
+    const std::unordered_map<std::string, int>& func_opset_imports,
+    const std::unordered_map<std::string, int>& model_opset_imports) {
+  auto func_opset_version = get_version_for_domain(node.domain(), func_opset_imports);
+  auto model_opset_version = get_version_for_domain(node.domain(), model_opset_imports);
+
+  if (func_opset_version == -1) {
+    fail_check(
+        "No Opset registered for domain " + node.domain());
+  }
+
+  if (model_opset_version == -1) {
+    // model does not include opset import for a node present in function body.
+    // This is ok as along as the opset import is present in function level opset imports.
+    return;
+  }
+
+  const auto* schema_for_function_import =
+      ctx.get_schema_registry()->GetSchema(node.op_type(), func_opset_version, node.domain());
+
+  const auto* schema_for_model_import =
+      ctx.get_schema_registry()->GetSchema(node.op_type(), model_opset_version, node.domain());
+
+  if (schema_per_function_import && schema_per_model_import &&
+      schema_per_function_import->since_version() == schema_per_model_import->since_version()) {
+    // The since versions of schema for both opset imports match. This means they are compatible.
+    return;
+  }
+
+  fail_check(
+      "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
+      "is not compatible with the version imported my model. FunctionOp imports version " +
+      ONNX_NAMESPACE::to_string(func_opset_version) + "whereas model imports version " +
+      ONNX_NAMESPACE::to_string(model_opset_version));
+}
+
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
   
@@ -686,32 +738,23 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   const auto& model_opset_imports = ctx.get_opset_imports();
   CheckerContext ctx_copy = ctx;
 
-  // A FunctionProto body (graph) may implicitly rely on the OperatorSet that
-  // this function belongs to or it can also explicitly rely on more OperatorSets
-  // specified in the opset_import field for FunctionProto. However the spec does not
-  // clarify how to treat inconsistencies between function level and model level OperatorSets imports.
-  // Right now we merge opset imports from function proto with the model level opset imports
-  // In case there is an inconsistency it is treated as an error.
-  // TODO: Clarify spec and revisit this check.
-  std::unordered_map<std::string, int> func_opset_imports{model_opset_imports};
+  std::unordered_map<std::string, int> func_opset_imports;
   for (auto& relied_opset : function.opset_import()) {
     auto& domain = relied_opset.domain();
     int version = static_cast<int>(relied_opset.version());
-    auto it = func_opset_imports.find(domain);
-    if (it == func_opset_imports.end()) {
-      func_opset_imports[domain] = version;
-    } else {
-      if (it->second != version) {
-        fail_check(
-            "ONNX models do not support multiple opset version imports for a domain. Function ",
-            function.name(),
-            " imports opset version ",
-            std::to_string(version),
-            " for domain ",
-            (domain.empty() ? "ai.onnx" : domain),
-            " where as the model imports opset version ",
-            std::to_string(it->second));
-      }
+    func_opset_imports[domain] = version;
+
+    auto it = model_opset_imports.find(domain);
+    if (it != model_opset_imports.end() && version > it->second) {
+      fail_check(
+          "Function ",
+          function.name(),
+          " imports opset version ",
+          std::to_string(version),
+          " for domain ",
+          (domain.empty() ? "ai.onnx" : domain),
+          " which is inconsistent with the opset version imported by model. Model imports opset version ",
+          std::to_string(it->second));
     }
   }
 
@@ -736,6 +779,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       fail_check("function (", function.name(), ") should not have duplicate outputs specified.");
     }
   }
+
   std::unordered_set<std::string> attrs;
   for (const auto& attr : function.attribute()) {
     auto result = attrs.insert(attr);
@@ -760,6 +804,10 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
             "\n is neither output of any previous nodes nor input of the function.");
       }
     }
+
+    // check whether the opset version imported for a domain by function and model are
+    // compatible
+    check_opset_compatibility(node, ctx, func_opset_imports, model_opset_imports);
 
     check_node(node, ctx_copy, lex_ctx);
 

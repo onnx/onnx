@@ -395,10 +395,14 @@ message ModelProto {
 
   // A list of function protos local to the model.
   //
-  // The opset imports in FunctionProto should not conflict with the ones in 
-  // model proto and or other model local FunctionProtos. Example, if the function proto imports domain  
-  // 'A' opset 10 whereas model proto also imports domain 'A' but a different opset version 
-  // then this is a merge conflict.
+  // Model local functions override standard operator sets. Meaning, 
+  // 
+  // The opserator sets imported by FunctionProto should be compatible with the ones
+  // imported by ModelProto and other model local FunctionProtos. 
+  // Example, if same operator set say 'A' is imported by a FunctionProto and ModelProto 
+  // or by 2 FunctionProtos then versions for the operator set may be different but, 
+  // the operator schema returned for op_type, domain, version combination
+  // for both the versions should be same.
 
   // One FunctionProto can reference other FunctionProto in the model, however, recursive reference
   // is not allowed.
@@ -774,8 +778,6 @@ message FunctionProto {
   reserved 3;
   reserved "status";
 
-
-
   // The inputs and outputs of the function.
   repeated string input = 4;
   repeated string output = 5;
@@ -789,14 +791,19 @@ message FunctionProto {
   optional string doc_string = 8;
 
   // The OperatorSets this function body (graph) relies on.
-  // A FunctionProto body (graph) may implicitly rely on the OperatorSet that
-  // this function belongs to. It can also explicitly rely on more OperatorSets
-  // with this field specified.
+  // All FunctionProtos implicitly import the operator set which the function operator is part of.
   //
   // All nodes in the function body (graph) will bind against the operator
   // with the same-domain/same-op_type operator with the HIGHEST version
   // in the referenced operator sets. This means at most one version can be relied
   // for one domain.
+  // 
+  // The opserator sets imported by FunctionProto should be compatible with the ones
+  // imported by ModelProto. Example, if same operator set say 'A' is imported by FunctionProto
+  // and ModelProto then versions for the operator set may be different but, 
+  // the operator schema returned for op_type, domain, version combination
+  // for both the versions should be same.
+
   repeated OperatorSetIdProto opset_import = 9;
 
   // The domain which this function belongs to. Combined with FunctionProto.name, this forms the unique identity of

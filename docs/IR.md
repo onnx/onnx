@@ -83,7 +83,7 @@ Each model has the following components:
 |graph|Graph|The parameterized graph that is evaluated to execute the model.|
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
 |training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
-|functions|FunctionProto[]|An optional list functions local to the model.|
+|functions|FunctionProto[]|An optional list of functions local to the model.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
@@ -164,7 +164,7 @@ There are two distinct ways to pass information to operators – inputs and attr
 A graph is used to describe a side-effect-free computation (function).
 A serialized graph is comprised of a set of metadata fields, a list of model parameters, and a list of computation nodes.
 
-Each computation dataflow graph is structured as a topologically sorted list of nodes that form a graph, which MUST be free of cycles. Each node represents a call to an operator. Each node has zero or more inputs and one or more outputs.
+Each computation dataflow graph is structured as a topologically sorted list of nodes that form a graph, which MUST be free of cycles. Each node represents a call to an operator or a model local function. Each node has zero or more inputs and one or more outputs.
 
 Graphs have the following properties:
 
