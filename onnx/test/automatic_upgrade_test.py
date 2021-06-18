@@ -154,6 +154,9 @@ class TestVersionConverterNew(unittest.TestCase):
             attrs={'kernel_shape': [2, 2]}
         )
 
+    def test_Bernoulli(self):  # type: () -> None
+        self._test_op_upgrade('Bernoulli', 15)
+
     def test_BitShift(self):  # type: () -> None
         self._test_op_upgrade('BitShift', 11, [[2, 3], [2, 3]], [[2, 3]],
             [TensorProto.UINT8, TensorProto.UINT8], [TensorProto.UINT8],
