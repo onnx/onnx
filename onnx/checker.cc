@@ -715,8 +715,8 @@ void check_opset_compatibility(
   const auto* schema_for_model_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), model_opset_version, node.domain());
 
-  if (schema_per_function_import && schema_per_model_import &&
-      schema_per_function_import->since_version() == schema_per_model_import->since_version()) {
+  if (schema_for_function_import && schema_for_model_import &&
+      schema_for_function_import->since_version() == schema_for_model_import->since_version()) {
     // The since versions of schema for both opset imports match. This means they are compatible.
     return;
   }
