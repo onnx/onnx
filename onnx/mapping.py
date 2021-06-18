@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import TensorProto, SequenceProto
+from onnx import TensorProto, SequenceProto, OptionalProto
 from typing import Text, Any
 import numpy as np  # type: ignore
 
@@ -66,5 +66,14 @@ STORAGE_ELEMENT_TYPE_TO_FIELD = {
     int(SequenceProto.TENSOR): 'tensor_values',
     int(SequenceProto.SPARSE_TENSOR): 'sparse_tensor_values',
     int(SequenceProto.SEQUENCE): 'sequence_values',
-    int(SequenceProto.MAP): 'map_values'
+    int(SequenceProto.MAP): 'map_values',
+    int(OptionalProto.OPTIONAL): 'optional_value'
+}
+
+OPTIONAL_ELEMENT_TYPE_TO_FIELD = {
+    int(OptionalProto.TENSOR): 'tensor_value',
+    int(OptionalProto.SPARSE_TENSOR): 'sparse_tensor_value',
+    int(OptionalProto.SEQUENCE): 'sequence_value',
+    int(OptionalProto.MAP): 'map_value',
+    int(OptionalProto.OPTIONAL): 'optional_value'
 }

@@ -129,6 +129,9 @@ void check_sequence(
 void check_map(
     const MapProto& map,
     const CheckerContext&);
+void check_optional(
+    const OptionalProto& opt,
+    const CheckerContext&);
 void check_attribute(
     const AttributeProto& attr,
     const CheckerContext&,

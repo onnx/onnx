@@ -65,10 +65,12 @@ struct ResolvedTestData {
   std::vector<ONNX_NAMESPACE::TensorProto> inputs_;
   std::vector<ONNX_NAMESPACE::SequenceProto> seq_inputs_;
   std::vector<ONNX_NAMESPACE::MapProto> map_inputs_;
+  std::vector<ONNX_NAMESPACE::OptionalProto> optional_inputs_;
 
   std::vector<ONNX_NAMESPACE::TensorProto> outputs_;
   std::vector<ONNX_NAMESPACE::SequenceProto> seq_outputs_;
   std::vector<ONNX_NAMESPACE::MapProto> map_outputs_;
+  std::vector<ONNX_NAMESPACE::OptionalProto> optional_outputs_;
 };
 
 /**
