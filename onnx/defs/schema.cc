@@ -688,11 +688,10 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
-void OpSchema::BuildFunction(FunctionProto& function_body, const std::vector<OperatorSetIdProto>& relied_opsets) const {
+void OpSchema::BuildFunction(FunctionProto& function_body) const {
   function_body.set_name(this->name_);
   function_body.set_doc_string(this->doc_);
-  function_body.set_since_version(this->since_version_);
-  function_body.set_status(OperatorStatus(1 - (int)this->support_));
+  function_body.set_domain(this->domain_);
   for (auto& i : inputs_) {
     function_body.add_input(i.GetName());
   }
@@ -703,8 +702,20 @@ void OpSchema::BuildFunction(FunctionProto& function_body, const std::vector<Ope
     function_body.add_attribute(a.first);
   }
 
-  for (auto& relied_opset : relied_opsets) {
-    *(function_body.mutable_opset_import()->Add()) = relied_opset;
+  // If the funciton proto does not import the
+  // opset for this schema then add it to the imports
+  bool imports_schema_opset = false;
+  for (const auto& relied_opset : function_body.opset_import()) {
+    if(relied_opset.domain() == domain_) {
+      imports_schema_opset = true;
+      break;
+    }
+  }
+
+  if(!imports_schema_opset) {
+    auto* schema_opset = function_body.mutable_opset_import()->Add();
+    schema_opset->set_domain(domain_);
+    schema_opset->set_version(since_version_);
   }
 }
 

@@ -678,7 +678,10 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
 
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
-  enforce_has_field(function, since_version);
+  
+  if (ctx.get_ir_version() >= 0x00000008) {
+    enforce_has_field(function, domain);
+  }
 
   const auto& model_opset_imports = ctx.get_opset_imports();
   CheckerContext ctx_copy = ctx;
@@ -814,8 +817,10 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   LexicalScopeContext lex_ctx;
   check_graph(model.graph(), ctx, lex_ctx);
 
-  for (const auto& function_proto : model.functions()) {
-    check_function(function_proto, ctx, lex_ctx);
+  if (ctx.get_ir_version() >= 0x00000008) {
+    for (const auto& function_proto : model.functions()) {
+      check_function(function_proto, ctx, lex_ctx);
+    }
   }
 }
 

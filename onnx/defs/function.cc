@@ -35,14 +35,14 @@ void FunctionExpandHelper(
 
   for (int idx = 0; idx < node.input_size(); ++idx) {
     if (idx >= func.input_size()) {
-      throw std::runtime_error(
+      ONNX_THROW(
           "Input for function node " + node_name + " is out of bounds");
     }
     io_names_map[func.input().Get(idx)] = node.input().Get(idx);
   }
   for (int idx = 0; idx < node.output_size(); ++idx) {
     if (idx >= func.output_size()) {
-      throw std::runtime_error(
+      ONNX_THROW(
           "Output for function node " + node_name + " is out of bounds");
     }
     // If the node output is missing, the corresponding function output should
@@ -60,9 +60,20 @@ void FunctionExpandHelper(
 
   // For undefined attributes of the function node
   // add default values obtained from the function schema.
+  // get the domain verison for function schema
+  int domain_version = -1;
+  for(const auto& opset_import : func.opset_import()){
+    if(opset_import.domain() == node.domain()) {
+      domain_version = static_cast<int>(opset_import.version());
+    }
+  }
+  if(domain_version == -1) {
+    ONNX_THROW("No opset import registered for domain '" + node.domain() + "' in function proto");
+  }
+    
   const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
   const auto schema = schema_registry->GetSchema(
-      node.op_type(), func.since_version(), node.domain());
+      node.op_type(), domain_version, node.domain());
   std::map<std::string, OpSchema::Attribute> default_attrs =
       schema->attributes();
 
