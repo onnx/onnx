@@ -481,6 +481,7 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(std::string)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TensorProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
 
   // Register "required" attribute without default value.
   OpSchema& Attr(
