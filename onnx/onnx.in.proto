@@ -99,7 +99,7 @@ enum Version {
   // Introduce TypeProto.SparseTensor
   // Introduce TypeProto.Optional
   // Added a list of FunctionProtos local to the model
-  // Deprecated since_version and opserator status from FunctionProto
+  // Deprecated since_version and operator status from FunctionProto
   IR_VERSION = 0x0000000000000008;
 
 }
@@ -399,7 +399,7 @@ message ModelProto {
   // then it will be preferred over the operator or function present in 
   // standard defined or cutom operator sets.
   // 
-  // The opserator sets imported by FunctionProto should be compatible with the ones
+  // The operator sets imported by FunctionProto should be compatible with the ones
   // imported by ModelProto and other model local FunctionProtos. 
   // Example, if same operator set say 'A' is imported by a FunctionProto and ModelProto 
   // or by 2 FunctionProtos then versions for the operator set may be different but, 
@@ -788,12 +788,12 @@ message FunctionProto {
   // the FunctionProto.
   optional string name = 1;
 
-  // Deprecated since IR Verison 8
+  // Deprecated since IR Version 8
   // optional int64 since_version = 2;
   reserved 2;
   reserved "since_version";
 
-  // Deprecated since IR Verison 8
+  // Deprecated since IR Version 8
   // optional OperatorStatus status = 3;
   reserved 3;
   reserved "status";
@@ -818,7 +818,7 @@ message FunctionProto {
   // in the referenced operator sets. This means at most one version can be relied
   // for one domain.
   // 
-  // The opserator sets imported by FunctionProto should be compatible with the ones
+  // The operator sets imported by FunctionProto should be compatible with the ones
   // imported by ModelProto. Example, if same operator set say 'A' is imported by FunctionProto
   // and ModelProto then versions for the operator set may be different but, 
   // the operator schema returned for op_type, domain, version combination

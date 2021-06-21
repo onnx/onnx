@@ -326,7 +326,14 @@ void check_sparse_tensor_indices_1(
   for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = index_data[i]; // linearized index of i-th value
     if (curr_index < 0 || curr_index >= dense_size) {
-      fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, "] out of range [0, ", dense_size - 1, "]");
+      fail_check(
+          "Sparse tensor (",
+          indices.name(),
+          ") index value at position [",
+          i,
+          "] out of range [0, ",
+          dense_size - 1,
+          "]");
     }
     if (curr_index <= prev_index) {
       fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, "] not in sorted order.");
@@ -639,7 +646,10 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
             "Nodes in a graph must be topologically sorted, however input '",
             input,
             "' of node: \n",
-            "name: ", node.name(), " OpType: ", node.op_type(),
+            "name: ",
+            node.name(),
+            " OpType: ",
+            node.op_type(),
             "\n is not output of any previous nodes.");
       }
     }
@@ -653,8 +663,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     }
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
-        ex.AppendContext(
-            "Bad node spec for node. Name: " + node.name() + " OpType: " + node.op_type());
+        ex.AppendContext("Bad node spec for node. Name: " + node.name() + " OpType: " + node.op_type());
         ONNX_THROW_EX(ex);
       });
     }
@@ -687,7 +696,7 @@ int get_version_for_domain(const std::string& domain, const std::unordered_map<s
   return it->second;
 }
 
-// Utility function to check compatibility of schema for 2 opsett versions for a given node.
+// Utility function to check compatibility of schema for 2 opset versions for a given node.
 // Checks whether the schema for 2 versions is same. This is true when the opschema
 // does not change between versions.
 void check_opset_compatibility(
@@ -699,8 +708,7 @@ void check_opset_compatibility(
   auto model_opset_version = get_version_for_domain(node.domain(), model_opset_imports);
 
   if (func_opset_version == -1) {
-    fail_check(
-        "No Opset registered for domain " + node.domain());
+    fail_check("No Opset registered for domain " + node.domain());
   }
 
   if (model_opset_version == -1) {
@@ -723,14 +731,14 @@ void check_opset_compatibility(
 
   fail_check(
       "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
-      "is not compatible with the version imported my model. FunctionOp imports version " +
+      "is not compatible with the version imported by model. FunctionOp imports version " +
       ONNX_NAMESPACE::to_string(func_opset_version) + "whereas model imports version " +
       ONNX_NAMESPACE::to_string(model_opset_version));
 }
 
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
-  
+
   if (ctx.get_ir_version() >= 0x00000008) {
     enforce_has_field(function, domain);
   }
@@ -800,7 +808,10 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
             "Nodes in a function must be topologically sorted, however input '",
             input,
             "' of node: \n",
-            "Name: ", node.name(), " OpType: ", node.op_type(),
+            "Name: ",
+            node.name(),
+            " OpType: ",
+            node.op_type(),
             "\n is neither output of any previous nodes nor input of the function.");
       }
     }
@@ -899,17 +910,18 @@ void check_model(const ModelProto& model) {
   check_model(model, ctx);
 }
 
-std::set<std::string> experimental_ops = {"ATen",
-                                          "Affine",
-                                          "ConstantFill",
-                                          "Crop",
-                                          "DynamicSlice",
-                                          "GRUUnit",
-                                          "GivenTensorFill",
-                                          "ImageScaler",
-                                          "ParametricSoftplus",
-                                          "Scale",
-                                          "ScaledTanh"};
+std::set<std::string> experimental_ops = {
+    "ATen",
+    "Affine",
+    "ConstantFill",
+    "Crop",
+    "DynamicSlice",
+    "GRUUnit",
+    "GivenTensorFill",
+    "ImageScaler",
+    "ParametricSoftplus",
+    "Scale",
+    "ScaledTanh"};
 
 bool check_is_experimental_op(std::string node_op_type) {
   return (experimental_ops.count(node_op_type)) ? true : false;

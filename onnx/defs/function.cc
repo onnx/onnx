@@ -2,15 +2,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
-std::string InteralTensorNameGenerator(
-    const std::string& node_name,
-    const std::string& internal_name) {
+std::string InteralTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
   std::string new_name = "Func_" + node_name + internal_name;
   return new_name;
 }
@@ -28,22 +25,19 @@ void FunctionExpandHelper(
     ss << address;
     uniq_prefix = ss.str();
   }
-  std::string node_name =
-      node.has_name() ? node.name() : func.name() + uniq_prefix;
+  std::string node_name = node.has_name() ? node.name() : func.name() + uniq_prefix;
   std::unordered_map<std::string, std::string> io_names_map;
   std::unordered_map<std::string, AttributeProto> attr_map;
 
   for (int idx = 0; idx < node.input_size(); ++idx) {
     if (idx >= func.input_size()) {
-      ONNX_THROW(
-          "Input for function node " + node_name + " is out of bounds");
+      ONNX_THROW("Input for function node " + node_name + " is out of bounds");
     }
     io_names_map[func.input().Get(idx)] = node.input().Get(idx);
   }
   for (int idx = 0; idx < node.output_size(); ++idx) {
     if (idx >= func.output_size()) {
-      ONNX_THROW(
-          "Output for function node " + node_name + " is out of bounds");
+      ONNX_THROW("Output for function node " + node_name + " is out of bounds");
     }
     // If the node output is missing, the corresponding function output should
     // be treated as an internal value (not as missing) because it could also be
@@ -60,22 +54,20 @@ void FunctionExpandHelper(
 
   // For undefined attributes of the function node
   // add default values obtained from the function schema.
-  // get the domain verison for function schema
+  // get the domain version for function schema
   int domain_version = -1;
-  for(const auto& opset_import : func.opset_import()){
-    if(opset_import.domain() == node.domain()) {
+  for (const auto& opset_import : func.opset_import()) {
+    if (opset_import.domain() == node.domain()) {
       domain_version = static_cast<int>(opset_import.version());
     }
   }
-  if(domain_version == -1) {
+  if (domain_version == -1) {
     ONNX_THROW("No opset import registered for domain '" + node.domain() + "' in function proto");
   }
-    
+
   const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
-  const auto schema = schema_registry->GetSchema(
-      node.op_type(), domain_version, node.domain());
-  std::map<std::string, OpSchema::Attribute> default_attrs =
-      schema->attributes();
+  const auto schema = schema_registry->GetSchema(node.op_type(), domain_version, node.domain());
+  std::map<std::string, OpSchema::Attribute> default_attrs = schema->attributes();
 
   for (const auto& pair : default_attrs) {
     const auto& attr_name = pair.first;
@@ -120,8 +112,7 @@ void FunctionExpandHelper(
   }
 }
 
-std::vector<NodeProto> FunctionBodyHelper::BuildNodes(
-    const std::vector<NodeDef>& node_defs) {
+std::vector<NodeProto> FunctionBodyHelper::BuildNodes(const std::vector<NodeDef>& node_defs) {
   std::vector<NodeProto> nodes(node_defs.size());
 
   for (size_t i = 0; i < node_defs.size(); i++) {

@@ -702,17 +702,17 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
     function_body.add_attribute(a.first);
   }
 
-  // If the funciton proto does not import the
+  // If the function proto does not import the
   // opset for this schema then add it to the imports
   bool imports_schema_opset = false;
   for (const auto& relied_opset : function_body.opset_import()) {
-    if(relied_opset.domain() == domain_) {
+    if (relied_opset.domain() == domain_) {
       imports_schema_opset = true;
       break;
     }
   }
 
-  if(!imports_schema_opset) {
+  if (!imports_schema_opset) {
     auto* schema_opset = function_body.mutable_opset_import()->Add();
     schema_opset->set_domain(domain_);
     schema_opset->set_version(since_version_);
