@@ -2317,6 +2317,15 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (30, 4, 5))])
 
+    def test_dynamicquantizelinear(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('DynamicQuantizeLinear', ['x'], ['y', 'y_scale', 'y_zero_point'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5)),
+                                      make_tensor_value_info('y_scale', TensorProto.FLOAT, ()),
+                                      make_tensor_value_info('y_zero_point', TensorProto.UINT8, ())])
+
     def test_reversesequence(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (4, 5, 6)),

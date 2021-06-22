@@ -179,6 +179,20 @@ ONNX_OPERATOR_SET_SCHEMA(
            {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
            {{"y_scale"}, "Identity", {"Scale"}},
            {{"y_zero_point"}, "Identity", {"Zeropoint"}},
-           {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}})));
+           {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}}))
+        .TypeAndShapeInferenceFunction(
+            [](ONNX_NAMESPACE::InferenceContext& ctx) {
+              updateOutputElemType(ctx, 0, TensorProto::UINT8);
+              updateOutputElemType(ctx, 1, TensorProto::FLOAT);
+              updateOutputElemType(ctx, 2, TensorProto::UINT8);
+
+              if (!hasInputShape(ctx, 0))
+                return;
+
+              auto& input_shape = getInputShape(ctx, 0);
+              updateOutputShape(ctx, 0, input_shape);
+              ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+              ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();
+            }));
 
 } // namespace ONNX_NAMESPACE
