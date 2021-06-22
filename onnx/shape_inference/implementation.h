@@ -34,7 +34,7 @@ struct GraphInferenceContext {
 
 class GraphInferencerImpl : public GraphInferencer {
  public:
-  GraphInferencerImpl(GraphProto& g, const GraphInferenceContext& context)
+  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context)
       : g_{&g}, context_{&context} {}
 
   std::vector<const TypeProto*> doInferencing(
@@ -42,13 +42,12 @@ class GraphInferencerImpl : public GraphInferencer {
       const std::vector<const TensorProto*>& inputData) override;
 
   SymbolTable& getSymbolTable() {
-    auto* contextForSymbol = const_cast<GraphInferenceContext*>(context_);
-    return contextForSymbol->symbolTable;
+    return context_->symbolTable;
   }
 
  private:
   GraphProto* g_;
-  const GraphInferenceContext* context_;
+  GraphInferenceContext* context_;
 };
 
 struct InferenceContextImpl : public InferenceContext {
@@ -59,7 +58,7 @@ struct InferenceContextImpl : public InferenceContext {
           inputDataByName,
       const std::unordered_map<std::string, const SparseTensorProto*>& 
           inputSparseDataByName,
-      const GraphInferenceContext* graphInferenceContext = nullptr)
+      GraphInferenceContext* graphInferenceContext = nullptr)
       : graphInferenceContext_{graphInferenceContext} {
     for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
@@ -175,7 +174,7 @@ struct InferenceContextImpl : public InferenceContext {
   std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
-  const GraphInferenceContext* graphInferenceContext_;
+  GraphInferenceContext* graphInferenceContext_;
 
   // mutable as internal cache of GraphInferencer instances
   mutable std::unordered_map<std::string, std::unique_ptr<GraphInferencer>>
