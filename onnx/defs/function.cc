@@ -120,6 +120,7 @@ std::vector<NodeProto> FunctionBodyHelper::BuildNodes(const std::vector<NodeDef>
     NodeProto& n = nodes[i];
 
     n.set_op_type(node.op_type);
+    n.set_domain(node.domain);
     for (const auto& i : node.inputs) {
       n.add_input(i);
     }
@@ -132,6 +133,40 @@ std::vector<NodeProto> FunctionBodyHelper::BuildNodes(const std::vector<NodeDef>
   }
 
   return nodes;
+}
+
+void FunctionBodyHelper::BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs) {
+  for (size_t i = 0; i < node_defs.size(); i++) {
+    const NodeDef& node = node_defs[i];
+    auto* np = functionProto.add_node();
+
+    np->set_op_type(node.op_type);
+    np->set_domain(node.domain);
+    for (const auto& inp : node.inputs) {
+      np->add_input(inp);
+    }
+    for (const auto& o : node.outputs) {
+      np->add_output(o);
+    }
+    for (const auto& attr : node.attributes) {
+      *(np->add_attribute()) = attr.proto;
+    }
+  }
+}
+
+bool FunctionBodyHelper::BuildFunctionProto(
+    FunctionProto& functionProto,
+    const OpSchema& schema,
+    const std::vector<NodeDef>& node_defs,
+    const std::vector<OperatorSetIdProto>& relied_opsets) {
+  BuildNodes(functionProto, node_defs);
+
+  for (auto& relied_opset : relied_opsets) {
+    *(functionProto.mutable_opset_import()->Add()) = relied_opset;
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
 }
 
 } // namespace ONNX_NAMESPACE

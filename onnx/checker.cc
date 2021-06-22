@@ -748,22 +748,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
   std::unordered_map<std::string, int> func_opset_imports;
   for (auto& relied_opset : function.opset_import()) {
-    auto& domain = relied_opset.domain();
-    int version = static_cast<int>(relied_opset.version());
-    func_opset_imports[domain] = version;
-
-    auto it = model_opset_imports.find(domain);
-    if (it != model_opset_imports.end() && version > it->second) {
-      fail_check(
-          "Function ",
-          function.name(),
-          " imports opset version ",
-          std::to_string(version),
-          " for domain ",
-          (domain.empty() ? "ai.onnx" : domain),
-          " which is inconsistent with the opset version imported by model. Model imports opset version ",
-          std::to_string(it->second));
-    }
+    func_opset_imports[relied_opset.domain()] = static_cast<int>(relied_opset.version());
   }
 
   ctx_copy.set_opset_imports(func_opset_imports);
@@ -818,7 +803,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
     // check whether the opset version imported for a domain by function and model are
     // compatible
-    check_opset_compatibility(node, ctx, func_opset_imports, model_opset_imports);
+    check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
 
     check_node(node, ctx_copy, lex_ctx);
 
