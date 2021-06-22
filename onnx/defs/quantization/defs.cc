@@ -186,13 +186,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               updateOutputElemType(ctx, 1, TensorProto::FLOAT);
               updateOutputElemType(ctx, 2, TensorProto::UINT8);
 
+              ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+              ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();
+
               if (!hasInputShape(ctx, 0))
                 return;
 
               auto& input_shape = getInputShape(ctx, 0);
               updateOutputShape(ctx, 0, input_shape);
-              ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
-              ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();
             }));
 
 } // namespace ONNX_NAMESPACE
