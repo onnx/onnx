@@ -20,11 +20,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include "data_type_utils.h"
 #include "onnx/common/common.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
-#include "onnx/onnx-operators_pb.h"
+
 namespace ONNX_NAMESPACE {
 
 struct FunctionBodyBuildContext {

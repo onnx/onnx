@@ -702,17 +702,13 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
     function_body.add_attribute(a.first);
   }
 
-  // If the function proto does not import the
-  // opset for this schema then add it to the imports
-  bool imports_schema_opset = false;
-  for (const auto& relied_opset : function_body.opset_import()) {
-    if (relied_opset.domain() == domain_) {
-      imports_schema_opset = true;
-      break;
-    }
-  }
-
-  if (!imports_schema_opset) {
+  // In a typical onnx function where the function and all the
+  // ops in function body belong to the same domain we implicitly add
+  // {domain_, since_version_} to funciton opset imports if it is not already added.
+  // This is simply for convienince. If any of the function body ops do not belong to same 
+  // domain as function itself, then the function author needs to explicitly add all the relevant
+  // opset imports.
+  if (function_body.opset_import().size() == 0) {
     auto* schema_opset = function_body.mutable_opset_import()->Add();
     schema_opset->set_domain(domain_);
     schema_opset->set_version(since_version_);
