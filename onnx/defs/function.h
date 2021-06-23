@@ -99,7 +99,7 @@ class FunctionBodyHelper {
   */
   static std::vector<NodeProto> BuildNodes(const std::vector<NodeDef>& node_defs);
 
-  static void FunctionBodyHelper::BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs);
+  static void BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs);
 
   static bool BuildFunctionProto(
       FunctionProto& functionProto,
