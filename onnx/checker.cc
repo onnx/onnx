@@ -714,10 +714,6 @@ void check_opset_compatibility(
     return;
   }
 
-  if (!schema_for_model_import) {
-    fail_check("No Opset registered for domain " + node.domain());
-  }
-
   const auto* schema_for_model_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), model_opset_version, node.domain());
 
