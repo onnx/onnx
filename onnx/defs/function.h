@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #pragma once
 
 #include <mutex>
@@ -13,7 +12,6 @@
 #include "attr_proto_util.h"
 #include "onnx/common/constants.h"
 #include "onnx/common/status.h"
-#include "onnx/onnx-operators_pb.h"
 #include "onnx/defs/schema.h"
 #include "tensor_proto_util.h"
 
@@ -47,17 +45,7 @@ class FunctionBodyHelper {
         std::vector<std::string> outputs,
         std::string op_type,
         std::vector<std::string> inputs,
-        std::string domain = "")
-        : outputs(std::move(outputs)),
-          op_type(std::move(op_type)),
-          inputs(std::move(inputs)),
-          domain(std::move(domain)) {}
-
-    NodeDef(
-        std::vector<std::string> outputs,
-        std::string op_type,
-        std::vector<std::string> inputs,
-        std::vector<AttributeProtoWrapper> attributes,
+        std::vector<AttributeProtoWrapper> attributes = {},
         std::string domain = "")
         : outputs(std::move(outputs)),
           op_type(std::move(op_type)),
