@@ -41,3 +41,29 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertTrue(model.ir_version == 7)
         self.assertTrue(len(model.opset_import) == 2)
         self.check_graph(model.graph)
+    
+    def test_parse_graph_error(self):  # type: () -> None
+        input = '''
+           agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+           {
+              T = MatMul[X, W]
+              S = Add(T, B)
+              C = Softmax(S)
+           }
+           '''
+        self.assertRaises(onnx.parser.ParseError, lambda: onnx.parser.parse_graph(input))
+
+    def test_parse_model_error(self):  # type: () -> None
+        input = '''
+           <
+             ir_version: 7,
+             opset_import: [ "" : 10   "com.microsoft": 1]
+           >
+           agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+           {
+              T = MatMul(X, W)
+              S = Add(T, B)
+              C = Softmax(S)
+           }
+           '''
+        self.assertRaises(onnx.parser.ParseError, lambda: onnx.parser.parse_model(input))

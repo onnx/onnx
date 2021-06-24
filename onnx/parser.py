@@ -3,6 +3,7 @@
 import onnx
 import onnx.onnx_cpp2py_export.parser as C
 from onnx import GraphProto, ModelProto
+from typing import Text
 
 
 class ParseError(Exception):
