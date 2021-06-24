@@ -26,9 +26,10 @@ class Reshape_4_5 final : public RemoveConsumedInputs {
         data.emplace_back(shape);
       }
       // Add value as input to node
-      // Create Value
-      Value* v = graph->addInitializerAndInput(t);
-      node->addInput(v);
+      Node* constant = graph->create(kConstant);
+      constant->insertBefore(node);
+      constant->t_(kvalue, t);        
+      node->addInput(constant->output());
       // Remove kshape attribute
       node->removeAttribute(kshape);
     }

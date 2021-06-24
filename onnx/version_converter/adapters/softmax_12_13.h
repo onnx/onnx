@@ -55,8 +55,10 @@ class Softmax_12_13 final : public Adapter {
         for (Dimension dim : target_shape) {
           data.emplace_back(dim.dim);
         }
-        Value* v = graph->addInitializerAndInput(t);
-        reshape->addInput(v);
+        Node* constant = graph->create(kConstant);
+        constant->insertBefore(node);
+        constant->t_(kvalue, t);        
+        reshape->addInput(constant->output());
 
         // Fix outputs & wiring
         node->output()->wipeSizes();

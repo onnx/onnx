@@ -47,8 +47,10 @@ class BroadcastForwardCompatibility final : public Adapter {
               for (auto a : axes) {
                 data.emplace_back(a);
               }
-              Value* axes_value = graph->addInitializerAndInput(t);
-              n->addInput(axes_value);
+              Node* constant = graph->create(kConstant);
+              constant->insertBefore(node);
+              constant->t_(kvalue, t);        
+              node->addInput(constant->output());
             } else { // Unsqueeze takes 'axes' attribute
               n->is_(kaxes, std::forward<const std::vector<int64_t>>(axes));
             }

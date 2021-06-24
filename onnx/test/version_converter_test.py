@@ -314,7 +314,8 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 4), 6)
         # Assert equality of graph and converted_model
-        assert converted_model.graph.node[0].op_type == "Reshape"
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Reshape"
         assert converted_model.opset_import[0].version == 6
 
     # Test Sum Adapter: 7 -> 8
@@ -1011,10 +1012,11 @@ class TestVersionConverter(unittest.TestCase):
 
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
 
-        assert len(converted_model.graph.node) == 1
-        assert converted_model.graph.node[0].op_type == "Upsample"
-        assert len(converted_model.graph.node[0].attribute) == 1
-        assert converted_model.graph.node[0].attribute[0].name == "mode"
+        assert len(converted_model.graph.node) == 2
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Upsample"
+        assert len(converted_model.graph.node[1].attribute) == 1
+        assert converted_model.graph.node[1].attribute[0].name == "mode"
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Helper for Upsample Adapter: 9 -> 8
@@ -1196,7 +1198,8 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 12), 13)
         # Assert equality of graph and converted_model
-        assert converted_model.graph.node[0].op_type == "Split"
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Split"
         assert converted_model.opset_import[0].version == 13
 
     # Test AxesInputToAttribute Adapter: 13 -> 12
@@ -1244,10 +1247,13 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 9), 10)
 
-        assert converted_model.graph.node[0].op_type == "Slice"
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Constant"
+        assert converted_model.graph.node[2].op_type == "Constant"
+        assert converted_model.graph.node[3].op_type == "Slice"
         assert converted_model.opset_import[0].version == 10
-        assert len(converted_model.graph.node[0].input) == 4
-        assert len(converted_model.graph.node[0].attribute) == 0
+        assert len(converted_model.graph.node[3].input) == 4
+        assert len(converted_model.graph.node[3].attribute) == 0
 
     # Test RNN Adapter: 13 -> 14
     def test_rnn_13_14(self):  # type: () -> None
@@ -1516,8 +1522,10 @@ class TestVersionConverter(unittest.TestCase):
 
         assert converted.graph.node[0].op_type == 'If'
         assert converted.opset_import[0].version == to_opset
-        assert len(converted.graph.node[0].attribute[0].g.node[0].attribute) == 0
-        assert len(converted.graph.node[0].attribute[1].g.node[0].attribute) == 0
+        assert converted.graph.node[0].attribute[0].g.node[2].op_type == 'Clip'
+        assert len(converted.graph.node[0].attribute[0].g.node[2].attribute) == 0
+        assert converted.graph.node[0].attribute[1].g.node[2].op_type == 'Clip'
+        assert len(converted.graph.node[0].attribute[1].g.node[2].attribute) == 0
 
 
 if __name__ == '__main__':

@@ -35,9 +35,10 @@ class Clip_10_11 final : public Adapter {
       t.elem_type() = TensorProto_DataType_FLOAT;
       auto& data = t.floats();
       data.emplace_back(val);
-      Value* v;
-      v = graph->addInitializerAndInput(t);
-      node->addInput(v);      
+      Node* constant = graph->create(kConstant);
+      constant->insertBefore(node);
+      constant->t_(kvalue, t);        
+      node->addInput(constant->output());     
     }
 
     Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {

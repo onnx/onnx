@@ -17,7 +17,7 @@ latest_opset = onnx.defs.onnx_opset_version()
 tested_ops = []
 
 
-class TestVersionConverterNew(unittest.TestCase):
+class TestAutomaticUpgrade(unittest.TestCase):
 
     def _test_op_upgrade(
         self,

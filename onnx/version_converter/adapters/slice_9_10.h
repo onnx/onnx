@@ -24,9 +24,10 @@ class Slice_9_10 final : public Adapter {
       for (auto a : attr) {
         data.emplace_back(a);
       }
-      Value* v;
-      v = graph->addInitializerAndInput(t);
-      node->addInput(v);
+      Node* constant = graph->create(kConstant);
+      constant->insertBefore(node);
+      constant->t_(kvalue, t);        
+      node->addInput(constant->output());
     }
 
     void adapt_slice_9_10(std::shared_ptr<Graph> graph, Node* node) const {
