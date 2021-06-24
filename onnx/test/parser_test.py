@@ -41,7 +41,7 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertTrue(model.ir_version == 7)
         self.assertTrue(len(model.opset_import) == 2)
         self.check_graph(model.graph)
-    
+
     def test_parse_graph_error(self):  # type: () -> None
         input = '''
            agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
