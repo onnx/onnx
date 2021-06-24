@@ -1227,7 +1227,7 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 12), 13)
         # Assert equality of graph and converted_model
-        assert converted_model.graph.node[0].op_type == "ReduceSum"
+        assert converted_model.graph.node[0].op_type == "Constant"
         assert converted_model.opset_import[0].version == 13
 
     # Test Slice Adapter: 9 -> 10
