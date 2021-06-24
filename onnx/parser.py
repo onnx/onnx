@@ -2,9 +2,12 @@
 
 import onnx
 import onnx.onnx_cpp2py_export.parser as C
+from onnx import GraphProto, ModelProto
+
 
 class ParseError(Exception):
     pass
+
 
 def parse_model(model_text):  # type: (bytes) -> ModelProto
     (success, msg, model_proto_str) = C.parse_model(model_text)
@@ -13,6 +16,7 @@ def parse_model(model_text):  # type: (bytes) -> ModelProto
     else:
         raise ParseError(msg)
 
+
 def parse_graph(graph_text):  # type: (bytes) -> GraphProto
     (success, msg, graph_proto_str) = C.parse_graph(graph_text)
     if success:
@@ -20,5 +24,4 @@ def parse_graph(graph_text):  # type: (bytes) -> GraphProto
         G.ParseFromString(graph_proto_str)
         return G
     else:
-        raise ParseError(msg)
-        
+        raise ParseError(msg)       
