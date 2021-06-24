@@ -9,7 +9,7 @@ class ParseError(Exception):
     pass
 
 
-def parse_model(model_text):  # type: (bytes) -> ModelProto
+def parse_model(model_text):  # type: (Text) -> ModelProto
     (success, msg, model_proto_str) = C.parse_model(model_text)
     if success:
         return onnx.load_from_string(model_proto_str)
@@ -17,11 +17,11 @@ def parse_model(model_text):  # type: (bytes) -> ModelProto
         raise ParseError(msg)
 
 
-def parse_graph(graph_text):  # type: (bytes) -> GraphProto
+def parse_graph(graph_text):  # type: (Text) -> GraphProto
     (success, msg, graph_proto_str) = C.parse_graph(graph_text)
     if success:
         G = onnx.GraphProto()
         G.ParseFromString(graph_proto_str)
         return G
     else:
-        raise ParseError(msg)       
+        raise ParseError(msg)
