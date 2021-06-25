@@ -411,7 +411,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   opset_imports[ONNX_DOMAIN] = 8; // Scan is v8
 
   const std::unordered_map<std::string, TypeProto*> outer_scope_value_types;
-  SymbolTable symbolTable;
+  SymbolTableImpl symbolTable;
   symbolTable.addFromGraph(subgraph);
   GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, symbolTable);
   GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);

@@ -118,7 +118,7 @@ void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existin
 
 // TypeProto_Tensor or TypeProto_SparseTensor
 template <typename TensorTypeProto>
-void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTable) {
+void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTableImpl& symbolTable) {
   if (!inferredType->has_shape()) {
     return;
   }
@@ -131,7 +131,7 @@ void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTab
   }
 }
 
-void materializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable) {
+void materializeSymbolicShape(TypeProto* inferredType, SymbolTableImpl& symbolTable) {
   const auto inferred_val_case = inferredType->value_case();
   if (inferred_val_case == TypeProto::kTensorType) {
     generateSymbolicShape(inferredType->mutable_tensor_type(), symbolTable);
@@ -220,7 +220,7 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, int>& opset_imports,
     const bool check_type, // check the type-equality for input and output
     const int error_mode,
-    SymbolTable& symbolTable,
+    SymbolTableImpl& symbolTable,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
 ) {
@@ -478,7 +478,7 @@ void InferShapes(
     const bool check_type,
     const ISchemaRegistry* schema_registry,
     const int error_mode) {
-  SymbolTable symbolTable;
+  SymbolTableImpl symbolTable;
   TraverseGraphsToAddExistingSymbols(*g, symbolTable);
   InferShapesImpl(
       g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, check_type, error_mode, symbolTable, schema_registry);
@@ -494,7 +494,7 @@ void InferShapes(
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
   auto* g = m.mutable_graph();
-  SymbolTable symbolTable;
+  SymbolTableImpl symbolTable;
   TraverseGraphsToAddExistingSymbols(*g, symbolTable);
   InferShapesImpl(
       g,
@@ -542,7 +542,7 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTable& symbolTable) {
+    SymbolTableImpl& symbolTable) {
   GraphProto g;
   // Get a temporary tensor-shape map
   const auto num_func_inputs = func->input_size();
@@ -660,7 +660,7 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTable &symbolTable) {
+    SymbolTableImpl &symbolTable) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : func->opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
@@ -671,7 +671,7 @@ void InferShapeForFunctionNode(
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inputTypes,
     const std::vector<const TensorProto*>& inputData) {
-  SymbolTable& symbolTable = getSymbolTable();
+  SymbolTableImpl& symbolTable = getSymbolTable();
   // add existing symbolic shape into symbol table from sub graph
   symbolTable.addFromGraph(*g_);
   int numInputs = int(inputTypes.size());
@@ -735,7 +735,7 @@ std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err) {
   return "(op_type:" + n.op_type() + op_name + "): " + err.what();
 }
 
-void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable) {
+void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTableImpl& symbolTable) {
   symbolTable.addFromGraph(g);
   for (const auto& n : g.node()) {
     for (auto& attr : n.attribute()) {

@@ -12,12 +12,71 @@
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
+class SymbolTableImpl : public SymbolTable {
+ public:
+  SymbolTableImpl() : index_(0){}
+
+  void addFromGraph(const GraphProto& g) {
+    AddExistingSymbolicDims(g.input());
+    AddExistingSymbolicDims(g.output());
+    AddExistingSymbolicDims(g.value_info());
+  }
+
+  std::string createNew(const std::string& symbol_prefix="unk__") {
+    std::string newSymbol;
+    do {
+      newSymbol = symbol_prefix + std::to_string(index_++);
+    } while(existing_symbols.count(newSymbol) > 0);
+    existing_symbols.insert(newSymbol);
+    return newSymbol;
+  }
+
+ private:
+  unsigned int index_;
+  std::unordered_set<std::string> existing_symbols;
+
+  // TypeProto_Tensor or TypeProto_SparseTensor
+  template <typename TensorTypeProto>
+  void AddExistingSymbolicDims(const TensorTypeProto& tensorType) {
+    if (tensorType.has_shape()) {
+      for (int i = 0; i < tensorType.shape().dim_size(); ++i) {
+        if (tensorType.shape().dim(i).has_dim_param()) {
+          existing_symbols.insert(tensorType.shape().dim(i).dim_param());
+        }
+      }
+    }
+  }
+
+  void AddExistingSymbolicDims(const TypeProto& typeProto) {
+      const auto val_case = typeProto.value_case();
+      switch (val_case) {
+        case TypeProto::kTensorType:
+          AddExistingSymbolicDims(typeProto.tensor_type());
+          break;
+        case TypeProto::kSparseTensorType:
+          AddExistingSymbolicDims(typeProto.sparse_tensor_type());
+          break;
+        case TypeProto::kSequenceType:
+          AddExistingSymbolicDims(typeProto.sequence_type().elem_type());
+          break;
+        default:
+          break;
+    }
+  }
+
+  void AddExistingSymbolicDims(const google::protobuf::RepeatedPtrField<ValueInfoProto>& protos) {
+    for (const auto& proto : protos) {
+      AddExistingSymbolicDims(proto.type());
+    }
+  }
+};
+
 struct GraphInferenceContext {
   GraphInferenceContext(
       const std::unordered_map<std::string, TypeProto*>&
           outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int> opset_imports_in,
-      SymbolTable& symbolTable_in,
+      SymbolTableImpl& symbolTable_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance())
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
@@ -29,7 +88,7 @@ struct GraphInferenceContext {
       outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
-  SymbolTable& symbolTable;
+  SymbolTableImpl& symbolTable;
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -41,7 +100,7 @@ class GraphInferencerImpl : public GraphInferencer {
       const std::vector<const TypeProto*>& inputTypes,
       const std::vector<const TensorProto*>& inputData) override;
 
-  SymbolTable& getSymbolTable() {
+  SymbolTableImpl& getSymbolTable() {
     return context_->symbolTable;
   }
 
@@ -190,9 +249,9 @@ void checkShapesAndTypes(
     const TypeProto& existingType);
 
 template <typename TensorTypeProto>
-void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTable);
+void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTableImpl& symbolTable);
 
-void materializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable);
+void materializeSymbolicShape(TypeProto* inferredType, SymbolTableImpl& symbolTable);
 
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
@@ -237,18 +296,18 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTable &symbolTable);
+    SymbolTableImpl &symbolTable);
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTable &symbolTable);
+    SymbolTableImpl &symbolTable);
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 
-void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable);
+void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTableImpl& symbolTable);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

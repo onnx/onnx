@@ -13,63 +13,11 @@ namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
 
-struct SymbolTable {
-
-  SymbolTable() : index_(0){}
-
-  void addFromGraph(const GraphProto& g) {
-    AddExistingSymbolicDims(g.input());
-    AddExistingSymbolicDims(g.output());
-    AddExistingSymbolicDims(g.value_info());
-  }
-
-  std::string createNew(const std::string& symbol_prefix="unk__") {
-    std::string newSymbol;
-    do {
-      newSymbol = symbol_prefix + std::to_string(index_++);
-    } while(existing_symbols.count(newSymbol) > 0);
-    existing_symbols.insert(newSymbol);
-    return newSymbol;
-  }
-
-  private:
-    unsigned int index_;
-    std::unordered_set<std::string> existing_symbols;
-  
-    // TypeProto_Tensor or TypeProto_SparseTensor
-    template <typename TensorTypeProto>
-    void AddExistingSymbolicDims(const TensorTypeProto& tensorType) {
-      if (tensorType.has_shape()) {
-        for (int i = 0; i < tensorType.shape().dim_size(); ++i) {
-          if (tensorType.shape().dim(i).has_dim_param()) {
-            existing_symbols.insert(tensorType.shape().dim(i).dim_param());
-          }
-        }
-      }
-    }
-  
-    void AddExistingSymbolicDims(const TypeProto& typeProto) {
-        const auto val_case = typeProto.value_case();
-        switch (val_case) {
-          case TypeProto::kTensorType:
-            AddExistingSymbolicDims(typeProto.tensor_type());
-            break;
-          case TypeProto::kSparseTensorType:
-            AddExistingSymbolicDims(typeProto.sparse_tensor_type());
-            break;
-          case TypeProto::kSequenceType:
-            AddExistingSymbolicDims(typeProto.sequence_type().elem_type());
-            break;
-          default:
-            break;
-      }
-    }
-
-    void AddExistingSymbolicDims(const google::protobuf::RepeatedPtrField<ValueInfoProto>& protos) {
-      for (const auto& proto : protos) {
-        AddExistingSymbolicDims(proto.type());
-      }
-    }
+class SymbolTable {
+ public:
+    virtual void addFromGraph(const GraphProto& g) = 0;
+    virtual std::string createNew(const std::string& symbol_prefix) = 0;
+    virtual ~SymbolTable() = default;
 };
 
 class GraphInferencer {
