@@ -5,37 +5,42 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto
-from onnx.helper import make_model, make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
+from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, TensorShapeProto, ONNX_ML
+from onnx.helper import make_model, make_node, make_tensor, make_tensor_value_info
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
-import os
-import numpy as np  # type: ignore
 
 
 class TestSymbolicShape(unittest.TestCase):
 
-    def _assert_valueinfo_shape(self, onnx_model, valueinfo):  # type: (ModelProto, List[ValueInfoProto]) -> None
-        nameShape = {}
-        for v in valueinfo:
-            shape = []
-            for dim_i in range(len(v.type.tensor_type.shape.dim)):
-                shape.append(v.type.tensor_type.shape.dim[dim_i].dim_value)
-            nameShape[v.name] = shape
+    def _assert_valueinfo_shape(self, onnx_model, value_infos):  # type: (ModelProto, List[ValueInfoProto]) -> None
+        """
+            Assert onnx_model.value_info should be the same as expected value_infos
+            Instead of exact symbol, use -1 to represent symbolic shape in expected value_infos
+        """
+        for expected_vi in value_infos:
+            shape = self._get_shape_from_name(onnx_model, expected_vi.name)
+            assert shape is not None, '{}'.format(onnx_model)
+            if expected_vi.type.HasField('tensor_type'):
+                expected_shape = expected_vi.type.tensor_type.shape
+            elif expected_vi.type.HasField('sparse_tensor_type'):
+                expected_shape = expected_vi.type.sparse_tensor_type.shape
+            assert len(shape.dim) == len(expected_shape.dim), '{}'.format(onnx_model)
+            for dim_i in range(len(shape.dim)):
+                dim = shape.dim[dim_i]
+                expected_dim = expected_shape.dim[dim_i]
+                # -1 means it's a symbolic shape
+                if expected_dim.dim_value == -1:
+                    # symbolic shape must exist
+                    assert dim.dim_param, '%s' % (onnx_model)
+                else:
+                    assert dim.dim_value == expected_dim.dim_value, '{}'.format(onnx_model)
 
-        for v in onnx_model.graph.value_info:
-            if v.name in nameShape:
-                for dim_i in range(len(nameShape[v.name])):
-                    dim = v.type.tensor_type.shape.dim[dim_i]
-                    # -1 means it's a symbolic shape
-                    if nameShape[v.name][dim_i] == -1:
-                        # symbolic shape must exist
-                        assert dim.dim_param, '%s' % (onnx_model)
-                    else:
-                        assert dim.dim_value == nameShape[v.name][dim_i], '%s' % (onnx_model)
-
-    def _count_unqiue_dim_param_number(self, onnx_model):  # type: (ModelProto) -> int
+    def _count_unique_dim_param_number(self, onnx_model):  # type: (ModelProto) -> int
+        """
+           return the total number of unique symbolic shape
+        """
         symbol_shape_set = set()
         inputs = list(onnx_model.graph.input)
         outputs = list(onnx_model.graph.output)
@@ -46,21 +51,20 @@ class TestSymbolicShape(unittest.TestCase):
                     symbol_shape_set.add(dim.dim_param)
         return len(symbol_shape_set)
 
-    def _get_shape_from_name(self, onnx_model, name):  # type: (ModelProto, Text) -> Optional[Sequence[Union[Text, int]]]
-        shape = []
+    def _get_shape_from_name(self, onnx_model, name):  # type: (ModelProto, Text) -> Optional[TensorShapeProto]
+        """
+            Get shape from tensor_type or sparse_tensor_type according to given name
+        """
         inputs = list(onnx_model.graph.input)
         outputs = list(onnx_model.graph.output)
         valueinfos = list(onnx_model.graph.value_info)
         for v in inputs + outputs + valueinfos:
             if v.name == name:
-                for dim_i in range(len(v.type.tensor_type.shape.dim)):
-                    dim_param = v.type.tensor_type.shape.dim[dim_i].dim_param
-                    dim_value = v.type.tensor_type.shape.dim[dim_i].dim_value
-                    if dim_param:
-                        shape.append(dim_param)  # type: ignore
-                    else:
-                        shape.append(dim_value)  # type: ignore
-        return shape
+                if v.type.HasField('tensor_type'):
+                    return v.type.tensor_type.shape
+                elif v.type.HasField('sparse_tensor_type'):
+                    return v.type.sparse_tensor_type.shape
+        return None
 
     def test_clip_enable_symbolic(self):  # type: () -> None
         concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
@@ -120,9 +124,9 @@ class TestSymbolicShape(unittest.TestCase):
         )
 
         onnx_model = make_model(graph_def)
-        original_count = self._count_unqiue_dim_param_number(onnx_model)
+        original_count = self._count_unique_dim_param_number(onnx_model)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
-        inferred_count = self._count_unqiue_dim_param_number(inferred_model)
+        inferred_count = self._count_unique_dim_param_number(inferred_model)
         # new symbol 'unk__2' should be generated to prevent duplicate so the count will be count + 1
         assert inferred_count == original_count + 1, '%s%s' % (inferred_model, onnx_model)
 

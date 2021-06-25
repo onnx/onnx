@@ -681,7 +681,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   }
 
   for (int i = 0, end = numInputs; i < end; ++i) {
-    TypeProto* inferredInput = const_cast<TypeProto*>(inputTypes[i]);
+    const TypeProto* inferredInput = inputTypes[i];
 
     if (!inferredInput)
       continue;
@@ -703,9 +703,9 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
         continue;
       }
     }
-    materializeSymbolicShape(inferredInput, symbolTable);
     // Even if graphInput doesn't have defined type, it will assign inferredType to it
     mergeShapesAndTypes(*inferredInput, graphInput);
+    materializeSymbolicShape(graphInput, symbolTable);
   }
 
   // future: pass inputData into InferShapes either directly, or indirectly by
