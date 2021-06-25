@@ -478,8 +478,8 @@ void InferShapes(
     const bool check_type,
     const ISchemaRegistry* schema_registry,
     const int error_mode) {
-  // add existing symbolic shape into symbol table from main graph
-  SymbolTable symbolTable(*g);
+  SymbolTable symbolTable;
+  TraverseGraphsToAddExistingSymbols(*g, symbolTable);
   InferShapesImpl(
       g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, check_type, error_mode, symbolTable, schema_registry);
 }
@@ -494,8 +494,8 @@ void InferShapes(
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
   auto* g = m.mutable_graph();
-  // add existing symbolic shape into symbol table from main graph
-  SymbolTable symbolTable(*g);
+  SymbolTable symbolTable;
+  TraverseGraphsToAddExistingSymbols(*g, symbolTable);
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
@@ -733,6 +733,17 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err) {
   std::string op_name = n.has_name() ? (", node name: " + n.name()) : "";
   return "(op_type:" + n.op_type() + op_name + "): " + err.what();
+}
+
+void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable) {
+  symbolTable.addFromGraph(g);
+  for (const auto& n : g.node()) {
+    for (auto& attr : n.attribute()) {
+      if (attr.has_g()) {
+        TraverseGraphsToAddExistingSymbols(attr.g(), symbolTable);
+      }
+    }
+  }
 }
 
 } // namespace shape_inference

@@ -15,17 +15,15 @@ using Dim = TensorShapeProto_Dimension;
 
 struct SymbolTable {
 
-  SymbolTable(GraphProto& g) : index_(0){
-    addFromGraph(g);
+  SymbolTable() : index_(0){}
+
+  void addFromGraph(const GraphProto& g) {
+    AddExistingSymbolicDims(g.input());
+    AddExistingSymbolicDims(g.output());
+    AddExistingSymbolicDims(g.value_info());
   }
 
-  void addFromGraph(GraphProto& g) {
-    AddExistingSymbolicDims(*g.mutable_input());
-    AddExistingSymbolicDims(*g.mutable_output());
-    AddExistingSymbolicDims(*g.mutable_value_info());
-  }
-
-  std::string createNew(std::string symbol_prefix="unk__") {
+  std::string createNew(const std::string& symbol_prefix="unk__") {
     std::string newSymbol;
     do {
       newSymbol = symbol_prefix + std::to_string(index_++);
@@ -40,7 +38,7 @@ struct SymbolTable {
   
     // TypeProto_Tensor or TypeProto_SparseTensor
     template <typename TensorTypeProto>
-    void AddExistingSymbolicDims(TensorTypeProto tensorType) {
+    void AddExistingSymbolicDims(const TensorTypeProto& tensorType) {
       if (tensorType.has_shape()) {
         for (int i = 0; i < tensorType.shape().dim_size(); ++i) {
           if (tensorType.shape().dim(i).has_dim_param()) {
@@ -50,7 +48,7 @@ struct SymbolTable {
       }
     }
   
-    void AddExistingSymbolicDims(TypeProto typeProto) {
+    void AddExistingSymbolicDims(const TypeProto& typeProto) {
         const auto val_case = typeProto.value_case();
         switch (val_case) {
           case TypeProto::kTensorType:
@@ -67,7 +65,7 @@ struct SymbolTable {
       }
     }
 
-    void AddExistingSymbolicDims(google::protobuf::RepeatedPtrField<ValueInfoProto> protos) {
+    void AddExistingSymbolicDims(const google::protobuf::RepeatedPtrField<ValueInfoProto>& protos) {
       for (const auto& proto : protos) {
         AddExistingSymbolicDims(proto.type());
       }
