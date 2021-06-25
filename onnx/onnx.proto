@@ -405,7 +405,7 @@ message ModelProto {
   // Example, if same operator set say 'A' is imported by a FunctionProto and ModelProto 
   // or by 2 FunctionProtos then versions for the operator set may be different but, 
   // the operator schema returned for op_type, domain, version combination
-  // for both the versions should be same for every node in the function body".
+  // for both the versions should be same for every node in the function body.
 
   // One FunctionProto can reference other FunctionProto in the model, however, recursive reference
   // is not allowed.

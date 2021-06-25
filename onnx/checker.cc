@@ -717,21 +717,10 @@ void check_opset_compatibility(
   const auto* schema_for_model_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), model_opset_version, node.domain());
 
-  // If func_opset_version > model_opset_version then it is possible that the opschema
-  // for this node is not available. This is acceptable as long as schema is present for the
-  // version imported by function opset imports.
-  // Example: If customdomain.Foo is converted (in place .i.e without version bump) from
-  // primitive op to function op containing nodes from onnx domain then an older model which
-  // contains Foo can run into this scenario. This is bcecause Foo will import a later
-  // version of onnx domain than this older model.
-  if (!schema_for_model_import) {
-    return;
-  }
-
   const auto* schema_for_function_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), func_opset_version, node.domain());
 
-  if (schema_for_function_import &&
+  if (schema_for_model_import && schema_for_function_import &&
       schema_for_function_import->since_version() == schema_for_model_import->since_version()) {
     // The since versions of schema for both opset imports match. This means they are compatible.
     return;
