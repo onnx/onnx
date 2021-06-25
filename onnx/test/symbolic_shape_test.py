@@ -119,16 +119,39 @@ class TestSymbolicShape(unittest.TestCase):
             nodes=[concat1, concat2, cast],
             inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'unk__0']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3]),
-                helper.make_tensor_value_info('D', TensorProto.FLOAT, [2, 'D'])],
-            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'unk__1'])]
+                helper.make_tensor_value_info('D', TensorProto.FLOAT, [2, 'unk__1'])],
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'unk__0'])]
         )
 
         onnx_model = make_model(graph_def)
         original_count = self._count_unique_dim_param_number(onnx_model)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         inferred_count = self._count_unique_dim_param_number(inferred_model)
-        # new symbol 'unk__2' should be generated to prevent duplicate so the count will be count + 1
-        assert inferred_count == original_count + 1, '%s%s' % (inferred_model, onnx_model)
+        # to prevent duplicate so the inferred count will be count + 2
+        # new symbol 'unk__2' and 'unk__3' should be generated
+        # original: {'unk_0', 'unk__1'}
+        # inferred: {'unk_0', 'unk__1', 'unk__2', 'unk__3'}
+        assert inferred_count == original_count + 2, '%s%s' % (inferred_model, onnx_model)
+
+    def test_unknown_shape(self):  # type: () -> None
+        concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
+        cast = onnx.helper.make_node('Cast',
+            inputs=['C'],
+            outputs=['output'],
+            to=getattr(TensorProto, 'FLOAT'))
+        graph_def = helper.make_graph(name='test_graph',
+            nodes=[concat, cast],
+            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [None, None]),  # unknown shape
+                helper.make_tensor_value_info('B', TensorProto.FLOAT, [None, None])],
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [None, None])]
+        )
+
+        onnx_model = make_model(graph_def)
+        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
+        self._assert_valueinfo_shape(inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (-1, -1))])
+        # the symbolic shape of C and output should be the same
+        # ('unk__0', 'unk__1')
+        assert self._get_shape_from_name(inferred_model, 'C') == self._get_shape_from_name(inferred_model, 'output')
 
 
 if __name__ == '__main__':
