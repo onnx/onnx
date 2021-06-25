@@ -141,14 +141,14 @@ class TestSymbolicShape(unittest.TestCase):
             to=getattr(TensorProto, 'FLOAT'))
         graph_def = helper.make_graph(name='test_graph',
             nodes=[concat, cast],
-            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [None, None]),  # unknown shape
-                helper.make_tensor_value_info('B', TensorProto.FLOAT, [None, None])],
-            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [None, None])]
+            inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [3, None]),  # unknown shape
+                helper.make_tensor_value_info('B', TensorProto.FLOAT, [3, None])],
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [3, None])]
         )
 
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
-        self._assert_valueinfo_shape(inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (-1, -1))])
+        self._assert_valueinfo_shape(inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (3, -1))])
         # the symbolic shape of C and output should be the same
         # ('unk__0', 'unk__1')
         assert self._get_shape_from_name(inferred_model, 'C') == self._get_shape_from_name(inferred_model, 'output')
