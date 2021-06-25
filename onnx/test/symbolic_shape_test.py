@@ -66,7 +66,7 @@ class TestSymbolicShape(unittest.TestCase):
                     return v.type.sparse_tensor_type.shape
         return None
 
-    def test_clip_enable_symbolic(self):  # type: () -> None
+    def test_concat_enable_symbolic(self):  # type: () -> None
         concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
             inputs=['C'],
@@ -85,7 +85,7 @@ class TestSymbolicShape(unittest.TestCase):
         # the symbolic shape of C and output should be the same
         assert self._get_shape_from_name(inferred_model, 'C') == self._get_shape_from_name(inferred_model, 'output')
 
-    def test_two_symbolic_clip(self):  # type: () -> None
+    def test_two_symbolic_concat(self):  # type: () -> None
         concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         concat2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
