@@ -479,7 +479,7 @@ void InferShapes(
     const ISchemaRegistry* schema_registry,
     const int error_mode) {
   SymbolTableImpl symbolTable;
-  TraverseGraphsToAddExistingSymbols(*g, symbolTable);
+  traverseGraphsToAddExistingSymbols(*g, symbolTable);
   InferShapesImpl(
       g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, check_type, error_mode, symbolTable, schema_registry);
 }
@@ -495,7 +495,7 @@ void InferShapes(
   }
   auto* g = m.mutable_graph();
   SymbolTableImpl symbolTable;
-  TraverseGraphsToAddExistingSymbols(*g, symbolTable);
+  traverseGraphsToAddExistingSymbols(*g, symbolTable);
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
@@ -735,12 +735,12 @@ std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err) {
   return "(op_type:" + n.op_type() + op_name + "): " + err.what();
 }
 
-void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTableImpl& symbolTable) {
+void traverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTableImpl& symbolTable) {
   symbolTable.addFromGraph(g);
   for (const auto& n : g.node()) {
     for (auto& attr : n.attribute()) {
       if (attr.has_g()) {
-        TraverseGraphsToAddExistingSymbols(attr.g(), symbolTable);
+        traverseGraphsToAddExistingSymbols(attr.g(), symbolTable);
       }
     }
   }

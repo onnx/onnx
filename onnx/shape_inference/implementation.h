@@ -307,7 +307,7 @@ void InferShapeForFunctionNode(
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 
-void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTableImpl& symbolTable);
+void traverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTableImpl& symbolTable);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE
