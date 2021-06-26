@@ -527,7 +527,7 @@ def make_tensor_value_info(
 
 def make_sparse_tensor_type_proto(
         elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> TypeProto
     """Makes a SparseTensor TypeProto based on the data type and shape."""
