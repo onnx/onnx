@@ -20,7 +20,7 @@ PYTEST_COMMAND="${PYTHON_BIN}pytest"
 $PIP_INSTALL_COMMAND --upgrade pip
 
 # pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
-$PIP_INSTALL_COMMAND numpy==1.16.6 protobuf==3.11.3 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
+$PIP_INSTALL_COMMAND numpy protobuf==3.11.3 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
 $PIP_INSTALL_COMMAND dist/*manylinux2010_i686.whl
 
 # pytest with the built wheel
