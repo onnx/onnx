@@ -20,11 +20,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include "data_type_utils.h"
 #include "onnx/common/common.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
-#include "onnx/onnx-operators_pb.h"
+
 namespace ONNX_NAMESPACE {
 
 struct FunctionBodyBuildContext {
@@ -481,6 +480,7 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(std::string)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TensorProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
 
   // Register "required" attribute without default value.
   OpSchema& Attr(
@@ -826,8 +826,7 @@ class OpSchema final {
 
   // Build function with information stored in opschema
   void BuildFunction(
-      FunctionProto& function_body,
-      const std::vector<OperatorSetIdProto>& relied_opsets = {}) const;
+      FunctionProto& function_body) const;
 
  private:
   void ParseAndSetTypes(
