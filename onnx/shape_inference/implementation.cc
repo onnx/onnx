@@ -342,31 +342,12 @@ static void InferShapesImpl(
     } else if (schema->HasFunction()) {
       ONNX_TRY {
         const auto func_proto = schema->GetFunction();
-        if (func_proto && func_proto->opset_import_size() > 0) {
-          // If function proto imports operator sets then merge them with model level opset imports.
-          std::unordered_map<std::string, int> function_opset_imports{opset_imports};
-          for (const auto& opset_import : func_proto->opset_import()) {
-            auto it = function_opset_imports.find(opset_import.domain());
-            if (it == function_opset_imports.end()) {
-              function_opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
-            } else {
-              if (it->second != opset_import.version()) {
-                fail_shape_inference(
-                    "ONNX models don't support multiple opset version imports for a domain. Function ",
-                    schema->Name(),
-                    " imports opset version " + std::to_string(opset_import.version()),
-                    " for domain ",
-                    (opset_import.domain().empty() ? "ai.onnx" : opset_import.domain()),
-                    " where as the model imports opset version ",
-                    std::to_string(it->second));
-              }
-            }
-          }
-          InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx);
-        } else {
-          // If the function proto does not import operator sets then simply use the model level opset imports.
-          InferShapeForFunctionNode(func_proto, opset_imports, schema_registry, ctx);
+        std::unordered_map<std::string, int> function_opset_imports;
+        for (const auto& opset_import : func_proto->opset_import()) {
+            function_opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
         }
+
+        InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx);
       }
       ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
         ONNX_HANDLE_EXCEPTION([&]() {
