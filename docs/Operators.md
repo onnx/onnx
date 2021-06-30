@@ -1890,7 +1890,9 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   ```
   Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
   ```
-  
+
+  It should also be noted that in training mode, if `T2` is float16, the mean/var should be cast to float when implementing, because calculation of mean and variance may cause overflow in float16 due to summation.
+
   For previous (depreciated) non-spatial cases, implementors are suggested
   to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
