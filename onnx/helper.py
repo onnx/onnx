@@ -462,7 +462,7 @@ def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
 
 def make_tensor_type_proto(
         elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> TypeProto
     """Makes a Tensor TypeProto based on the data type and shape."""
@@ -510,7 +510,7 @@ def make_tensor_type_proto(
 def make_tensor_value_info(
         name,  # type: Text
         elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
@@ -527,7 +527,7 @@ def make_tensor_value_info(
 
 def make_sparse_tensor_type_proto(
         elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> TypeProto
     """Makes a SparseTensor TypeProto based on the data type and shape."""
@@ -575,7 +575,7 @@ def make_sparse_tensor_type_proto(
 def make_sparse_tensor_value_info(
         name,  # type: Text
         elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
@@ -638,7 +638,7 @@ def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
 def make_tensor_sequence_value_info(
         name,  # type: Text
         elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int]]]
+        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
         doc_string="",  # type: Text
         elem_shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
