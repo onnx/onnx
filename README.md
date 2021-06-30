@@ -128,9 +128,9 @@ set PATH=<protobuf_install_dir>\bin;<protobuf_install_dir>\include;<protobuf_ins
 set USE_MSVC_STATIC_RUNTIME=0
 
 # use the static installed protobuf
-set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON
+set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
 
-# Optional: Set environment variable `ONNX_ML=1` for onnx-ml
+# Optional: Set environment variable `ONNX_ML=0` to exclude onnx-ml ops. By default it is set to 1
 
 # Build ONNX
 python setup.py install
@@ -151,10 +151,10 @@ git submodule update --init --recursive
 
 # Set environment variable for ONNX to use protobuf shared lib
 set USE_MSVC_STATIC_RUNTIME=0
-set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
+set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON
 
 # Build ONNX
-# Optional: Set environment variable `ONNX_ML=1` for onnx-ml
+# Optional: Set environment variable `ONNX_ML=0` to exclude onnx-ml ops. By default it is set to 1
 
 python setup.py install
 ```
@@ -178,19 +178,36 @@ python -c "import onnx"
 to verify it works.
 
 
+#### Common Build Options
+For full list refer to CMakeLists.txt
+**Environment variables**
+`USE_MSVC_STATIC_RUNTIME` should be 1 or 0, not ON or OFF
+When set to 1 onnx links statically to runtime library
+**Default**: USE_MSVC_STATIC_RUNTIME=1
+
+`DEBUG` should be 0 or 1
+When set to 1 onnx is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file][CMakeLists] and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
+**Default**: Debug=0
+
+**CMake variables**
+`ONNX_USE_PROTOBUF_SHARED_LIBS` should be ON or OFF
+If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `USE_MSVC_STATIC_RUNTIME` must be 0.
+If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
+**Default**: ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=1
+
+`ONNX_USE_LITE_PROTO` should be ON or OFF
+When set to ON onnx uses lite protobuf instead of full protobuf.
+**Default**: ONNX_USE_LITE_PROTO=ON
+
+`ONNX_WERROR` should be ON or OFF
+When set to ON warnings are treated as errors..
+**Default**: ONNX_WERROR=OFF in local builds, ON in CI and release pipelines.
+
+
 #### Common Errors
-**Environment variables**: `USE_MSVC_STATIC_RUNTIME` (should be 1 or 0, not ON or OFF)
-
-**CMake variables**: `ONNX_USE_PROTOBUF_SHARED_LIBS`, `Protobuf_USE_STATIC_LIBS`
-
-If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `Protobuf_USE_STATIC_LIBS` must be OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.
-If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must be ON and `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
-
 Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
 
 Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
-
-If you want to build ONNX on Debug mode, remember to set the environment variable `DEBUG=1`. For debug versions of the dependencies, you need to open the [CMakeLists file][CMakeLists] and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 
 You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-dev) for a Linux-based installation without having to worry about dependency versioning.
 
