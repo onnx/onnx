@@ -241,6 +241,115 @@ struct InferenceContextImpl : public InferenceContext {
       graphAttributeInferencers_;
 };
 
+struct DataPropagationContextImpl : public DataPropagationContext {
+  DataPropagationContextImpl(
+      NodeProto& n,
+      const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
+      const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
+      std::unordered_map<std::string, TensorShapeProto>& generatedShapeData,
+      const GraphInferenceContext* graphInferenceContext = nullptr)
+      : generatedShapeData_{generatedShapeData}, graphInferenceContext_{graphInferenceContext} {
+
+    for (auto& attr : *n.mutable_attribute()) {
+      attributesByName_[attr.name()] = &attr;
+      if (attr.has_g()) {
+        // need a mutable GraphProto to run inferencing on this attribute
+        graphProtoAttributesByName_[attr.name()] = attr.mutable_g();
+      }
+    }
+
+    size_t input_idx = 0;
+    for (const auto& input : n.input()) {
+      inputIndexToNameMap_.insert({input_idx++, input});
+
+      auto valueTypesIter = valueTypesByName.find(input);
+      if (valueTypesIter != valueTypesByName.end()) {
+        allInputTypes_.push_back(valueTypesIter->second);
+      } else {
+        allInputTypes_.push_back(nullptr);
+      }
+
+      const auto inputDataIter = inputDataByName.find(input);
+      if (inputDataIter != inputDataByName.cend()) {
+        allInputData_.push_back(inputDataIter->second);
+      } else {
+        allInputData_.push_back(nullptr);
+      }
+    }
+
+    size_t output_idx = 0;
+    for (const auto& output : n.output()) {
+      outputIndexToNameMap_.insert({output_idx++, output});
+    }
+
+    allOutputTypes_.resize(n.output_size());
+  }
+
+  std::vector<const TensorProto*> allInputData_;
+  std::unordered_map<size_t, std::string> inputIndexToNameMap_;
+  std::unordered_map<size_t, std::string> outputIndexToNameMap_;
+  std::vector<const TypeProto*> allInputTypes_;
+  std::vector<TypeProto> allOutputTypes_;
+  const GraphInferenceContext* graphInferenceContext_;
+  std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+  std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
+  std::unordered_map<std::string, TensorShapeProto>& generatedShapeData_;
+
+
+  size_t getNumInputs() const override {
+    return allInputTypes_.size();
+  }
+
+  const TypeProto* getInputType(size_t index) const override {
+    if (index >= allInputTypes_.size()) {
+      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+    return allInputTypes_[index];
+  }
+
+  size_t getNumOutputs() const override {
+    return allOutputTypes_.size();
+  }
+
+  TypeProto* getOutputType(size_t index) override {
+    if (index >= allOutputTypes_.size()) {
+      ONNX_THROW("output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+    return &allOutputTypes_[index];
+  }
+
+  std::string getOutputName(size_t index) const override {
+    if (index > outputIndexToNameMap_.size()) {
+      throw InferenceError("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+
+    return outputIndexToNameMap_.at(index);
+  }
+
+  void addGeneratedShapeData(size_t index, TensorShapeProto&& tp) override {
+    if (index >= outputIndexToNameMap_.size()) {
+      throw std::runtime_error("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+    auto result = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tp)});
+    if (!result.second) {
+      fail_shape_inference("data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
+    }
+  }
+
+  const TensorShapeProto* getGeneratedShapeData(size_t index) const override {
+    if (index >= allInputData_.size()) {
+      throw std::runtime_error("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+
+    auto iter = generatedShapeData_.find(inputIndexToNameMap_.at(index));
+    if (iter != generatedShapeData_.end()) {
+        return &iter->second;
+    }
+
+    return nullptr;
+  }
+};
+
 void checkShapesAndTypes(
     const TypeProto_Sequence& inferredType,
     const TypeProto_Sequence& existingType);

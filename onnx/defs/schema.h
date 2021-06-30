@@ -388,6 +388,11 @@ class OpSchema final {
                                       : dummyInferenceFunction;
   }
 
+  OpSchema& PartialDataPropagationFunction(DataPropagationFunction partialDataProgationFunction);
+  DataPropagationFunction GetDataPropagationFunction() const {
+    return partial_data_propagation_function_ ? partial_data_propagation_function_ : dummyDataPropagationFunction;
+  }
+
   // Set the support level for the op schema.
   OpSchema& SetSupportLevel(SupportType supportType);
 
@@ -855,6 +860,7 @@ class OpSchema final {
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
+  DataPropagationFunction partial_data_propagation_function_;
   FunctionProto function_body_;
   ContextDependentFunctionBodyBuilder functionBuilder_;
 };

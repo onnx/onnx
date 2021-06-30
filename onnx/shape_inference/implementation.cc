@@ -226,6 +226,7 @@ static void InferShapesImpl(
 ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{outer_scope_value_types_by_name};
   std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{outer_scope_value_types_by_name};
+  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
 
   GraphInferenceContext graphInferenceContext{valueTypesByName, opset_imports, symbolTable, schema_registry};
   for (auto& vi : *g->mutable_value_info()) {
@@ -426,7 +427,8 @@ static void InferShapesImpl(
         materializeSymbolicShape(inferredType, symbolTable);
         // Now we can merge pre-existing and inferred info
         mergeShapesAndTypes(*inferredType, existingType);
-
+        DataPropagationContextImpl ctx(
+            n, valueTypesByName, inputDataByName, generatedShapeDataByName, &graphInferenceContext);
         // Make merged info available to further inference.
         valueTypesByName[n.output(i)] = existingType;
       }
