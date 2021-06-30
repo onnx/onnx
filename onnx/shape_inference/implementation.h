@@ -300,6 +300,32 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     return allInputTypes_.size();
   }
 
+  const TypeProto* getInputType(size_t index) const override {
+    if (index >= allInputTypes_.size()) {
+      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+    return allInputTypes_[index];
+  }
+
+  size_t getNumOutputs() const override {
+    return allOutputTypes_.size();
+  }
+
+  TypeProto* getOutputType(size_t index) override {
+    if (index >= allOutputTypes_.size()) {
+      ONNX_THROW("output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+    return &allOutputTypes_[index];
+  }
+
+  std::string getOutputName(size_t index) const override {
+    if (index > outputIndexToNameMap_.size()) {
+      throw InferenceError("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+
+    return outputIndexToNameMap_.at(index);
+  }
+
   void addGeneratedShapeData(size_t index, TensorShapeProto&& tp) override {
     if (index >= outputIndexToNameMap_.size()) {
       throw std::runtime_error("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
@@ -322,14 +348,6 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
     return nullptr;
   }
-
-  std::string getOutputName(size_t index) const override {
-    if (index > outputIndexToNameMap_.size()) {
-      throw InferenceError("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
-    }
-
-    return outputIndexToNameMap_.at(index);
-  }  
 };
 
 void checkShapesAndTypes(
