@@ -64,11 +64,25 @@ struct InferenceContext {
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
 };
 
+struct DataPropagationContext {
+  virtual size_t getNumInputs() const = 0;
+  virtual const TypeProto* getInputType(size_t index) const = 0;
+  virtual void addGeneratedShapeData(size_t index, TensorShapeProto&& tp) = 0;
+  virtual const TensorShapeProto* getGeneratedShapeData(size_t index) const = 0;
+  virtual TypeProto* getOutputType(size_t index) = 0;
+  virtual std::string getOutputName(size_t index) const = 0;
+  virtual ~DataPropagationContext() {}
+};
+
 using InferenceFunction = std::function<void(InferenceContext&)>;
+using DataPropagationFunction = std::function<void(DataPropagationContext&)>;
 
 // This no-op inference function is used for operators without an
 // inference implementation.
-inline void dummyInferenceFunction(InferenceContext&){};
+inline void dummyInferenceFunction(InferenceContext&) {};
+
+// This no-op data propagation function is used for operators without a defined data propagator
+inline void dummyDataPropagationFunction(DataPropagationContext&) {};
 
 template <typename T>
 inline bool getRepeatedAttribute(InferenceContext& ctx, std::string attr_name, std::vector<T>& values) {
@@ -361,11 +375,13 @@ inline bool hasShape(const TypeProto& type) {
   return false;
 }
 
-inline bool hasInputShape(InferenceContext& ctx, size_t n) {
+template <typename Context>
+inline bool hasInputShape(Context& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) && hasShape(*ctx.getInputType(n));
 }
 
-inline bool hasNInputShapes(InferenceContext& ctx, size_t n) {
+template <typename Context>
+inline bool hasNInputShapes(Context& ctx, size_t n) {
   for (size_t i = 0; i < n; i++) {
     if (!hasInputShape(ctx, i)) {
       return false;
