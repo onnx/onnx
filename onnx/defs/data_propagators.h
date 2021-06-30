@@ -19,7 +19,6 @@ inline void ShapeDataPropagator(DataPropagationContext& ctx) {
 
   if (ctx.getInputType(0)->tensor_type().has_shape()) {
     auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-    auto dim_size = input_shape.dim_size();
 
     TensorShapeProto tsp;
     tsp.CopyFrom(input_shape);
