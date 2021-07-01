@@ -290,10 +290,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::unordered_map<size_t, std::string> outputIndexToNameMap_;
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
+  std::unordered_map<std::string, TensorShapeProto>& generatedShapeData_;
   const GraphInferenceContext* graphInferenceContext_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
-  std::unordered_map<std::string, TensorShapeProto>& generatedShapeData_;
 
 
   size_t getNumInputs() const override {
