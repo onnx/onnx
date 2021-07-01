@@ -485,22 +485,12 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
-                                   /WX
-                                   /wd4800 # disable warning type' : forcing
-                                           # value to bool 'true' or 'false'
-                                           # (performance warning)
-                                   /wd4503 # identifier' : decorated name length
-                                           # exceeded, name was truncated
-                                   /wd4146 # unary minus operator applied to
-                                           # unsigned type, result still
-                                           # unsigned from include\google\protob
-                                           # uf\wire_format_lite.h
-                                 /wd4244 # 'argument': conversion from 'google::
-                                         # protobuf::uint64' to 'int', possible
-                                         # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int',
-                                         # possible loss of data
-                                 /wd4996 # The second parameter is ignored.
+                                   /wd4244 # 'argument': conversion from 'google::
+                                           # protobuf::uint64' to 'int', possible
+                                           # loss of data
+                                   /wd4267 # Conversion from 'size_t' to 'int',
+                                           # possible loss of data
+                                   /wd4996 # The second parameter is ignored.
                                    ${EXTRA_FLAGS})
     if(ONNX_USE_PROTOBUF_SHARED_LIBS)
       target_compile_options(onnx_cpp2py_export
@@ -545,16 +535,6 @@ endif()
 if(MSVC)
   target_compile_options(onnx_proto
                          PRIVATE /MP
-                                 /WX
-                                 /wd4800 # disable warning type' : forcing value
-                                         # to bool 'true' or 'false'
-                                         # (performance warning)
-                                 /wd4503 # identifier' : decorated name length
-                                         # exceeded, name was truncated
-                                 /wd4146 # unary minus operator applied to
-                                         # unsigned type, result still unsigned:
-                                         # include\google\protobuf\wire_format_l
-                                         # ite.h
                                  /wd4244 #'argument': conversion from 'google::
                                          #protobuf::uint64' to 'int', possible
                                          # loss of data
@@ -563,14 +543,6 @@ if(MSVC)
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
-                                 /WX
-                                 /wd4800 # disable warning type' : forcing value
-                                         # to bool 'true' or 'false'
-                                         # (performance warning)
-                                 /wd4503 # identifier' : decorated name length
-                                         # exceeded, name was truncated
-                                 /wd4146 # unary minus operator applied to
-                                         # unsigned type, result still unsigned
                                  /wd4244 # 'argument': conversion from 'google::
                                          # protobuf::uint64' to 'int', possible
                                          # loss of data
