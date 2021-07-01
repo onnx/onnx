@@ -91,7 +91,7 @@ git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
 git checkout v3.11.3
 cd cmake
-cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX=<protobug_install_dir> -DCMAKE_BUILD_TYPE=Release -Dprotobuf_MSVC_STATIC_RUNTIME=ON -DProtobuf_USE_STATIC_LIBS=ON -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobug_install_dir> -DCMAKE_BUILD_TYPE=Release -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=Release
 msbuild INSTALL.vcxproj /p:Configuration=Release
 ```
@@ -103,7 +103,7 @@ cd protobuf
 git checkout v3.11.3
 git submodule update --init --recursive
 mkdir build_source && cd build_source
-cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 make install
 ```
@@ -117,7 +117,7 @@ wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/proto
 tar -xvf protobuf-cpp-3.11.3.tar.gz
 cd protobuf-3.11.3
 mkdir build_source && cd build_source
-cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j${NUM_CORES}
 make install
 ```
@@ -155,8 +155,11 @@ For full list refer to CMakeLists.txt
 **Default**: Debug=0
 
 **CMake variables**
-* `ONNX_USE_PROTOBUF_SHARED_LIBS` should be ON or OFF. If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `USE_MSVC_STATIC_RUNTIME` must be 0. If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.  
-**Default**: ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=1
+* `ONNX_USE_PROTOBUF_SHARED_LIBS` should be ON or OFF.  
+**Default**: ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=1  
+`ONNX_USE_PROTOBUF_SHARED_LIBS` determines how onnx links to protobuf libraries.  
+    - When set to OFF - onnx will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/master/cmake/README.md#dlls-vs-static-linking) and Protobuf_USE_STATIC_LIBS will be set to OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
+    - When set to OFF - onnx will link statically to protobuf, and Protobuf_USE_STATIC_LIBS will be set to ON (to force the use of the static libraries) and `USE_MSVC_STATIC_RUNTIME` can be 0 or 1.  
 
 * `ONNX_USE_LITE_PROTO` should be ON or OFF. When set to ON onnx uses lite protobuf instead of full protobuf.  
 **Default**: ONNX_USE_LITE_PROTO=OFF
@@ -166,7 +169,7 @@ For full list refer to CMakeLists.txt
 
 
 ## Common Errors
-* Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
+* Note: the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
 
 * Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
 
