@@ -1886,12 +1886,12 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   
   ```
   
+  The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
+  
   When training_mode=False:
   ```
   Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
   ```
-  
-  It should also be noted that in training mode, if `T2` is float16, the mean/var should be cast to float when implementing, because calculation of mean and variance may cause overflow in float16 due to summation.
   
   For previous (depreciated) non-spatial cases, implementors are suggested
   to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.

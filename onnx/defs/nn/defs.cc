@@ -1620,6 +1620,8 @@ where N is the population size (this formula does not use sample size N - 1).
 
 ```
 
+The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
+
 When training_mode=False:
 ```
 Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
