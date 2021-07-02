@@ -237,7 +237,7 @@ TEST(FunctionVerification, VerifyModelLocalFunctions) {
   const char* code = R"ONNX(
 <
   ir_version: 8,
-  opset_import: [ "" : 13 "custom_domain" : 1],
+  opset_import: [ "" : 13, "custom_domain" : 1],
   producer_name: "FunctionProtoTest",
   producer_version: "1.0",
   model_version: 1,
