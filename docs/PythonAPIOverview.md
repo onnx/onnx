@@ -283,3 +283,36 @@ model = onnx.load('path/to/the/model.onnx')
 # Here both 'seq', 'batch' and -1 are dynamic using dim_param.
 variable_length_model = update_model_dims.update_inputs_outputs_dims(model, {'input_name': ['seq', 'batch', 3, -1]}, {'output_name': ['seq', 'batch', 1, -1]})
 ```
+
+## ONNX Parser
+
+Functions `onnx.parser.parse_model` and `onnx.parser.parse_graph` can be used to create an ONNX model
+or graph from a textual representation as shown below. See [Language Syntax](syntax.md) for more details
+about the language syntax.
+
+```python
+input = '''
+   agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+   {
+        T = MatMul(X, W)
+        S = Add(T, B)
+        C = Softmax(S)
+   }
+'''
+graph = onnx.parser.parse_graph(input)
+
+input = '''
+   <
+     ir_version: 7,
+     opset_import: ["" : 10]
+   >
+   agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+   {
+      T = MatMul(X, W)
+      S = Add(T, B)
+      C = Softmax(S)
+   }
+'''
+model = onnx.parser.parse_model(input)
+
+```
