@@ -158,7 +158,7 @@ For full list refer to CMakeLists.txt
 * `ONNX_USE_PROTOBUF_SHARED_LIBS` should be ON or OFF.  
 **Default**: ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=1  
 `ONNX_USE_PROTOBUF_SHARED_LIBS` determines how onnx links to protobuf libraries.  
-    - When set to OFF - onnx will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/master/cmake/README.md#dlls-vs-static-linking) and Protobuf_USE_STATIC_LIBS will be set to OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
+    - When set to ON - onnx will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/master/cmake/README.md#dlls-vs-static-linking), Protobuf_USE_STATIC_LIBS will be set to OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
     - When set to OFF - onnx will link statically to protobuf, and Protobuf_USE_STATIC_LIBS will be set to ON (to force the use of the static libraries) and `USE_MSVC_STATIC_RUNTIME` can be 0 or 1.  
 
 * `ONNX_USE_LITE_PROTO` should be ON or OFF. When set to ON onnx uses lite protobuf instead of full protobuf.  
