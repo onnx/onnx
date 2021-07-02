@@ -16,7 +16,7 @@ cmake_policy(SET CMP0063 NEW)
 # Project
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
-option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag " OFF)
+option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag and Protobuf_USE_STATIC_LIBS. " OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
@@ -48,11 +48,14 @@ if(NOT DEFINED ONNX_VERIFY_PROTO3)
   option(ONNX_VERIFY_PROTO3 "Generate code by proto3" ${PROTO3_ENABLED})
 endif()
 
- if (ONNX_USE_PROTOBUF_SHARED_LIBS)
+if(ONNX_USE_PROTOBUF_SHARED_LIBS)
   if(MSVC)
     #TODO: if ONNX_USE_MSVC_STATIC_RUNTIME is ON, it may not work
     add_definitions(-DPROTOBUF_USE_DLLS)
   endif()
+  set(Protobuf_USE_STATIC_LIBS OFF)
+else() 
+  set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
 # Set C++11 as standard for the whole project
