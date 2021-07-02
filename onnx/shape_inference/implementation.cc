@@ -427,8 +427,9 @@ static void InferShapesImpl(
         materializeSymbolicShape(inferredType, symbolTable);
         // Now we can merge pre-existing and inferred info
         mergeShapesAndTypes(*inferredType, existingType);
-        DataPropagationContextImpl ctx(
+        DataPropagationContextImpl dataPropagationCtx(
             n, valueTypesByName, inputDataByName, generatedShapeDataByName, &graphInferenceContext);
+        schema->GetDataPropagationFunction()(dataPropagationCtx);
         // Make merged info available to further inference.
         valueTypesByName[n.output(i)] = existingType;
       }
