@@ -966,6 +966,7 @@ class OpSet_Onnx_ver14 {
 
 
 // Forward declarations for ai.onnx version 15
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, BatchNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Bernoulli);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow);
 
@@ -973,6 +974,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow);
 class OpSet_Onnx_ver15 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, BatchNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Bernoulli)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow)>());
   }

@@ -1588,7 +1588,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver14_doc = R"DOC(
+static const char* BatchNormalization_ver15_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 There are five required inputs 'X', 'scale', 'B', 'input_mean' and
@@ -1633,10 +1633,10 @@ to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormali
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    14,
+    15,
     OpSchema()
         .NumOutputs({1, 3})
-        .SetDoc(BatchNormalization_ver14_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(BatchNormalization_ver15_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
