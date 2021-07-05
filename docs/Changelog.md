@@ -18943,6 +18943,49 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
+### <a name="GridSampler-14"></a>**GridSampler-14**</a>
+
+  Given an input and a flow-field grid, computes the output using input values and pixel locations from grid.
+  Currently, only spatial (4-D) input are supported.
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>align_corners</tt> : int (default is 0)</dt>
+<dd>If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.</dd>
+<dt><tt>mode</tt> : string (default is bilinear)</dt>
+<dd>Three interpolation modes: bilinear (default), nearest and bicubic.</dd>
+<dt><tt>padding_mode</tt> : string (default is zeros)</dt>
+<dd>Supported Padding modes for outside grid values: `zeros`(default), `border`, `reflection`</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>4-D tensor of shape (N, C, inH, inW), where N is the batch size, C is the numbers of channels, inH and inW are the height and width of the data.</dd>
+<dt><tt>grid</tt> (non-differentiable) : T</dt>
+<dd>4-D tensor of shape (N, outH, outW, 2), where outH and outW is the height and width of offset and output.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>4-D tensor of shape (N, C, outH, outW).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input 'X', 'grid' and output 'Y' to all tensor types.</dd>
+</dl>
+
 ### <a name="HardSwish-14"></a>**HardSwish-14**</a>
 
   HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where

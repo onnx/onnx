@@ -2520,6 +2520,65 @@ ONNX_OPERATOR_SET_SCHEMA(
           resizeShapeInference(ctx, true);
         }));
 
+static const char* GridSampler_ver13_doc = R"DOC(
+Given an input and a flow-field grid, computes the output using input values and pixel locations from grid.
+Currently, only spatial (4-D) input are supported.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GridSampler,
+    14,
+    OpSchema()
+        .Attr(
+            "mode",
+            "Three interpolation modes: bilinear (default), nearest and bicubic.",
+            AttributeProto::STRING,
+            std::string("bilinear"))
+        .Attr(
+            "padding_mode",
+            "Supported Padding modes for outside grid values: `zeros`(default), `border`, `reflection`",
+            AttributeProto::STRING,
+            std::string("zeros"))
+        .Attr(
+            "align_corners",
+            "If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. "
+            "If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            0,
+            "X",
+            "4-D tensor of shape (N, C, inH, inW), where N is the batch size, C is the numbers of channels, inH and inW are the height and width of the data.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "grid",
+            "4-D tensor of shape (N, outH, outW, 2), where outH and outW is the height and width of offset and output.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "4-D tensor of shape (N, C, outH, outW).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input 'X', 'grid' and output 'Y' to all tensor types.")
+        .SetDoc(GridSampler_ver13_doc)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
     16,

@@ -62,6 +62,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#GlobalLpPool">GlobalLpPool</a>|<a href="Changelog.md#GlobalLpPool-2">2</a>, <a href="Changelog.md#GlobalLpPool-1">1</a>|
 |<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-1">1</a>|
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
+|<a href="#GridSampler">GridSampler</a>|<a href="Changelog.md#GridSampler-14">14</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
@@ -7606,6 +7607,50 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrains input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+
+### <a name="GridSampler"></a><a name="gridsampler">**GridSampler**</a>
+
+  Given an input and a flow-field grid, computes the output using input values and pixel locations from grid.
+  Currently, only spatial (4-D) input are supported.
+
+#### Version
+
+This version of the operator has been available since version 14 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>align_corners</tt> : int (default is 0)</dt>
+<dd>If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.</dd>
+<dt><tt>mode</tt> : string (default is bilinear)</dt>
+<dd>Three interpolation modes: bilinear (default), nearest and bicubic.</dd>
+<dt><tt>padding_mode</tt> : string (default is zeros)</dt>
+<dd>Supported Padding modes for outside grid values: `zeros`(default), `border`, `reflection`</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>4-D tensor of shape (N, C, inH, inW), where N is the batch size, C is the numbers of channels, inH and inW are the height and width of the data.</dd>
+<dt><tt>grid</tt> (non-differentiable) : T</dt>
+<dd>4-D tensor of shape (N, outH, outW, 2), where outH and outW is the height and width of offset and output.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>4-D tensor of shape (N, C, outH, outW).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input 'X', 'grid' and output 'Y' to all tensor types.</dd>
 </dl>
 
 

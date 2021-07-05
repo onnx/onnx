@@ -942,6 +942,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Sub);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Mul);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Div);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Identity);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, GridSampler);
 
 // Iterate over schema from ai.onnx version 14
 class OpSet_Onnx_ver14 {
@@ -961,6 +962,7 @@ class OpSet_Onnx_ver14 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Mul)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Div)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Identity)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, GridSampler)>());
   }
 };
 

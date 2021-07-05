@@ -3760,6 +3760,16 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (None, None))])  # type: ignore
 
+    def test_gridsampler(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, 1, 3, 2)),
+             ('grid', TensorProto.FLOAT, (1, 1, 3, 2))],
+            [make_node("Gridsampler", ['input', 'grid'], ['y'])],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (1, 1, 1, 3))])
+
     def test_optional_construct_empty_tensor(self):  # type: () -> None
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[1, 2, 3])
         optional_type_proto = helper.make_optional_type_proto(tensor_type_proto)
