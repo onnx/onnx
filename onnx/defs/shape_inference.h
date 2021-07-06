@@ -83,6 +83,7 @@ struct DataPropagationContext {
   virtual ~DataPropagationContext() {}
   virtual void addGeneratedShapeData(size_t index, TensorShapeProto&& tp) = 0;
   virtual const TensorShapeProto* getGeneratedShapeData(size_t index) const = 0;
+  virtual const TensorShapeProto* getGeneratedShapeDataFromName(std::string name) const = 0;
 };
 
 using InferenceFunction = std::function<void(InferenceContext&)>;

@@ -333,7 +333,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          ShapeDataPropagator(ctx);
+          ShapeOpDataPropagator(ctx);
         }));
 
 static const char* Size_ver13_doc = R"DOC(

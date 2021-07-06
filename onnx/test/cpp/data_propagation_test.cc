@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "gtest/gtest.h"
+#include "onnx/checker.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx_pb.h"
@@ -17,13 +18,19 @@ namespace ONNX_NAMESPACE {
 namespace Test {
 
 
-inline bool compareShape(const TensorShapeProto& A, const TensorShapeProto& B) {
-    if (A.dim_size() != B.dim_size()) {
+inline bool compareShape(const TensorShapeProto* A, const TensorShapeProto* B) {
+    if (A == nullptr ||  B == nullptr) {
+        fail_check("The compared shapes should not be nullptr.");
         return false;
     }
-    for (int i = 0; i < A.dim_size() ; ++i) {
-        if (A.dim(i).has_dim_value() != B.dim(i).has_dim_value() || 
-                A.dim(i).dim_value() != B.dim(i).dim_value()) {
+    if (A->dim_size() != B->dim_size()) {
+        fail_check("The compared sizes of dim are different");
+        return false;
+    }
+    for (int i = 0; i < A->dim_size() ; ++i) {
+        if (A->dim(i).has_dim_value() != B->dim(i).has_dim_value() || 
+                A->dim(i).dim_value() != B->dim(i).dim_value()) {
+            fail_check("The compared dim values are different");
             return false;
         }
     }
@@ -43,15 +50,23 @@ TEST(DataPropagationImplTest, ShapeTest) {
   simpleTensor.mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(5);
   const auto simpleShape = simpleTensor.tensor_type().shape();
 
+  std::string input_name = "shape_input";
+  std::string output_name = "shape_output";
+
+  // Constructs shape node
   NodeProto shape_node;
   shape_node.set_name("shape");
   shape_node.set_domain(ONNX_DOMAIN);
   shape_node.set_op_type("Shape");
-  shape_node.add_input("input");
-  shape_node.add_output("shape_output");
-
-    *subgraph.add_node() = shape_node;
-
+  shape_node.add_input(input_name);
+  shape_node.add_output(output_name);
+  
+  // Constructs graph
+  ValueInfoProto graph_input;  
+  graph_input.set_name(input_name);
+  *graph_input.mutable_type() = simpleTensor;
+  *subgraph.add_input() = graph_input;
+  *subgraph.add_node() = shape_node;
   std::unordered_map<std::string, int> opset_imports;
   opset_imports[ONNX_DOMAIN] = domain_version;
 
@@ -59,24 +74,23 @@ TEST(DataPropagationImplTest, ShapeTest) {
   SymbolTableImpl symbolTable;
   symbolTable.addFromGraph(subgraph);
   GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, symbolTable);
+
   GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
 
   std::vector<const TypeProto*> subgraphInputTypes = {&simpleTensor};
 
-  auto output =
-      graphInferencer.doInferencing(subgraphInputTypes, {});
-
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
-  valueTypesByName["input"] = &simpleTensor;
+  valueTypesByName[input_name] = &simpleTensor;
 
   std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
   DataPropagationContextImpl dataPropagationCtx(
     shape_node, valueTypesByName, {}, generatedShapeDataByName, &graphInfCtx);
+
   const auto schema = schemaRegistry->GetSchema(shape_node.op_type(), domain_version, shape_node.domain());
   schema->GetDataPropagationFunction()(dataPropagationCtx);
-  const auto* propagatedShape = dataPropagationCtx.getGeneratedShapeData(0);
+  const auto* propagatedShape = dataPropagationCtx.getGeneratedShapeDataFromName(output_name);
 
-  EXPECT_TRUE(compareShape(*propagatedShape, simpleShape));
+  EXPECT_TRUE(compareShape(propagatedShape, &simpleShape));
 }
 
 } // namespace Test

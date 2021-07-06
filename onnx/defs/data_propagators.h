@@ -12,7 +12,9 @@ inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int
   }
 }
 
-inline void ShapeDataPropagator(DataPropagationContext& ctx) {
+// Data propagation function for Shape op
+// Propagates input shape to output shape
+inline void ShapeOpDataPropagator(DataPropagationContext& ctx) {
   if (!hasNInputShapes(ctx, 1)) {
     return;
   }

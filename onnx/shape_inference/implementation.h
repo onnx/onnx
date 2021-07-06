@@ -345,7 +345,14 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     if (iter != generatedShapeData_.end()) {
         return &iter->second;
     }
+    return nullptr;
+  }
 
+  const TensorShapeProto* getGeneratedShapeDataFromName(std::string name) const override {
+    auto iter = generatedShapeData_.find(name);
+    if (iter != generatedShapeData_.end()) {
+        return &iter->second;
+    }
     return nullptr;
   }
 };
