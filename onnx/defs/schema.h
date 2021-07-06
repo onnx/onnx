@@ -801,6 +801,10 @@ class OpSchema final {
     return tensor_inference_function_ ? true : false;
   }
 
+  bool has_data_propagation_function() const {
+    return partial_data_propagation_function_ ? true : false;
+  }  
+
   bool HasFunction() const {
     return function_body_.node_size() > 0;
   }

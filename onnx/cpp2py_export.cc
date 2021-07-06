@@ -56,6 +56,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "has_type_and_shape_inference_function",
           &OpSchema::has_type_and_shape_inference_function)
       .def_property_readonly(
+          "has_data_propagation_function",
+          &OpSchema::has_data_propagation_function)
+      .def_property_readonly(
           "type_constraints", &OpSchema::typeConstraintParams)
       .def_static(
           "is_infinite",
