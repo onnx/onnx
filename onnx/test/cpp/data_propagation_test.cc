@@ -188,5 +188,9 @@ TEST(DataPropagationImplTest, CastTest) {
   TestPropagateShapeDataFromInputToOutput("Cast");
 }
 
+TEST(DataPropagationImplTest, SizeTest) {
+  TestPropagateShapeDataFromInputToOutput("Size");
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE
