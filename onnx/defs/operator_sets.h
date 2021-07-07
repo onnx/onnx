@@ -942,7 +942,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Sub);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Mul);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Div);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Identity);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, GridSampler);
 
 // Iterate over schema from ai.onnx version 14
 class OpSet_Onnx_ver14 {
@@ -962,7 +961,6 @@ class OpSet_Onnx_ver14 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Mul)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Div)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Identity)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, GridSampler)>());
   }
 };
 
@@ -987,8 +985,6 @@ class OpSet_Onnx_ver15 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Optional)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalHasElement)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalGetElement)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, CastLike)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Shape)>());
   }
 };
 
@@ -1017,9 +1013,6 @@ class OpSet_Onnx_ver16 {
 };
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
-  RegisterOpSetSchema<OpSet_Onnx_ver2>();
-  RegisterOpSetSchema<OpSet_Onnx_ver3>();
-  RegisterOpSetSchema<OpSet_Onnx_ver4>();
   RegisterOpSetSchema<OpSet_Onnx_ver5>();
   RegisterOpSetSchema<OpSet_Onnx_ver6>();
   RegisterOpSetSchema<OpSet_Onnx_ver7>();

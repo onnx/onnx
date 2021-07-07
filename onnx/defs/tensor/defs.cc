@@ -2520,14 +2520,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           resizeShapeInference(ctx, true);
         }));
 
-static const char* GridSampler_ver13_doc = R"DOC(
+static const char* GridSampler_ver15_doc = R"DOC(
 Given an input and a flow-field grid, computes the output using input values and pixel locations from grid.
 Currently, only spatial (4-D) input are supported.
+For each output location output[n, :, h, w], the size-2 vector grid[n, h, w] specifies input pixel locations x and y,
+which are used to interpolate the output value output[n, :, h, w]. 
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     GridSampler,
-    14,
+    15,
     OpSchema()
         .Attr(
             "mode",
@@ -2536,7 +2538,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("bilinear"))
         .Attr(
             "padding_mode",
-            "Supported Padding modes for outside grid values: `zeros`(default), `border`, `reflection`",
+            "Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`"
+            "zeros: use 0 for out-of-bound grid locations"
+            "border: use border values for out-of-bound grid locations"
+            "reflection: use values at locations reflected by the border for out-of-bound grid locations.",
             AttributeProto::STRING,
             std::string("zeros"))
         .Attr(
@@ -2548,8 +2553,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "X",
-            "4-D tensor of shape (N, C, inH, inW), where N is the batch size, C is the numbers of channels, inH and inW are the height and width of the data.",
-            "T",
+            "4-D tensor of shape (N, C, H, W),"
+            "where N is the batch size, C is the numbers of channels,"
+            "H and W are the height and width of the input data.",
+            "T1",
             OpSchema::Single,
             true,
             1,
@@ -2557,8 +2564,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "grid",
-            "4-D tensor of shape (N, outH, outW, 2), where outH and outW is the height and width of offset and output.",
-            "T",
+            "Input offset, 4-D tensor of shape (N, H_out, W_out, 2),"
+            "where H_out and W_out are the height and width of grid and output,"
+            "Grid specifies the sampling pixel locations normalized by the input spatial dimensions."
+            "Therefore, it should have most values in the range of [-1, 1]."
+            "If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.",
+            "T1",
             OpSchema::Single,
             true,
             1,
@@ -2566,18 +2577,45 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "Y",
-            "4-D tensor of shape (N, C, outH, outW).",
-            "T",
+            "4-D tensor of shape (N, C, H_out, W_out).",
+            "T2",
             OpSchema::Single,
             true,
             1,
             OpSchema::Differentiable)
         .TypeConstraint(
-            "T",
+            "T1",
             OpSchema::all_tensor_types(),
-            "Constrain input 'X', 'grid' and output 'Y' to all tensor types.")
-        .SetDoc(GridSampler_ver13_doc)
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+            "Constrain input 'X' and 'grid' to all tensor types.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain types to float tensors.")
+        .SetDoc(GridSampler_ver15_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          size_t input_param = 0, grid_param = 1;
+
+          checkInputRank(ctx, input_param, 4);
+          checkInputRank(ctx, grid_param, 4);
+
+          // Output dimensions, initialized to an unknown-dimension-value
+          Dim N, C, H_out, W_out;
+
+          // Get value of N from dim 0 of input_param, if available
+          unifyInputDim(ctx, input_param, 0, N);
+          // Get value of C from dim 1 of input_param, if available
+          unifyInputDim(ctx, input_param, 1, C);
+
+          // Get value of H_out from dim 2 of grid_param, if available
+          unifyInputDim(ctx, grid_param, 2, H_out);
+          // Get value of W_out from dim 3 of grid_param, if available
+          unifyInputDim(ctx, grid_param, 3, W_out);
+
+          // set output shape:
+          updateOutputShape(ctx, 0, {N, C, H_out, W_out});
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
