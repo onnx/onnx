@@ -7612,10 +7612,15 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="GridSampler"></a><a name="gridsampler">**GridSampler**</a>
 
+  The GridSampler operator is often used in conjunction with affine_grid doing Grid generator
+  and Sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
+  
   Given an input and a flow-field grid, computes the output using input values and pixel locations from grid.
   Currently, only spatial (4-D) input are supported.
   For each output location output[n, :, h, w], the size-2 vector grid[n, h, w] specifies input pixel locations x and y,
-  which are used to interpolate the output value output[n, :, h, w]. 
+  which are used to interpolate the output value output[n, :, h, w].
+  
+  See also in [torch-nn-functional-grid-sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
 
 #### Version
 

@@ -2521,10 +2521,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* GridSampler_ver15_doc = R"DOC(
+The GridSampler operator is often used in conjunction with affine_grid doing Grid generator
+and Sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
+
 Given an input and a flow-field grid, computes the output using input values and pixel locations from grid.
 Currently, only spatial (4-D) input are supported.
 For each output location output[n, :, h, w], the size-2 vector grid[n, h, w] specifies input pixel locations x and y,
-which are used to interpolate the output value output[n, :, h, w]. 
+which are used to interpolate the output value output[n, :, h, w].
+
+See also in [torch-nn-functional-grid-sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2608,10 +2613,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Get value of C from dim 1 of input_param, if available
           unifyInputDim(ctx, input_param, 1, C);
 
-          // Get value of H_out from dim 2 of grid_param, if available
-          unifyInputDim(ctx, grid_param, 2, H_out);
-          // Get value of W_out from dim 3 of grid_param, if available
-          unifyInputDim(ctx, grid_param, 3, W_out);
+          // Get value of H_out from dim 1 of grid_param, if available
+          unifyInputDim(ctx, grid_param, 1, H_out);
+          // Get value of W_out from dim 2 of grid_param, if available
+          unifyInputDim(ctx, grid_param, 2, W_out);
 
           // set output shape:
           updateOutputShape(ctx, 0, {N, C, H_out, W_out});
