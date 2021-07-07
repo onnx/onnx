@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 150/164 (91.46%, 5 generators excluded) common operators.
+Node tests have covered 150/165 (90.91%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -14664,6 +14664,9 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F494;No Cover Common Operators
+### CastLike (call for test cases)
+
+
 ### ConcatFromSequence (call for test cases)
 
 
@@ -14749,12 +14752,12 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 seed: 0
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -14785,12 +14788,16 @@ strides: 1
 
 ## densenet121
 
-densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
+densenet121 has 668 nodes. Of these, 668 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
+<details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
 <details>
 <summary>AveragePool: 3 out of 6 attributes covered</summary>
 
@@ -14802,7 +14809,7 @@ pads: 1
 strides: 1
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
@@ -14824,12 +14831,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 seed: 0
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -14856,7 +14863,7 @@ storage_order: 0
 strides: 1
 </details>
 <details>
-<summary>Unsqueeze: 1 out of 0 attributes covered</summary>
+<summary>Mul: 2 out of 0 attributes covered</summary>
 
 </details>
 </details>
@@ -14871,6 +14878,10 @@ inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
@@ -14881,7 +14892,7 @@ pads: 2
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
@@ -14903,12 +14914,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 seed: 0
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -14935,7 +14946,7 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Unsqueeze: 1 out of 0 attributes covered</summary>
+<summary>Mul: 2 out of 0 attributes covered</summary>
 
 </details>
 </details>
@@ -14943,12 +14954,16 @@ strides: 2
 
 ## inception_v2
 
-inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
+inception_v2 has 371 nodes. Of these, 371 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
+<details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
 <details>
 <summary>AveragePool: 3 out of 6 attributes covered</summary>
 
@@ -14960,7 +14975,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
@@ -14982,12 +14997,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 seed: 0
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -15014,7 +15029,7 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Unsqueeze: 1 out of 0 attributes covered</summary>
+<summary>Mul: 2 out of 0 attributes covered</summary>
 
 </details>
 </details>
@@ -15029,6 +15044,10 @@ resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
@@ -15039,7 +15058,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -15061,12 +15080,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 seed: 0
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -15093,7 +15112,7 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Unsqueeze: 1 out of 0 attributes covered</summary>
+<summary>Mul: 2 out of 0 attributes covered</summary>
 
 </details>
 </details>
@@ -15108,6 +15127,10 @@ shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
@@ -15118,7 +15141,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -15140,12 +15163,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 seed: 0
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -15172,13 +15195,13 @@ storage_order: 0
 strides: 2
 </details>
 <details>
+<summary>Mul: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
-</details>
-<details>
-<summary>Unsqueeze: 1 out of 0 attributes covered</summary>
-
 </details>
 </details>
 
@@ -15192,6 +15215,10 @@ squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
@@ -15202,7 +15229,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -15224,12 +15251,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 seed: 0
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -15256,13 +15283,13 @@ storage_order: 0
 strides: 2
 </details>
 <details>
+<summary>Mul: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
-</details>
-<details>
-<summary>Unsqueeze: 1 out of 0 attributes covered</summary>
-
 </details>
 </details>
 
@@ -15276,6 +15303,10 @@ vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
@@ -15286,7 +15317,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -15308,12 +15339,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 seed: 0
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -15340,13 +15371,13 @@ storage_order: 0
 strides: 2
 </details>
 <details>
+<summary>Mul: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
-</details>
-<details>
-<summary>Unsqueeze: 1 out of 0 attributes covered</summary>
-
 </details>
 </details>
 
@@ -15360,6 +15391,10 @@ zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
@@ -15370,7 +15405,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -15392,12 +15427,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 seed: 0
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -15424,13 +15459,13 @@ storage_order: 0
 strides: 2
 </details>
 <details>
+<summary>Mul: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
-</details>
-<details>
-<summary>Unsqueeze: 1 out of 0 attributes covered</summary>
-
 </details>
 </details>
 
