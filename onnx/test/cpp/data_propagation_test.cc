@@ -184,5 +184,9 @@ TEST(DataPropagationImplTest, UnsqueezeTest) {
   TestPropagateShapeDataFromInputToOutput("Unsqueeze");
 }
 
+TEST(DataPropagationImplTest, CastTest) {
+  TestPropagateShapeDataFromInputToOutput("Cast");
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE

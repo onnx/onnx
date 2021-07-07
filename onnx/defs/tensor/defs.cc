@@ -102,7 +102,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
+
 
 static const char* Reshape_ver14_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
