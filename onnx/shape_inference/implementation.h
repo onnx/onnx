@@ -425,14 +425,16 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl &symbolTable);
+    SymbolTableImpl& symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName);
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl &symbolTable);
+    SymbolTableImpl& symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName);
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 

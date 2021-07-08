@@ -376,7 +376,7 @@ static void InferShapesImpl(
             function_opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
         }
 
-        InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx, symbolTable);
+        InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx, symbolTable, generatedShapeDataByName);
       }
       ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
         ONNX_HANDLE_EXCEPTION([&]() {
@@ -528,7 +528,8 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl& symbolTable) {
+    SymbolTableImpl& symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName) {
   GraphProto g;
   // Get a temporary tensor-shape map
   const auto num_func_inputs = func->input_size();
@@ -620,6 +621,11 @@ void InferShapeForFunctionNode(
       }
       materializeSymbolicShape(inferred_output_type, symbolTable);
       mergeShapesAndTypes(*inferred_output_type, existingType);
+      DataPropagationContextImpl temp_dataPropagationCtx(
+          copy_n, temp_valueTypesByName, temp_initializersByName, generatedShapeDataByName);
+      if (schema->has_data_propagation_function()) {
+        schema->GetDataPropagationFunction()(temp_dataPropagationCtx);
+      }
       // Make merged info available to further inference.
       temp_valueTypesByName[copy_n.output(i)] = existingType;
     }
@@ -646,12 +652,13 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl &symbolTable) {
+    SymbolTableImpl& symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : func->opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
-  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, symbolTable);
+  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, symbolTable, generatedShapeDataByName);
 }
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
