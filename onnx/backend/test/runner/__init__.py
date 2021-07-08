@@ -169,15 +169,18 @@ class Runner(object):
     def assert_similar_outputs(cls, ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
         np.testing.assert_equal(len(outputs), len(ref_outputs))
         for i in range(len(outputs)):
-            np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
-            if ref_outputs[i].dtype == np.object:
+            if isinstance(outputs[i], (list, tuple)):
                 np.testing.assert_array_equal(outputs[i], ref_outputs[i])
             else:
-                np.testing.assert_allclose(
-                    outputs[i],
-                    ref_outputs[i],
-                    rtol=rtol,
-                    atol=atol)
+                np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
+                if ref_outputs[i].dtype == np.object:
+                    np.testing.assert_array_equal(outputs[i], ref_outputs[i])
+                else:
+                    np.testing.assert_allclose(
+                        outputs[i],
+                        ref_outputs[i],
+                        rtol=rtol,
+                        atol=atol)
 
     @classmethod
     @retry_excute(3)
