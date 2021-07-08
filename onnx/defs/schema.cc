@@ -375,7 +375,7 @@ OpSchema& OpSchema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFun
 }
 
 OpSchema& OpSchema::PartialDataPropagationFunction(DataPropagationFunction dataPropagationFunction) {
-  partial_data_propagation_function_ = std::move(dataPropagationFunction);
+  data_propagation_function_ = std::move(dataPropagationFunction);
   return *this;
 }
 

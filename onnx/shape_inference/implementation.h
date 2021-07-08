@@ -295,6 +295,14 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
 
+  const AttributeProto* getAttribute(const std::string& name) const override {
+    auto iter = attributesByName_.find(name);
+    if (iter == attributesByName_.end()) {
+      return nullptr;
+    } else {
+      return iter->second;
+    }
+  }
 
   size_t getNumInputs() const override {
     return allInputTypes_.size();
