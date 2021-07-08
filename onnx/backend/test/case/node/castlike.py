@@ -17,6 +17,7 @@ from ..base import Base
 from . import expect
 import sys
 
+
 class CastLike(Base):
 
     @staticmethod
