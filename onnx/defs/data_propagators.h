@@ -4,7 +4,7 @@ namespace ONNX_NAMESPACE {
 
 inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int idx) {
   // propogate input data
-  const auto input_data = ctx.getGeneratedShapeData(idx);
+  const auto input_data = ctx.getInputGeneratedShapeData(idx);
   if (input_data != nullptr) {
     TensorShapeProto tp;
     tp.CopyFrom(*input_data);

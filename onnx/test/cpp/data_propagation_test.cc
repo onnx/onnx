@@ -103,17 +103,14 @@ void TestPropagateShapeDataFromInputToOutput(std::string opsetName) {
   std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
 
   const TensorShapeProto* propagatedShape;
-  int i = 0;
   for (auto n: subgraph.node()) {
     DataPropagationContextImpl dataPropagationCtx(
         n, valueTypesByName, {}, generatedShapeDataByName, &graphInfCtx);
 
     const auto schema = schemaRegistry->GetSchema(n.op_type(), domain_version, n.domain());
-    //if (i == 1) break;
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
-    propagatedShape = dataPropagationCtx.getGeneratedShapeDataFromName(output_name);
-    ++i;
+    propagatedShape = dataPropagationCtx.getOutputGeneratedShapeData(0);
   }
   //EXPECT_TRUE(CompareShape(propagatedShape, &simpleShape));
 }
@@ -171,7 +168,7 @@ TEST(DataPropagationImplTest, ShapeTest) {
   EXPECT_TRUE(schema->has_data_propagation_function());
 
   schema->GetDataPropagationFunction()(dataPropagationCtx);
-  const auto* propagatedShape = dataPropagationCtx.getGeneratedShapeDataFromName(output_name);
+  const auto* propagatedShape = dataPropagationCtx.getOutputGeneratedShapeData(0);
 
   EXPECT_TRUE(CompareShape(propagatedShape, &simpleShape));
 }

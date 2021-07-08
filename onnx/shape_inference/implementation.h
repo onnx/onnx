@@ -336,7 +336,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     }
   }
 
-  const TensorShapeProto* getGeneratedShapeData(size_t index) const override {
+  const TensorShapeProto* getInputGeneratedShapeData(size_t index) const override {
     if (index >= allInputData_.size()) {
       throw std::runtime_error("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
     }
@@ -348,8 +348,12 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     return nullptr;
   }
 
-  const TensorShapeProto* getGeneratedShapeDataFromName(std::string name) const override {
-    auto iter = generatedShapeData_.find(name);
+  const TensorShapeProto* getOutputGeneratedShapeData(size_t index) const override {
+    if (index >= getNumOutputs()) {
+      throw std::runtime_error("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+
+    auto iter = generatedShapeData_.find(outputIndexToNameMap_.at(index));
     if (iter != generatedShapeData_.end()) {
         return &iter->second;
     }
