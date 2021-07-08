@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 153/168 (91.07%, 5 generators excluded) common operators.
+Node tests have covered 151/165 (91.52%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4699,6 +4699,223 @@ y = np.random.randn(5).astype(np.float32)
 z = np.greater_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_greater_equal_bcast')
+```
+
+</details>
+
+
+### GridSampler
+There are 2 test cases, listed as following:
+<details>
+<summary>gridsampler</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GridSampler',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='nearest',
+    padding_mode='border',
+    align_corners=1,
+)
+# X shape, [N, C, H, W] - [1, 1, 4, 4]
+X = np.array(
+    [
+        [
+            [
+                [0., 1., 2., 3.],
+                [4., 5., 6., 7.],
+                [8., 9., 10., 11.],
+                [12., 13., 14., 15.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Grid shape, [N, H_out, W_out, 2] - [1, 6, 6, 2]
+Grid = np.array(
+    [
+        [
+            [
+                [-1.0000, -1.0000],
+                [-0.6000, -1.0000],
+                [-0.2000, -1.0000],
+                [0.2000, -1.0000],
+                [0.6000, -1.0000],
+                [1.0000, -1.0000]
+            ],
+            [
+                [-1.0000, -0.6000],
+                [-0.6000, -0.6000],
+                [-0.2000, -0.6000],
+                [0.2000, -0.6000],
+                [0.6000, -0.6000],
+                [1.0000, -0.6000]
+            ],
+            [
+                [-1.0000, -0.2000],
+                [-0.6000, -0.2000],
+                [-0.2000, -0.2000],
+                [0.2000, -0.2000],
+                [0.6000, -0.2000],
+                [1.0000, -0.2000]
+            ],
+            [
+                [-1.0000, 0.2000],
+                [-0.6000, 0.2000],
+                [-0.2000, 0.2000],
+                [0.2000, 0.2000],
+                [0.6000, 0.2000],
+                [1.0000, 0.2000]
+            ],
+            [
+                [-1.0000, 0.6000],
+                [-0.6000, 0.6000],
+                [-0.2000, 0.6000],
+                [0.2000, 0.6000],
+                [0.6000, 0.6000],
+                [1.0000, 0.6000]
+            ],
+            [
+                [-1.0000, 1.0000],
+                [-0.6000, 1.0000],
+                [-0.2000, 1.0000],
+                [0.2000, 1.0000],
+                [0.6000, 1.0000],
+                [1.0000, 1.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 6, 6]
+Y = np.array(
+    [
+        [
+            [
+                [0.0000, 0.1500, 0.5500, 0.9500, 1.3500, 0.7500],
+                [0.6000, 1.5000, 2.3000, 3.1000, 3.9000, 2.1000],
+                [2.2000, 4.7000, 5.5000, 6.3000, 7.1000, 3.7000],
+                [3.8000, 7.9000, 8.7000, 9.5000, 10.3000, 5.3000],
+                [5.4000, 11.1000, 11.9000, 12.7000, 13.5000, 6.9000],
+                [3.0000, 6.1500, 6.5500, 6.9500, 7.3500, 3.7500]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+expect(node, inputs=[X, Grid], outputs=[Y],
+       name='export_gridsampler')
+```
+
+</details>
+<details>
+<summary>gridsampler_paddingmode</summary>
+
+```python
+# X shape, [N, C, H, W] - [1, 1, 3, 2]
+X = np.array(
+    [
+        [
+            [
+                [0., 1.],
+                [2., 3.],
+                [4., 5.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Grid shape, [N, H_out, W_out, 2] - [1, 2, 4, 2]
+Grid = np.array(
+    [
+        [
+            [
+                [-10.0000, -10.0000],
+                [-0.5000, -0.5000],
+                [-0.2000, -0.2000],
+                [10.0000, 10.0000]
+            ],
+
+            [
+                [10.0000, 10.0000],
+                [-0.2000, -0.2000],
+                [0.5000, 0.5000],
+                [10.0000, 10.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+# setting padding_mode = 'zeros'
+node = onnx.helper.make_node(
+    'GridSampler',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    padding_mode='zeros',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_zeros = np.array(
+    [
+        [
+            [
+                [0.0000, 0.0000, 1.7000, 0.0000],
+                [0.0000, 1.7000, 0.0000, 0.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_zeros],
+       name='export_gridsampler_zeros_padding')
+
+# setting padding_mode = 'border'
+node = onnx.helper.make_node(
+    'GridSampler',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    padding_mode='border',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_border = np.array(
+    [
+        [
+            [
+                [0.0000, 0.0000, 1.7000, 5.0000],
+                [5.0000, 1.7000, 5.0000, 5.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_border],
+       name='export_gridsampler_border_padding')
+
+# setting padding_mode = 'reflection'
+node = onnx.helper.make_node(
+    'GridSampler',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    padding_mode='reflection',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_reflection = np.array(
+    [
+        [
+            [
+                [2.5000, 0.0000, 1.7000, 2.5000],
+                [2.5000, 1.7000, 5.0000, 2.5000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_reflection],
+       name='export_gridsampler_reflection_padding')
 ```
 
 </details>
@@ -15212,9 +15429,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### GreaterOrEqual (call for test cases)
-
-
-### GridSampler (call for test cases)
 
 
 ### LessOrEqual (call for test cases)
