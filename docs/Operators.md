@@ -93,6 +93,9 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#NonZero">NonZero</a>|<a href="Changelog.md#NonZero-13">13</a>, <a href="Changelog.md#NonZero-9">9</a>|
 |<a href="#Not">Not</a>|<a href="Changelog.md#Not-1">1</a>|
 |<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
+|<a href="#Optional">Optional</a>|<a href="Changelog.md#Optional-15">15</a>|
+|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-15">15</a>|
+|<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
 |<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
@@ -12628,6 +12631,189 @@ values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, dtype=output_type)
 y = y * (on_value - off_value) + off_value
 expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
+```
+
+</details>
+
+
+### <a name="Optional"></a><a name="optional">**Optional**</a>
+
+  Construct an optional type containing either an empty optional of a certain type specified by the attribute,
+  or an optional type containing the 'input' element.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>type</tt> : type_proto</dt>
+<dd>Type of the element in the optional output</dd>
+</dl>
+
+#### Inputs (0 - 1)
+
+<dl>
+<dt><tt>input</tt> (optional) : V</dt>
+<dd>The input element.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : O</dt>
+<dd>The optional output enclosing the input element.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrains input type to all tensor and sequence types.</dd>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrains output type to all optional tensor or optional sequence types.</dd>
+</dl>
+
+
+### <a name="OptionalGetElement"></a><a name="optionalgetelement">**OptionalGetElement**</a>
+
+  Outputs the element in the optional-type input'. It is an error if the input value does not have an element "
+  "and the behavior is undefined in this case."
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : O</dt>
+<dd>The optional input.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : V</dt>
+<dd>Output element in the optional input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output type to all tensor or sequence types.</dd>
+</dl>
+
+
+### <a name="OptionalHasElement"></a><a name="optionalhaselement">**OptionalHasElement**</a>
+
+  Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : O</dt>
+<dd>The optional input.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : B</dt>
+<dd>A scalar boolean tensor. If true, it indicates that optional-type input contains an element. Otherwise, it is empty.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrains output to a boolean tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>empty</summary>
+
+```python
+optional = None
+
+node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_has_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       name='test_optional_has_element_empty', input_types=[1])
+```
+
+</details>
+
+
+<details>
+<summary>empty</summary>
+
+```python
+optional = [np.array([1, 2, 3, 4])]
+
+node = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_get_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       name='test_optional_get_element_sequence')
+```
+
+</details>
+
+
+<details>
+<summary>optionalhaselement</summary>
+
+```python
+optional = np.array([1, 2, 3, 4])
+
+node = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_get_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       name='test_optional_get_element')
+```
+
+</details>
+
+
+<details>
+<summary>optionalhaselement</summary>
+
+```python
+optional = np.array([1, 2, 3, 4])
+
+node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_has_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       name='test_optional_has_element')
 ```
 
 </details>

@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 150/164 (91.46%, 5 generators excluded) common operators.
+Node tests have covered 151/167 (90.42%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -7863,6 +7863,78 @@ expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_wit
 </details>
 
 
+### OptionalHasElement
+There are 4 test cases, listed as following:
+<details>
+<summary>empty</summary>
+
+```python
+optional = None
+
+node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_has_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       name='test_optional_has_element_empty', input_types=[1])
+```
+
+</details>
+<details>
+<summary>empty</summary>
+
+```python
+optional = [np.array([1, 2, 3, 4])]
+
+node = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_get_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       name='test_optional_get_element_sequence')
+```
+
+</details>
+<details>
+<summary>optionalhaselement</summary>
+
+```python
+optional = np.array([1, 2, 3, 4])
+
+node = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_get_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       name='test_optional_get_element')
+```
+
+</details>
+<details>
+<summary>optionalhaselement</summary>
+
+```python
+optional = np.array([1, 2, 3, 4])
+
+node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_has_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       name='test_optional_has_element')
+```
+
+</details>
+
+
 ### Or
 There are 2 test cases, listed as following:
 <details>
@@ -14686,6 +14758,12 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### Multinomial (random generator operator)
+
+
+### Optional (call for test cases)
+
+
+### OptionalGetElement (call for test cases)
 
 
 ### RandomNormal (random generator operator)

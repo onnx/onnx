@@ -968,6 +968,9 @@ class OpSet_Onnx_ver14 {
 // Forward declarations for ai.onnx version 15
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Bernoulli);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Optional);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalHasElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalGetElement);
 
 // Iterate over schema from ai.onnx version 15
 class OpSet_Onnx_ver15 {
@@ -975,6 +978,9 @@ class OpSet_Onnx_ver15 {
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Bernoulli)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Optional)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalHasElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalGetElement)>());
   }
 };
 
