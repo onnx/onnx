@@ -10,16 +10,16 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Optional_ver1_doc = R"DOC(
-Construct an optional type containing either an empty optional of a certain type specified by the attribute,
-or an optional type containing the 'input' element.
+static const char* Optional_ver15_doc = R"DOC(
+Construct an optional type value containing either an empty optional of a certain type specified by the attribute,
+or a non-empty value containing the 'input' element.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Optional,
     15,
     OpSchema()
-        .SetDoc(Optional_ver1_doc)
+        .SetDoc(Optional_ver15_doc)
         .Input(0, "input", "The input element.", "V", OpSchema::Optional)
         .Attr("type", "Type of the element in the optional output", AttributeProto::TYPE_PROTO, OPTIONAL_VALUE)
         .Output(0, "output", "The optional output enclosing the input element.", "O")

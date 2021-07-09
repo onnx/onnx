@@ -66,6 +66,7 @@ class TestShapeInference(unittest.TestCase):
 
     def _compare_value_infos(self, vi, inferred_vi):
         if vi.HasField('tensor_type'):
+            assert inferred_vi.HasField('tensor_type')
             for dim_i in range(len(vi.tensor_type.shape.dim)):
                 dim = vi.tensor_type.shape.dim[dim_i]
                 inferred_dim = inferred_vi.tensor_type.shape.dim[dim_i]
@@ -75,10 +76,12 @@ class TestShapeInference(unittest.TestCase):
                 else:
                     assert dim.dim_value == inferred_dim.dim_value, '\n%s\n%s\n' % (vi, inferred_vi)
         elif vi.HasField('sequence_type'):
+            assert inferred_vi.HasField('sequence_type')
             vi = vi.sequence_type.elem_type
             inferred_vi = inferred_vi.sequence_type.elem_type
             self._compare_value_infos(vi, inferred_vi)
         elif vi.HasField('optional_type'):
+            assert inferred_vi.HasField('optional_type')
             vi = vi.optional_type.elem_type
             inferred_vi = inferred_vi.optional_type.elem_type
             self._compare_value_infos(vi, inferred_vi)

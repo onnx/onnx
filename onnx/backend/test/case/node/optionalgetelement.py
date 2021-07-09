@@ -23,7 +23,9 @@ class OptionalHasElement(Base):
 
     @staticmethod
     def export():  # type: () -> None
-        optional = np.array([1, 2, 3, 4])
+        optional = np.array([1, 2, 3, 4]).astype(np.float32)
+        tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.FLOAT), [4, ])
+        input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
 
         node = onnx.helper.make_node(
             'OptionalGetElement',
@@ -32,11 +34,15 @@ class OptionalHasElement(Base):
         )
         output = optional_get_element_reference_implementation(optional)
         expect(node, inputs=[optional], outputs=[output],
+               input_type_protos=[input_type_proto],
                name='test_optional_get_element')
 
     @staticmethod
     def export_empty():  # type: () -> None
-        optional = [np.array([1, 2, 3, 4])]
+        optional = [np.array([1, 2, 3, 4]).astype(np.int32)]
+        tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.INT32), [4, ])
+        seq_type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+        input_type_proto = onnx.helper.make_optional_type_proto(seq_type_proto)
 
         node = onnx.helper.make_node(
             'OptionalGetElement',
@@ -45,4 +51,5 @@ class OptionalHasElement(Base):
         )
         output = optional_get_element_reference_implementation(optional)
         expect(node, inputs=[optional], outputs=[output],
+               input_type_protos=[input_type_proto],
                name='test_optional_get_element_sequence')

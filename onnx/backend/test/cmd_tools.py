@@ -62,6 +62,9 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                         elif isinstance(input, list):
                             f.write(numpy_helper.from_list(
                                 input, case.model.graph.input[j].name).SerializeToString())
+                        elif input is None:
+                            f.write(numpy_helper.from_optional(
+                                input, case.model.graph.input[j].name).SerializeToString())
                         else:
                             f.write(numpy_helper.from_array(
                                 input, case.model.graph.input[j].name).SerializeToString())
@@ -73,6 +76,9 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                                 output, case.model.graph.output[j].name).SerializeToString())
                         elif isinstance(output, list):
                             f.write(numpy_helper.from_list(
+                                output, case.model.graph.output[j].name).SerializeToString())
+                        elif output is None:
+                            f.write(numpy_helper.from_optional(
                                 output, case.model.graph.output[j].name).SerializeToString())
                         else:
                             f.write(numpy_helper.from_array(

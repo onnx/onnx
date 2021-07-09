@@ -19513,8 +19513,8 @@ This version of the operator has been available since version 15 of the default 
 
 ### <a name="Optional-15"></a>**Optional-15**</a>
 
-  Construct an optional type containing either an empty optional of a certain type specified by the attribute,
-  or an optional type containing the 'input' element.
+  Construct an optional type value containing either an empty optional of a certain type specified by the attribute,
+  or a non-empty value containing the 'input' element.
 
 #### Version
 

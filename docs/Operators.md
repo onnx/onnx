@@ -2460,8 +2460,8 @@ test_cases = [
 ]
 
 for from_type, to_type in test_cases:
-    input_type = None
-    output_type = None
+    input_type_proto = None
+    output_type_proto = None
     if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
         np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
             u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
@@ -2473,8 +2473,8 @@ for from_type, to_type in test_cases:
             assert from_type == 'FLOAT'
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
-            input_type = int(TensorProto.FLOAT)
-            output_type = int(TensorProto.BFLOAT16)
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), None)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), None)
         else:
             assert to_type == 'FLOAT'
             input = np_bfp16.reshape([3, 4])
@@ -2486,8 +2486,8 @@ for from_type, to_type in test_cases:
                 np_fp32_zeros[0::2] = np_bfp16
             np_fp32_from_bfloat = np_fp32_zeros.view(dtype=np.float32)
             output = np_fp32_from_bfloat.reshape([3, 4])
-            input_type = int(TensorProto.BFLOAT16)
-            output_type = int(TensorProto.FLOAT)
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), None)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), None)
     elif 'STRING' != from_type:
         input = np.random.random_sample(shape).astype(
             TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
@@ -2513,11 +2513,11 @@ for from_type, to_type in test_cases:
         outputs=['output'],
         to=getattr(TensorProto, to_type),
     )
-    if input_type and output_type:
+    if input_type_proto and output_type_proto:
         expect(node, inputs=[input], outputs=[output],
                    name='test_cast_' + from_type + '_to_' + to_type,
-                   input_types=[input_type],
-                   output_types=[output_type])
+                   input_type_protos=[input_type_proto],
+                   output_type_protos=[output_type_proto])
     else:
         expect(node, inputs=[input], outputs=[output],
                    name='test_cast_' + from_type + '_to_' + to_type)
@@ -9538,7 +9538,9 @@ seq_res = [x[:int(i)] for i in x]
 cond = np.array(1).astype(np.bool)
 expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
        name='test_loop13_seq', opset_imports=[onnx.helper.make_opsetid("", 13)],
-       input_types=[onnx.TensorProto.INT64, onnx.TensorProto.BOOL, onnx.TensorProto.FLOAT])
+       input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, None),
+                          onnx.helper.make_tensor_type_proto(onnx.TensorProto.BOOL, None),
+                          onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, None)])
 ```
 
 </details>
@@ -12638,8 +12640,8 @@ expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_wit
 
 ### <a name="Optional"></a><a name="optional">**Optional**</a>
 
-  Construct an optional type containing either an empty optional of a certain type specified by the attribute,
-  or an optional type containing the 'input' element.
+  Construct an optional type value containing either an empty optional of a certain type specified by the attribute,
+  or a non-empty value containing the 'input' element.
 
 #### Version
 
@@ -12748,7 +12750,8 @@ This version of the operator has been available since version 15 of the default 
 
 ```python
 optional = None
-
+tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.FLOAT), None)
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
 node = onnx.helper.make_node(
     'OptionalHasElement',
     inputs=['optional_input'],
@@ -12756,7 +12759,8 @@ node = onnx.helper.make_node(
 )
 output = optional_has_element_reference_implementation(optional)
 expect(node, inputs=[optional], outputs=[output],
-       name='test_optional_has_element_empty', input_types=[1])
+       input_type_protos=[input_type_proto],
+       name='test_optional_has_element_empty')
 ```
 
 </details>
@@ -12766,7 +12770,10 @@ expect(node, inputs=[optional], outputs=[output],
 <summary>empty</summary>
 
 ```python
-optional = [np.array([1, 2, 3, 4])]
+optional = [np.array([1, 2, 3, 4]).astype(np.int32)]
+tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.INT32), [4, ])
+seq_type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+input_type_proto = onnx.helper.make_optional_type_proto(seq_type_proto)
 
 node = onnx.helper.make_node(
     'OptionalGetElement',
@@ -12775,6 +12782,7 @@ node = onnx.helper.make_node(
 )
 output = optional_get_element_reference_implementation(optional)
 expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
        name='test_optional_get_element_sequence')
 ```
 
@@ -12785,7 +12793,9 @@ expect(node, inputs=[optional], outputs=[output],
 <summary>optionalhaselement</summary>
 
 ```python
-optional = np.array([1, 2, 3, 4])
+optional = np.array([1, 2, 3, 4]).astype(np.float32)
+tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.FLOAT), [4, ])
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
 
 node = onnx.helper.make_node(
     'OptionalGetElement',
@@ -12794,6 +12804,7 @@ node = onnx.helper.make_node(
 )
 output = optional_get_element_reference_implementation(optional)
 expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
        name='test_optional_get_element')
 ```
 
@@ -12804,8 +12815,9 @@ expect(node, inputs=[optional], outputs=[output],
 <summary>optionalhaselement</summary>
 
 ```python
-optional = np.array([1, 2, 3, 4])
-
+optional = np.array([1, 2, 3, 4]).astype(np.float32)
+tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.FLOAT), [4, ])
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
 node = onnx.helper.make_node(
     'OptionalHasElement',
     inputs=['optional_input'],
@@ -12813,6 +12825,7 @@ node = onnx.helper.make_node(
 )
 output = optional_has_element_reference_implementation(optional)
 expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
        name='test_optional_has_element')
 ```
 
