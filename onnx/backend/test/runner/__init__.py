@@ -170,7 +170,8 @@ class Runner(object):
         np.testing.assert_equal(len(outputs), len(ref_outputs))
         for i in range(len(outputs)):
             if isinstance(outputs[i], (list, tuple)):
-                np.testing.assert_array_equal(outputs[i], ref_outputs[i])
+                for j in range(len(outputs[i])):
+                    cls.assert_similar_outputs(ref_outputs[i][j], outputs[i][j], rtol, atol)
             else:
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
                 if ref_outputs[i].dtype == np.object:
