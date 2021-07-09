@@ -25,7 +25,7 @@ class OptionalHasElement(Base):
     @staticmethod
     def export():  # type: () -> None
         optional = np.array([1, 2, 3, 4]).astype(np.float32)
-        tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.FLOAT), [4, ])
+        tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
         input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
         node = onnx.helper.make_node(
             'OptionalHasElement',
@@ -40,7 +40,7 @@ class OptionalHasElement(Base):
     @staticmethod
     def export_empty():  # type: () -> None
         optional = None
-        tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.FLOAT), None)
+        tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.INT32, shape=[])
         input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
         node = onnx.helper.make_node(
             'OptionalHasElement',

@@ -238,4 +238,5 @@ class Loop(Base):
                name='test_loop13_seq', opset_imports=[onnx.helper.make_opsetid("", 13)],
                input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, None),
                                   onnx.helper.make_tensor_type_proto(onnx.TensorProto.BOOL, None),
-                                  onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, None)])
+                                  onnx.helper.make_sequence_type_proto(
+                                      onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, None))])

@@ -24,7 +24,7 @@ class OptionalHasElement(Base):
     @staticmethod
     def export_get_element_tensor():  # type: () -> None
         optional = np.array([1, 2, 3, 4]).astype(np.float32)
-        tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.FLOAT), [4, ])
+        tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
         input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
 
         node = onnx.helper.make_node(
@@ -40,7 +40,7 @@ class OptionalHasElement(Base):
     @staticmethod
     def export_get_element_sequence():  # type: () -> None
         optional = [np.array([1, 2, 3, 4]).astype(np.int32)]
-        tensor_type_proto = onnx.helper.make_tensor_type_proto(int(onnx.TensorProto.INT32), [4, ])
+        tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.INT32, shape=[4, ])
         seq_type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
         input_type_proto = onnx.helper.make_optional_type_proto(seq_type_proto)
 
