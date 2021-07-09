@@ -53,7 +53,7 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 ## Official Python packages
 ONNX released packages are published in PyPi.
 ```
-pip install numpy protobuf==3.11.3
+pip install numpy protobuf==3.16.0
 pip install onnx
 ```
 
@@ -63,7 +63,7 @@ pip install onnx
 ## Conda packages
 A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
 ```
-conda install -c conda-forge numpy protobuf==3.11.3 libprotobuf=3.11.3
+conda install -c conda-forge numpy protobuf==3.16.0 libprotobuf=3.16.0
 conda install -c conda-forge onnx
 ```
 
@@ -72,7 +72,7 @@ You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-
 
 ## Build ONNX from Source
 Before building from source uninstall any existing versions of onnx `pip uninstall onnx`.  
-If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. Specifically on Windows, the version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also let's you control the verison of protobuf. The tested and recommended version is 3.11.3.
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. Specifically on Windows, the version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also let's you control the verison of protobuf. The tested and recommended version is 3.16.0.
 
 Note for Windows : The instructions in this README assume you are using Visual Studio. It is recommended that you run all the commands from a shell started from "Developer Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
 ```
@@ -89,7 +89,7 @@ pip install -e .
 ```
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v3.11.3
+git checkout v3.16.0
 cd cmake
 cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobug_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=Release
@@ -100,7 +100,7 @@ msbuild INSTALL.vcxproj /p:Configuration=Release
 ```
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v3.11.3
+git checkout v3.16.0
 git submodule update --init --recursive
 mkdir build_source && cd build_source
 cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
@@ -113,9 +113,9 @@ make install
 export NUM_CORES=`sysctl -n hw.ncpu`
 brew update
 brew install autoconf && brew install automake
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.3/protobuf-cpp-3.11.3.tar.gz
-tar -xvf protobuf-cpp-3.11.3.tar.gz
-cd protobuf-3.11.3
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz
+tar -xvf protobuf-cpp-3.16.0.tar.gz
+cd protobuf-3.16.0
 mkdir build_source && cd build_source
 cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j${NUM_CORES}
