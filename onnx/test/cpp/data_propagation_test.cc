@@ -17,7 +17,6 @@ namespace ONNX_NAMESPACE {
 
 namespace Test {
 
-
 inline bool CompareShape(const TensorShapeProto* A, const TensorShapeProto* B) {
     if (A == nullptr ||  B == nullptr) {
         fail_check("The compared shapes should not be nullptr.");
@@ -102,14 +101,10 @@ void TestPropagateShapeDataFromInputToOutput(std::string opsetName) {
   SymbolTableImpl symbolTable;
   symbolTable.addFromGraph(subgraph);
   GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, symbolTable);
-
   GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
-
   std::vector<const TypeProto*> subgraphInputTypes = {&simpleTensor};
-
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   valueTypesByName[shape_input_name] = &simpleTensor;
-
   std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
 
   const TensorShapeProto* propagatedShape;
@@ -132,8 +127,6 @@ TEST(DataPropagationImplTest, ShapeTest) {
   TypeProto simpleTensor;
   int domain_version = 15;
   simpleTensor.mutable_tensor_type()->set_elem_type(TensorProto_DataType_FLOAT);
-
-
   simpleTensor.mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(2);
   simpleTensor.mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(5);
   const auto simpleShape = simpleTensor.tensor_type().shape();
@@ -176,11 +169,8 @@ TEST(DataPropagationImplTest, ShapeTest) {
   SymbolTableImpl symbolTable;
   symbolTable.addFromGraph(subgraph);
   GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, symbolTable);
-
   GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
-
   std::vector<const TypeProto*> subgraphInputTypes = {&simpleTensor};
-
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   valueTypesByName[shape_input_name] = &simpleTensor;
   std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
