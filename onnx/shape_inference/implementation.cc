@@ -427,9 +427,9 @@ static void InferShapesImpl(
         materializeSymbolicShape(inferredType, symbolTable);
         // Now we can merge pre-existing and inferred info
         mergeShapesAndTypes(*inferredType, existingType);
-        DataPropagationContextImpl dataPropagationCtx(
-            n, valueTypesByName, inputDataByName, generatedShapeDataByName, &graphInferenceContext);
         if (schema->has_data_propagation_function()) {
+          DataPropagationContextImpl dataPropagationCtx(
+              n, valueTypesByName, inputDataByName, generatedShapeDataByName, &graphInferenceContext);
           schema->GetDataPropagationFunction()(dataPropagationCtx);
         }
         // Make merged info available to further inference.
@@ -621,9 +621,9 @@ void InferShapeForFunctionNode(
       }
       materializeSymbolicShape(inferred_output_type, symbolTable);
       mergeShapesAndTypes(*inferred_output_type, existingType);
-      DataPropagationContextImpl temp_dataPropagationCtx(
-          copy_n, temp_valueTypesByName, temp_initializersByName, generatedShapeDataByName);
       if (schema->has_data_propagation_function()) {
+        DataPropagationContextImpl temp_dataPropagationCtx(
+            copy_n, temp_valueTypesByName, temp_initializersByName, generatedShapeDataByName);
         schema->GetDataPropagationFunction()(temp_dataPropagationCtx);
       }
       // Make merged info available to further inference.

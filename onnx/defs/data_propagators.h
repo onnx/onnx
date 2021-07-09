@@ -4,11 +4,11 @@ namespace ONNX_NAMESPACE {
 
 inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int idx) {
   // propogate input data
-  const auto input_data = ctx.getInputGeneratedShapeData(idx);
+  const auto input_data = ctx.getInputData(idx);
   if (input_data != nullptr) {
     TensorShapeProto tp;
     tp.CopyFrom(*input_data);
-    ctx.addGeneratedShapeData(0, std::move(tp));
+    ctx.addOutputData(0, std::move(tp));
   }
 }
 
@@ -24,7 +24,7 @@ inline void ShapeOpDataPropagator(DataPropagationContext& ctx) {
 
     TensorShapeProto tsp;
     tsp.CopyFrom(input_shape);
-    ctx.addGeneratedShapeData(0, std::move(tsp));
+    ctx.addOutputData(0, std::move(tsp));
   }
 }
 

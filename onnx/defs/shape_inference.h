@@ -80,11 +80,9 @@ struct DataPropagationContext {
   virtual const TypeProto* getInputType(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
-  virtual std::string getOutputName(size_t index) const = 0;
   virtual ~DataPropagationContext() {}
-  virtual void addGeneratedShapeData(size_t index, TensorShapeProto&& tp) = 0;
-  virtual const TensorShapeProto* getInputGeneratedShapeData(size_t index) const = 0;
-  virtual const TensorShapeProto* getOutputGeneratedShapeData(size_t index) const = 0;
+  virtual void addOutputData(size_t index, TensorShapeProto&& tp) = 0;
+  virtual const TensorShapeProto* getInputData(size_t index) const = 0;
 };
 
 using InferenceFunction = std::function<void(InferenceContext&)>;
