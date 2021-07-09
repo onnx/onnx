@@ -731,21 +731,20 @@ void check_opset_compatibility(
   const auto* schema_for_function_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), func_opset_version, node.domain());
 
-  if (!schema_for_model_import || !schema_for_function_import) {
+  if (!schema_for_model_import && !schema_for_function_import) {
     // the op belongs to a custom domain so we cannot verify schema
     return;
   }
 
-  if (schema_for_function_import->since_version() == schema_for_model_import->since_version()) {
-    // The since versions of schema for both opset imports match. This means they are compatible.
-    return;
+  // if schema is present for 1 but not other or the schema since versions do not match then raise an error
+  if (!schema_for_model_import || !schema_for_function_import ||
+      schema_for_function_import->since_version() != schema_for_model_import->since_version()) {
+    fail_check(
+        "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
+        "is not compatible with the version imported by model. FunctionOp imports version " +
+        ONNX_NAMESPACE::to_string(func_opset_version) + "whereas model imports version " +
+        ONNX_NAMESPACE::to_string(model_opset_version));
   }
-
-  fail_check(
-      "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
-      "is not compatible with the version imported by model. FunctionOp imports version " +
-      ONNX_NAMESPACE::to_string(func_opset_version) + "whereas model imports version " +
-      ONNX_NAMESPACE::to_string(model_opset_version));
 }
 
 void check_model_local_functions(
