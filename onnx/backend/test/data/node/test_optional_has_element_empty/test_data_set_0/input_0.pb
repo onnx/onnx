@@ -1,2 +1,2 @@
 
-output
+optional_input

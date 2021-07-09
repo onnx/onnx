@@ -12767,7 +12767,7 @@ expect(node, inputs=[optional], outputs=[output],
 
 
 <details>
-<summary>empty</summary>
+<summary>get_element_sequence</summary>
 
 ```python
 optional = [np.array([1, 2, 3, 4]).astype(np.int32)]
@@ -12790,7 +12790,7 @@ expect(node, inputs=[optional], outputs=[output],
 
 
 <details>
-<summary>optionalhaselement</summary>
+<summary>get_element_tensor</summary>
 
 ```python
 optional = np.array([1, 2, 3, 4]).astype(np.float32)
