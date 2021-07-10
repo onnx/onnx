@@ -61,7 +61,7 @@ class If(Base):
             else_branch=else_body
         )
 
-        cond = np.array(1).astype(np.bool)
+        cond = np.array(1).astype(bool)
         res = x if cond else y
         expect(if_node, inputs=[cond], outputs=[res], name='test_if',
             opset_imports=[onnx.helper.make_opsetid("", 11)])
@@ -125,7 +125,7 @@ class If(Base):
             else_branch=else_body
         )
 
-        cond = np.array(1).astype(np.bool)
+        cond = np.array(1).astype(bool)
         res = x if cond else y
         expect(if_node, inputs=[cond], outputs=[res], name='test_if_seq',
             opset_imports=[onnx.helper.make_opsetid("", 13)])
