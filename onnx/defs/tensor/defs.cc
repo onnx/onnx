@@ -375,10 +375,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Dim_ver15_doc = R"DOC( 
 Returns a specific dimension of the given input tensor's shape.  
-Takes an input tensor and the index of the dimension to extract (as an attribute) and
-returns the dimension value at the requested index in the input shape.
+Takes an input tensor and the index (axis) of the dimension to extract (as an attribute) and
+returns the dimension value at the requested index (axis) in the input shape.
 The op returns the output as a 1-dimensional tensor of size 1,
-for the common usage scenario of creating other shapes (as 1-dimensional tensors). 
+for the common usage scenario of creating other shapes (as 1-dimensional tensors).
+The axis specified must be a value in the range [-r, r-1] where r = rank(input).
+Otherwise, the output value is undefined.
  
 For example: 
 Input tensor with shape: [2, 3, 4] 
