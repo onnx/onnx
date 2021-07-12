@@ -136,6 +136,12 @@ void check_opset_compatibility(
     const std::unordered_map<std::string, int>& func_opset_imports,
     const std::unordered_map<std::string, int>& model_opset_imports);
 
+// Checks all model local functions present in ModelProto
+void check_model_local_functions(
+    const ModelProto& model,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& parent_lex);
+
 void check_model(const ModelProto& model);
 void check_model(const std::string& model_path);
 
