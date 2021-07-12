@@ -23,7 +23,7 @@ jobs:
       uses: actions/checkout@master
       with:
         repository: protocolbuffers/protobuf
-        ref: refs/tags/v3.11.3
+        ref: refs/tags/v3.16.0
         path: ./protobuf_root/protobuf
   
     - name: Checkout Protobuf submodules
