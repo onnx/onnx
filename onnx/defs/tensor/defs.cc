@@ -434,10 +434,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (axis_attr == nullptr)
                 return false; // Required attribute
               int64_t axis = axis_attr->i();
+              int64_t maxint = (~((int64_t) 1) << 63);
+              int64_t axis_end = (axis == -1) ? maxint : (axis+1);
               std::vector<FunctionBodyHelper::NodeDef> body{
                   // nodes: {outputs, op, inputs, attributes}
                   {{"starts"}, "Constant", {}, {MakeAttribute("value", To1DTensor<int64_t>({axis}))}},
-                  {{"ends"}, "Constant", {}, {MakeAttribute("value", To1DTensor<int64_t>({axis + 1}))}},
+                  {{"ends"}, "Constant", {}, {MakeAttribute("value", To1DTensor<int64_t>({axis_end}))}},
                   {{"shape"}, "Shape", {"input"}},
                   {{"output"}, "Slice", {"shape", "starts", "ends"}}};
               return FunctionBodyHelper::BuildFunctionProto(functionProto, schema, body, {});
