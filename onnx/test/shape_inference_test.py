@@ -3587,6 +3587,13 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (None, None))])  # type: ignore
 
+    def test_dim(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (None,))],
+            [make_node('Dim', ['x'], ['y'], axis=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1,))])  # type: ignore
+
 
 if __name__ == '__main__':
     unittest.main()

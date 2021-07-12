@@ -4,6 +4,8 @@
 
 
 #include "onnx/defs/tensor/utils.h"
+#include "onnx/defs/function.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 #include <algorithm>
 #include <cmath>
@@ -370,6 +372,76 @@ ONNX_OPERATOR_SET_SCHEMA(
               TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         }));
+
+static const char* Dim_ver15_doc = R"DOC( 
+Returns a specific dimension of the given input tensor's shape.  
+Takes an input tensor and the index of the dimension to extract (as an attribute) and
+returns the dimension value at the requested index in the input shape.
+The op returns the output as a 1-dimensional tensor of size 1,
+for the common usage scenario of creating other shapes (as 1-dimensional tensors). 
+ 
+For example: 
+Input tensor with shape: [2, 3, 4] 
+Index: 1
+Output: [3] 
+ 
+Input tensor with shape: [2, 3, 4] 
+Index: 2
+Output: [4] 
+ 
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Dim,
+    15,
+    OpSchema()
+        .SetDoc(Dim_ver15_doc)
+        .Input(0, "input", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Dimension of the input tensor at the specified axis.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Attr(
+            "axis",
+            "The axis whose dimension is required. A negative value means counting axes from the back. "
+            "Accepted range is [-r, r-1] where r = rank(input).",
+            AttributeProto::INT)
+        .TypeConstraint("T", OpSchema::all_tensor_types_with_bfloat(), "Input tensor can be of arbitrary type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          auto* type = ctx.getOutputType(0)->mutable_tensor_type();
+          type->set_elem_type(TensorProto::INT64);
+          // output of this operator is a 1D tensor of length 1
+          auto* shape = type->mutable_shape();
+          shape->add_dim()->set_dim_value(1);
+
+          if (hasInputShape(ctx, 0)) {
+            // Check that axis attribute has a proper value.
+            int rank = getInputShape(ctx, 0).dim_size();
+            int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+            if (axis < -rank || axis >= rank) {
+              fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis);
+            }
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
+              auto axis_attr = ctx.getAttribute("axis");
+              if (axis_attr == nullptr)
+                return false; // Required attribute
+              int64_t axis = axis_attr->i();
+              std::vector<FunctionBodyHelper::NodeDef> body{
+                  // nodes: {outputs, op, inputs, attributes}
+                  {{"starts"}, "Constant", {}, {MakeAttribute("value", To1DTensor<int64_t>({axis}))}},
+                  {{"ends"}, "Constant", {}, {MakeAttribute("value", To1DTensor<int64_t>({axis + 1}))}},
+                  {{"shape"}, "Shape", {"input"}},
+                  {{"output"}, "Slice", {"shape", "starts", "ends"}}};
+              return FunctionBodyHelper::BuildFunctionProto(functionProto, schema, body, {});
+            }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Concat,
