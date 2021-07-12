@@ -169,21 +169,21 @@ struct InferenceContextImpl : public InferenceContext {
 
   const TypeProto* getInputType(size_t index) const override {
     if (index >= allInputTypes_.size()) {
-      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return allInputTypes_[index];
   }
 
   const TensorProto* getInputData(size_t index) const override {
     if (index >= allInputData_.size()) {
-      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return allInputData_[index];
   }
 
   const SparseTensorProto* getInputSparseData(size_t index) const override {
     if (index >= allInputSparseData_.size()) {
-      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return allInputSparseData_[index];
   }
@@ -194,7 +194,7 @@ struct InferenceContextImpl : public InferenceContext {
 
   TypeProto* getOutputType(size_t index) override {
     if (index >= allOutputTypes_.size()) {
-      ONNX_THROW("output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return &allOutputTypes_[index];
   }
@@ -310,7 +310,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
   const TypeProto* getInputType(size_t index) const override {
     if (index >= allInputTypes_.size()) {
-      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return allInputTypes_[index];
   }
@@ -321,24 +321,31 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
   TypeProto* getOutputType(size_t index) override {
     if (index >= allOutputTypes_.size()) {
-      ONNX_THROW("output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return &allOutputTypes_[index];
   }
 
-  void addOutputData(size_t index, TensorShapeProto&& tp) override {
+  const TensorProto* getInputData(size_t index) const override {
+    if (index >= allInputData_.size()) {
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
+    }
+    return allInputData_[index];
+  }
+
+  void addOutputShapeData(size_t index, TensorShapeProto&& tp) override {
     if (index >= outputIndexToNameMap_.size()) {
-      throw std::runtime_error("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     auto result = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tp)});
     if (!result.second) {
-      fail_shape_inference("data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
+      fail_shape_inference("Data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
     }
   }
 
-  const TensorShapeProto* getInputData(size_t index) const override {
+  const TensorShapeProto* getInputShapeData(size_t index) const override {
     if (index >= allInputData_.size()) {
-      throw std::runtime_error("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
 
     auto iter = generatedShapeData_.find(inputIndexToNameMap_.at(index));
