@@ -6,7 +6,7 @@ set -e -x
 PY_VERSION=$1
 PLAT=$2
 GITHUB_EVENT_NAME=$3
-BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3'
+BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.16.0'
 SYSTEM_PACKAGES='cmake3'
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
@@ -20,7 +20,7 @@ ONNX_PATH=$(pwd)
 cd ..
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v3.11.3
+git checkout v3.16.0
 git submodule update --init --recursive
 mkdir build_source && cd build_source
 
