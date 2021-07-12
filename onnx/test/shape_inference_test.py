@@ -13,7 +13,6 @@ import onnx.shape_inference
 import unittest
 import os
 import numpy as np  # type: ignore
-import re
 
 
 class TestShapeInference(unittest.TestCase):
@@ -64,27 +63,30 @@ class TestShapeInference(unittest.TestCase):
         for i in range(len(vis)):
             self._compare_value_infos(vis[i].type, inferred_vis[i].type)
 
-    def _compare_value_infos(self, vi, inferred_vi):
-        if vi.HasField('tensor_type'):
-            assert inferred_vi.HasField('tensor_type')
-            for dim_i in range(len(vi.tensor_type.shape.dim)):
-                dim = vi.tensor_type.shape.dim[dim_i]
-                inferred_dim = inferred_vi.tensor_type.shape.dim[dim_i]
+    def _compare_value_infos(self, vi_type, inferred_vi_type):  # type: (TypeProto, TypeProto) -> None
+        if vi_type.HasField('tensor_type'):
+            assert inferred_vi_type.HasField('tensor_type')
+            for dim_i in range(len(vi_type.tensor_type.shape.dim)):
+                dim = vi_type.tensor_type.shape.dim[dim_i]
+                inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
                 # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
                 if dim.dim_param:
-                    assert inferred_dim.dim_param, '\n%s\n%s\n' % (vi, inferred_vi)
+                    assert inferred_dim.dim_param, '\n%s\n%s\n' % (vi_type, inferred_vi_type)
                 else:
-                    assert dim.dim_value == inferred_dim.dim_value, '\n%s\n%s\n' % (vi, inferred_vi)
-        elif vi.HasField('sequence_type'):
-            assert inferred_vi.HasField('sequence_type')
-            vi = vi.sequence_type.elem_type
-            inferred_vi = inferred_vi.sequence_type.elem_type
+                    assert dim.dim_value == inferred_dim.dim_value, '\n%s\n%s\n' % (vi_type, inferred_vi_type)
+        elif vi_type.HasField('sequence_type'):
+            assert inferred_vi_type.HasField('sequence_type')
+            vi = vi_type.sequence_type.elem_type
+            inferred_vi = inferred_vi_type.sequence_type.elem_type
             self._compare_value_infos(vi, inferred_vi)
-        elif vi.HasField('optional_type'):
-            assert inferred_vi.HasField('optional_type')
-            vi = vi.optional_type.elem_type
-            inferred_vi = inferred_vi.optional_type.elem_type
+        elif vi_type.HasField('optional_type'):
+            assert inferred_vi_type.HasField('optional_type')
+            vi = vi_type.optional_type.elem_type
+            inferred_vi = inferred_vi_type.optional_type.elem_type
             self._compare_value_infos(vi, inferred_vi)
+        else:
+            raise NotImplementedError(
+                "Unrecognized value info type in _compare_value_infos: ", str(vi_type))
 
     def test_empty_graph(self):  # type: () -> None
         graph = self._make_graph(

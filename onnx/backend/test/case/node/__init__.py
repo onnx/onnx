@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import sys
 import re
 
-from typing import List, Text, Sequence, Any, Union
+from typing import List, Text, Sequence, Any, Union, Optional
 import numpy as np  # type: ignore
 
 import onnx
@@ -103,7 +103,7 @@ def function_testcase_helper(node, input_types, name):  # type: (NodeProto, List
     return node_list
 
 
-def _extract_value_info(input, name, type_proto=None):  # type: (Union[List[Any], np.ndarray, None], Text, TypeProto) -> onnx.ValueInfoProto
+def _extract_value_info(input, name, type_proto=None):  # type: (Union[List[Any], np.ndarray, None], Text, Optional[TypeProto]) -> onnx.ValueInfoProto
     if type_proto is None:
         if input is None:
             raise NotImplementedError("_extract_value_info: both input and type_proto arguments cannot be None.")
