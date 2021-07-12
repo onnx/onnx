@@ -376,9 +376,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
               TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-        })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(

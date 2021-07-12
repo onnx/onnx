@@ -2,6 +2,7 @@
 
 namespace ONNX_NAMESPACE {
 
+// Please note that TensorShapeProto only supports integer shape
 inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int idx) {
   // propogate input data
   const auto input_data = ctx.getInputData(idx);
