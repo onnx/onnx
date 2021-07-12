@@ -310,7 +310,7 @@ ext_modules = [
 packages = setuptools.find_packages()
 
 install_requires.extend([
-    'protobuf>=3.11.3',
+    'protobuf>=3.16.0',
     'numpy>=1.16.6',
     'six',
     'typing>=3.6.4; python_version < "3.5"',
