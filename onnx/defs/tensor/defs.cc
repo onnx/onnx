@@ -436,7 +436,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (axis_attr == nullptr)
                 return false; // Required attribute
               int64_t axis = axis_attr->i();
-              int64_t maxint = (~((int64_t) 1) << 63);
+              int64_t maxint = ~(((int64_t) 1) << 63);
               int64_t axis_end = (axis == -1) ? maxint : (axis+1);
               std::vector<FunctionBodyHelper::NodeDef> body{
                   // nodes: {outputs, op, inputs, attributes}
