@@ -35,7 +35,9 @@ jobs:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
 
-  - script: conda create --yes --quiet --name py$(python.version) python=$(python.version) numpy libprotobuf=3.11.3 protobuf
+  - script: |
+      conda create --yes --quiet --name py$(python.version) python=$(python.version)
+      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf=3.16.0
     displayName: Create Anaconda environment
 
   - script: |
@@ -51,7 +53,7 @@ jobs:
       set ONNX_ML=$(onnx_ml)
       set ONNX_VERIFY_PROTO_3=$(onnx_verify_proto)
       set USE_MSVC_STATIC_RUNTIME=0
-      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
+      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
 
       python setup.py --quiet install
       pytest

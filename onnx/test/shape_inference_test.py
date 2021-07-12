@@ -13,6 +13,7 @@ import onnx.shape_inference
 import unittest
 import os
 import numpy as np  # type: ignore
+import re
 
 
 class TestShapeInference(unittest.TestCase):
@@ -59,15 +60,16 @@ class TestShapeInference(unittest.TestCase):
         inferred_vis = list(inferred_model.graph.value_info)
         vis = list(sorted(vis, key=lambda x: x.name))
         inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))
-        if vis == inferred_vis:
-            return
-        # otherwise some custom logic to give a nicer diff
-        vis_names = set(x.name for x in vis)
-        inferred_vis_names = set(x.name for x in inferred_vis)
-        assert vis_names == inferred_vis_names, (vis_names, inferred_vis_names)
-        for vi, inferred_vi in zip(vis, inferred_vis):
-            assert vi == inferred_vi, '\n%s\n%s\n' % (vi, inferred_vi)
-        assert False
+        # check the inferred value_info
+        for i in range(len(vis)):
+            for dim_i in range(len(vis[i].type.tensor_type.shape.dim)):
+                dim = vis[i].type.tensor_type.shape.dim[dim_i]
+                inferred_dim = inferred_vis[i].type.tensor_type.shape.dim[dim_i]
+                # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
+                if dim.dim_param:
+                    assert inferred_dim.dim_param, '\n%s\n%s\n' % (vis, inferred_vis)
+                else:
+                    assert dim.dim_value == inferred_dim.dim_value, '\n%s\n%s\n' % (vis, inferred_vis)
 
     def test_empty_graph(self):  # type: () -> None
         graph = self._make_graph(
@@ -905,6 +907,20 @@ class TestShapeInference(unittest.TestCase):
             [make_node('RandomNormalLike', ['X'], ['out'], dtype=TensorProto.DOUBLE,)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (2, 3, 4))])
+
+    def test_bernoulli(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4))],
+            [make_node('Bernoulli', ['x'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4))])  # type: ignore
+
+    def test_bernoulli_with_dtype(self):  # type: () -> None
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('Bernoulli', ['x'], ['out'], dtype=TensorProto.DOUBLE,)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (2, 3, 4))])  # type: ignore
 
     def _logical_binary_op(self, op, input_type):  # type: (Text, TensorProto.DataType) -> None
         graph = self._make_graph(
@@ -2294,6 +2310,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5))])
 
+    def test_quantizelinear_default_zp(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y_scale', TensorProto.FLOAT, ())],
+            [make_node('QuantizeLinear', ['x', 'y_scale'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5))])
+
     def test_dequantizelinear(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (30, 4, 5)),
@@ -2302,6 +2326,15 @@ class TestShapeInference(unittest.TestCase):
             [make_node('DequantizeLinear', ['x', 'x_scale', 'x_zero_point'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_dynamicquantizelinear(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('DynamicQuantizeLinear', ['x'], ['y', 'y_scale', 'y_zero_point'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5)),
+                                      make_tensor_value_info('y_scale', TensorProto.FLOAT, ()),
+                                      make_tensor_value_info('y_zero_point', TensorProto.UINT8, ())])
 
     def test_reversesequence(self):  # type: () -> None
         graph = self._make_graph(

@@ -44,7 +44,7 @@ Once the criteria of proposing new operator/function has been satisfied, you wil
     4. Write the mathematic formula or a pseudocode in the description. The core algorithm needs to be very clear.
 2. Write a reference implementation in Python, this reference implementation should cover all the expected behavior of the operator. Only in extremely rare case, we will waive this requirement.
 3. Operator version: check out our
-[versioning doc](https://github.com/fdwr/onnx/blob/master/docs/Versioning.md#operator-versioning)
+[versioning doc](https://github.com/onnx/onnx/blob/master/docs/Versioning.md#operator-versioning)
 4. Write unit test, that cover main usage and corner cases.
     1. The testing examples will be extracted to the doc.
     2. We also generate binary data for it.

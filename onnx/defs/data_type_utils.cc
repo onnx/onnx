@@ -136,7 +136,10 @@ std::string DataTypeUtils::ToString(
       return ToString(
           type_proto.sequence_type().elem_type(), left + "seq(", ")" + right);
     }
-
+    case TypeProto::ValueCase::kOptionalType: {
+      return ToString(
+          type_proto.optional_type().elem_type(), left + "optional(", ")" + right);
+    }
     case TypeProto::ValueCase::kMapType: {
       std::string map_str =
           "map(" + ToDataTypeString(type_proto.map_type().key_type()) + ",";
@@ -190,6 +193,11 @@ void DataTypeUtils::FromString(
     return FromString(
         std::string(s.Data(), s.Size()),
         *type_proto.mutable_sequence_type()->mutable_elem_type());
+  } else if (s.LStrip("optional")) {
+    s.ParensWhitespaceStrip();
+    return FromString(
+        std::string(s.Data(), s.Size()),
+        *type_proto.mutable_optional_type()->mutable_elem_type());
   } else if (s.LStrip("map")) {
     s.ParensWhitespaceStrip();
     size_t key_size = s.Find(',');

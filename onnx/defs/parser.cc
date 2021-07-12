@@ -323,15 +323,18 @@ Status OnnxParser::Parse(ModelProto& model) {
         case KeyWordMap::KeyWord::OPSET_IMPORT: {
           auto& imports = *model.mutable_opset_import();
           MATCH('[');
-          while (!Matches(']')) {
-            auto* import = imports.Add();
-            PARSE_TOKEN(strval);
-            import->set_domain(strval);
-            MATCH(':');
-            PARSE_TOKEN(intval);
-            import->set_version(intval);
+          if (!Matches(']')) {
+            do {
+              auto* import = imports.Add();
+              PARSE_TOKEN(strval);
+              import->set_domain(strval);
+              MATCH(':');
+              PARSE_TOKEN(intval);
+              import->set_version(intval);
+            } while (Matches(','));
+            MATCH(']');
+            break;
           }
-          break;
         }
         case KeyWordMap::KeyWord::PRODUCER_NAME:
           PARSE_TOKEN(strval);
