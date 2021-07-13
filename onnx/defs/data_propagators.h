@@ -7,9 +7,9 @@ inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int
   // propogate input data
   const auto input_data = ctx.getInputShapeData(idx);
   if (input_data != nullptr) {
-    TensorShapeProto tp;
-    tp.CopyFrom(*input_data);
-    ctx.addOutputShapeData(0, std::move(tp));
+    TensorShapeProto tsp;
+    tsp.CopyFrom(*input_data);
+    ctx.addOutputShapeData(0, std::move(tsp));
   }
 }
 
