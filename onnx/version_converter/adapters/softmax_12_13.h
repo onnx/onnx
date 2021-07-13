@@ -19,7 +19,9 @@ class Softmax_12_13 final : public Adapter {
       int old_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 1;
       int input_rank = node->inputs()[0]->sizes().size();
 
-      if(old_axis == input_rank - 1 || old_axis == -1)
+      if(old_axis < 0) old_axis = input_rank + old_axis + 1;
+
+      if(old_axis == input_rank - 1)
         node->i_(kaxis, -1);
       else {
         // Insert Flatten node before softmax
@@ -29,7 +31,11 @@ class Softmax_12_13 final : public Adapter {
         flatten->i_(kaxis, old_axis);        
         node->replaceInput(0, flatten->output());
 
-        if(old_axis == 0) node->i_(kaxis, 1);
+        if(old_axis == 0) {
+          node->i_(kaxis, 1);
+        } else {
+          node->i_(kaxis, -1);
+        }
 
         // Insert Reshape node after softmax
         const std::string original_output_name = node->output()->uniqueName();
@@ -49,8 +55,10 @@ class Softmax_12_13 final : public Adapter {
         for (Dimension dim : target_shape) {
           data.emplace_back(dim.dim);
         }
-        Value* v = graph->addInitializerAndInput(t);
-        reshape->addInput(v);
+        Node* constant = graph->create(kConstant);
+        constant->insertBefore(node);
+        constant->t_(kvalue, t);        
+        reshape->addInput(constant->output());
 
         // Fix outputs & wiring
         node->output()->wipeSizes();
@@ -68,8 +76,9 @@ class Softmax_12_13 final : public Adapter {
       }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_softmax_12_13(graph, node);
+      return node;
     }
 };
 
