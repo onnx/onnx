@@ -13,12 +13,12 @@ from . import expect
 
 
 # Reference implementation of dimension op
-def dim(x, axis):
+def dim(x, axis): # type: ignore
     d = x.shape[axis]
     return np.array([d]).astype(np.int64)
 
 
-def test_dim(xval, axisval, testname):
+def test_dim(xval, axisval, testname): # type: ignore
     node = onnx.helper.make_node(
         'Dim',
         inputs=['x'],
