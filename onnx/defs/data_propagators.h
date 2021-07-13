@@ -5,11 +5,11 @@ namespace ONNX_NAMESPACE {
 // Please note that TensorShapeProto only supports integer shape
 inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int idx) {
   // propogate input data
-  const auto input_data = ctx.getInputShapeData(idx);
+  const auto input_data = ctx.getInputData(idx);
   if (input_data != nullptr) {
     TensorShapeProto tsp;
     tsp.CopyFrom(*input_data);
-    ctx.addOutputShapeData(0, std::move(tsp));
+    ctx.addOutputData(0, std::move(tsp));
   }
 }
 
@@ -23,7 +23,7 @@ inline void ShapeOpDataPropagator(DataPropagationContext& ctx) {
     auto input_shape = ctx.getInputType(0)->tensor_type().shape();
     TensorShapeProto tsp;
     tsp.CopyFrom(input_shape);
-    ctx.addOutputShapeData(0, std::move(tsp));
+    ctx.addOutputData(0, std::move(tsp));
   }
 }
 

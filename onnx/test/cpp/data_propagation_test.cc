@@ -114,7 +114,7 @@ void TestPropagateShapeDataFromInputToOutput(std::string opsetName) {
     const auto schema = schemaRegistry->GetSchema(n.op_type(), domain_version, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
-    propagatedShape = dataPropagationCtx.getInputShapeData(0);
+    propagatedShape = dataPropagationCtx.getInputData(0);
   }
   // Expects the input data of final_node (from the output of tested_node)
   EXPECT_TRUE(CompareShape(propagatedShape, &simpleShape));
@@ -182,7 +182,7 @@ TEST(DataPropagationImplTest, ShapeTest) {
     const auto schema = schemaRegistry->GetSchema(n.op_type(), domain_version, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
-    propagatedShape = dataPropagationCtx.getInputShapeData(0);
+    propagatedShape = dataPropagationCtx.getInputData(0);
   }
   // Expects the input data of final_node (from the output of shape_node)
   EXPECT_TRUE(CompareShape(propagatedShape, &simpleShape));

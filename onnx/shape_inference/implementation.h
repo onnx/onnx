@@ -326,14 +326,22 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     return &allOutputTypes_[index];
   }
 
-  const TensorProto* getInputData(size_t index) const override {
-    if (index >= allInputData_.size()) {
+  const TensorShapeProto* getInputData(size_t index) const override {
+    if (index >= allInputTypes_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
-    return allInputData_[index];
+    if (allInputTypes_[index] != nullptr && allInputTypes_[index]->has_tensor_type()
+        && allInputTypes_[index]->tensor_type().has_shape()) {
+      return &allInputTypes_[index]->tensor_type().shape();
+    }
+    auto iter = generatedShapeData_.find(inputIndexToNameMap_.at(index));
+    if (iter != generatedShapeData_.end()) {
+      return &iter->second;
+    }
+    return nullptr;
   }
 
-  void addOutputShapeData(size_t index, TensorShapeProto&& tp) override {
+  void addOutputData(size_t index, TensorShapeProto&& tp) override {
     if (index >= outputIndexToNameMap_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
@@ -341,18 +349,6 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     if (!result.second) {
       fail_shape_inference("Data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
     }
-  }
-
-  const TensorShapeProto* getInputShapeData(size_t index) const override {
-    if (index >= allInputData_.size()) {
-      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
-    }
-
-    auto iter = generatedShapeData_.find(inputIndexToNameMap_.at(index));
-    if (iter != generatedShapeData_.end()) {
-        return &iter->second;
-    }
-    return nullptr;
   }
 };
 
