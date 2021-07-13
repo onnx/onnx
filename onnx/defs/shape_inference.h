@@ -13,6 +13,17 @@ namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
 
+struct ShapeInferenceOptions {
+  bool check_type;
+  int strict_error_mode;
+  bool enable_data_propagation;
+  ShapeInferenceOptions(): check_type(false), strict_error_mode(0),
+    enable_data_propagation(false) {};
+  ShapeInferenceOptions(bool check_type_val, int strict_mode_val, bool data_prop_val):
+    check_type(check_type_val), strict_error_mode(strict_mode_val),
+    enable_data_propagation(data_prop_val) {};
+};
+
 // Maintains a SymbolTable for symbolic shape inference
 class SymbolTable {
  public:

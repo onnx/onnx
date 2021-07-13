@@ -323,10 +323,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type, bool strict_mode, bool data_prop) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
-    shape_inference::InferShapes(proto, check_type, 
+    ShapeInferenceOptions options {check_type, strict_mode == true ? 1 : 0, data_prop};
+    shape_inference::InferShapes(proto,
                                  OpSchemaRegistry::Instance(),
-                                 strict_mode == true ? 1 : 0,
-                                 data_prop == true ? 1 : 0);
+                                 options);
     std::string out;
     proto.SerializeToString(&out);
     return py::bytes(out);
@@ -335,10 +335,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   shape_inference.def(
       "infer_shapes_path",
       [](const std::string& model_path, const std::string& output_path, bool check_type, bool strict_mode, bool data_prop)  -> void {
-        shape_inference::InferShapes(model_path, check_type, output_path, 
+        ShapeInferenceOptions options {check_type, strict_mode == true ? 1 : 0, data_prop};
+        shape_inference::InferShapes(model_path, output_path, 
                                      OpSchemaRegistry::Instance(),
-                                     strict_mode == true ? 1 : 0,
-                                     data_prop == true ? 1 : 0);
+                                     options);
       });
 
   // Submodule `parser`
