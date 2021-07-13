@@ -395,10 +395,10 @@ message ModelProto {
 
   // A list of function protos local to the model.
   //
-  // Model local functions override standard operator sets. Meaning, 
-  // if a model local function exists for op_type + domain combination
-  // then it will be preferred over the operator or function present in 
-  // standard defined or cutom operator sets.
+  // Name of the function "FunctionProto.name" should be unique within the domain "FunctionProto.domain".
+  // In case of any conflicts the behavior (whether the model local functions are given higher priority,
+  // or standard opserator sets are given higher priotity or this is treated as error) is defined by 
+  // the runtimes.
   // 
   // The operator sets imported by FunctionProto should be compatible with the ones
   // imported by ModelProto and other model local FunctionProtos. 
@@ -406,7 +406,7 @@ message ModelProto {
   // or by 2 FunctionProtos then versions for the operator set may be different but, 
   // the operator schema returned for op_type, domain, version combination
   // for both the versions should be same for every node in the function body.
-
+  //
   // One FunctionProto can reference other FunctionProto in the model, however, recursive reference
   // is not allowed.
   repeated FunctionProto functions = 25;
@@ -793,7 +793,6 @@ message FunctionProto {
   string doc_string = 8;
 
   // The OperatorSets this function body (graph) relies on.
-  // All FunctionProtos implicitly import the operator set which the function operator is part of.
   //
   // All nodes in the function body (graph) will bind against the operator
   // with the same-domain/same-op_type operator with the HIGHEST version
