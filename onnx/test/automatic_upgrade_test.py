@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import onnx
-from onnx import helper, TensorProto, shape_inference, version_converter
+from onnx import helper, TensorProto, shape_inference, version_converter, ValueInfoProto
 from typing import Text, List, Dict, Any, Union, Callable, Optional, cast
 import string
 import numpy as np  # type: ignore
@@ -30,7 +30,9 @@ class TestAutomaticUpgrade(unittest.TestCase):
         initializer=[],  # type: List[Any]
         attrs={},  # type: Dict[Text, Any]
         seq_inputs=[],  # type: List[int]
-        seq_outputs=[]  # type: List[int]
+        seq_outputs=[],  # type: List[int]
+        optional_inputs=[],  # type: List[int]
+        optional_outputs=[]  # type: List[int]
     ):  # type: (...) -> None
         global tested_ops
         tested_ops.append(op)
@@ -43,32 +45,45 @@ class TestAutomaticUpgrade(unittest.TestCase):
         if input_types is None:
             input_types = [TensorProto.FLOAT] * n_inputs
         is_sequence = [0 if id not in seq_inputs else 1 for id in range(n_inputs)]
+        is_optional = [0 if id not in optional_inputs else 1 for id in range(n_inputs)]
         # turn empty strings into [0] to ease type analysis, even though those entries
         # will be ignored
         input_shapes_cast = cast(List[List[int]],
                 [[0] if isinstance(shape, str) else shape for shape in input_shapes]
         )
-        inputs = [
-            helper.make_tensor_value_info(name, ttype, shape) if is_sequence == 0
-            else helper.make_tensor_sequence_value_info(name, ttype, shape)
-            for (name, ttype, shape, is_sequence)
-            in zip(input_names, input_types, input_shapes_cast, is_sequence) if name != ''
-        ]
+        inputs = []  # type: List[ValueInfoProto]
+        for (name, ttype, shape, is_seq, is_opt) in \
+                zip(input_names, input_types, input_shapes_cast, is_sequence, is_optional):
+            if name != '':
+                if is_seq:
+                    inputs += [helper.make_tensor_sequence_value_info(name, ttype, shape)]
+                elif is_opt:
+                    type_proto = helper.make_tensor_type_proto(ttype, shape)
+                    type_proto2 = helper.make_optional_type_proto(type_proto)
+                    inputs += [helper.make_value_info(name, type_proto2)]
+                else:
+                    inputs += [helper.make_tensor_value_info(name, ttype, shape)]
 
         n_outputs = len(output_shapes)
         output_names = list(string.ascii_lowercase)[n_inputs:n_inputs + n_outputs]
         if output_types is None:
             output_types = [TensorProto.FLOAT] * n_outputs
         is_sequence = [0 if id not in seq_outputs else 1 for id in range(n_outputs)]
+        is_optional = [0 if id not in optional_outputs else 1 for id in range(n_outputs)]
         output_shapes_cast = cast(List[List[int]],
                 [[0] if isinstance(shape, str) else shape for shape in output_shapes]
         )
-        outputs = [
-            helper.make_tensor_value_info(name, ttype, shape) if is_sequence == 0
-            else helper.make_tensor_sequence_value_info(name, ttype, shape)
-            for (name, ttype, shape, is_sequence)
-            in zip(output_names, output_types, output_shapes_cast, is_sequence)
-        ]
+        outputs = []  # type: List[ValueInfoProto]
+        for (name, ttype, shape, is_seq, is_opt) in \
+                zip(output_names, output_types, output_shapes_cast, is_sequence, is_optional):
+            if is_seq:
+                outputs += [helper.make_tensor_sequence_value_info(name, ttype, shape)]
+            elif is_opt:
+                type_proto = helper.make_tensor_type_proto(ttype, shape)
+                type_proto2 = helper.make_optional_type_proto(type_proto)
+                outputs += [helper.make_value_info(name, type_proto2)]
+            else:
+                outputs += [helper.make_tensor_value_info(name, ttype, shape)]
 
         node = helper.make_node(op, input_names, output_names, **attrs)
         graph = helper.make_graph([node], op, inputs, outputs, initializer)
@@ -1015,7 +1030,8 @@ class TestAutomaticUpgrade(unittest.TestCase):
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
         excluded_ops = [
-            # Sequence-based ops disabled because the version converter doesn't play nicely with sequences
+            # Sequence-based and Optional-based ops disabled because
+            # the version converter doesn't play nicely with sequences
             'ConcatFromSequence',
             'SequenceAt',
             'SequenceConstruct',
@@ -1023,7 +1039,10 @@ class TestAutomaticUpgrade(unittest.TestCase):
             'SequenceErase',
             'SequenceInsert',
             'SequenceLength',
-            'SplitToSequence'
+            'SplitToSequence',
+            'Optional',
+            'OptionalGetElement',
+            "OptionalHasElement"
         ]
         all_op_names = [op for op in all_op_names if op not in excluded_ops]
 
