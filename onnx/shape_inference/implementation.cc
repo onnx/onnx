@@ -220,6 +220,7 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, int>& opset_imports,
     const bool check_type, // check the type-equality for input and output
     const int error_mode,
+    const int data_prop,
     SymbolTableImpl& symbolTable,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
@@ -376,7 +377,7 @@ static void InferShapesImpl(
             function_opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
         }
 
-        InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx, symbolTable, generatedShapeDataByName);
+        InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx, symbolTable, generatedShapeDataByName, data_prop);
       }
       ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
         ONNX_HANDLE_EXCEPTION([&]() {
@@ -427,7 +428,7 @@ static void InferShapesImpl(
         materializeSymbolicShape(inferredType, symbolTable);
         // Now we can merge pre-existing and inferred info
         mergeShapesAndTypes(*inferredType, existingType);
-        if (schema->has_data_propagation_function()) {
+        if (data_prop == 1 && schema->has_data_propagation_function()) {
           DataPropagationContextImpl dataPropagationCtx(
               n, valueTypesByName, inputDataByName, generatedShapeDataByName, &graphInferenceContext);
           schema->GetDataPropagationFunction()(dataPropagationCtx);
@@ -463,18 +464,20 @@ void InferShapes(
     const std::unordered_map<std::string, int>& opset_imports,
     const bool check_type,
     const ISchemaRegistry* schema_registry,
-    const int error_mode) {
+    const int error_mode,
+    const int data_prop) {
   SymbolTableImpl symbolTable;
   traverseGraphsToAddExistingSymbols(*g, symbolTable);
   InferShapesImpl(
-      g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, check_type, error_mode, symbolTable, schema_registry);
+      g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, check_type, error_mode, data_prop, symbolTable, schema_registry);
 }
 
 void InferShapes(
     ModelProto& m,
     const bool check_type,
     const ISchemaRegistry* schema_registry,
-    const int error_mode) {
+    const int error_mode,
+    const int data_prop) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
@@ -488,6 +491,7 @@ void InferShapes(
       opset_imports,
       check_type,
       error_mode,
+      data_prop,
       symbolTable,
       schema_registry,
       m.ir_version());
@@ -498,7 +502,8 @@ void InferShapes(
     const bool check_type,
     const std::string& save_path,
     const ISchemaRegistry* schema_registry,
-    const int error_mode) {
+    const int error_mode,
+    const int data_prop) {
   ModelProto model;
   std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
   if (!model_stream.good()) {
@@ -509,7 +514,7 @@ void InferShapes(
     fail_check(
         "Unable to parse model from file:", model_path, ". Please check if it is a valid protobuf file of model.");
   }
-  InferShapes(model, check_type, schema_registry, error_mode);
+  InferShapes(model, check_type, schema_registry, error_mode, data_prop);
   // Save the inferred model to the original model path
   // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
   std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
@@ -529,7 +534,8 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
     SymbolTableImpl& symbolTable,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName) {
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
+    const int data_prop) {
   GraphProto g;
   // Get a temporary tensor-shape map
   const auto num_func_inputs = func->input_size();
@@ -621,7 +627,7 @@ void InferShapeForFunctionNode(
       }
       materializeSymbolicShape(inferred_output_type, symbolTable);
       mergeShapesAndTypes(*inferred_output_type, existingType);
-      if (schema->has_data_propagation_function()) {
+      if (data_prop == 1 && schema->has_data_propagation_function()) {
         DataPropagationContextImpl temp_dataPropagationCtx(
             copy_n, temp_valueTypesByName, temp_initializersByName, generatedShapeDataByName);
         schema->GetDataPropagationFunction()(temp_dataPropagationCtx);
@@ -653,12 +659,13 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
     SymbolTableImpl& symbolTable,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName) {
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
+    const int data_prop) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : func->opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
-  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, symbolTable, generatedShapeDataByName);
+  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, symbolTable, generatedShapeDataByName, data_prop);
 }
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
@@ -707,6 +714,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
+      false,
       false,
       false,
       symbolTable,

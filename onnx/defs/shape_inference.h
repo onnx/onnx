@@ -74,6 +74,17 @@ struct InferenceContext {
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
 };
 
+// We use data propagation to perform partial evaluation of the model, to compute statically
+// known information about tensor values. It is intended to improve the precision of shape
+// inference. We reuse TensorShapeProto to represent the statically known values. One
+// limitation of this is that TensorShapeProto can represent only integer values.
+// As an example, data-propagation is intended to handle code-fragments like below:
+//   shape = Shape(X)
+//   batchsize = Slice(shape, [0], [1])
+//   newshape = Concat (batchsize, [1024, 1024])
+//   Z = Reshape(Y, newshape)
+// If the shape of X is statically known, then data-propagation should be able to determine
+// the value of newshape, as well as the shape of Z.
 struct DataPropagationContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;

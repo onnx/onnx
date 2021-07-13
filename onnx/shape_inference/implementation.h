@@ -385,7 +385,8 @@ void InferShapes(
     ModelProto& m,
     const bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int error_mode = 0
+    const int error_mode = 0,
+    const int data_prop = 0
     );
 
 void InferShapes(
@@ -393,7 +394,8 @@ void InferShapes(
     const std::unordered_map<std::string, int>& opset_imports,
     const bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int error_mode = 0
+    const int error_mode = 0,
+    const int data_prop = 0
     );
 
 void InferShapes(
@@ -401,7 +403,8 @@ void InferShapes(
     const bool check_type = false,
     const std::string& save_path = "",
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int error_mode = 0
+    const int error_mode = 0,
+    const int data_prop = 0
     );
 
 void InferShapeForFunctionNode(
@@ -409,7 +412,8 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
     SymbolTableImpl& symbolTable,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName);
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
+    const int data_prop);
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
@@ -417,7 +421,8 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
     SymbolTableImpl& symbolTable,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName);
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
+    const int data_prop);
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 
