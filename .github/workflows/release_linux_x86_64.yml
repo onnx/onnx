@@ -37,14 +37,26 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install numpy protobuf==3.11.3
-        sudo apt-get install protobuf-compiler libprotoc-dev
+        python -m pip install numpy protobuf==3.16.0
 
     - name: Build manylinux2010_x86_64
       uses: docker://quay.io/pypa/manylinux2010_x86_64
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_x86_64 ${{ github.event_name }}
+
+    - name: Install protobuf in the GitHub Action environment for testing the wheel
+      run: |
+        cd ..
+        git clone https://github.com/protocolbuffers/protobuf.git
+        cd protobuf
+        git checkout v3.11.3
+        git submodule update --init --recursive
+        mkdir build_source && cd build_source
+
+        cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+        sudo make -j$(nproc)
+        sudo make install
 
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |

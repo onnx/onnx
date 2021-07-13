@@ -23,7 +23,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Atan">Atan</a>|<a href="Changelog.md#Atan-7">7</a>|
 |<a href="#Atanh">Atanh</a>|<a href="Changelog.md#Atanh-9">9</a>|
 |<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
-|<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
+|<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
 |<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
@@ -1887,6 +1887,8 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   
   ```
   
+  The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
+  
   When training_mode=False:
   ```
   Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
@@ -1898,9 +1900,9 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 #### Version
 
-This version of the operator has been available since version 14 of the default ONNX operator set.
+This version of the operator has been available since version 15 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-9">9</a>
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-14">14</a>
 
 #### Attributes
 
@@ -1918,13 +1920,13 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
-<dt><tt>scale</tt> (differentiable) : T</dt>
+<dt><tt>scale</tt> (differentiable) : T1</dt>
 <dd>Scale tensor of shape (C).</dd>
-<dt><tt>B</tt> (differentiable) : T</dt>
+<dt><tt>B</tt> (differentiable) : T1</dt>
 <dd>Bias tensor of shape (C).</dd>
-<dt><tt>input_mean</tt> (differentiable) : U</dt>
+<dt><tt>input_mean</tt> (differentiable) : T2</dt>
 <dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
-<dt><tt>input_var</tt> (differentiable) : U</dt>
+<dt><tt>input_var</tt> (differentiable) : T2</dt>
 <dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
@@ -1933,9 +1935,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>The output tensor of the same shape as X</dd>
-<dt><tt>running_mean</tt> (optional, non-differentiable) : U</dt>
+<dt><tt>running_mean</tt> (optional, non-differentiable) : T2</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
-<dt><tt>running_var</tt> (optional, non-differentiable) : U</dt>
+<dt><tt>running_var</tt> (optional, non-differentiable) : T2</dt>
 <dd>The running variance after the BatchNormalization operator. This op uses the population size (N) for calculating variance, and not the sample size N-1.</dd>
 </dl>
 
@@ -1944,8 +1946,10 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>U</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain mean and variance types to float tensors. It allows all float type for U.</dd>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain scale and bias types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain mean and variance types to float tensors.</dd>
 </dl>
 
 

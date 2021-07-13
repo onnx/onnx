@@ -15,8 +15,9 @@ class RemoveConsumedInputs : public Adapter {
     explicit RemoveConsumedInputs(const std::string& op_name, const OpSetID&
       initial, const OpSetID& target): Adapter(op_name, initial, target) {}
 
-    void adapt(std::shared_ptr<Graph>, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph>, Node* node) const override {
       if (node->hasAttribute(kconsumed_inputs)) node->removeAttribute(kconsumed_inputs);
+      return node;
     }
 };
 

@@ -18,7 +18,7 @@ PYTHON_COMAND="${PYTHON_BIN}python"
 PYTEST_COMMAND="${PYTHON_BIN}pytest"
 
 $PIP_INTALL_COMMAND --upgrade pip
-$PIP_INTALL_COMMAND numpy protobuf==3.11.3
+$PIP_INTALL_COMMAND numpy protobuf==3.16.0
 $PIP_INTALL_COMMAND dist/*manylinux2010_i686.whl
 
 # pytest with the built wheel
