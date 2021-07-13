@@ -29,14 +29,15 @@ class Resize_10_11 final : public Adapter {
       for(int i = 0; i < input_rank; i++)
         data.emplace_back(1);
 
-      Value* roi_input;
-      roi_input = graph->addInitializerAndInput(t);
-  
-      node->replaceInput(1, roi_input);
+      Node* constant = graph->create(kConstant);
+      constant->insertBefore(node);
+      constant->t_(kvalue, t);        
+      node->replaceInput(1, constant->output());
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_resize_10_11(graph, node);
+      return node;
     }
 };
 
