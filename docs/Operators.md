@@ -167,6 +167,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |**Function**|**Since version**|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|
+|<a href="#Dim">Dim</a>|<a href="Changelog.md#Dim-15">15</a>|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-12">12</a>|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
@@ -4656,6 +4657,59 @@ expect(node, inputs=[x], outputs=[y],
 ```
 
 </details>
+
+
+### <a name="Dim"></a><a name="dim">**Dim**</a>
+
+  Returns a specific dimension of the given input tensor's shape.  
+  Takes an input tensor and the index (axis) of the dimension to extract (as an attribute) and
+  returns the dimension value at the requested index (axis) in the input shape.
+  The op returns the output as a 1-dimensional tensor of size 1,
+  for the common usage scenario of creating other shapes (as 1-dimensional tensors).
+  The axis specified must be a value in the range [-r, r-1] where r = rank(input).
+  Otherwise, the output value is undefined.
+   
+  For example: 
+  Input tensor with shape: [2, 3, 4] 
+  Index: 1
+  Output: [3] 
+   
+  Input tensor with shape: [2, 3, 4] 
+  Index: 2
+  Output: [4] 
+   
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (required)</dt>
+<dd>The axis whose dimension is required. A negative value means counting axes from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (non-differentiable) : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>Dimension of the input tensor at the specified axis.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+</dl>
 
 
 ### <a name="Div"></a><a name="div">**Div**</a>
