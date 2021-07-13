@@ -31,13 +31,16 @@ class Pad_10_11 final : public Adapter {
       t_value.elem_type() = TensorProto_DataType_FLOAT;
       auto& data_value = t_value.floats();
       data_value.emplace_back(node->f(kvalue));
-      Value* v_value = graph->addInitializerAndInput(t_value);
-      node->addInput(v_value);
+      Node* constant = graph->create(kConstant);
+      constant->insertBefore(node);
+      constant->t_(kvalue, t_value);        
+      node->addInput(constant->output());
       node->removeAttribute(kvalue);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
 	    adapt_pad_10_11(graph, node);
+      return node;
     }
 };
 
