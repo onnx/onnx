@@ -1011,6 +1011,13 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
 
+    def test_Dim(self):  # type: () -> None
+        self._test_op_upgrade('Dim', 15,
+            [[2, 3, 4]], [[1]],
+            [TensorProto.FLOAT], [TensorProto.INT64],
+            attrs={'axis': 1}
+        )
+
     def test_ops_tested(self):  # type: () -> None
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
