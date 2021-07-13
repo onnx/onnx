@@ -724,23 +724,59 @@ void check_opset_compatibility(
     return;
   }
 
+  if (func_opset_version == model_opset_version) {
+    // both versions are same, no need to verify schema.
+    return;
+  }
+
   const auto* schema_for_model_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), model_opset_version, node.domain());
 
   const auto* schema_for_function_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), func_opset_version, node.domain());
 
-  if (schema_for_model_import && schema_for_function_import &&
-      schema_for_function_import->since_version() == schema_for_model_import->since_version()) {
-    // The since versions of schema for both opset imports match. This means they are compatible.
+  if (!schema_for_model_import && !schema_for_function_import) {
+    // the op belongs to a custom domain so we cannot verify schema
     return;
   }
 
-  fail_check(
-      "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
-      "is not compatible with the version imported by model. FunctionOp imports version " +
-      ONNX_NAMESPACE::to_string(func_opset_version) + "whereas model imports version " +
-      ONNX_NAMESPACE::to_string(model_opset_version));
+  // if schema is present for 1 but not other or the schema since versions do not match then raise an error
+  if (!schema_for_model_import || !schema_for_function_import ||
+      schema_for_function_import->since_version() != schema_for_model_import->since_version()) {
+    fail_check(
+        "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
+        "is not compatible with the version imported by model. FunctionOp imports version " +
+        ONNX_NAMESPACE::to_string(func_opset_version) + "whereas model imports version " +
+        ONNX_NAMESPACE::to_string(model_opset_version));
+  }
+}
+
+void check_model_local_functions(
+    const ModelProto& model,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& parent_lex) {
+    // make a copy of model opset imports to maintain a master copy of opset imports across the model and 
+    // all model local functions to verify opset compatibility
+    std::unordered_map<std::string, int> model_opset_imports(ctx.get_opset_imports());
+
+    // merge the opset imports from every function in model_opset_imports
+    // only add the opset import if an entry for it does not exist in model_opset_imports
+    // if there is an entry then the compatibility will be checked later on in check_opset_compatibility
+    // called by check_function.
+    for (const auto& function_proto : model.functions()) {
+      for (const auto& opset_import : function_proto.opset_import()) {
+        if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
+          model_opset_imports[opset_import.domain()] = opset_import.version();
+        }
+      }
+    }
+
+    CheckerContext ctx_copy = ctx;
+    ctx_copy.set_opset_imports(model_opset_imports);
+
+    for (const auto& function_proto : model.functions()) {
+        check_function(function_proto, ctx_copy, parent_lex);
+    }
 }
 
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
@@ -869,9 +905,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   check_graph(model.graph(), ctx, lex_ctx);
 
   if (ctx.get_ir_version() >= 0x00000008) {
-    for (const auto& function_proto : model.functions()) {
-      check_function(function_proto, ctx, lex_ctx);
-    }
+    check_model_local_functions(model, ctx, lex_ctx);
   }
 }
 

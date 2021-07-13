@@ -26,16 +26,18 @@ class Split_12_13 : public Adapter {
     for (auto a : axes) {
       data.emplace_back(a);
     }
-    Value* v;
-    v = graph->addInitializerAndInput(t);
-    node->addInput(v);
+    Node* constant = graph->create(kConstant);
+    constant->insertBefore(node);
+    constant->t_(kvalue, t);        
+    node->addInput(constant->output());
   }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     if (node->hasAttribute(ksplit)){
       attrToInput(graph, node, node->is(ksplit));
       node->removeAttribute(ksplit);
     }
+    return node;
   }
 };
 

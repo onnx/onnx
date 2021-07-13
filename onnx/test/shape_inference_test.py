@@ -2327,6 +2327,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5))])
 
+    def test_quantizelinear_default_zp(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y_scale', TensorProto.FLOAT, ())],
+            [make_node('QuantizeLinear', ['x', 'y_scale'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5))])
+
     def test_dequantizelinear(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (30, 4, 5)),
