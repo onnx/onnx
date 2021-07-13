@@ -749,6 +749,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
       /******** 14 -> 15 ********/
       registerAdapter(make_unique<CompatibleAdapter>(
+          "BatchNormalization", OpSetID(14), OpSetID(15)));
+      registerAdapter(make_unique<CompatibleAdapter>(
           "Pow", OpSetID(14), OpSetID(15)));
     }
 
