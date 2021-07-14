@@ -332,17 +332,20 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     // Gets it from initializer if it exists
     const auto* input_data = allInputData_[index];
     if (input_data != nullptr) {
-      std::vector<int64_t> input_vals;
+      TensorShapeProto* tsp = nullptr;
       if (input_data->data_type() == TensorProto_DataType_INT64) {
-        input_vals = ParseData<int64_t>(input_data);
+        std::vector<int64_t> input_vals = ParseData<int64_t>(input_data);
+        for (unsigned int i = 0; i < input_vals.size(); ++i) {
+          tsp->mutable_dim()->Add()->set_dim_value(input_vals[i]);
+        }
+        return tsp;
       } else if (input_data->data_type() == TensorProto_DataType_INT32) {
         std::vector<int32_t> input_vals = ParseData<int32_t>(input_data);
+        for (unsigned int i = 0; i < input_vals.size(); ++i) {
+          tsp->mutable_dim()->Add()->set_dim_value(input_vals[i]);
+        }
+        return tsp;
       }
-      TensorShapeProto* tsp = nullptr;
-      for (unsigned int i = 0; i < input_vals.size(); ++i) {
-        tsp->mutable_dim()->Add()->set_dim_value(input_vals[i]);
-      }
-      return tsp;
     }
     // Otherwise, gets it from previous data propagation
     auto iter = generatedShapeData_.find(inputIndexToNameMap_.at(index));
