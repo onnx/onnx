@@ -4,6 +4,7 @@
 
 
 #include "onnx/defs/tensor/utils.h"
+#include "onnx/defs/function.h"
 
 #include <algorithm>
 #include <cmath>
@@ -106,6 +107,101 @@ ONNX_OPERATOR_SET_SCHEMA(
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
+
+static const char* CastLike_ver15_doc = R"DOC(
+The operator casts the elements of a given input tensor (the first input) to
+the same data type as the elements of the second input tensor.
+See documentation of the Cast operator for further details.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+	CastLike,
+	15,
+	OpSchema()
+	.SetDoc(CastLike_ver15_doc)
+	.Input(
+		0,
+		"input",
+		"Input tensor to be cast.",
+		"T1",
+		OpSchema::Single,
+		true,
+		1,
+		OpSchema::Differentiable)
+	.Input(
+		1,
+		"target_type",
+		"The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.",
+		"T2",
+		OpSchema::Single,
+		true,
+		1,
+		OpSchema::NonDifferentiable)
+	.Output(
+		0,
+		"output",
+		"Output tensor produced by casting the first input tensor to have the same type as the second input tensor.",
+		"T2",
+		OpSchema::Single,
+		true,
+		1,
+		OpSchema::Differentiable)
+	.TypeConstraint(
+		"T1",
+		{ "tensor(float16)",
+		 "tensor(float)",
+		 "tensor(double)",
+		 "tensor(int8)",
+		 "tensor(int16)",
+		 "tensor(int32)",
+		 "tensor(int64)",
+		 "tensor(uint8)",
+		 "tensor(uint16)",
+		 "tensor(uint32)",
+		 "tensor(uint64)",
+		 "tensor(bool)",
+		 "tensor(string)",
+		 "tensor(bfloat16)" },
+		"Constrain input types. Casting from complex is not supported.")
+	.TypeConstraint(
+		"T2",
+		{ "tensor(float16)",
+		 "tensor(float)",
+		 "tensor(double)",
+		 "tensor(int8)",
+		 "tensor(int16)",
+		 "tensor(int32)",
+		 "tensor(int64)",
+		 "tensor(uint8)",
+		 "tensor(uint16)",
+		 "tensor(uint32)",
+		 "tensor(uint64)",
+		 "tensor(bool)",
+		 "tensor(string)",
+		 "tensor(bfloat16)" },
+		"Constrain output types. Casting to complex is not supported.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	propagateElemTypeFromInputToOutput(ctx, 1, 0);
+	if (hasNInputShapes(ctx, 1)) {
+		propagateShapeFromInputToOutput(ctx, 0, 0);
+	}
+})
+.SetContextDependentFunctionBodyBuilder(
+	[](const FunctionBodyBuildContext& ctx,
+		const OpSchema& schema,
+		FunctionProto& functionProto) -> bool {
+	auto target_type = ctx.getInputType(1);
+	if ((target_type == nullptr) || (!target_type->has_tensor_type())) {
+		// we cannot create a correct function body without knowing the target element type
+		return false;
+	}
+	auto target_elt_type = target_type->tensor_type().elem_type();
+	std::vector<FunctionBodyHelper::NodeDef> body{
+		// nodes: {outputs, op, inputs, attributes}
+	  { {"output"}, "Cast", {"input"}, {MakeAttribute("to", (int64_t)(target_elt_type))} }
+	};
+	return FunctionBodyHelper::BuildFunctionProto(functionProto, schema, body, {});
+}));
 
 static const char* Reshape_ver14_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
