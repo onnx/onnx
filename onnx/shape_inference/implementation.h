@@ -338,7 +338,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       } else if (input_data->data_type() == TensorProto_DataType_INT32) {
         std::vector<int32_t> input_vals = ParseData<int32_t>(input_data);
       }
-      TensorShapeProto* tsp;
+      TensorShapeProto* tsp = nullptr;
       for (int i = 0; i < input_vals.size(); ++i) {
         tsp->mutable_dim()->Add()->set_dim_value(input_vals[i]);
       }
