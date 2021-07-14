@@ -309,7 +309,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     return allOutputTypes_.size();
   }
 
-  TypeProto* getOutputType(size_t index) override {
+  const TypeProto* getOutputType(size_t index) const override {
     if (index >= allOutputTypes_.size()) {
       ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
