@@ -285,16 +285,6 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     allOutputTypes_.resize(n.output_size());
   }
 
-  std::vector<const TensorProto*> allInputData_;
-  std::unordered_map<size_t, std::string> inputIndexToNameMap_;
-  std::unordered_map<size_t, std::string> outputIndexToNameMap_;
-  std::vector<const TypeProto*> allInputTypes_;
-  std::vector<TypeProto> allOutputTypes_;
-  std::unordered_map<std::string, TensorShapeProto>& generatedShapeData_;
-  const GraphInferenceContext* graphInferenceContext_;
-  std::unordered_map<std::string, const AttributeProto*> attributesByName_;
-  std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
-
   const AttributeProto* getAttribute(const std::string& name) const override {
     auto iter = attributesByName_.find(name);
     if (iter == attributesByName_.end()) {
@@ -333,23 +323,24 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     for (unsigned int i = 0; i < input_vals.size(); ++i) {
       converted_tsp.mutable_dim()->Add()->set_dim_value(input_vals[i]);
     }
-    return std::move(converted_tsp);
+    return converted_tsp;
   }
 
   const TensorShapeProto* getInputData(size_t index) override {
     if (index >= allInputData_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
+    const std::string input_name = inputIndexToNameMap_.at(index);
     // Gets it from previous data propagation
-    auto iter = generatedShapeData_.find(inputIndexToNameMap_.at(index));
+    auto iter = generatedShapeData_.find(input_name);
     if (iter != generatedShapeData_.end()) {
       return &iter->second;
     }
     // Otherwise, gets it from initializer if it exists
     const auto* input_data = allInputData_[index];
-    if (input_data != nullptr) {
-      // Only scalar (0D tensor) or 1D tensor can be converted
-      if (input_data->dims_size() == 0 || input_data->dims_size() == 1) {
+    // Only scalar (0D tensor) or 1D tensor can be converted
+    if (input_data != nullptr &&
+        (input_data->dims_size() == 0 || input_data->dims_size() == 1)) {
         TensorShapeProto tsp;
 
         if (input_data->data_type() == TensorProto_DataType_INT64) {
@@ -363,10 +354,9 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
         // Adds this TensorShapeProto from initializer into generatedShapeData
         // for future use
-        generatedShapeData_.insert({inputIndexToNameMap_.at(index), std::move(tsp)});
-        TensorShapeProto* tsp_ptr = &tsp;
-        return tsp_ptr;
-      }
+        generatedShapeData_.insert({input_name, std::move(tsp)});
+        auto iter = generatedShapeData_.find(input_name);
+        return &iter->second;
     }
     return nullptr;
   }
@@ -380,6 +370,16 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       fail_shape_inference("Data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
     }
   }
+
+  std::vector<const TensorProto*> allInputData_;
+  std::unordered_map<size_t, std::string> inputIndexToNameMap_;
+  std::unordered_map<size_t, std::string> outputIndexToNameMap_;
+  std::vector<const TypeProto*> allInputTypes_;
+  std::vector<TypeProto> allOutputTypes_;
+  std::unordered_map<std::string, TensorShapeProto>& generatedShapeData_;
+  const GraphInferenceContext* graphInferenceContext_;
+  std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+  std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;  
 };
 
 void checkShapesAndTypes(
