@@ -16,15 +16,16 @@ using Dim = TensorShapeProto_Dimension;
 struct ShapeInferenceOptions {
   // Checks the type-equality for input and output
   bool check_type;
-  // 1: Stricter shape inference; will throw errors if any
-  // 0: Simply stop if any error
-  int strict_error_mode;
+  // 1: Will throw any node level shape infer errors
+  // 0: Won't throw node-level shape infer errors, but other errors
+  // like merging existing shape with inferred etc are thrown
+  int error_mode;
   // Enables data propagation for limited operators
   // to perform shape computation
   bool enable_data_propagation;
   ShapeInferenceOptions(bool check_type_val = false,
     int strict_mode_val = 0,bool data_prop_val = false):
-    check_type(check_type_val), strict_error_mode(strict_mode_val),
+    check_type(check_type_val), error_mode(strict_mode_val),
     enable_data_propagation(data_prop_val) {};
 };
 
@@ -107,7 +108,7 @@ struct DataPropagationContext {
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
   virtual ~DataPropagationContext() {}
-  virtual const TensorShapeProto* getInputData(size_t index) const = 0;
+  virtual const TensorShapeProto* getInputData(size_t index) = 0;
   virtual void addOutputData(size_t index, TensorShapeProto&& tp) = 0;
 };
 
