@@ -23,6 +23,11 @@ If the inferred values conflict with values already provided in the
 graph, that means that the provided values are invalid (or there is a
 bug in shape inference), and the result is unspecified.
 
+bool check_type: Checks the type-equality for input and output
+bool strict_mode: Stricter shape inference, it will throw errors if any;
+    Otherwise, simply stop if any error
+bool data_prop: Enables data propagation for limited operators to perform shape computation
+
 Arguments:
     input (Union[ModelProto, Text, bytes], bool, bool, bool) -> ModelProto
 

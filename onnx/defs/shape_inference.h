@@ -14,12 +14,16 @@ namespace ONNX_NAMESPACE {
 using Dim = TensorShapeProto_Dimension;
 
 struct ShapeInferenceOptions {
+  // Checks the type-equality for input and output
   bool check_type;
+  // 1: Stricter shape inference; will throw errors if any
+  // 0: Simply stop if any error
   int strict_error_mode;
+  // Enables data propagation for limited operators
+  // to perform shape computation
   bool enable_data_propagation;
-  ShapeInferenceOptions(): check_type(false), strict_error_mode(0),
-    enable_data_propagation(false) {};
-  ShapeInferenceOptions(bool check_type_val, int strict_mode_val, bool data_prop_val):
+  ShapeInferenceOptions(bool check_type_val = false,
+    int strict_mode_val = 0,bool data_prop_val = false):
     check_type(check_type_val), strict_error_mode(strict_mode_val),
     enable_data_propagation(data_prop_val) {};
 };
