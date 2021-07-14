@@ -348,9 +348,8 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     // Otherwise, gets it from initializer if it exists
     const auto* input_data = allInputData_[index];
     if (input_data != nullptr) {
-      // Only shape (1) tensor or scalar (0D tensor) can be converted
-      if ((input_data->dims_size() == 1 && input_data->dims(0) == 1) ||
-        input_data->dims_size() == 0) {
+      // Only scalar (0D tensor) or 1D tensor can be converted
+      if (input_data->dims_size() == 0 || input_data->dims_size() == 1) {
         TensorShapeProto* tsp = nullptr;
 
         // Only supports integer type to form a shape
