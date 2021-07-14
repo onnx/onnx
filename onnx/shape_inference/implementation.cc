@@ -20,6 +20,8 @@ std::string getValueCaseString(const TypeProto& type) {
       return "sequence_type";
     case TypeProto::ValueCase::kMapType:
       return "map_type";
+    case TypeProto::ValueCase::kOptionalType:
+      return "optional_type";
 #ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType:
       return "opaque_type";
@@ -111,6 +113,8 @@ void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existin
     checkTensorShapesAndTypes(inferredType.sparse_tensor_type(), existingType.sparse_tensor_type());
   } else if (inferredTypeCase == TypeProto::kSequenceType && existingTypeCase == TypeProto::kSequenceType) {
     checkShapesAndTypes(inferredType.sequence_type().elem_type(), existingType.sequence_type().elem_type());
+  } else if (inferredTypeCase == TypeProto::kOptionalType && existingTypeCase == TypeProto::kOptionalType) {
+    checkShapesAndTypes(inferredType.optional_type().elem_type(), existingType.optional_type().elem_type());
   } else {
     fail_type_inference("type case unsupported. existing=", existingTypeCase, " inferred=", inferredTypeCase);
   }
@@ -139,6 +143,8 @@ void materializeSymbolicShape(TypeProto* inferredType, SymbolTableImpl& symbolTa
     generateSymbolicShape(inferredType->mutable_sparse_tensor_type(), symbolTable);
   } else if (inferred_val_case == TypeProto::kSequenceType) {
     materializeSymbolicShape(inferredType->mutable_sequence_type()->mutable_elem_type(), symbolTable);
+  } else if (inferred_val_case == TypeProto::kOptionalType) {
+    materializeSymbolicShape(inferredType->mutable_optional_type()->mutable_elem_type(), symbolTable);
   } else {
     fail_shape_inference("type case unsupported for symbolic shape inference. inferred=", inferred_val_case);
   }
@@ -211,6 +217,9 @@ void mergeShapesAndTypes(const TypeProto& inferredType, TypeProto* existingType)
   } else if (inferred_val_case == TypeProto::kSequenceType) {
     mergeShapesAndTypes(
         inferredType.sequence_type().elem_type(), existingType->mutable_sequence_type()->mutable_elem_type());
+  } else if (inferred_val_case == TypeProto::kOptionalType) {
+    mergeShapesAndTypes(
+        inferredType.optional_type().elem_type(), existingType->mutable_optional_type()->mutable_elem_type());
   }
 }
 
