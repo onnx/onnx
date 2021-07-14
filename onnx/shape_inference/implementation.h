@@ -352,11 +352,13 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       if (input_data->dims_size() == 0 || input_data->dims_size() == 1) {
         TensorShapeProto tsp;
 
-        // Only supports integer type to form a shape
         if (input_data->data_type() == TensorProto_DataType_INT64) {
           tsp = vectorToTensorShapeProto(ParseData<int64_t>(input_data));
         } else if (input_data->data_type() == TensorProto_DataType_INT32) {
           tsp = vectorToTensorShapeProto(ParseData<int32_t>(input_data));
+        } else {
+          // Only supports integer type to form a shape
+          return nullptr;
         }
 
         // Adds this TensorShapeProto from initializer into generatedShapeData
