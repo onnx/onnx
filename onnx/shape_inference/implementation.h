@@ -329,14 +329,14 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   template <typename INTEGER>
   void vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals, TensorShapeProto* tsp) {
     // Only scalar (0D tensor) or shape (1) tensor can be converted
-    TensorShapeProto converted_tsp;
     if ((input_vals.size() ==  1 && input_vals[0] == 1) ||
       input_vals.size() == 0) {
+      TensorShapeProto converted_tsp;
       for (unsigned int i = 0; i < input_vals.size(); ++i) {
         converted_tsp.mutable_dim()->Add()->set_dim_value(input_vals[i]);
       }
+      tsp = &converted_tsp;
     }
-    tsp = &converted_tsp;
   }
 
   const TensorShapeProto* getInputData(size_t index) override {
