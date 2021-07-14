@@ -11,8 +11,8 @@
 namespace ONNX_NAMESPACE {
 
 static const char* Optional_ver15_doc = R"DOC(
-Construct an optional type value containing either an empty optional of a certain type specified by the attribute,
-or a non-empty value containing the 'input' element.
+Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
+or a non-empty value containing the input element.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -97,8 +97,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* OptionalGetElement_ver1_doc = R"DOC(
-Outputs the element in the optional-type input'. It is an error if the input value does not have an element "
-"and the behavior is undefined in this case."
+Outputs the element in the optional-type input. It is an error if the input value does not have an element
+and the behavior is undefined in this case.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

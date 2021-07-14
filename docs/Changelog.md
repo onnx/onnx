@@ -19644,8 +19644,8 @@ This version of the operator has been available since version 15 of the default 
 
 ### <a name="Optional-15"></a>**Optional-15**</a>
 
-  Construct an optional type value containing either an empty optional of a certain type specified by the attribute,
-  or a non-empty value containing the 'input' element.
+  Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
+  or a non-empty value containing the input element.
 
 #### Version
 
@@ -19683,8 +19683,8 @@ This version of the operator has been available since version 15 of the default 
 
 ### <a name="OptionalGetElement-15"></a>**OptionalGetElement-15**</a>
 
-  Outputs the element in the optional-type input'. It is an error if the input value does not have an element "
-  "and the behavior is undefined in this case."
+  Outputs the element in the optional-type input. It is an error if the input value does not have an element
+  and the behavior is undefined in this case.
 
 #### Version
 
