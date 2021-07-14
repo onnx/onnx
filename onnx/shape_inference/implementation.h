@@ -329,17 +329,11 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   // Convert integer vector into TensorShapeProto
   template <typename INTEGER>
   void vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals, TensorShapeProto* tsp) {
-    // Only scalar (0D tensor) or shape (1) tensor can be converted
-    if ((input_vals.size() ==  1 && input_vals[0] == 1) ||
-      input_vals.size() == 0) {
-      TensorShapeProto converted_tsp;
-      for (unsigned int i = 0; i < input_vals.size(); ++i) {
-        converted_tsp.mutable_dim()->Add()->set_dim_value(input_vals[i]);
-      }
-      tsp = &converted_tsp;
-    } else {
-      tsp = nullptr;
+    TensorShapeProto converted_tsp;
+    for (unsigned int i = 0; i < input_vals.size(); ++i) {
+      converted_tsp.mutable_dim()->Add()->set_dim_value(input_vals[i]);
     }
+    tsp = &converted_tsp;
   }
 
   const TensorShapeProto* getInputData(size_t index) override {
@@ -350,21 +344,28 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     auto iter = generatedShapeData_.find(inputIndexToNameMap_.at(index));
     if (iter != generatedShapeData_.end()) {
       return &iter->second;
-    }  
+    }
     // Otherwise, gets it from initializer if it exists
     const auto* input_data = allInputData_[index];
     if (input_data != nullptr) {
-      TensorShapeProto* tsp = nullptr;
-      // Only supports integer type to form a shape
-      if (input_data->data_type() == TensorProto_DataType_INT64) {
-        vectorToTensorShapeProto(ParseData<int64_t>(input_data), tsp);
-      } else if (input_data->data_type() == TensorProto_DataType_INT32) {
-        vectorToTensorShapeProto(ParseData<int32_t>(input_data), tsp);
-      }
-      if (tsp != nullptr) {
-        // Adds this TensorShapeProto from initializer into generatedShapeData
-        generatedShapeData_.insert({inputIndexToNameMap_.at(index), std::move(*tsp)});
-        return tsp;
+      // Only shape (1) tensor or scalar (0D tensor) can be converted
+      if ((input_data->dims_size() == 1 && input_data->dims(0) == 1) ||
+        input_data->dims_size() == 0) {
+        TensorShapeProto* tsp = nullptr;
+
+        // Only supports integer type to form a shape
+        if (input_data->data_type() == TensorProto_DataType_INT64) {
+          vectorToTensorShapeProto(ParseData<int64_t>(input_data), tsp);
+        } else if (input_data->data_type() == TensorProto_DataType_INT32) {
+          vectorToTensorShapeProto(ParseData<int32_t>(input_data), tsp);
+        }
+
+        if (tsp != nullptr) {
+          // Adds this TensorShapeProto from initializer into generatedShapeData
+          // for future use
+          generatedShapeData_.insert({inputIndexToNameMap_.at(index), std::move(*tsp)});
+          return tsp;
+        }
       }
     }
     return nullptr;
