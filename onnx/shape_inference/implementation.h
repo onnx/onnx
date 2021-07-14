@@ -328,12 +328,12 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
   // Convert integer vector into TensorShapeProto
   template <typename INTEGER>
-  void vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals, TensorShapeProto* tsp) {
+  TensorShapeProto vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals) const {
     TensorShapeProto converted_tsp;
     for (unsigned int i = 0; i < input_vals.size(); ++i) {
       converted_tsp.mutable_dim()->Add()->set_dim_value(input_vals[i]);
     }
-    tsp = &converted_tsp;
+    return std::move(converted_tsp);
   }
 
   const TensorShapeProto* getInputData(size_t index) override {
@@ -350,21 +350,20 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     if (input_data != nullptr) {
       // Only scalar (0D tensor) or 1D tensor can be converted
       if (input_data->dims_size() == 0 || input_data->dims_size() == 1) {
-        TensorShapeProto* tsp = nullptr;
+        TensorShapeProto tsp;
 
         // Only supports integer type to form a shape
         if (input_data->data_type() == TensorProto_DataType_INT64) {
-          vectorToTensorShapeProto(ParseData<int64_t>(input_data), tsp);
+          tsp = vectorToTensorShapeProto(ParseData<int64_t>(input_data));
         } else if (input_data->data_type() == TensorProto_DataType_INT32) {
-          vectorToTensorShapeProto(ParseData<int32_t>(input_data), tsp);
+          tsp = vectorToTensorShapeProto(ParseData<int32_t>(input_data));
         }
 
-        if (tsp != nullptr) {
-          // Adds this TensorShapeProto from initializer into generatedShapeData
-          // for future use
-          generatedShapeData_.insert({inputIndexToNameMap_.at(index), std::move(*tsp)});
-          return tsp;
-        }
+        // Adds this TensorShapeProto from initializer into generatedShapeData
+        // for future use
+        generatedShapeData_.insert({inputIndexToNameMap_.at(index), std::move(tsp)});
+        TensorShapeProto* tsp_ptr = &tsp;
+        return tsp_ptr;
       }
     }
     return nullptr;
