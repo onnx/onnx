@@ -326,6 +326,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     return &allOutputTypes_[index];
   }
 
+  // Convert integer vector into TensorShapeProto
   template <typename INTEGER>
   void vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals, TensorShapeProto* tsp) {
     // Only scalar (0D tensor) or shape (1) tensor can be converted
@@ -336,6 +337,8 @@ struct DataPropagationContextImpl : public DataPropagationContext {
         converted_tsp.mutable_dim()->Add()->set_dim_value(input_vals[i]);
       }
       tsp = &converted_tsp;
+    } else {
+      tsp = nullptr;
     }
   }
 
