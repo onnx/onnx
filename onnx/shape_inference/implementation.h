@@ -325,19 +325,30 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     }
     return &allOutputTypes_[index];
   }
-
   const TensorShapeProto* getInputData(size_t index) const override {
-    if (index >= allInputTypes_.size()) {
+    if (index >= allInputData_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
-    if (allInputTypes_[index] != nullptr && allInputTypes_[index]->has_tensor_type()
-        && allInputTypes_[index]->tensor_type().has_shape()) {
-      return &allInputTypes_[index]->tensor_type().shape();
+    // Gets it from initializer if it exists
+    const auto* input_data = allInputData_[index];
+    if (input_data != nullptr) {
+      std::vector<int64_t> input_vals;
+      if (input_data->data_type() == TensorProto_DataType_INT64) {
+        input_vals = ParseData<int64_t>(input_data);
+      } else if (input_data->data_type() == TensorProto_DataType_INT32) {
+        std::vector<int32_t> input_vals = ParseData<int32_t>(input_data);
+      }
+      TensorShapeProto* tsp;
+      for (int i = 0; i < input_vals.size(); ++i) {
+        tsp->mutable_dim()->Add()->set_dim_value(input_vals[i]);
+      }
+      return tsp;
     }
+    // Otherwise, gets it from previous data propagation
     auto iter = generatedShapeData_.find(inputIndexToNameMap_.at(index));
     if (iter != generatedShapeData_.end()) {
       return &iter->second;
-    }
+    }  
     return nullptr;
   }
 
