@@ -339,7 +339,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
         std::vector<int32_t> input_vals = ParseData<int32_t>(input_data);
       }
       TensorShapeProto* tsp = nullptr;
-      for (int i = 0; i < input_vals.size(); ++i) {
+      for (unsigned int i = 0; i < input_vals.size(); ++i) {
         tsp->mutable_dim()->Add()->set_dim_value(input_vals[i]);
       }
       return tsp;
