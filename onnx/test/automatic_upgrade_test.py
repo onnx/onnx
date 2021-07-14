@@ -1011,6 +1011,13 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
 
+    def test_CastLike(self):  # type: () -> None
+        self._test_op_upgrade('CastLike', 15,
+            [[2, 3, 4], [2, 1, 4]],
+            [[2, 3, 4]],
+            input_types=[TensorProto.FLOAT, TensorProto.FLOAT16],
+            output_types=[TensorProto.FLOAT16])
+
     def test_ops_tested(self):  # type: () -> None
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
