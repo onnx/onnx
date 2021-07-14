@@ -109,7 +109,7 @@ def _extract_value_info(input, name, type_proto=None):  # type: (Union[List[Any]
             raise NotImplementedError("_extract_value_info: both input and type_proto arguments cannot be None.")
         elif isinstance(input, list):
             elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype]
-            shape = input[0].shape
+            shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
             type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
         else:

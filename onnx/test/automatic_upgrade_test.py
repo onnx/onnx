@@ -59,8 +59,8 @@ class TestAutomaticUpgrade(unittest.TestCase):
                     inputs += [helper.make_tensor_sequence_value_info(name, ttype, shape)]
                 elif is_opt:
                     type_proto = helper.make_tensor_type_proto(ttype, shape)
-                    type_proto2 = helper.make_optional_type_proto(type_proto)
-                    inputs += [helper.make_value_info(name, type_proto2)]
+                    optional_type_proto = helper.make_optional_type_proto(type_proto)
+                    inputs += [helper.make_value_info(name, optional_type_proto)]
                 else:
                     inputs += [helper.make_tensor_value_info(name, ttype, shape)]
 
@@ -80,8 +80,8 @@ class TestAutomaticUpgrade(unittest.TestCase):
                 outputs += [helper.make_tensor_sequence_value_info(name, ttype, shape)]
             elif is_opt:
                 type_proto = helper.make_tensor_type_proto(ttype, shape)
-                type_proto2 = helper.make_optional_type_proto(type_proto)
-                outputs += [helper.make_value_info(name, type_proto2)]
+                optional_type_proto = helper.make_optional_type_proto(type_proto)
+                outputs += [helper.make_value_info(name, optional_type_proto)]
             else:
                 outputs += [helper.make_tensor_value_info(name, ttype, shape)]
 
@@ -1025,6 +1025,13 @@ class TestAutomaticUpgrade(unittest.TestCase):
         self._test_op_upgrade('Xor', 7, [[2, 3], [2, 3]], [[2, 3]],
             [TensorProto.BOOL, TensorProto.BOOL], [TensorProto.BOOL]
         )
+
+    def test_CastLike(self):  # type: () -> None
+        self._test_op_upgrade('CastLike', 15,
+            [[2, 3, 4], [2, 1, 4]],
+            [[2, 3, 4]],
+            input_types=[TensorProto.FLOAT, TensorProto.FLOAT16],
+            output_types=[TensorProto.FLOAT16])
 
     def test_ops_tested(self):  # type: () -> None
         all_schemas = onnx.defs.get_all_schemas()
