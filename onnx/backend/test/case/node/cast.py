@@ -50,8 +50,8 @@ class Cast(Base):
                     assert from_type == 'FLOAT'
                     input = np_fp32.reshape([3, 4])
                     output = np_bfp16.reshape([3, 4])
-                    input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), None)
-                    output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), None)
+                    input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), input.shape)
+                    output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), output.shape)
                 else:
                     assert to_type == 'FLOAT'
                     input = np_bfp16.reshape([3, 4])
@@ -63,8 +63,8 @@ class Cast(Base):
                         np_fp32_zeros[0::2] = np_bfp16
                     np_fp32_from_bfloat = np_fp32_zeros.view(dtype=np.float32)
                     output = np_fp32_from_bfloat.reshape([3, 4])
-                    input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), None)
-                    output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), None)
+                    input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), input.shape)
+                    output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), output.shape)
             elif 'STRING' != from_type:
                 input = np.random.random_sample(shape).astype(
                     TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
