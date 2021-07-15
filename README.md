@@ -50,116 +50,83 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 # Installation
 
-## Binaries
-
-A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
-
+## Official Python packages
+ONNX released packages are published in PyPi.
 ```
-conda install -c conda-forge onnx
-```
-
-## Source
-
-If you have installed onnx on your machine, please `pip uninstall onnx` first before the following process of build from source.
-
-### Linux and MacOS
-You will need an install of Protobuf and NumPy to build ONNX.  One easy
-way to get these dependencies is via
-[Anaconda](https://www.anaconda.com/download/):
-
-```
-# Use conda-forge protobuf, as default doesn't come with protoc
-conda install -c conda-forge protobuf numpy
-```
-
-You can then install ONNX from PyPi (Note: Set environment variable `ONNX_ML=1` for onnx-ml):
-
-```
+pip install numpy protobuf==3.16.0
 pip install onnx
 ```
 
-Alternatively, you can also build and install ONNX locally from source code:
+[Weekly packages](https://test.pypi.org/project/onnx-weekly/) are published in test pypi to enable experimentation and early testing.
 
+
+## Conda packages
+A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
+```
+conda install -c conda-forge numpy protobuf==3.16.0 libprotobuf=3.16.0
+conda install -c conda-forge onnx
+```
+
+You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-dev) for a Linux-based installation without having to worry about dependency versioning.
+
+
+## Build ONNX from Source
+Before building from source uninstall any existing versions of onnx `pip uninstall onnx`.  
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. Specifically on Windows, the version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also let's you control the verison of protobuf. The tested and recommended version is 3.16.0.
+
+Note for Windows : The instructions in this README assume you are using Visual Studio. It is recommended that you run all the commands from a shell started from "Developer Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
 ```
 git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
-python setup.py install
+# prefer lite proto
+set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+pip install -e .
 ```
 
-Note: When installing in a non-Anaconda environment, make sure to install the Protobuf compiler before running the pip installation of onnx. For example, on Ubuntu:
-
-```
-sudo apt-get install protobuf-compiler libprotoc-dev
-pip install onnx
-```
-
-### Windows
-If you are building ONNX from source on Windows, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library.
-
-Note that the instructions in this README assume you are using Visual Studio. It is recommended that you run all the commands from a shell started from "Developer Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent.
-
-#### Build Protobuf and ONNX on Windows
-Step 1: Build Protobuf locally
+### Building Protobuf from source
+* **Windows**
 ```
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v3.11.3
+git checkout v3.16.0
 cd cmake
-# Explicitly set -Dprotobuf_MSVC_STATIC_RUNTIME=OFF to make sure protobuf does not statically link to runtime library
-cmake -G -A -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir>
-# For example:
-# cmake -G "Visual Studio 16 2019" -A x64 -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX=..\install
+cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobug_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=Release
 msbuild INSTALL.vcxproj /p:Configuration=Release
 ```
 
-Step 2: Build ONNX
+* **Linux**
 ```
-# Get ONNX
-git clone https://github.com/onnx/onnx.git
-cd onnx
+git clone https://github.com/protocolbuffers/protobuf.git
+cd protobuf
+git checkout v3.16.0
 git submodule update --init --recursive
+mkdir build_source && cd build_source
+cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+make install
+```
 
-# Set environment variables to find protobuf and turn off static linking of ONNX to runtime library.
-# Even better option is to add it to user\system PATH so this step can be performed only once.
-# For more details check https://docs.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library?view=vs-2017
+* **Mac**
+```
+export NUM_CORES=`sysctl -n hw.ncpu`
+brew update
+brew install autoconf && brew install automake
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz
+tar -xvf protobuf-cpp-3.16.0.tar.gz
+cd protobuf-3.16.0
+mkdir build_source && cd build_source
+cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+make -j${NUM_CORES}
+make install
+```
+
+Once build is successful, update PATH to include protobuf paths. Example on Windows:  
 set PATH=<protobuf_install_dir>\bin;<protobuf_install_dir>\include;<protobuf_install_dir>\libs;%PATH%
-set USE_MSVC_STATIC_RUNTIME=0
 
-# use the static installed protobuf
-set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON
 
-# Optional: Set environment variable `ONNX_ML=1` for onnx-ml
-
-# Build ONNX
-python setup.py install
-```
-
-If you would prefer to use Protobuf from conda-forge instead of building Protobuf from source, you can use the following instructions.
-
-#### Build ONNX on Windows with Anaconda
-
-```
-# Use conda-forge protobuf
-conda install -c conda-forge numpy libprotobuf=3.11.3 protobuf
-
-# Get ONNX
-git clone https://github.com/onnx/onnx.git
-cd onnx
-git submodule update --init --recursive
-
-# Set environment variable for ONNX to use protobuf shared lib
-set USE_MSVC_STATIC_RUNTIME=0
-set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DProtobuf_USE_STATIC_LIBS=OFF -DONNX_USE_LITE_PROTO=ON
-
-# Build ONNX
-# Optional: Set environment variable `ONNX_ML=1` for onnx-ml
-
-python setup.py install
-```
-
-#### Build ONNX on ARM 64
+### Build ONNX on ARM 64
 If you are building ONNX on an ARM 64 device, please make sure to install the dependencies appropriately.
 
 ```
@@ -178,21 +145,33 @@ python -c "import onnx"
 to verify it works.
 
 
-#### Common Errors
-**Environment variables**: `USE_MSVC_STATIC_RUNTIME` (should be 1 or 0, not ON or OFF)
+## Common Build Options
+For full list refer to CMakeLists.txt  
+**Environment variables**  
+* `USE_MSVC_STATIC_RUNTIME` should be 1 or 0, not ON or OFF. When set to 1 onnx links statically to runtime library.  
+**Default**: USE_MSVC_STATIC_RUNTIME=1
 
-**CMake variables**: `ONNX_USE_PROTOBUF_SHARED_LIBS`, `Protobuf_USE_STATIC_LIBS`
+* `DEBUG` should be 0 or 1. When set to 1 onnx is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file][CMakeLists] and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.  
+**Default**: Debug=0
 
-If `ONNX_USE_PROTOBUF_SHARED_LIBS` is ON then `Protobuf_USE_STATIC_LIBS` must be OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.
-If `ONNX_USE_PROTOBUF_SHARED_LIBS` is OFF then `Protobuf_USE_STATIC_LIBS` must be ON and `USE_MSVC_STATIC_RUNTIME` can be 1 or 0.
+**CMake variables**
+* `ONNX_USE_PROTOBUF_SHARED_LIBS` should be ON or OFF.  
+**Default**: ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=1  
+`ONNX_USE_PROTOBUF_SHARED_LIBS` determines how onnx links to protobuf libraries.  
+    - When set to ON - onnx will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/master/cmake/README.md#dlls-vs-static-linking), Protobuf_USE_STATIC_LIBS will be set to OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
+    - When set to OFF - onnx will link statically to protobuf, and Protobuf_USE_STATIC_LIBS will be set to ON (to force the use of the static libraries) and `USE_MSVC_STATIC_RUNTIME` can be 0 or 1.  
 
-Note that the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
+* `ONNX_USE_LITE_PROTO` should be ON or OFF. When set to ON onnx uses lite protobuf instead of full protobuf.  
+**Default**: ONNX_USE_LITE_PROTO=OFF
 
-Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
+* `ONNX_WERROR` should be ON or OFF. When set to ON warnings are treated as errors.  
+**Default**: ONNX_WERROR=OFF in local builds, ON in CI and release pipelines.
 
-If you want to build ONNX on Debug mode, remember to set the environment variable `DEBUG=1`. For debug versions of the dependencies, you need to open the [CMakeLists file][CMakeLists] and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 
-You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-dev) for a Linux-based installation without having to worry about dependency versioning.
+## Common Errors
+* Note: the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
+
+* Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
 
 # Testing
 

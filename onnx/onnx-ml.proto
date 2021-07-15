@@ -101,6 +101,8 @@ enum Version {
   // IR VERSION 8 published on <TBD>
   // Introduce TypeProto.SparseTensor
   // Introduce TypeProto.Optional
+  // Added a list of FunctionProtos local to the model
+  // Deprecated since_version and operator status from FunctionProto
   IR_VERSION = 0x0000000000000008;
 
 }
@@ -392,6 +394,24 @@ message ModelProto {
   //
   // If this field is empty, the training behavior of the model is undefined.
   repeated TrainingInfoProto training_info = 20;
+
+  // A list of function protos local to the model.
+  //
+  // Name of the function "FunctionProto.name" should be unique within the domain "FunctionProto.domain".
+  // In case of any conflicts the behavior (whether the model local functions are given higher priority,
+  // or standard opserator sets are given higher priotity or this is treated as error) is defined by 
+  // the runtimes.
+  // 
+  // The operator sets imported by FunctionProto should be compatible with the ones
+  // imported by ModelProto and other model local FunctionProtos. 
+  // Example, if same operator set say 'A' is imported by a FunctionProto and ModelProto 
+  // or by 2 FunctionProtos then versions for the operator set may be different but, 
+  // the operator schema returned for op_type, domain, version combination
+  // for both the versions should be same for every node in the function body.
+  //
+  // One FunctionProto can reference other FunctionProto in the model, however, recursive reference
+  // is not allowed.
+  repeated FunctionProto functions = 25;
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
@@ -752,6 +772,60 @@ message OperatorSetIdProto {
   // The version of the operator set being identified.
   // This field MUST be present in this version of the IR.
   optional int64 version = 2;
+}
+
+// Operator/function status.
+enum OperatorStatus {
+    EXPERIMENTAL = 0;
+    STABLE = 1;
+}
+
+message FunctionProto {
+  // The name of the function, similar usage of op_type in OperatorProto.
+  // Combined with FunctionProto.domain, this forms the unique identity of
+  // the FunctionProto.
+  optional string name = 1;
+
+  // Deprecated since IR Version 8
+  // optional int64 since_version = 2;
+  reserved 2;
+  reserved "since_version";
+
+  // Deprecated since IR Version 8
+  // optional OperatorStatus status = 3;
+  reserved 3;
+  reserved "status";
+
+  // The inputs and outputs of the function.
+  repeated string input = 4;
+  repeated string output = 5;
+
+  // The attributes of the function.
+  repeated string attribute = 6;
+
+  // The nodes in the function.
+  repeated NodeProto node = 7;
+  // A human-readable documentation for this function. Markdown is allowed.
+  optional string doc_string = 8;
+
+  // The OperatorSets this function body (graph) relies on.
+  //
+  // All nodes in the function body (graph) will bind against the operator
+  // with the same-domain/same-op_type operator with the HIGHEST version
+  // in the referenced operator sets. This means at most one version can be relied
+  // for one domain.
+  // 
+  // The operator sets imported by FunctionProto should be compatible with the ones
+  // imported by ModelProto. Example, if same operator set say 'A' is imported by FunctionProto
+  // and ModelProto then versions for the operator set may be different but, 
+  // the operator schema returned for op_type, domain, version combination
+  // for both the versions should be same.
+
+  repeated OperatorSetIdProto opset_import = 9;
+
+  // The domain which this function belongs to. Combined with FunctionProto.name, this forms the unique identity of
+  // the FunctionProto.
+  optional string domain = 10;
 }
 
 

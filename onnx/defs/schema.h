@@ -20,11 +20,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include "data_type_utils.h"
 #include "onnx/common/common.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
-#include "onnx/onnx-operators_pb.h"
+
 namespace ONNX_NAMESPACE {
 
 struct FunctionBodyBuildContext {
@@ -481,6 +480,7 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(std::string)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TensorProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
 
   // Register "required" attribute without default value.
   OpSchema& Attr(
@@ -735,6 +735,41 @@ class OpSchema final {
     return all_tensor_sequence_types;
   }
 
+  static const std::vector<std::string>& all_optional_types() {
+    static const std::vector<std::string> all_optional_types = {
+        "optional(seq(tensor(uint8)))",
+        "optional(seq(tensor(uint16)))",
+        "optional(seq(tensor(uint32)))",
+        "optional(seq(tensor(uint64)))",
+        "optional(seq(tensor(int8)))",
+        "optional(seq(tensor(int16)))",
+        "optional(seq(tensor(int32)))",
+        "optional(seq(tensor(int64)))",
+        "optional(seq(tensor(float16)))",
+        "optional(seq(tensor(float)))",
+        "optional(seq(tensor(double)))",
+        "optional(seq(tensor(string)))",
+        "optional(seq(tensor(bool)))",
+        "optional(seq(tensor(complex64)))",
+        "optional(seq(tensor(complex128)))",
+        "optional(tensor(uint8))",
+        "optional(tensor(uint16))",
+        "optional(tensor(uint32))",
+        "optional(tensor(uint64))",
+        "optional(tensor(int8))",
+        "optional(tensor(int16))",
+        "optional(tensor(int32))",
+        "optional(tensor(int64))",
+        "optional(tensor(float16))",
+        "optional(tensor(float))",
+        "optional(tensor(double))",
+        "optional(tensor(string))",
+        "optional(tensor(bool))",
+        "optional(tensor(complex64))",
+        "optional(tensor(complex128))"};
+    return all_optional_types;
+  }
+
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
   OpSchema& FillUsing(const std::function<void(OpSchema&)>& populator);
@@ -826,8 +861,7 @@ class OpSchema final {
 
   // Build function with information stored in opschema
   void BuildFunction(
-      FunctionProto& function_body,
-      const std::vector<OperatorSetIdProto>& relied_opsets = {}) const;
+      FunctionProto& function_body) const;
 
  private:
   void ParseAndSetTypes(

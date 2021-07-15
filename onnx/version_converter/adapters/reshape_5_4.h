@@ -60,8 +60,9 @@ class Reshape_5_4 final : public Adapter {
           "No initializer or constant input to Reshape node found");
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_reshape_5_4(graph, node);
+      return node;
     }
 };
 

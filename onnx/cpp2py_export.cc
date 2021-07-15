@@ -6,10 +6,12 @@
 #include <pybind11/stl.h>
 #include <climits>
 #include <limits>
+#include <tuple>
 #include <unordered_map>
 
 #include "onnx/checker.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
@@ -18,6 +20,16 @@
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
 using namespace pybind11::literals;
+
+template <typename ProtoType>
+static std::tuple<bool, py::bytes, py::bytes> Parse(const char* cstr) {
+  ProtoType proto{};
+  OnnxParser parser(cstr);
+  auto status = parser.Parse(proto);
+  std::string out;
+  proto.SerializeToString(&out);
+  return std::make_tuple(status.IsOK(), py::bytes(status.ErrorMessage()), py::bytes(out));
+}
 
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   onnx_cpp2py_export.doc() = "Python interface to onnx";
@@ -147,7 +159,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("TENSORS", AttributeProto::TENSORS)
       .value("GRAPHS", AttributeProto::GRAPHS)
       .value("SPARSE_TENSOR", AttributeProto::SPARSE_TENSOR)
-      .value("SPARSE_TENSORS", AttributeProto::SPARSE_TENSORS);
+      .value("SPARSE_TENSORS", AttributeProto::SPARSE_TENSORS)
+      .value("TYPE_PROTO", AttributeProto::TYPE_PROTO)
+      .value("TYPE_PROTOS", AttributeProto::TYPE_PROTOS);
 
   py::enum_<OpSchema::SupportType>(op_schema, "SupportType")
       .value("COMMON", OpSchema::SupportType::COMMON)
@@ -321,6 +335,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                                      OpSchemaRegistry::Instance(),
                                      strict_mode == true ? 1 : 0);
       });
+
+  // Submodule `parser`
+  auto parser = onnx_cpp2py_export.def_submodule("parser");
+  parser.doc() = "Parser submodule";
+
+  parser.def("parse_model", Parse<ModelProto>);
+  parser.def("parse_graph", Parse<GraphProto>);
 }
 
 } // namespace ONNX_NAMESPACE

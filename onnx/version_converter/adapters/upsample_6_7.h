@@ -31,8 +31,9 @@ struct Upsample_6_7 final: public Adapter {
     node->removeAttribute(height_scale_symbol);
   }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_upsample_6_7(graph, node);
+    return node;
   }
 };
 

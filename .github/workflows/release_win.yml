@@ -23,7 +23,7 @@ jobs:
       uses: actions/checkout@master
       with:
         repository: protocolbuffers/protobuf
-        ref: refs/tags/v3.11.3
+        ref: refs/tags/v3.16.0
         path: ./protobuf_root/protobuf
   
     - name: Checkout Protobuf submodules
@@ -59,7 +59,7 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install numpy==1.16.6 wheel          
+        python -m pip install numpy==1.16.6 wheel
             
     - name: Build ONNX wheel
       run: |        
@@ -73,7 +73,7 @@ jobs:
         mkdir protobuf_install
         cd ./protobuf/cmake
 
-        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -DCMAKE_BUILD_TYPE=Release -Dprotobuf_MSVC_STATIC_RUNTIME=ON -DProtobuf_USE_STATIC_LIBS=ON -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
         msbuild protobuf.sln /m /p:Configuration=Release
         msbuild INSTALL.vcxproj /p:Configuration=Release
         echo "Protobuf installation complete."
@@ -91,7 +91,7 @@ jobs:
         echo "Install ONNX"
         $Env:USE_MSVC_STATIC_RUNTIME=1
         $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON"
+        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly TestPyPI package"

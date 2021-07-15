@@ -236,4 +236,7 @@ class Loop(Base):
         cond = np.array(1).astype(np.bool)
         expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
                name='test_loop13_seq', opset_imports=[onnx.helper.make_opsetid("", 13)],
-               input_types=[onnx.TensorProto.INT64, onnx.TensorProto.BOOL, onnx.TensorProto.FLOAT])
+               input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, trip_count.shape),
+                                  onnx.helper.make_tensor_type_proto(onnx.TensorProto.BOOL, cond.shape),
+                                  onnx.helper.make_sequence_type_proto(
+                                      onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, []))])
