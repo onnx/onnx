@@ -59,7 +59,7 @@ class OneHot(Base):
         )
         indices = np.array([[1, 9],
                             [2, 4]], dtype=np.float32)
-        depth = np.array([10], dtype=np.float32)
+        depth = np.array(10, dtype=np.float32)
         values = np.array([off_value, on_value], dtype=output_type)
         y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
         y = y * (on_value - off_value) + off_value
@@ -79,7 +79,7 @@ class OneHot(Base):
         )
         indices = np.array([0, -7, -8], dtype=np.int64)
 
-        depth = np.array([10], dtype=np.float32)
+        depth = np.array(10, dtype=np.float32)
         values = np.array([off_value, on_value], dtype=output_type)
         y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
         y = y * (on_value - off_value) + off_value
@@ -104,7 +104,7 @@ class OneHot(Base):
         )
         indices = np.array([[1, 9],
                             [2, 4]], dtype=np.float32)
-        depth = np.array([10], dtype=np.float32)
+        depth = np.array(10, dtype=np.float32)
         values = np.array([off_value, on_value], dtype=output_type)
         y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
         y = y * (on_value - off_value) + off_value
