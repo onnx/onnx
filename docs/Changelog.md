@@ -9530,9 +9530,9 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>B</tt> (non-differentiable) : T2</dt>
 <dd>N-dimensional matrix B</dd>
 <dt><tt>a_zero_point</tt> (optional, non-differentiable) : T1</dt>
-<dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements should be equal to the number of rows of input 'A'.</dd>
+<dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or N-D tensor. Scalar refers to per tensor quantization whereas N-D refers or per row quaization. If the input is 2D of shape [M, K] then zero point tensor may be an M element vector [zp_1, zp_2, ..., zp_M]. If the input is N-D tensor with shape [D1, D2, M, K] then zero point tesnor may have shape [D1, D2, M, 1]. </dd>
 <dt><tt>b_zero_point</tt> (optional, non-differentiable) : T2</dt>
-<dd>Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
+<dd>Zero point tensor for input 'B'. It's optional and default value is 0. It could be a scalar or a N-D tensor, Scalar refers to per tensor quantization whereas N-D refers or per col quaization. If the input is 2D of shape [K, N] then zero point tensor may be an N element vector [zp_1, zp_2, ..., zp_N]. If the input is N-D tensor with shape [D1, D2, K, N] then zero point tesnor may have shape [D1, D2, 1, N]. </dd>
 </dl>
 
 #### Outputs
@@ -9806,12 +9806,15 @@ This version of the operator has been available since version 10 of the default 
 ### <a name="QLinearMatMul-10"></a>**QLinearMatMul-10**</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
-  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, and computes the quantized output.
-  The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it is rounding to nearest ties to even.
-  Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
-  They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
-  the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
-  and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
+  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, 
+  and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point). 
+  For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 
+  Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor 
+  (per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers or per row 
+  or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be 
+  an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K] 
+  for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tesnor may 
+  have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
   Production must never overflow, and accumulation may overflow if and only if in 32 bits.
 
 #### Version
