@@ -2513,7 +2513,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "a_zero_point",
             "Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or N-D tensor. "
-            "Scalar refers to per tensor quantization whereas N-D refers to per row quaization. "
+            "Scalar refers to per tensor quantization whereas N-D refers to per row quantization. "
             "If the input is 2D of shape [M, K] then zero point tensor may be an M element vector [zp_1, zp_2, ..., zp_M]. "
             "If the input is N-D tensor with shape [D1, D2, M, K] then zero point tensor may have shape [D1, D2, M, 1]. ",
             "T1",
@@ -2525,7 +2525,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "b_zero_point",
             "Zero point tensor for input 'B'. It's optional and default value is 0. It could be a scalar or a N-D tensor, "
-            "Scalar refers to per tensor quantization whereas N-D refers to per col quaization. "
+            "Scalar refers to per tensor quantization whereas N-D refers to per col quantization. "
             "If the input is 2D of shape [K, N] then zero point tensor may be an N element vector [zp_1, zp_2, ..., zp_N]. "
             "If the input is N-D tensor with shape [D1, D2, K, N] then zero point tensor may have shape [D1, D2, 1, N]. ",
             "T2",
