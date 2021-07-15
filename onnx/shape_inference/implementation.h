@@ -246,9 +246,8 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       NodeProto& n,
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
       const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
-      std::unordered_map<std::string, TensorShapeProto>& generatedShapeData,
-      const GraphInferenceContext* graphInferenceContext = nullptr)
-      : generatedShapeData_{generatedShapeData}, graphInferenceContext_{graphInferenceContext} {
+      std::unordered_map<std::string, TensorShapeProto>& generatedShapeData)
+      : generatedShapeData_{generatedShapeData} {
 
     for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
@@ -318,7 +317,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
   // Convert integer vector into TensorShapeProto
   template <typename INTEGER>
-  TensorShapeProto vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals, TensorShapeProto& converted_tsp) const {
+  void vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals, TensorShapeProto& converted_tsp) const {
     for (unsigned int i = 0; i < input_vals.size(); ++i) {
       converted_tsp.mutable_dim()->Add()->set_dim_value(input_vals[i]);
     }
@@ -376,7 +375,6 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
   std::unordered_map<std::string, TensorShapeProto>& generatedShapeData_;
-  const GraphInferenceContext* graphInferenceContext_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;  
 };
