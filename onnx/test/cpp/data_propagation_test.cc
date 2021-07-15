@@ -155,8 +155,6 @@ TEST(DataPropagationImplTest, ShapeTest) {
   *subgraph.add_input() = graph_input;
   *subgraph.add_node() = shape_node;
   *subgraph.add_node() = final_node;
-  std::unordered_map<std::string, int> opset_imports;
-  opset_imports[ONNX_DOMAIN] = domain_version;
 
   std::vector<const TypeProto*> subgraphInputTypes = {&simpleTensor};
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
