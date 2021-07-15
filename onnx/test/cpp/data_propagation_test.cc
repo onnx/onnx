@@ -94,14 +94,7 @@ void TestPropagateShapeDataFromInputToOutput(std::string opsetName) {
   *subgraph.add_node() = shape_node;
   *subgraph.add_node() = tested_node;
   *subgraph.add_node() = final_node;
-  std::unordered_map<std::string, int> opset_imports;
-  opset_imports[ONNX_DOMAIN] = domain_version;
 
-  const std::unordered_map<std::string, TypeProto*> outer_scope_value_types;
-  SymbolTableImpl symbolTable;
-  symbolTable.addFromGraph(subgraph);
-  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, symbolTable);
-  GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
   std::vector<const TypeProto*> subgraphInputTypes = {&simpleTensor};
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   valueTypesByName[shape_input_name] = &simpleTensor;
@@ -110,7 +103,7 @@ void TestPropagateShapeDataFromInputToOutput(std::string opsetName) {
   const TensorShapeProto* propagatedShape;
   for (auto n: subgraph.node()) {
     DataPropagationContextImpl dataPropagationCtx(
-        n, valueTypesByName, {}, generatedShapeDataByName, &graphInfCtx);
+        n, valueTypesByName, {}, generatedShapeDataByName);
     const auto schema = schemaRegistry->GetSchema(n.op_type(), domain_version, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
@@ -165,11 +158,6 @@ TEST(DataPropagationImplTest, ShapeTest) {
   std::unordered_map<std::string, int> opset_imports;
   opset_imports[ONNX_DOMAIN] = domain_version;
 
-  const std::unordered_map<std::string, TypeProto*> outer_scope_value_types;
-  SymbolTableImpl symbolTable;
-  symbolTable.addFromGraph(subgraph);
-  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, symbolTable);
-  GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
   std::vector<const TypeProto*> subgraphInputTypes = {&simpleTensor};
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   valueTypesByName[shape_input_name] = &simpleTensor;
@@ -178,7 +166,7 @@ TEST(DataPropagationImplTest, ShapeTest) {
   const TensorShapeProto* propagatedShape;
   for (auto n: subgraph.node()) {
     DataPropagationContextImpl dataPropagationCtx(
-        n, valueTypesByName, {}, generatedShapeDataByName, &graphInfCtx);
+        n, valueTypesByName, {}, generatedShapeDataByName);
     const auto schema = schemaRegistry->GetSchema(n.op_type(), domain_version, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);

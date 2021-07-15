@@ -437,7 +437,7 @@ static void InferShapesImpl(
         mergeShapesAndTypes(*inferredType, existingType);
         if (options.enable_data_propagation && schema->has_data_propagation_function()) {
           DataPropagationContextImpl dataPropagationCtx(
-              n, valueTypesByName, inputDataByName, generatedShapeDataByName, &graphInferenceContext);
+              n, valueTypesByName, inputDataByName, generatedShapeDataByName);
           schema->GetDataPropagationFunction()(dataPropagationCtx);
         }
         // Make merged info available to further inference.

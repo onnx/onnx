@@ -318,12 +318,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
   // Convert integer vector into TensorShapeProto
   template <typename INTEGER>
-  TensorShapeProto vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals) const {
-    TensorShapeProto converted_tsp;
+  TensorShapeProto vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals, TensorShapeProto& converted_tsp) const {
     for (unsigned int i = 0; i < input_vals.size(); ++i) {
       converted_tsp.mutable_dim()->Add()->set_dim_value(input_vals[i]);
     }
-    return converted_tsp;
   }
 
   const TensorShapeProto* getInputData(size_t index) override {
@@ -345,9 +343,9 @@ struct DataPropagationContextImpl : public DataPropagationContext {
         TensorShapeProto tsp;
 
         if (input_data->data_type() == TensorProto_DataType_INT64) {
-          tsp = vectorToTensorShapeProto(ParseData<int64_t>(input_data));
+          vectorToTensorShapeProto(ParseData<int64_t>(input_data), tsp);
         } else if (input_data->data_type() == TensorProto_DataType_INT32) {
-          tsp = vectorToTensorShapeProto(ParseData<int32_t>(input_data));
+          vectorToTensorShapeProto(ParseData<int32_t>(input_data), tsp);
         } else {
           // Only supports integer type to form a shape
           return nullptr;
