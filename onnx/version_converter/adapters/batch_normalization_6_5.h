@@ -20,8 +20,9 @@ class BatchNormalization_6_5 final : public Adapter {
       node->is_(kconsumed_inputs, {0, 0});
     }
 
-     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+     Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_batch_normalization_6_5(graph, node);
+      return node;
     }
 };
 
