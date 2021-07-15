@@ -2521,15 +2521,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* GridSampler_ver15_doc = R"DOC(
-The GridSampler operator is often used in conjunction with affine_grid doing Grid generator
-and Sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
+Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
+Currently, only spatial (4-D) inputs are supported. For `input` with shap (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
+the `output` will have shape (N, C, H_out, W_out).
+For each output location `output[n, :, h, w]`, the size-2 vector `grid[n, h, w]` specifies `input` pixel locations `x` and `y`,
+which are used to interpolate the output value `output[n, :, h, w]`.
 
-Given an input and a flow-field grid, computes the output using input values and pixel locations from grid.
-Currently, only spatial (4-D) input are supported.
-For each output location output[n, :, h, w], the size-2 vector grid[n, h, w] specifies input pixel locations x and y,
-which are used to interpolate the output value output[n, :, h, w].
+The GridSampler operator is often used in conjunction with affine_grid doing grid generator
+and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
 
-See also in [torch-nn-functional-grid-sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
+See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2543,9 +2544,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("bilinear"))
         .Attr(
             "padding_mode",
-            "Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`"
-            "zeros: use 0 for out-of-bound grid locations"
-            "border: use border values for out-of-bound grid locations"
+            "Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. "
+            "zeros: use 0 for out-of-bound grid locations, "
+            "border: use border values for out-of-bound grid locations, "
             "reflection: use values at locations reflected by the border for out-of-bound grid locations.",
             AttributeProto::STRING,
             std::string("zeros"))
@@ -2558,8 +2559,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "X",
-            "4-D tensor of shape (N, C, H, W),"
-            "where N is the batch size, C is the numbers of channels,"
+            "4-D tensor of shape (N, C, H, W), "
+            "where N is the batch size, C is the numbers of channels, "
             "H and W are the height and width of the input data.",
             "T1",
             OpSchema::Single,
@@ -2569,10 +2570,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "grid",
-            "Input offset, 4-D tensor of shape (N, H_out, W_out, 2),"
-            "where H_out and W_out are the height and width of grid and output,"
-            "Grid specifies the sampling pixel locations normalized by the input spatial dimensions."
-            "Therefore, it should have most values in the range of [-1, 1]."
+            "Input offset, 4-D tensor of shape (N, H_out, W_out, 2), "
+            "where H_out and W_out are the height and width of grid and output, "
+            "Grid specifies the sampling pixel locations normalized by the input spatial dimensions. "
+            "Therefore, it should have most values in the range of [-1, 1]. "
             "If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.",
             "T1",
             OpSchema::Single,
@@ -2591,11 +2592,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             OpSchema::all_tensor_types(),
-            "Constrain input 'X' and 'grid' to all tensor types.")
+            "Constrain input types to all tensor types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain types to float tensors.")
+            "Constrain output types to float tensors.")
         .SetDoc(GridSampler_ver15_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);

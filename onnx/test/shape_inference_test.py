@@ -3760,7 +3760,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (None, None))])  # type: ignore
 
-    def test_gridsampler(self):   # type: () -> None
+    def test_gridsampler(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1, 1, 3, 3)),
              ('grid', TensorProto.INT64, (1, 3, 3, 2))],
@@ -3770,7 +3770,7 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 3, 3))])  # type: ignore
 
-    def test_gridsampler_defaults(self):   # type: () -> None
+    def test_gridsampler_defaults(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
              ('grid', TensorProto.FLOAT, ('N', 'H_out', 'W_out', 2))],
@@ -3780,7 +3780,7 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, ('N', 'C', 'H_out', 'W_out'))])  # type: ignore
 
-    def test_gridsampler_no_dim(self):   # type: () -> None
+    def test_gridsampler_no_dim(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, ('N', 'C', None, None)),
              ('grid', TensorProto.FLOAT, ('N', None, None, 2))],

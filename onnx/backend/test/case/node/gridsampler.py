@@ -20,9 +20,9 @@ class GridSampler(Base):
             'GridSampler',
             inputs=['X', 'Grid'],
             outputs=['Y'],
-            mode='nearest',
-            padding_mode='border',
-            align_corners=1,
+            mode='bilinear',
+            padding_mode='zeros',
+            align_corners=0,
         )
         # X shape, [N, C, H, W] - [1, 1, 4, 4]
         X = np.array(
@@ -111,7 +111,7 @@ class GridSampler(Base):
             dtype=np.float32,
         )
         expect(node, inputs=[X, Grid], outputs=[Y],
-               name='export_gridsampler')
+               name='test_gridsampler')
 
     @staticmethod
     def export_gridsampler_paddingmode():  # type: () -> None
@@ -134,7 +134,7 @@ class GridSampler(Base):
                 [
                     [
                         [-10.0000, -10.0000],
-                        [-0.5000, -0.5000],
+                        [-5.0000, -5.0000],
                         [-0.2000, -0.2000],
                         [10.0000, 10.0000]
                     ],
@@ -142,7 +142,7 @@ class GridSampler(Base):
                     [
                         [10.0000, 10.0000],
                         [-0.2000, -0.2000],
-                        [0.5000, 0.5000],
+                        [5.0000, 5.0000],
                         [10.0000, 10.0000]
                     ]
                 ]
@@ -171,7 +171,7 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_zeros],
-               name='export_gridsampler_zeros_padding')
+               name='test_gridsampler_zeros_padding')
 
         # setting padding_mode = 'border'
         node = onnx.helper.make_node(
@@ -185,7 +185,7 @@ class GridSampler(Base):
             [
                 [
                     [
-                        [0.0000, 0.0000, 1.7000, 5.0000],
+                        [5.0000, 0.0000, 1.7000, 5.0000],
                         [5.0000, 1.7000, 5.0000, 5.0000]
                     ]
                 ]
@@ -194,8 +194,8 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_border],
-               name='export_gridsampler_border_padding')
-        
+               name='test_gridsampler_border_padding')
+
         # setting padding_mode = 'reflection'
         node = onnx.helper.make_node(
             'GridSampler',
@@ -217,6 +217,134 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_reflection],
-               name='export_gridsampler_reflection_padding')
+               name='test_gridsampler_reflection_padding')
 
+    @staticmethod
+    def export_gridsampler_mode_aligncorners():  # type: () -> None
+        # X shape, [N, C, H, W] - [1, 1, 3, 2]
+        X = np.array(
+            [
+                [
+                    [
+                        [0., 1.],
+                        [2., 3.],
+                        [4., 5.]
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+        # Grid shape, [N, H_out, W_out, 2] - [1, 2, 4, 2]
+        Grid = np.array(
+            [
+                [
+                    [
+                        [-1.0000, -1.0000],
+                        [-0.5000, -0.5000],
+                        [-0.2000, -0.2000],
+                        [0.0000, 0.0000]
+                    ],
 
+                    [
+                        [0.0000, 0.0000],
+                        [-0.2000, -0.2000],
+                        [0.5000, 0.5000],
+                        [1.0000, 1.0000]
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        # setting mode = 'bilinear', default align_corners = 0
+        node = onnx.helper.make_node(
+            'GridSampler',
+            inputs=['X', 'Grid'],
+            outputs=['Y'],
+            mode='bilinear',
+        )
+        # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+        Y_bilinear = np.array(
+            [
+                [
+                    [
+                        [0.0000, 0.5000, 1.7000, 2.5000],
+                        [2.5000, 1.7000, 4.5000, 1.2500]
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        expect(node, inputs=[X, Grid], outputs=[Y_bilinear],
+               name='test_gridsampler_bilinear')
+
+        # setting mode = 'bilinear', align_corners = 1
+        node = onnx.helper.make_node(
+            'GridSampler',
+            inputs=['X', 'Grid'],
+            outputs=['Y'],
+            mode='bilinear',
+            align_corners=1,
+        )
+        # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+        Y_align_corners = np.array(
+            [
+                [
+                    [
+                        [0.0000, 1.2500, 2.0000, 2.5000],
+                        [2.5000, 2.0000, 3.7500, 5.0000]
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        expect(node, inputs=[X, Grid], outputs=[Y_align_corners],
+               name='test_gridsampler_aligncorners_true')
+
+        # setting mode = 'nearest'
+        node = onnx.helper.make_node(
+            'GridSampler',
+            inputs=['X', 'Grid'],
+            outputs=['Y'],
+            mode='nearest',
+        )
+        # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+        Y_nearest = np.array(
+            [
+                [
+                    [
+                        [0., 0., 2., 2.],
+                        [2., 2., 5., 0.]
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        expect(node, inputs=[X, Grid], outputs=[Y_nearest],
+               name='test_gridsampler_nearest')
+
+        # setting mode = 'bicubic'
+        node = onnx.helper.make_node(
+            'GridSampler',
+            inputs=['X', 'Grid'],
+            outputs=['Y'],
+            mode='bicubic',
+        )
+        # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+        Y_bicubic = np.array(
+            [
+                [
+                    [
+                        [-0.1406, 0.3828, 1.7556, 2.9688],
+                        [2.9688, 1.7556, 5.1445, 1.3906]
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        expect(node, inputs=[X, Grid], outputs=[Y_bicubic],
+               name='test_gridsampler_bicubic')

@@ -1,8 +1,8 @@
-backend-test:±
+backend-test:¯
 3
 X
 GridY"GridSampler*
-padding_mode"zeros  export_gridsampler_zeros_paddingZ
+padding_mode"zeros test_gridsampler_zeros_paddingZ
 X
 
 
