@@ -248,15 +248,6 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
       std::unordered_map<std::string, TensorShapeProto>& generatedShapeData)
       : generatedShapeData_{generatedShapeData} {
-
-    for (auto& attr : *n.mutable_attribute()) {
-      attributesByName_[attr.name()] = &attr;
-      if (attr.has_g()) {
-        // need a mutable GraphProto to run inferencing on this attribute
-        graphProtoAttributesByName_[attr.name()] = attr.mutable_g();
-      }
-    }
-
     size_t input_idx = 0;
     for (const auto& input : n.input()) {
       inputIndexToNameMap_.insert({input_idx++, input});
@@ -376,7 +367,6 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::vector<TypeProto> allOutputTypes_;
   std::unordered_map<std::string, TensorShapeProto>& generatedShapeData_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
-  std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;  
 };
 
 void checkShapesAndTypes(
