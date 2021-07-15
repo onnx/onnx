@@ -84,8 +84,9 @@ struct Upsample_9_8 final : public Adapter {
       ONNX_ASSERTM(false, "Unsuppported conversion due to unavailable input: scale");
   }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_upsample_9_8(graph, node);
+    return node;
   }
 };
 

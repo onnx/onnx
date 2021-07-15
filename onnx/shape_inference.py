@@ -24,7 +24,7 @@ graph, that means that the provided values are invalid (or there is a
 bug in shape inference), and the result is unspecified.
 
 Arguments:
-    input (Union[ModelProto, Text, bytes], Text, bool) -> ModelProto
+    input (Union[ModelProto, Text, bytes], bool, bool) -> ModelProto
 
 Return:
     return (ModelProto) model with inferred shape information

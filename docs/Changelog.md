@@ -19466,6 +19466,102 @@ This version of the operator has been available since version 14 of the default 
 </dl>
 
 ## Version 15 of the default ONNX operator set
+### <a name="BatchNormalization-15"></a>**BatchNormalization-15**</a>
+
+  Carries out batch normalization as described in the paper
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  There are five required inputs 'X', 'scale', 'B', 'input_mean' and
+  'input_var'.
+  Note that 'input_mean' and 'input_var' are expected to be the estimated
+  statistics in inference mode (training_mode=False, default),
+  and the running statistics in training mode (training_mode=True).
+  There are multiple cases for the number of outputs, which we list below:
+  
+  Output case #1: Y, running_mean, running_var (training_mode=True)
+  Output case #2: Y (training_mode=False)
+  
+  When training_mode=False, extra outputs are invalid.
+  The outputs are updated as follows when training_mode=True:
+  ```
+  running_mean = input_mean * momentum + current_mean * (1 - momentum)
+  running_var = input_var * momentum + current_var * (1 - momentum)
+  
+  Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+  
+  where:
+  
+  current_mean = ReduceMean(X, axis=all_except_channel_index)
+  current_var =  ReduceVar(X, axis=all_except_channel_index)
+  
+  Notice that ReduceVar refers to the population variance, and it equals to
+  sum(sqrd(x_i - x_avg)) / N
+  where N is the population size (this formula does not use sample size N - 1).
+  
+  ```
+  
+  The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
+  
+  When training_mode=False:
+  ```
+  Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
+  ```
+  
+  For previous (depreciated) non-spatial cases, implementors are suggested
+  to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
+<dt><tt>training_mode</tt> : int (default is 0)</dt>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dt><tt>scale</tt> (differentiable) : T1</dt>
+<dd>Scale tensor of shape (C).</dd>
+<dt><tt>B</tt> (differentiable) : T1</dt>
+<dd>Bias tensor of shape (C).</dd>
+<dt><tt>input_mean</tt> (differentiable) : T2</dt>
+<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
+<dt><tt>input_var</tt> (differentiable) : T2</dt>
+<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
+</dl>
+
+#### Outputs (1 - 3)
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>The output tensor of the same shape as X</dd>
+<dt><tt>running_mean</tt> (optional, non-differentiable) : T2</dt>
+<dd>The running mean after the BatchNormalization operator.</dd>
+<dt><tt>running_var</tt> (optional, non-differentiable) : T2</dt>
+<dd>The running variance after the BatchNormalization operator. This op uses the population size (N) for calculating variance, and not the sample size N-1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain scale and bias types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain mean and variance types to float tensors.</dd>
+</dl>
+
 ### <a name="Bernoulli-15"></a>**Bernoulli-15**</a>
 
   Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
@@ -19509,6 +19605,143 @@ This version of the operator has been available since version 15 of the default 
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bool)</dt>
 <dd>Constrain output types to all numeric tensors and bool tensors.</dd>
+</dl>
+
+### <a name="CastLike-15"></a>**CastLike-15**</a>
+
+  The operator casts the elements of a given input tensor (the first input) to
+  the same data type as the elements of the second input tensor.
+  See documentation of the Cast operator for further details.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T1</dt>
+<dd>Input tensor to be cast.</dd>
+<dt><tt>target_type</tt> (non-differentiable) : T2</dt>
+<dd>The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T2</dt>
+<dd>Output tensor produced by casting the first input tensor to have the same type as the second input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
+</dl>
+
+### <a name="Optional-15"></a>**Optional-15**</a>
+
+  Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
+  or a non-empty value containing the input element.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>type</tt> : type_proto</dt>
+<dd>Type of the element in the optional output</dd>
+</dl>
+
+#### Inputs (0 - 1)
+
+<dl>
+<dt><tt>input</tt> (optional) : V</dt>
+<dd>The input element.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : O</dt>
+<dd>The optional output enclosing the input element.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrains input type to all tensor and sequence types.</dd>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrains output type to all optional tensor or optional sequence types.</dd>
+</dl>
+
+### <a name="OptionalGetElement-15"></a>**OptionalGetElement-15**</a>
+
+  Outputs the element in the optional-type input. It is an error if the input value does not have an element
+  and the behavior is undefined in this case.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : O</dt>
+<dd>The optional input.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : V</dt>
+<dd>Output element in the optional input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output type to all tensor or sequence types.</dd>
+</dl>
+
+### <a name="OptionalHasElement-15"></a>**OptionalHasElement-15**</a>
+
+  Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : O</dt>
+<dd>The optional input.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : B</dt>
+<dd>A scalar boolean tensor. If true, it indicates that optional-type input contains an element. Otherwise, it is empty.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrains output to a boolean tensor.</dd>
 </dl>
 
 ### <a name="Pow-15"></a>**Pow-15**</a>

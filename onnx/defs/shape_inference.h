@@ -13,6 +13,16 @@ namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
 
+// Maintains a SymbolTable for symbolic shape inference
+class SymbolTable {
+ public:
+    // Adds existing symbols from a main graph or subgraph
+    virtual void addFromGraph(const GraphProto& g) = 0;
+    // Creates a new symbol which is not duplicate as any existing one
+    virtual std::string createNew(const std::string& symbol_prefix) = 0;
+    virtual ~SymbolTable() = default;
+};
+
 class GraphInferencer {
  public:
   // Perform inferencing on the graph contained in GraphInferencer.
