@@ -32,16 +32,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
-    - name: Install dependencies
-      shell: bash
-      run: |
-        set -e
-        python -m pip install -q --upgrade pip
-        # Install protobuf 3.11.3 due to compatibility
-        wget https://raw.githubusercontent.com/Homebrew/homebrew-core/66613cae31ad29ac4b1af532220aeb9e11d9672f/Formula/protobuf.rb
-        brew install protobuf.rb
-        python -m pip install -q -r requirements-release.txt
-
     - name: Install protobuf dependencies
       run: |
         # Install protobuf 3.16.0 due to compatibility
@@ -60,7 +50,14 @@ jobs:
         make install
         export PATH=$(pwd)/bin:$PATH
         cd $ONNX_PATH
-         
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        set -e
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements-release.txt
+
     - name: Build, install and test ONNX
       shell: bash
       run: |

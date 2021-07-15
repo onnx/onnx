@@ -46,7 +46,7 @@ $PIP_COMMAND --upgrade pip
 # Install Python dependency
 if [ "$PLAT" == "manylinux2010_i686" ]; then
     # pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
-    $PIP_COMMAND numpy==1.16.6 protobuf==3.11.3 || { echo "Installing Python requirements failed."; exit 1; }
+    $PIP_COMMAND numpy==1.16.6 protobuf==3.16.0 || { echo "Installing Python requirements failed."; exit 1; }
 else
     $PIP_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 fi
