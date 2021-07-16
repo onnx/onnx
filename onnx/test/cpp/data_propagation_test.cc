@@ -38,14 +38,14 @@ inline bool CompareShape(const TensorShapeProto* A, const TensorShapeProto* B) {
 }
 
 bool RunDataPropagation(const char* graphCode, int domain_version = 15) {
-  // Parse the graph from graphCode
+  // Parses the graph from graphCode
   GraphProto graph;
   OnnxParser parser(graphCode);
   auto status = parser.Parse(graph);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
 
-  // Construct name to TypeProto map from value_info, input, output
+  // Constructs name to TypeProto map from value_info, input, output
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   for (auto& vi : *graph.mutable_value_info()) {
     if (vi.has_type()) {
@@ -63,13 +63,26 @@ bool RunDataPropagation(const char* graphCode, int domain_version = 15) {
     }
   }
 
-  // Construct name to TensorProto map from initializer
+  // Constructs name to TensorProto map from initializer
   std::unordered_map<std::string, const TensorProto*> inputDataByName;
   for (const auto& tp : graph.initializer()) {
     inputDataByName[tp.name()] = &tp;
   }
+  // Collects data from constant nodes
+  for (const auto& n : graph.node()) {
+    if (n.op_type() != "Constant" || n.output().size() != 1) {
+      continue;
+    }
+    for (const auto& attr : n.attribute()) {
+      if (attr.name() == "value") {
+        if (attr.type() == AttributeProto::TENSOR && attr.has_t()) {
+          inputDataByName[n.output(0)] = &attr.t();
+        }
+      }
+    }
+  }
 
-  // Run data propagation on each node
+  // Runs data propagation on each node
   std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
   auto* schemaRegistry = OpSchemaRegistry::Instance();
   const TensorShapeProto* propagatedShape;
