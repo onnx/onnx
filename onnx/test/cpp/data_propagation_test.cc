@@ -87,6 +87,10 @@ void RunDataPropagationTest(const char* graphCode, int domain_version = 15) {
   auto* schemaRegistry = OpSchemaRegistry::Instance();
   const TensorShapeProto* propagatedShape;
   for (auto n: graph.node()) {
+    // No need to run data propagation on Constant
+    if (n.op_type() == "Constant") {
+      continue;
+    }
     DataPropagationContextImpl dataPropagationCtx(
         n, valueTypesByName, inputDataByName, generatedShapeDataByName);
     const auto schema = schemaRegistry->GetSchema(n.op_type(), domain_version, n.domain());
@@ -103,10 +107,10 @@ void RunDataPropagationTest(const char* graphCode, int domain_version = 15) {
 
 TEST(DataPropagationImplTest, ShapeTest) {
   const char* code = R"ONNX(
-agraph (int32[7,4,1] x) => (int32[7,4,1] z)
+agraph (int32[7,4,1] x) => (int32[7,4,1] y)
 {
-    y = Shape(x)
-    z = Cast<to = 7>(y)
+    xs = Shape(x)
+    y = Cast<to = 7>(xs)
 }
 )ONNX";
   RunDataPropagationTest(code);
@@ -114,10 +118,10 @@ agraph (int32[7,4,1] x) => (int32[7,4,1] z)
 
 TEST(DataPropagationImplTest, CastTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[2,5] z)
+agraph (int32[2,5] x) => (int32[2,5] y)
 {
-    y = Shape(x)
-    z = Cast<to = 7>(y)
+    xs = Shape(x)
+    y = Cast<to = 7>(xs)
 }
 )ONNX";
   RunDataPropagationTest(code);
@@ -125,11 +129,11 @@ agraph (int32[2,5] x) => (int32[2,5] z)
 
 TEST(DataPropagationImplTest, SqueezeTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[2,5] w)
+agraph (int32[2,5] x) => (int32[2,5] z)
 {
-    y = Shape(x)
-    z = Squeeze(y)
-    w = Cast<to = 7>(z)
+    xs = Shape(x)
+    y = Squeeze(xs)
+    z = Cast<to = 7>(y)
 }
 )ONNX";
   RunDataPropagationTest(code);
@@ -137,11 +141,12 @@ agraph (int32[2,5] x) => (int32[2,5] w)
 
 TEST(DataPropagationImplTest, UnsqueezeTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x, int32[1] y) => (int32[2,5] t)
+agraph (int32[2,5] x) => (int32[2,5] w)
 {
-    z = Shape(x)
-    w = Unsqueeze(z, y)
-    t = Cast<to = 7>(w)
+    xs = Shape(x)
+    y = Constant<value = int64[1] {1}>()
+    z = Unsqueeze(xs, y)
+    w = Cast<to = 7>(z)
 }
 )ONNX";
   RunDataPropagationTest(code);
