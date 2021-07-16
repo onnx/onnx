@@ -5,6 +5,7 @@
 #include <iostream>
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
+#include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx_pb.h"
@@ -36,154 +37,105 @@ inline bool CompareShape(const TensorShapeProto* A, const TensorShapeProto* B) {
     return true;
 }
 
-void TestPropagateShapeDataFromInputToOutput(std::string opsetName) {
-  auto* schemaRegistry = OpSchemaRegistry::Instance();
-  GraphProto subgraph;
-  // simple tensor with shape info
-  TypeProto simpleTensor;
-  int domain_version = 15;
-  simpleTensor.mutable_tensor_type()->set_elem_type(TensorProto_DataType_FLOAT);
-  simpleTensor.mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(7);
-  simpleTensor.mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(4);
-  simpleTensor.mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(1);
-  const auto simpleShape = simpleTensor.tensor_type().shape();
+bool RunDataPropagation(const char* graphCode, int domain_version = 15) {
+  // Parse the graph from graphCode
+  GraphProto graph;
+  OnnxParser parser(graphCode);
+  auto status = parser.Parse(graph);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
 
-  std::string shape_input_name = "shape_input";
-  std::string shape_output_name = "shape_output";
-  std::string tested_output_name  = "tested_output";
-  std::string output_name = "output";
-
-  // Constructs Shape node
-  NodeProto shape_node;
-  shape_node.set_name("shape");
-  shape_node.set_domain(ONNX_DOMAIN);
-  shape_node.set_op_type("Shape");
-  shape_node.add_input(shape_input_name);
-  shape_node.add_output(shape_output_name);
-
-  // Constructs tested intermediate node
-
-  NodeProto tested_node;
-  tested_node.set_name(opsetName);
-  tested_node.set_op_type(opsetName);
-  tested_node.set_domain(ONNX_DOMAIN);
-  tested_node.add_input(shape_output_name);
-  tested_node.add_output(tested_output_name);
-  if (opsetName == "Unsqueeze") {
-     // add a dummy input for axes
-    tested_node.add_input("axes");
-  }    
-  
-  // Constructs final node to get output data from previous node
-  NodeProto final_node;
-  final_node.set_name("cast");
-  final_node.set_op_type("Cast");
-  final_node.set_domain(ONNX_DOMAIN);
-  final_node.add_input(tested_output_name);
-  final_node.add_output(output_name);
-  AttributeProto* to = final_node.add_attribute();
-  to->set_name("to");
-  to->set_type(AttributeProto::INT);
-  to->set_i(1);
-
-  // Constructs graph
-  ValueInfoProto graph_input;  
-  graph_input.set_name(shape_input_name);
-  *graph_input.mutable_type() = simpleTensor;
-  *subgraph.add_input() = graph_input;
-  *subgraph.add_node() = shape_node;
-  *subgraph.add_node() = tested_node;
-  *subgraph.add_node() = final_node;
-
-  std::vector<const TypeProto*> subgraphInputTypes = {&simpleTensor};
+  // Construct name to TypeProto map from value_info, input, output
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
-  valueTypesByName[shape_input_name] = &simpleTensor;
-  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
+  for (auto& vi : *graph.mutable_value_info()) {
+    if (vi.has_type()) {
+      valueTypesByName[vi.name()] = vi.mutable_type();
+    }
+  }
+  for (auto& vi : *graph.mutable_input()) {
+    if (vi.has_type()) {
+      valueTypesByName[vi.name()] = vi.mutable_type();
+    }
+  }
+  for (auto& vi : *graph.mutable_output()) {
+    if (vi.has_type()) {
+      valueTypesByName[vi.name()] = vi.mutable_type();
+    }
+  }
 
+  // Construct name to TensorProto map from initializer
+  std::unordered_map<std::string, const TensorProto*> inputDataByName;
+  for (const auto& tp : graph.initializer()) {
+    inputDataByName[tp.name()] = &tp;
+  }
+
+  // Run data propagation on each node
+  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
+  auto* schemaRegistry = OpSchemaRegistry::Instance();
   const TensorShapeProto* propagatedShape;
-  for (auto n: subgraph.node()) {
+  for (auto n: graph.node()) {
     DataPropagationContextImpl dataPropagationCtx(
-        n, valueTypesByName, {}, generatedShapeDataByName);
+        n, valueTypesByName, inputDataByName, generatedShapeDataByName);
     const auto schema = schemaRegistry->GetSchema(n.op_type(), domain_version, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
     propagatedShape = dataPropagationCtx.getInputData(0);
   }
-  // Expects the input data of final_node (from the output of tested_node)
-  EXPECT_TRUE(CompareShape(propagatedShape, &simpleShape));
+  // Expects the input data of final node (from the output of previous node)
+  // is same as the given output shape
+  auto* outputShape = graph.mutable_output(0)
+    ->mutable_type()->mutable_tensor_type()->mutable_shape();
+  return CompareShape(propagatedShape, outputShape);
 }
 
 TEST(DataPropagationImplTest, ShapeTest) {
-  auto* schemaRegistry = OpSchemaRegistry::Instance();
-  GraphProto subgraph;
-  // simple tensor with shape info
-  TypeProto simpleTensor;
-  int domain_version = 15;
-  simpleTensor.mutable_tensor_type()->set_elem_type(TensorProto_DataType_FLOAT);
-  simpleTensor.mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(2);
-  simpleTensor.mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(5);
-  const auto simpleShape = simpleTensor.tensor_type().shape();
-
-  std::string shape_input_name = "shape_input";
-  std::string shape_output_name = "shape_output";
-  std::string output_name = "output";
-
-  // Constructs Shape node
-  NodeProto shape_node;
-  shape_node.set_name("shape");
-  shape_node.set_domain(ONNX_DOMAIN);
-  shape_node.set_op_type("Shape");
-  shape_node.add_input(shape_input_name);
-  shape_node.add_output(shape_output_name);
-
-  // Constructs final node to get GeneratedShapeData from previous node
-  NodeProto final_node;
-  final_node.set_name("cast");
-  final_node.set_op_type("Cast");
-  final_node.set_domain(ONNX_DOMAIN);
-  final_node.add_input(shape_output_name);
-  final_node.add_output(output_name);
-  AttributeProto* to = final_node.add_attribute();
-  to->set_name("to");
-  to->set_type(AttributeProto::INT);
-  to->set_i(1);
-  
-  // Constructs graph
-  ValueInfoProto graph_input;  
-  graph_input.set_name(shape_input_name);
-  *graph_input.mutable_type() = simpleTensor;
-  *subgraph.add_input() = graph_input;
-  *subgraph.add_node() = shape_node;
-  *subgraph.add_node() = final_node;
-
-  std::vector<const TypeProto*> subgraphInputTypes = {&simpleTensor};
-  std::unordered_map<std::string, TypeProto*> valueTypesByName;
-  valueTypesByName[shape_input_name] = &simpleTensor;
-  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
-  
-  const TensorShapeProto* propagatedShape;
-  for (auto n: subgraph.node()) {
-    DataPropagationContextImpl dataPropagationCtx(
-        n, valueTypesByName, {}, generatedShapeDataByName);
-    const auto schema = schemaRegistry->GetSchema(n.op_type(), domain_version, n.domain());
-    EXPECT_TRUE(schema->has_data_propagation_function());
-    schema->GetDataPropagationFunction()(dataPropagationCtx);
-    propagatedShape = dataPropagationCtx.getInputData(0);
-  }
-  // Expects the input data of final_node (from the output of shape_node)
-  EXPECT_TRUE(CompareShape(propagatedShape, &simpleShape));
+  const char* code = R"ONNX(
+agraph (int32[2,5] x) => (int32[2,5] z)
+{
+    y = Shape(x)
+    z = Cast(y)
 }
+)ONNX";
 
-TEST(DataPropagationImplTest, SqueezeTest) {
-  TestPropagateShapeDataFromInputToOutput("Squeeze");
-}
-
-TEST(DataPropagationImplTest, UnsqueezeTest) {
-  TestPropagateShapeDataFromInputToOutput("Unsqueeze");
+  EXPECT_TRUE(RunDataPropagation(code));
 }
 
 TEST(DataPropagationImplTest, CastTest) {
-  TestPropagateShapeDataFromInputToOutput("Cast");
+  const char* code = R"ONNX(
+agraph (int32[2,5] x) => (int32[2,5] z)
+{
+    y = Shape(x)
+    z = Cast(y)
+}
+)ONNX";
+
+  EXPECT_TRUE(RunDataPropagation(code));
+}
+
+TEST(DataPropagationImplTest, SqueezeTest) {
+  const char* code = R"ONNX(
+agraph (int32[2,5] x) => (int32[2,5] w)
+{
+    y = Shape(x)
+    z = Squeeze(y)
+    w = Cast(z)
+}
+)ONNX";
+
+  EXPECT_TRUE(RunDataPropagation(code));
+}
+
+TEST(DataPropagationImplTest, UnsqueezeTest) {
+  const char* code = R"ONNX(
+agraph (int32[2,5] x) => (int32[2,5] w)
+{
+    y = Shape(x)
+    z = Unsqueeze(y)
+    w = Cast(z)
+}
+)ONNX";
+
+  EXPECT_TRUE(RunDataPropagation(code));
 }
 
 } // namespace Test
