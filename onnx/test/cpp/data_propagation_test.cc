@@ -37,7 +37,7 @@ inline bool CompareShape(const TensorShapeProto* A, const TensorShapeProto* B) {
     return true;
 }
 
-bool RunDataPropagation(const char* graphCode, int domain_version = 15) {
+void RunDataPropagationTest(const char* graphCode, int domain_version = 15) {
   // Parses the graph from graphCode
   GraphProto graph;
   OnnxParser parser(graphCode);
@@ -98,7 +98,7 @@ bool RunDataPropagation(const char* graphCode, int domain_version = 15) {
   // is same as the given output shape
   auto* outputShape = graph.mutable_output(0)
     ->mutable_type()->mutable_tensor_type()->mutable_shape();
-  return CompareShape(propagatedShape, outputShape);
+  EXPECT_TRUE(CompareShape(propagatedShape, outputShape));
 }
 
 TEST(DataPropagationImplTest, ShapeTest) {
@@ -110,7 +110,7 @@ agraph (int32[2,5] x) => (int32[2,5] z)
 }
 )ONNX";
 
-  EXPECT_TRUE(RunDataPropagation(code));
+  RunDataPropagationTest(code);
 }
 
 TEST(DataPropagationImplTest, CastTest) {
@@ -122,7 +122,7 @@ agraph (int32[2,5] x) => (int32[2,5] z)
 }
 )ONNX";
 
-  EXPECT_TRUE(RunDataPropagation(code));
+  RunDataPropagationTest(code);
 }
 
 TEST(DataPropagationImplTest, SqueezeTest) {
@@ -135,7 +135,7 @@ agraph (int32[2,5] x) => (int32[2,5] w)
 }
 )ONNX";
 
-  EXPECT_TRUE(RunDataPropagation(code));
+  RunDataPropagationTest(code);
 }
 
 TEST(DataPropagationImplTest, UnsqueezeTest) {
@@ -148,7 +148,7 @@ agraph (int32[2,5] x) => (int32[2,5] w)
 }
 )ONNX";
 
-  EXPECT_TRUE(RunDataPropagation(code));
+  RunDataPropagationTest(code);
 }
 
 } // namespace Test
