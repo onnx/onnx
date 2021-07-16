@@ -103,13 +103,12 @@ void RunDataPropagationTest(const char* graphCode, int domain_version = 15) {
 
 TEST(DataPropagationImplTest, ShapeTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[2,5] z)
+agraph (int32[7,4,1] x) => (int32[7,4,1] z)
 {
     y = Shape(x)
-    z = Cast(y)
+    z = Cast<to = 7>(y)
 }
 )ONNX";
-
   RunDataPropagationTest(code);
 }
 
@@ -118,10 +117,9 @@ TEST(DataPropagationImplTest, CastTest) {
 agraph (int32[2,5] x) => (int32[2,5] z)
 {
     y = Shape(x)
-    z = Cast(y)
+    z = Cast<to = 7>(y)
 }
 )ONNX";
-
   RunDataPropagationTest(code);
 }
 
@@ -131,23 +129,21 @@ agraph (int32[2,5] x) => (int32[2,5] w)
 {
     y = Shape(x)
     z = Squeeze(y)
-    w = Cast(z)
+    w = Cast<to = 7>(z)
 }
 )ONNX";
-
   RunDataPropagationTest(code);
 }
 
 TEST(DataPropagationImplTest, UnsqueezeTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[2,5] w)
+agraph (int32[2,5] x, int32[1] y) => (int32[2,5] t)
 {
-    y = Shape(x)
-    z = Unsqueeze(y)
-    w = Cast(z)
+    z = Shape(x)
+    w = Unsqueeze(z, y)
+    t = Cast<to = 7>(w)
 }
 )ONNX";
-
   RunDataPropagationTest(code);
 }
 
