@@ -1,0 +1,70 @@
+name: MacRelease
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master and release brnaches
+on:
+  push:
+    branches: [ master, rel-* ]
+  # adding for testing
+  pull_request:
+    branches: [ master, rel-* ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: macos-11.0
+    strategy:
+      matrix:
+        python-version: [3.9]
+        architecture: ['x86_64']
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+          
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: ONNX Package Creation
+        shell: bash
+        run: |
+          echo "Current system compat version is"
+          echo $SYSTEM_VERSION_COMPAT
+          sw_vers -productVersion
+          ls /Library/Developer/CommandLineTools/SDKs
+          git submodule update --init --recursive
+          python -m pip install --upgrade pip setuptools wheel numpy pytest nbval
+          brew update --quiet
+          brew install protobuf
+          git submodule update --init --recursive
+          export ONNX_BUILD_TESTS=1
+          export ONNX_ML=1
+          export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+          export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+          python setup.py bdist_wheel
+
+      - name: Install and test ONNX
+        shell: bash
+        run: |
+          python -m pip install packaging
+          python -c"from packaging import tags; print('\n'.join([str(t) for t in tags.sys_tags()]))"
+          mv dist/onnx-1.8.0-cp39-cp39-macosx_11_0_x86_64.whl dist/onnx-1.8.0-cp39-cp39-macosx_10_16_x86_64.whl
+          for file in dist/*.whl; do python -m pip install --upgrade $file; done
+          pytest
+
+      - uses: actions/upload-artifact@v1
+        with:
+          name: wheels
+          path: ./dist
