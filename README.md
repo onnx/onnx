@@ -173,6 +173,15 @@ For full list refer to CMakeLists.txt
 
 * Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
 
+Another potential error is:
+
+```
+ImportError: cannot import name 'ONNX_ML'
+```
+
+You just need to cd to onnx in your source code tree and repeat.
+
+
 # Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, you will first need to install pytest:
