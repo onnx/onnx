@@ -102,14 +102,16 @@ Status OnnxParser::Parse(ValueInfoList& vilist) {
   return Status::OK();
 }
 
-Status OnnxParser::ParseInput(ValueInfoList& vilist, TensorList& initializers) {
-  vilist.Clear();
+// Each input element is a value-info with an optional initializer of the form "= initial-value".
+// The value-info is added to the "inputs", while the initializer is added to initializers.
+Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initializers) {
+  inputs.Clear();
   if (Matches('(')) {
     if (!Matches(')')) {
       do {
         ValueInfoProto vi;
         PARSE(vi);
-        *vilist.Add() = vi;
+        *inputs.Add() = vi;
         if (Matches('=')) {
           // default value for input
           TensorProto& tp = *initializers.Add();
@@ -123,8 +125,11 @@ Status OnnxParser::ParseInput(ValueInfoList& vilist, TensorList& initializers) {
   return Status::OK();
 }
 
-Status OnnxParser::ParseValueInfo(ValueInfoList& vilist, TensorList& initializers) {
-  vilist.Clear();
+// This is handled slightly different from the inputs.
+// Each element is either a value-info or an initializer.
+// A value-info is added to the "value_infos", while an initializer is added to initializers.
+Status OnnxParser::ParseValueInfo(ValueInfoList& value_infos, TensorList& initializers) {
+  value_infos.Clear();
   if (Matches('<')) {
     if (!Matches('>')) {
       do {
@@ -137,7 +142,7 @@ Status OnnxParser::ParseValueInfo(ValueInfoList& vilist, TensorList& initializer
           CHECK_PARSER_STATUS (Parse(tp, vi.type()));
         } else {
           // valueinfo
-          *vilist.Add() = vi;
+          *value_infos.Add() = vi;
         }
       } while (Matches(','));
       MATCH('>');
