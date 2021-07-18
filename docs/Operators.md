@@ -6584,6 +6584,9 @@ y = np.take(data, indices, axis=0)
 
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_negative_indices')
+
+# print(y)
+# [0. 1. 0.]
 ```
 
 </details>
@@ -6621,8 +6624,10 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     ]
     axis = 1
     output = [
-        [1, 1],
-        [4, 3],
+        [
+          [1, 1],
+          [4, 3],
+        ],
     ]
   ```
   Example 2:
@@ -6638,8 +6643,10 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
     ]
     axis = 0
     output = [
-        [4, 8, 3],
-        [7, 2, 3],
+        [
+          [4, 8, 3],
+          [7, 2, 3],
+        ],
     ]
   ```
 
@@ -7304,7 +7311,10 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(1, 3, 5, 5).astype(np.float32)
-y = np.mean(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
+spatial_shape = np.ndim(x) - 2
+y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
 expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
 ```
 
@@ -7419,7 +7429,10 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(1, 3, 5, 5).astype(np.float32)
-y = np.max(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
+spatial_shape = np.ndim(x) - 2
+y = np.max(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
 expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool')
 ```
 
@@ -7756,8 +7769,9 @@ expect(node, inputs=[x], outputs=[y],
   
    Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
   
-  The "axis" attribute indicates the dimension along which Hardmax
-  will be performed. The output tensor has the same shape
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which Hardmax will be performed.
+  The output tensor has the same shape
   and contains the Hardmax values of the corresponding input.
 
 #### Version
@@ -7773,7 +7787,7 @@ Other versions of this operator: <a href="Changelog.md#Hardmax-1">1</a>, <a href
 <dd>
 Describes the dimension Hardmax will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
 
@@ -7781,14 +7795,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor of rank >= axis.</dd>
+<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as the input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -8627,7 +8641,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dt><tt>input_forget</tt> : int (default is 0)</dt>
 <dd>Couple the input and forget gates if 1.</dd>
 <dt><tt>layout</tt> : int (default is 0)</dt>
-<dd>The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. If 0, the following shapes are expected: X.shape = [seq_length, batch_size, input_size], Y.shape = [seq_length, num_directions, batch_size, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [num_directions, batch_size, hidden_size]. If 1, the following shapes are expected: X.shape = [batch_size, seq_length, input_size], Y.shape = [batch_size, seq_length, num_directions, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [num_directions, batch_size, hidden_size].</dd>
+<dd>The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. If 0, the following shapes are expected: X.shape = [seq_length, batch_size, input_size], Y.shape = [seq_length, num_directions, batch_size, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [num_directions, batch_size, hidden_size]. If 1, the following shapes are expected: X.shape = [batch_size, seq_length, input_size], Y.shape = [batch_size, seq_length, num_directions, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [batch_size, num_directions, hidden_size].</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -9116,8 +9130,9 @@ expect(node, inputs=[x], outputs=[y],
   
    LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
   
-  The "axis" attribute indicates the dimension along which LogSoftmax
-  will be performed. The output tensor has the same shape
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which LogSoftmax will be performed.
+  The output tensor has the same shape
   and contains the LogSoftmax values of the corresponding input.
 
 #### Version
@@ -9133,7 +9148,7 @@ Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a h
 <dd>
 Describes the dimension LogSoftmax will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
 
@@ -9141,14 +9156,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor of rank >= axis.</dd>
+<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as the input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -12739,6 +12754,11 @@ values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
 expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_negative_indices')
+
+# print(y)
+# [[3. 1. 1. 1. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 1. 3. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 3. 1. 1. 1. 1. 1. 1. 1.]]
 ```
 
 </details>
@@ -19611,8 +19631,9 @@ expect(node, inputs=[x, starts, ends, axes, steps], outputs=[y],
   
    Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
   
-  The "axis" attribute indicates the dimension along which Softmax
-  will be performed. The output tensor has the same shape
+  The input does not need to explicitly be a 2D vector. The "axis" attribute
+  indicates the dimension along which Softmax will be performed.
+  The output tensor has the same shape
   and contains the Softmax values of the corresponding input.
 
 #### Version
@@ -19628,7 +19649,7 @@ Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href
 <dd>
 Describes the dimension Softmax will be performed on.
 Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).
+from the back. Accepted range is [-r, r-1] where r = rank(input).,
 </dd>
 </dl>
 
@@ -19636,14 +19657,14 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor of rank >= axis.</dd>
+<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as the input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
