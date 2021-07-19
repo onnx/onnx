@@ -45,7 +45,7 @@ inline bool CompareShape(const TensorShapeProto* A, const TensorShapeProto* B) {
 }
 
 void RunDataPropagationTest(const char* graphCode,
-  const std::vector<int> expectedTensorShape, int domain_version = 15) {
+  const std::vector<int>& expectedTensorShape, int domain_version = 15) {
   // Parses the graph from graphCode
   GraphProto graph;
   OnnxParser parser(graphCode);
