@@ -384,6 +384,12 @@ Optional attributes start and end can be used to compute a slice of the input te
 If start axis is omitted, the slice starts from axis 0.
 The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
 If the end axis is omitted, the axes upto the last one will be included.
+Negative axes indicate counting back from the last axis.
+Note that axes will be clipped to the range [0, r-1], where r is the
+rank of the input tensor if they are out-of-range (after adding r in the case of
+negative axis). Thus, specifying any end value > r is equivalent to specifying an end
+value of r, and specifying any start value < -r is equivalent to specifying a start
+value of 0.
 
 For example:
 Input tensor with shape: [2, 3, 4] 
@@ -431,19 +437,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           auto* output_length = output_shape->add_dim();
 
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-
           if (ctx.getInputType(0)->tensor_type().has_shape()) {
             int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
             int64_t start = getAttribute(ctx, "start", 0);
             if (start < 0)
               start += rank;
+            start = (start < 0) ? 0 : (start > rank) ? rank : start;
             int64_t end = getAttribute(ctx, "end", rank);
             if (end < 0)
               end += rank;
-            output_length->set_dim_value(end - start);
+            end = (end < 0) ? 0 : (end > rank) ? rank : end;
+            output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
           }
         }));
 
