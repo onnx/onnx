@@ -118,6 +118,7 @@ struct InferenceContextImpl : public InferenceContext {
           inputDataByName,
       const std::unordered_map<std::string, const SparseTensorProto*>& 
           inputSparseDataByName,
+      const std::unordered_map<std::string, TensorShapeProto>& generatedShapeData,
       GraphInferenceContext* graphInferenceContext = nullptr)
       : graphInferenceContext_{graphInferenceContext} {
     for (auto& attr : *n.mutable_attribute()) {
@@ -140,13 +141,21 @@ struct InferenceContextImpl : public InferenceContext {
       if (inputDataIter != inputDataByName.cend()) {
         allInputData_.push_back(inputDataIter->second);
         allInputSparseData_.push_back(nullptr);
+        allShapeInputData_.push_back(nullptr);
       } else {
         allInputData_.push_back(nullptr);
         const auto inputSparseDataIter = inputSparseDataByName.find(input);
         if (inputSparseDataIter != inputSparseDataByName.cend()) {
           allInputSparseData_.push_back(inputSparseDataIter->second);
+          allShapeInputData_.push_back(nullptr);
         } else {
           allInputSparseData_.push_back(nullptr);
+          const auto inputShapeDataIter = generatedShapeData.find(input);
+          if (inputShapeDataIter != generatedShapeData.cend()) {
+            allShapeInputData_.push_back(&inputShapeDataIter->second);
+          } else {
+            allShapeInputData_.push_back(nullptr);
+          }
         }
       }
     }
@@ -179,6 +188,14 @@ struct InferenceContextImpl : public InferenceContext {
       ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
     }
     return allInputData_[index];
+  }
+
+  const TensorShapeProto* getShapeInput(size_t index) const override {
+    if (index >= allShapeInputData_.size()) {
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
+    }
+
+    return allShapeInputData_[index];
   }
 
   const SparseTensorProto* getInputSparseData(size_t index) const override {
@@ -230,6 +247,7 @@ struct InferenceContextImpl : public InferenceContext {
   }
   std::vector<const TensorProto*> allInputData_;
   std::vector<const SparseTensorProto*> allInputSparseData_;
+  std::vector<const TensorShapeProto*> allShapeInputData_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
   std::vector<const TypeProto*> allInputTypes_;

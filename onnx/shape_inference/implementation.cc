@@ -355,7 +355,7 @@ static void InferShapesImpl(
     }
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
-    InferenceContextImpl ctx(n, valueTypesByName, inputDataByName, inputSparseDataByName, &graphInferenceContext);
+    InferenceContextImpl ctx(n, valueTypesByName, inputDataByName, inputSparseDataByName, {}, & graphInferenceContext);
     if (!schema) {
       std::cerr << "Warning: Unsupported operator " << n.op_type() << ". No schema registered for this operator."
                 << std::endl;
@@ -588,7 +588,7 @@ void InferShapeForFunctionNode(
     }
 
     InferenceContextImpl temp_ctx(
-        copy_n, temp_valueTypesByName, temp_initializersByName, temp_SparseInitializersByName);
+        copy_n, temp_valueTypesByName, temp_initializersByName, temp_SparseInitializersByName, {});
     schema->GetTypeAndShapeInferenceFunction()(temp_ctx);
     for (int i = 0; i < copy_n.output_size(); ++i) {
       TypeProto* inferred_output_type = temp_ctx.getOutputType(i);

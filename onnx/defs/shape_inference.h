@@ -72,6 +72,8 @@ struct InferenceContext {
   virtual GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) = 0;
   virtual ~InferenceContext() {}
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
+  // Gets the shape inputs computed by partial data propagation.
+  virtual const TensorShapeProto* getShapeInput(size_t index) const = 0;
 };
 
 using InferenceFunction = std::function<void(InferenceContext&)>;
