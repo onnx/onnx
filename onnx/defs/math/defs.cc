@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <functional>
+#include "onnx/defs/data_propagators.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
@@ -151,12 +152,18 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 ONNX_OPERATOR_SET_SCHEMA(
     Add,
     14,
-    OpSchema().FillUsing(MathDocGenerator("addition")));
+    OpSchema().FillUsing(MathDocGenerator("addition"))
+    .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+        MathOpDataPropagator(ctx, "Add");
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sub,
     14,
-    OpSchema().FillUsing(MathDocGenerator("subtraction")));
+    OpSchema().FillUsing(MathDocGenerator("subtraction"))
+    .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+        MathOpDataPropagator(ctx, "Sub");
+    }));
 
 static const char* Mod_doc = R"DOC(
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
@@ -224,7 +231,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     Mul,
     14,
-    OpSchema().FillUsing(MathDocGenerator("multiplication")));
+    OpSchema().FillUsing(MathDocGenerator("multiplication"))
+    .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+        MathOpDataPropagator(ctx, "Mul");
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Div,

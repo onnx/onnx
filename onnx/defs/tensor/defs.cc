@@ -2,14 +2,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
+#include "onnx/defs/data_propagators.h"
 #include "onnx/defs/tensor/utils.h"
 #include "onnx/defs/function.h"
 
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-#include "onnx/defs/data_propagators.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -472,6 +471,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
               TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          SizeOpDataPropagator(ctx);
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -568,6 +570,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (all_lengths_known) {
             output_shape->mutable_dim(axis)->set_dim_value(total_length);
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          ConcatOpDataPropagator(ctx);
         }));
 
 static const char* Split_ver13_doc =
@@ -987,6 +992,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ->mutable_dim((int)axis)
                 ->set_dim_value(temp);
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          SliceOpDataPropagator(ctx);
         }));
 
 static const char* Transpose_ver13_doc = R"DOC(
@@ -1556,6 +1564,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                                             : // i - axis < q
                     data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          GatherOpDataPropagator(ctx);
         }));
 
 static const char* GatherElements_ver13_doc = R"DOC(
