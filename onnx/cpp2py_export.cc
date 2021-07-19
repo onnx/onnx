@@ -68,6 +68,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "has_type_and_shape_inference_function",
           &OpSchema::has_type_and_shape_inference_function)
       .def_property_readonly(
+          "has_data_propagation_function",
+          &OpSchema::has_data_propagation_function)
+      .def_property_readonly(
           "type_constraints", &OpSchema::typeConstraintParams)
       .def_static(
           "is_infinite",
@@ -317,23 +320,25 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   py::register_exception<InferenceError>(shape_inference, "InferenceError");
 
 
-  shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type, bool strict_mode) {
+  shape_inference.def("infer_shapes", [](const py::bytes& bytes, bool check_type, bool strict_mode, bool data_prop) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
-    shape_inference::InferShapes(proto, check_type, 
+    ShapeInferenceOptions options {check_type, strict_mode == true ? 1 : 0, data_prop};
+    shape_inference::InferShapes(proto,
                                  OpSchemaRegistry::Instance(),
-                                 strict_mode == true ? 1 : 0);
+                                 options);
     std::string out;
     proto.SerializeToString(&out);
     return py::bytes(out);
-  }, "bytes"_a, "check_type"_a = false, "strict_mode"_a = false);
+  }, "bytes"_a, "check_type"_a = false, "strict_mode"_a = false, "data_prop"_a = false);
 
   shape_inference.def(
       "infer_shapes_path",
-      [](const std::string& model_path, const std::string& output_path, bool check_type, bool strict_mode)  -> void {
-        shape_inference::InferShapes(model_path, check_type, output_path, 
+      [](const std::string& model_path, const std::string& output_path, bool check_type, bool strict_mode, bool data_prop)  -> void {
+        ShapeInferenceOptions options {check_type, strict_mode == true ? 1 : 0, data_prop};
+        shape_inference::InferShapes(model_path, output_path, 
                                      OpSchemaRegistry::Instance(),
-                                     strict_mode == true ? 1 : 0);
+                                     options);
       });
 
   // Submodule `parser`
