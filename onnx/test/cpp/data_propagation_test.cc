@@ -18,24 +18,28 @@ namespace ONNX_NAMESPACE {
 
 namespace Test {
 
-inline bool CompareShape(const TensorShapeProto* A, const TensorShapeProto* B) {
-    if (A == nullptr ||  B == nullptr) {
-        fail_check("The compared shapes should not be nullptr.");
-        return false;
-    }
-    if (A->dim_size() != B->dim_size()) {
+inline bool CompareShape(const TensorShapeProto& A, const TensorShapeProto& B,
+  bool checkSameParam = false) {
+    if (A.dim_size() != B.dim_size()) {
         fail_check("The compared sizes of dim are different.");
         return false;
     }
-    for (int i = 0; i < A->dim_size() ; ++i) {
-      if (A->dim(i).has_dim_value() && B->dim(i).has_dim_value()) {
-        if (A->dim(i).dim_value() != B->dim(i).dim_value()) {
+    for (int i = 0; i < A.dim_size() ; ++i) {
+      if (A.dim(i).has_dim_value() && B.dim(i).has_dim_value()) {
+        if (A.dim(i).dim_value() != B.dim(i).dim_value()) {
         fail_check("The compared dim values are different.(",
-          A->dim(i).dim_value(), ") vs (", B->dim(i).dim_value(), ").");
+          A.dim(i).dim_value(), ") vs (", B.dim(i).dim_value(), ").");
         return false;
         }
-      } else if (A->dim(i).has_dim_param() && B->dim(i).has_dim_param()) {
-        continue;
+      } else if (A.dim(i).has_dim_param() && B.dim(i).has_dim_param()) {
+        if (checkSameParam && A.dim(i).dim_param() != B.dim(i).dim_param()) {
+          fail_check("The compared dim parameters are different.(",
+            A.dim(i).dim_param(), ") vs (", B.dim(i).dim_param(), ").");
+          return false;
+        }
+        else {
+          continue;
+        }
       } else {
         fail_check("Cannot compare a dim parameter to a dim value.");
         return false;
@@ -44,8 +48,7 @@ inline bool CompareShape(const TensorShapeProto* A, const TensorShapeProto* B) {
     return true;
 }
 
-void RunDataPropagationTest(const char* graphCode,
-  const std::vector<int>& expectedTensorShape, int domain_version = 15) {
+const TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 15) {
   // Parses the graph from graphCode
   GraphProto graph;
   OnnxParser parser(graphCode);
@@ -93,7 +96,7 @@ void RunDataPropagationTest(const char* graphCode,
   // Runs data propagation on each node
   std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
   auto* schemaRegistry = OpSchemaRegistry::Instance();
-  const TensorShapeProto* propagatedShape;
+  const TensorShapeProto* propagated_tsp;
   for (auto n: graph.node()) {
     // No need to run data propagation on Constant
     if (n.op_type() == "Constant") {
@@ -101,18 +104,16 @@ void RunDataPropagationTest(const char* graphCode,
     }
     DataPropagationContextImpl dataPropagationCtx(
         n, valueTypesByName, inputDataByName, generatedShapeDataByName);
-    const auto schema = schemaRegistry->GetSchema(n.op_type(), domain_version, n.domain());
+    const auto schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
-    propagatedShape = dataPropagationCtx.getInputData(0);
+    propagated_tsp = dataPropagationCtx.getInputData(0);
   }
-  // Expects the input data of final node (from the output of previous node)
-  // is same as the expected output shape
-  TensorShapeProto expectedTsp;
-  for (auto dim_value: expectedTensorShape) {
-    expectedTsp.mutable_dim()->Add()->set_dim_value(dim_value);
+  if (propagated_tsp == nullptr) {
+    fail_check("Data propagation failed.");
   }
-  EXPECT_TRUE(CompareShape(propagatedShape, &expectedTsp));
+  // Returns the input data of final node (same as the output of previous node)
+  return std::move(*propagated_tsp);
 }
 
 TEST(DataPropagationImplTest, ShapeTest) {
@@ -123,7 +124,29 @@ agraph (int32[7,4,1] x) => (int32[3] y)
     y = Cast<to = 7>(xs)
 }
 )ONNX";
-  RunDataPropagationTest(code, {7,4,1});
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(7);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(4);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(1);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, SymbolicShapeTest) {
+  const char* code = R"ONNX(
+agraph (int32[N,3,256,256] x) => (int32[4] y)
+{
+    xs = Shape(x)
+    y = Cast<to = 7>(xs)
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_param("N");
+  expected_tsp.mutable_dim()->Add()->set_dim_value(3);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(256);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(256);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp, true));
 }
 
 TEST(DataPropagationImplTest, CastTest) {
@@ -134,7 +157,11 @@ agraph (int32[2,5] x) => (int32[2] y)
     y = Cast<to = 7>(xs)
 }
 )ONNX";
-  RunDataPropagationTest(code, {2,5});
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(2);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(5);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }
 
 TEST(DataPropagationImplTest, SqueezeTest) {
@@ -146,7 +173,11 @@ agraph (int32[2,5] x) => (int32[2] z)
     z = Cast<to = 7>(y)
 }
 )ONNX";
-  RunDataPropagationTest(code, {2,5});
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(2);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(5);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }
 
 TEST(DataPropagationImplTest, UnsqueezeTest) {
@@ -159,7 +190,117 @@ agraph (int32[2,5] x) => (int32[1,2] w)
     w = Cast<to = 7>(z)
 }
 )ONNX";
-  RunDataPropagationTest(code, {2,5});
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(2);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(5);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, SizeTest) {
+  const char* code = R"ONNX(
+agraph (int32[0,1,2,3] x) => (int32[1] w)
+{
+    xs = Shape(x)
+    z = Size(xs)
+    w = Cast<to = 7>(z)
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(4);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, AddTest) {
+  const char* code = R"ONNX(
+agraph (int32[2,4,5] x, int32[2,4,5] y) => (int32[3] w)
+{
+    xs = Shape(x)
+    ys = Shape(y)
+    z = Add(xs, ys)
+    w = Cast<to = 7>(z)
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(4);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(8);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(10);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, SubTest) {
+  const char* code = R"ONNX(
+agraph (int32[2,4,6] x, int32[5] y) => (int32[3] w)
+{
+    xs = Shape(x)
+    ys = Shape(y)
+    z = Sub(xs, ys)
+    w = Cast<to = 7>(z)
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(-3);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(-1);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(1);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, MulTest) {
+  const char* code = R"ONNX(
+agraph (int32[2] x, int32[5,1,7] y) => (int32[3] w)
+{
+    xs = Shape(x)
+    ys = Shape(y)
+    z = Mul(xs, ys)
+    w = Cast<to = 7>(z)
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(10);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(2);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(14);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, ConcatTest) {
+  const char* code = R"ONNX(
+agraph (int32[1,2] x, int32[3,4] y) => (int32[4] w)
+{
+    xs = Shape(x)
+    ys = Shape(y)
+    z = Concat<axis = 0>(xs, ys)
+    w = Cast<to = 7>(z)
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(1);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(2);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(3);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(4);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, GatherTest) {
+  const char* code = R"ONNX(
+agraph (int32[1,2,3,4,5,6] x, int32[0,3,5] y) => (int32[3] w)
+{
+    xs = Shape(x)
+    ys = Shape(y)
+    z = Gather<axis = 0>(xs, ys)
+    w = Cast<to = 7>(z)
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(1);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(4);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(6);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }
 
 } // namespace Test
