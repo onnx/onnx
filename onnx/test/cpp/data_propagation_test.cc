@@ -28,16 +28,24 @@ inline bool CompareShape(const TensorShapeProto* A, const TensorShapeProto* B) {
         return false;
     }
     for (int i = 0; i < A->dim_size() ; ++i) {
-        if (A->dim(i).has_dim_value() != B->dim(i).has_dim_value() || 
-                A->dim(i).dim_value() != B->dim(i).dim_value()) {
-            fail_check("The compared dim values are different.");
-            return false;
+      if (A->dim(i).has_dim_value() && B->dim(i).has_dim_value()) {
+        if (A->dim(i).dim_value() != B->dim(i).dim_value()) {
+        fail_check("The compared dim values are different.(",
+          A->dim(i).dim_value(), ") vs (", B->dim(i).dim_value(), ").");
+        return false;
         }
+      } else if (A->dim(i).has_dim_param() && B->dim(i).has_dim_param()) {
+        continue;
+      } else {
+        fail_check("Cannot compare a dim parameter to a dim value.");
+        return false;
+      }
     }
     return true;
 }
 
-void RunDataPropagationTest(const char* graphCode, int domain_version = 15) {
+void RunDataPropagationTest(const char* graphCode,
+  const std::vector<int> expectedTensorShape, int domain_version = 15) {
   // Parses the graph from graphCode
   GraphProto graph;
   OnnxParser parser(graphCode);
@@ -99,49 +107,51 @@ void RunDataPropagationTest(const char* graphCode, int domain_version = 15) {
     propagatedShape = dataPropagationCtx.getInputData(0);
   }
   // Expects the input data of final node (from the output of previous node)
-  // is same as the given output shape
-  auto* outputShape = graph.mutable_output(0)
-    ->mutable_type()->mutable_tensor_type()->mutable_shape();
-  EXPECT_TRUE(CompareShape(propagatedShape, outputShape));
+  // is same as the expected output shape
+  TensorShapeProto expectedTsp;
+  for (auto dim_value: expectedTensorShape) {
+    expectedTsp.mutable_dim()->Add()->set_dim_value(dim_value);
+  }
+  EXPECT_TRUE(CompareShape(propagatedShape, &expectedTsp));
 }
 
 TEST(DataPropagationImplTest, ShapeTest) {
   const char* code = R"ONNX(
-agraph (int32[7,4,1] x) => (int32[7,4,1] y)
+agraph (int32[7,4,1] x) => (int32[3] y)
 {
     xs = Shape(x)
     y = Cast<to = 7>(xs)
 }
 )ONNX";
-  RunDataPropagationTest(code);
+  RunDataPropagationTest(code, {7,4,1});
 }
 
 TEST(DataPropagationImplTest, CastTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[2,5] y)
+agraph (int32[2,5] x) => (int32[2] y)
 {
     xs = Shape(x)
     y = Cast<to = 7>(xs)
 }
 )ONNX";
-  RunDataPropagationTest(code);
+  RunDataPropagationTest(code, {2,5});
 }
 
 TEST(DataPropagationImplTest, SqueezeTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[2,5] z)
+agraph (int32[2,5] x) => (int32[2] z)
 {
     xs = Shape(x)
     y = Squeeze(xs)
     z = Cast<to = 7>(y)
 }
 )ONNX";
-  RunDataPropagationTest(code);
+  RunDataPropagationTest(code, {2,5});
 }
 
 TEST(DataPropagationImplTest, UnsqueezeTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[2,5] w)
+agraph (int32[2,5] x) => (int32[1,2] w)
 {
     xs = Shape(x)
     y = Constant<value = int64[1] {1}>()
@@ -149,7 +159,7 @@ agraph (int32[2,5] x) => (int32[2,5] w)
     w = Cast<to = 7>(z)
 }
 )ONNX";
-  RunDataPropagationTest(code);
+  RunDataPropagationTest(code, {2,5});
 }
 
 } // namespace Test
