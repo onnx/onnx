@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include "onnx/defs/data_propagators.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -102,6 +103,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
 static const char* CastLike_ver15_doc = R"DOC(
@@ -417,7 +421,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* output_shape = 
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           auto* output_length = output_shape->add_dim();
-		
+
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
@@ -426,6 +430,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             output_length->set_dim_value(
                 ctx.getInputType(0)->tensor_type().shape().dim_size());
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          ShapeOpDataPropagator(ctx);
         }));
 
 static const char* Size_ver13_doc = R"DOC(
@@ -1770,6 +1777,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    ->add_dim() = input_shape.dim(i);
             }
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
 static const char* Unsqueeze_ver13_doc = R"DOC(
@@ -1893,6 +1903,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ->set_dim_value(1);
             ++j;
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
 static const char* SpaceToDepth_ver13_doc =

@@ -13,6 +13,22 @@ namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
 
+struct ShapeInferenceOptions {
+  // Checks the type-equality for input and output
+  bool check_type;
+  // 1: Will throw any node level shape infer errors
+  // 0: Won't throw node-level shape infer errors, but other errors
+  // like merging existing shape with inferred etc are thrown
+  int error_mode;
+  // Enables data propagation for limited operators
+  // to perform shape computation
+  bool enable_data_propagation;
+  ShapeInferenceOptions(bool check_type_val = false,
+    int strict_mode_val = 0,bool data_prop_val = false):
+    check_type(check_type_val), error_mode(strict_mode_val),
+    enable_data_propagation(data_prop_val) {};
+};
+
 // Maintains a SymbolTable for symbolic shape inference
 class SymbolTable {
  public:
@@ -74,11 +90,37 @@ struct InferenceContext {
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
 };
 
+// We use data propagation to perform partial evaluation of the model, to compute statically
+// known information about tensor values. It is intended to improve the precision of shape
+// inference. We reuse TensorShapeProto to represent the statically known values. One
+// limitation of this is that TensorShapeProto can represent only integer values.
+// As an example, data-propagation is intended to handle code-fragments like below:
+//   shape = Shape(X)
+//   batchsize = Slice(shape, [0], [1])
+//   newshape = Concat (batchsize, [1024, 1024])
+//   Z = Reshape(Y, newshape)
+// If the shape of X is statically known, then data-propagation should be able to determine
+// the value of newshape, as well as the shape of Z.
+struct DataPropagationContext {
+  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
+  virtual size_t getNumInputs() const = 0;
+  virtual const TypeProto* getInputType(size_t index) const = 0;
+  virtual size_t getNumOutputs() const = 0;
+  virtual const TypeProto* getOutputType(size_t index) const = 0;
+  virtual ~DataPropagationContext() {}
+  virtual const TensorShapeProto* getInputData(size_t index) = 0;
+  virtual void addOutputData(size_t index, TensorShapeProto&& tp) = 0;
+};
+
 using InferenceFunction = std::function<void(InferenceContext&)>;
+using DataPropagationFunction = std::function<void(DataPropagationContext&)>;
 
 // This no-op inference function is used for operators without an
 // inference implementation.
-inline void dummyInferenceFunction(InferenceContext&){};
+inline void dummyInferenceFunction(InferenceContext&) {};
+
+// This no-op data propagation function is used for operators without a defined data propagator
+inline void dummyDataPropagationFunction(DataPropagationContext&) {};
 
 template <typename T>
 inline bool getRepeatedAttribute(InferenceContext& ctx, std::string attr_name, std::vector<T>& values) {
@@ -371,11 +413,13 @@ inline bool hasShape(const TypeProto& type) {
   return false;
 }
 
-inline bool hasInputShape(InferenceContext& ctx, size_t n) {
+template <typename Context>
+inline bool hasInputShape(Context& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) && hasShape(*ctx.getInputType(n));
 }
 
-inline bool hasNInputShapes(InferenceContext& ctx, size_t n) {
+template <typename Context>
+inline bool hasNInputShapes(Context& ctx, size_t n) {
   for (size_t i = 0; i < n; i++) {
     if (!hasInputShape(ctx, i)) {
       return false;
