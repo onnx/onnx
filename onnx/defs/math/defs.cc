@@ -5,12 +5,73 @@
 
 #include <algorithm>
 #include <functional>
-#include "onnx/defs/data_propagators.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
+
+inline int MathOpTwoIntegers(std::string op_type, int a, int b) {
+  if (op_type == "Add") {
+    return a + b;
+  } else if (op_type == "Sub") {
+    return a - b;
+  } else if (op_type == "Mul") {
+    return a * b;
+  }
+  fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
+}
+
+inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_type) {
+  const auto input_0 = ctx.getInputData(0);
+  const auto input_1 = ctx.getInputData(1);
+  if (input_0 == nullptr || input_1 == nullptr) {
+      return;
+  }
+  TensorShapeProto tsp;
+  if (input_0->dim_size() < input_1->dim_size()) {
+    if (input_0->dim_size() != 1) {
+        fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (",
+            input_0->dim_size(), ") vs (", input_1->dim_size(), ").");
+    }
+    if (input_0->dim(0).has_dim_param()) {
+      return;
+    }
+    int input_0_val = input_0->dim(0).dim_value();
+    for (int i = 0; i < input_1->dim_size(); ++i) {
+      if (input_1->dim(i).has_dim_param()) {
+        return;
+      }
+      tsp.mutable_dim()->Add()->set_dim_value(
+        MathOpTwoIntegers(op_type, input_0_val, input_1->dim(i).dim_value()));
+    }
+  } else if (input_0->dim_size() > input_1->dim_size()) {
+    if (input_1->dim_size() != 1) {
+        fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (",
+            input_0->dim_size(), ") vs (", input_1->dim_size(), ").");
+    }
+    if (input_1->dim(0).has_dim_param()) {
+      return;
+    }
+    int input_1_val = input_1->dim(0).dim_value();
+    for (int i = 0; i < input_0->dim_size(); ++i) {
+      if (input_0->dim(i).has_dim_param()) {
+        return;
+      }
+      tsp.mutable_dim()->Add()->set_dim_value(
+        MathOpTwoIntegers(op_type, input_0->dim(i).dim_value(), input_1_val));
+    }
+  } else {
+    for (int i = 0; i < input_0->dim_size(); ++i) {
+      if (input_0->dim(i).has_dim_param() || input_1->dim(i).has_dim_param()) {
+        return;
+      }
+      tsp.mutable_dim()->Add()->set_dim_value(
+          MathOpTwoIntegers(op_type, input_0->dim(i).dim_value(), input_1->dim(i).dim_value()));
+    }
+  }
+  ctx.addOutputData(0, std::move(tsp));
+}
 
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {

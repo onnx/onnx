@@ -512,7 +512,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          SizeOpDataPropagator(ctx);
+          const auto input_data = ctx.getInputData(0);
+          if (input_data != nullptr) {
+            TensorShapeProto tsp;
+            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
+            ctx.addOutputData(0, std::move(tsp));
+          }
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -611,7 +616,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          ConcatOpDataPropagator(ctx);
+          if (!axisIsZero(ctx)) {
+            return;
+          }
+          TensorShapeProto tsp;
+          for (size_t i = 0; i < ctx.getNumInputs(); ++i) {
+            const auto input_data = ctx.getInputData(i);
+            if (input_data == nullptr) {
+              return;
+            }
+            for (int j = 0; j < input_data->dim_size(); ++j) {
+              appendDimToTensorShapeProto(tsp, input_data->dim(j));
+            }
+          }
+          if (tsp.dim_size() > 0) {
+            ctx.addOutputData(0, std::move(tsp));
+          }
         }));
 
 static const char* Split_ver13_doc =
@@ -1033,7 +1053,40 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          SliceOpDataPropagator(ctx);
+          const auto input_data = ctx.getInputData(0);
+          const auto starts = ctx.getInputData(1);
+          const auto ends = ctx.getInputData(2);
+          const auto axes = ctx.getNumInputs() >= 4 ? ctx.getInputData(3) : nullptr;
+          const auto steps = ctx.getNumInputs() >= 5 ? ctx.getInputData(4) : nullptr;
+
+          if (input_data == nullptr || starts == nullptr || ends == nullptr) {
+            return;
+          }
+          if (starts->dim_size() != ends->dim_size()) {
+            fail_shape_inference("Input rank for starts and ends should be the same: (",
+            starts->dim_size(), ") vs (", ends->dim_size(), ").");
+          }
+          // Only supports axis = 0 since the data comes from Shape
+          if((axes == nullptr || (axes->dim_size() == 1 && axes->dim(0).dim_value() == 0))
+            && starts->dim_size () == 1 && ends->dim_size() == 1) {
+            int step = 1; // Default step is 1
+            if (steps != nullptr) {
+              if (steps->dim_size() != 1) {
+                return;
+              }
+              step = steps->dim(0).dim_value();
+              if (step == 0) {
+                fail_shape_inference("Step cannot be 0 for Slice");
+              }
+            }
+            TensorShapeProto tsp;
+            for (int i = starts->dim(0).dim_value(); i < ends->dim(0).dim_value(); i += step) {
+              appendDimToTensorShapeProto(tsp, input_data->dim(i));
+            }
+            if (tsp.dim_size() > 0) {
+              ctx.addOutputData(0, std::move(tsp));
+            }
+          }
         }));
 
 static const char* Transpose_ver13_doc = R"DOC(
@@ -1605,7 +1658,26 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          GatherOpDataPropagator(ctx);
+          if (!axisIsZero(ctx, true)) {
+            return;
+          }
+          const auto input_data = ctx.getInputData(0);
+          const auto input_indices = ctx.getInputData(1);
+          if (input_data == nullptr || input_indices == nullptr) {
+            return;
+          }
+          TensorShapeProto tsp;
+          for (int i = 0; i < input_indices->dim_size(); ++i) {
+            if (input_indices->dim(i).has_dim_value()) {
+              int index = input_indices->dim(i).dim_value();
+              if (index < input_data->dim_size()) {
+                appendDimToTensorShapeProto(tsp, input_data->dim(index));
+              }
+            }
+          }
+          if (tsp.dim_size() > 0) {
+            ctx.addOutputData(0, std::move(tsp));
+          }
         }));
 
 static const char* GatherElements_ver13_doc = R"DOC(
