@@ -18,38 +18,29 @@ namespace ONNX_NAMESPACE {
 
 namespace Test {
 
-inline bool CompareShape(const TensorShapeProto& A, const TensorShapeProto& B,
-  bool checkSameParam = false) {
-    if (A.dim_size() != B.dim_size()) {
-        fail_check("The compared sizes of dim are different (",
-          A.dim_size(), ") vs (", B.dim_size(), ").");
-        return false;
-    }
-    for (int i = 0; i < A.dim_size() ; ++i) {
-      if (A.dim(i).has_dim_value() && B.dim(i).has_dim_value()) {
-        if (A.dim(i).dim_value() != B.dim(i).dim_value()) {
-        fail_check("The compared dim values are different (",
-          A.dim(i).dim_value(), ") vs (", B.dim(i).dim_value(), ").");
-        return false;
-        }
-      } else if (A.dim(i).has_dim_param() && B.dim(i).has_dim_param()) {
-        if (checkSameParam && A.dim(i).dim_param() != B.dim(i).dim_param()) {
-          fail_check("The compared dim parameters are different.(",
-            A.dim(i).dim_param(), ") vs (", B.dim(i).dim_param(), ").");
-          return false;
-        }
-        else {
-          continue;
-        }
-      } else {
-        fail_check("Cannot compare a dim parameter to a dim value.");
-        return false;
-      }
-    }
-    return true;
+inline bool CompareShape(
+    const TensorShapeProto& inferredShape,
+    const TensorShapeProto& expectedShape,
+    bool checkSameParam = false) {
+  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size()) << "Dim size for inferred and expected shape is different.";
+
+  for (int i = 0; i < inferredShape.dim_size(); i++) {
+    EXPECT_TRUE(
+        (inferredShape.dim(i).has_dim_value() && expectedShape.dim(i).has_dim_value()) ||
+        (inferredShape.dim(i).has_dim_param() && expectedShape.dim(i).has_dim_param()))
+        << "Inferred and expected dim values are different.";
+
+    EXPECT_TRUE(
+        inferredShape.dim(i).has_dim_value() ? inferredShape.dim(i).dim_value() == expectedShape.dim(i).dim_value()
+            : checkSameParam                 ? inferredShape.dim(i).dim_param() == expectedShape.dim(i).dim_param()
+                                             : true)
+        << "Inferred and expected dims are different.";
+  }
+
+  return true;
 }
 
-const TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 15) {
+ TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 15) {
   // Parses the graph from graphCode
   GraphProto graph;
   OnnxParser parser(graphCode);
@@ -97,7 +88,7 @@ const TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersi
   // Runs data propagation on each node
   std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
   auto* schemaRegistry = OpSchemaRegistry::Instance();
-  const TensorShapeProto* propagated_tsp;
+  TensorShapeProto inferredShape;
   for (auto n: graph.node()) {
     // No need to run data propagation on Constant
     if (n.op_type() == "Constant") {
@@ -108,14 +99,18 @@ const TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersi
     const auto schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
-    propagated_tsp = dataPropagationCtx.getInputData(0);
   }
-  if (propagated_tsp == nullptr) {
-    fail_check("Data propagation failed.");
-  }
-  // Returns the input data of final node (same as the output of previous node)
-  return std::move(*propagated_tsp);
-}
+
+  // Assuming the graph being tested only has 1 output. 
+  // If this ever changes then fixes are required here.
+  const auto inputShapeDataIter = generatedShapeDataByName.find(graph.output()[0].name());
+  EXPECT_TRUE(inputShapeDataIter != generatedShapeDataByName.cend());
+
+  inferredShape.CopyFrom(inputShapeDataIter->second);
+
+  // Returns the partial shape data for output
+  return inferredShape;
+ }
 
 TEST(DataPropagationImplTest, ShapeTest) {
   const char* code = R"ONNX(
