@@ -140,6 +140,13 @@ inline int64_t getAttribute(InferenceContext& ctx, const std::string& attributeN
   return defaultValue;
 }
 
+inline int64_t getAttribute(DataPropagationContext& ctx, const std::string& attributeName, int64_t defaultValue) {
+  auto attr_proto = ctx.getAttribute(attributeName);
+  if ((nullptr != attr_proto) && attr_proto->has_i())
+    return attr_proto->i();
+  return defaultValue;
+}
+
 inline std::string
 getAttribute(InferenceContext& ctx, const std::string& attributeName, const std::string& defaultValue) {
   auto attr_proto = ctx.getAttribute(attributeName);

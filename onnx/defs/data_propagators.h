@@ -16,18 +16,4 @@ inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int
   }
 }
 
-// Data propagation function for Shape op
-// Propagates input shape to output shape
-inline void ShapeOpDataPropagator(DataPropagationContext& ctx) {
-  if (!hasNInputShapes(ctx, 1)) {
-    return;
-  }
-  if (ctx.getInputType(0)->tensor_type().has_shape()) {
-    auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-    TensorShapeProto tsp;
-    tsp.CopyFrom(input_shape);
-    ctx.addOutputData(0, std::move(tsp));
-  }
-}
-
 }
