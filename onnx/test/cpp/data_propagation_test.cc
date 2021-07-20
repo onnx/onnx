@@ -22,19 +22,19 @@ inline bool CompareShape(
     const TensorShapeProto& inferredShape,
     const TensorShapeProto& expectedShape,
     bool checkSameParam = false) {
-  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size(), "Dim size for inferred and expected shape is different.");
+  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size()) << "Dim size for inferred and expected shape is different.";
 
   for (int i = 0; i < inferredShape.dim_size(); i++) {
     EXPECT_TRUE(
         (inferredShape.dim(i).has_dim_value() && expectedShape.dim(i).has_dim_value()) ||
-            (inferredShape.dim(i).has_dim_param() && expectedShape.dim(i).has_dim_param()),
-        "Inferred and expected dim values are different.");
+        (inferredShape.dim(i).has_dim_param() && expectedShape.dim(i).has_dim_param()))
+        << "Inferred and expected dim values are different.";
 
     EXPECT_TRUE(
         inferredShape.dim(i).has_dim_value() ? inferredShape.dim(i).dim_value() == expectedShape.dim(i).dim_value()
             : checkSameParam                 ? inferredShape.dim(i).dim_param() == expectedShape.dim(i).dim_param()
-                                             : true,
-        "Inferred and expected dims are different.");
+                                             : true)
+        << "Inferred and expected dims are different.";
   }
 
   return true;
@@ -104,7 +104,7 @@ inline bool CompareShape(
   // Assuming the graph being tested only has 1 output. 
   // If this ever changes then fixes are required here.
   const auto inputShapeDataIter = generatedShapeDataByName.find(graph.output()[0].name());
-  EXPECT_TRUE(inputShapeDataIter != generatedShapeDataByName.cend(), "Data propagation failed.");
+  EXPECT_TRUE(inputShapeDataIter != generatedShapeDataByName.cend());
 
   inferredShape.CopyFrom(inputShapeDataIter->second);
 
