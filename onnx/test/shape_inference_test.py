@@ -3619,129 +3619,35 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (None, None))])  # type: ignore
 
-    def test_optional_construct_empty_tensor(self):  # type: () -> None
-        tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[1, 2, 3])
-        optional_type_proto = helper.make_optional_type_proto(tensor_type_proto)
-        optional_val_info = helper.make_value_info(
-            name='output',
-            type_proto=optional_type_proto)
+    def test_gridsampler(self):  # type: () -> None
         graph = self._make_graph(
-            [],
-            [make_node('Optional', [], ['output'], type=tensor_type_proto)],
+            [('x', TensorProto.FLOAT, (1, 1, 3, 3)),
+             ('grid', TensorProto.INT64, (1, 3, 3, 2))],
+            [make_node("GridSampler", ['x', 'grid'], ['y'], mode='nearest', padding_mode='border', align_corners=1)],
             [])
-        self._assert_inferred(graph, [optional_val_info])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 3, 3))])  # type: ignore
 
-    def test_optional_construct_empty_sequence(self):  # type: () -> None
-        tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.INT32, shape=[1, 2, 3])
-        sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
-        optional_type_proto = helper.make_optional_type_proto(sequence_type_proto)
-        optional_val_info = helper.make_value_info(
-            name='output_sequence',
-            type_proto=optional_type_proto)
+    def test_gridsampler_defaults(self):  # type: () -> None
         graph = self._make_graph(
-            [],
-            [make_node('Optional', [], ['output_sequence'], type=sequence_type_proto)],
+            [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
+             ('grid', TensorProto.FLOAT, ('N', 'H_out', 'W_out', 2))],
+            [make_node("GridSampler", ['x', 'grid'], ['y'])],
             [])
-        self._assert_inferred(graph, [optional_val_info])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, ('N', 'C', 'H_out', 'W_out'))])  # type: ignore
 
-    def test_optional_construct_tensor(self):  # type: () -> None
-        tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[2, 3, 4])
-        optional_type_proto = helper.make_optional_type_proto(tensor_type_proto)
-        optional_val_info = helper.make_value_info(
-            name='output',
-            type_proto=optional_type_proto)
+    def test_gridsampler_no_dim(self):  # type: () -> None
         graph = self._make_graph(
-            [('input1', TensorProto.FLOAT, (2, 3, 4))],
-            [make_node('Optional', ['input1'], ['output'])],
+            [('x', TensorProto.FLOAT, ('N', 'C', None, None)),
+             ('grid', TensorProto.FLOAT, ('N', None, None, 2))],
+            [make_node("GridSampler", ['x', 'grid'], ['y'], mode='bilinear', padding_mode='border')],
             [])
-        self._assert_inferred(graph, [optional_val_info])  # type: ignore
-
-    def test_optional_construct_sequence(self):  # type: () -> None
-        tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.INT64, shape=[2, 3, 0])
-        sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
-        sequence_val_info = helper.make_value_info(
-            name='input_sequence',
-            type_proto=sequence_type_proto)
-        optional_type_proto = helper.make_optional_type_proto(sequence_type_proto)
-        optional_val_info = helper.make_value_info(
-            name='output_sequence',
-            type_proto=optional_type_proto)
-        graph = self._make_graph(
-            [('input1', TensorProto.INT64, (2, 3, 0))],
-            [make_node('SequenceConstruct', ['input1'], ['input_sequence']),
-             make_node('Optional', ['input_sequence'], ['output_sequence'])],
-            [])
-        self._assert_inferred(graph, [sequence_val_info, optional_val_info])  # type: ignore
-
-    def test_optional_tensor_has_element(self):  # type: () -> None
-        tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[2, 3, 4])
-        optional_type_proto = helper.make_optional_type_proto(tensor_type_proto)
-        optional_val_info = helper.make_value_info(
-            name='sequence',
-            type_proto=optional_type_proto)
-        graph = self._make_graph(
-            [('input1', TensorProto.FLOAT, (2, 3, 4))],
-            [make_node('Optional', ['input1'], ['sequence']),
-             make_node('OptionalHasElement', ['sequence'], ['output'])],
-            [])
-        self._assert_inferred(graph, [optional_val_info,
-                                      make_tensor_value_info('output', TensorProto.BOOL, None)])  # type: ignore
-
-    def test_optional_sequence_has_element(self):  # type: () -> None
-        tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[0, 3, 4])
-        sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
-        sequence_val_info = helper.make_value_info(
-            name='sequence',
-            type_proto=sequence_type_proto)
-        optional_type_proto = helper.make_optional_type_proto(sequence_type_proto)
-        optional_val_info = helper.make_value_info(
-            name='optional',
-            type_proto=optional_type_proto)
-        graph = self._make_graph(
-            [('input1', TensorProto.FLOAT, (0, 3, 4))],
-            [make_node('SequenceConstruct', ['input1'], ['sequence']),
-             make_node('Optional', ['sequence'], ['optional']),
-             make_node('OptionalHasElement', ['optional'], ['output'])],
-            [])
-        self._assert_inferred(graph, [sequence_val_info, optional_val_info,
-                                      make_tensor_value_info('output', TensorProto.BOOL, None)])  # type: ignore
-
-    def test_optional_tensor_get_element(self):  # type: () -> None
-        tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.DOUBLE, shape=[2, 1, 4])
-        tensor_val_into = helper.make_value_info(
-            name='output',
-            type_proto=tensor_type_proto)
-        optional_type_proto = helper.make_optional_type_proto(tensor_type_proto)
-        optional_val_info = helper.make_value_info(
-            name='optional',
-            type_proto=optional_type_proto)
-        graph = self._make_graph(
-            [('input1', TensorProto.DOUBLE, (2, 1, 4))],
-            [make_node('Optional', ['input1'], ['optional']),
-             make_node('OptionalGetElement', ['optional'], ['output'])],
-            [])
-        self._assert_inferred(graph, [optional_val_info, tensor_val_into])  # type: ignore
-
-    def test_optional_sequence_get_element(self):  # type: () -> None
-        tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.INT32, shape=[2, 0, 4])
-        sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
-        sequence_val_into = helper.make_value_info(
-            name='sequence',
-            type_proto=sequence_type_proto)
-        optional_type_proto = helper.make_optional_type_proto(sequence_type_proto)
-        optional_val_info = helper.make_value_info(
-            name='optional',
-            type_proto=optional_type_proto)
-        output_val_into = helper.make_value_info(
-            name='output',
-            type_proto=sequence_type_proto)
-        graph = self._make_graph(
-            [('input1', TensorProto.INT32, (2, 0, 4))],
-            [make_node('SequenceConstruct', ['input1'], ['sequence']),
-             make_node('Optional', ['sequence'], ['optional']),
-             make_node('OptionalGetElement', ['optional'], ['output'])],
-            [])
-        self._assert_inferred(graph, [optional_val_info, sequence_val_into, output_val_into])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, ('N', 'C', None, None))])  # type: ignore
 
 
 if __name__ == '__main__':
