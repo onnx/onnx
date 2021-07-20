@@ -1047,8 +1047,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool axes_specified = ctx.getNumInputs() >= 4;
           bool steps_specified = ctx.getNumInputs() >= 5;
 
-          const TensorShapeProto* axes;
-          const TensorShapeProto* steps;
+          const TensorShapeProto* axes = nullptr;
+          const TensorShapeProto* steps = nullptr;
           if (axes_specified) {
             axes = ctx.getInputData(3);
             if (axes == nullptr) {
