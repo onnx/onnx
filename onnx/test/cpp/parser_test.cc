@@ -80,6 +80,9 @@ TEST(ParserTest, TensorProtoTest) {
 
   Parse(tensorProto, "int32[5] {1, 2, 3, 4, 5}");
 
+  Parse(tensorProto, "int32[5] T {1, 2, 3, 4, 5}");
+  EXPECT_EQ(tensorProto.name(), "T");
+
   Parse(tensorProto, "float[5] {1, 2.0, 3.1, 4, 5.5}");
 
   Parse(tensorProto, "string[2] { \"Hello\", \"World\" }");
@@ -213,9 +216,10 @@ TEST(ParserTest, NodeAttrTest2) {
 TEST(ParserTest, GraphTest) {
   const char* code = R"ONNX(
 agraph (float[N] y, float[N] z) => (float[N] w)
+<float[2] w1 = {1.0, 2.0}, float[3] w2 = {4.0, 5.0, 6.0}, float[N] x>
 {
-    x = foo(y, z)
-    w = bar(x, y)
+    x = foo(y, z, w1)
+    w = bar(x, y, w2)
 }
 )ONNX";
 
@@ -226,6 +230,27 @@ agraph (float[N] y, float[N] z) => (float[N] w)
   EXPECT_EQ(graph.input_size(), 2);
   EXPECT_EQ(graph.output_size(), 1);
   EXPECT_EQ(graph.node_size(), 2);
+  EXPECT_EQ(graph.initializer_size(), 2);
+  EXPECT_EQ(graph.value_info_size(), 1);
+}
+
+TEST(ParserTest, InitializerTest) {
+  const char* code = R"ONNX(
+agraph (float y = {1.0}, float[N] z) => (float[N] w)
+<float[2] w1 = {1.0, 2.0}, float[3] w2 = {4.0, 5.0, 6.0}, float[N] x>
+{
+    x = foo(y, z, w1)
+    w = bar(x, y, w2)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.input_size(), 2);
+  EXPECT_EQ(graph.output_size(), 1);
+  EXPECT_EQ(graph.initializer_size(), 3); // y, w1, w2
+  EXPECT_EQ(graph.value_info_size(), 1); // x
 }
 
 TEST(ParserTest, IfNodeTest) {

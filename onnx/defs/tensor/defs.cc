@@ -381,57 +381,96 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shape_ver13_doc = R"DOC(
+static const char* Shape_ver15_doc = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+Optional attributes start and end can be used to compute a slice of the input tensor's shape.
+If start axis is omitted, the slice starts from axis 0.
+The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
+If the end axis is omitted, the axes upto the last one will be included.
+Negative axes indicate counting back from the last axis.
+Note that axes will be clipped to the range [0, r-1], where r is the
+rank of the input tensor if they are out-of-range (after adding r in the case of
+negative axis). Thus, specifying any end value > r is equivalent to specifying an end
+value of r, and specifying any start value < -r is equivalent to specifying a start
+value of 0.
+
+For example:
+Input tensor with shape: [2, 3, 4] 
+No attributes specified.
+Output: [2, 3, 4] 
+
+Input tensor with shape: [2, 3, 4] 
+start: -1
+Output: [4] 
+
+Input tensor with shape: [2, 3, 4] 
+end: -1
+Output: [2, 3]
+
+Input tensor with shape: [2, 3, 4] 
+start: 1
+end: 2
+Output: [3] 
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
-    13,
+    15,
     OpSchema()
-        .SetDoc(Shape_ver13_doc)
-        .Input(0,
-            "data",
-            "An input tensor.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(0,
-            "shape",
-            "Shape of the input tensor",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Input tensor can be of arbitrary type.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(int64)"},
-            "Constrain output to int64 tensor.")
+        .SetDoc(Shape_ver15_doc)
+        .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Attr(
+            "start",
+            "(Optional) Starting axis for slicing the shape. Default value is 0."
+            "Negative value means counting dimensions from the back.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "end",
+            "(Optional) Ending axis for slicing the shape. "
+            "Negative value means counting dimensions from the back. "
+            "If omitted, sizes of all axes upto (including) the last one will be included.",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .TypeConstraint("T", OpSchema::all_tensor_types_with_bfloat(), "Input tensor can be of arbitrary type.")
+        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain output to int64 tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
-              TensorProto::INT64);
-          auto* output_shape = 
-              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           auto* output_length = output_shape->add_dim();
 
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-
           if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            output_length->set_dim_value(
-                ctx.getInputType(0)->tensor_type().shape().dim_size());
+            int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
+            int64_t start = getAttribute(ctx, "start", 0);
+            if (start < 0)
+              start += rank;
+            start = (start < 0) ? 0 : (start > rank) ? rank : start;
+            int64_t end = getAttribute(ctx, "end", rank);
+            if (end < 0)
+              end += rank;
+            end = (end < 0) ? 0 : (end > rank) ? rank : end;
+            output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          ShapeOpDataPropagator(ctx);
+          if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            int64_t rank = static_cast<int64_t>(input_shape.dim_size());
+            int64_t start = getAttribute(ctx, "start", 0);
+            if (start < 0)
+              start += rank;
+            start = (start < 0) ? 0 : (start > rank) ? rank : start;
+            int64_t end = getAttribute(ctx, "end", rank);
+            if (end < 0)
+              end += rank;
+            end = (end < 0) ? 0 : (end > rank) ? rank : end;
+            TensorShapeProto output_shape;
+            for (int64_t d = start; d < end; ++d) {
+              *output_shape.add_dim() = input_shape.dim(static_cast<int>(d));
+            }
+            ctx.addOutputData(0, std::move(output_shape));
+          }
         }));
 
 static const char* Size_ver13_doc = R"DOC(

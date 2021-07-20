@@ -403,6 +403,41 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (3,))])
 
+    def test_shape_start_1(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("Shape", ['x'], ['y'], start=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (2,))])
+
+    def test_shape_end_1(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("Shape", ['x'], ['y'], end=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1,))])
+
+    def test_shape_negative_start(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("Shape", ['x'], ['y'], start=-1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1,))])
+
+    def test_shape_clip1(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("Shape", ['x'], ['y'], start=-5)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (3,))])
+
+    def test_shape_clip2(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("Shape", ['x'], ['y'], end=10)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (3,))])
+
     def test_size(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 4, 3))],

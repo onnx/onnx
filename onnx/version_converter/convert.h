@@ -752,6 +752,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
           "BatchNormalization", OpSetID(14), OpSetID(15)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Pow", OpSetID(14), OpSetID(15)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Shape", OpSetID(14), OpSetID(15)));
     }
 
     ModelProto convert_version(
