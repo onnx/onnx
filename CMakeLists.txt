@@ -386,7 +386,7 @@ endif()
 # onnx_proto symbols visibility
 if(MSVC)
   if(ONNX_BUILD_MAIN_LIB)
-  # ONNX_BUILD_MAIN_LIB can be be set if onnx_proto is static,
+  # ONNX_BUILD_MAIN_LIB can be set if onnx_proto is static,
   # but it is linked into a shared library which wants
   # to export the ONNX APIs and classes.
   target_compile_definitions(onnx_proto PUBLIC "ONNX_API=__declspec(dllexport)")
