@@ -6,8 +6,13 @@ set -e -x
 PY_VERSION=$1
 PLAT=$2
 GITHUB_EVENT_NAME=$3
-BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.11.3'
+BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.16.0'
 SYSTEM_PACKAGES='cmake3'
+if [ `uname -m` == 'aarch64' ]; then
+ SYSTEM_PACKAGES='cmake'
+else
+ SYSTEM_PACKAGES='cmake3'
+fi
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
@@ -20,7 +25,7 @@ ONNX_PATH=$(pwd)
 cd ..
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v3.11.3
+git checkout v3.16.0
 git submodule update --init --recursive
 mkdir build_source && cd build_source
 
@@ -31,11 +36,16 @@ cd $ONNX_PATH
 
 # Compile wheels
 # Need to be updated if there is a new Python Version
-declare -A python_map=( ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
-declare -A python_include=( ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
-PY_VER=${python_map[$PY_VERSION]}
-PIP_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir"
-PYTHON_COMAND="/opt/python/"${PY_VER}"/bin/python"
+if [ `uname -m` == 'aarch64' ]; then
+ PIP_COMMAND="$PY_VERSION -m pip install --no-cache-dir"
+ PYTHON_COMMAND="$PY_VERSION"
+else
+ declare -A python_map=( ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
+ declare -A python_include=( ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
+ PY_VER=${python_map[$PY_VERSION]}
+ PIP_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir"
+ PYTHON_COMMAND="/opt/python/"${PY_VER}"/bin/python"
+fi
 
 # set ONNX build environments
 export ONNX_ML=1
@@ -51,9 +61,9 @@ fi
 
 # Build wheels
 if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
-    $PYTHON_COMAND setup.py bdist_wheel --weekly_build || { echo "Building wheels failed."; exit 1; }
+    $PYTHON_COMMAND setup.py bdist_wheel --weekly_build || { echo "Building wheels failed."; exit 1; }
 else
-    $PYTHON_COMAND setup.py bdist_wheel || { echo "Building wheels failed."; exit 1; }
+    $PYTHON_COMMAND setup.py bdist_wheel || { echo "Building wheels failed."; exit 1; }
 fi
 
 

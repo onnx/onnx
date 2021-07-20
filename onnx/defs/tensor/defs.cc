@@ -4,10 +4,12 @@
 
 
 #include "onnx/defs/tensor/utils.h"
+#include "onnx/defs/function.h"
 
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include "onnx/defs/data_propagators.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -101,7 +103,105 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
+
+static const char* CastLike_ver15_doc = R"DOC(
+The operator casts the elements of a given input tensor (the first input) to
+the same data type as the elements of the second input tensor.
+See documentation of the Cast operator for further details.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+	CastLike,
+	15,
+	OpSchema()
+	.SetDoc(CastLike_ver15_doc)
+	.Input(
+		0,
+		"input",
+		"Input tensor to be cast.",
+		"T1",
+		OpSchema::Single,
+		true,
+		1,
+		OpSchema::Differentiable)
+	.Input(
+		1,
+		"target_type",
+		"The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.",
+		"T2",
+		OpSchema::Single,
+		true,
+		1,
+		OpSchema::NonDifferentiable)
+	.Output(
+		0,
+		"output",
+		"Output tensor produced by casting the first input tensor to have the same type as the second input tensor.",
+		"T2",
+		OpSchema::Single,
+		true,
+		1,
+		OpSchema::Differentiable)
+	.TypeConstraint(
+		"T1",
+		{ "tensor(float16)",
+		 "tensor(float)",
+		 "tensor(double)",
+		 "tensor(int8)",
+		 "tensor(int16)",
+		 "tensor(int32)",
+		 "tensor(int64)",
+		 "tensor(uint8)",
+		 "tensor(uint16)",
+		 "tensor(uint32)",
+		 "tensor(uint64)",
+		 "tensor(bool)",
+		 "tensor(string)",
+		 "tensor(bfloat16)" },
+		"Constrain input types. Casting from complex is not supported.")
+	.TypeConstraint(
+		"T2",
+		{ "tensor(float16)",
+		 "tensor(float)",
+		 "tensor(double)",
+		 "tensor(int8)",
+		 "tensor(int16)",
+		 "tensor(int32)",
+		 "tensor(int64)",
+		 "tensor(uint8)",
+		 "tensor(uint16)",
+		 "tensor(uint32)",
+		 "tensor(uint64)",
+		 "tensor(bool)",
+		 "tensor(string)",
+		 "tensor(bfloat16)" },
+		"Constrain output types. Casting to complex is not supported.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	propagateElemTypeFromInputToOutput(ctx, 1, 0);
+	if (hasNInputShapes(ctx, 1)) {
+		propagateShapeFromInputToOutput(ctx, 0, 0);
+	}
+})
+.SetContextDependentFunctionBodyBuilder(
+	[](const FunctionBodyBuildContext& ctx,
+		const OpSchema& schema,
+		FunctionProto& functionProto) -> bool {
+	auto target_type = ctx.getInputType(1);
+	if ((target_type == nullptr) || (!target_type->has_tensor_type())) {
+		// we cannot create a correct function body without knowing the target element type
+		return false;
+	}
+	auto target_elt_type = target_type->tensor_type().elem_type();
+	std::vector<FunctionBodyHelper::NodeDef> body{
+		// nodes: {outputs, op, inputs, attributes}
+	  { {"output"}, "Cast", {"input"}, {MakeAttribute("to", (int64_t)(target_elt_type))} }
+	};
+	return FunctionBodyHelper::BuildFunctionProto(functionProto, schema, body, {});
+}));
 
 static const char* Reshape_ver14_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
@@ -282,53 +382,95 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shape_ver13_doc = R"DOC(
+static const char* Shape_ver15_doc = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+Optional attributes start and end can be used to compute a slice of the input tensor's shape.
+If start axis is omitted, the slice starts from axis 0.
+The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
+If the end axis is omitted, the axes upto the last one will be included.
+Negative axes indicate counting back from the last axis.
+Note that axes will be clipped to the range [0, r-1], where r is the
+rank of the input tensor if they are out-of-range (after adding r in the case of
+negative axis). Thus, specifying any end value > r is equivalent to specifying an end
+value of r, and specifying any start value < -r is equivalent to specifying a start
+value of 0.
+
+For example:
+Input tensor with shape: [2, 3, 4] 
+No attributes specified.
+Output: [2, 3, 4] 
+
+Input tensor with shape: [2, 3, 4] 
+start: -1
+Output: [4] 
+
+Input tensor with shape: [2, 3, 4] 
+end: -1
+Output: [2, 3]
+
+Input tensor with shape: [2, 3, 4] 
+start: 1
+end: 2
+Output: [3] 
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
-    13,
+    15,
     OpSchema()
-        .SetDoc(Shape_ver13_doc)
-        .Input(0,
-            "data",
-            "An input tensor.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(0,
-            "shape",
-            "Shape of the input tensor",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Input tensor can be of arbitrary type.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(int64)"},
-            "Constrain output to int64 tensor.")
+        .SetDoc(Shape_ver15_doc)
+        .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Attr(
+            "start",
+            "(Optional) Starting axis for slicing the shape. Default value is 0."
+            "Negative value means counting dimensions from the back.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "end",
+            "(Optional) Ending axis for slicing the shape. "
+            "Negative value means counting dimensions from the back. "
+            "If omitted, sizes of all axes upto (including) the last one will be included.",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .TypeConstraint("T", OpSchema::all_tensor_types_with_bfloat(), "Input tensor can be of arbitrary type.")
+        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain output to int64 tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
-              TensorProto::INT64);
-          auto* output_shape = 
-              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           auto* output_length = output_shape->add_dim();
-		
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
 
           if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            output_length->set_dim_value(
-                ctx.getInputType(0)->tensor_type().shape().dim_size());
+            int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
+            int64_t start = getAttribute(ctx, "start", 0);
+            if (start < 0)
+              start += rank;
+            start = (start < 0) ? 0 : (start > rank) ? rank : start;
+            int64_t end = getAttribute(ctx, "end", rank);
+            if (end < 0)
+              end += rank;
+            end = (end < 0) ? 0 : (end > rank) ? rank : end;
+            output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            int64_t rank = static_cast<int64_t>(input_shape.dim_size());
+            int64_t start = getAttribute(ctx, "start", 0);
+            if (start < 0)
+              start += rank;
+            start = (start < 0) ? 0 : (start > rank) ? rank : start;
+            int64_t end = getAttribute(ctx, "end", rank);
+            if (end < 0)
+              end += rank;
+            end = (end < 0) ? 0 : (end > rank) ? rank : end;
+            TensorShapeProto output_shape;
+            for (int64_t d = start; d < end; ++d) {
+              *output_shape.add_dim() = input_shape.dim(static_cast<int>(d));
+            }
+            ctx.addOutputData(0, std::move(output_shape));
           }
         }));
 
@@ -1674,6 +1816,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    ->add_dim() = input_shape.dim(i);
             }
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
 static const char* Unsqueeze_ver13_doc = R"DOC(
@@ -1797,6 +1942,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ->set_dim_value(1);
             ++j;
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
 static const char* SpaceToDepth_ver13_doc =

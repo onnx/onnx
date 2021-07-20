@@ -37,7 +37,7 @@ jobs:
     - name: Install python dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install numpy protobuf==3.11.3
+        python -m pip install numpy protobuf==3.16.0
 
     - name: Build manylinux2010_x86_64
       uses: docker://quay.io/pypa/manylinux2010_x86_64
