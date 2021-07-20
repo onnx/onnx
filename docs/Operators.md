@@ -136,7 +136,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SequenceErase">SequenceErase</a>|<a href="Changelog.md#SequenceErase-11">11</a>|
 |<a href="#SequenceInsert">SequenceInsert</a>|<a href="Changelog.md#SequenceInsert-11">11</a>|
 |<a href="#SequenceLength">SequenceLength</a>|<a href="Changelog.md#SequenceLength-11">11</a>|
-|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
+|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
 |<a href="#Sigmoid">Sigmoid</a>|<a href="Changelog.md#Sigmoid-13">13</a>, <a href="Changelog.md#Sigmoid-6">6</a>, <a href="Changelog.md#Sigmoid-1">1</a>|
 |<a href="#Sign">Sign</a>|<a href="Changelog.md#Sign-13">13</a>, <a href="Changelog.md#Sign-9">9</a>|
@@ -9853,9 +9853,9 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>B</tt> (non-differentiable) : T2</dt>
 <dd>N-dimensional matrix B</dd>
 <dt><tt>a_zero_point</tt> (optional, non-differentiable) : T1</dt>
-<dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements should be equal to the number of rows of input 'A'.</dd>
+<dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or N-D tensor. Scalar refers to per tensor quantization whereas N-D refers to per row quantization. If the input is 2D of shape [M, K] then zero point tensor may be an M element vector [zp_1, zp_2, ..., zp_M]. If the input is N-D tensor with shape [D1, D2, M, K] then zero point tensor may have shape [D1, D2, M, 1]. </dd>
 <dt><tt>b_zero_point</tt> (optional, non-differentiable) : T2</dt>
-<dd>Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
+<dd>Zero point tensor for input 'B'. It's optional and default value is 0. It could be a scalar or a N-D tensor, Scalar refers to per tensor quantization whereas N-D refers to per col quantization. If the input is 2D of shape [K, N] then zero point tensor may be an N element vector [zp_1, zp_2, ..., zp_N]. If the input is N-D tensor with shape [D1, D2, K, N] then zero point tensor may have shape [D1, D2, 1, N]. </dd>
 </dl>
 
 #### Outputs
@@ -13622,12 +13622,15 @@ expect(node, inputs=[x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale
 ### <a name="QLinearMatMul"></a><a name="qlinearmatmul">**QLinearMatMul**</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
-  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, and computes the quantized output.
-  The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it is rounding to nearest ties to even.
-  Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
-  They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
-  the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
-  and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
+  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, 
+  and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point). 
+  For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 
+  Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor 
+  (per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row 
+  or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be 
+  an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K] 
+  for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may 
+  have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
   Production must never overflow, and accumulation may overflow if and only if in 32 bits.
 
 #### Version
@@ -18897,12 +18900,49 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="Shape"></a><a name="shape">**Shape**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+  Optional attributes start and end can be used to compute a slice of the input tensor's shape.
+  If start axis is omitted, the slice starts from axis 0.
+  The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
+  If the end axis is omitted, the axes upto the last one will be included.
+  Negative axes indicate counting back from the last axis.
+  Note that axes will be clipped to the range [0, r-1], where r is the
+  rank of the input tensor if they are out-of-range (after adding r in the case of
+  negative axis). Thus, specifying any end value > r is equivalent to specifying an end
+  value of r, and specifying any start value < -r is equivalent to specifying a start
+  value of 0.
+  
+  For example:
+  Input tensor with shape: [2, 3, 4] 
+  No attributes specified.
+  Output: [2, 3, 4] 
+  
+  Input tensor with shape: [2, 3, 4] 
+  start: -1
+  Output: [4] 
+  
+  Input tensor with shape: [2, 3, 4] 
+  end: -1
+  Output: [2, 3]
+  
+  Input tensor with shape: [2, 3, 4] 
+  start: 1
+  end: 2
+  Output: [3] 
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 15 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>end</tt> : int</dt>
+<dd>(Optional) Ending axis for slicing the shape. Negative value means counting dimensions from the back. If omitted, sizes of all axes upto (including) the last one will be included.</dd>
+<dt><tt>start</tt> : int (default is 0)</dt>
+<dd>(Optional) Starting axis for slicing the shape. Default value is 0.Negative value means counting dimensions from the back.</dd>
+</dl>
 
 #### Inputs
 
@@ -18934,28 +18974,31 @@ Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>
 <summary>shape</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Shape',
-    inputs=['x'],
-    outputs=['y'],
-)
-
 x = np.array([
     [1, 2, 3],
     [4, 5, 6],
 ]).astype(np.float32)
-y = np.array([
-    2, 3,
-]).astype(np.int64)
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_shape_example')
+test_shape('_example', x)  # preserve names of original test cases
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.array(x.shape).astype(np.int64)
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_shape')
+test_shape('', x)  # preserve names of original test cases
+
+test_shape('_start_1', x, start=1)
+
+test_shape('_end_1', x, end=1)
+
+test_shape('_start_negative_1', x, start=-1)
+
+test_shape('_end_negative_1', x, end=-1)
+
+test_shape('_start_1_end_negative_1', x, start=1, end=-1)
+
+test_shape('_start_1_end_2', x, start=1, end=2)
+
+test_shape('_clip_start', x, start=-10)
+
+test_shape('_clip_end', x, end=10)
 ```
 
 </details>
