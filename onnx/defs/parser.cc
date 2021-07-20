@@ -102,19 +102,75 @@ Status OnnxParser::Parse(ValueInfoList& vilist) {
   return Status::OK();
 }
 
+// Each input element is a value-info with an optional initializer of the form "= initial-value".
+// The value-info is added to the "inputs", while the initializer is added to initializers.
+Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initializers) {
+  inputs.Clear();
+  if (Matches('(')) {
+    if (!Matches(')')) {
+      do {
+        ValueInfoProto vi;
+        PARSE(vi);
+        *inputs.Add() = vi;
+        if (Matches('=')) {
+          // default value for input
+          TensorProto& tp = *initializers.Add();
+          tp.set_name(vi.name());
+          CHECK_PARSER_STATUS (Parse(tp, vi.type()));
+        }
+      } while (Matches(','));
+      MATCH(')');
+    }
+  }
+  return Status::OK();
+}
+
+// This is handled slightly different from the inputs.
+// Each element is either a value-info or an initializer.
+// A value-info is added to the "value_infos", while an initializer is added to initializers.
+Status OnnxParser::ParseValueInfo(ValueInfoList& value_infos, TensorList& initializers) {
+  value_infos.Clear();
+  if (Matches('<')) {
+    if (!Matches('>')) {
+      do {
+        ValueInfoProto vi;
+        PARSE(vi);
+        if (Matches('=')) {
+          // initializer
+          TensorProto& tp = *initializers.Add();
+          tp.set_name(vi.name());
+          CHECK_PARSER_STATUS (Parse(tp, vi.type()));
+        } else {
+          // valueinfo
+          *value_infos.Add() = vi;
+        }
+      } while (Matches(','));
+      MATCH('>');
+    }
+  }
+  return Status::OK();
+}
+
 Status OnnxParser::Parse(TensorProto& tensorProto) {
   tensorProto = TensorProto();
   // Parse the concrete tensor-type with numeric dimensions:
   TypeProto typeProto;
   PARSE(typeProto);
-  if (!typeProto.has_tensor_type())
+  ParseOptionalIdentifier(*tensorProto.mutable_name());
+  (void)Matches('='); // Optional, to unify handling of initializers as well as tensor-protos in other contexts
+  return Parse(tensorProto, typeProto);
+}
+
+// Parse TensorProto data given its type:
+Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto) {
+  if (!tensorTypeProto.has_tensor_type())
     return ParseError("Error parsing TensorProto (expected a tensor type).");
-  auto elem_type = typeProto.tensor_type().elem_type();
+  auto elem_type = tensorTypeProto.tensor_type().elem_type();
   tensorProto.set_data_type(elem_type);
-  if (!typeProto.tensor_type().has_shape())
+  if (!tensorTypeProto.tensor_type().has_shape())
     return ParseError("Error parsing TensorProto (expected a tensor shape).");
   uint64_t n = 1;
-  for (auto& dim : typeProto.tensor_type().shape().dim()) {
+  for (auto& dim : tensorTypeProto.tensor_type().shape().dim()) {
     if (!dim.has_dim_value())
       return ParseError("Error parsing TensorProto shape (expected numeric dimension).");
     auto dimval = dim.dim_value();
@@ -300,10 +356,12 @@ Status OnnxParser::Parse(GraphProto& graph) {
 
 Status OnnxParser::Parse(std::string name, GraphProto& graph) {
   graph.set_name(name);
-  PARSE(*graph.mutable_input());
+  graph.mutable_initializer()->Clear();
+  CHECK_PARSER_STATUS(ParseInput(*graph.mutable_input(), *graph.mutable_initializer()));
   MATCH('=');
   MATCH('>', false);
   PARSE(*graph.mutable_output());
+  CHECK_PARSER_STATUS(ParseValueInfo(*graph.mutable_value_info(), *graph.mutable_initializer()));
   return Parse(*graph.mutable_node());
 }
 
