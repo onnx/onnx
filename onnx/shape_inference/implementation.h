@@ -178,14 +178,14 @@ struct InferenceContextImpl : public InferenceContext {
 
   const TypeProto* getInputType(size_t index) const override {
     if (index >= allInputTypes_.size()) {
-      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return allInputTypes_[index];
   }
 
   const TensorProto* getInputData(size_t index) const override {
     if (index >= allInputData_.size()) {
-      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return allInputData_[index];
   }
@@ -200,7 +200,7 @@ struct InferenceContextImpl : public InferenceContext {
 
   const SparseTensorProto* getInputSparseData(size_t index) const override {
     if (index >= allInputSparseData_.size()) {
-      ONNX_THROW("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return allInputSparseData_[index];
   }
@@ -211,7 +211,7 @@ struct InferenceContextImpl : public InferenceContext {
 
   TypeProto* getOutputType(size_t index) override {
     if (index >= allOutputTypes_.size()) {
-      ONNX_THROW("output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+      ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return &allOutputTypes_[index];
   }
@@ -259,6 +259,139 @@ struct InferenceContextImpl : public InferenceContext {
       graphAttributeInferencers_;
 };
 
+struct DataPropagationContextImpl : public DataPropagationContext {
+  DataPropagationContextImpl(
+      NodeProto& n,
+      const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
+      const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
+      std::unordered_map<std::string, TensorShapeProto>& generatedShapeData)
+      : generatedShapeData_{generatedShapeData} {
+    size_t input_idx = 0;
+  
+    for (auto& attr : *n.mutable_attribute()) {
+      attributesByName_[attr.name()] = &attr;
+    }
+
+    for (const auto& input : n.input()) {
+      inputIndexToNameMap_.insert({input_idx++, input});
+
+      auto valueTypesIter = valueTypesByName.find(input);
+      if (valueTypesIter != valueTypesByName.end()) {
+        allInputTypes_.push_back(valueTypesIter->second);
+      } else {
+        allInputTypes_.push_back(nullptr);
+      }
+
+      const auto inputDataIter = inputDataByName.find(input);
+      if (inputDataIter != inputDataByName.cend()) {
+        allInputData_.push_back(inputDataIter->second);
+      } else {
+        allInputData_.push_back(nullptr);
+      }
+    }
+
+    size_t output_idx = 0;
+    for (const auto& output : n.output()) {
+      outputIndexToNameMap_.insert({output_idx++, output});
+    }
+
+    allOutputTypes_.resize(n.output_size());
+  }
+
+  const AttributeProto* getAttribute(const std::string& name) const override {
+    auto iter = attributesByName_.find(name);
+    if (iter == attributesByName_.end()) {
+      return nullptr;
+    } else {
+      return iter->second;
+    }
+  }
+
+  size_t getNumInputs() const override {
+    return allInputTypes_.size();
+  }
+
+  const TypeProto* getInputType(size_t index) const override {
+    if (index >= allInputTypes_.size()) {
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
+    }
+    return allInputTypes_[index];
+  }
+
+  size_t getNumOutputs() const override {
+    return allOutputTypes_.size();
+  }
+
+  const TypeProto* getOutputType(size_t index) const override {
+    if (index >= allOutputTypes_.size()) {
+      ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
+    }
+    return &allOutputTypes_[index];
+  }
+
+  // Convert integer vector into TensorShapeProto
+  template <typename INTEGER>
+  void vectorToTensorShapeProto(const std::vector<INTEGER>& input_vals, TensorShapeProto& converted_tsp) const {
+    for (unsigned int i = 0; i < input_vals.size(); ++i) {
+      converted_tsp.mutable_dim()->Add()->set_dim_value(input_vals[i]);
+    }
+  }
+
+  const TensorShapeProto* getInputData(size_t index) override {
+    if (index >= allInputData_.size()) {
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
+    }
+    const std::string input_name = inputIndexToNameMap_.at(index);
+    // Gets it from previous data propagation
+    auto iter = generatedShapeData_.find(input_name);
+    if (iter != generatedShapeData_.end()) {
+      return &iter->second;
+    }
+    // Otherwise, gets it from initializer if it exists
+    const auto* input_data = allInputData_[index];
+    // Only scalar (0D tensor) or 1D tensor can be converted for now
+    // TODO: It should support tensors with more dimension on demand
+    if (input_data != nullptr &&
+        (input_data->dims_size() == 0 || input_data->dims_size() == 1)) {
+        TensorShapeProto tsp;
+
+        if (input_data->data_type() == TensorProto_DataType_INT64) {
+          vectorToTensorShapeProto(ParseData<int64_t>(input_data), tsp);
+        } else if (input_data->data_type() == TensorProto_DataType_INT32) {
+          vectorToTensorShapeProto(ParseData<int32_t>(input_data), tsp);
+        } else {
+          // Only supports integer type to form a shape
+          return nullptr;
+        }
+
+        // Adds this TensorShapeProto from initializer into generatedShapeData
+        // for future use
+        generatedShapeData_.insert({input_name, std::move(tsp)});
+        auto iter = generatedShapeData_.find(input_name);
+        return &iter->second;
+    }
+    return nullptr;
+  }
+
+  void addOutputData(size_t index, TensorShapeProto&& tsp) override {
+    if (index >= outputIndexToNameMap_.size()) {
+      ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
+    }
+    auto result = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tsp)});
+    if (!result.second) {
+      fail_shape_inference("Data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
+    }
+  }
+
+  std::vector<const TensorProto*> allInputData_;
+  std::unordered_map<size_t, std::string> inputIndexToNameMap_;
+  std::unordered_map<size_t, std::string> outputIndexToNameMap_;
+  std::vector<const TypeProto*> allInputTypes_;
+  std::vector<TypeProto> allOutputTypes_;
+  std::unordered_map<std::string, TensorShapeProto>& generatedShapeData_;
+  std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+};
+
 void checkShapesAndTypes(
     const TypeProto_Sequence& inferredType,
     const TypeProto_Sequence& existingType);
@@ -290,39 +423,40 @@ void mergeShapesAndTypes(
 
 void InferShapes(
     ModelProto& m,
-    const bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int error_mode = 0
+    const ShapeInferenceOptions& options = {}
     );
 
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
-    const bool check_type = false,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int error_mode = 0
+    const ShapeInferenceOptions& options = {}
     );
 
 void InferShapes(
     const std::string& model_path,
-    const bool check_type = false,
     const std::string& save_path = "",
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int error_mode = 0
+    const ShapeInferenceOptions& options = {}
     );
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl &symbolTable);
+    SymbolTableImpl& symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
+    const ShapeInferenceOptions& options);
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl &symbolTable);
+    SymbolTableImpl& symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
+    const ShapeInferenceOptions& options);
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 

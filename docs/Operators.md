@@ -136,7 +136,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SequenceErase">SequenceErase</a>|<a href="Changelog.md#SequenceErase-11">11</a>|
 |<a href="#SequenceInsert">SequenceInsert</a>|<a href="Changelog.md#SequenceInsert-11">11</a>|
 |<a href="#SequenceLength">SequenceLength</a>|<a href="Changelog.md#SequenceLength-11">11</a>|
-|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
+|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
 |<a href="#Sigmoid">Sigmoid</a>|<a href="Changelog.md#Sigmoid-13">13</a>, <a href="Changelog.md#Sigmoid-6">6</a>, <a href="Changelog.md#Sigmoid-1">1</a>|
 |<a href="#Sign">Sign</a>|<a href="Changelog.md#Sign-13">13</a>, <a href="Changelog.md#Sign-9">9</a>|
@@ -18900,12 +18900,49 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="Shape"></a><a name="shape">**Shape**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+  Optional attributes start and end can be used to compute a slice of the input tensor's shape.
+  If start axis is omitted, the slice starts from axis 0.
+  The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
+  If the end axis is omitted, the axes upto the last one will be included.
+  Negative axes indicate counting back from the last axis.
+  Note that axes will be clipped to the range [0, r-1], where r is the
+  rank of the input tensor if they are out-of-range (after adding r in the case of
+  negative axis). Thus, specifying any end value > r is equivalent to specifying an end
+  value of r, and specifying any start value < -r is equivalent to specifying a start
+  value of 0.
+  
+  For example:
+  Input tensor with shape: [2, 3, 4] 
+  No attributes specified.
+  Output: [2, 3, 4] 
+  
+  Input tensor with shape: [2, 3, 4] 
+  start: -1
+  Output: [4] 
+  
+  Input tensor with shape: [2, 3, 4] 
+  end: -1
+  Output: [2, 3]
+  
+  Input tensor with shape: [2, 3, 4] 
+  start: 1
+  end: 2
+  Output: [3] 
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 15 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>end</tt> : int</dt>
+<dd>(Optional) Ending axis for slicing the shape. Negative value means counting dimensions from the back. If omitted, sizes of all axes upto (including) the last one will be included.</dd>
+<dt><tt>start</tt> : int (default is 0)</dt>
+<dd>(Optional) Starting axis for slicing the shape. Default value is 0.Negative value means counting dimensions from the back.</dd>
+</dl>
 
 #### Inputs
 
@@ -18937,28 +18974,31 @@ Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>
 <summary>shape</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Shape',
-    inputs=['x'],
-    outputs=['y'],
-)
-
 x = np.array([
     [1, 2, 3],
     [4, 5, 6],
 ]).astype(np.float32)
-y = np.array([
-    2, 3,
-]).astype(np.int64)
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_shape_example')
+test_shape('_example', x)  # preserve names of original test cases
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.array(x.shape).astype(np.int64)
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_shape')
+test_shape('', x)  # preserve names of original test cases
+
+test_shape('_start_1', x, start=1)
+
+test_shape('_end_1', x, end=1)
+
+test_shape('_start_negative_1', x, start=-1)
+
+test_shape('_end_negative_1', x, end=-1)
+
+test_shape('_start_1_end_negative_1', x, start=1, end=-1)
+
+test_shape('_start_1_end_2', x, start=1, end=2)
+
+test_shape('_clip_start', x, start=-10)
+
+test_shape('_clip_end', x, end=10)
 ```
 
 </details>
