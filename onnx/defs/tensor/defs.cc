@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include "onnx/defs/data_propagators.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -102,6 +103,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
 static const char* CastLike_ver15_doc = R"DOC(
@@ -448,6 +452,25 @@ ONNX_OPERATOR_SET_SCHEMA(
               end += rank;
             end = (end < 0) ? 0 : (end > rank) ? rank : end;
             output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            int64_t rank = static_cast<int64_t>(input_shape.dim_size());
+            int64_t start = getAttribute(ctx, "start", 0);
+            if (start < 0)
+              start += rank;
+            start = (start < 0) ? 0 : (start > rank) ? rank : start;
+            int64_t end = getAttribute(ctx, "end", rank);
+            if (end < 0)
+              end += rank;
+            end = (end < 0) ? 0 : (end > rank) ? rank : end;
+            TensorShapeProto output_shape;
+            for (int64_t d = start; d < end; ++d) {
+              *output_shape.add_dim() = input_shape.dim(static_cast<int>(d));
+            }
+            ctx.addOutputData(0, std::move(output_shape));
           }
         }));
 
@@ -1793,6 +1816,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                    ->add_dim() = input_shape.dim(i);
             }
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
 static const char* Unsqueeze_ver13_doc = R"DOC(
@@ -1916,6 +1942,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ->set_dim_value(1);
             ++j;
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
 static const char* SpaceToDepth_ver13_doc =

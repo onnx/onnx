@@ -93,6 +93,9 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#NonZero">NonZero</a>|<a href="Changelog.md#NonZero-13">13</a>, <a href="Changelog.md#NonZero-9">9</a>|
 |<a href="#Not">Not</a>|<a href="Changelog.md#Not-1">1</a>|
 |<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
+|<a href="#Optional">Optional</a>|<a href="Changelog.md#Optional-15">15</a>|
+|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-15">15</a>|
+|<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
 |<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
@@ -2462,8 +2465,8 @@ test_cases = [
 ]
 
 for from_type, to_type in test_cases:
-    input_type = None
-    output_type = None
+    input_type_proto = None
+    output_type_proto = None
     if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
         np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
             u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
@@ -2475,8 +2478,8 @@ for from_type, to_type in test_cases:
             assert from_type == 'FLOAT'
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
-            input_type = int(TensorProto.FLOAT)
-            output_type = int(TensorProto.BFLOAT16)
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), input.shape)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), output.shape)
         else:
             assert to_type == 'FLOAT'
             input = np_bfp16.reshape([3, 4])
@@ -2488,8 +2491,8 @@ for from_type, to_type in test_cases:
                 np_fp32_zeros[0::2] = np_bfp16
             np_fp32_from_bfloat = np_fp32_zeros.view(dtype=np.float32)
             output = np_fp32_from_bfloat.reshape([3, 4])
-            input_type = int(TensorProto.BFLOAT16)
-            output_type = int(TensorProto.FLOAT)
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), input.shape)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), output.shape)
     elif 'STRING' != from_type:
         input = np.random.random_sample(shape).astype(
             TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
@@ -2515,11 +2518,11 @@ for from_type, to_type in test_cases:
         outputs=['output'],
         to=getattr(TensorProto, to_type),
     )
-    if input_type and output_type:
+    if input_type_proto and output_type_proto:
         expect(node, inputs=[input], outputs=[output],
                    name='test_cast_' + from_type + '_to_' + to_type,
-                   input_types=[input_type],
-                   output_types=[output_type])
+                   input_type_protos=[input_type_proto],
+                   output_type_protos=[output_type_proto])
     else:
         expect(node, inputs=[input], outputs=[output],
                    name='test_cast_' + from_type + '_to_' + to_type)
@@ -2585,8 +2588,8 @@ test_cases = [
 ]
 
 for from_type, to_type in test_cases:
-    input_type = None
-    output_type = None
+    input_type_proto = None
+    output_type_proto = None
     if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
         np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
             u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
@@ -2598,8 +2601,8 @@ for from_type, to_type in test_cases:
             assert from_type == 'FLOAT'
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
-            input_type = int(TensorProto.FLOAT)
-            output_type = int(TensorProto.BFLOAT16)
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), input.shape)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), output.shape)
         else:
             assert to_type == 'FLOAT'
             input = np_bfp16.reshape([3, 4])
@@ -2611,8 +2614,8 @@ for from_type, to_type in test_cases:
                 np_fp32_zeros[0::2] = np_bfp16
             np_fp32_from_bfloat = np_fp32_zeros.view(dtype=np.float32)
             output = np_fp32_from_bfloat.reshape([3, 4])
-            input_type = int(TensorProto.BFLOAT16)
-            output_type = int(TensorProto.FLOAT)
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), input.shape)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), output.shape)
     elif 'STRING' != from_type:
         input = np.random.random_sample(shape).astype(
             TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
@@ -2638,11 +2641,11 @@ for from_type, to_type in test_cases:
         inputs=['input', 'like'],
         outputs=['output'],
     )
-    if input_type and output_type:
+    if input_type_proto and output_type_proto:
         expect(node, inputs=[input, like], outputs=[output],
                    name='test_castlike_' + from_type + '_to_' + to_type,
-                   input_types=[input_type, output_type],
-                   output_types=[output_type])
+                   input_type_protos=[input_type_proto, output_type_proto],
+                   output_type_protos=[output_type_proto])
     else:
         expect(node, inputs=[input, like], outputs=[output],
                    name='test_castlike_' + from_type + '_to_' + to_type)
@@ -9663,7 +9666,10 @@ seq_res = [x[:int(i)] for i in x]
 cond = np.array(1).astype(np.bool)
 expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
        name='test_loop13_seq', opset_imports=[onnx.helper.make_opsetid("", 13)],
-       input_types=[onnx.TensorProto.INT64, onnx.TensorProto.BOOL, onnx.TensorProto.FLOAT])
+       input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, trip_count.shape),
+                          onnx.helper.make_tensor_type_proto(onnx.TensorProto.BOOL, cond.shape),
+                          onnx.helper.make_sequence_type_proto(
+                              onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, []))])
 ```
 
 </details>
@@ -9847,9 +9853,9 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>B</tt> (non-differentiable) : T2</dt>
 <dd>N-dimensional matrix B</dd>
 <dt><tt>a_zero_point</tt> (optional, non-differentiable) : T1</dt>
-<dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements should be equal to the number of rows of input 'A'.</dd>
+<dd>Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or N-D tensor. Scalar refers to per tensor quantization whereas N-D refers to per row quantization. If the input is 2D of shape [M, K] then zero point tensor may be an M element vector [zp_1, zp_2, ..., zp_M]. If the input is N-D tensor with shape [D1, D2, M, K] then zero point tensor may have shape [D1, D2, M, 1]. </dd>
 <dt><tt>b_zero_point</tt> (optional, non-differentiable) : T2</dt>
-<dd>Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number of elements should be equal to the number of columns of input 'B'.</dd>
+<dd>Zero point tensor for input 'B'. It's optional and default value is 0. It could be a scalar or a N-D tensor, Scalar refers to per tensor quantization whereas N-D refers to per col quantization. If the input is 2D of shape [K, N] then zero point tensor may be an N element vector [zp_1, zp_2, ..., zp_N]. If the input is N-D tensor with shape [D1, D2, K, N] then zero point tensor may have shape [D1, D2, 1, N]. </dd>
 </dl>
 
 #### Outputs
@@ -12761,6 +12767,200 @@ expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_wit
 </details>
 
 
+### <a name="Optional"></a><a name="optional">**Optional**</a>
+
+  Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
+  or a non-empty value containing the input element.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>type</tt> : type_proto</dt>
+<dd>Type of the element in the optional output</dd>
+</dl>
+
+#### Inputs (0 - 1)
+
+<dl>
+<dt><tt>input</tt> (optional) : V</dt>
+<dd>The input element.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : O</dt>
+<dd>The optional output enclosing the input element.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrains input type to all tensor and sequence types.</dd>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrains output type to all optional tensor or optional sequence types.</dd>
+</dl>
+
+
+### <a name="OptionalGetElement"></a><a name="optionalgetelement">**OptionalGetElement**</a>
+
+  Outputs the element in the optional-type input. It is an error if the input value does not have an element
+  and the behavior is undefined in this case.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : O</dt>
+<dd>The optional input.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : V</dt>
+<dd>Output element in the optional input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output type to all tensor or sequence types.</dd>
+</dl>
+
+
+### <a name="OptionalHasElement"></a><a name="optionalhaselement">**OptionalHasElement**</a>
+
+  Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
+
+#### Version
+
+This version of the operator has been available since version 15 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : O</dt>
+<dd>The optional input.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : B</dt>
+<dd>A scalar boolean tensor. If true, it indicates that optional-type input contains an element. Otherwise, it is empty.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrains output to a boolean tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>empty</summary>
+
+```python
+optional = None
+tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.INT32, shape=[])
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_has_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
+       name='test_optional_has_element_empty')
+```
+
+</details>
+
+
+<details>
+<summary>get_element_sequence</summary>
+
+```python
+optional = [np.array([1, 2, 3, 4]).astype(np.int32)]
+tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.INT32, shape=[4, ])
+seq_type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+input_type_proto = onnx.helper.make_optional_type_proto(seq_type_proto)
+
+node = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_get_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
+       name='test_optional_get_element_sequence')
+```
+
+</details>
+
+
+<details>
+<summary>get_element_tensor</summary>
+
+```python
+optional = np.array([1, 2, 3, 4]).astype(np.float32)
+tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+
+node = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_get_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
+       name='test_optional_get_element')
+```
+
+</details>
+
+
+<details>
+<summary>optionalhaselement</summary>
+
+```python
+optional = np.array([1, 2, 3, 4]).astype(np.float32)
+tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_has_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
+       name='test_optional_has_element')
+```
+
+</details>
+
+
 ### <a name="Or"></a><a name="or">**Or**</a>
 
   Returns the tensor resulted from performing the `or` logical operation
@@ -13422,12 +13622,15 @@ expect(node, inputs=[x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale
 ### <a name="QLinearMatMul"></a><a name="qlinearmatmul">**QLinearMatMul**</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
-  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, and computes the quantized output.
-  The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it is rounding to nearest ties to even.
-  Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
-  They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
-  the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
-  and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
+  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, 
+  and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point). 
+  For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 
+  Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor 
+  (per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row 
+  or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be 
+  an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K] 
+  for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may 
+  have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
   Production must never overflow, and accumulation may overflow if and only if in 32 bits.
 
 #### Version
