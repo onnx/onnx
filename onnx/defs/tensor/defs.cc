@@ -810,6 +810,36 @@ Example 2:
   ]
 )DOC";
 
+inline int64_t clamp(int64_t val, int64_t low, int64_t high) {
+  if (val < low)
+    return low;
+  if (val > high)
+    return high;
+  return val;
+}
+
+inline void processSliceInputs(const int64_t input_rank,
+  int64_t& start, int64_t& end, int64_t& step) {  
+  // process step
+  if (step == 0) {
+    fail_shape_inference("'step' cannot be 0 for Slice");
+  }
+  // process start
+  if (start < 0)
+    start += input_rank;
+  if (step < 0)
+    start = clamp(start, 0, input_rank - 1);
+  else
+    start = clamp(start, 0, input_rank);
+  // process end
+  if (end < 0)
+    end += input_rank;
+  if (step < 0)
+    end = clamp(end, -1, input_rank);
+  else
+    end = clamp(end, 0, input_rank);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Slice,
     13,
@@ -928,14 +958,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return vec;
           };
 
-          auto clamp = [](int64_t val, int64_t low, int64_t high) -> int64_t {
-            if (val < low)
-              return low;
-            if (val > high)
-              return high;
-            return val;
-          };
-
           std::vector<int64_t> starts = get_initializer_data(startsInitializer);
           std::vector<int64_t> ends = get_initializer_data(endsInitializer);
 
@@ -1012,32 +1034,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ->clear_dim_param();
               continue;
             }
-
-            const auto input_dim_value = input_dim.dim_value();
-
-            // process step
-            auto step = steps[axis_index];
-            if (step == 0) {
-              fail_shape_inference("'step' cannot be 0");
-            }
-
-            // process start
             auto start = starts[axis_index];
-            if (start < 0)
-              start += input_dim_value;
-            if (step < 0)
-              start = clamp(start, 0, input_dim_value - 1);
-            else
-              start = clamp(start, 0, input_dim_value);
-
-            // process end
             auto end = ends[axis_index];
-            if (end < 0)
-              end += input_dim_value;
-            if (step < 0)
-              end = clamp(end, -1, input_dim_value);
-            else
-              end = clamp(end, 0, input_dim_value);
+            auto step = steps[axis_index];
+
+            processSliceInputs(input_dim.dim_value(), start, end, step);
 
             // find output dim value for this axis
             auto temp = static_cast<int64_t>(ceil(1.0 * (end - start) / step));
@@ -1069,19 +1070,26 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Only supports axis = 0 since the data comes from Shape
           if((axes == nullptr || (axes->dim_size() == 1 && axes->dim(0).dim_value() == 0))
             && starts->dim_size () == 1 && ends->dim_size() == 1) {
-            int step = 1; // Default step is 1
+            auto start = starts->dim(0).dim_value();
+            auto end = ends->dim(0).dim_value();
+            int64_t step = 1; // Default step is 1
             if (steps != nullptr) {
               if (steps->dim_size() != 1) {
                 return;
               }
               step = steps->dim(0).dim_value();
-              if (step == 0) {
-                fail_shape_inference("Step cannot be 0 for Slice");
-              }
             }
+
+            processSliceInputs(input_data->dim_size(), start, end, step);
             TensorShapeProto tsp;
-            for (int i = starts->dim(0).dim_value(); i < ends->dim(0).dim_value(); i += step) {
-              appendDimToTensorShapeProto(tsp, input_data->dim(i));
+            if (start < end) {
+              for (int i = start; i < end; i += step) {
+                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+              }
+            } else {
+              for (int i = start; i > end; i += step) {
+                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+              }
             }
             if (tsp.dim_size() > 0) {
               ctx.addOutputData(0, std::move(tsp));

@@ -200,15 +200,15 @@ agraph (int32[2,5] x) => (int32[1,2] w)
 
 TEST(DataPropagationImplTest, SizeTest) {
   const char* code = R"ONNX(
-agraph (int32[0,1,2,3] x) => (int32[1] w)
+agraph (int64[1] x) => (int32[1] w)
+<int64[3] init = {2,3,5}>
 {
-    xs = Shape(x)
-    z = Size(xs)
+    z = Size(init)
     w = Cast<to = 7>(z)
 }
 )ONNX";
   TensorShapeProto expected_tsp;
-  expected_tsp.mutable_dim()->Add()->set_dim_value(4);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(3);
   const auto propagated_tsp = RunDataPropagation(code);
   EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }
@@ -339,6 +339,26 @@ agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[3] w)
   expected_tsp.mutable_dim()->Add()->set_dim_value(3);
   expected_tsp.mutable_dim()->Add()->set_dim_value(4);
   expected_tsp.mutable_dim()->Add()->set_dim_value(5);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, SliceNegativeStartEndTest) {
+  const char* code = R"ONNX(
+agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[3] w)
+{
+    xs = Shape(x)
+    starts = Constant<value = int64[1] {-3}>()
+    ends = Constant<value = int64[1] {-7}>()
+    axes = Constant<value = int64[1] {0}>()
+    steps = Constant<value = int64[1] {-2}>()
+    z = Slice(xs, starts, ends, axes, steps)
+    w = Cast<to = 7>(z)
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(6);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(4);
   const auto propagated_tsp = RunDataPropagation(code);
   EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }

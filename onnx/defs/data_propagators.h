@@ -27,7 +27,7 @@ inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
   if (input_data_0 == nullptr) {
     return false;
   }
-  auto rank = input_data_0->dim_size();
+  int rank = input_data_0->dim_size();
   if (axis < -rank || axis >= rank) {
     fail_shape_inference("axis must be in [-rank, rank-1].");
     return false;
