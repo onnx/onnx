@@ -517,8 +517,32 @@ TEST(GraphInferencerImplTest, Scan9_BasicTest) {
   doInferencingTest(false);
 }
 
-TEST(ShapeInferenceTest, ReshapeTest) {
-  const char* code = R"ONNX(
+void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+
+  ShapeInferenceOptions options{true, 1, true};
+  ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
+
+  const auto inferredShape = model.graph().output()[0].type().tensor_type().shape();
+  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size());
+
+  for (int i = 0; i < inferredShape.dim_size(); i++) {
+    EXPECT_TRUE(
+        (inferredShape.dim(i).has_dim_value() && expectedShape.dim(i).has_dim_value()) ||
+        (inferredShape.dim(i).has_dim_param() && expectedShape.dim(i).has_dim_param()));
+
+    EXPECT_TRUE(
+        inferredShape.dim(i).has_dim_value() ? inferredShape.dim(i).dim_value() == expectedShape.dim(i).dim_value()
+                                             : inferredShape.dim(i).dim_param() == expectedShape.dim(i).dim_param());
+  }
+
+}
+TEST(ShapeInferenceTest, ReshapeTestWithShapeAsSymInput) {
+  const char* modelStr = R"ONNX(
 <
   ir_version: 8,
   opset_import: [ "" : 15],
@@ -533,31 +557,63 @@ agraph (float[batch_size, 256, 768, 3] x, float[batch_size, 196608] m) => (float
     z = Reshape(m, y)
 }
 )ONNX";
-  ModelProto model;
-  OnnxParser parser(code);
-  auto status = parser.Parse(model);
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
-  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
 
-  TensorShapeProto expected_shape;
-  expected_shape.mutable_dim()->Add()->set_dim_param("batch_size");
-  expected_shape.mutable_dim()->Add()->set_dim_value(256);
-  expected_shape.mutable_dim()->Add()->set_dim_value(768);
-  ShapeInferenceOptions options{true, 1, true};
-  ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
+  TensorShapeProto expectedShape;
+  expectedShape.mutable_dim()->Add()->set_dim_param("batch_size");
+  expectedShape.mutable_dim()->Add()->set_dim_value(256);
+  expectedShape.mutable_dim()->Add()->set_dim_value(768);
 
-  const auto inferred_shape = model.graph().output()[0].type().tensor_type().shape();
-  EXPECT_TRUE(inferred_shape.dim_size() == expected_shape.dim_size());
+  RunReshapeShapeInfTest(modelStr, expectedShape);
+}
 
-  for (int i = 0; i < inferred_shape.dim_size(); i++) {
-    EXPECT_TRUE(
-        (inferred_shape.dim(i).has_dim_value() && expected_shape.dim(i).has_dim_value()) ||
-        (inferred_shape.dim(i).has_dim_param() && expected_shape.dim(i).has_dim_param()));
+TEST(ShapeInferenceTest, ReshapeTestWithShapeAsInitializer) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 15],
+  producer_name: "DataPropagationTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for data propagation."
+>
+agraph (float[1, 196608] m) => (float[?, ?, ?] z)
+<int64[3] shape = {1, 768, 256}>
+{
+    z = Reshape(m, shape)
+}
+)ONNX";
 
-    EXPECT_TRUE(
-        inferred_shape.dim(i).has_dim_value() ? inferred_shape.dim(i).dim_value() == expected_shape.dim(i).dim_value()
-                                              : inferred_shape.dim(i).dim_param() == expected_shape.dim(i).dim_param());
-  }
+  TensorShapeProto expectedShape;
+  expectedShape.mutable_dim()->Add()->set_dim_value(1);
+  expectedShape.mutable_dim()->Add()->set_dim_value(768);
+  expectedShape.mutable_dim()->Add()->set_dim_value(256);
+
+  RunReshapeShapeInfTest(modelStr, expectedShape);
+}
+
+TEST(ShapeInferenceTest, ReshapeTestWithShapeAsInitializer1) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 15],
+  producer_name: "DataPropagationTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for data propagation."
+>
+agraph (float[1, 196608] m) => (float[?, ?, ?] z)
+<int64[3] shape = {1, -1, 256}>
+{
+    z = Reshape(m, shape)
+}
+)ONNX";
+
+  TensorShapeProto expectedShape;
+  expectedShape.mutable_dim()->Add()->set_dim_value(1);
+  expectedShape.mutable_dim()->Add()->set_dim_value(768);
+  expectedShape.mutable_dim()->Add()->set_dim_value(256);
+
+  RunReshapeShapeInfTest(modelStr, expectedShape);
 }
 
 } // namespace Test
