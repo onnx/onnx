@@ -133,10 +133,11 @@ inline void ConcatOpDataPropagator(DataPropagationContext& ctx) {
   TensorShapeProto tsp;
   for (size_t i = 0; i < ctx.getNumInputs(); ++i) {
     const auto input_data = ctx.getInputData(i);
-    if (input_data != nullptr) {
-      for (int j = 0; j < input_data->dim_size(); ++j) {
-        appendDimToTensorShapeProto(tsp, input_data->dim(j));
-      }
+    if (input_data == nullptr) {
+      return;
+    }
+    for (int j = 0; j < input_data->dim_size(); ++j) {
+      appendDimToTensorShapeProto(tsp, input_data->dim(j));
     }
   }
   if (tsp.dim_size() > 0) {
