@@ -28,17 +28,17 @@ inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_typ
   if (input_0 == nullptr || input_1 == nullptr) {
     return;
   }
+  int size_0 = input_0->dim_size();
+  int size_1 = input_1->dim_size();
   // Fails to broadcast if the ranks are different and no any rank is 1 
-  if ((input_0->dim_size() != input_1->dim_size() && input_0->dim_size() != 1
-    && input_1->dim_size() != 1)) {
+  if (size_0 != size_1 && size_0 != 1 && size_1 != 1) {
     fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (",
-        input_0->dim_size(), ") vs (", input_1->dim_size(), ").");
+        size_0, ") vs (", size_1, ").");
   }
   TensorShapeProto tsp;
-  int max_dim_size = std::max(input_0->dim_size(), input_1->dim_size());
-  for (int i = 0; i < max_dim_size; ++i) {
-    auto input_dim_0 = (input_0->dim_size() == 1)? input_0->dim(0):input_0->dim(i);
-    auto input_dim_1 = (input_1->dim_size() == 1)? input_1->dim(0):input_1->dim(i);
+  for (int i = 0; i < std::max(size_0, size_1); ++i) {
+    auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
+    auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
     if (!(input_dim_0.has_dim_value() && input_dim_1.has_dim_value())) {
       return;
     }
