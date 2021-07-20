@@ -387,6 +387,73 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* Shape_ver13_doc = R"DOC(
+Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+)DOC";
+
+// Data propagation function for Shape op
+// Propagates input shape to output shape
+static void ShapeOp13DataPropagator(DataPropagationContext& ctx) {
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  if (ctx.getInputType(0)->tensor_type().has_shape()) {
+    auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+    TensorShapeProto tsp;
+    tsp.CopyFrom(input_shape);
+    ctx.addOutputData(0, std::move(tsp));
+  }
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Shape,
+    13,
+    OpSchema()
+        .SetDoc(Shape_ver13_doc)
+        .Input(0,
+            "data",
+            "An input tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(0,
+            "shape",
+            "Shape of the input tensor",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Input tensor can be of arbitrary type.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int64)"},
+            "Constrain output to int64 tensor.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
+              TensorProto::INT64);
+          auto* output_shape = 
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto* output_length = output_shape->add_dim();
+		
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            output_length->set_dim_value(
+                ctx.getInputType(0)->tensor_type().shape().dim_size());
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          ShapeOp13DataPropagator(ctx);
+        }));
+
 static const char* Shape_ver1_doc = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 )DOC";

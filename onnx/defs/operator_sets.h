@@ -973,6 +973,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Optional);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalHasElement);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalGetElement);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, CastLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Shape);
 
 // Iterate over schema from ai.onnx version 15
 class OpSet_Onnx_ver15 {
@@ -985,6 +986,7 @@ class OpSet_Onnx_ver15 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalHasElement)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalGetElement)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, CastLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Shape)>());
   }
 };
 

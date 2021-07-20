@@ -374,6 +374,11 @@ OpSchema& OpSchema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFun
   return *this;
 }
 
+OpSchema& OpSchema::PartialDataPropagationFunction(DataPropagationFunction dataPropagationFunction) {
+  data_propagation_function_ = std::move(dataPropagationFunction);
+  return *this;
+}
+
 OpSchema& OpSchema::SetSupportLevel(SupportType support) {
   support_ = support;
   return *this;
