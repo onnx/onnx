@@ -7,7 +7,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx_pb.h"
-
+#include "onnx/defs/parser.h"
 #include "onnx/shape_inference/implementation.h"
 
 using namespace ONNX_NAMESPACE::shape_inference;
@@ -515,6 +515,49 @@ TEST(GraphInferencerImplTest, Scan8_BasicTest) {
 // Check subgraph inferencing via GraphInferencer using a Scan (from opset 9)
 TEST(GraphInferencerImplTest, Scan9_BasicTest) {
   doInferencingTest(false);
+}
+
+TEST(ShapeInferenceTest, ReshapeTest) {
+  const char* code = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 15],
+  producer_name: "DataPropagationTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for data propagation."
+>
+agraph (float[batch_size, 256, 768, 3] x, float[batch_size, 196608] m) => (float[?, ?, ?] z)
+{
+    y = Shape<start = 0, end = 3>(x)
+    z = Reshape(m, y)
+}
+)ONNX";
+  ModelProto model;
+  OnnxParser parser(code);
+  auto status = parser.Parse(model);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+
+  TensorShapeProto expected_shape;
+  expected_shape.mutable_dim()->Add()->set_dim_param("batch_size");
+  expected_shape.mutable_dim()->Add()->set_dim_value(256);
+  expected_shape.mutable_dim()->Add()->set_dim_value(768);
+  ShapeInferenceOptions options{true, 1, true};
+  ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
+
+  const auto inferred_shape = model.graph().output()[0].type().tensor_type().shape();
+  EXPECT_TRUE(inferred_shape.dim_size() == expected_shape.dim_size());
+
+  for (int i = 0; i < inferred_shape.dim_size(); i++) {
+    EXPECT_TRUE(
+        (inferred_shape.dim(i).has_dim_value() && expected_shape.dim(i).has_dim_value()) ||
+        (inferred_shape.dim(i).has_dim_param() && expected_shape.dim(i).has_dim_param()));
+
+    EXPECT_TRUE(
+        inferred_shape.dim(i).has_dim_value() ? inferred_shape.dim(i).dim_value() == expected_shape.dim(i).dim_value()
+                                              : inferred_shape.dim(i).dim_param() == expected_shape.dim(i).dim_param());
+  }
 }
 
 } // namespace Test
