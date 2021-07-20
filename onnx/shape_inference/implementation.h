@@ -77,7 +77,7 @@ struct GraphInferenceContext {
       const std::unordered_map<std::string, TypeProto*>&
           outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int> opset_imports_in,
-      SymbolTableImpl& symbolTable_in,
+      SymbolTable& symbolTable_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance())
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
@@ -89,7 +89,7 @@ struct GraphInferenceContext {
       outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
-  SymbolTableImpl& symbolTable;
+  SymbolTable& symbolTable;
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -101,7 +101,7 @@ class GraphInferencerImpl : public GraphInferencer {
       const std::vector<const TypeProto*>& inputTypes,
       const std::vector<const TensorProto*>& inputData) override;
 
-  SymbolTableImpl& getSymbolTable() {
+  SymbolTable& getSymbolTable() {
     return context_->symbolTable;
   }
 
@@ -401,9 +401,9 @@ void checkShapesAndTypes(
     const TypeProto& existingType);
 
 template <typename TensorTypeProto>
-void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTableImpl& symbolTable);
+void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTable);
 
-void materializeSymbolicShape(TypeProto* inferredType, SymbolTableImpl& symbolTable);
+void materializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable);
 
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
@@ -445,7 +445,7 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl& symbolTable,
+    SymbolTable& symbolTable,
     std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
     const ShapeInferenceOptions& options);
 
@@ -454,13 +454,13 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl& symbolTable,
+    SymbolTable& symbolTable,
     std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
     const ShapeInferenceOptions& options);
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 
-void traverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTableImpl& symbolTable);
+void traverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE
