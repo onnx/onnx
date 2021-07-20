@@ -226,15 +226,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "the zero value is honored, similar to NumPy.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(0,
-            "data",
-            "An input tensor.",
-            "T",
-            OpSchema::Single,
-            true,
+        .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
             1,
-            OpSchema::Differentiable)
-        .Input(1,
             "shape",
             "Specified shape for output.",
             "tensor(int64)",
@@ -242,14 +236,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .Output(0,
-            "reshaped",
-            "Reshaped data.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Output(0, "reshaped", "Reshaped data.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -260,26 +247,21 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Shape Inference if 2nd input data (the target shape) is available
           // or the target shape is generated via partial data propagation
           const TensorProto* targetShapeInitializer = ctx.getInputData(1);
-          const auto* shapeInput = ctx.getShapeInput(1);
-
-          if (!targetShapeInitializer && !shapeInput) {
-            return;
-          }
-
+          const auto* shapeInput = ctx.getSymbolicInput(1);
           // The targetShapeProto represents the specified shape for output.
           TensorShapeProto targetShapeProto;
-          int allowzero = static_cast<int>(getAttribute(ctx, "allowzero", 0));
-
           if (targetShapeInitializer) {
             auto targetShape = ParseData<int64_t>(targetShapeInitializer);
             for (auto val : targetShape) {
               targetShapeProto.add_dim()->set_dim_value(val);
             }
+          } else if (shapeInput) {
+            targetShapeProto.CopyFrom(*shapeInput);
+          } else {
+            return;
           }
 
-          if (shapeInput) {
-            targetShapeProto.CopyFrom(*shapeInput);
-          }
+          int allowzero = static_cast<int>(getAttribute(ctx, "allowzero", 0));
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targetShape dimension is -1, we do not set the
@@ -301,12 +283,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Add a new dimension to outputShape
             auto* new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
+              // There is a tricky edge case here. It is possible that the value of
+              // symbolic dim can be -1 or 0 at runtime. In that case simply propgating this
+              // symbol can be erroneous. This should be a very rare scenario and in such a
+              // case an option is to turn off data propagation during shape inference.
               new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
-              // if there is a -1 we cannot use output product to infer the value
               outputProductValid = false;
             } else {
               if (!targetShapeProto.dim(i).has_dim_value()) {
-                fail_shape_inference("Invalid target shape. Neither dim value nor dim param exists.");
+                // treat this dim as unknown dim
+                continue;
               }
 
               const auto dim_value = targetShapeProto.dim(i).dim_value();
@@ -332,10 +318,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                       fail_shape_inference("Invalid position of 0.");
                     }
                     if (dataInputTensorType.shape().dim(i).has_dim_value()) {
-                      const auto& dim_value = 
-                          dataInputTensorType.shape().dim(i).dim_value();
-                      new_dim->set_dim_value(dim_value);
-                      outputProduct *= dim_value;
+                      const auto& input_dim_value = dataInputTensorType.shape().dim(i).dim_value();
+                      new_dim->set_dim_value(input_dim_value);
+                      outputProduct *= input_dim_value;
                       unresolvedZeros[i] = false;
                     } else if (dataInputTensorType.shape().dim(i).has_dim_param()) {
                       new_dim->set_dim_param(dataInputTensorType.shape().dim(i).dim_param());
@@ -373,11 +358,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             } else {
               for (int i = 0; i < dataInputTensorType.shape().dim_size(); ++i) {
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
-                  inputProduct *= 
-                      dataInputTensorType.shape().dim(i).dim_value();
-                } else if (
-                    i >= static_cast<int>(unresolvedZeros.size()) ||
-                    !unresolvedZeros[i]) {
+                  inputProduct *= dataInputTensorType.shape().dim(i).dim_value();
+                } else if (i >= static_cast<int>(unresolvedZeros.size()) || !unresolvedZeros[i]) {
                   inputProductValid = false;
                   break;
                 }
@@ -385,8 +367,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             if (inputProductValid) {
               if (inputProduct % outputProduct != 0) {
-                fail_shape_inference(
-                    "Dimension could not be inferred: incompatible shapes");
+                fail_shape_inference("Dimension could not be inferred: incompatible shapes");
               }
               negativeOneDim->set_dim_value(inputProduct / outputProduct);
             }

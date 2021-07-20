@@ -190,7 +190,7 @@ struct InferenceContextImpl : public InferenceContext {
     return allInputData_[index];
   }
 
-  const TensorShapeProto* getShapeInput(size_t index) const override {
+  const TensorShapeProto* getSymbolicInput(size_t index) const override {
     if (index >= allShapeInputData_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
