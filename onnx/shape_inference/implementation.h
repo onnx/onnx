@@ -366,9 +366,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
         // Adds this TensorShapeProto from initializer into generatedShapeData
         // for future use
-        generatedShapeData_.insert({input_name, std::move(tsp)});
-        auto iter = generatedShapeData_.find(input_name);
-        return &iter->second;
+        auto result = generatedShapeData_.insert({input_name, std::move(tsp)});
+        if (result.second) {
+          return &(result.first->second);
+        }
     }
     return nullptr;
   }

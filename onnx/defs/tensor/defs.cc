@@ -291,6 +291,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               outputProductValid = false;
             } else {
               if (!targetShapeProto.dim(i).has_dim_value()) {
+                outputProductValid = false;
                 // treat this dim as unknown dim
                 continue;
               }
