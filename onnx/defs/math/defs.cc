@@ -26,49 +26,24 @@ inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_typ
   const auto input_0 = ctx.getInputData(0);
   const auto input_1 = ctx.getInputData(1);
   if (input_0 == nullptr || input_1 == nullptr) {
-      return;
+    return;
+  }
+  // Fails to broadcast if the ranks are different and no any rank is 1 
+  if ((input_0->dim_size() != input_1->dim_size() && input_0->dim_size() != 1
+    && input_1->dim_size() != 1)) {
+    fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (",
+        input_0->dim_size(), ") vs (", input_1->dim_size(), ").");
   }
   TensorShapeProto tsp;
-  if (input_0->dim_size() < input_1->dim_size()) {
-    if (input_0->dim_size() != 1) {
-        fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (",
-            input_0->dim_size(), ") vs (", input_1->dim_size(), ").");
-    }
-    if (input_0->dim(0).has_dim_param()) {
+  int max_dim_size = std::max(input_0->dim_size(), input_1->dim_size());
+  for (int i = 0; i < max_dim_size; ++i) {
+    auto input_dim_0 = (input_0->dim_size() == 1)? input_0->dim(0):input_0->dim(i);
+    auto input_dim_1 = (input_1->dim_size() == 1)? input_1->dim(0):input_1->dim(i);
+    if (!(input_dim_0.has_dim_value() && input_dim_1.has_dim_value())) {
       return;
     }
-    int input_0_val = input_0->dim(0).dim_value();
-    for (int i = 0; i < input_1->dim_size(); ++i) {
-      if (input_1->dim(i).has_dim_param()) {
-        return;
-      }
-      tsp.mutable_dim()->Add()->set_dim_value(
-        MathOpTwoIntegers(op_type, input_0_val, input_1->dim(i).dim_value()));
-    }
-  } else if (input_0->dim_size() > input_1->dim_size()) {
-    if (input_1->dim_size() != 1) {
-        fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (",
-            input_0->dim_size(), ") vs (", input_1->dim_size(), ").");
-    }
-    if (input_1->dim(0).has_dim_param()) {
-      return;
-    }
-    int input_1_val = input_1->dim(0).dim_value();
-    for (int i = 0; i < input_0->dim_size(); ++i) {
-      if (input_0->dim(i).has_dim_param()) {
-        return;
-      }
-      tsp.mutable_dim()->Add()->set_dim_value(
-        MathOpTwoIntegers(op_type, input_0->dim(i).dim_value(), input_1_val));
-    }
-  } else {
-    for (int i = 0; i < input_0->dim_size(); ++i) {
-      if (input_0->dim(i).has_dim_param() || input_1->dim(i).has_dim_param()) {
-        return;
-      }
-      tsp.mutable_dim()->Add()->set_dim_value(
-          MathOpTwoIntegers(op_type, input_0->dim(i).dim_value(), input_1->dim(i).dim_value()));
-    }
+    tsp.mutable_dim()->Add()->set_dim_value(
+        MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
   }
   ctx.addOutputData(0, std::move(tsp));
 }

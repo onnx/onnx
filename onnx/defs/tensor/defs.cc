@@ -1037,7 +1037,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto start = starts[axis_index];
             auto end = ends[axis_index];
             auto step = steps[axis_index];
-
             processSliceInputs(input_dim.dim_value(), start, end, step);
 
             // find output dim value for this axis
@@ -1079,8 +1078,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               step = steps->dim(0).dim_value();
             }
-
             processSliceInputs(input_data->dim_size(), start, end, step);
+
             TensorShapeProto tsp;
             if (start < end) {
               for (int i = start; i < end; i += step) {
