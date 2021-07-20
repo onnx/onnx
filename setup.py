@@ -309,13 +309,15 @@ ext_modules = [
 # no need to do fancy stuff so far
 packages = setuptools.find_packages()
 
-install_requires.extend([
-    'protobuf',
-    'numpy>=1.16.6',
-    'six',
-    'typing>=3.6.4; python_version < "3.5"',
-    'typing-extensions>=3.6.2.1',
-])
+requirements_file = "requirements.txt"
+requirements_path = os.path.join(os.getcwd(), requirements_file)
+if not os.path.exists(requirements_path):
+    this = os.path.dirname(__file__)
+    requirements_path = os.path.join(this, requirements_file)
+if not os.path.exists(requirements_path):
+    raise FileNotFoundError("Unable to find " + requirements_file)
+with open(requirements_path) as f:
+    install_requires = f.read().splitlines()
 
 ################################################################################
 # Test
