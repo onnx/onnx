@@ -183,7 +183,7 @@ inline void SliceOpDataPropagator(DataPropagationContext& ctx) {
     starts->dim_size(), ") vs (", ends->dim_size(), ").");
   }
   // Only supports axis = 0 since the data comes from Shape
-  if((axes == nullptr || axes->dim_size() == 1 && axes->dim(0).dim_value() == 0)
+  if((axes == nullptr || (axes->dim_size() == 1 && axes->dim(0).dim_value() == 0))
     && starts->dim_size () == 1 && ends->dim_size() == 1) {
     int step = 1; // Default step is 1
     if (steps != nullptr) {
