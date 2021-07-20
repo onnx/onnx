@@ -122,7 +122,7 @@ void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existin
 
 // TypeProto_Tensor or TypeProto_SparseTensor
 template <typename TensorTypeProto>
-void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTableImpl& symbolTable) {
+void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTable) {
   if (!inferredType->has_shape()) {
     return;
   }
@@ -130,12 +130,12 @@ void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTableImpl& symbo
     // set a symbol if it doesn't have dim_value and dim_param
     auto* dim = inferredType->mutable_shape()->mutable_dim(i);
     if (!dim->has_dim_value() && !dim->has_dim_param()) {
-      dim->set_dim_param(symbolTable.createNew());
+      dim->set_dim_param(symbolTable.createNew("unk__"));
     }
   }
 }
 
-void materializeSymbolicShape(TypeProto* inferredType, SymbolTableImpl& symbolTable) {
+void materializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable) {
   const auto inferred_val_case = inferredType->value_case();
   if (inferred_val_case == TypeProto::kTensorType) {
     generateSymbolicShape(inferredType->mutable_tensor_type(), symbolTable);
@@ -228,7 +228,7 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
     const ShapeInferenceOptions& options,
-    SymbolTableImpl& symbolTable,
+    SymbolTable& symbolTable,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
 ) {
@@ -355,7 +355,8 @@ static void InferShapesImpl(
     }
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
-    InferenceContextImpl ctx(n, valueTypesByName, inputDataByName, inputSparseDataByName, &graphInferenceContext);
+    InferenceContextImpl ctx(
+        n, valueTypesByName, inputDataByName, inputSparseDataByName, generatedShapeDataByName, &graphInferenceContext);
     if (!schema) {
       std::cerr << "Warning: Unsupported operator " << n.op_type() << ". No schema registered for this operator."
                 << std::endl;
@@ -532,7 +533,7 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl& symbolTable,
+    SymbolTable& symbolTable,
     std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
     const ShapeInferenceOptions& options) {
   GraphProto g;
@@ -590,7 +591,7 @@ void InferShapeForFunctionNode(
     }
 
     InferenceContextImpl temp_ctx(
-        copy_n, temp_valueTypesByName, temp_initializersByName, temp_SparseInitializersByName);
+        copy_n, temp_valueTypesByName, temp_initializersByName, temp_SparseInitializersByName, generatedShapeDataByName);
     schema->GetTypeAndShapeInferenceFunction()(temp_ctx);
     for (int i = 0; i < copy_n.output_size(); ++i) {
       TypeProto* inferred_output_type = temp_ctx.getOutputType(i);
@@ -657,7 +658,7 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTableImpl& symbolTable,
+    SymbolTable& symbolTable,
     std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
     const ShapeInferenceOptions& options) {
   std::unordered_map<std::string, int> opset_imports;
@@ -670,7 +671,7 @@ void InferShapeForFunctionNode(
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inputTypes,
     const std::vector<const TensorProto*>& inputData) {
-  SymbolTableImpl& symbolTable = getSymbolTable();
+  SymbolTable& symbolTable = getSymbolTable();
   int numInputs = int(inputTypes.size());
 
   if (g_->input_size() != numInputs) {
@@ -731,7 +732,7 @@ std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err) {
   return "(op_type:" + n.op_type() + op_name + "): " + err.what();
 }
 
-void traverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTableImpl& symbolTable) {
+void traverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable) {
   symbolTable.addFromGraph(g);
   for (const auto& n : g.node()) {
     for (auto& attr : n.attribute()) {
