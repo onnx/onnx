@@ -6,7 +6,6 @@ set -e -x
 PY_VERSION=$1
 PLAT=$2
 GITHUB_EVENT_NAME=$3
-BUILD_REQUIREMENTS='numpy==1.16.6 protobuf==3.16.0'
 SYSTEM_PACKAGES='cmake3'
 if [ `uname -m` == 'aarch64' ]; then
  SYSTEM_PACKAGES='cmake'
@@ -52,11 +51,14 @@ export ONNX_ML=1
 export CMAKE_ARGS="-DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${python_include[$PY_VERSION]}"
 
 # Update pip
-$PIP_COMMAND --upgrade --no-cache-dir pip
+$PIP_COMMAND --upgrade pip
 
-# Check if requirements were passed
-if [ ! -z "$BUILD_REQUIREMENTS" ]; then
-    $PIP_COMMAND --no-cache-dir ${BUILD_REQUIREMENTS} || { echo "Installing requirements failed."; exit 1; }
+# Install Python dependency
+if [ "$PLAT" == "manylinux2010_i686" ]; then
+    # pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
+    $PIP_COMMAND numpy==1.16.6 protobuf==3.16.0 || { echo "Installing Python requirements failed."; exit 1; }
+else
+    $PIP_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 fi
 
 # Build wheels
