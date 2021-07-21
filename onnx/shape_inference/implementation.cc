@@ -356,7 +356,7 @@ static void InferShapesImpl(
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
-        n, valueTypesByName, inputDataByName, inputSparseDataByName, generatedShapeDataByName, &graphInferenceContext);
+        n, valueTypesByName, inputDataByName, inputSparseDataByName, &generatedShapeDataByName, &graphInferenceContext);
     if (!schema) {
       std::cerr << "Warning: Unsupported operator " << n.op_type() << ". No schema registered for this operator."
                 << std::endl;
@@ -386,7 +386,7 @@ static void InferShapesImpl(
         }
 
         InferShapeForFunctionNode(
-            func_proto, function_opset_imports, schema_registry, ctx, options, generatedShapeDataByName, symbolTable);
+            func_proto, function_opset_imports, schema_registry, ctx, options, symbolTable, &generatedShapeDataByName);
       }
       ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
         ONNX_HANDLE_EXCEPTION([&]() {
@@ -539,8 +539,12 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
     const ShapeInferenceOptions& options,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
-    SymbolTable* symbolTable) {
+    SymbolTable* symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName) {
+  if (options.enable_data_propagation && generatedShapeDataByName == nullptr) {
+    fail_shape_inference("Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
+  }
+
   GraphProto g;
   // Get a temporary tensor-shape map
   const auto num_func_inputs = func->input_size();
@@ -637,7 +641,7 @@ void InferShapeForFunctionNode(
       mergeShapesAndTypes(*inferred_output_type, existingType);
       if (options.enable_data_propagation && schema->has_data_propagation_function()) {
         DataPropagationContextImpl temp_dataPropagationCtx(
-            copy_n, temp_valueTypesByName, temp_initializersByName, generatedShapeDataByName);
+            copy_n, temp_valueTypesByName, temp_initializersByName, *generatedShapeDataByName);
         schema->GetDataPropagationFunction()(temp_dataPropagationCtx);
       }
       // Make merged info available to further inference.
@@ -666,14 +670,16 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    const ShapeInferenceOptions& options) {
+    const ShapeInferenceOptions& options,
+    SymbolTable* symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName) {
+
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : func->opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
 
-  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
-  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, options, generatedShapeDataByName);
+  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, options, symbolTable, generatedShapeDataByName);
 }
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
