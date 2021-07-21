@@ -381,18 +381,33 @@ if (MSVC)
   else()
     set(EXTRA_FLAGS "")
   endif()
-  if (BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
-    set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
+endif()
+
+# onnx_proto symbols visibility
+if(MSVC)
+  if(ONNX_BUILD_MAIN_LIB)
+  # ONNX_BUILD_MAIN_LIB can be set if onnx_proto is static,
+  # but it is linked into a shared library which wants
+  # to export the ONNX APIs and classes.
+  target_compile_definitions(onnx_proto PUBLIC "ONNX_API=__declspec(dllexport)")
+
+  elseif(BUILD_SHARED_LIBS)
+    # users of onnx_proto import symbols
+    target_compile_definitions(onnx_proto INTERFACE "ONNX_API=__declspec(dllimport)")
+    # onnx_proto exports symbols
+    target_compile_definitions(onnx_proto PRIVATE "ONNX_API=__declspec(dllexport)")
+
   else()
-    set(ONNX_API_DEFINE "-DONNX_API=")
+    # Windows static libs don't need symbols visibility decorators
+    target_compile_definitions(onnx_proto PUBLIC "ONNX_API=")
   endif()
 else()
   # On non-Windows, hide all symbols we don't need
-  set(ONNX_API_DEFINE "-DONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
-  set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
-  set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+    target_compile_definitions(onnx_proto PUBLIC "ONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
+    set_target_properties(onnx_proto PROPERTIES
+      CXX_VISIBILITY_PRESET hidden
+      VISIBILITY_INLINES_HIDDEN ON)
 endif()
-target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
@@ -414,7 +429,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   # So, create a object library
   add_library(onnx OBJECT ${ONNX_SRCS})
 else()
-  add_library(onnx ${ONNX_SRCS})
+  # onnx target doesn't export symbols and should be built as static lib
+  add_library(onnx STATIC ${ONNX_SRCS})
 endif()
 
 target_include_directories(onnx PUBLIC
