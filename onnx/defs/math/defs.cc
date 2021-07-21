@@ -39,11 +39,15 @@ inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_typ
   for (int i = 0; i < std::max(size_0, size_1); ++i) {
     auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
     auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
-    if (!(input_dim_0.has_dim_value() && input_dim_1.has_dim_value())) {
+    if (input_dim_0.has_dim_value() && input_dim_1.has_dim_value()) {
+      tsp.mutable_dim()->Add()->set_dim_value(
+          MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
+    } else if (input_dim_0.has_dim_param() || input_dim_1.has_dim_param()) {
+      tsp.mutable_dim()->Add()->set_dim_param("?");
+    } else {
+      // Dim is not set by value or param
       return;
     }
-    tsp.mutable_dim()->Add()->set_dim_value(
-        MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
   }
   ctx.addOutputData(0, std::move(tsp));
 }
