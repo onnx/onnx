@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
+#include "onnx/defs/data_propagators.h"
 #include "onnx/defs/tensor/utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/tensor_proto_util.h"
@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-#include "onnx/defs/data_propagators.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -504,6 +503,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
               TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          const auto input_data = ctx.getInputData(0);
+          if (input_data != nullptr) {
+            TensorShapeProto tsp;
+            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
+            ctx.addOutputData(0, std::move(tsp));
+          }
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -599,6 +606,24 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (all_lengths_known) {
             output_shape->mutable_dim(axis)->set_dim_value(total_length);
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          if (!axisIsZero(ctx)) {
+            return;
+          }
+          TensorShapeProto tsp;
+          for (size_t i = 0; i < ctx.getNumInputs(); ++i) {
+            const auto input_data = ctx.getInputData(i);
+            if (input_data == nullptr) {
+              return;
+            }
+            for (int j = 0; j < input_data->dim_size(); ++j) {
+              appendDimToTensorShapeProto(tsp, input_data->dim(j));
+            }
+          }
+          if (tsp.dim_size() > 0) {
+            ctx.addOutputData(0, std::move(tsp));
           }
         }));
 
@@ -778,6 +803,31 @@ Example 2:
   ]
 )DOC";
 
+inline void processSliceInputs(const int64_t input_rank,
+  int64_t& start, int64_t& end, int64_t& step) {
+  auto clamp = [](int64_t val, int64_t min, int64_t max) -> int64_t {
+    return (val < min) ? min : (val > max) ? max : val;
+  };
+  // process step
+  if (step == 0) {
+    fail_shape_inference("'step' cannot be 0 for Slice");
+  }
+  // process start
+  if (start < 0)
+    start += input_rank;
+  if (step < 0)
+    start = clamp(start, 0, input_rank - 1);
+  else
+    start = clamp(start, 0, input_rank);
+  // process end
+  if (end < 0)
+    end += input_rank;
+  if (step < 0)
+    end = clamp(end, -1, input_rank);
+  else
+    end = clamp(end, 0, input_rank);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Slice,
     13,
@@ -896,14 +946,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return vec;
           };
 
-          auto clamp = [](int64_t val, int64_t low, int64_t high) -> int64_t {
-            if (val < low)
-              return low;
-            if (val > high)
-              return high;
-            return val;
-          };
-
           std::vector<int64_t> starts = get_initializer_data(startsInitializer);
           std::vector<int64_t> ends = get_initializer_data(endsInitializer);
 
@@ -980,32 +1022,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ->clear_dim_param();
               continue;
             }
-
-            const auto input_dim_value = input_dim.dim_value();
-
-            // process step
-            auto step = steps[axis_index];
-            if (step == 0) {
-              fail_shape_inference("'step' cannot be 0");
-            }
-
-            // process start
             auto start = starts[axis_index];
-            if (start < 0)
-              start += input_dim_value;
-            if (step < 0)
-              start = clamp(start, 0, input_dim_value - 1);
-            else
-              start = clamp(start, 0, input_dim_value);
-
-            // process end
             auto end = ends[axis_index];
-            if (end < 0)
-              end += input_dim_value;
-            if (step < 0)
-              end = clamp(end, -1, input_dim_value);
-            else
-              end = clamp(end, 0, input_dim_value);
+            auto step = steps[axis_index];
+            processSliceInputs(input_dim.dim_value(), start, end, step);
 
             // find output dim value for this axis
             auto temp = static_cast<int64_t>(ceil(1.0 * (end - start) / step));
@@ -1018,6 +1038,67 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ->mutable_shape()
                 ->mutable_dim((int)axis)
                 ->set_dim_value(temp);
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          const auto input_data = ctx.getInputData(0);
+          const auto starts = ctx.getInputData(1);
+          const auto ends = ctx.getInputData(2);
+          bool axes_specified = ctx.getNumInputs() >= 4;
+          bool steps_specified = ctx.getNumInputs() >= 5;
+
+          const TensorShapeProto* axes = nullptr;
+          const TensorShapeProto* steps = nullptr;
+          if (axes_specified) {
+            axes = ctx.getInputData(3);
+            if (axes == nullptr) {
+              return;
+            }
+          }
+          if (steps_specified) {
+            steps = ctx.getInputData(4);
+            if (steps == nullptr) {
+              return;
+            }
+          }
+
+          if (input_data == nullptr || starts == nullptr || ends == nullptr) {
+            return;
+          }
+          if (starts->dim_size() != ends->dim_size()) {
+            fail_shape_inference("Input rank for starts and ends should be the same: (",
+            starts->dim_size(), ") vs (", ends->dim_size(), ").");
+          }
+          // Only supports axis = 0 since the data comes from Shape
+          if ((!axes_specified || (axes->dim_size() == 1 && axes->dim(0).dim_value() == 0))
+            && starts->dim_size () == 1 && ends->dim_size() == 1) {
+            auto start = starts->dim(0).dim_value();
+            auto end = ends->dim(0).dim_value();
+            int64_t step = 1; // Default step is 1
+            if (steps_specified) {
+              if (steps->dim_size() != 1) {
+                return;
+              }
+              if (!steps->dim(0).has_dim_value()) {
+                return;
+              }
+              step = steps->dim(0).dim_value();
+            }
+            processSliceInputs(input_data->dim_size(), start, end, step);
+
+            TensorShapeProto tsp;
+            if (step > 0) {
+              for (int i = start; i < end; i += step) {
+                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+              }
+            } else {
+              for (int i = start; i > end; i += step) {
+                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+              }
+            }
+            if (tsp.dim_size() > 0) {
+              ctx.addOutputData(0, std::move(tsp));
+            }
           }
         }));
 
@@ -1587,6 +1668,29 @@ ONNX_OPERATOR_SET_SCHEMA(
                 (i >= axis && i < axis + q) ? indices_shape.dim(i - axis)
                                             : // i - axis < q
                     data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          if (!axisIsZero(ctx, true)) {
+            return;
+          }
+          const auto input_data = ctx.getInputData(0);
+          const auto input_indices = ctx.getInputData(1);
+          if (input_data == nullptr || input_indices == nullptr) {
+            return;
+          }
+          TensorShapeProto tsp;
+          for (int i = 0; i < input_indices->dim_size(); ++i) {
+            if (input_indices->dim(i).has_dim_value()) {
+              int index = input_indices->dim(i).dim_value();
+              appendDimToTensorShapeProto(tsp,
+                input_data->dim((index < 0)? input_data->dim_size() + index : index));
+            } else {
+              return;
+            }
+          }
+          if (tsp.dim_size() > 0) {
+            ctx.addOutputData(0, std::move(tsp));
           }
         }));
 
