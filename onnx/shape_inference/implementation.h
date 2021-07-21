@@ -77,7 +77,7 @@ struct GraphInferenceContext {
       const std::unordered_map<std::string, TypeProto*>&
           outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int> opset_imports_in,
-      SymbolTable& symbolTable_in,
+      SymbolTable* symbolTable_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance())
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
@@ -89,7 +89,7 @@ struct GraphInferenceContext {
       outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
-  SymbolTable& symbolTable;
+  SymbolTable* symbolTable;
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -101,7 +101,7 @@ class GraphInferencerImpl : public GraphInferencer {
       const std::vector<const TypeProto*>& inputTypes,
       const std::vector<const TensorProto*>& inputData) override;
 
-  SymbolTable& getSymbolTable() {
+  SymbolTable* getSymbolTable() {
     return context_->symbolTable;
   }
 
@@ -118,7 +118,7 @@ struct InferenceContextImpl : public InferenceContext {
           inputDataByName,
       const std::unordered_map<std::string, const SparseTensorProto*>& 
           inputSparseDataByName,
-      const std::unordered_map<std::string, TensorShapeProto>& generatedShapeData,
+      const std::unordered_map<std::string, TensorShapeProto>* generatedShapeData = nullptr,
       GraphInferenceContext* graphInferenceContext = nullptr)
       : graphInferenceContext_{graphInferenceContext} {
     for (auto& attr : *n.mutable_attribute()) {
@@ -137,6 +137,10 @@ struct InferenceContextImpl : public InferenceContext {
         allInputTypes_.push_back(nullptr);
       }
 
+      // input data can be in 1 of the 3 containers 
+      // inputDataByName - this is when input is TensorProto
+      // inputSparseDataByName - this is when input is SparseTesnorProto
+      // generatedShapeData - this is when input was geenrated as part of partial data propagation
       const auto inputDataIter = inputDataByName.find(input);
       if (inputDataIter != inputDataByName.cend()) {
         allInputData_.push_back(inputDataIter->second);
@@ -150,9 +154,13 @@ struct InferenceContextImpl : public InferenceContext {
           allShapeInputData_.push_back(nullptr);
         } else {
           allInputSparseData_.push_back(nullptr);
-          const auto inputShapeDataIter = generatedShapeData.find(input);
-          if (inputShapeDataIter != generatedShapeData.cend()) {
-            allShapeInputData_.push_back(&inputShapeDataIter->second);
+          if (generatedShapeData != nullptr) {
+            const auto inputShapeDataIter = generatedShapeData->find(input);
+            if (inputShapeDataIter != generatedShapeData->cend()) {
+              allShapeInputData_.push_back(&inputShapeDataIter->second);
+            } else {
+              allShapeInputData_.push_back(nullptr);
+            }
           } else {
             allShapeInputData_.push_back(nullptr);
           }
@@ -446,18 +454,19 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTable& symbolTable,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
-    const ShapeInferenceOptions& options);
+    const ShapeInferenceOptions& options = {},
+    SymbolTable* symbolTable = nullptr,
+    std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName = nullptr);
 
 void InferShapeForFunctionNode(
     const FunctionProto* func,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTable& symbolTable,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
-    const ShapeInferenceOptions& options);
+    const ShapeInferenceOptions& options = {},
+    SymbolTable* symbolTable = nullptr,
+    std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName = nullptr);
+    
 
 std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 
