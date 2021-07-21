@@ -413,7 +413,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   const std::unordered_map<std::string, TypeProto*> outer_scope_value_types;
   SymbolTableImpl symbolTable;
   symbolTable.addFromGraph(subgraph);
-  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, symbolTable);
+  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, &symbolTable);
   GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
 
   // loop_state_in and scan_in are the two inputs.
