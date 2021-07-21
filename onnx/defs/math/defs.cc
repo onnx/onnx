@@ -42,11 +42,9 @@ inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_typ
     if (input_dim_0.has_dim_value() && input_dim_1.has_dim_value()) {
       tsp.mutable_dim()->Add()->set_dim_value(
           MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
-    } else if (input_dim_0.has_dim_param() || input_dim_1.has_dim_param()) {
-      tsp.mutable_dim()->Add()->set_dim_param("?");
     } else {
-      // Dim is not set by value or param
-      return;
+      // Cannot compute the value; simply add a empty dim without value and param
+      tsp.mutable_dim()->Add();
     }
   }
   ctx.addOutputData(0, std::move(tsp));

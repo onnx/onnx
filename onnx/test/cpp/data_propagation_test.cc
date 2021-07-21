@@ -26,8 +26,8 @@ inline bool CompareShape(
 
   for (int i = 0; i < inferredShape.dim_size(); i++) {
     EXPECT_TRUE(
-        (inferredShape.dim(i).has_dim_value() && expectedShape.dim(i).has_dim_value()) ||
-        (inferredShape.dim(i).has_dim_param() && expectedShape.dim(i).has_dim_param()))
+        (inferredShape.dim(i).has_dim_value() == expectedShape.dim(i).has_dim_value()) &&
+        (inferredShape.dim(i).has_dim_param() == expectedShape.dim(i).has_dim_param()))
         << "Inferred and expected dim values are different.";
 
     EXPECT_TRUE(
@@ -236,10 +236,11 @@ agraph (int32[2,4,5] x, int32[2,4,M] y) => (int32[3] w)
     w = Cast<to = 7>(z)
 }
 )ONNX";
+  // Add({2,4,5}, {2,4,M} = (4, 8, ?))
   TensorShapeProto expected_tsp;
   expected_tsp.mutable_dim()->Add()->set_dim_value(4);
   expected_tsp.mutable_dim()->Add()->set_dim_value(8);
-  expected_tsp.mutable_dim()->Add()->set_dim_param("?");
+  expected_tsp.mutable_dim()->Add(); // not set value or param
   const auto propagated_tsp = RunDataPropagation(code);
   EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }
