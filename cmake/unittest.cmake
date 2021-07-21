@@ -53,7 +53,6 @@ function(AddTest)
                            PRIVATE /EHsc # exception handling - C++ may throw,
                                          # extern "C" will not
                            )
-    add_msvc_runtime_flag(${_UT_TARGET})
   endif()
 
   if(MSVC)

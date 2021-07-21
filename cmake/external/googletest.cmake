@@ -22,7 +22,7 @@ else()
       ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtest.a)
 endif()
 
-if(ONNX_USE_MSVC_STATIC_RUNTIME)
+if(CMAKE_MSVC_RUNTIME_LIBRARY)
   set(ONNX_USE_MSVC_SHARED_RUNTIME OFF)
 else()
   set(ONNX_USE_MSVC_SHARED_RUNTIME ON)

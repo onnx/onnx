@@ -228,7 +228,7 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
     const ShapeInferenceOptions& options,
-    SymbolTable& symbolTable,
+    SymbolTable* symbolTable,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
 ) {
@@ -356,7 +356,7 @@ static void InferShapesImpl(
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
-        n, valueTypesByName, inputDataByName, inputSparseDataByName, generatedShapeDataByName, &graphInferenceContext);
+        n, valueTypesByName, inputDataByName, inputSparseDataByName, &generatedShapeDataByName, &graphInferenceContext);
     if (!schema) {
       std::cerr << "Warning: Unsupported operator " << n.op_type() << ". No schema registered for this operator."
                 << std::endl;
@@ -385,7 +385,8 @@ static void InferShapesImpl(
             function_opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
         }
 
-        InferShapeForFunctionNode(func_proto, function_opset_imports, schema_registry, ctx, symbolTable, generatedShapeDataByName, options);
+        InferShapeForFunctionNode(
+            func_proto, function_opset_imports, schema_registry, ctx, options, symbolTable, &generatedShapeDataByName);
       }
       ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
         ONNX_HANDLE_EXCEPTION([&]() {
@@ -433,7 +434,11 @@ static void InferShapesImpl(
             *iter->second = *inferredType;
           }
         }
-        materializeSymbolicShape(inferredType, symbolTable);
+
+        if (symbolTable) {
+          materializeSymbolicShape(inferredType, *symbolTable);
+        }
+
         // Now we can merge pre-existing and inferred info
         mergeShapesAndTypes(*inferredType, existingType);
         if (options.enable_data_propagation && schema->has_data_propagation_function()) {
@@ -475,7 +480,7 @@ void InferShapes(
   SymbolTableImpl symbolTable;
   traverseGraphsToAddExistingSymbols(*g, symbolTable);
   InferShapesImpl(
-      g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, options, symbolTable, schema_registry);
+      g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, options, &symbolTable, schema_registry);
 }
 
 void InferShapes(
@@ -494,7 +499,7 @@ void InferShapes(
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
       options,
-      symbolTable,
+      &symbolTable,
       schema_registry,
       m.ir_version());
 }
@@ -533,9 +538,13 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTable& symbolTable,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
-    const ShapeInferenceOptions& options) {
+    const ShapeInferenceOptions& options,
+    SymbolTable* symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName) {
+  if (options.enable_data_propagation && generatedShapeDataByName == nullptr) {
+    fail_shape_inference("Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
+  }
+
   GraphProto g;
   // Get a temporary tensor-shape map
   const auto num_func_inputs = func->input_size();
@@ -625,11 +634,14 @@ void InferShapeForFunctionNode(
         vi->set_name(copy_n.output(i));
         existingType = vi->mutable_type();
       }
-      materializeSymbolicShape(inferred_output_type, symbolTable);
+
+      if (symbolTable) {
+        materializeSymbolicShape(inferred_output_type, *symbolTable);
+      }
       mergeShapesAndTypes(*inferred_output_type, existingType);
       if (options.enable_data_propagation && schema->has_data_propagation_function()) {
         DataPropagationContextImpl temp_dataPropagationCtx(
-            copy_n, temp_valueTypesByName, temp_initializersByName, generatedShapeDataByName);
+            copy_n, temp_valueTypesByName, temp_initializersByName, *generatedShapeDataByName);
         schema->GetDataPropagationFunction()(temp_dataPropagationCtx);
       }
       // Make merged info available to further inference.
@@ -658,20 +670,22 @@ void InferShapeForFunctionNode(
     const FunctionProto* func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    SymbolTable& symbolTable,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
-    const ShapeInferenceOptions& options) {
+    const ShapeInferenceOptions& options,
+    SymbolTable* symbolTable,
+    std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName) {
+
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : func->opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
-  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, symbolTable, generatedShapeDataByName, options);
+
+  InferShapeForFunctionNode(func, opset_imports, schema_registry, ctx, options, symbolTable, generatedShapeDataByName);
 }
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inputTypes,
     const std::vector<const TensorProto*>& inputData) {
-  SymbolTable& symbolTable = getSymbolTable();
+  SymbolTable* symbolTable = getSymbolTable();
   int numInputs = int(inputTypes.size());
 
   if (g_->input_size() != numInputs) {
@@ -703,7 +717,10 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     }
     // Even if graphInput doesn't have defined type, it will assign inferredType to it
     mergeShapesAndTypes(*inferredInput, graphInput);
-    materializeSymbolicShape(graphInput, symbolTable);
+
+    if (symbolTable) {
+      materializeSymbolicShape(graphInput, *symbolTable);
+    }
   }
 
   // future: pass inputData into InferShapes either directly, or indirectly by

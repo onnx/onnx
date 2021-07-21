@@ -50,7 +50,8 @@ endif()
 
 if(ONNX_USE_PROTOBUF_SHARED_LIBS)
   if(MSVC)
-    #TODO: if ONNX_USE_MSVC_STATIC_RUNTIME is ON, it may not work
+    # TODO: if ONNX was set to dynamically link to CRT, it may not work. 
+	# Because libprotobuf.dll has C++ symbols in its public interface. 
     add_definitions(-DPROTOBUF_USE_DLLS)
   endif()
   set(Protobuf_USE_STATIC_LIBS OFF)
@@ -111,11 +112,13 @@ if(ONNX_WERROR)
   endif()
 endif()
 
-# find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
-# Use the following command in the future; now this is only compatible with the latest pybind11
-# find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
-find_package(PythonInterp ${PY_VERSION} REQUIRED)
-find_package(PythonLibs ${PY_VERSION})
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18")
+  find_package(Python COMPONENTS Interpreter Development.Module NumPy)
+else()
+  find_package(PythonInterp ${PY_VERSION} REQUIRED)
+  find_package(PythonLibs ${PY_VERSION})
+endif()
+
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
@@ -485,24 +488,31 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
+    if (TARGET Python::Module)
+      target_link_libraries(onnx_cpp2py_export PRIVATE Python::Module)
+	else()
+	  target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
+	endif()
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
-                                   /wd4244 # 'argument': conversion from 'google::
+                                   ${EXTRA_FLAGS})
+    if(ONNX_WERROR)
+      target_compile_options(onnx_cpp2py_export
+                           PRIVATE /wd4244 # 'argument': conversion from 'google::
                                            # protobuf::uint64' to 'int', possible
                                            # loss of data
                                    /wd4267 # Conversion from 'size_t' to 'int',
                                            # possible loss of data
                                    /wd4996 # The second parameter is ignored.
-                                   ${EXTRA_FLAGS})
-    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_cpp2py_export
+                                   )
+      if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+        target_compile_options(onnx_cpp2py_export
                              PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
                                              # have dll-interface to be used by
                                              # clients of class 'type2'
                             )
+      endif()
     endif()
-    add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
 endif()
@@ -538,35 +548,39 @@ endif()
 if(MSVC)
   target_compile_options(onnx_proto
                          PRIVATE /MP
+                                 ${EXTRA_FLAGS})
+  target_compile_options(onnx
+                         PRIVATE /MP
+                                 ${EXTRA_FLAGS})
+  if(ONNX_WERROR)
+      target_compile_options(onnx_proto PRIVATE
                                  /wd4244 #'argument': conversion from 'google::
                                          #protobuf::uint64' to 'int', possible
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
-                                 ${EXTRA_FLAGS})
-  target_compile_options(onnx
-                         PRIVATE /MP
+                            )
+      target_compile_options(onnx PRIVATE
                                  /wd4244 # 'argument': conversion from 'google::
                                          # protobuf::uint64' to 'int', possible
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  /wd4996 # The second parameter is ignored.
-                                 ${EXTRA_FLAGS})
-  if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_proto
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
+                            )
+      if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+        target_compile_options(onnx_proto PRIVATE
+                             /wd4251 # 'identifier' : class 'type1' needs to
                                              # have dll-interface to be used by
                                              # clients of class 'type2'
                             )
-      target_compile_options(onnx
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
+        target_compile_options(onnx PRIVATE
+                             /wd4251 # 'identifier' : class 'type1' needs to
                                              # have dll-interface to be used by
                                              # clients of class 'type2'
                             )
+      endif()
   endif()
-  add_msvc_runtime_flag(onnx_proto)
-  add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
       -IGNORE:4221 # LNK4221: This object file does not define any previously
                    # undefined public symbols, so it will not be used by any
@@ -604,16 +618,10 @@ set_target_properties(onnxifi_loader
                                  C_EXTENSIONS
                                  NO)
 target_link_libraries(onnxifi_loader PUBLIC onnxifi ${CMAKE_DL_LIBS})
-if(MSVC)
-  add_msvc_runtime_flag(onnxifi_loader)
-endif()
 
 if (NOT ANDROID AND NOT IOS)
   # ---[ ONNXIFI wrapper
   add_library(onnxifi_wrapper MODULE onnx/onnxifi_wrapper.c)
-  if(MSVC)
-    add_msvc_runtime_flag(onnxifi_wrapper)
-  endif()
   target_include_directories(onnxifi_wrapper PRIVATE
     $<BUILD_INTERFACE:${ONNX_ROOT}>
     $<INSTALL_INTERFACE:include>)
@@ -651,9 +659,7 @@ target_include_directories(onnxifi_dummy PRIVATE
   $<INSTALL_INTERFACE:include>)
 target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
 target_compile_definitions(onnxifi_dummy PRIVATE ONNXIFI_BUILD_LIBRARY=TRUE)
-if(MSVC)
-  add_msvc_runtime_flag(onnxifi_dummy)
-
+if(MSVC AND ONNX_WERROR)
   target_compile_options(onnxifi_dummy
                          PRIVATE /wd4113 # 'identifier1' differs in parameter
                                          # lists from 'identifier2'

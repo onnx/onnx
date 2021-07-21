@@ -173,6 +173,7 @@ class cmake_build(setuptools.Command):
                 CMAKE,
                 '-DPYTHON_INCLUDE_DIR={}'.format(sysconfig.get_python_inc()),
                 '-DPYTHON_EXECUTABLE={}'.format(sys.executable),
+                '-DPython_EXECUTABLE={}'.format(sys.executable), # For cmake version >= 3.18
                 '-DBUILD_ONNX_PYTHON=ON',
                 '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
@@ -193,7 +194,7 @@ class cmake_build(setuptools.Command):
                     '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
                 ])
                 if USE_MSVC_STATIC_RUNTIME:
-                    cmake_args.append('-DONNX_USE_MSVC_STATIC_RUNTIME=ON')
+                    cmake_args.append('-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>')
                 if platform.architecture()[0] == '64bit':
                     cmake_args.extend(['-A', 'x64', '-T', 'host=x64'])
                 else:
