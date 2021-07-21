@@ -17,11 +17,14 @@ inline void appendDimToTensorShapeProto(TensorShapeProto& tsp, const TensorShape
 // Returns true if the given axis attribute is 0
 inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
   auto axisAttr = ctx.getAttribute("axis");
-  if (!axisAttr && !defaultZero) {
-    fail_shape_inference("Required attribute axis is missing");
-    return false;
-  } else if (defaultZero) {
-    return true;
+  // if axis is not defined
+  if (!axisAttr) {
+    if (defaultZero) {
+      return true;
+    } else {
+      fail_shape_inference("Required attribute axis is missing");
+      return false;
+    }
   }
   int axis = static_cast<int>(axisAttr->i());
   auto input_data_0 = ctx.getInputData(0);

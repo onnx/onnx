@@ -355,7 +355,7 @@ agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[3] w)
   EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }
 
-TEST(DataPropagationImplTest, SliceNegativeStartEndTest) {
+TEST(DataPropagationImplTest, SliceNegativeStartEndStepTest) {
   const char* code = R"ONNX(
 agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[3] w)
 {
