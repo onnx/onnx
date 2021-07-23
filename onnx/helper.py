@@ -906,5 +906,6 @@ def make_training_info(algorithm, algorithm_bindings, initialization, initializa
 
     return training_info
 
+
 # For backwards compatibility
 make_sequence_value_info = make_tensor_sequence_value_info
