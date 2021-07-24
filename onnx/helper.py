@@ -917,6 +917,5 @@ def make_sequence_value_info(
         elem_shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
     """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
-    message="`onnx.helper.make_sequence_value_info` is a deprecated alias for `onnx.helper.make_tensor_sequence_value_info`. To silence this warning, please use `make_tensor_sequence_value_info` for `TensorProto` sequences.\nDeprecated in ONNX v1.10.0; `onnx.helper.make_sequence_value_info` alias will be removed in an upcoming release."
-    warnings.warn(message, DeprecationWarning, stacklevel=2)
+    warnings.warn(str("`onnx.helper.make_sequence_value_info` is a deprecated alias for `onnx.helper.make_tensor_sequence_value_info`. To silence this warning, please use `make_tensor_sequence_value_info` for `TensorProto` sequences. Deprecated in ONNX v1.10.0, `onnx.helper.make_sequence_value_info alias` will be removed in an upcoming release."), DeprecationWarning, stacklevel=2)
     return make_tensor_sequence_value_info(name, elem_type, shape, doc_string, elem_shape_denotation)
