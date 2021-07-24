@@ -1,29 +1,26 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from distutils.spawn import find_executable
-from distutils import sysconfig, log
-import setuptools
-import setuptools.command.build_py
-import setuptools.command.develop
-import setuptools.command.build_ext
-
-from collections import namedtuple
-from contextlib import contextmanager
-from datetime import date
 import glob
+import multiprocessing
 import os
+import platform
 import shlex
 import subprocess
 import sys
-import platform
+from collections import namedtuple
+from contextlib import contextmanager
+from datetime import date
+from distutils import log, sysconfig
+from distutils.spawn import find_executable
 from textwrap import dedent
-import multiprocessing
 
+import setuptools
+import setuptools.command.build_ext
+import setuptools.command.build_py
+import setuptools.command.develop
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, 'onnx')
