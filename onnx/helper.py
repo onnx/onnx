@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 
 import collections.abc  # type: ignore
 import numbers
-from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
@@ -505,9 +504,9 @@ def make_tensor_type_proto(
             dim = tensor_shape_proto.dim.add()
             if d is None:
                 pass
-            elif isinstance(d, integer_types):
+            elif isinstance(d, int):
                 dim.dim_value = d
-            elif isinstance(d, text_type):
+            elif isinstance(d, str):
                 dim.dim_param = d
             else:
                 raise ValueError(
@@ -570,9 +569,9 @@ def make_sparse_tensor_type_proto(
             dim = sparse_tensor_shape_proto.dim.add()
             if d is None:
                 pass
-            elif isinstance(d, integer_types):
+            elif isinstance(d, int):
                 dim.dim_value = d
-            elif isinstance(d, text_type):
+            elif isinstance(d, str):
                 dim.dim_param = d
             else:
                 raise ValueError(
@@ -637,9 +636,9 @@ def make_value_info(
 
 
 def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
-    if isinstance(s, text_type):
+    if isinstance(s, int):
         sanitized = s
-    elif isinstance(s, binary_type):
+    elif isinstance(s, bytes):
         sanitized = s.decode('utf-8', errors='ignore')
     else:
         sanitized = str(s)

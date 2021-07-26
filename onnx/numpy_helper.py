@@ -11,7 +11,6 @@ import numpy as np  # type: ignore
 from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
-from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List, Dict
 
 
@@ -110,11 +109,11 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         # and then specify shape .reshape([x, y, z])
         flat_array = arr.flatten()
         for e in flat_array:
-            if isinstance(e, text_type):
+            if isinstance(e, str):
                 tensor.string_data.append(e.encode('utf-8'))
             elif isinstance(e, np.ndarray):
                 for s in e:
-                    if isinstance(s, text_type):
+                    if isinstance(s, str):
                         tensor.string_data.append(s.encode('utf-8'))
                     elif isinstance(s, bytes):
                         tensor.string_data.append(s)

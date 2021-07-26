@@ -22,12 +22,13 @@ import numpy as np  # type: ignore
 import onnx
 from onnx import helper, numpy_helper, NodeProto, ModelProto, TypeProto
 from onnx.backend.base import Backend
-from six.moves.urllib.request import urlretrieve
+from urllib.request import urlretrieve
 from ..loader import load_model_tests
 from ..case.test_case import TestCase
 from .item import TestItem
 from typing import (Any, Callable, Dict, Iterable, List, Optional, Pattern,
                     Sequence, Set, Text, Type, Union)
+
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
     pass
