@@ -47,7 +47,7 @@ def namedtupledict(typename, field_names, *args, **kwargs):  # type: (Text, Sequ
         if isinstance(key, six.string_types):
             key = field_names_map[key]
         return super(type(self), self).__getitem__(key)  # type: ignore
-    data.__getitem__ = getitem
+    setattr(data, "__getitem__", getitem)
     return data
 
 

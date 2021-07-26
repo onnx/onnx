@@ -94,8 +94,8 @@ def main():
         print('{} models have been checked. {} models were skipped.'.format(len(model_list), len(skip_models)))
     else:
         print('In all {} models, {} models failed, {} models were skipped'.format(len(model_list), len(failed_models), len(skip_models)))
-        for model, error in failed_messages:
-            print('{} failed because: {}'.format(model, error))
+        for model_name, error in failed_messages:
+            print('{} failed because: {}'.format(model_name, error))
         sys.exit(1)
 
 

@@ -26,8 +26,8 @@ from six.moves.urllib.request import urlretrieve
 from ..loader import load_model_tests
 from ..case.test_case import TestCase
 from .item import TestItem
-from typing import Optional, Pattern, Set, Dict, Text, Type, Sequence, Any, Callable, Union, Iterable, List
-
+from typing import (Any, Callable, Dict, Iterable, List, Optional, Pattern,
+                    Sequence, Set, Text, Type, Union)
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
     pass
@@ -142,7 +142,7 @@ class Runner(object):
         for category, items_map in self._filtered_test_items.items():
             test_case_name = str('OnnxBackend{}Test').format(category)
             test_case = self._get_test_case(test_case_name)
-            for name, item in sorted(items_map.items()):
+            for name, item in sorted(items_map.items()):  # type:ignore
                 setattr(test_case, name, item.func)
             test_cases[test_case_name] = test_case
         return test_cases
@@ -155,7 +155,7 @@ class Runner(object):
             unittest.TextTestRunner().run(BackendTest(backend).test_suite)
         '''
         suite = unittest.TestSuite()
-        for case in sorted(self.test_cases.values()):
+        for case in sorted(self.test_cases.values()):  # type:ignore
             suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))
         return suite
 

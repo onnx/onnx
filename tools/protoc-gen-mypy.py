@@ -324,12 +324,12 @@ class Descriptors(object):
         self.message_to_fd = {}  # type: Dict[Text, d.FileDescriptorProto]
 
         def _add_enums(enums, prefix, fd):
-            # type: (d.EnumDescriptorProto, d.FileDescriptorProto) -> None
+            # type: (d.EnumDescriptorProto, Text, d.FileDescriptorProto) -> None
             for enum in enums:
                 self.message_to_fd[prefix + enum.name] = fd
 
         def _add_messages(messages, prefix, fd):
-            # type: (d.DescriptorProto, d.FileDescriptorProto) -> None
+            # type: (d.DescriptorProto, Text, d.FileDescriptorProto) -> None
             for message in messages:
                 self.messages[prefix + message.name] = message
                 self.message_to_fd[prefix + message.name] = fd

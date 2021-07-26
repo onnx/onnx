@@ -10,7 +10,7 @@ import os
 import csv
 import datetime
 
-from tabulate import tabulate  # type: ignore
+from tabulate import tabulate
 
 import onnx
 from onnx import defs, helper, GraphProto
@@ -159,6 +159,7 @@ class Coverage(object):
         if os.path.isfile(nodes_path):
             with open(nodes_path, 'r') as nodes_file:
                 reader = csv.DictReader(nodes_file)
+                assert reader.fieldnames is not None
                 frameworks = list(reader.fieldnames)
                 for row in reader:
                     op = row[str('Op')]

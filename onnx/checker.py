@@ -98,7 +98,12 @@ def check_model(model, full_check=False):  # type: (Union[ModelProto, Text, byte
         if full_check:
             onnx.shape_inference.infer_shapes_path(model, check_type=True, strict_mode=True)
     else:
-        protobuf_string = model if isinstance(model, binary_type) else model.SerializeToString()
+        protobuf_string: bytes
+        if isinstance(model, binary_type):
+            protobuf_string = model
+        else:
+            assert isinstance(model, ModelProto)
+            protobuf_string = model.SerializeToString()
         # If the protobuf is larger than 2GB,
         # remind users should use the model path to check
         if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:

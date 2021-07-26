@@ -644,8 +644,8 @@ def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
     else:
         sanitized = str(s)
     if len(sanitized) < 64:
-        return sanitized
-    return sanitized[:64] + '...<+len=%d>' % (len(sanitized) - 64)
+        return str(sanitized)
+    return str(sanitized[:64] + '...<+len=%d>' % (len(sanitized) - 64))
 
 
 def make_tensor_sequence_value_info(
@@ -798,7 +798,9 @@ def printable_node(node, prefix='', subgraphs=False):  # type: (NodeProto, Text,
     printed_attrs = []
     for attr in node.attribute:
         if subgraphs:
-            printed_attr, gs = printable_attribute(attr, subgraphs)
+            pa = printable_attribute(attr, subgraphs)
+            assert isinstance(pa, tuple)
+            printed_attr, gs = pa
             assert isinstance(gs, list)
             graphs.extend(gs)
             printed_attrs.append(printed_attr)
@@ -866,7 +868,9 @@ def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
     graphs = []  # type: List[GraphProto]
     # body
     for node in graph.node:
-        pn, gs = printable_node(node, indent, subgraphs=True)
+        pn_ = printable_node(node, indent, subgraphs=True)
+        assert isinstance(pn_, tuple)
+        pn, gs = pn_
         assert isinstance(gs, list)
         content.append(pn)
         graphs.extend(gs)
