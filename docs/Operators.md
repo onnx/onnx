@@ -64,8 +64,8 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
-|<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
-|<a href="#If">If</a>|<a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
+|<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-15">15</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
+|<a href="#If">If</a>|<a href="Changelog.md#If-15">15</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
 |<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-10">10</a>|
 |<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
@@ -74,7 +74,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
 |<a href="#Log">Log</a>|<a href="Changelog.md#Log-13">13</a>, <a href="Changelog.md#Log-6">6</a>, <a href="Changelog.md#Log-1">1</a>|
-|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
+|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-15">15</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
 |<a href="#LpNormalization">LpNormalization</a>|<a href="Changelog.md#LpNormalization-1">1</a>|
 |<a href="#LpPool">LpPool</a>|<a href="Changelog.md#LpPool-11">11</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-1">1</a>|
 |<a href="#MatMul">MatMul</a>|<a href="Changelog.md#MatMul-13">13</a>, <a href="Changelog.md#MatMul-9">9</a>, <a href="Changelog.md#MatMul-1">1</a>|
@@ -7898,9 +7898,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 14 of the default ONNX operator set.
+This version of the operator has been available since version 15 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a href="Changelog.md#Identity-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-14">14</a>
 
 #### Inputs
 
@@ -7919,8 +7919,8 @@ Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a hre
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
-<dd>Constrain input and output types to all tensor and sequence types.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
 </dl>
 
 
@@ -7980,9 +7980,9 @@ expect(node, inputs=[data], outputs=[data], name='test_identity_sequence')
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 15 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Changelog.md#If-11">11</a>
+Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-13">13</a>
 
 #### Attributes
 
@@ -8010,8 +8010,8 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
-<dd>All Tensor and Sequence types</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>All Tensor, Sequence, and optional types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
 </dl>
@@ -9394,9 +9394,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 15 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="Changelog.md#Loop-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-13">13</a>
 
 #### Attributes
 
@@ -9426,7 +9426,7 @@ Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
 <dd>All Tensor and Sequence types</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>tensor of int64, which should be a scalar.</dd>

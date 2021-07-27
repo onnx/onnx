@@ -4175,4 +4175,39 @@ ONNX_OPERATOR_SET_SCHEMA(
                  ->add_dim() = data_shape.dim(i);
           }
         }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Identity,
+    14,
+    OpSchema()
+        .SetDoc("Identity operator")
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "V",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor to copy input into.",
+            "V",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "V",
+            [](){
+              auto t = OpSchema::all_tensor_types_with_bfloat();
+              auto s = OpSchema::all_tensor_sequence_types();
+              t.insert(t.end(), s.begin(), s.end());
+              return t;
+            }(),
+            "Constrain input and output types to all tensor and sequence types.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 } // namespace ONNX_NAMESPACE
