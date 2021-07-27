@@ -1,14 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from collections import defaultdict
 import inspect
+from collections import defaultdict
 from textwrap import dedent
-from typing import Dict, Text, List, Tuple, Type, Sequence, Any
+from typing import Any, Dict, List, Sequence, Text, Tuple, Type
 
 import numpy as np  # type: ignore
 
@@ -44,5 +42,5 @@ class _Exporter(type):
         super(_Exporter, cls).__init__(name, bases, dct)
 
 
-class Base(object, metaclass=_Exporter):
+class Base(metaclass=_Exporter):
     pass

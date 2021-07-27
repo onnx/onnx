@@ -61,9 +61,13 @@ class TestSymbolicShape(unittest.TestCase):
         for v in inputs + outputs + valueinfos:
             if v.name == name:
                 if v.type.HasField('tensor_type'):
-                    return v.type.tensor_type.shape
+                    shape = v.type.tensor_type.shape
+                    assert isinstance(shape, TensorShapeProto)
+                    return shape
                 elif v.type.HasField('sparse_tensor_type'):
-                    return v.type.sparse_tensor_type.shape
+                    shape = v.type.sparse_tensor_type.shape
+                    assert isinstance(shape, TensorShapeProto)
+                    return shape
         return None
 
     def test_concat_enable_symbolic(self):  # type: () -> None

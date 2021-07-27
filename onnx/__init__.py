@@ -69,6 +69,7 @@ def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) 
         return proto
     elif hasattr(proto, 'SerializeToString') and callable(proto.SerializeToString):
         result = proto.SerializeToString()
+        assert isinstance(result, bytes)
         return result
     else:
         raise TypeError('No SerializeToString method is detected. '

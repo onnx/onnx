@@ -1,11 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from collections import defaultdict
 import functools
 import glob
 import os
@@ -16,18 +13,19 @@ import tarfile
 import tempfile
 import time
 import unittest
-
-import numpy as np  # type: ignore
-
-import onnx
-from onnx import helper, numpy_helper, NodeProto, ModelProto, TypeProto
-from onnx.backend.base import Backend
-from urllib.request import urlretrieve
-from ..loader import load_model_tests
-from ..case.test_case import TestCase
-from .item import TestItem
+from collections import defaultdict
 from typing import (Any, Callable, Dict, Iterable, List, Optional, Pattern,
                     Sequence, Set, Text, Type, Union)
+from urllib.request import urlretrieve
+
+import numpy as np  # type: ignore
+import onnx
+from onnx import ModelProto, NodeProto, TypeProto, helper, numpy_helper
+from onnx.backend.base import Backend
+
+from ..case.test_case import TestCase
+from ..loader import load_model_tests
+from .item import TestItem
 
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
@@ -169,7 +167,7 @@ class Runner(object):
             onnx_backend_tests = BackendTest(backend).tests
         '''
         tests = self._get_test_case('OnnxBackendTest')
-        for items_map in sorted(self._filtered_test_items.values()):
+        for items_map in sorted(self._filtered_test_items.values()):  # type:ignore
             for name, item in sorted(items_map.items()):
                 setattr(tests, name, item.func)
         return tests
