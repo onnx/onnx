@@ -488,7 +488,7 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    if (TARGET Python::Module)
+    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18")
       target_link_libraries(onnx_cpp2py_export PRIVATE Python::Module)
     else()
       target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
