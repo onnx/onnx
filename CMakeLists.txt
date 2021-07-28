@@ -51,7 +51,7 @@ endif()
 if(ONNX_USE_PROTOBUF_SHARED_LIBS)
   if(MSVC)
     # TODO: if ONNX was set to dynamically link to CRT, it may not work. 
-	# Because libprotobuf.dll has C++ symbols in its public interface. 
+    # Because libprotobuf.dll has C++ symbols in its public interface. 
     add_definitions(-DPROTOBUF_USE_DLLS)
   endif()
   set(Protobuf_USE_STATIC_LIBS OFF)
@@ -490,9 +490,9 @@ if(BUILD_ONNX_PYTHON)
   if(MSVC)
     if (TARGET Python::Module)
       target_link_libraries(onnx_cpp2py_export PRIVATE Python::Module)
-	else()
-	  target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
-	endif()
+    else()
+      target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
+    endif()
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
                                    ${EXTRA_FLAGS})
