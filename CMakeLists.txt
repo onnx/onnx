@@ -367,7 +367,7 @@ target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
-
+add_dependencies(onnx_proto gen_onnx_proto)
 if (MSVC)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(EXTRA_FLAGS
