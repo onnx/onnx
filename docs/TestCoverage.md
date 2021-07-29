@@ -4704,14 +4704,14 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### GridSampler
-There are 4 test cases, listed as following:
+### GridSample
+There are 3 test cases, listed as following:
 <details>
-<summary>gridsampler</summary>
+<summary>gridsample</summary>
 
 ```python
 node = onnx.helper.make_node(
-    'GridSampler',
+    'GridSample',
     inputs=['X', 'Grid'],
     outputs=['Y'],
     mode='bilinear',
@@ -4805,12 +4805,12 @@ Y = np.array(
     dtype=np.float32,
 )
 expect(node, inputs=[X, Grid], outputs=[Y],
-       name='test_gridsampler')
+       name='test_gridsample')
 ```
 
 </details>
 <details>
-<summary>gridsampler_mode_aligncorners</summary>
+<summary>gridsample_mode_aligncorners</summary>
 
 ```python
 # X shape, [N, C, H, W] - [1, 1, 3, 2]
@@ -4850,7 +4850,7 @@ Grid = np.array(
 
 # setting mode = 'bilinear', default align_corners = 0
 node = onnx.helper.make_node(
-    'GridSampler',
+    'GridSample',
     inputs=['X', 'Grid'],
     outputs=['Y'],
     mode='bilinear',
@@ -4869,11 +4869,11 @@ Y_bilinear = np.array(
 )
 
 expect(node, inputs=[X, Grid], outputs=[Y_bilinear],
-       name='test_gridsampler_bilinear')
+       name='test_gridsample_bilinear')
 
 # setting mode = 'bilinear', align_corners = 1
 node = onnx.helper.make_node(
-    'GridSampler',
+    'GridSample',
     inputs=['X', 'Grid'],
     outputs=['Y'],
     mode='bilinear',
@@ -4893,11 +4893,11 @@ Y_align_corners = np.array(
 )
 
 expect(node, inputs=[X, Grid], outputs=[Y_align_corners],
-       name='test_gridsampler_aligncorners_true')
+       name='test_gridsample_aligncorners_true')
 
 # setting mode = 'nearest'
 node = onnx.helper.make_node(
-    'GridSampler',
+    'GridSample',
     inputs=['X', 'Grid'],
     outputs=['Y'],
     mode='nearest',
@@ -4916,11 +4916,11 @@ Y_nearest = np.array(
 )
 
 expect(node, inputs=[X, Grid], outputs=[Y_nearest],
-       name='test_gridsampler_nearest')
+       name='test_gridsample_nearest')
 
 # setting mode = 'bicubic'
 node = onnx.helper.make_node(
-    'GridSampler',
+    'GridSample',
     inputs=['X', 'Grid'],
     outputs=['Y'],
     mode='bicubic',
@@ -4939,12 +4939,12 @@ Y_bicubic = np.array(
 )
 
 expect(node, inputs=[X, Grid], outputs=[Y_bicubic],
-       name='test_gridsampler_bicubic')
+       name='test_gridsample_bicubic')
 ```
 
 </details>
 <details>
-<summary>gridsampler_paddingmode</summary>
+<summary>gridsample_paddingmode</summary>
 
 ```python
 # X shape, [N, C, H, W] - [1, 1, 3, 2]
@@ -4984,7 +4984,7 @@ Grid = np.array(
 
 # setting padding_mode = 'zeros'
 node = onnx.helper.make_node(
-    'GridSampler',
+    'GridSample',
     inputs=['X', 'Grid'],
     outputs=['Y'],
     padding_mode='zeros',
@@ -5003,11 +5003,11 @@ Y_zeros = np.array(
 )
 
 expect(node, inputs=[X, Grid], outputs=[Y_zeros],
-       name='test_gridsampler_zeros_padding')
+       name='test_gridsample_zeros_padding')
 
 # setting padding_mode = 'border'
 node = onnx.helper.make_node(
-    'GridSampler',
+    'GridSample',
     inputs=['X', 'Grid'],
     outputs=['Y'],
     padding_mode='border',
@@ -5026,11 +5026,11 @@ Y_border = np.array(
 )
 
 expect(node, inputs=[X, Grid], outputs=[Y_border],
-       name='test_gridsampler_border_padding')
+       name='test_gridsample_border_padding')
 
 # setting padding_mode = 'reflection'
 node = onnx.helper.make_node(
-    'GridSampler',
+    'GridSample',
     inputs=['X', 'Grid'],
     outputs=['Y'],
     padding_mode='reflection',
@@ -5049,34 +5049,7 @@ Y_reflection = np.array(
 )
 
 expect(node, inputs=[X, Grid], outputs=[Y_reflection],
-       name='test_gridsampler_reflection_padding')
-```
-
-</details>
-<details>
-<summary>gridsampler_torch</summary>
-
-```python
-node = onnx.helper.make_node(
-    'GridSampler',
-    inputs=['X', 'Grid'],
-    outputs=['Y'],
-    mode='bilinear',
-    padding_mode='zeros',
-    align_corners=0,
-)
-
-# X shape, [N, C, H, W] - [1, 1, 4, 4]
-# Grid shape, [N, H_out, W_out, 2] - [1, 6, 6, 2]
-# Y shape, [N, C, H_out, W_out] - [1, 1, 6, 6]
-X = torch.arange(3 * 3).view(1, 1, 3, 3).float()
-d = torch.linspace(-1, 1, 6)
-meshx, meshy = torch.meshgrid((d, d))
-grid = torch.stack((meshy, meshx), 2)
-Grid = grid.unsqueeze(0)
-Y = torch.nn.functional.grid_sample(X, Grid, mode='bilinear', padding_mode='zeros', align_corners=False)
-expect(node, inputs=[X.numpy(), Grid.numpy()], outputs=[Y.numpy()],
-       name='test_gridsampler_torch')
+       name='test_gridsample_reflection_padding')
 ```
 
 </details>

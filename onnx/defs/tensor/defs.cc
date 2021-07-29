@@ -2520,21 +2520,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           resizeShapeInference(ctx, true);
         }));
 
-static const char* GridSampler_ver15_doc = R"DOC(
+static const char* GridSample_ver15_doc = R"DOC(
 Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
-Currently, only spatial (4-D) inputs are supported. For `input` with shap (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
+Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
 the `output` will have shape (N, C, H_out, W_out).
+
 For each output location `output[n, :, h, w]`, the size-2 vector `grid[n, h, w]` specifies `input` pixel locations `x` and `y`,
 which are used to interpolate the output value `output[n, :, h, w]`.
 
-The GridSampler operator is often used in conjunction with affine_grid doing grid generator
-and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
-
+The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
 See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    GridSampler,
+    GridSample,
     15,
     OpSchema()
         .Attr(
@@ -2597,7 +2596,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain output types to float tensors.")
-        .SetDoc(GridSampler_ver15_doc)
+        .SetDoc(GridSample_ver15_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 

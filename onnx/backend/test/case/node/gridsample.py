@@ -12,12 +12,12 @@ from ..base import Base
 from . import expect
 
 
-class GridSampler(Base):
+class GridSample(Base):
 
     @staticmethod
-    def export_gridsampler():  # type: () -> None
+    def export_gridsample():  # type: () -> None
         node = onnx.helper.make_node(
-            'GridSampler',
+            'GridSample',
             inputs=['X', 'Grid'],
             outputs=['Y'],
             mode='bilinear',
@@ -111,10 +111,10 @@ class GridSampler(Base):
             dtype=np.float32,
         )
         expect(node, inputs=[X, Grid], outputs=[Y],
-               name='test_gridsampler')
+               name='test_gridsample')
 
     @staticmethod
-    def export_gridsampler_paddingmode():  # type: () -> None
+    def export_gridsample_paddingmode():  # type: () -> None
         # X shape, [N, C, H, W] - [1, 1, 3, 2]
         X = np.array(
             [
@@ -152,7 +152,7 @@ class GridSampler(Base):
 
         # setting padding_mode = 'zeros'
         node = onnx.helper.make_node(
-            'GridSampler',
+            'GridSample',
             inputs=['X', 'Grid'],
             outputs=['Y'],
             padding_mode='zeros',
@@ -171,11 +171,11 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_zeros],
-               name='test_gridsampler_zeros_padding')
+               name='test_gridsample_zeros_padding')
 
         # setting padding_mode = 'border'
         node = onnx.helper.make_node(
-            'GridSampler',
+            'GridSample',
             inputs=['X', 'Grid'],
             outputs=['Y'],
             padding_mode='border',
@@ -194,11 +194,11 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_border],
-               name='test_gridsampler_border_padding')
+               name='test_gridsample_border_padding')
 
         # setting padding_mode = 'reflection'
         node = onnx.helper.make_node(
-            'GridSampler',
+            'GridSample',
             inputs=['X', 'Grid'],
             outputs=['Y'],
             padding_mode='reflection',
@@ -217,10 +217,10 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_reflection],
-               name='test_gridsampler_reflection_padding')
+               name='test_gridsample_reflection_padding')
 
     @staticmethod
-    def export_gridsampler_mode_aligncorners():  # type: () -> None
+    def export_gridsample_mode_aligncorners():  # type: () -> None
         # X shape, [N, C, H, W] - [1, 1, 3, 2]
         X = np.array(
             [
@@ -258,7 +258,7 @@ class GridSampler(Base):
 
         # setting mode = 'bilinear', default align_corners = 0
         node = onnx.helper.make_node(
-            'GridSampler',
+            'GridSample',
             inputs=['X', 'Grid'],
             outputs=['Y'],
             mode='bilinear',
@@ -277,11 +277,11 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_bilinear],
-               name='test_gridsampler_bilinear')
+               name='test_gridsample_bilinear')
 
         # setting mode = 'bilinear', align_corners = 1
         node = onnx.helper.make_node(
-            'GridSampler',
+            'GridSample',
             inputs=['X', 'Grid'],
             outputs=['Y'],
             mode='bilinear',
@@ -301,11 +301,11 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_align_corners],
-               name='test_gridsampler_aligncorners_true')
+               name='test_gridsample_aligncorners_true')
 
         # setting mode = 'nearest'
         node = onnx.helper.make_node(
-            'GridSampler',
+            'GridSample',
             inputs=['X', 'Grid'],
             outputs=['Y'],
             mode='nearest',
@@ -324,11 +324,11 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_nearest],
-               name='test_gridsampler_nearest')
+               name='test_gridsample_nearest')
 
         # setting mode = 'bicubic'
         node = onnx.helper.make_node(
-            'GridSampler',
+            'GridSample',
             inputs=['X', 'Grid'],
             outputs=['Y'],
             mode='bicubic',
@@ -347,4 +347,33 @@ class GridSampler(Base):
         )
 
         expect(node, inputs=[X, Grid], outputs=[Y_bicubic],
-               name='test_gridsampler_bicubic')
+               name='test_gridsample_bicubic')
+
+    '''
+    For someone who want to test by script. Comment it cause github ONNX CI
+    do not have the torch python package.
+    @staticmethod
+    def export_gridsample_torch():  # type: () -> None
+        node = onnx.helper.make_node(
+            'GridSample',
+            inputs=['X', 'Grid'],
+            outputs=['Y'],
+            mode='bilinear',
+            padding_mode='zeros',
+            align_corners=0,
+        )
+
+        # X shape, [N, C, H, W] - [1, 1, 4, 4]
+        # Grid shape, [N, H_out, W_out, 2] - [1, 6, 6, 2]
+        # Y shape, [N, C, H_out, W_out] - [1, 1, 6, 6]
+        import torch
+        X = torch.arange(3 * 3).view(1, 1, 3, 3).float()
+        d = torch.linspace(-1, 1, 6)
+        meshx, meshy = torch.meshgrid((d, d))
+        grid = torch.stack((meshy, meshx), 2)
+        Grid = grid.unsqueeze(0)
+        Y = torch.nn.functional.grid_sample(X, Grid, mode='bilinear',
+                                            padding_mode='zeros', align_corners=False)
+        expect(node, inputs=[X.numpy(), Grid.numpy()], outputs=[Y.numpy()],
+               name='test_gridsample_torch')
+    '''

@@ -1,8 +1,9 @@
-backend-test:£
--
+backend-test:¡
+,
 X
-GridY"GridSampler*
-mode"bicubic test_gridsampler_bicubicZ
+GridY"
+GridSample*
+mode"bicubic test_gridsample_bicubicZ
 X
 
 

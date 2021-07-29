@@ -1,8 +1,9 @@
-backend-test:¥
-.
+backend-test:¡
+,
 X
-GridY"GridSampler*
-mode"bilinear test_gridsampler_bilinearZ
+GridY"
+GridSample*
+mode"nearest test_gridsample_nearestZ
 X
 
 
