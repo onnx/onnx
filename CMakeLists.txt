@@ -11,6 +11,11 @@ if(NOT CMAKE_BUILD_TYPE)
       "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage."
     FORCE)
 endif()
+
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.15")
+  cmake_policy(SET CMP0091 NEW)
+endif()
+
 cmake_policy(SET CMP0063 NEW)
 
 # Project
@@ -113,7 +118,7 @@ if(ONNX_WERROR)
 endif()
 
 if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18")
-  find_package(Python COMPONENTS Interpreter Development.Module NumPy)
+  find_package(Python COMPONENTS Interpreter Development.Module)
 else()
   find_package(PythonInterp ${PY_VERSION} REQUIRED)
   find_package(PythonLibs ${PY_VERSION})
@@ -264,9 +269,10 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
                        VERBATIM)
-    message("Generated: ${GENERATED_PROTO}")
+    FILE(TO_NATIVE_PATH ${GENERATED_PROTO}  GENERATED_PROTO_PATH)
+    message("Generated: ${GENERATED_PROTO_PATH}")
     set(PROTOC_ARGS
-        ${GENERATED_PROTO}
+        ${GENERATED_PROTO_PATH}
         -I
         ${CMAKE_CURRENT_BINARY_DIR}
         --cpp_out
@@ -308,14 +314,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
                 -DNAMESPACES=${ONNX_NAMESPACE} -P
                 ${ONNX_PROTO_POST_BUILD_SCRIPT}
         DEPENDS ${GENERATED_PROTO} ${DEPEND}
-        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO_PATH}"
         VERBATIM)
     else()
       add_custom_command(
         OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
         COMMAND ${ONNX_PROTOC_EXECUTABLE} ARGS ${PROTOC_ARGS}
         DEPENDS ${GENERATED_PROTO} ${DEPEND}
-        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO_PATH}"
         VERBATIM)
     endif()
     add_custom_target(${NAME} DEPENDS ${OUTPUT_PB_SRC} ${OUTPUT_PB_HEADER})
@@ -367,7 +373,7 @@ target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
-add_dependencies(onnx_proto gen_onnx_proto)
+add_dependencies(onnx_proto gen_onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 if (MSVC)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(EXTRA_FLAGS
@@ -419,7 +425,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
 else()
   add_library(onnx ${ONNX_SRCS})
 endif()
-
+add_dependencies(onnx onnx_proto gen_onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -437,6 +443,7 @@ if(BUILD_ONNX_PYTHON)
   endif()
 
   add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  add_dependencies(onnx_cpp2py_export onnx_proto gen_onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")

@@ -173,7 +173,7 @@ class cmake_build(setuptools.Command):
                 CMAKE,
                 '-DPYTHON_INCLUDE_DIR={}'.format(sysconfig.get_python_inc()),
                 '-DPYTHON_EXECUTABLE={}'.format(sys.executable),
-                '-DPython_EXECUTABLE={}'.format(sys.executable), # For cmake version >= 3.18
+                '-DPython_EXECUTABLE={}'.format(sys.executable),
                 '-DBUILD_ONNX_PYTHON=ON',
                 '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
