@@ -124,6 +124,9 @@ else()
   find_package(PythonLibs ${PY_VERSION})
 endif()
 
+if(NOT PYTHON_EXECUTABLE)
+  set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
@@ -262,13 +265,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         list(APPEND GEN_PROTO_ARGS --protoc_path)
         list(APPEND GEN_PROTO_ARGS "${ONNX_PROTOC_EXECUTABLE}")
     endif()
-
+    FILE(TO_NATIVE_PATH ${PYTHON_EXECUTABLE}  PYTHON_EXECUTABLE_PATH)
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
+                       COMMAND "${PYTHON_EXECUTABLE_PATH}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
-                       COMMENT "Running gen_proto.py on ${INFILE}"
+                       COMMENT "Running ${PYTHON_EXECUTABLE_PATH} ${GEN_PROTO_PY} on ${INFILE}"
                        VERBATIM)
+
     FILE(TO_NATIVE_PATH ${GENERATED_PROTO}  GENERATED_PROTO_PATH)
     message("Generated: ${GENERATED_PROTO_PATH}")
     set(PROTOC_ARGS
