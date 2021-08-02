@@ -990,6 +990,20 @@ class OpSet_Onnx_ver15 {
   }
 };
 
+
+// Forward declarations for ai.onnx version 16
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterND);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterElements);
+
+// Iterate over schema from ai.onnx version 16
+class OpSet_Onnx_ver16 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterND)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterElements)>());
+  }
+};
+
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -1006,6 +1020,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver13>();
   RegisterOpSetSchema<OpSet_Onnx_ver14>();
   RegisterOpSetSchema<OpSet_Onnx_ver15>();
+  RegisterOpSetSchema<OpSet_Onnx_ver16>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
@@ -1013,6 +1028,7 @@ inline void RegisterOnnxOperatorSetSchema() {
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
   // Update here if opset_version bumps 
   // These calls for schema registration here are required to be in descending order for this to work correctly
+  RegisterOpSetSchema<OpSet_Onnx_ver16>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver15>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver14>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver13>(target_version);
