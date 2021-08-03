@@ -122,7 +122,7 @@ False instead of True.)DOC";
           // skip if axes is not an initializer
           return;
         }
-        std::vector<int64_t> axes_values = ParseData<int64_t>(axesInitializer);
+        std::vector<int64_t> axes_values = ParseData<int64_t>(axesInitializer, ctx.getModelDir());
         axes.assign(axes_values.begin(), axes_values.end());
       } else { // axes is attribute
         auto axes_proto = ctx.getAttribute("axes");

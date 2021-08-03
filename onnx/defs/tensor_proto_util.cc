@@ -5,6 +5,8 @@
 
 #include "tensor_proto_util.h"
 #include <vector>
+#include "onnx/common/file_utils.h"
+#include "onnx/common/path.h"
 #include "onnx/common/platform_helpers.h"
 
 namespace ONNX_NAMESPACE {
@@ -32,9 +34,13 @@ namespace ONNX_NAMESPACE {
 
 #define DEFINE_PARSE_DATA(type, typed_data_fetch)                          \
   template <>                                                              \
-  const std::vector<type> ParseData(const TensorProto* tensor_proto) {     \
+  const std::vector<type> ParseData(const TensorProto* tensor_proto,       \
+    const std::string model_dir) {     \
     std::vector<type> res;                                                 \
-    if (!tensor_proto->has_raw_data()) {                                   \
+    if (tensor_proto->has_data_location() &&                               \
+      tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) { \
+      tensor_proto = LoadExternalTensor(*tensor_proto, model_dir);                  \
+    } else if (!tensor_proto->has_raw_data()) {                            \
       const auto& data = tensor_proto->typed_data_fetch();                 \
       res.insert(res.end(), data.begin(), data.end());                     \
       return res;                                                          \

@@ -119,8 +119,10 @@ struct InferenceContextImpl : public InferenceContext {
       const std::unordered_map<std::string, const SparseTensorProto*>& 
           inputSparseDataByName,
       const std::unordered_map<std::string, TensorShapeProto>* generatedShapeData = nullptr,
-      GraphInferenceContext* graphInferenceContext = nullptr)
-      : graphInferenceContext_{graphInferenceContext} {
+      GraphInferenceContext* graphInferenceContext = nullptr,
+      const std::string model_dir = "")
+      : graphInferenceContext_{graphInferenceContext},
+        model_dir_{model_dir} {
     for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
       if (attr.has_g()) {
@@ -253,6 +255,11 @@ struct InferenceContextImpl : public InferenceContext {
 
     return inferencer;
   }
+
+  std::string getModelDir() const override {
+    return model_dir_;
+  }
+
   std::vector<const TensorProto*> allInputData_;
   std::vector<const SparseTensorProto*> allInputSparseData_;
   std::vector<const TensorShapeProto*> allShapeInputData_;
@@ -261,6 +268,7 @@ struct InferenceContextImpl : public InferenceContext {
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
   GraphInferenceContext* graphInferenceContext_;
+  std::string model_dir_;
 
   // mutable as internal cache of GraphInferencer instances
   mutable std::unordered_map<std::string, std::unique_ptr<GraphInferencer>>
@@ -272,8 +280,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       NodeProto& n,
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
       const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
-      std::unordered_map<std::string, TensorShapeProto>& generatedShapeData)
-      : generatedShapeData_{generatedShapeData} {
+      std::unordered_map<std::string, TensorShapeProto>& generatedShapeData,
+      const std::string model_dir)
+      : generatedShapeData_{generatedShapeData},
+        model_dir_{model_dir} {
     size_t input_idx = 0;
   
     for (auto& attr : *n.mutable_attribute()) {
@@ -364,9 +374,9 @@ struct DataPropagationContextImpl : public DataPropagationContext {
         TensorShapeProto tsp;
 
         if (input_data->data_type() == TensorProto_DataType_INT64) {
-          vectorToTensorShapeProto(ParseData<int64_t>(input_data), tsp);
+          vectorToTensorShapeProto(ParseData<int64_t>(input_data, model_dir_), tsp);
         } else if (input_data->data_type() == TensorProto_DataType_INT32) {
-          vectorToTensorShapeProto(ParseData<int32_t>(input_data), tsp);
+          vectorToTensorShapeProto(ParseData<int32_t>(input_data, model_dir_), tsp);
         } else {
           // Only supports integer type to form a shape
           return nullptr;
@@ -399,6 +409,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::vector<TypeProto> allOutputTypes_;
   std::unordered_map<std::string, TensorShapeProto>& generatedShapeData_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+  std::string model_dir_;
 };
 
 void checkShapesAndTypes(
@@ -433,7 +444,8 @@ void mergeShapesAndTypes(
 void InferShapes(
     ModelProto& m,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const ShapeInferenceOptions& options = {}
+    const ShapeInferenceOptions& options = {},
+    const std::string model_dir = ""
     );
 
 void InferShapes(

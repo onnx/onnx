@@ -6,6 +6,7 @@
 #include <fstream>
 #include <list>
 #include "onnx/checker.h"
+#include "onnx/common/file_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -230,7 +231,8 @@ static void InferShapesImpl(
     const ShapeInferenceOptions& options,
     SymbolTable* symbolTable,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int ir_version = IR_VERSION // default the latest one
+    const int ir_version = IR_VERSION, // default the latest one,
+    const std::string model_dir = ""
 ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{outer_scope_value_types_by_name};
   std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{outer_scope_value_types_by_name};
@@ -356,7 +358,8 @@ static void InferShapesImpl(
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
-        n, valueTypesByName, inputDataByName, inputSparseDataByName, &generatedShapeDataByName, &graphInferenceContext);
+        n, valueTypesByName, inputDataByName, inputSparseDataByName, &generatedShapeDataByName,
+          &graphInferenceContext, model_dir);
     if (!schema) {
       std::cerr << "Warning: Unsupported operator " << n.op_type() << ". No schema registered for this operator."
                 << std::endl;
@@ -443,7 +446,8 @@ static void InferShapesImpl(
         mergeShapesAndTypes(*inferredType, existingType);
         if (options.enable_data_propagation && schema->has_data_propagation_function()) {
           DataPropagationContextImpl dataPropagationCtx(
-              n, valueTypesByName, inputDataByName, generatedShapeDataByName);
+              n, valueTypesByName, inputDataByName, generatedShapeDataByName,
+              model_dir);
           schema->GetDataPropagationFunction()(dataPropagationCtx);
         }
         // Make merged info available to further inference.
@@ -486,7 +490,8 @@ void InferShapes(
 void InferShapes(
     ModelProto& m,
     const ISchemaRegistry* schema_registry,
-    const ShapeInferenceOptions& options) {
+    const ShapeInferenceOptions& options,
+    const std::string model_dir) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
@@ -501,7 +506,8 @@ void InferShapes(
       options,
       &symbolTable,
       schema_registry,
-      m.ir_version());
+      m.ir_version(),
+      model_dir);
 }
 
 void InferShapes(
@@ -510,16 +516,13 @@ void InferShapes(
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options) {
   ModelProto model;
-  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if (!model_stream.good()) {
-    fail_check("Unable to open model file:", model_path, ". Please check if it is a valid file.");
+  std::string model_dir;
+  size_t pos = model_path.find_last_of("\\/");
+  if (pos != std::string::npos) {
+    model_dir = model_path.substr(0, pos + 1);
   }
-  std::string data{std::istreambuf_iterator<char>{model_stream}, std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
-    fail_check(
-        "Unable to parse model from file:", model_path, ". Please check if it is a valid protobuf file of model.");
-  }
-  InferShapes(model, schema_registry, options);
+  LoadProtoFromPath(model_path, model);
+  InferShapes(model, schema_registry, options, model_dir);
   // Save the inferred model to the original model path
   // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
   std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
@@ -641,7 +644,8 @@ void InferShapeForFunctionNode(
       mergeShapesAndTypes(*inferred_output_type, existingType);
       if (options.enable_data_propagation && schema->has_data_propagation_function()) {
         DataPropagationContextImpl temp_dataPropagationCtx(
-            copy_n, temp_valueTypesByName, temp_initializersByName, *generatedShapeDataByName);
+            copy_n, temp_valueTypesByName, temp_initializersByName, *generatedShapeDataByName,
+            ctx.getModelDir());
         schema->GetDataPropagationFunction()(temp_dataPropagationCtx);
       }
       // Make merged info available to further inference.

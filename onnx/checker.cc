@@ -3,6 +3,7 @@
  */
 
 #include "onnx/checker.h"
+#include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
@@ -911,15 +912,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
 
 void check_model(const std::string& model_path) {
   ModelProto model;
-  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if (!model_stream.good()) {
-    fail_check("Unable to open model file:", model_path, ". Please check if it is a valid file.");
-  }
-  std::string data{std::istreambuf_iterator<char>{model_stream}, std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
-    fail_check(
-        "Unable to parse model from file:", model_path, ". Please check if it is a valid protobuf file of model.");
-  }
+  LoadProtoFromPath(model_path, model);
 
   CheckerContext ctx;
   std::string model_dir;

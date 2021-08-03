@@ -452,10 +452,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               std::vector<int64_t> splitSizes;
               if (splitInitializer->data_type() == TensorProto::INT64) {
-                const auto& data = ParseData<int64_t>(splitInitializer);
+                const auto& data = ParseData<int64_t>(splitInitializer, ctx.getModelDir());
                 splitSizes.insert(splitSizes.end(), data.begin(), data.end());
               } else if (splitInitializer->data_type() == TensorProto::INT32) {
-                const auto& data = ParseData<int32_t>(splitInitializer);
+                const auto& data = ParseData<int32_t>(splitInitializer, ctx.getModelDir());
                 splitSizes.insert(splitSizes.end(), data.begin(), data.end());
               } else {
                 // unaccepted data type
