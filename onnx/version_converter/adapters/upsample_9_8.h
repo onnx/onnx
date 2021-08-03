@@ -29,10 +29,9 @@ struct Upsample_9_8 final : public Adapter {
             std::vector<float> value = initializers[i].floats();
             if (initializers[i].is_raw_data()){
               const std::string& bytes = initializers[i].raw();
-              value.insert(
-                  value.end(),
-                  reinterpret_cast<const float*>(bytes.c_str()),
-                  reinterpret_cast<const float*>(bytes.c_str() + bytes.size()));
+              const size_t raw_data_size = bytes.size();
+              value.resize(raw_data_size / sizeof(float));
+              memcpy(reinterpret_cast<char*>(value.data()), bytes.c_str(), raw_data_size);
             }
             std::vector<double> d_values;
             d_values.reserve(value.size());
@@ -63,10 +62,9 @@ struct Upsample_9_8 final : public Adapter {
           std::vector<float> value = op->t(kvalue).floats();
           if (op->t(kvalue).is_raw_data()){
             const std::string& bytes = op->t(kvalue).raw();
-            value.insert(
-                value.end(),
-                reinterpret_cast<const float*>(bytes.c_str()),
-                reinterpret_cast<const float*>(bytes.c_str() + bytes.size()));
+            const size_t raw_data_size = bytes.size();
+            value.resize(raw_data_size / sizeof(float));
+            memcpy(reinterpret_cast<char*>(value.data()), bytes.c_str(), raw_data_size);
           }
           std::vector<double> d_values;
           d_values.reserve(value.size());

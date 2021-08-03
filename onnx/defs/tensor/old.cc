@@ -142,10 +142,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> targetShape;
           if (targetShapeInitializer->has_raw_data()) {
             const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+            const size_t raw_data_size = bytes.size();
+            targetShape.resize(raw_data_size / sizeof(int64_t));
+            memcpy(reinterpret_cast<char*>(targetShape.data()), bytes.c_str(), raw_data_size);
           } else {
             const auto& data = targetShapeInitializer->int64_data();
             targetShape.insert(targetShape.end(), data.begin(), data.end());
@@ -281,10 +280,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> targetShape;
           if (targetShapeInitializer->has_raw_data()) {
             const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+            const size_t raw_data_size = bytes.size();
+            targetShape.resize(raw_data_size / sizeof(int64_t));
+            memcpy(reinterpret_cast<char*>(targetShape.data()), bytes.c_str(), raw_data_size);
           } else {
             const auto& data = targetShapeInitializer->int64_data();
             targetShape.insert(targetShape.end(), data.begin(), data.end());

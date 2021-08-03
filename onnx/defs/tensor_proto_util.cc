@@ -60,10 +60,9 @@ namespace ONNX_NAMESPACE {
         }                                                                  \
       }                                                                    \
     }                                                                      \
-    res.insert(                                                            \
-        res.end(),                                                         \
-        reinterpret_cast<const type*>(bytes),                              \
-        reinterpret_cast<const type*>(bytes + raw_data.size()));           \
+    const size_t raw_data_size = raw_data.size();                          \
+    res.resize(raw_data_size / sizeof(type));                              \
+    memcpy(reinterpret_cast<char*>(res.data()), bytes, raw_data_size);     \
     return res;                                                            \
   }
 
