@@ -281,7 +281,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
       const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
       std::unordered_map<std::string, TensorShapeProto>& generatedShapeData,
-      const std::string model_dir)
+      const std::string model_dir = "")
       : generatedShapeData_{generatedShapeData},
         model_dir_{model_dir} {
     size_t input_idx = 0;

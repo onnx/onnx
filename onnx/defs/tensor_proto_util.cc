@@ -39,7 +39,9 @@ namespace ONNX_NAMESPACE {
     std::vector<type> res;                                                 \
     if (tensor_proto->has_data_location() &&                               \
       tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) { \
-      tensor_proto = LoadExternalTensor(*tensor_proto, model_dir);                  \
+      TensorProto loaded_proto;                                            \
+      LoadExternalTensor(*tensor_proto, loaded_proto, model_dir);          \
+      tensor_proto = &loaded_proto;                                        \
     } else if (!tensor_proto->has_raw_data()) {                            \
       const auto& data = tensor_proto->typed_data_fetch();                 \
       res.insert(res.end(), data.begin(), data.end());                     \

@@ -22,16 +22,14 @@ void LoadProtoFromPath(const std::string proto_path, T& proto) {
   }
 }
 
-TensorProto* LoadExternalTensor(const TensorProto& external_tensor,
-  const std::string model_dir) {
+void LoadExternalTensor(const TensorProto& external_tensor,
+  TensorProto& loaded_tensor, const std::string model_dir) {
   for (const StringStringEntryProto& entry : external_tensor.external_data()) {
     if (entry.has_key() && entry.has_value() && entry.key() == "location") {
-      TensorProto loaded_tensor;
       LoadProtoFromPath(path_join(model_dir, entry.value()), loaded_tensor);
-      return std::move(&loaded_tensor);
+      break;
     }
   }
-  return nullptr;
 }
 
 } // namespace ONNX_NAMESPACE
