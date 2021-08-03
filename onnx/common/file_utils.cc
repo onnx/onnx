@@ -2,11 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/checker.h"
 #include "onnx/common/file_utils.h"
-#include "onnx/common/path.h"
-
-#include <fstream>
 
 namespace ONNX_NAMESPACE {
 

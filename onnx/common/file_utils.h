@@ -4,6 +4,11 @@
 
 #pragma once
 
+#include "onnx/checker.h"
+#include "onnx/common/path.h"
+
+#include <fstream>
+
 namespace ONNX_NAMESPACE {
 
 template <typename T>
