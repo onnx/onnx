@@ -3,6 +3,7 @@
  */
 
 #include "onnx/checker.h"
+#include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 
 #include <fstream>
