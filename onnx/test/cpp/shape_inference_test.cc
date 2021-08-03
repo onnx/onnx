@@ -7,7 +7,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx_pb.h"
-
+#include "onnx/defs/parser.h"
 #include "onnx/shape_inference/implementation.h"
 
 using namespace ONNX_NAMESPACE::shape_inference;
@@ -411,7 +411,9 @@ static void doInferencingTest(bool use_scan_opset8) {
   opset_imports[ONNX_DOMAIN] = 8; // Scan is v8
 
   const std::unordered_map<std::string, TypeProto*> outer_scope_value_types;
-  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports);
+  SymbolTableImpl symbolTable;
+  symbolTable.addFromGraph(subgraph);
+  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, &symbolTable);
   GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
 
   // loop_state_in and scan_in are the two inputs.
@@ -494,7 +496,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   valueTypesByName["loop_state_start"] = &loop_state_in_tensor;
   valueTypesByName["scan_op_in"] = &scan_in_tensor;
 
-  InferenceContextImpl ctx(scan, valueTypesByName, {}, {} , & graphInfCtx);
+  InferenceContextImpl ctx(scan, valueTypesByName, {}, {}, {}, & graphInfCtx);
   if (use_scan_opset8)
     ScanInferenceFunctionOpset8(ctx);
   else
@@ -513,6 +515,105 @@ TEST(GraphInferencerImplTest, Scan8_BasicTest) {
 // Check subgraph inferencing via GraphInferencer using a Scan (from opset 9)
 TEST(GraphInferencerImplTest, Scan9_BasicTest) {
   doInferencingTest(false);
+}
+
+void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+
+  ShapeInferenceOptions options{true, 1, true};
+  ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
+
+  const auto inferredShape = model.graph().output()[0].type().tensor_type().shape();
+  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size());
+
+  for (int i = 0; i < inferredShape.dim_size(); i++) {
+    EXPECT_TRUE(
+        (inferredShape.dim(i).has_dim_value() && expectedShape.dim(i).has_dim_value()) ||
+        (inferredShape.dim(i).has_dim_param() && expectedShape.dim(i).has_dim_param()));
+
+    EXPECT_TRUE(
+        inferredShape.dim(i).has_dim_value() ? inferredShape.dim(i).dim_value() == expectedShape.dim(i).dim_value()
+                                             : inferredShape.dim(i).dim_param() == expectedShape.dim(i).dim_param());
+  }
+
+}
+TEST(ShapeInferenceTest, ReshapeTestWithShapeAsSymInput) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 15],
+  producer_name: "DataPropagationTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for data propagation."
+>
+agraph (float[batch_size, 256, 768, 3] x, float[batch_size, 196608] m) => (float[?, ?, ?] z)
+{
+    y = Shape<start = 0, end = 3>(x)
+    z = Reshape(m, y)
+}
+)ONNX";
+
+  TensorShapeProto expectedShape;
+  expectedShape.mutable_dim()->Add()->set_dim_param("batch_size");
+  expectedShape.mutable_dim()->Add()->set_dim_value(256);
+  expectedShape.mutable_dim()->Add()->set_dim_value(768);
+
+  RunReshapeShapeInfTest(modelStr, expectedShape);
+}
+
+TEST(ShapeInferenceTest, ReshapeTestWithShapeAsInitializer) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 15],
+  producer_name: "DataPropagationTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for data propagation."
+>
+agraph (float[1, 196608] m) => (float[?, ?, ?] z)
+<int64[3] shape = {1, 768, 256}>
+{
+    z = Reshape(m, shape)
+}
+)ONNX";
+
+  TensorShapeProto expectedShape;
+  expectedShape.mutable_dim()->Add()->set_dim_value(1);
+  expectedShape.mutable_dim()->Add()->set_dim_value(768);
+  expectedShape.mutable_dim()->Add()->set_dim_value(256);
+
+  RunReshapeShapeInfTest(modelStr, expectedShape);
+}
+
+TEST(ShapeInferenceTest, ReshapeTestWithShapeAsInitializer1) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 15],
+  producer_name: "DataPropagationTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for data propagation."
+>
+agraph (float[1, 196608] m) => (float[?, ?, ?] z)
+<int64[3] shape = {1, -1, 256}>
+{
+    z = Reshape(m, shape)
+}
+)ONNX";
+
+  TensorShapeProto expectedShape;
+  expectedShape.mutable_dim()->Add()->set_dim_value(1);
+  expectedShape.mutable_dim()->Add()->set_dim_value(768);
+  expectedShape.mutable_dim()->Add()->set_dim_value(256);
+
+  RunReshapeShapeInfTest(modelStr, expectedShape);
 }
 
 } // namespace Test

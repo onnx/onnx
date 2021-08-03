@@ -84,7 +84,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 
 **Source distribution verification**
-* Test the source distribution by doing ``pip install -i https://test.pypi.org/simple/ onnx`` in a new environment.
+* Test the source distribution by doing ``pip install -i https://test.pypi.org/simple/ --no-binary :all: onnx`` in a new environment.
 
 ## Upload to official PyPI
 **NOTE: Once the packages are uploaded to PyPI, you cannot overwrite it on the same PyPI instance. Please make sure everything is good on TestPyPI before uploading to PyPI**
@@ -96,7 +96,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 **Source Distribution**
 * Follow the same process in TestPyPI to produce the source distribution.
 * Use ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`` instead to upload to the official PyPI.
-* Test with ``pip install --index-url https://upload.pypi.org/legacy/ onnx``
+* Test with ``pip install --no-binary :all: onnx``
 
 ## After PyPI Release
 

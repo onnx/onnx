@@ -14,7 +14,7 @@ import sys
 
 import numpy as np  # type: ignore
 
-from onnx import defs, FunctionProto, helper, OperatorStatus
+from onnx import defs, FunctionProto, helper
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.sample.ops import collect_sample_implementations
