@@ -24,7 +24,7 @@ through bilinear interpolation.
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
-    10,
+    16,
     OpSchema()
         .SetDoc(RoiAlign_ver1_doc)
         .Attr(
@@ -60,6 +60,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Default is 'avg'.",
             AttributeProto::STRING,
             std::string("avg"))
+        .Attr(
+            "coordinate_transformation_mode",
+            "Allowed values are 'half_pixel' and 'output_half_pixel'. "
+            "Use the value 'half_pixel' to pixel shift the input coordinates by -0.5 (the recommended behavior). "
+            "Use the value 'output_half_pixel' to omit the pixel shift for the input (use this for a "
+            "backward-compatible behavior).",
+            AttributeProto::STRING,
+            std::string("half_pixel"))
         .Input(
             0,
             "X",
