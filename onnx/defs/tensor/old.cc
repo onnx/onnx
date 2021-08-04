@@ -139,18 +139,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           // Make targetShape (0 -> same as originalShape, -1 -> inferred).
           // The targetShape vector represents the specified shape for output.
-          std::vector<int64_t> targetShape;
-          if (targetShapeInitializer->has_raw_data()) {
-            const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
-          } else {
-            const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.begin(), data.end());
-          }
-
+          std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer);
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targertShape dimension is -1, we do not set the
           // dimension value in this iteration, but we record the Dimension. If
@@ -278,17 +267,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           // Make targetShape (0 -> same as originalShape, -1 -> inferred).
           // The targetShape vector represents the specified shape for output.
-          std::vector<int64_t> targetShape;
-          if (targetShapeInitializer->has_raw_data()) {
-            const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
-          } else {
-            const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.begin(), data.end());
-          }
+          std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer);
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targertShape dimension is -1, we do not set the
@@ -385,6 +364,73 @@ ONNX_OPERATOR_SET_SCHEMA(
               negativeOneDim->set_dim_value(inputProduct / outputProduct);
             }
           }
+        }));
+
+static const char* Shape_ver13_doc = R"DOC(
+Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+)DOC";
+
+// Data propagation function for Shape op
+// Propagates input shape to output shape
+static void ShapeOp13DataPropagator(DataPropagationContext& ctx) {
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  if (ctx.getInputType(0)->tensor_type().has_shape()) {
+    auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+    TensorShapeProto tsp;
+    tsp.CopyFrom(input_shape);
+    ctx.addOutputData(0, std::move(tsp));
+  }
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Shape,
+    13,
+    OpSchema()
+        .SetDoc(Shape_ver13_doc)
+        .Input(0,
+            "data",
+            "An input tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(0,
+            "shape",
+            "Shape of the input tensor",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Input tensor can be of arbitrary type.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int64)"},
+            "Constrain output to int64 tensor.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
+              TensorProto::INT64);
+          auto* output_shape = 
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto* output_length = output_shape->add_dim();
+		
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            output_length->set_dim_value(
+                ctx.getInputType(0)->tensor_type().shape().dim_size());
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          ShapeOp13DataPropagator(ctx);
         }));
 
 static const char* Shape_ver1_doc = R"DOC(

@@ -7,3 +7,4 @@ recursive-include cmake *
 recursive-include tools *
 include VERSION_NUMBER
 include CMakeLists.txt
+include requirements.txt

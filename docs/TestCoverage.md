@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 149/163 (91.41%, 5 generators excluded) common operators.
+Node tests have covered 152/168 (90.48%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1419,6 +1419,61 @@ expect(node, inputs=[x, s, bias, mean, var],
 </details>
 
 
+### Bernoulli
+There are 3 test cases, listed as following:
+<details>
+<summary>bernoulli_with_dtype</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+    dtype=onnx.TensorProto.DOUBLE,
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+y = bernoulli_reference_implementation(x, np.float64)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli_double')
+```
+
+</details>
+<details>
+<summary>bernoulli_with_seed</summary>
+
+```python
+seed = np.float(0)
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+    seed=seed,
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+y = bernoulli_reference_implementation(x, np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli_seed')
+```
+
+</details>
+<details>
+<summary>bernoulli_without_dtype</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Bernoulli',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
+y = bernoulli_reference_implementation(x, np.float)
+expect(node, inputs=[x], outputs=[y], name='test_bernoulli')
+```
+
+</details>
+
+
 ### BitShift
 There are 8 test cases, listed as following:
 <details>
@@ -1596,8 +1651,8 @@ test_cases = [
 ]
 
 for from_type, to_type in test_cases:
-    input_type = None
-    output_type = None
+    input_type_proto = None
+    output_type_proto = None
     if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
         np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
             u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
@@ -1609,8 +1664,8 @@ for from_type, to_type in test_cases:
             assert from_type == 'FLOAT'
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
-            input_type = int(TensorProto.FLOAT)
-            output_type = int(TensorProto.BFLOAT16)
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), input.shape)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), output.shape)
         else:
             assert to_type == 'FLOAT'
             input = np_bfp16.reshape([3, 4])
@@ -1622,8 +1677,8 @@ for from_type, to_type in test_cases:
                 np_fp32_zeros[0::2] = np_bfp16
             np_fp32_from_bfloat = np_fp32_zeros.view(dtype=np.float32)
             output = np_fp32_from_bfloat.reshape([3, 4])
-            input_type = int(TensorProto.BFLOAT16)
-            output_type = int(TensorProto.FLOAT)
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), input.shape)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), output.shape)
     elif 'STRING' != from_type:
         input = np.random.random_sample(shape).astype(
             TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
@@ -1649,14 +1704,101 @@ for from_type, to_type in test_cases:
         outputs=['output'],
         to=getattr(TensorProto, to_type),
     )
-    if input_type and output_type:
+    if input_type_proto and output_type_proto:
         expect(node, inputs=[input], outputs=[output],
                    name='test_cast_' + from_type + '_to_' + to_type,
-                   input_types=[input_type],
-                   output_types=[output_type])
+                   input_type_protos=[input_type_proto],
+                   output_type_protos=[output_type_proto])
     else:
         expect(node, inputs=[input], outputs=[output],
                    name='test_cast_' + from_type + '_to_' + to_type)
+```
+
+</details>
+
+
+### CastLike
+There are 1 test cases, listed as following:
+<details>
+<summary>castlike</summary>
+
+```python
+shape = (3, 4)
+test_cases = [
+    ('FLOAT', 'FLOAT16'),
+    ('FLOAT', 'DOUBLE'),
+    ('FLOAT16', 'FLOAT'),
+    ('FLOAT16', 'DOUBLE'),
+    ('DOUBLE', 'FLOAT'),
+    ('DOUBLE', 'FLOAT16'),
+    ('FLOAT', 'STRING'),
+    ('STRING', 'FLOAT'),
+    ('FLOAT', 'BFLOAT16'),
+    ('BFLOAT16', 'FLOAT'),
+]
+
+for from_type, to_type in test_cases:
+    input_type_proto = None
+    output_type_proto = None
+    if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
+        np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
+            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
+            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.float32)
+        little_endisan = sys.byteorder == 'little'
+        np_uint16_view = np_fp32.view(dtype=np.uint16)
+        np_bfp16 = np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
+        if 'BFLOAT16' == to_type:
+            assert from_type == 'FLOAT'
+            input = np_fp32.reshape([3, 4])
+            output = np_bfp16.reshape([3, 4])
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), input.shape)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), output.shape)
+        else:
+            assert to_type == 'FLOAT'
+            input = np_bfp16.reshape([3, 4])
+            #convert bfloat to FLOAT
+            np_fp32_zeros = np.zeros((len(np_bfp16) * 2,), dtype=np.uint16)
+            if little_endisan:
+                np_fp32_zeros[1::2] = np_bfp16
+            else:
+                np_fp32_zeros[0::2] = np_bfp16
+            np_fp32_from_bfloat = np_fp32_zeros.view(dtype=np.float32)
+            output = np_fp32_from_bfloat.reshape([3, 4])
+            input_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.BFLOAT16), input.shape)
+            output_type_proto = onnx.helper.make_tensor_type_proto(int(TensorProto.FLOAT), output.shape)
+    elif 'STRING' != from_type:
+        input = np.random.random_sample(shape).astype(
+            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+        if ('STRING' == to_type):
+            # Converting input to str, then give it np.object dtype for generating script
+            ss = []
+            for i in input.flatten():
+                s = str(i).encode('utf-8')
+                su = s.decode('utf-8')
+                ss.append(su)
+
+            output = np.array(ss).astype(np.object).reshape([3, 4])
+        else:
+            output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+    else:
+        input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
+            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
+            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
+        output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+    like = output.flatten()[0:1]
+    node = onnx.helper.make_node(
+        'CastLike',
+        inputs=['input', 'like'],
+        outputs=['output'],
+    )
+    if input_type_proto and output_type_proto:
+        expect(node, inputs=[input, like], outputs=[output],
+                   name='test_castlike_' + from_type + '_to_' + to_type,
+                   input_type_protos=[input_type_proto, output_type_proto],
+                   output_type_protos=[output_type_proto])
+    else:
+        expect(node, inputs=[input, like], outputs=[output],
+                   name='test_castlike_' + from_type + '_to_' + to_type)
 ```
 
 </details>
@@ -5679,7 +5821,10 @@ seq_res = [x[:int(i)] for i in x]
 cond = np.array(1).astype(bool)
 expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
        name='test_loop13_seq', opset_imports=[onnx.helper.make_opsetid("", 13)],
-       input_types=[onnx.TensorProto.INT64, onnx.TensorProto.BOOL, onnx.TensorProto.FLOAT])
+       input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, trip_count.shape),
+                          onnx.helper.make_tensor_type_proto(onnx.TensorProto.BOOL, cond.shape),
+                          onnx.helper.make_sequence_type_proto(
+                              onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, []))])
 ```
 
 </details>
@@ -7803,6 +7948,89 @@ values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, dtype=output_type)
 y = y * (on_value - off_value) + off_value
 expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
+```
+
+</details>
+
+
+### OptionalHasElement
+There are 4 test cases, listed as following:
+<details>
+<summary>empty</summary>
+
+```python
+optional = None
+tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.INT32, shape=[])
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_has_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
+       name='test_optional_has_element_empty')
+```
+
+</details>
+<details>
+<summary>get_element_sequence</summary>
+
+```python
+optional = [np.array([1, 2, 3, 4]).astype(np.int32)]
+tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.INT32, shape=[4, ])
+seq_type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+input_type_proto = onnx.helper.make_optional_type_proto(seq_type_proto)
+
+node = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_get_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
+       name='test_optional_get_element_sequence')
+```
+
+</details>
+<details>
+<summary>get_element_tensor</summary>
+
+```python
+optional = np.array([1, 2, 3, 4]).astype(np.float32)
+tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+
+node = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_get_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
+       name='test_optional_get_element')
+```
+
+</details>
+<details>
+<summary>optionalhaselement</summary>
+
+```python
+optional = np.array([1, 2, 3, 4]).astype(np.float32)
+tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_has_element_reference_implementation(optional)
+expect(node, inputs=[optional], outputs=[output],
+       input_type_protos=[input_type_proto],
+       name='test_optional_has_element')
 ```
 
 </details>
@@ -11311,28 +11539,31 @@ There are 1 test cases, listed as following:
 <summary>shape</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Shape',
-    inputs=['x'],
-    outputs=['y'],
-)
-
 x = np.array([
     [1, 2, 3],
     [4, 5, 6],
 ]).astype(np.float32)
-y = np.array([
-    2, 3,
-]).astype(np.int64)
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_shape_example')
+test_shape('_example', x)  # preserve names of original test cases
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.array(x.shape).astype(np.int64)
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_shape')
+test_shape('', x)  # preserve names of original test cases
+
+test_shape('_start_1', x, start=1)
+
+test_shape('_end_1', x, end=1)
+
+test_shape('_start_negative_1', x, start=-1)
+
+test_shape('_end_negative_1', x, end=-1)
+
+test_shape('_start_1_end_negative_1', x, start=1, end=-1)
+
+test_shape('_start_1_end_2', x, start=1, end=2)
+
+test_shape('_clip_start', x, start=-10)
+
+test_shape('_clip_end', x, end=10)
 ```
 
 </details>
@@ -14631,6 +14862,12 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### Multinomial (random generator operator)
+
+
+### Optional (call for test cases)
+
+
+### OptionalGetElement (call for test cases)
 
 
 ### RandomNormal (random generator operator)

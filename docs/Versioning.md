@@ -90,6 +90,13 @@ Changes to the semantics of an operator or function MUST be introduced in a new 
 >    step (1).
 > 4. Register the new operator in the corresponding `operator_sets`
 >    header file.
+> 5. Add a version adapter to `convert.h` so that the version 
+>    converter can upgrade the old version of the operator to the new 
+>    one. This can be a `CompatibleAdapter` in case operators following
+>    the old schema are still valid under the new one (which is usually 
+>    true).
+> 6. A version adapter to downgrade the new operator to the older version
+>    can also be added to `convert.h` but it's not mandatory.
 
 How nodes bind to operator declarations is strictly defined, and are designed to increase model compatibility across ONNX implementations, in the spirit of the conservative clause of the robustness principle.
 
@@ -168,6 +175,8 @@ ONNX version|IR version|Opset version ai.onnx|Opset version ai.onnx.ml|Opset ver
 1.8.0|7|13|2|1
 1.8.1|7|13|2|1
 1.9.0|7|14|2|1
+1.10.0|8|15|2|1
+1.10.1|8|15|2|1
 
 A programmatically accessible version of the above table is available [here](../onnx/helper.py). Limited version number
 information is also maintained in [version.h](../onnx/common/version.h) and [schema.h](../onnx/defs/schema.h).

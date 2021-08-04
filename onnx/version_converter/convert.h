@@ -47,7 +47,10 @@
 #include "onnx/version_converter/adapters/resize_10_11.h"
 #include "onnx/version_converter/adapters/topk_9_10.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
+#include "onnx/version_converter/adapters/scatter_10_11.h"
 #include "onnx/version_converter/adapters/softmax_12_13.h"
+#include "onnx/version_converter/adapters/batch_normalization_13_14.h"
+#include "onnx/version_converter/adapters/upsample_9_10.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -356,10 +359,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(9), OpSetID(10)));
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(9), OpSetID(10)));
-      registerAdapter(make_unique<CompatibleAdapter>("Upsample",
-        OpSetID(9), OpSetID(10)));
       registerAdapter(make_unique<Slice_9_10>());
       registerAdapter(make_unique<TopK_9_10>());
+      registerAdapter(make_unique<Upsample_9_10>());
 
       /******** 10 -> 9 ********/
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
@@ -432,8 +434,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Scan",
         OpSetID(10), OpSetID(11)));
-      registerAdapter(make_unique<CompatibleAdapter>("Scatter",
-        OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Softmax",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<CompatibleAdapter>("Slice",
@@ -447,8 +447,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>("Unsqueeze",
         OpSetID(10), OpSetID(11)));
       registerAdapter(make_unique<Clip_10_11>());
-      registerAdapter(make_unique<Resize_10_11>());
       registerAdapter(make_unique<Pad_10_11>());
+      registerAdapter(make_unique<Resize_10_11>());
+      registerAdapter(make_unique<Scatter_10_11>());
 
       /******** 11 -> 10 ********/
       std::vector<TensorProto_DataType> equal_unallowed_types = {
@@ -617,6 +618,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>(
           "LRN", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<CompatibleAdapter>(
+          "NegativeLogLikelihoodLoss", OpSetID(12), OpSetID(13)));
+      registerAdapter(make_unique<CompatibleAdapter>(
           "MatMul", OpSetID(12), OpSetID(13)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Max", OpSetID(12), OpSetID(13)));
@@ -719,19 +722,38 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
       /******** 13 -> 14 ********/
       registerAdapter(make_unique<CompatibleAdapter>(
+          "Add", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
           "CumSum", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Div", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Identity", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Mul", OpSetID(13), OpSetID(14)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Relu", OpSetID(13), OpSetID(14)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Reshape", OpSetID(13), OpSetID(14)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Sub", OpSetID(13), OpSetID(14)));
       registerAdapter(make_unique<AddLayout>("GRU"));
       registerAdapter(make_unique<AddLayout>("LSTM"));
       registerAdapter(make_unique<AddLayout>("RNN"));
+      registerAdapter(make_unique<BatchNormalization_13_14>());
 
       /******** 14 -> 13 ********/
       registerAdapter(make_unique<RemoveLayout>("GRU"));
       registerAdapter(make_unique<RemoveLayout>("LSTM"));
       registerAdapter(make_unique<RemoveLayout>("RNN"));
+
+      /******** 14 -> 15 ********/
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "BatchNormalization", OpSetID(14), OpSetID(15)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Pow", OpSetID(14), OpSetID(15)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "Shape", OpSetID(14), OpSetID(15)));
     }
 
     ModelProto convert_version(
