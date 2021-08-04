@@ -287,7 +287,7 @@ variable_length_model = update_model_dims.update_inputs_outputs_dims(model, {'in
 ## ONNX Parser
 
 Functions `onnx.parser.parse_model` and `onnx.parser.parse_graph` can be used to create an ONNX model
-or graph from a textual representation as shown below. See [Language Syntax](syntax.md) for more details
+or graph from a textual representation as shown below. See [Language Syntax](Syntax.md) for more details
 about the language syntax.
 
 ```python
