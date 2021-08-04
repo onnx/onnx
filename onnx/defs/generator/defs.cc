@@ -267,17 +267,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           // In this case, we extract the shape values from input tensor
           // and create output tensor of that shape.
           // First, extract target shape value.
-          std::vector<int64_t> targetShape;
-          if (targetShapeInitializer->has_raw_data()) {
-            const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
-          } else {
-            const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.begin(), data.end());
-          }
+          std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer);
+
           // Next, set output shape to the target shape.
           auto final_output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
