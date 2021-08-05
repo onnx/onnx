@@ -1346,7 +1346,7 @@ When `reduction` is set to "add", `output` is calculated as follows:
     for idx in np.ndindex(update_indices):
         output[indices[idx]] += updates[idx]
 
-When `reduction` is set to "multiply", `output` is calculated as follows:
+When `reduction` is set to "mul", `output` is calculated as follows:
 
     output = np.copy(data)
     update_indices = indices.shape[:-1]
@@ -1386,10 +1386,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(ScatterND_ver16_doc)
         .Attr(
             "reduction",
-            "Type of reduction to apply: none (default), add, multiply. "
+            "Type of reduction to apply: none (default), add, mul. "
             "'none': no reduction applied. "
             "'add':  reduction using the addition operation. "
-            "'multiply': reduction using the multiplication operation.",
+            "'mul': reduction using the multiplication operation.",
             AttributeProto::STRING,
             std::string("none"))
         .Input(
@@ -1467,10 +1467,10 @@ When `reduction` is set to "add", the update corresponding to the [i][j] entry i
   output[indices[i][j]][j] += updates[i][j] if axis = 0,
   output[i][indices[i][j]] += updates[i][j] if axis = 1,
 ```
-When `reduction` is set to "multiply", the update corresponding to the [i][j] entry is performed as below:
+When `reduction` is set to "mul", the update corresponding to the [i][j] entry is performed as below:
 ```
-  output[indices[i][j]][j] += updates[i][j] if axis = 0,
-  output[i][indices[i][j]] += updates[i][j] if axis = 1,
+  output[indices[i][j]][j] *= updates[i][j] if axis = 0,
+  output[i][indices[i][j]] *= updates[i][j] if axis = 1,
 ```
 
 This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
@@ -1519,10 +1519,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "reduction",
-            "Type of reduction to apply: none (default), add, multiply. "
+            "Type of reduction to apply: none (default), add, mul. "
             "'none': no reduction applied. "
             "'add':  reduction using the addition operation. "
-            "'multiply': reduction using the multiplication operation.",
+            "'mul': reduction using the multiplication operation.",
             AttributeProto::STRING,
             std::string("none"))
         .Input(

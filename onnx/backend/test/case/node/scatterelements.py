@@ -56,7 +56,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction='none'):  # type:
         for iter, idx_set in enumerate(idx):
             if reduction is 'add':
                 scattered[idx_set] += updates[updates_idx[iter]]
-            elif reduction is 'multiply':
+            elif reduction is 'mul':
                 scattered[idx_set] *= updates[updates_idx[iter]]
     return scattered
 

@@ -25,7 +25,7 @@ def scatter_nd_impl(data, indices, updates, reduction='none'):
         # NOTE: The order of iteration in this loop is not specified.
         if reduction is 'add':
             output[indices[i]] += updates[i]
-        elif reduction is 'multiply':
+        elif reduction is 'mul':
             output[indices[i]] *= updates[i]
         else:
             output[indices[i]] = updates[i]
@@ -91,7 +91,7 @@ class ScatterND(Base):
             'ScatterND',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
-            reduction='multiply',
+            reduction='mul',
         )
         data = np.array(
             [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
@@ -107,6 +107,6 @@ class ScatterND(Base):
         #     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
         #     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         #     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
-        output = scatter_nd_impl(data, indices, updates, reduction='multiply')
+        output = scatter_nd_impl(data, indices, updates, reduction='mul')
         expect(node, inputs=[data, indices, updates], outputs=[output],
                name='test_scatternd_add')
