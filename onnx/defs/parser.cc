@@ -15,7 +15,7 @@
 #include "onnx/defs/parser.h"
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
-#define PARSE(x) CHECK_PARSER_STATUS(Parse(x))
+#define PARSE(...) CHECK_PARSER_STATUS(Parse(__VA_ARGS__))
 #define MATCH(...) CHECK_PARSER_STATUS(Match(__VA_ARGS__))
 
 namespace ONNX_NAMESPACE {
@@ -30,6 +30,15 @@ Status OnnxParser::Parse(IdList& idlist) {
   while (Matches(',')) {
     ParseOptionalIdentifier(id);
     *idlist.Add() = id;
+  }
+  return Status::OK();
+}
+
+Status OnnxParser::Parse(char open, IdList& idlist, char close) {
+  idlist.Clear();
+  if (Matches(open)) {
+    PARSE(idlist);
+    MATCH(close);
   }
   return Status::OK();
 }
@@ -326,7 +335,7 @@ Status OnnxParser::Parse(NodeProto& node) {
     domain += id;
     ParseIdentifier(id);
   }
-  node.set_domain(domain); // TODO
+  node.set_domain(domain);
   node.set_op_type(id);
   PARSE(*node.mutable_attribute());
   MATCH('(');
@@ -363,6 +372,28 @@ Status OnnxParser::Parse(std::string name, GraphProto& graph) {
   PARSE(*graph.mutable_output());
   CHECK_PARSER_STATUS(ParseValueInfo(*graph.mutable_value_info(), *graph.mutable_initializer()));
   return Parse(*graph.mutable_node());
+}
+
+Status OnnxParser::Parse(FunctionProto& fn) {
+  // TODO: opset import
+  std::string domain("");
+  std::string id;
+  ParseIdentifier(id);
+  while (Matches('.')) {
+    if (!domain.empty())
+      domain += ".";
+    domain += id;
+    ParseIdentifier(id);
+  }
+  fn.set_domain(domain);
+  fn.set_name(id);
+
+  PARSE('<', *fn.mutable_attribute(), '>');
+  PARSE('(', *fn.mutable_input(), ')');
+  MATCH('=');
+  MATCH('>', false);
+  PARSE('(', *fn.mutable_output(), ')');
+  return Parse(*fn.mutable_node());
 }
 
 Status OnnxParser::Parse(ModelProto& model) {

@@ -356,6 +356,8 @@ class OnnxParser : public ParserBase {
 
   Status Parse(GraphProto& graph);
 
+  Status Parse(FunctionProto& fn);
+
   Status Parse(ModelProto& model);
 
   template <typename T>
@@ -368,6 +370,8 @@ class OnnxParser : public ParserBase {
   Status Parse(std::string name, GraphProto& graph);
 
   Status Parse(IdList& idlist);
+
+  Status Parse(char open, IdList& idlist, char close); 
 
   Status ParseSingleAttributeValue(AttributeProto& attr);
 
