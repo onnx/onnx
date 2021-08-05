@@ -163,7 +163,8 @@ def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
 
     # Retrieve the tensor's data from raw_data or load external file
     if not tensor.HasField("raw_data"):
-        raise ValueError("raw_data field doesn't exist.")
+        # If the model did not load external data, it's possible there is no raw_data
+        return
 
     # Create file if it doesn't exist
     if not os.path.isfile(external_data_file_path):
