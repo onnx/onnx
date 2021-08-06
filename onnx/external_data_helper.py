@@ -41,8 +41,11 @@ def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text
     tensor: a TensorProto object.
     base_dir: directory that contains the external data.
     """
-    if tensor.HasField("raw_data"):  # already loaded
-        return
+    # If it has already loaded, override the raw_data from external tensor
+    if tensor.HasField("raw_data"):
+        # Empty raw_data for the following load
+        tensor.ClearField("raw_data")
+
     info = ExternalDataInfo(tensor)
     file_location = _sanitize_path(info.location)
     external_data_file_path = os.path.join(base_dir, file_location)
@@ -172,7 +175,8 @@ def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
 
     # Open file for reading and writing at random locations ('r+b')
     with open(external_data_file_path, 'r+b') as data_file:
-        data_file.seek(0, 2)
+        # it will override previous raw_data from external tensor
+        data_file.seek(0, 0)
         if info.offset is not None:
             # Pad file to required offset if needed
             file_size = data_file.tell()

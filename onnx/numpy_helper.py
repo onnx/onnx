@@ -24,6 +24,7 @@ def to_array(tensor, base_dir=""):  # type: (TensorProto, Text) -> np.ndarray[An
 
     Inputs:
         tensor: a TensorProto object.
+        base_dir: if external tensor exists, base_dir can help to find the path to it
     Returns:
         arr: the converted array.
     """
@@ -45,6 +46,7 @@ def to_array(tensor, base_dir=""):  # type: (TensorProto, Text) -> np.ndarray[An
         ss = list(s.decode('utf-8') for s in utf8_strings)
         return np.asarray(ss).astype(np_dtype).reshape(dims)
 
+    # Load raw data from external tensor if it exists
     if uses_external_data(tensor):
         load_external_data_for_tensor(tensor, base_dir)
 
