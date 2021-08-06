@@ -423,7 +423,7 @@ Status OnnxParser::Parse(FunctionProto& fn) {
 
 Status OnnxParser::Parse(OpsetIdList& opsets) {
   std::string strval;
-  int64_t intval;
+  int64_t intval = 0;
   MATCH('[');
   if (!Matches(']')) {
     do {
