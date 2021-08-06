@@ -375,6 +375,31 @@ Status OnnxParser::Parse(std::string name, GraphProto& graph) {
 }
 
 Status OnnxParser::Parse(FunctionProto& fn) {
+  fn.Clear();
+  std::string strval;
+  if (Matches('<')) {
+    do {
+      KeyWordMap::KeyWord keyword = KeyWordMap::KeyWord::NONE;
+      PARSE_TOKEN(keyword);
+      MATCH(':');
+      switch (keyword) {
+        case KeyWordMap::KeyWord::OPSET_IMPORT:
+          PARSE(*fn.mutable_opset_import());
+          break;
+        case KeyWordMap::KeyWord::DOC_STRING:
+          PARSE_TOKEN(strval);
+          fn.set_doc_string(strval);
+          break;
+        case KeyWordMap::KeyWord::DOMAIN_KW:
+          PARSE_TOKEN(strval);
+          fn.set_domain(strval);
+          break;
+        default:
+          return ParseError("Unhandled keyword.");
+      }
+    } while (Matches(','));
+    MATCH('>');
+  }
   // TODO: opset import
   std::string domain("");
   std::string id;
@@ -396,7 +421,26 @@ Status OnnxParser::Parse(FunctionProto& fn) {
   return Parse(*fn.mutable_node());
 }
 
+Status OnnxParser::Parse(OpsetIdList& opsets) {
+  std::string strval;
+  int64_t intval;
+  MATCH('[');
+  if (!Matches(']')) {
+    do {
+      auto* import = opsets.Add();
+      PARSE_TOKEN(strval);
+      import->set_domain(strval);
+      MATCH(':');
+      PARSE_TOKEN(intval);
+      import->set_version(intval);
+    } while (Matches(','));
+    MATCH(']');
+  }
+  return Status::OK();
+}
+
 Status OnnxParser::Parse(ModelProto& model) {
+  model.Clear();
   std::string strval;
   int64_t intval;
   if (Matches('<')) {
@@ -409,22 +453,9 @@ Status OnnxParser::Parse(ModelProto& model) {
           PARSE_TOKEN(intval);
           model.set_ir_version(intval);
           break;
-        case KeyWordMap::KeyWord::OPSET_IMPORT: {
-          auto& imports = *model.mutable_opset_import();
-          MATCH('[');
-          if (!Matches(']')) {
-            do {
-              auto* import = imports.Add();
-              PARSE_TOKEN(strval);
-              import->set_domain(strval);
-              MATCH(':');
-              PARSE_TOKEN(intval);
-              import->set_version(intval);
-            } while (Matches(','));
-            MATCH(']');
-          }
+        case KeyWordMap::KeyWord::OPSET_IMPORT:
+          PARSE(*model.mutable_opset_import());
           break;
-        }
         case KeyWordMap::KeyWord::PRODUCER_NAME:
           PARSE_TOKEN(strval);
           model.set_producer_name(strval);
@@ -471,7 +502,7 @@ Status OnnxParser::Parse(ModelProto& model) {
 
   auto* functions = model.mutable_functions();
   while (!EndOfInput()) {
-    PARSE (*functions->Add());
+    PARSE(*functions->Add());
   }
   return Status::OK();
 }

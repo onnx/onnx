@@ -236,10 +236,15 @@ agraph (float[N] y, float[N] z) => (float[N] w)
 
 TEST(ParserTest, FunctionTest) {
   const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
 f (y, z) => (w)
 {
-    x = foo(y, z)
-    w = bar(x, y)
+    x = Add(y, z)
+    w = Mul(x, y)
 }
 )ONNX";
 
@@ -251,6 +256,7 @@ f (y, z) => (w)
   EXPECT_EQ(fp.output_size(), 1);
   EXPECT_EQ(fp.node_size(), 2);
   EXPECT_EQ(fp.attribute_size(), 0);
+  EXPECT_EQ(fp.opset_import_size(), 1);
 }
 
 TEST(ParserTest, InitializerTest) {
@@ -366,14 +372,22 @@ agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
   C = local.foo (X, W, B)
 }
 
-local.foo (x, w, b) => (c) {
+<
+  opset_import: [ "" : 10 ],
+  domain: "local",
+  doc_string: "A function test case."
+>
+foo (x, w, b) => (c) {
   T = MatMul(x, w)
   S = Add(T, b)
   c = Softmax(S)
 }
 )ONNX";
 
-  CheckModel(code);
+  ModelProto model;
+  Parse(model, code);
+
+  EXPECT_EQ(model.functions_size(), 1);
 }
 
 } // namespace Test

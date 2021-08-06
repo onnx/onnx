@@ -32,6 +32,8 @@ using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
 
 using TensorList = google::protobuf::RepeatedPtrField<TensorProto>;
 
+using OpsetIdList = google::protobuf::RepeatedPtrField<OperatorSetIdProto>;
+
 #define CHECK_PARSER_STATUS(status) \
   {                                 \
     auto local_status_ = status;    \
@@ -384,6 +386,8 @@ class OnnxParser : public ParserBase {
   Status ParseValueInfo(ValueInfoList& vilist, TensorList& initializers); 
 
   Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
+
+  Status Parse(OpsetIdList& opsets);
 };
 
 } // namespace ONNX_NAMESPACE
