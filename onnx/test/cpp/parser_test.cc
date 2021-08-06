@@ -355,5 +355,26 @@ iftest (bool b, float[128] X, float[128] Y) => (float[128] Z)
   CheckModel(code);
 }
 
+TEST(ParserTest, FunModelTest) {
+  const char* code = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 10, "local" : 1 ]
+>
+agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+{
+  C = local.foo (X, W, B)
+}
+
+local.foo (x, w, b) => (c) {
+  T = MatMul(x, w)
+  S = Add(T, b)
+  c = Softmax(S)
+}
+)ONNX";
+
+  CheckModel(code);
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE

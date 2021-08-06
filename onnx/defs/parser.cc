@@ -467,7 +467,13 @@ Status OnnxParser::Parse(ModelProto& model) {
     } while (Matches(','));
     MATCH('>');
   }
-  return Parse(*model.mutable_graph());
+  PARSE(*model.mutable_graph());
+
+  auto* functions = model.mutable_functions();
+  while (!EndOfInput()) {
+    PARSE (*functions->Add());
+  }
+  return Status::OK();
 }
 
 } // namespace ONNX_NAMESPACE
