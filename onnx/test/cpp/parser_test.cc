@@ -384,10 +384,6 @@ foo (x, w, b) => (c) {
 }
 )ONNX";
 
-  // ModelProto model;
-  // Parse(model, code);
-
-  // EXPECT_EQ(model.functions_size(), 1);
   CheckModel(code);
 }
 
