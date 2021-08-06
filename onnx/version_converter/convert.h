@@ -51,6 +51,7 @@
 #include "onnx/version_converter/adapters/softmax_12_13.h"
 #include "onnx/version_converter/adapters/batch_normalization_13_14.h"
 #include "onnx/version_converter/adapters/upsample_9_10.h"
+#include "onnx/version_converter/adapters/roialign_15_16.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -754,6 +755,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
           "Pow", OpSetID(14), OpSetID(15)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Shape", OpSetID(14), OpSetID(15)));
+
+      /******** 15 -> 16 ********/
+      registerAdapter(make_unique<RoiAlign_15_16>());
     }
 
     ModelProto convert_version(
