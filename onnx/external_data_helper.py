@@ -175,8 +175,7 @@ def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
 
     # Open file for reading and writing at random locations ('r+b')
     with open(external_data_file_path, 'r+b') as data_file:
-        # it will override previous raw_data from external tensor
-        data_file.seek(0, 0)
+        data_file.seek(0, 2)
         if info.offset is not None:
             # Pad file to required offset if needed
             file_size = data_file.tell()
