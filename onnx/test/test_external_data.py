@@ -16,7 +16,7 @@ from onnx import ModelProto, TensorProto
 from onnx.external_data_helper import set_external_data
 from onnx.external_data_helper import convert_model_to_external_data
 from onnx.external_data_helper import convert_model_from_external_data
-from onnx.external_data_helper import load_external_data_for_model
+from onnx.external_data_helper import load_external_data_for_model, load_external_data_for_tensor
 from onnx.numpy_helper import to_array, from_array
 from typing import Any, Tuple, Text, List
 import pytest  # type: ignore
@@ -408,6 +408,19 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         # Specify self.temp_dir to load external tensor
         tensor_data = to_array(model.graph.initializer[0], self.temp_dir)
         self.assertTrue(np.allclose(tensor_data, data_w))
+
+    def test_save_model_with_existing_raw_data_should_override(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+        original_raw_data = self.model.graph.initializer[0].raw_data
+        onnx.save_model(self.model, model_file_path, save_as_external_data=True, size_threshold=0)
+        self.assertTrue(Path.isfile(model_file_path))
+
+        model = onnx.load_model(model_file_path, load_external_data=False)
+        initializer_tensor = model.graph.initializer[0]
+        initializer_tensor.raw_data = b"dummpy_raw_data"
+        # If raw_data and external tensor exist at the same time, override existing raw_data
+        load_external_data_for_tensor(initializer_tensor, self.temp_dir)
+        self.assertEqual(initializer_tensor.raw_data, original_raw_data)
 
 
 if __name__ == '__main__':

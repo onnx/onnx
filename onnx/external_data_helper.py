@@ -44,6 +44,8 @@ def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text
     # If it has already loaded, override the raw_data from external tensor
     if tensor.HasField("raw_data"):
         # Empty raw_data for the following load
+        print("Warning: raw_data and external data exist simultaneously."
+              "External data will override raw_data")
         tensor.ClearField("raw_data")
 
     info = ExternalDataInfo(tensor)
