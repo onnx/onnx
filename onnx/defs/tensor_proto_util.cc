@@ -68,10 +68,14 @@ namespace ONNX_NAMESPACE {
         }                                                                  \
       }                                                                    \
     }                                                                      \
-    res.insert(                                                            \
-        res.end(),                                                         \
-        reinterpret_cast<const type*>(bytes),                              \
-        reinterpret_cast<const type*>(bytes + raw_data.size()));           \
+    /* raw_data.c_str()/bytes is a byte array and may not be properly  */  \
+    /* aligned for the underlying type */                                  \
+    /* We need to copy the raw_data.c_str()/bytes as byte instead of  */   \
+    /* copying as the underlying type, otherwise we may hit memory   */    \
+    /* misalignment issues on certain platforms, such as arm32-v7a */      \
+    const size_t raw_data_size = raw_data.size();                          \
+    res.resize(raw_data_size / sizeof(type));                              \
+    memcpy(reinterpret_cast<char*>(res.data()), bytes, raw_data_size);     \
     return res;                                                            \
   }
 

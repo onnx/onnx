@@ -72,21 +72,28 @@ You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-
 
 ## Build ONNX from Source
 Before building from source uninstall any existing versions of onnx `pip uninstall onnx`.  
-If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. Specifically on Windows, the version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also let's you control the verison of protobuf. The tested and recommended version is 3.16.0.
 
-Note for Windows : The instructions in this README assume you are using Visual Studio. It is recommended that you run all the commands from a shell started from "Developer Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
+Generally spreaking, you need to install [protobuf C/C++ libraires and tools](https://github.com/protocolbuffers/protobuf) before proceeding forward. Then depending on how you installed protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF".  For example, you may need to run the following command:
+
+Linux:
+```bash
+export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 ```
-git clone https://github.com/onnx/onnx.git
-cd onnx
-git submodule update --init --recursive
-# prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
+Windows:
+```bat
+set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 ```
 
-### Building Protobuf from source
-* **Windows**
-```
+The ON/OFF depends on what kind of protobuf library you have. Shared libraries are files ending with \*.dll/\*.so/\*.dylib. Static libraries are files ending with \*.a/\*.lib. This option depends on how you get your protobuf library and how it was built. And it is default OFF. You don't need to run the commands above if you'd prefer to use a static protobuf library.
+
+
+### Windows
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the verison of protobuf. The tested and recommended version is 3.16.0.
+
+The instructions in this README assume you are using Visual Studio.  It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
+
+You can get protobuf by running the following commands:
+```bat
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
 git checkout v3.16.0
@@ -95,8 +102,51 @@ cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobug_install
 msbuild protobuf.sln /m /p:Configuration=Release
 msbuild INSTALL.vcxproj /p:Configuration=Release
 ```
+Then it will be built as a static library and installed to <protobug_install_dir>. Please add the bin directory(which contains protoc.exe) to your PATH.
 
-* **Linux**
+```bat
+set PATH=<protobug_install_dir>/bin;%PATH%
+```
+
+Please note: if your protobug_install_dir contains spaces, **do not** add quotation marks around it. 
+
+Alternative: if you don't want to change your PATH, you can set ONNX_PROTOC_EXECUTABLE instead. 
+```bat
+set CMAKE_ARGS=-DONNX_PROTOC_EXECUTABLE=<full_path_to_protoc.exe>
+```
+
+Then you can build ONNX as:
+```
+git clone https://github.com/onnx/onnx.git
+cd onnx
+git submodule update --init --recursive
+# prefer lite proto
+set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+pip install -e .
+```
+### Linux
+
+First, you need to install protobuf. 
+
+Ubuntu users: the quickest way to install protobuf is to run
+
+```bash
+apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler
+```
+
+Then you can build ONNX as:
+```
+export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+git clone --recursive https://github.com/onnx/onnx.git
+cd onnx
+# prefer lite proto
+set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+pip install -e .
+```
+
+Otherwise, you may need to install it from source. You can use the following commands to do it:
+
+Debian/Ubuntu:
 ```
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
@@ -106,6 +156,32 @@ mkdir build_source && cd build_source
 cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 make install
+```
+
+CentOS/RHEL/Fedora:
+```
+git clone https://github.com/protocolbuffers/protobuf.git
+cd protobuf
+git checkout v3.16.0
+git submodule update --init --recursive
+mkdir build_source && cd build_source
+cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+make install
+```
+
+Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
+
+Once build is successful, update PATH to include protobuf paths.
+
+Then you can build ONNX as:
+```
+git clone https://github.com/onnx/onnx.git
+cd onnx
+git submodule update --init --recursive
+# prefer lite proto
+set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+pip install -e .
 ```
 
 * **Mac**
@@ -122,18 +198,17 @@ make -j${NUM_CORES}
 make install
 ```
 
-Once build is successful, update PATH to include protobuf paths. Example on Windows:  
-set PATH=<protobuf_install_dir>\bin;<protobuf_install_dir>\include;<protobuf_install_dir>\libs;%PATH%
+Once build is successful, update PATH to include protobuf paths.
 
-
-### Build ONNX on ARM 64
-If you are building ONNX on an ARM 64 device, please make sure to install the dependencies appropriately.
-
+Then you can build ONNX as:
 ```
-pip install cython protobuf numpy
-sudo apt-get install libprotobuf-dev protobuf-compiler
-pip install onnx
+git clone --recursive https://github.com/onnx/onnx.git
+cd onnx
+# prefer lite proto
+set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+pip install -e .
 ```
+
 
 ## Verify Installation
 After installation, run
