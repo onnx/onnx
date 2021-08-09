@@ -342,49 +342,33 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertFalse(attribute_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
+    def test_save_model_does_not_load_external_tensor(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+        onnx.save_model(self.model,
+                        model_file_path,
+                        save_as_external_data=True,
+                        location=None,
+                        size_threshold=0,
+                        convert_attribute=False)
+        # Save without load_external_data
+        model = onnx.load_model(model_file_path, load_external_data=False)
+        onnx.save_model(self.model,
+                        model_file_path,
+                        save_as_external_data=True,
+                        location=None,
+                        size_threshold=0,
+                        convert_attribute=False)
+        # Load the saved model again; Only works if the saved path is under the same directory
+        model = onnx.load_model(model_file_path)
 
-# The following test will fail in some platforms
-# because >2GB proto python object is not allowed
-# Disable it for now and it should be fixed after 1.8 Release
-"""
-class TestLarge2GBExternalData(TestLoadExternalDataBase):
+        initializer_tensor = model.graph.initializer[0]
+        self.assertTrue(initializer_tensor.HasField("data_location"))
+        self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
 
-    def setUp(self):  # type: () -> None
-        # Set numbers of constant to avoid memory limit exceeded
-        self.constant_num = 100
-        self.constant_size = 6000000
-        self.temp_dir = tempfile.mkdtemp()  # type: Text
-        self.initializer_value = np.arange(self.constant_size).astype(np.float32)
-        self.attribute_value = np.arange(self.constant_size).astype(np.float32)
-        self.model_filename, self.model = self.create_test_model_both()
+        attribute_tensor = model.graph.node[0].attribute[0].t
+        self.assertFalse(attribute_tensor.HasField("data_location"))
+        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
-    def create_test_model_both(self):  # type: () -> Tuple[Text, ModelProto]
-        constant_array = []
-        for i in range(self.constant_num):
-            constant_node = onnx.helper.make_node(
-                'Constant',
-                inputs=[],
-                outputs=['values' + str(i)],
-                value=self.create_external_data_tensor(self.attribute_value, "attribute_value" + str(i))
-            )
-            constant_array.append(constant_node)
-
-        initializers = [self.create_external_data_tensor(self.initializer_value, "input_value")]
-        inputs = [helper.make_tensor_value_info("input_value",
-                                                onnx.TensorProto.FLOAT,
-                                                self.initializer_value.shape)]
-
-        graph = helper.make_graph(constant_array, "test_graph",
-                                  inputs=inputs, outputs=[],
-                                  initializer=initializers)
-
-        model = helper.make_model(graph)
-
-        model_filename = os.path.join(self.temp_dir, "model.onnx")
-        with open(model_filename, "wb") as model_file:
-            model_file.write(model.SerializeToString())
-        return model_filename, model
-"""
 
 if __name__ == '__main__':
     unittest.main()

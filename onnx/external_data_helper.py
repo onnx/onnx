@@ -166,8 +166,7 @@ def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
 
     # Retrieve the tensor's data from raw_data or load external file
     if not tensor.HasField("raw_data"):
-        # If the model did not load external data, it's possible there is no raw_data
-        return
+        raise ValueError("raw_data field doesn't exist.")
 
     # Create file if it doesn't exist
     if not os.path.isfile(external_data_file_path):
@@ -261,9 +260,18 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
     @return
     The modified model object.
     """
+    any_not_save_external_tensor = False
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
-            save_external_data(tensor, filepath)
-            tensor.ClearField(str('raw_data'))
+            if tensor.HasField("raw_data"):
+                save_external_data(tensor, filepath)
+                tensor.ClearField(str('raw_data'))
+            else:
+                # If the model did not load external data, it's possible there is no raw_data
+                any_not_save_external_tensor = True
+
+    if any_not_save_external_tensor:
+        print("Warning: Please note that some external tensors were not saved ",
+              "because they were not loaded before. ")
 
     return model
