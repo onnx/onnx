@@ -369,6 +369,46 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertFalse(attribute_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
+    def test_to_array_with_external_data(self):  # type: () -> None
+        x = data_w = np.ones((3, 3), np.float32)
+        w = helper.make_tensor(name='w', data_type=TensorProto.FLOAT, dims=data_w.shape, vals=data_w.flatten().astype(np.float32).tobytes(), raw=True)
+        V = helper.make_tensor_value_info('V', TensorProto.FLOAT, [3, 3])
+        Z = helper.make_tensor_value_info('Z', TensorProto.FLOAT, [3, 3])
+
+        X = helper.make_node(
+            'Constant',
+            inputs=[],
+            outputs=['X'],
+            value=onnx.helper.make_tensor(
+                name='const_x',
+                data_type=onnx.TensorProto.FLOAT,
+                dims=x.shape,
+                vals=x.flatten().astype(float),
+            ),
+        )
+        node_cf = helper.make_node(
+            'Gemm',
+            ['w', 'X'],
+            ['Z'],
+            name='gemm'
+        )
+        graph_def = helper.make_graph(
+            [X, node_cf],
+            'test-model',
+            [V],
+            [Z],
+            initializer=[w],
+        )
+        model_def = helper.make_model(graph_def, producer_name='onnx-example')
+
+        path = os.path.join(self.temp_dir, 'temp.onnx')
+        onnx.save_model(model_def, path, save_as_external_data=True, all_tensors_to_one_file=False, size_threshold=0)
+        # raw_data of external tensor is not loaded
+        model = onnx.load(path, load_external_data=False)
+        # Specify self.temp_dir to load external tensor
+        tensor_data = to_array(model.graph.initializer[0], self.temp_dir)
+        self.assertTrue(np.allclose(tensor_data, data_w))
+
 
 if __name__ == '__main__':
     unittest.main()

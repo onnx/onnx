@@ -271,7 +271,7 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
                 any_not_save_external_tensor = True
 
     if any_not_save_external_tensor:
-        print("Warning: Please note that some external tensors were not saved ",
+        print("Warning: Please note that some external tensors were not saved",
               "because they were not loaded before. ")
 
     return model
