@@ -54,8 +54,8 @@ ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 ONNX_DISABLE_EXCEPTIONS = bool(os.getenv('ONNX_DISABLE_EXCEPTIONS') == '1')
 
-DEBUG = bool(os.getenv('DEBUG'))
-COVERAGE = bool(os.getenv('COVERAGE'))
+DEBUG = bool(os.getenv('DEBUG', '1') == '1')
+COVERAGE = bool(os.getenv('COVERAGE', '1') == '1')
 
 ################################################################################
 # Version

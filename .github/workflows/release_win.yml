@@ -90,7 +90,6 @@ jobs:
         cd ../../../onnx
         dir
         echo "Install ONNX"
-        $Env:USE_MSVC_STATIC_RUNTIME=0
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
