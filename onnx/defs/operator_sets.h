@@ -1017,6 +1017,9 @@ class OpSet_Onnx_ver16 {
 };
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
+  RegisterOpSetSchema<OpSet_Onnx_ver2>();
+  RegisterOpSetSchema<OpSet_Onnx_ver3>();
+  RegisterOpSetSchema<OpSet_Onnx_ver4>();
   RegisterOpSetSchema<OpSet_Onnx_ver5>();
   RegisterOpSetSchema<OpSet_Onnx_ver6>();
   RegisterOpSetSchema<OpSet_Onnx_ver7>();

@@ -19651,9 +19651,8 @@ This version of the operator has been available since version 15 of the default 
   Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
   Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
   the `output` will have shape (N, C, H_out, W_out).
-  
-  For each output location `output[n, :, h, w]`, the size-2 vector `grid[n, h, w]` specifies `input` pixel locations `x` and `y`,
-  which are used to interpolate the output value `output[n, :, h, w]`.
+  For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
+  which are used to interpolate the output value `output[N, C, H_out, W_out]`.
   
   The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
   See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
@@ -19670,7 +19669,7 @@ This version of the operator has been available since version 15 of the default 
 <dt><tt>mode</tt> : string (default is bilinear)</dt>
 <dd>Three interpolation modes: bilinear (default), nearest and bicubic.</dd>
 <dt><tt>padding_mode</tt> : string (default is zeros)</dt>
-<dd>Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. zeros: use 0 for out-of-bound grid locations, border: use border values for out-of-bound grid locations, reflection: use values at locations reflected by the border for out-of-bound grid locations.</dd>
+<dd>Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. zeros: use 0 for out-of-bound grid locations, border: use border values for out-of-bound grid locations, reflection: use values at locations reflected by the border for out-of-bound grid locations. If index 0 represents the margin pixel, the reflected value at index -1 will be the same as the value at index 1. For location far away from the border, it will keep being reflected until becoming in bound. If pixel location x = -3.5 reflects by border -1 and becomes x' = 1.5, then reflects by border 1 and becomes x'' = 0.5.</dd>
 </dl>
 
 #### Inputs
