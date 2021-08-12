@@ -49,14 +49,14 @@ def scatter_elements(data, indices, updates, axis=0, reduction='none'):  # type:
     updates_idx.insert(axis, np.repeat(np.arange(indices.shape[axis]), np.prod(idx_xsection_shape)))
 
     scattered = np.copy(data)
-    if reduction is 'none':
+    if reduction == 'none':
         scattered[tuple(idx)] = updates[tuple(updates_idx)]
     else:
         idx, updates_idx = make_indices_for_duplicate(idx), make_indices_for_duplicate(updates_idx)
         for iter, idx_set in enumerate(idx):
-            if reduction is 'add':
+            if reduction == 'add':
                 scattered[idx_set] += updates[updates_idx[iter]]
-            elif reduction is 'mul':
+            elif reduction == 'mul':
                 scattered[idx_set] *= updates[updates_idx[iter]]
     return scattered
 

@@ -23,9 +23,9 @@ def scatter_nd_impl(data, indices, updates, reduction='none'):
     output = np.copy(data)
     for i in np.ndindex(indices.shape[:-1]):
         # NOTE: The order of iteration in this loop is not specified.
-        if reduction is 'add':
+        if reduction == 'add':
             output[indices[i]] += updates[i]
-        elif reduction is 'mul':
+        elif reduction == 'mul':
             output[indices[i]] *= updates[i]
         else:
             output[indices[i]] = updates[i]
@@ -109,4 +109,4 @@ class ScatterND(Base):
         #     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
         output = scatter_nd_impl(data, indices, updates, reduction='mul')
         expect(node, inputs=[data, indices, updates], outputs=[output],
-               name='test_scatternd_add')
+               name='test_scatternd_multiply')
