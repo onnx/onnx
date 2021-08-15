@@ -1322,6 +1322,28 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
 
+    def test_batch_norm_rank1(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (128,)),   # 1-dimensional permitted
+             ('scale', TensorProto.FLOAT, (1,)),
+             ('b', TensorProto.FLOAT, (1,)),
+             ('mean', TensorProto.FLOAT, (1,)),
+             ('var', TensorProto.FLOAT, (1,))],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (128,))])
+
+    def test_batch_norm_invalid(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (128,)),
+             ('scale', TensorProto.FLOAT, (1, 2)),   # invalid rank
+             ('b', TensorProto.FLOAT, (1,)),
+             ('mean', TensorProto.FLOAT, (1,)),
+             ('var', TensorProto.FLOAT, (1,))],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'])],
+            [])
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     def test_split_negative_axis(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 4))],
