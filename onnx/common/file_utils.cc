@@ -3,9 +3,6 @@
  */
 
 #include "onnx/common/file_utils.h"
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 namespace ONNX_NAMESPACE {
 
@@ -23,17 +20,13 @@ void LoadExternalTensor(const TensorProto& external_tensor, TensorProto& loaded_
       length = std::stoi(entry.value());
     }
   }
-  std::fstream tensor_stream(tensor_path, std::ios::in | std::ios::binary);
+  std::ifstream tensor_stream(tensor_path, std::ios::binary);
   if (!tensor_stream.good()) {
     fail_check("Unable to open external tensor: ", tensor_path, ". Please check if it is a valid file. ");
   }
   tensor_stream.seekg(offset, std::ios::beg);
   if (length > 0) {
-#ifdef _WIN32
-    std::vector<BYTE> buffer(length);
-#else  // POSIX
     std::vector<char> buffer(length);
-#endif
     tensor_stream.read(buffer.data(), length);
     std::string data(buffer.begin(), buffer.end());
     loaded_tensor.set_raw_data(data);
