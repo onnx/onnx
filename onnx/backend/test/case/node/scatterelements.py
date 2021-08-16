@@ -30,7 +30,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction='none'):  # type:
             unpacked = unpacked, packed[i]
         return unpacked
 
-    def make_indices_for_duplicate(idx):
+    def make_indices_for_duplicate(idx):  # type: ignore
         final_idx = list()
         for i in range(len(idx[0])):
             final_idx.append(tuple(idx_element[i] for idx_element in idx))

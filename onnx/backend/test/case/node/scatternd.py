@@ -12,8 +12,7 @@ from ..base import Base
 from . import expect
 
 
-def scatter_nd_impl(data, indices, updates, reduction='none'):
-    # type: (np.ndarray, np.ndarray, np.ndarray, str) -> np.ndarray
+def scatter_nd_impl(data, indices, updates, reduction='none'):  # type: ignore
 
     # Check tensor shapes
     assert indices.shape[-1] <= len(data.shape)
