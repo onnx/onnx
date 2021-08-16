@@ -11,7 +11,7 @@ import os
 import os.path as Path
 
 import onnx
-from onnx import checker, helper
+from onnx import checker, helper, parser, shape_inference
 from onnx import ModelProto, TensorProto
 from onnx.external_data_helper import set_external_data
 from onnx.external_data_helper import convert_model_to_external_data
@@ -421,6 +421,42 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         # If raw_data and external tensor exist at the same time, override existing raw_data
         load_external_data_for_tensor(initializer_tensor, self.temp_dir)
         self.assertEqual(initializer_tensor.raw_data, original_raw_data)
+
+    def test_reshape_inference_with_external_data(self):  # type: () -> None
+        reshape_shape = (2, 12)
+        X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [2, 3, 4])
+        C = helper.make_tensor_value_info('C', TensorProto.INT64, reshape_shape)
+        shape_data = np.array(reshape_shape, np.int64)
+        shape_init = helper.make_tensor(name='Shape', data_type=TensorProto.INT64,
+            dims=shape_data.shape, vals=shape_data.tobytes(), raw=True)
+
+        reshape = onnx.helper.make_node(
+            'Reshape',
+            inputs=['X', 'Shape'],
+            outputs=['Y'],
+        )
+        cast = onnx.helper.make_node(
+            'Cast',
+            inputs=['Y'],
+            outputs=['C'],
+            to=getattr(TensorProto, "INT64")
+        )
+        graph_def = helper.make_graph(
+            [reshape, cast],
+            'test-model',
+            [X],
+            [C],
+            initializer=[shape_init],
+        )
+        model = helper.make_model(graph_def, producer_name='onnx-example')
+
+        model_file_path = self.get_temp_model_filename()
+        onnx.save_model(model, model_file_path, save_as_external_data=True, all_tensors_to_one_file=False, size_threshold=0)
+        shape_inference.infer_shapes_path(model_file_path)
+        inferred_model = onnx.load(model_file_path)
+        inferred_shape = (inferred_model.graph.value_info[0].type.tensor_type.shape.dim[0].dim_value,
+            inferred_model.graph.value_info[0].type.tensor_type.shape.dim[1].dim_value)
+        self.assertEqual(inferred_shape, reshape_shape)
 
 
 if __name__ == '__main__':
