@@ -865,7 +865,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
             [TensorProto.FLOAT],
             attrs={'reduction': 'mul'}
-        ) 
+        )
 
     def test_Scan(self):  # type: () -> None
         sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
