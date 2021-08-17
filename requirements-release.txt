@@ -6,5 +6,4 @@ ipython == 7.16.1
 wheel
 setuptools
 twine
-hashlib
 wget

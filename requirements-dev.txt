@@ -10,5 +10,4 @@ jupyter
 pyzmq
 setuptools
 twine
-hashlib
 wget
