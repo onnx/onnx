@@ -10,3 +10,8 @@ jupyter
 pyzmq
 setuptools
 twine
+hashlib
+json
+os
+wget
+urllib
