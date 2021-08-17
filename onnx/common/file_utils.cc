@@ -35,7 +35,7 @@ void LoadExternalTensor(const TensorProto& external_tensor, std::string& loaded_
   tensor_stream.seekg(offset, std::ios::beg);
   size_t total_bytes_read = 0;
 
-  while (total_bytes_read < length) {
+  while (total_bytes_read < (size_t)length) {
     // Reads at most 1GB each time to prevent memory issue
     const size_t max_bytes_to_read = 1 << 30;
     const size_t remain_read = length - total_bytes_read;
