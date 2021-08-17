@@ -9,8 +9,8 @@ namespace ONNX_NAMESPACE {
 void LoadExternalTensor(const TensorProto& external_tensor, std::string& loaded_raw_data,
   const std::string model_dir) {
   std::string tensor_path;
-  size_t offset = 0;
-  size_t length = 0;
+  int offset = 0;
+  int length = 0;
   for (const StringStringEntryProto& entry : external_tensor.external_data()) {
     if (entry.has_value() && entry.key() == "location") {
       tensor_path = path_join(model_dir, entry.value());
