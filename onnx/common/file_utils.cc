@@ -27,10 +27,8 @@ void LoadExternalTensor(const TensorProto& external_tensor, TensorProto& loaded_
   tensor_stream.seekg(offset, std::ios::beg);
   if (length > 0) {
     std::vector<char> buffer(length);
-    buffer.reserve(length);
     tensor_stream.read(buffer.data(), length);
-    std::string data(buffer.begin(), buffer.end());
-    loaded_tensor.set_raw_data(data.data(), data.size() * sizeof(char));
+    loaded_tensor.set_raw_data(buffer.data(), buffer.size() * sizeof(char));
   } else if (length < 0) {
     tensor_stream.close();
     fail_check("The loaded length for a external tensor should not be negative. ");
