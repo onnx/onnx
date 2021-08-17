@@ -24,6 +24,7 @@ void LoadProtoFromPath(const std::string proto_path, T& proto) {
   }
 }
 
-std::string LoadExternalTensor(const TensorProto& external_tensor, const std::string model_dir);
+void LoadExternalTensor(const TensorProto& external_tensor, std::string& loaded_raw_data,
+  const std::string model_dir);
 
 } // namespace ONNX_NAMESPACE

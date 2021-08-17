@@ -40,7 +40,7 @@ namespace ONNX_NAMESPACE {
     std::string raw_data;                                                     \
     if (!tensor_proto->has_raw_data() && tensor_proto->has_data_location() && \
       tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) {   \
-      raw_data = LoadExternalTensor(*tensor_proto, model_dir);                \
+      LoadExternalTensor(*tensor_proto, raw_data, model_dir);                 \
     } else if (!tensor_proto->has_raw_data()) {                               \
       const auto& data = tensor_proto->typed_data_fetch();                    \
       res.insert(res.end(), data.begin(), data.end());                        \

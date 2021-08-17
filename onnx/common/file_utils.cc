@@ -6,7 +6,8 @@
 
 namespace ONNX_NAMESPACE {
 
-std::string LoadExternalTensor(const TensorProto& external_tensor, const std::string model_dir) {
+void LoadExternalTensor(const TensorProto& external_tensor, std::string& loaded_raw_data,
+  const std::string model_dir) {
   std::string tensor_path;
   int offset = 0;
   int length = 0;
@@ -30,14 +31,12 @@ std::string LoadExternalTensor(const TensorProto& external_tensor, const std::st
     fail_check("Unable to open external tensor: ", tensor_path, ". Please check if it is a valid file. ");
   }
 
-  int remain_length = tensor_stream.tellg();
-  std::vector<char> buffer(remain_length);
-  tensor_stream.seekg(0, std::ios::beg);
-  tensor_stream.read(buffer.data(), remain_length);
+  std::vector<char> buffer(length);
+  tensor_stream.seekg(offset, std::ios::beg);
+  tensor_stream.read(buffer.data(), length);
 
-  std::vector<char> data = std::vector<char>(buffer.begin() + offset, buffer.begin() + offset + length);
-  std::string raw(data.begin(), data.end());
-  return raw;
+  std::string char_to_str(buffer.begin(), buffer.end());
+  loaded_raw_data = char_to_str;
 }
 
 } // namespace ONNX_NAMESPACE
