@@ -37,18 +37,19 @@ namespace ONNX_NAMESPACE {
   const std::vector<type> ParseData(const TensorProto* tensor_proto,          \
     const std::string model_dir) {                                            \
     std::vector<type> res;                                                    \
+    std::string raw_data;                                                     \
     if (!tensor_proto->has_raw_data() && tensor_proto->has_data_location() && \
       tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) {   \
-      TensorProto loaded_proto = *const_cast<TensorProto*>(tensor_proto);     \
-      LoadExternalTensor(*tensor_proto, loaded_proto, model_dir);             \
-      tensor_proto = &loaded_proto;                                           \
+      raw_data = LoadExternalTensor(*tensor_proto, model_dir);                \
     } else if (!tensor_proto->has_raw_data()) {                               \
       const auto& data = tensor_proto->typed_data_fetch();                    \
       res.insert(res.end(), data.begin(), data.end());                        \
       return res;                                                             \
     }                                                                         \
+    else {                                                                    \
     /* make copy as we may have to reverse bytes */                           \
-    std::string raw_data = tensor_proto->raw_data();                          \
+    raw_data = tensor_proto->raw_data();                                      \
+    }                                                                         \
     /* okay to remove const qualifier as we have already made a copy */       \
     char* bytes = const_cast<char*>(raw_data.c_str());                        \
     /*onnx is little endian serialized always-tweak byte order if needed*/    \

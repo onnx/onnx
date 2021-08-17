@@ -6,8 +6,7 @@
 
 namespace ONNX_NAMESPACE {
 
-void LoadExternalTensor(const TensorProto& external_tensor, TensorProto& loaded_tensor,
-  const std::string model_dir) {
+std::string LoadExternalTensor(const TensorProto& external_tensor, const std::string model_dir) {
   std::string tensor_path;
   int offset = 0;
   int length = 0;
@@ -26,15 +25,19 @@ void LoadExternalTensor(const TensorProto& external_tensor, TensorProto& loaded_
       }
     }
   }
-  std::ifstream tensor_stream(tensor_path, std::ios::binary);
+  std::ifstream tensor_stream(tensor_path, std::ios::binary | std::ios::ate);
   if (!tensor_stream.good()) {
     fail_check("Unable to open external tensor: ", tensor_path, ". Please check if it is a valid file. ");
   }
-  tensor_stream.seekg(offset, std::ios::beg);
-  std::string data(std::istreambuf_iterator<char>(tensor_stream), {});
-  loaded_tensor.set_raw_data(data.data(), length);
-  loaded_tensor.set_data_location(TensorProto_DataLocation_DEFAULT);
-  loaded_tensor.clear_external_data();
+
+  int remain_length = tensor_stream.tellg();
+  std::vector<char> buffer(remain_length);
+  tensor_stream.seekg(0, std::ios::beg);
+  tensor_stream.read(buffer.data(), remain_length);
+
+  std::vector<char> data = std::vector<char>(buffer.begin() + offset, buffer.begin() + offset + length);
+  std::string raw(data.begin(), data.end());
+  return raw;
 }
 
 } // namespace ONNX_NAMESPACE
