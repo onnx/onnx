@@ -6,4 +6,3 @@ hashlib
 json
 os
 wget
-urllib
