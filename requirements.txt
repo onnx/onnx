@@ -3,5 +3,4 @@ protobuf
 six
 typing-extensions>=3.6.2.1
 hashlib
-json
 wget

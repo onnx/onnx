@@ -11,10 +11,9 @@ import json
 import os
 import wget
 import hashlib
-import onnx
 from io import BytesIO
 from typing import List, Optional
-from onnx import ModelProto
+import onnx
 
 if "ONNX_HOME" in os.environ:
     _ONNX_HUB_DIR = join(os.environ["ONNX_HOME"], "hub")
@@ -109,7 +108,7 @@ def get_model_info(model: str,
 def load(model: str,
          repo: str = "onnx/models:master",
          opset: Optional[int] = None,
-         force_reload: bool = False) -> ModelProto:
+         force_reload: bool = False) -> onnx.ModelProto:
     """
     Download a model by name from the onnx model hub
 

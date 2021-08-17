@@ -11,5 +11,4 @@ pyzmq
 setuptools
 twine
 hashlib
-json
 wget
