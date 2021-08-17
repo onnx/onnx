@@ -16,8 +16,14 @@ void LoadExternalTensor(const TensorProto& external_tensor, TensorProto& loaded_
       tensor_path = path_join(model_dir, entry.value());
     } else if (entry.has_value() && entry.key() == "offset") {
       offset = std::stoi(entry.value());
+      if (offset < 0) {
+        fail_check("The loaded offset for a external tensor should not be negative. ");
+      }
     } else if (entry.has_value() && entry.key() == "length") {
       length = std::stoi(entry.value());
+      if (length < 0) {
+        fail_check("The loaded length for a external tensor should not be negative. ");
+      }
     }
   }
   std::ifstream tensor_stream(tensor_path, std::ios::binary);
@@ -25,18 +31,8 @@ void LoadExternalTensor(const TensorProto& external_tensor, TensorProto& loaded_
     fail_check("Unable to open external tensor: ", tensor_path, ". Please check if it is a valid file. ");
   }
   tensor_stream.seekg(offset, std::ios::beg);
-  if (length > 0) {
-    std::vector<char> buffer(length);
-    tensor_stream.read(buffer.data(), length);
-    loaded_tensor.set_raw_data(buffer.data(), buffer.size() * sizeof(char));
-  } else if (length < 0) {
-    tensor_stream.close();
-    fail_check("The loaded length for a external tensor should not be negative. ");
-  } else {
-    std::string data(std::istreambuf_iterator<char>(tensor_stream), {});
-    loaded_tensor.set_raw_data(data);
-  }
-  tensor_stream.close();
+  std::string data(std::istreambuf_iterator<char>(tensor_stream), {});
+  loaded_tensor.set_raw_data(data.data(), length);
   loaded_tensor.set_data_location(TensorProto_DataLocation_DEFAULT);
   loaded_tensor.clear_external_data();
 }
