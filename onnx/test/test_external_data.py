@@ -453,6 +453,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         with tempfile.TemporaryDirectory() as temp_dir:
             model_file_path = os.path.join(temp_dir, 'model.onnx')
             onnx.save_model(model, model_file_path, save_as_external_data=True, all_tensors_to_one_file=False, size_threshold=0)
+            # Only infer_shapes_path can work with models in different directory
             shape_inference.infer_shapes_path(model_file_path)
             inferred_model = onnx.load(model_file_path)
             inferred_shape = (inferred_model.graph.value_info[0].type.tensor_type.shape.dim[0].dim_value,
