@@ -361,7 +361,7 @@ def make_attribute(
     if doc_string:
         attr.doc_string = doc_string
 
-    is_iterable = isinstance(value, collections.Iterable)
+    is_iterable = isinstance(value, collections)
     bytes_or_false = _to_bytes_or_false(value)
     # First, singular cases
     # float
