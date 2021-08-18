@@ -9,10 +9,10 @@ from urllib.request import urlopen
 from urllib.error import HTTPError
 import json
 import os
-import wget
+import wget  # type: ignore
 import hashlib
 from io import BytesIO
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, cast, Set, Union
 import onnx
 
 if "ONNX_HOME" in os.environ:
@@ -22,8 +22,10 @@ elif "XDG_CACHE_HOME" in os.environ:
 else:
     _ONNX_HUB_DIR = join(os.path.expanduser('~'), ".cache", "onnx", "hub")
 
+ModelInfoType = Dict[str, Union[str, int, Dict[str, Any]]]
 
-def set_dir(new_dir):
+
+def set_dir(new_dir: object) -> None:
     """
     Set the current ONNX hub cache location
     @param new_dir: location of new model hub cache
@@ -32,7 +34,7 @@ def set_dir(new_dir):
     _ONNX_HUB_DIR = new_dir
 
 
-def get_dir():
+def get_dir() -> str:
     """
     Get the current ONNX hub cache location
     @return: The location of the ONNX hub model cache
@@ -61,7 +63,7 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
         return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_branch)
 
 
-def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = None) -> List[dict]:
+def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = None) -> List[ModelInfoType]:
     """
         Get the list of model info consistent with a given name and opset
 
@@ -73,19 +75,19 @@ def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = No
     manifest_url = base_url + "ONNX_HUB_MANIFEST.json"
     try:
         with urlopen(manifest_url) as f:
-            manifest = json.load(f)
+            manifest: List[ModelInfoType] = json.load(f)
     except HTTPError as e:
         raise AssertionError("Could not find manifest at {}".format(manifest_url), e)
 
     if tags is None:
         return manifest
     else:
-        return [m for m in manifest if len(set(m["metadata"]["tags"]).intersection(set(tags))) > 0]
+        return [m for m in manifest if len(set(cast(List[str], m["metadata"]["tags"])).intersection(set(tags))) > 0]
 
 
 def get_model_info(model: str,
                    repo: str = "onnx/models:master",
-                   opset: Optional[int] = None) -> List[dict]:
+                   opset: Optional[int] = None) -> List[ModelInfoType]:
     """
     Get the list of model info consistent with a given name and opset
 
