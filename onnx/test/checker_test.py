@@ -9,7 +9,7 @@ import unittest
 from typing import Sequence, Text
 import numpy as np  # type: ignore
 
-from onnx import checker, helper, shape_inference
+from onnx import checker, helper, numpy_helper, shape_inference
 from onnx import TensorProto, GraphProto, SparseTensorProto
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
@@ -441,6 +441,70 @@ class TestChecker(unittest.TestCase):
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
         self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
+
+    def test_loop_with_same_initializer_input_below_ir4(self):  # type: () -> None
+        # This is for testing IR<4: tensors must exist both in initializer and input
+        # shape_inference should allow different number of graph input and node input for Loop
+        # Comes from a tf2onnx model
+
+        model = helper.make_model(
+            opset_imports=[helper.make_operatorsetid('', 8)],
+            ir_version=3,
+            graph=helper.make_graph(
+                name='test-loop',
+                inputs=[
+                    helper.make_tensor_value_info('input:0', TensorProto.INT32, shape=[1]),
+                    helper.make_tensor_value_info('while/maximum_iterations:0', TensorProto.INT64, shape=[]),
+                    helper.make_tensor_value_info('const_fold_opt__18', TensorProto.INT64, shape=[1]),
+                    helper.make_tensor_value_info('const_fold_opt__17', TensorProto.FLOAT, shape=[]),
+                    helper.make_tensor_value_info('Const:0', TensorProto.INT32, shape=[1]),
+                ],
+                outputs=[helper.make_tensor_value_info('output:0', TensorProto.INT32, shape=[1])],
+                initializer=[
+                    numpy_helper.from_array(np.array(9223372036854775807, dtype=np.int64), name='while/maximum_iterations:0'),
+                    numpy_helper.from_array(np.array([-1], dtype=np.int64), name='const_fold_opt__18'),
+                    numpy_helper.from_array(np.array(10.0, dtype=np.float32), name='const_fold_opt__17'),
+                    numpy_helper.from_array(np.array([1], dtype=np.int32), name='Const:0'),
+                ],
+                nodes=[
+                    helper.make_node('Cast', inputs=['input:0'], outputs=['while_cond_158_while/Less__13:0'], name='while_cond_158_while/Less__13', domain='', to=TensorProto.FLOAT),
+                    helper.make_node('Less', inputs=['while_cond_158_while/Less__13:0', 'const_fold_opt__17'], outputs=['while_cond_158_while/Less:0'], name='while_cond_158_while/Less', domain=''),
+                    helper.make_node('Squeeze', inputs=['while_cond_158_while/Less:0'], outputs=['while_cond_158_while/Squeeze:0'], name='while_cond_158_while/Squeeze', domain=''),
+                    helper.make_node(
+                        'Loop',
+                        inputs=['while/maximum_iterations:0', 'while_cond_158_while/Squeeze:0', 'input:0', 'Const:0'],
+                        outputs=['while_loop:0', 'while_loop:1'],
+                        name='while_loop',
+                        body=helper.make_graph(
+                            name='while_body',
+                            inputs=[
+                                helper.make_tensor_value_info('while_while_loop_counter:0', TensorProto.INT64, shape=[]),
+                                helper.make_tensor_value_info('cond__15:0', TensorProto.BOOL, shape=[]),
+                                helper.make_tensor_value_info('while_placeholder:0', TensorProto.INT32, shape=[1]),
+                                helper.make_tensor_value_info('while_add_const_0:0', TensorProto.INT32, shape=[1]),
+                                helper.make_tensor_value_info('const_fold_opt__19', TensorProto.FLOAT, shape=[]),
+                            ],
+                            outputs=[
+                                helper.make_tensor_value_info('cond___while/Identity_graph_outputs_Identity__3:0', TensorProto.BOOL, shape=[]),
+                                helper.make_tensor_value_info('while/Identity_2:0', TensorProto.INT32, shape=[1]),
+                                helper.make_tensor_value_info('while_add_const_0:0', TensorProto.INT32, shape=[1]),
+                            ],
+                            initializer=[numpy_helper.from_array(np.array(10.0, dtype=np.float32), name='const_fold_opt__19')],
+                            nodes=[
+                                helper.make_node('Add', inputs=['while_placeholder:0', 'while_add_const_0:0'], outputs=['while/Identity_2:0'], name='while/Add'),
+                                helper.make_node('Cast', inputs=['while/Identity_2:0'], outputs=['cond___while/Less__13:0'], name='cond___while/Less__13', domain='', to=TensorProto.FLOAT),
+                                helper.make_node('Less', inputs=['cond___while/Less__13:0', 'const_fold_opt__19'], outputs=['cond___while/Less:0'], name='cond___while/Less', domain=''),
+                                helper.make_node('Squeeze', inputs=['cond___while/Less:0'], outputs=['cond___while/Identity_graph_outputs_Identity__3:0'], name='cond___while/Squeeze', domain=''),
+                            ],
+                        ),
+                    ),
+                    helper.make_node('Unsqueeze', inputs=['while_loop:0'], outputs=['Reshape/tensor:0'], name='Reshape/tensor', axes=[0]),
+                    helper.make_node('Reshape', inputs=['Reshape/tensor:0', 'const_fold_opt__18'], outputs=['output:0'], name='Reshape'),
+                ],
+            ),
+        )
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
 
 
 if __name__ == '__main__':

@@ -236,7 +236,7 @@ static void InferShapesImpl(
   std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{outer_scope_value_types_by_name};
   std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
 
-  GraphInferenceContext graphInferenceContext{valueTypesByName, opset_imports, symbolTable, schema_registry};
+  GraphInferenceContext graphInferenceContext{valueTypesByName, opset_imports, symbolTable, schema_registry, ir_version};
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type()) {
       valueTypesByName[vi.name()] = vi.mutable_type();
@@ -355,8 +355,8 @@ static void InferShapesImpl(
     }
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
-    InferenceContextImpl ctx(
-        n, valueTypesByName, inputDataByName, inputSparseDataByName, &generatedShapeDataByName, &graphInferenceContext);
+    InferenceContextImpl ctx(n, valueTypesByName, inputDataByName,inputSparseDataByName,
+      &generatedShapeDataByName, &graphInferenceContext);
     if (!schema) {
       std::cerr << "Warning: Unsupported operator " << n.op_type() << ". No schema registered for this operator."
                 << std::endl;
@@ -599,8 +599,8 @@ void InferShapeForFunctionNode(
       }
     }
 
-    InferenceContextImpl temp_ctx(
-        copy_n, temp_valueTypesByName, temp_initializersByName, temp_SparseInitializersByName, generatedShapeDataByName);
+    InferenceContextImpl temp_ctx(copy_n, temp_valueTypesByName, temp_initializersByName,
+      temp_SparseInitializersByName, generatedShapeDataByName);
     schema->GetTypeAndShapeInferenceFunction()(temp_ctx);
     for (int i = 0; i < copy_n.output_size(); ++i) {
       TypeProto* inferred_output_type = temp_ctx.getOutputType(i);
@@ -687,9 +687,17 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TensorProto*>& inputData) {
   SymbolTable* symbolTable = getSymbolTable();
   int numInputs = int(inputTypes.size());
-
-  if (g_->input_size() != numInputs) {
-    fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided");
+  if (getIRVersion() < 4) {
+    // IR < 4 requires all initializers to be optional inputs
+    // So the number of graph input can be larger than the number of node input 
+    if ( numInputs > g_->input_size()) {
+      fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided.",
+        "The number of graph input cannot be smaller than the numbe of node input" );
+    }
+  } else {
+    if (g_->input_size() != numInputs) {
+      fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided");
+    }
   }
 
   for (int i = 0, end = numInputs; i < end; ++i) {
