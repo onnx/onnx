@@ -12,7 +12,7 @@ import os
 import wget  # type: ignore
 import hashlib
 from io import BytesIO
-from typing import List, Optional, Dict, Any, cast, Set, Union
+from typing import List, Optional, Dict, Any, cast, Set
 import onnx
 
 if "ONNX_HOME" in os.environ:
