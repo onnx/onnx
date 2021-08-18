@@ -22,10 +22,26 @@ elif "XDG_CACHE_HOME" in os.environ:
 else:
     _ONNX_HUB_DIR = join(os.path.expanduser('~'), ".cache", "onnx", "hub")
 
-ModelInfoType = Dict[str, Union[str, int, Dict[str, Any]]]
+class ModelInfo(object):
+    def __init__(self, raw_model_info: Dict[str, Any]):
+        self.model = cast(str, raw_model_info["model"])
+
+        self.model_path = cast(str, raw_model_info["model_path"])
+        self.metadata: Dict[str, Any] = cast(Dict[str, Any], raw_model_info["metadata"])
+        self.model_sha: Optional[str] = None
+        if "model_sha" in self.metadata:
+            self.model_sha = cast(str, self.metadata["model_sha"])
+
+        self.tags: Set[str] = set()
+        if "tags" in self.metadata:
+            self.tags = set(cast(List[str], self.metadata["tags"]))
+
+        self.opset = cast(int, raw_model_info["opset_version"])
+        self.raw_model_info: Dict[str, Any] = raw_model_info
 
 
-def set_dir(new_dir: object) -> None:
+
+def set_dir(new_dir: str) -> None:
     """
     Set the current ONNX hub cache location
     @param new_dir: location of new model hub cache
@@ -63,7 +79,7 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
         return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_branch)
 
 
-def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = None) -> List[ModelInfoType]:
+def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = None) -> List[ModelInfo]:
     """
         Get the list of model info consistent with a given name and opset
 
@@ -75,19 +91,25 @@ def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = No
     manifest_url = base_url + "ONNX_HUB_MANIFEST.json"
     try:
         with urlopen(manifest_url) as f:
-            manifest: List[ModelInfoType] = json.load(f)
+            manifest: List[ModelInfo] = [ModelInfo(info) for info in json.load(f)]
     except HTTPError as e:
         raise AssertionError("Could not find manifest at {}".format(manifest_url), e)
 
     if tags is None:
         return manifest
     else:
-        return [m for m in manifest if len(set(cast(List[str], m["metadata"]["tags"])).intersection(set(tags))) > 0]
+        canonical_tags = {t.lower() for t in tags}
+        matching_info_list: List[ModelInfo] = []
+        for m in manifest:
+            model_tags = {t.lower() for t in m.tags}
+            if len(canonical_tags.intersection(model_tags)) > 0:
+                matching_info_list.append(m)
+        return matching_info_list
 
 
 def get_model_info(model: str,
                    repo: str = "onnx/models:master",
-                   opset: Optional[int] = None) -> List[ModelInfoType]:
+                   opset: Optional[int] = None) -> List[ModelInfo]:
     """
     Get the list of model info consistent with a given name and opset
 
@@ -97,15 +119,15 @@ def get_model_info(model: str,
     @param opset: The opset of the model to download. The default of `None`  will return all models of matching name
     """
     manifest = list_models(repo)
-    matching_models = [m for m in manifest if m["model"] == model]
+    matching_models = [m for m in manifest if m.model == model]
     assert len(matching_models) != 0, "No models found with name {}".format(model)
 
     if opset is None:
-        selected_models = sorted(matching_models, key=lambda m: m['opset_version'])
+        selected_models = sorted(matching_models, key=lambda m: m.opset)
     else:
-        selected_models = [m for m in matching_models if m["opset_version"] == opset]
+        selected_models = [m for m in matching_models if m.opset == opset]
         if len(selected_models) == 0:
-            valid_opsets = [m["opset_version"] for m in matching_models]
+            valid_opsets = [m.opset for m in matching_models]
             raise AssertionError(
                 "{} has no version with opset {}. Valid opsets: {}".format(model, opset, valid_opsets))
     return selected_models
@@ -125,28 +147,25 @@ def load(model: str,
     @param force_reload: Whether to force the model to re-download even if its already found in the cache
     """
     selected_model = get_model_info(model, repo, opset)[0]
-    local_model_path = selected_model['model_path'].split("/")
-    if "model_sha" in selected_model["metadata"]:
-        model_sha = selected_model["metadata"]["model_sha"]
-        local_model_path[-1] = "{}_{}".format(model_sha, local_model_path[-1])
-    else:
-        model_sha = None
-    local_model_path = join(_ONNX_HUB_DIR, os.sep.join(local_model_path))
+    local_model_path_arr = selected_model.model_path.split("/")
+    if selected_model.model_sha is not None:
+        local_model_path_arr[-1] = "{}_{}".format(selected_model.model_sha, local_model_path_arr[-1])
+    local_model_path = join(_ONNX_HUB_DIR, os.sep.join(local_model_path_arr))
 
     if force_reload or not os.path.exists(local_model_path):
         os.makedirs(os.path.dirname(local_model_path), exist_ok=True)
         lfs_url = _get_base_url(repo, True)
         print("Downloading {} to local path {}".format(model, local_model_path))
-        wget.download(lfs_url + selected_model['model_path'] + "?raw=true", local_model_path)
+        wget.download(lfs_url + selected_model.model_path + "?raw=true", local_model_path)
     else:
         print("Using cached {} model from {}".format(model, local_model_path))
 
     with open(local_model_path, "rb") as f:
         bytes = f.read()
 
-    if model_sha is not None:
+    if selected_model.model_sha is not None:
         downloaded_sha = hashlib.sha256(bytes).hexdigest()
-        assert downloaded_sha == model_sha, \
-            "Downloaded model has SHA256 {} while checksum is {}".format(downloaded_sha, model_sha)
+        assert downloaded_sha == selected_model.model_sha, \
+            "Downloaded model has SHA256 {} while checksum is {}".format(downloaded_sha, selected_model.model_sha)
 
     return onnx.load(BytesIO(bytes))
