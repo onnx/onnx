@@ -40,6 +40,14 @@ class ModelInfo(object):
         self.opset = cast(int, raw_model_info["opset_version"])
         self.raw_model_info: Dict[str, Any] = raw_model_info
 
+    def __str__(self) -> str:
+        return "ModelInfo(model={}, opset={}, path={}, metadata={})".format(
+            self.model, self.opset, self.model_path, self.metadata
+        )
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 def set_dir(new_dir: str) -> None:
     """
@@ -168,4 +176,4 @@ def load(model: str,
         assert downloaded_sha == selected_model.model_sha, \
             "Downloaded model has SHA256 {} while checksum is {}".format(downloaded_sha, selected_model.model_sha)
 
-    return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
+    return onnx.load(cast(IO[str], BytesIO(model_bytes)))
