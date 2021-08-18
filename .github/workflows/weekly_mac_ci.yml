@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    if: github.event_name == 'schedule' || contains( github.event.pull_request.labels.*.name, 'test with ONNX Model Zoo')
+    if: github.event_name == 'schedule' || contains( github.event.pull_request.labels.*.name, 'test ONNX Model Zoo')
     runs-on: macos-latest
     strategy:
       matrix:
