@@ -687,17 +687,18 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TensorProto*>& inputData) {
   SymbolTable* symbolTable = getSymbolTable();
   int numInputs = int(inputTypes.size());
-  if (getIRVersion() < 4) {
+  if (getIRVersion() >= 4) {
+    if (g_->input_size() != numInputs) {
+      fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided");
+    }
+  } else {
     // IR < 4 requires all initializers to be optional inputs
     // So the number of graph input can be larger than the number of node input 
     if ( numInputs > g_->input_size()) {
       fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided.",
-        "The number of graph input cannot be smaller than the numbe of node input" );
+        "The number of graph input cannot be smaller than the number of node input" );
     }
-  } else {
-    if (g_->input_size() != numInputs) {
-      fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided");
-    }
+
   }
 
   for (int i = 0, end = numInputs; i < end; ++i) {
