@@ -108,7 +108,7 @@ class GraphInferencerImpl : public GraphInferencer {
     return context_->symbolTable;
   }
 
-  const int getIRVersion() const {
+  int getIRVersion() const {
     return context_->ir_version;
   }
 
