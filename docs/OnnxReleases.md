@@ -50,7 +50,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
         * onnx/onnx.pb.h
     * If they are present run ``git clean -ixd`` and remove those files from your local branch
 * Do ``python setup.py sdist`` to generate the source distribution.
-* Do ``twine upload dist/* https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`` to upload it to the test instance of PyPI.
+* Do ``twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`` to upload it to the test instance of PyPI.
 
 ## TestPyPI package verification
 **Test ONNX itself**
