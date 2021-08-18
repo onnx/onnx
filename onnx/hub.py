@@ -12,7 +12,7 @@ import os
 import wget  # type: ignore
 import hashlib
 from io import BytesIO
-from typing import List, Optional, Dict, Any, cast, Set
+from typing import List, Optional, Dict, Any, cast, Set, IO
 import onnx
 
 if "ONNX_HOME" in os.environ:
@@ -24,7 +24,7 @@ else:
 
 
 class ModelInfo(object):
-    def __init__(self, raw_model_info: Dict[str, Any]):
+    def __init__(self, raw_model_info: Dict[str, Any]) -> None:
         self.model = cast(str, raw_model_info["model"])
 
         self.model_path = cast(str, raw_model_info["model_path"])
@@ -161,11 +161,11 @@ def load(model: str,
         print("Using cached {} model from {}".format(model, local_model_path))
 
     with open(local_model_path, "rb") as f:
-        bytes = f.read()
+        model_bytes = f.read()
 
     if selected_model.model_sha is not None:
-        downloaded_sha = hashlib.sha256(bytes).hexdigest()
+        downloaded_sha = hashlib.sha256(model_bytes).hexdigest()
         assert downloaded_sha == selected_model.model_sha, \
             "Downloaded model has SHA256 {} while checksum is {}".format(downloaded_sha, selected_model.model_sha)
 
-    return onnx.load(BytesIO(bytes))
+    return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
