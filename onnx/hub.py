@@ -20,7 +20,7 @@ if "ONNX_HOME" in os.environ:
 elif "XDG_CACHE_HOME" in os.environ:
     _ONNX_HUB_DIR = join(os.environ["XDG_CACHE_HOME"], "onnx", "hub")
 else:
-    _ONNX_HUB_DIR = join("~", ".cache", "onnx", "hub")
+    _ONNX_HUB_DIR = join(os.path.expanduser('~'), ".cache", "onnx", "hub")
 
 
 def set_dir(new_dir):
@@ -40,11 +40,12 @@ def get_dir():
     return _ONNX_HUB_DIR
 
 
-def _get_base_url(repo: str) -> str:
+def _get_base_url(repo: str, lfs: bool = False) -> str:
     """
     Gets the base github url from a repo specification string
     @param repo: The location of the model repo in format "user/repo[:branch]".
         If no branch is found will default to "master"
+    @param lfs: whether the url is for downloading lfs models
     @return: the base github url for downloading
     """
     repo_owner = repo.split("/")[0]
@@ -54,7 +55,10 @@ def _get_base_url(repo: str) -> str:
     else:
         repo_branch = "master"
 
-    return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_branch)
+    if lfs:
+        return "https://github.com/{}/{}/blob/{}/".format(repo_owner, repo_name, repo_branch)
+    else:
+        return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_branch)
 
 
 def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = None) -> List[dict]:
@@ -130,8 +134,9 @@ def load(model: str,
 
     if force_reload or not os.path.exists(local_model_path):
         os.makedirs(os.path.dirname(local_model_path), exist_ok=True)
+        lfs_url = _get_base_url(repo, True)
         print("Downloading {} to local path {}".format(model, local_model_path))
-        wget.download(base_url + selected_model['model_path'], local_model_path)
+        wget.download(lfs_url + selected_model['model_path'] + "?raw=true", local_model_path)
     else:
         print("Using cached {} model from {}".format(model, local_model_path))
 
