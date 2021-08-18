@@ -22,6 +22,7 @@ elif "XDG_CACHE_HOME" in os.environ:
 else:
     _ONNX_HUB_DIR = join(os.path.expanduser('~'), ".cache", "onnx", "hub")
 
+
 class ModelInfo(object):
     def __init__(self, raw_model_info: Dict[str, Any]):
         self.model = cast(str, raw_model_info["model"])
@@ -38,7 +39,6 @@ class ModelInfo(object):
 
         self.opset = cast(int, raw_model_info["opset_version"])
         self.raw_model_info: Dict[str, Any] = raw_model_info
-
 
 
 def set_dir(new_dir: str) -> None:
