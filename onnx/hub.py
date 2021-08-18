@@ -122,7 +122,6 @@ def load(model: str,
     @param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
     @param force_reload: Whether to force the model to re-download even if its already found in the cache
     """
-    base_url = _get_base_url(repo)
     selected_model = get_model_info(model, repo, opset)[0]
     local_model_path = selected_model['model_path'].split("/")
     if "model_sha" in selected_model["metadata"]:
