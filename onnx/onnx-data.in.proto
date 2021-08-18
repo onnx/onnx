@@ -68,6 +68,7 @@ message SequenceProto {
   // When this field is present, the elem_type field MUST be Optional.
   repeated OptionalProto optional_values = 7;
 
+  optional int32 reserved_for_container = 21;
 }
 
 
@@ -103,6 +104,8 @@ message MapProto {
   // repeated keys field and have to be one of the following data types
   // TENSOR, SPARSE_TENSOR, MAP, SEQUENCE.
   optional SequenceProto values = 5;
+
+  optional int32 reserved_for_container = 21;
 }
 
 // Optional
@@ -147,4 +150,20 @@ message OptionalProto {
   // When this field is present, the elem_type field MUST be OPTIONAL.
   optional OptionalProto optional_value = 7;
 
+  optional int32 reserved_for_container = 21;
 }
+
+// Container
+//
+//
+message InOutContainer {
+  optional string name = 1;
+  oneof value {
+    TensorProto tensor_value = 22;
+    SparseTensorProto sparse_tensor_value = 23;
+    SequenceProto sequence_value = 24;
+    MapProto map_value = 25;
+    OptionalProto optional_value = 26;
+  }
+  optional int32 reserved_for_container = 21;
+};

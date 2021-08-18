@@ -618,6 +618,8 @@ message TensorProto {
   // When this field is present, the data_type field MUST be
   // UINT32 or UINT64
   repeated uint64 uint64_data = 11 [packed = true];
+
+  optional int32 reserved_for_container = 21;
 }
 
 // A serialized sparse-tensor value
@@ -642,6 +644,8 @@ message SparseTensorProto {
 
   // The shape of the underlying dense-tensor: [dim_1, dim_2, ... dim_rank]
   repeated int64 dims = 3;
+
+  optional int32 reserved_for_container = 21;
 }
 
 // Defines a tensor shape. A dimension can be either an integer value
