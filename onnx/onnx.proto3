@@ -27,13 +27,6 @@ package onnx;
 
 // Notes
 //
-// Release
-//
-// We are still in the very early stage of defining ONNX. The current
-// version of ONNX is a starting point. While we are actively working
-// towards a complete spec, we would like to get the community involved
-// by sharing our working version of ONNX.
-//
 // Protobuf compatibility
 //
 // To simplify framework compatibility, ONNX is defined using the subset of protobuf
@@ -92,7 +85,7 @@ enum Version {
   //   - Add sparse initializers
   IR_VERSION_2019_9_19 = 0x0000000000000006;
 
-  // IR VERSION 7 published on <TBD>
+  // IR VERSION 7 published on May 8, 2020
   // - Add support to allow function body graph to rely on multiple external opreator sets.
   // - Add a list to promote inference graph's initializers to global and
   //   mutable variables. Global variables are visible in all graphs of the
@@ -101,7 +94,15 @@ enum Version {
   //   method and training algorithm. The execution of TrainingInfoProto
   //   can modify the values of mutable variables.
   // - Implicitly add inference graph into each TrainingInfoProto's algorithm.
-  IR_VERSION = 0x0000000000000007;
+  IR_VERSION_2020_5_8 = 0x0000000000000007;
+
+  // IR VERSION 8 published on <TBD>
+  // Introduce TypeProto.SparseTensor
+  // Introduce TypeProto.Optional
+  // Added a list of FunctionProtos local to the model
+  // Deprecated since_version and operator status from FunctionProto
+  IR_VERSION = 0x0000000000000008;
+
 }
 
 // Attributes
@@ -122,6 +123,7 @@ message AttributeProto {
     TENSOR = 4;
     GRAPH = 5;
     SPARSE_TENSOR = 11;
+    TYPE_PROTO = 13;
 
     FLOATS = 6;
     INTS = 7;
@@ -129,6 +131,7 @@ message AttributeProto {
     TENSORS = 9;
     GRAPHS = 10;
     SPARSE_TENSORS = 12;
+    TYPE_PROTOS = 14;
   }
 
   // The name field MUST be present for this version of the IR.
@@ -160,6 +163,7 @@ message AttributeProto {
   SparseTensorProto sparse_tensor = 22;  // sparse tensor value
   // Do not use field below, it's deprecated.
   // optional ValueProto v = 12;         // value - subsumes everything but graph
+  TypeProto tp = 14;          // type proto
 
   repeated float floats = 7;          // list of floats
   repeated int64 ints = 8;            // list of ints
@@ -167,6 +171,7 @@ message AttributeProto {
   repeated TensorProto tensors = 10;  // list of tensors
   repeated GraphProto graphs = 11;    // list of graph
   repeated SparseTensorProto sparse_tensors = 23; // list of sparse tensors
+  repeated TypeProto type_protos = 15;// list of type protos
 }
 
 // Defines information on value, including the name, the type, and
@@ -387,6 +392,24 @@ message ModelProto {
   //
   // If this field is empty, the training behavior of the model is undefined.
   repeated TrainingInfoProto training_info = 20;
+
+  // A list of function protos local to the model.
+  //
+  // Name of the function "FunctionProto.name" should be unique within the domain "FunctionProto.domain".
+  // In case of any conflicts the behavior (whether the model local functions are given higher priority,
+  // or standard opserator sets are given higher priotity or this is treated as error) is defined by 
+  // the runtimes.
+  // 
+  // The operator sets imported by FunctionProto should be compatible with the ones
+  // imported by ModelProto and other model local FunctionProtos. 
+  // Example, if same operator set say 'A' is imported by a FunctionProto and ModelProto 
+  // or by 2 FunctionProtos then versions for the operator set may be different but, 
+  // the operator schema returned for op_type, domain, version combination
+  // for both the versions should be same for every node in the function body.
+  //
+  // One FunctionProto can reference other FunctionProto in the model, however, recursive reference
+  // is not allowed.
+  repeated FunctionProto functions = 25;
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
@@ -671,6 +694,23 @@ message TypeProto {
     TypeProto value_type = 2;
   };
 
+  // wrapper for Tensor, Sequence, or Map
+  message Optional {
+    // The type and optional shape of the element wrapped.
+    // This field MUST be present for this version of the IR.
+    // Possible values correspond to OptionalProto.DataType enum
+    TypeProto elem_type = 1;
+  };
+
+
+  message SparseTensor {
+    // This field MUST NOT have the value of UNDEFINED
+    // This field MUST have a valid TensorProto.DataType value
+    // This field MUST be present for this version of the IR.
+    int32 elem_type = 1;
+    TensorShapeProto shape = 2;
+  }
+
 
   oneof value {
     // The type of a tensor.
@@ -686,6 +726,13 @@ message TypeProto {
 
     // The type of a map.
     Map map_type = 5;
+
+    // The type of an optional.
+    Optional optional_type = 9;
+
+
+    // Type of the sparse tensor
+    SparseTensor sparse_tensor_type = 8;
 
   }
 
@@ -709,6 +756,60 @@ message OperatorSetIdProto {
   // The version of the operator set being identified.
   // This field MUST be present in this version of the IR.
   int64 version = 2;
+}
+
+// Operator/function status.
+enum OperatorStatus {
+    EXPERIMENTAL = 0;
+    STABLE = 1;
+}
+
+message FunctionProto {
+  // The name of the function, similar usage of op_type in OperatorProto.
+  // Combined with FunctionProto.domain, this forms the unique identity of
+  // the FunctionProto.
+  string name = 1;
+
+  // Deprecated since IR Version 8
+  // optional int64 since_version = 2;
+  reserved 2;
+  reserved "since_version";
+
+  // Deprecated since IR Version 8
+  // optional OperatorStatus status = 3;
+  reserved 3;
+  reserved "status";
+
+  // The inputs and outputs of the function.
+  repeated string input = 4;
+  repeated string output = 5;
+
+  // The attributes of the function.
+  repeated string attribute = 6;
+
+  // The nodes in the function.
+  repeated NodeProto node = 7;
+  // A human-readable documentation for this function. Markdown is allowed.
+  string doc_string = 8;
+
+  // The OperatorSets this function body (graph) relies on.
+  //
+  // All nodes in the function body (graph) will bind against the operator
+  // with the same-domain/same-op_type operator with the HIGHEST version
+  // in the referenced operator sets. This means at most one version can be relied
+  // for one domain.
+  // 
+  // The operator sets imported by FunctionProto should be compatible with the ones
+  // imported by ModelProto. Example, if same operator set say 'A' is imported by FunctionProto
+  // and ModelProto then versions for the operator set may be different but, 
+  // the operator schema returned for op_type, domain, version combination
+  // for both the versions should be same.
+
+  repeated OperatorSetIdProto opset_import = 9;
+
+  // The domain which this function belongs to. Combined with FunctionProto.name, this forms the unique identity of
+  // the FunctionProto.
+  string domain = 10;
 }
 
 

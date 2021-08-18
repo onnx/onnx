@@ -29,3 +29,7 @@ def example_test_with_ort():  # type: () -> None
     x = x.astype(numpy.float32)
 
     sess.run([output_name], {input_name: x})
+
+
+if __name__ == "__main__":
+    example_test_with_ort()

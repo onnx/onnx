@@ -7,10 +7,12 @@ on:
   push:
     branches: [master, rel-*]
   pull_request:
-    branches: [rel-*]
+    branches: [master, rel-*]
+  workflow_dispatch:
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: windows-latest
     strategy:
       matrix:
@@ -21,7 +23,7 @@ jobs:
       uses: actions/checkout@master
       with:
         repository: protocolbuffers/protobuf
-        ref: refs/tags/v3.11.3
+        ref: refs/tags/v3.16.0
         path: ./protobuf_root/protobuf
   
     - name: Checkout Protobuf submodules
@@ -56,9 +58,10 @@ jobs:
           
     - name: Install python dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install numpy==1.16.6 wheel          
-            
+        python -m pip install -q --upgrade pip
+        cd onnx
+        python -m pip install -q -r requirements-release.txt
+
     - name: Build ONNX wheel
       run: |        
         $arch = 'x64'
@@ -71,7 +74,7 @@ jobs:
         mkdir protobuf_install
         cd ./protobuf/cmake
 
-        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -DCMAKE_BUILD_TYPE=Release -Dprotobuf_MSVC_STATIC_RUNTIME=ON -DProtobuf_USE_STATIC_LIBS=ON -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
         msbuild protobuf.sln /m /p:Configuration=Release
         msbuild INSTALL.vcxproj /p:Configuration=Release
         echo "Protobuf installation complete."
@@ -89,7 +92,7 @@ jobs:
         echo "Install ONNX"
         $Env:USE_MSVC_STATIC_RUNTIME=1
         $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DProtobuf_USE_STATIC_LIBS=ON -DONNX_USE_LITE_PROTO=ON"
+        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly TestPyPI package"
@@ -97,14 +100,11 @@ jobs:
         } else {
           python setup.py bdist_wheel
         }
-        Get-ChildItem -Path dist/*.whl | foreach {pip install --upgrade $_.fullname} 
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname} 
   
-
     - name: Test the installed wheel
       run: |
         cd onnx
-        # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
-        python -m pip install -q pytest==5.4.3 nbval ipython==7.16.1
         pytest
 
     - name: Test the uploaded backend test data
@@ -124,5 +124,30 @@ jobs:
     - name: Upload wheel to TestPyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
-        python -m pip install -q twine
         twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+
+    - name: Verify ONNX with the latest numpy
+      if: ${{ always() }}
+      run: |
+        cd onnx
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest
+
+    - name: Verify ONNX with the latest protobuf
+      if: ${{ always() }}
+      run: |
+        cd onnx
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest        
+
+    - name: Verify ONNX with ort-nightly
+      if: ${{ always() }}
+      run: |
+        # ort-nightly does not support x86
+        if ('${{ matrix.architecture }}' -eq 'x64') {
+          python -m pip install -q flatbuffers
+          python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
+          python onnx\onnx\test\test_with_ort.py
+        }

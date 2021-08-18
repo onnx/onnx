@@ -58,6 +58,7 @@ class Runner(object):
         self._parent_module = parent_module
         self._include_patterns = set()  # type: Set[Pattern[Text]]
         self._exclude_patterns = set()  # type: Set[Pattern[Text]]
+        self._xfail_patterns = set()    # type: Set[Pattern[Text]]
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
@@ -94,6 +95,10 @@ class Runner(object):
         self._exclude_patterns.add(re.compile(pattern))
         return self
 
+    def xfail(self, pattern):  # type: (Text) -> Runner
+        self._xfail_patterns.add(re.compile(pattern))
+        return self
+
     def enable_report(self):  # type: () -> Runner
         import pytest  # type: ignore
 
@@ -120,6 +125,9 @@ class Runner(object):
                             'matched exclude pattern "{}"'.format(
                                 exclude.pattern)
                         )(item.func)
+                for xfail in self._xfail_patterns:
+                    if xfail.search(name):
+                        item.func = unittest.expectedFailure(item.func)
                 filtered[category][name] = item
         return filtered
 
@@ -169,15 +177,19 @@ class Runner(object):
     def assert_similar_outputs(cls, ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
         np.testing.assert_equal(len(outputs), len(ref_outputs))
         for i in range(len(outputs)):
-            np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
-            if ref_outputs[i].dtype == np.object:
-                np.testing.assert_array_equal(outputs[i], ref_outputs[i])
+            if isinstance(outputs[i], (list, tuple)):
+                for j in range(len(outputs[i])):
+                    cls.assert_similar_outputs(ref_outputs[i][j], outputs[i][j], rtol, atol)
             else:
-                np.testing.assert_allclose(
-                    outputs[i],
-                    ref_outputs[i],
-                    rtol=rtol,
-                    atol=atol)
+                np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
+                if ref_outputs[i].dtype == np.object:
+                    np.testing.assert_array_equal(outputs[i], ref_outputs[i])
+                else:
+                    np.testing.assert_allclose(
+                        outputs[i],
+                        ref_outputs[i],
+                        rtol=rtol,
+                        atol=atol)
 
     @classmethod
     @retry_excute(3)

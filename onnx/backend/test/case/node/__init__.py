@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import sys
 import re
 
-from typing import List, Text, Sequence, Any, Union
+from typing import List, Text, Sequence, Any, Union, Optional
 import numpy as np  # type: ignore
 
 import onnx
@@ -21,8 +21,7 @@ from ..test_case import TestCase
 _NodeTestCases = []
 _TargetOpType = ""
 
-from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto
-from onnx.onnx_operators_pb import FunctionProto
+from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto
 
 
 # FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
@@ -104,19 +103,21 @@ def function_testcase_helper(node, input_types, name):  # type: (NodeProto, List
     return node_list
 
 
-def _extract_value_info(input, name, ele_type=None):  # type: (Union[List[Any], np.ndarray], Text, np.dtype) -> onnx.ValueInfoProto
-    if isinstance(input, list):
-        # TODO: Account for recursive sequence case. Right now, this function supports
-        # Sequences of Tensors.
-        return onnx.helper.make_sequence_value_info(
-            name=name,
-            elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype],
-            shape=None
-        )
-    return onnx.helper.make_tensor_value_info(
-        name=name,
-        elem_type=ele_type if ele_type else onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype],
-        shape=input.shape)
+def _extract_value_info(input, name, type_proto=None):  # type: (Union[List[Any], np.ndarray, None], Text, Optional[TypeProto]) -> onnx.ValueInfoProto
+    if type_proto is None:
+        if input is None:
+            raise NotImplementedError("_extract_value_info: both input and type_proto arguments cannot be None.")
+        elif isinstance(input, list):
+            elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype]
+            shape = None
+            tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
+            type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+        else:
+            elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype]
+            shape = input.shape
+            type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
+
+    return onnx.helper.make_value_info(name, type_proto)
 
 
 # In the case of ops with optional inputs and outputs, node.input and node.output indicate
@@ -136,18 +137,18 @@ def expect(node,  # type: onnx.NodeProto
         return
     present_inputs = [x for x in node.input if (x != '')]
     present_outputs = [x for x in node.output if (x != '')]
-    input_types = [None] * len(inputs)
-    if 'input_types' in kwargs:
-        input_types = kwargs[str('input_types')]
-        del kwargs[str('input_types')]
-    output_types = [None] * len(outputs)
-    if 'output_types' in kwargs:
-        output_types = kwargs[str('output_types')]
-        del kwargs[str('output_types')]
+    input_type_protos = [None] * len(inputs)
+    if 'input_type_protos' in kwargs:
+        input_type_protos = kwargs[str('input_type_protos')]
+        del kwargs[str('input_type_protos')]
+    output_type_protos = [None] * len(outputs)
+    if 'output_type_protos' in kwargs:
+        output_type_protos = kwargs[str('output_type_protos')]
+        del kwargs[str('output_type_protos')]
     inputs_vi = [_extract_value_info(arr, arr_name, input_type)
-                 for arr, arr_name, input_type in zip(inputs, present_inputs, input_types)]
+                 for arr, arr_name, input_type in zip(inputs, present_inputs, input_type_protos)]
     outputs_vi = [_extract_value_info(arr, arr_name, output_type)
-                  for arr, arr_name, output_type in zip(outputs, present_outputs, output_types)]
+                  for arr, arr_name, output_type in zip(outputs, present_outputs, output_type_protos)]
     graph = onnx.helper.make_graph(
         nodes=[node],
         name=name,
@@ -173,9 +174,9 @@ def expect(node,  # type: onnx.NodeProto
     def merge(node_inputs, present_value_info):  # type: (List[Text], List[onnx.ValueInfoProto]) -> List[TypeProto]
         if (node_inputs):
             if (node_inputs[0] != ''):
-                [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
+                return [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
             else:
-                [TypeProto()] + merge(node_inputs[1:], present_value_info)
+                return [TypeProto()] + merge(node_inputs[1:], present_value_info)
         return []
     merged_types = merge(list(node.input), inputs_vi)
     expanded_function_nodes = function_testcase_helper(node, merged_types, name)

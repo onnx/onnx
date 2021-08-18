@@ -39,8 +39,9 @@ class Gemm_6_7 final : public Adapter {
       if (node->hasAttribute(kbroadcast)) node->removeAttribute(kbroadcast);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_gemm_6_7(graph, node);
+      return node;
     }
 };
 

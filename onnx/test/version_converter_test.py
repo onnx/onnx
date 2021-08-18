@@ -314,7 +314,8 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 4), 6)
         # Assert equality of graph and converted_model
-        assert converted_model.graph.node[0].op_type == "Reshape"
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Reshape"
         assert converted_model.opset_import[0].version == 6
 
     # Test Sum Adapter: 7 -> 8
@@ -1011,10 +1012,11 @@ class TestVersionConverter(unittest.TestCase):
 
         converted_model = self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
 
-        assert len(converted_model.graph.node) == 1
-        assert converted_model.graph.node[0].op_type == "Upsample"
-        assert len(converted_model.graph.node[0].attribute) == 1
-        assert converted_model.graph.node[0].attribute[0].name == "mode"
+        assert len(converted_model.graph.node) == 2
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Upsample"
+        assert len(converted_model.graph.node[1].attribute) == 1
+        assert converted_model.graph.node[1].attribute[0].name == "mode"
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Helper for Upsample Adapter: 9 -> 8
@@ -1196,7 +1198,8 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 12), 13)
         # Assert equality of graph and converted_model
-        assert converted_model.graph.node[0].op_type == "Split"
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Split"
         assert converted_model.opset_import[0].version == 13
 
     # Test AxesInputToAttribute Adapter: 13 -> 12
@@ -1227,7 +1230,7 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 12), 13)
         # Assert equality of graph and converted_model
-        assert converted_model.graph.node[0].op_type == "ReduceSum"
+        assert converted_model.graph.node[0].op_type == "Constant"
         assert converted_model.opset_import[0].version == 13
 
     # Test Slice Adapter: 9 -> 10
@@ -1244,10 +1247,13 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 9), 10)
 
-        assert converted_model.graph.node[0].op_type == "Slice"
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Constant"
+        assert converted_model.graph.node[2].op_type == "Constant"
+        assert converted_model.graph.node[3].op_type == "Slice"
         assert converted_model.opset_import[0].version == 10
-        assert len(converted_model.graph.node[0].input) == 4
-        assert len(converted_model.graph.node[0].attribute) == 0
+        assert len(converted_model.graph.node[3].input) == 4
+        assert len(converted_model.graph.node[3].attribute) == 0
 
     # Test RNN Adapter: 13 -> 14
     def test_rnn_13_14(self):  # type: () -> None
@@ -1458,6 +1464,68 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "LSTM"
         assert converted_model.opset_import[0].version == to_opset
         assert len(converted_model.graph.node[0].attribute) == 1
+
+    # Test that subgraphs are converted
+    def test_if_subgraph_10_11(self):  # type: () -> None
+        from_opset = 10
+        to_opset = 11
+        data_type = TensorProto.FLOAT
+        data_shape = [2]
+
+        subg1_node = [onnx.helper.make_node(
+            'Clip',
+            inputs=['sub_in'],
+            outputs=['sub_out'],
+            min=2.0,
+            max=3.0
+        )]
+        subg1_input = [
+            onnx.helper.make_tensor_value_info('sub_in', data_type, data_shape)
+        ]
+        subg1_output = [
+            onnx.helper.make_tensor_value_info('sub_out', data_type, data_shape)
+        ]
+        subg1 = helper.make_graph(subg1_node, "then_g", subg1_input, subg1_output)
+
+        subg2_node = [onnx.helper.make_node(
+            'Clip',
+            inputs=['sub_in'],
+            outputs=['sub_out'],
+            min=2.0,
+            max=3.0
+        )]
+        subg2_input = [
+            onnx.helper.make_tensor_value_info('sub_in', data_type, data_shape)
+        ]
+        subg2_output = [
+            onnx.helper.make_tensor_value_info('sub_out', data_type, data_shape)
+        ]
+        subg2 = helper.make_graph(subg2_node, "then_g", subg2_input, subg2_output)
+
+        node = [onnx.helper.make_node(
+            'If',
+            inputs=['cond'],
+            outputs=['out'],
+            then_branch=subg1,
+            else_branch=subg2
+        )]
+        input = [
+            onnx.helper.make_tensor_value_info('cond', TensorProto.BOOL, [])
+        ]
+        output = [
+            onnx.helper.make_tensor_value_info('out', data_type, data_shape)
+        ]
+        init = [helper.make_tensor('sub_in', data_type, data_shape, [4.0, 5.0])]
+        graph = helper.make_graph(node, 'test_subgraphs', input, output, init)
+
+        converted = self._converted(graph, helper.make_operatorsetid('', from_opset), to_opset)
+
+        assert converted.graph.node[0].op_type == 'If'
+        assert converted.opset_import[0].version == to_opset
+        assert converted.graph.node[0].attribute[0].g.node[2].op_type == 'Clip'
+        assert len(converted.graph.node[0].attribute[0].g.node[2].attribute) == 0
+        assert converted.graph.node[0].attribute[1].g.node[2].op_type == 'Clip'
+        assert len(converted.graph.node[0].attribute[1].g.node[2].attribute) == 0
 
 
 if __name__ == '__main__':
