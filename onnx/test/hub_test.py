@@ -8,7 +8,7 @@ from os.path import join
 
 
 class TestModelHub(unittest.TestCase):
-    def setUp(self):
+    def setUp(self): # type: () -> None
         self.name_1 = "T5-encoder"
         self.repo_1 = "mhamilton723/models:onnx-hub"  # TODO change this once committed in onnx/models
         self.opset_1 = 1
