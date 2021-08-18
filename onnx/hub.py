@@ -99,7 +99,7 @@ def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = No
     manifest_url = base_url + "ONNX_HUB_MANIFEST.json"
     try:
         with urlopen(manifest_url) as f:
-            manifest: List[ModelInfo] = [ModelInfo(info) for info in json.load(f)]
+            manifest: List[ModelInfo] = [ModelInfo(info) for info in json.load(cast(IO[str], f))]
     except HTTPError as e:
         raise AssertionError("Could not find manifest at {}".format(manifest_url), e)
 
@@ -176,4 +176,4 @@ def load(model: str,
         assert downloaded_sha == selected_model.model_sha, \
             "Downloaded model has SHA256 {} while checksum is {}".format(downloaded_sha, selected_model.model_sha)
 
-    return onnx.load(cast(IO[str], BytesIO(model_bytes)))
+    return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
