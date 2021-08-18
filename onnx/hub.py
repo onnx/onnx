@@ -74,7 +74,7 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
         repo_branch = "master"
 
     if lfs:
-        return "https://github.com/{}/{}/blob/{}/".format(repo_owner, repo_name, repo_branch)
+        return "https://media.githubusercontent.com/media/{}/{}/{}/".format(repo_owner, repo_name, repo_branch)
     else:
         return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_branch)
 
@@ -156,7 +156,7 @@ def load(model: str,
         os.makedirs(os.path.dirname(local_model_path), exist_ok=True)
         lfs_url = _get_base_url(repo, True)
         print("Downloading {} to local path {}".format(model, local_model_path))
-        wget.download(lfs_url + selected_model.model_path + "?raw=true", local_model_path)
+        wget.download(lfs_url + selected_model.model_path, local_model_path)
     else:
         print("Using cached {} model from {}".format(model, local_model_path))
 
