@@ -16,6 +16,7 @@ import numpy as np  # type: ignore
 
 from onnx import defs, FunctionProto, helper
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
+from OpSchema import AttrType, FormalParameter, SupportType # type: ignore
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.sample.ops import collect_sample_implementations
 from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
@@ -54,8 +55,8 @@ def format_versions(versions):  # type: (Sequence[OpSchema]) -> Text
                                                v.since_version) for v in versions[::-1]))
 
 
-def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
-    assert isinstance(v, OpSchema.AttrType)
+def display_attr_type(v):  # type: (AttrType) -> Text
+    assert isinstance(v, AttrType)
     s = Text(v)
     s = s[s.rfind('.') + 1:].lower()
     if s[-1] == 's':
@@ -81,20 +82,20 @@ def display_version_link(name, version):  # type: (Text, int) -> Text
     return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, version)
 
 
-def generate_formal_parameter_tags(formal_parameter):  # type: (OpSchema.FormalParameter) -> Text
+def generate_formal_parameter_tags(formal_parameter):  # type: (FormalParameter) -> Text
     tags = []  # type: List[Text]
-    if OpSchema.FormalParameterOption.Optional == formal_parameter.option:
+    if OpSchema.FormalParameterOption.Optional == formal_parameter.option:  # type: ignore
         tags = ["optional"]
-    elif OpSchema.FormalParameterOption.Variadic == formal_parameter.option:
-        if formal_parameter.isHomogeneous:
+    elif OpSchema.FormalParameterOption.Variadic == formal_parameter.option:  # type: ignore
+        if formal_parameter.isHomogeneous:  # type: ignore
             tags = ["variadic"]
         else:
             tags = ["variadic", "heterogeneous"]
-    differentiable = OpSchema.DifferentiationCategory.Differentiable  # type: OpSchema.DifferentiationCategory
-    non_differentiable = OpSchema.DifferentiationCategory.NonDifferentiable  # type: OpSchema.DifferentiationCategory
-    if differentiable == formal_parameter.differentiationCategory:
+    differentiable = OpSchema.DifferentiationCategory.Differentiable    # type: ignore
+    non_differentiable = OpSchema.DifferentiationCategory.NonDifferentiable    # type: ignore
+    if differentiable == formal_parameter.differentiationCategory:  # type: ignore
         tags.append('differentiable')
-    elif non_differentiable == formal_parameter.differentiationCategory:
+    elif non_differentiable == formal_parameter.differentiationCategory:  # type: ignore
         tags.append('non-differentiable')
 
     return '' if len(tags) == 0 else ' (' + ', '.join(tags) + ')'
@@ -217,9 +218,9 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
     return s
 
 
-def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
+def support_level_str(level):  # type: (SupportType) -> Text
     return \
-        "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
+        "<sub>experimental</sub> " if level == SupportType.EXPERIMENTAL else ""
 
 
 def main(args):  # type: (Type[Args]) -> None
