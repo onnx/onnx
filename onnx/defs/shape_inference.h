@@ -339,19 +339,12 @@ inline void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, si
     fail_type_inference("Input ", inputIndex, " expected to have sequence type");
   }
   auto input_seq_type = input_type->sequence_type();
-  if (input_seq_type.has_elem_type() && input_seq_type.elem_type().has_tensor_type()) {
-    if (input_seq_type.elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED) {
-      fail_type_inference("Element type of input ", inputIndex, " unknown");
-    }
-    auto output_type = ctx.getOutputType(outputIndex);
-    if (output_type->value_case() == TypeProto::kSequenceType ||
-        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-      output_type->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(
-          input_seq_type.elem_type().tensor_type().elem_type());
-    } else {
-      fail_type_inference("Output ", outputIndex, " expected to have sequence type. Got: ", input_type->value_case());
-    }
+  if (!input_seq_type.has_elem_type()) {
+    fail_type_inference("Element type of sequence input ", inputIndex, " unknown");
   }
+
+  auto output_type = ctx.getOutputType(outputIndex);
+  output_type->mutable_sequence_type()->mutable_elem_type()->CopyFrom(input_seq_type.elem_type());
 }
 
 inline void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
@@ -363,45 +356,9 @@ inline void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, si
   if (!input_opt_type.has_elem_type()) {
     fail_type_inference("Element type of optional input ", inputIndex, " unknown");
   }
-  if (input_opt_type.elem_type().has_tensor_type()) {
 
-	  const auto input_tensor_elem_type = getTensorElementType(input_opt_type.elem_type());
-	  if (input_tensor_elem_type == TensorProto::UNDEFINED) {
-	    fail_type_inference("Tensor type of optional tensor input ", inputIndex, " unknown");
-	  }
-
-	  auto output_opt_type = ctx.getOutputType(outputIndex)->mutable_optional_type();
-	  const auto input_value_case = input_opt_type.elem_type().value_case();
-	  const auto output_value_case = output_opt_type->mutable_elem_type()->value_case();
-	  auto output_tensor_type = output_opt_type->mutable_elem_type();
-	  if (output_value_case == TypeProto::kTensorType || output_value_case == TypeProto::kSparseTensorType) {
-	    setTensorElementType(input_tensor_elem_type, output_value_case, *output_tensor_type);
-	  } else if (output_value_case == TypeProto::VALUE_NOT_SET) {
-	    // Assume output will have the same type
-	    setTensorElementType(input_tensor_elem_type, input_value_case, *output_tensor_type);
-	  } else {
-	    // This is not expected to happen
-	    fail_type_inference(
-	        "Optional tensor output ", outputIndex, " expected to have tensor or sparse tensor type. Got: ", output_value_case);
-	  }
-  } else if (input_opt_type.elem_type().has_sequence_type()) {
-
-	  auto input_seq_type = input_opt_type.elem_type().sequence_type();
-	  if (input_seq_type.has_elem_type() && input_seq_type.elem_type().has_tensor_type()) {
-	    if (input_seq_type.elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED) {
-	      fail_type_inference("Element type of optional sequence input ", inputIndex, " unknown");
-	    }
-	    auto output_opt_type = ctx.getOutputType(outputIndex)->mutable_optional_type();
-	    const auto output_value_case = output_opt_type->mutable_elem_type()->value_case();
-	    if (output_value_case == TypeProto::kSequenceType ||
-	        output_value_case == TypeProto::VALUE_NOT_SET) {
-	      output_opt_type->mutable_elem_type()->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(
-	          input_seq_type.elem_type().tensor_type().elem_type());
-	    } else {
-	      fail_type_inference("Optional output ", outputIndex, " expected to have sequence type. Got: ", input_type->value_case());
-	    }
-	  }
-  }
+  auto output_type = ctx.getOutputType(outputIndex);
+  output_type->mutable_optional_type()->mutable_elem_type()->CopyFrom(input_opt_type.elem_type());
 }
 
 inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
