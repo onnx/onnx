@@ -116,7 +116,7 @@ Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initializers) {
           // default value for input
           TensorProto& tp = *initializers.Add();
           tp.set_name(vi.name());
-          CHECK_PARSER_STATUS (Parse(tp, vi.type()));
+          CHECK_PARSER_STATUS(Parse(tp, vi.type()));
         }
       } while (Matches(','));
       MATCH(')');
@@ -139,7 +139,7 @@ Status OnnxParser::ParseValueInfo(ValueInfoList& value_infos, TensorList& initia
           // initializer
           TensorProto& tp = *initializers.Add();
           tp.set_name(vi.name());
-          CHECK_PARSER_STATUS (Parse(tp, vi.type()));
+          CHECK_PARSER_STATUS(Parse(tp, vi.type()));
         } else {
           // valueinfo
           *value_infos.Add() = vi;
@@ -391,8 +391,8 @@ Status OnnxParser::Parse(ModelProto& model) {
               import->set_version(intval);
             } while (Matches(','));
             MATCH(']');
-            break;
           }
+          break;
         }
         case KeyWordMap::KeyWord::PRODUCER_NAME:
           PARSE_TOKEN(strval);
