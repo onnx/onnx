@@ -12,15 +12,16 @@ import os
 import wget  # type: ignore
 import hashlib
 from io import BytesIO
-from typing import List, Optional, Dict, Any, cast, Set, IO
+from typing import List, Optional, Dict, Any, Tuple, cast, Set, IO
 import onnx
+import sys
 
 if "ONNX_HOME" in os.environ:
     _ONNX_HUB_DIR = join(os.environ["ONNX_HOME"], "hub")
 elif "XDG_CACHE_HOME" in os.environ:
     _ONNX_HUB_DIR = join(os.environ["XDG_CACHE_HOME"], "onnx", "hub")
 else:
-    _ONNX_HUB_DIR = join(os.path.expanduser('~'), ".cache", "onnx", "hub")
+    _ONNX_HUB_DIR = join(os.path.expanduser("~"), ".cache", "onnx", "hub")
 
 
 class ModelInfo(object):
@@ -66,7 +67,55 @@ def get_dir() -> str:
     return _ONNX_HUB_DIR
 
 
-def _get_base_url(repo: str, lfs: bool = False) -> str:
+def _parse_repo_info(repo_spec: str) -> Tuple[str, str, str]:
+    """
+    Gets the repo owner, name and ref from a repo specification string.
+    """
+    repo_owner = repo_spec.split("/")[0]
+    repo_name = repo_spec.split("/")[1].split(":")[0]
+    if ":" in repo_spec:
+        repo_ref = repo_spec.split("/")[1].split(":")[1]
+    else:
+        repo_ref = "master"
+    return (repo_owner, repo_name, repo_ref)
+
+
+def _verify_repo_ref(repo_spec: str) -> Tuple[bool, Optional[str]]:
+    """
+    Verifies whether the given repo_spec can be trusted.
+    A ref can be trusted if it is from the onnx/models repo, and it has valid signnature.
+    """
+    repo_owner, repo_name, repo_ref = _parse_repo_info(repo_spec)
+    if (repo_owner == "onnx") and (repo_name == "models"):
+
+        try:
+            commit_info_url = "https://api.github.com/repos/{}/{}/commits/{}".format(repo_owner, repo_name, repo_ref)
+            response = urlopen(commit_info_url)
+            commit_info = json.loads(response.read().decode("utf-8"))
+            verified = commit_info["commit"]["verification"]["verified"]
+            if not verified:
+                msg = (
+                    'The model repo spec "{}/{}/{}" is not verified by GitHub and it may contain security vulnerabilities. '
+                    + "Only continue if you trust this model spec."
+                ).format(repo_owner, repo_name, repo_ref)
+                return (False, msg)
+            else:
+                return (True, None)
+        except HTTPError as e:
+            msg = (
+                'Cannot verify the model repo spec "{}/{}/{}" due to HTTPError and it may contain security vulnerabilities. '
+                + "Only continue if you trust this model spec. Error details: {}"
+            ).format(repo_owner, repo_name, repo_ref, e.reason)
+
+            return (False, msg)
+    else:
+        msg = 'The model repo "{}/{}" is not trusted and it may contain security vulnerabilities. Only continue if you trust this repo.'.format(
+            repo_owner, repo_name
+        )
+        return (False, msg)
+
+
+def _get_base_url(repo_spec: str, lfs: bool = False) -> str:
     """
     Gets the base github url from a repo specification string
     @param repo: The location of the model repo in format "user/repo[:branch]".
@@ -74,17 +123,12 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
     @param lfs: whether the url is for downloading lfs models
     @return: the base github url for downloading
     """
-    repo_owner = repo.split("/")[0]
-    repo_name = repo.split("/")[1].split(":")[0]
-    if ":" in repo:
-        repo_branch = repo.split("/")[1].split(":")[1]
-    else:
-        repo_branch = "master"
+    repo_owner, repo_name, repo_ref = _parse_repo_info(repo_spec)
 
     if lfs:
-        return "https://media.githubusercontent.com/media/{}/{}/{}/".format(repo_owner, repo_name, repo_branch)
+        return "https://media.githubusercontent.com/media/{}/{}/{}/".format(repo_owner, repo_name, repo_ref)
     else:
-        return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_branch)
+        return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_ref)
 
 
 def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = None) -> List[ModelInfo]:
@@ -115,9 +159,7 @@ def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = No
         return matching_info_list
 
 
-def get_model_info(model: str,
-                   repo: str = "onnx/models:master",
-                   opset: Optional[int] = None) -> List[ModelInfo]:
+def get_model_info(model: str, repo: str = "onnx/models:master", opset: Optional[int] = None) -> List[ModelInfo]:
     """
     Get the list of model info consistent with a given name and opset
 
@@ -127,7 +169,7 @@ def get_model_info(model: str,
     @param opset: The opset of the model to download. The default of `None`  will return all models of matching name
     """
     manifest = list_models(repo)
-    matching_models = [m for m in manifest if m.model == model]
+    matching_models = [m for m in manifest if m.model.lower() == model.lower()]
     assert len(matching_models) != 0, "No models found with name {}".format(model)
 
     if opset is None:
@@ -136,15 +178,17 @@ def get_model_info(model: str,
         selected_models = [m for m in matching_models if m.opset == opset]
         if len(selected_models) == 0:
             valid_opsets = [m.opset for m in matching_models]
-            raise AssertionError(
-                "{} has no version with opset {}. Valid opsets: {}".format(model, opset, valid_opsets))
+            raise AssertionError("{} has no version with opset {}. Valid opsets: {}".format(model, opset, valid_opsets))
     return selected_models
 
 
-def load(model: str,
-         repo: str = "onnx/models:master",
-         opset: Optional[int] = None,
-         force_reload: bool = False) -> onnx.ModelProto:
+def load(
+    model: str,
+    repo: str = "onnx/models:master",
+    opset: Optional[int] = None,
+    force_reload: bool = False,
+    silent: bool = False,
+) -> Optional[onnx.ModelProto]:
     """
     Download a model by name from the onnx model hub
 
@@ -153,6 +197,7 @@ def load(model: str,
         If no branch is found will default to "master"
     @param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
     @param force_reload: Whether to force the model to re-download even if its already found in the cache
+    @param silent: Whether to suppress the warning message if the repo is not trusted.
     """
     selected_model = get_model_info(model, repo, opset)[0]
     local_model_path_arr = selected_model.model_path.split("/")
@@ -161,6 +206,13 @@ def load(model: str,
     local_model_path = join(_ONNX_HUB_DIR, os.sep.join(local_model_path_arr))
 
     if force_reload or not os.path.exists(local_model_path):
+        (verified, msg) = _verify_repo_ref(repo)
+        if not verified and not silent:
+            print(msg, file=sys.stderr)
+            print("Continue?[y/n]")
+            if input().lower() != "y":
+                return None
+
         os.makedirs(os.path.dirname(local_model_path), exist_ok=True)
         lfs_url = _get_base_url(repo, True)
         print("Downloading {} to local path {}".format(model, local_model_path))
@@ -173,7 +225,9 @@ def load(model: str,
 
     if selected_model.model_sha is not None:
         downloaded_sha = hashlib.sha256(model_bytes).hexdigest()
-        assert downloaded_sha == selected_model.model_sha, \
-            "Downloaded model has SHA256 {} while checksum is {}".format(downloaded_sha, selected_model.model_sha)
+        assert downloaded_sha == selected_model.model_sha, "Downloaded model has SHA256 {} while checksum is {}".format(
+            downloaded_sha, selected_model.model_sha
+        )
 
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
+
