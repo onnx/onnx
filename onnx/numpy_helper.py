@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import sys
 
 import numpy as np  # type: ignore
-from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
+from onnx import TensorProto, MapProto, SequenceProto, OptionalProto, InOutContainerProto
 from onnx import mapping, helper
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List, Dict
@@ -353,3 +353,15 @@ def convert_endian(tensor):  # type: (TensorProto) -> None
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
     tensor.raw_data = np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
+
+
+def wrap_with_container(v, value_proto):  # type: (Any, str) -> InOutContainerProto
+    if value_proto.type.HasField('map_type'):
+        return from_dict(v, value_proto.name)
+    elif value_proto.type.HasField('sequence_type'):
+        return from_list(v, value_proto.name)
+    elif value_proto.type.HasField('optional_type'):
+        return from_optional(v, value_proto.name)
+    else:
+        assert value_proto.type.HasField('tensor_type')
+        return from_array(v, value_proto.name)

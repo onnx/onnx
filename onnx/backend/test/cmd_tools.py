@@ -56,35 +56,13 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                 for j, input in enumerate(inputs):
                     with open(os.path.join(
                             data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
-                        if case.model.graph.input[j].type.HasField('map_type'):
-                            f.write(numpy_helper.from_dict(
-                                input, case.model.graph.input[j].name).SerializeToString())
-                        elif case.model.graph.input[j].type.HasField('sequence_type'):
-                            f.write(numpy_helper.from_list(
-                                input, case.model.graph.input[j].name).SerializeToString())
-                        elif case.model.graph.input[j].type.HasField('optional_type'):
-                            f.write(numpy_helper.from_optional(
-                                input, case.model.graph.input[j].name).SerializeToString())
-                        else:
-                            assert case.model.graph.input[j].type.HasField('tensor_type')
-                            f.write(numpy_helper.from_array(
-                                input, case.model.graph.input[j].name).SerializeToString())
+                        f.write(numpy_helper.wrap_with_container(
+                            input, case.model.graph.input[j]).SerializeToString())
                 for j, output in enumerate(outputs):
                     with open(os.path.join(
                             data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
-                        if case.model.graph.output[j].type.HasField('map_type'):
-                            f.write(numpy_helper.from_dict(
-                                output, case.model.graph.output[j].name).SerializeToString())
-                        elif case.model.graph.output[j].type.HasField('sequence_type'):
-                            f.write(numpy_helper.from_list(
-                                output, case.model.graph.output[j].name).SerializeToString())
-                        elif case.model.graph.output[j].type.HasField('optional_type'):
-                            f.write(numpy_helper.from_optional(
-                                output, case.model.graph.output[j].name).SerializeToString())
-                        else:
-                            assert case.model.graph.output[j].type.HasField('tensor_type')
-                            f.write(numpy_helper.from_array(
-                                output, case.model.graph.output[j].name).SerializeToString())
+                        f.write(numpy_helper.wrap_with_container(
+                            output, case.model.graph.output[j]).SerializeToString())
 
 
 def parse_args():  # type: () -> argparse.Namespace
