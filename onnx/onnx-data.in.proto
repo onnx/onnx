@@ -158,6 +158,8 @@ message OptionalProto {
 //
 message InOutContainerProto {
   optional string name = 1;
+  optional int32 reserved_for_container = 21;
+
   oneof value {
     TensorProto tensor_value = 22;
     SparseTensorProto sparse_tensor_value = 23;
@@ -165,6 +167,4 @@ message InOutContainerProto {
     MapProto map_value = 25;
     OptionalProto optional_value = 26;
   }
-
-  optional int32 reserved_for_container = 21;
 };

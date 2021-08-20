@@ -356,12 +356,18 @@ def convert_endian(tensor):  # type: (TensorProto) -> None
 
 
 def wrap_with_container(v, value_proto):  # type: (Any, str) -> InOutContainerProto
+    ret = InOutContainerProto()
+    ret.name = value_proto.name
+    ret.reserved_for_container = 100
+
     if value_proto.type.HasField('map_type'):
-        return from_dict(v, value_proto.name)
+        ret.map_value.CopyFrom(from_dict(v, value_proto.name))
     elif value_proto.type.HasField('sequence_type'):
-        return from_list(v, value_proto.name)
+        ret.sequence_value.CopyFrom(from_list(v, value_proto.name))
     elif value_proto.type.HasField('optional_type'):
-        return from_optional(v, value_proto.name)
+        ret.optional_value.CopyFrom(from_optional(v, value_proto.name))
     else:
         assert value_proto.type.HasField('tensor_type')
-        return from_array(v, value_proto.name)
+        ret.tensor_value.CopyFrom(from_array(v, value_proto.name))
+
+    return ret
