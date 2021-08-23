@@ -58,13 +58,13 @@ class TestModelHub(unittest.TestCase):
 
     def test_verify_repo_ref(self):  # type: () -> None
         # Not trusted repo:
-        (verified, _) = hub._verify_repo_ref("mhamilton723/models")
+        verified = hub._verify_repo_ref("mhamilton723/models")
         self.assertFalse(verified)
 
         # Not trusted repo:
-        (verified, _) = hub._verify_repo_ref("onnx/models:unknown")
+        verified = hub._verify_repo_ref("onnx/models:unknown")
         self.assertFalse(verified)
 
         # Trusted repo:
-        (verified, _) = hub._verify_repo_ref(self.repo)
+        verified = hub._verify_repo_ref(self.repo)
         self.assertTrue(verified)

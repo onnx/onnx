@@ -80,20 +80,13 @@ def _parse_repo_info(repo: str) -> Tuple[str, str, str]:
     return repo_owner, repo_name, repo_ref
 
 
-def _verify_repo_ref(repo: str) -> Tuple[bool, Optional[str]]:
+def _verify_repo_ref(repo: str) -> bool:
     """
-    Verifies whether the given repo_spec can be trusted.
-    A ref can be trusted if it is from the onnx/models:master repo.
+    Verifies whether the given model repo can be trusted.
+    A model repo can be trusted if it matches onnx/models:master.
     """
     repo_owner, repo_name, repo_ref = _parse_repo_info(repo)
-    if not ((repo_owner == "onnx") and (repo_name == "models") and (repo_ref == "master")):
-        msg = (
-            'The model repo specification "{}/{}:{}" is not trusted and may'
-            " contain security vulnerabilities. Only continue if you trust this repo."
-        ).format(repo_owner, repo_name, repo_ref)
-        return False, msg
-    else:
-        return True, None
+    return (repo_owner == "onnx") and (repo_name == "models") and (repo_ref == "master")
 
 
 def _get_base_url(repo: str, lfs: bool = False) -> str:
@@ -187,8 +180,12 @@ def load(
     local_model_path = join(_ONNX_HUB_DIR, os.sep.join(local_model_path_arr))
 
     if force_reload or not os.path.exists(local_model_path):
-        (verified, msg) = _verify_repo_ref(repo)
-        if not verified and not silent:
+        if not _verify_repo_ref(repo) and not silent:
+            msg = (
+                'The model repo specification "{}" is not trusted and may'
+                " contain security vulnerabilities. Only continue if you trust this repo."
+            ).format(repo)
+
             print(msg, file=sys.stderr)
             print("Continue?[y/n]")
             if input().lower() != "y":
