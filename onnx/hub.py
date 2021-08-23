@@ -95,16 +95,16 @@ def _verify_repo_ref(repo_spec: str) -> Tuple[bool, Optional[str]]:
             verified = commit_info["commit"]["verification"]["verified"]
             if not verified:
                 msg = (
-                    'The model repo spec "{}/{}/{}" is not verified by GitHub and it may contain security vulnerabilities. '
-                    + "Only continue if you trust this model spec."
+                        'The model repo spec "{}/{}/{}" is not verified by GitHub and it may contain security vulnerabilities. '
+                        + "Only continue if you trust this model spec."
                 ).format(repo_owner, repo_name, repo_ref)
                 return (False, msg)
             else:
                 return (True, None)
         except HTTPError as e:
             msg = (
-                'Cannot verify the model repo spec "{}/{}/{}" due to HTTPError and it may contain security vulnerabilities. '
-                + "Only continue if you trust this model spec. Error details: {}"
+                    'Cannot verify the model repo spec "{}/{}/{}" due to HTTPError and it may contain security vulnerabilities. '
+                    + "Only continue if you trust this model spec. Error details: {}"
             ).format(repo_owner, repo_name, repo_ref, e.reason)
 
             return (False, msg)
@@ -183,11 +183,11 @@ def get_model_info(model: str, repo: str = "onnx/models:master", opset: Optional
 
 
 def load(
-    model: str,
-    repo: str = "onnx/models:master",
-    opset: Optional[int] = None,
-    force_reload: bool = False,
-    silent: bool = False,
+        model: str,
+        repo: str = "onnx/models:master",
+        opset: Optional[int] = None,
+        force_reload: bool = False,
+        silent: bool = False,
 ) -> Optional[onnx.ModelProto]:
     """
     Download a model by name from the onnx model hub
@@ -230,4 +230,3 @@ def load(
         )
 
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
-

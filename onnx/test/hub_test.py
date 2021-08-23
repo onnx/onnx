@@ -54,7 +54,7 @@ class TestModelHub(unittest.TestCase):
         self.assertRaises(AssertionError, lambda: hub.load(self.name, self.repo, opset=-1))
 
     def test_manifest_not_found(self):  # type: () -> None
-        self.assertRaises(AssertionError, lambda: hub.load(self.name, "mhamilton723/models:unknown", silent=True))
+        self.assertRaises(AssertionError, lambda: hub.load(self.name, "onnx/models:unknown", silent=True))
 
     def test_verify_repo_ref(self):  # type: () -> None
         # Not trusted repo:
