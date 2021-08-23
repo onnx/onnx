@@ -83,39 +83,17 @@ def _parse_repo_info(repo: str) -> Tuple[str, str, str]:
 def _verify_repo_ref(repo: str) -> Tuple[bool, Optional[str]]:
     """
     Verifies whether the given repo_spec can be trusted.
-    A ref can be trusted if it is from the onnx/models repo, and it has valid signnature.
+    A ref can be trusted if it is from the onnx/models:master repo.
     """
     repo_owner, repo_name, repo_ref = _parse_repo_info(repo)
-    if (repo_owner == "onnx") and (repo_name == "models"):
-
-        try:
-            commit_info_url = "https://api.github.com/repos/{}/{}/commits/{}".format(repo_owner, repo_name, repo_ref)
-            response = urlopen(commit_info_url)
-            commit_info = json.loads(response.read().decode("utf-8"))
-            verified = commit_info["commit"]["verification"]["verified"]
-            if not verified:
-                msg = (
-                    'The model repo spec "{}/{}/{}" is not verified by GitHub and '
-                    'it may contain security vulnerabilities. '
-                    'Only continue if you trust this model spec.'
-                ).format(repo_owner, repo_name, repo_ref)
-                return False, msg
-            else:
-                return True, None
-        except HTTPError as e:
-            msg = (
-                'Cannot verify the model repo spec "{}/{}/{}" due to HTTPError'
-                ' and it may contain security vulnerabilities. '
-                'Only continue if you trust this model spec. Error details: {}'
-            ).format(repo_owner, repo_name, repo_ref, e.reason)
-
-            return False, msg
-    else:
+    if not ((repo_owner == "onnx") and (repo_name == "models") and (repo_ref == "master")):
         msg = (
-            'The model repo "{}/{}" is not trusted and it may'
-            ' contain security vulnerabilities. Only continue if you trust this repo.'
-        ).format(repo_owner, repo_name)
+            'The model repo specification "{}/{}:{}" is not trusted and may'
+            " contain security vulnerabilities. Only continue if you trust this repo."
+        ).format(repo_owner, repo_name, repo_ref)
         return False, msg
+    else:
+        return True, None
 
 
 def _get_base_url(repo: str, lfs: bool = False) -> str:
@@ -186,11 +164,11 @@ def get_model_info(model: str, repo: str = "onnx/models:master", opset: Optional
 
 
 def load(
-        model: str,
-        repo: str = "onnx/models:master",
-        opset: Optional[int] = None,
-        force_reload: bool = False,
-        silent: bool = False,
+    model: str,
+    repo: str = "onnx/models:master",
+    opset: Optional[int] = None,
+    force_reload: bool = False,
+    silent: bool = False,
 ) -> Optional[onnx.ModelProto]:
     """
     Download a model by name from the onnx model hub
