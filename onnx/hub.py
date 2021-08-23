@@ -67,25 +67,25 @@ def get_dir() -> str:
     return _ONNX_HUB_DIR
 
 
-def _parse_repo_info(repo_spec: str) -> Tuple[str, str, str]:
+def _parse_repo_info(repo: str) -> Tuple[str, str, str]:
     """
     Gets the repo owner, name and ref from a repo specification string.
     """
-    repo_owner = repo_spec.split("/")[0]
-    repo_name = repo_spec.split("/")[1].split(":")[0]
-    if ":" in repo_spec:
-        repo_ref = repo_spec.split("/")[1].split(":")[1]
+    repo_owner = repo.split("/")[0]
+    repo_name = repo.split("/")[1].split(":")[0]
+    if ":" in repo:
+        repo_ref = repo.split("/")[1].split(":")[1]
     else:
         repo_ref = "master"
-    return (repo_owner, repo_name, repo_ref)
+    return repo_owner, repo_name, repo_ref
 
 
-def _verify_repo_ref(repo_spec: str) -> Tuple[bool, Optional[str]]:
+def _verify_repo_ref(repo: str) -> Tuple[bool, Optional[str]]:
     """
     Verifies whether the given repo_spec can be trusted.
     A ref can be trusted if it is from the onnx/models repo, and it has valid signnature.
     """
-    repo_owner, repo_name, repo_ref = _parse_repo_info(repo_spec)
+    repo_owner, repo_name, repo_ref = _parse_repo_info(repo)
     if (repo_owner == "onnx") and (repo_name == "models"):
 
         try:
@@ -95,27 +95,30 @@ def _verify_repo_ref(repo_spec: str) -> Tuple[bool, Optional[str]]:
             verified = commit_info["commit"]["verification"]["verified"]
             if not verified:
                 msg = (
-                        'The model repo spec "{}/{}/{}" is not verified by GitHub and it may contain security vulnerabilities. '
-                        + "Only continue if you trust this model spec."
+                    'The model repo spec "{}/{}/{}" is not verified by GitHub and '
+                    'it may contain security vulnerabilities. '
+                    'Only continue if you trust this model spec.'
                 ).format(repo_owner, repo_name, repo_ref)
-                return (False, msg)
+                return False, msg
             else:
-                return (True, None)
+                return True, None
         except HTTPError as e:
             msg = (
-                    'Cannot verify the model repo spec "{}/{}/{}" due to HTTPError and it may contain security vulnerabilities. '
-                    + "Only continue if you trust this model spec. Error details: {}"
+                'Cannot verify the model repo spec "{}/{}/{}" due to HTTPError'
+                ' and it may contain security vulnerabilities. '
+                'Only continue if you trust this model spec. Error details: {}'
             ).format(repo_owner, repo_name, repo_ref, e.reason)
 
-            return (False, msg)
+            return False, msg
     else:
-        msg = 'The model repo "{}/{}" is not trusted and it may contain security vulnerabilities. Only continue if you trust this repo.'.format(
-            repo_owner, repo_name
-        )
-        return (False, msg)
+        msg = (
+            'The model repo "{}/{}" is not trusted and it may'
+            ' contain security vulnerabilities. Only continue if you trust this repo.'
+        ).format(repo_owner, repo_name)
+        return False, msg
 
 
-def _get_base_url(repo_spec: str, lfs: bool = False) -> str:
+def _get_base_url(repo: str, lfs: bool = False) -> str:
     """
     Gets the base github url from a repo specification string
     @param repo: The location of the model repo in format "user/repo[:branch]".
@@ -123,7 +126,7 @@ def _get_base_url(repo_spec: str, lfs: bool = False) -> str:
     @param lfs: whether the url is for downloading lfs models
     @return: the base github url for downloading
     """
-    repo_owner, repo_name, repo_ref = _parse_repo_info(repo_spec)
+    repo_owner, repo_name, repo_ref = _parse_repo_info(repo)
 
     if lfs:
         return "https://media.githubusercontent.com/media/{}/{}/{}/".format(repo_owner, repo_name, repo_ref)
@@ -133,12 +136,12 @@ def _get_base_url(repo_spec: str, lfs: bool = False) -> str:
 
 def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = None) -> List[ModelInfo]:
     """
-        Get the list of model info consistent with a given name and opset
+    Get the list of model info consistent with a given name and opset
 
-        @param repo: The location of the model repo in format "user/repo[:branch]".
-            If no branch is found will default to "master"
-        @param tags: A list of tags to filter models by
-        """
+    @param repo: The location of the model repo in format "user/repo[:branch]".
+        If no branch is found will default to "master"
+    @param tags: A list of tags to filter models by
+    """
     base_url = _get_base_url(repo)
     manifest_url = base_url + "ONNX_HUB_MANIFEST.json"
     try:
