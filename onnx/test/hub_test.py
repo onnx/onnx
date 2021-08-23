@@ -65,6 +65,10 @@ class TestModelHub(unittest.TestCase):
         (verified, _) = hub._verify_repo_ref("onnx/models:a3714158461054b4b9d5215bedb77e445e3cd2ff")
         self.assertFalse(verified)
 
+        # Trusted repo, but non-existent ref.
+        (verified, _) = hub._verify_repo_ref("onnx/models:unknown")
+        self.assertFalse(verified)
+
         # Trusted repo, verified ref:
         (verified, _) = hub._verify_repo_ref(self.repo)
         self.assertTrue(verified)
