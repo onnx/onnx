@@ -7949,6 +7949,31 @@ expect(node, inputs=[data], outputs=[data],
 
 
 <details>
+<summary>identity_opt</summary>
+
+```python
+ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
+seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
+opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
+
+identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['opt_in'],
+    outputs=['opt_out']
+)
+
+x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
+
+expect(identity_node, inputs=[x], outputs=[x], name='test_identity_opt',
+       opset_imports=[onnx.helper.make_opsetid("", 16)],
+       input_type_protos=[opt_in_tp],
+       output_type_protos=[opt_in_tp])
+```
+
+</details>
+
+
+<details>
 <summary>sequence</summary>
 
 ```python
@@ -8071,7 +8096,140 @@ if_node = onnx.helper.make_node(
 cond = np.array(1).astype(bool)
 res = x if cond else y
 expect(if_node, inputs=[cond], outputs=[res], name='test_if',
-    opset_imports=[onnx.helper.make_opsetid("", 11)])
+       opset_imports=[onnx.helper.make_opsetid("", 11)])
+```
+
+</details>
+
+
+<details>
+<summary>if_opt_input</summary>
+
+```python
+# Given a bool scalar input cond and an optional sequence of tensor,
+# return an empty tensor sequence if true, return the input sequence
+# tensor element otherwise
+
+ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
+seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
+opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
+opt_in = onnx.helper.make_value_info('opt_seq_in', opt_in_tp)
+
+then_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
+then_out_seq_tp = onnx.helper.make_sequence_type_proto(then_out_tensor_tp)
+then_out = onnx.helper.make_value_info('then_out', then_out_seq_tp)
+else_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
+else_out_seq_tp = onnx.helper.make_sequence_type_proto(else_out_tensor_tp)
+else_out = onnx.helper.make_value_info('else_out', else_out_seq_tp)
+
+seq_empty_in = onnx.helper.make_node(
+    'SequenceEmpty',
+    inputs=[],
+    outputs=['seq_empty']
+)
+
+then_body = onnx.helper.make_graph(
+    [seq_empty_in],
+    'then_body',
+    [],
+    [then_out]
+)
+
+optional_get_elem = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['opt_seq_in'],
+    outputs=['seq_in']
+)
+
+else_body = onnx.helper.make_graph(
+    [optional_get_elem],
+    'else_body',
+    [opt_in],
+    [else_out]
+)
+
+if_node = onnx.helper.make_node(
+    'If',
+    inputs=['cond'],
+    outputs=['sequence'],
+    then_branch=then_body,
+    else_branch=else_body
+)
+
+x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
+cond = np.array(0).astype(bool)
+res = compute_if_outputs(x, cond)
+
+expect(if_node, inputs=[cond], outputs=[res], name='test_if_opt_input',
+       opset_imports=[onnx.helper.make_opsetid("", 16)])
+```
+
+</details>
+
+
+<details>
+<summary>if_optional_output</summary>
+
+```python
+# Given a bool scalar input cond and an optional sequence of tensor, return an empty
+# optional sequence of tensor if True, return the identity
+# (of the input optional sequence) otherwise.
+
+ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
+seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
+opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
+opt_in = onnx.helper.make_value_info('opt_seq_in', opt_in_tp)
+
+then_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
+then_out_seq_tp = onnx.helper.make_sequence_type_proto(then_out_tensor_tp)
+then_out_opt_tp = onnx.helper.make_optional_type_proto(then_out_seq_tp)
+then_out = onnx.helper.make_value_info('then_out', then_out_opt_tp)
+else_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
+else_out_seq_tp = onnx.helper.make_sequence_type_proto(else_out_tensor_tp)
+else_out_opt_tp = onnx.helper.make_optional_type_proto(else_out_seq_tp)
+else_out = onnx.helper.make_value_info('else_out', else_out_opt_tp)
+
+seq_empty_in = onnx.helper.make_node(
+    'Optional',
+    inputs=[],
+    outputs=['optional_empty'],
+    type=opt_in_tp
+)
+
+then_body = onnx.helper.make_graph(
+    [seq_empty_in],
+    'then_body',
+    [],
+    [then_out]
+)
+
+optional_get_elem = onnx.helper.make_node(
+    'Identity',
+    inputs=['opt_seq_in'],
+    outputs=['optional_seq']
+)
+
+else_body = onnx.helper.make_graph(
+    [optional_get_elem],
+    'else_body',
+    [opt_in],
+    [else_out]
+)
+
+if_node = onnx.helper.make_node(
+    'If',
+    inputs=['cond'],
+    outputs=['sequence'],
+    then_branch=then_body,
+    else_branch=else_body
+)
+
+x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
+cond = np.array(0).astype(bool)
+res = compute_if_outputs(x, cond)
+
+expect(if_node, inputs=[cond], outputs=[res], name='test_if_opt_output',
+       opset_imports=[onnx.helper.make_opsetid("", 16)])
 ```
 
 </details>
@@ -8141,7 +8299,7 @@ if_node = onnx.helper.make_node(
 cond = np.array(1).astype(bool)
 res = x if cond else y
 expect(if_node, inputs=[cond], outputs=[res], name='test_if_seq',
-    opset_imports=[onnx.helper.make_opsetid("", 13)])
+       opset_imports=[onnx.helper.make_opsetid("", 13)])
 ```
 
 </details>
@@ -9670,6 +9828,180 @@ expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
                           onnx.helper.make_tensor_type_proto(onnx.TensorProto.BOOL, cond.shape),
                           onnx.helper.make_sequence_type_proto(
                               onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, []))])
+```
+
+</details>
+
+
+<details>
+<summary>loop_16_none</summary>
+
+```python
+# Given a tensor x of values [x1, ..., xN], and an initial optional sequence of tensors s1,
+# Return a concatenated sequence of tensors of
+#   [s1, [x1], [x1, x2], ..., [x1, ..., xN]]
+
+ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, None)
+seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
+opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
+opt_in = onnx.helper.make_value_info('opt_seq_in', opt_in_tp)
+seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
+cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
+iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
+
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+
+optional_has_elem_node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['opt_seq_in'],
+    outputs=['optional_has_elem']
+)
+
+optional_is_none = onnx.helper.make_node(
+    'Not',
+    inputs=['optional_has_elem'],
+    outputs=['optional_is_none']
+)
+
+optional_get_elem = onnx.helper.make_node(
+    'OptionalGetElement',
+    inputs=['opt_seq_in'],
+    outputs=['seq_in']
+)
+
+seq_empty_in = onnx.helper.make_node(
+    'SequenceEmpty',
+    inputs=[],
+    outputs=['seq_empty']
+)
+
+then_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+then_body = onnx.helper.make_graph(
+    [seq_empty_in],
+    'then_body',
+    [],
+    [then_seq_out]
+)
+
+else_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+else_body = onnx.helper.make_graph(
+    [optional_get_elem],
+    'else_body',
+    [opt_in],
+    [else_seq_out]
+)
+
+if_node = onnx.helper.make_node(
+    'If',
+    inputs=['optional_is_none'],
+    outputs=['sequence'],
+    then_branch=then_body,
+    else_branch=else_body
+)
+
+x_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_x',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=x.shape,
+        vals=x.flatten().astype(float),
+    )
+)
+
+one_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['one'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_one',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[1]
+    )
+)
+
+zero_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['slice_start'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_zero',
+        data_type=onnx.TensorProto.INT64,
+        dims=(1,),
+        vals=[0]
+    )
+)
+
+axes_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['axes'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor_axes',
+        data_type=onnx.TensorProto.INT64,
+        dims=(),
+        vals=[0]
+    )
+)
+
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['iter_count', 'one'],
+    outputs=['end']
+)
+
+end_unsqueeze_node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['end', 'axes'],
+    outputs=['slice_end']
+)
+
+slice_node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x', 'slice_start', 'slice_end'],
+    outputs=['slice_out']
+)
+
+insert_node = onnx.helper.make_node(
+    'SequenceInsert',
+    inputs=['sequence', 'slice_out'],
+    outputs=['seq_out']
+)
+
+identity_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['cond_in'],
+    outputs=['cond_out']
+)
+
+loop_body = onnx.helper.make_graph(
+    [identity_node, optional_has_elem_node, optional_is_none, if_node, x_const_node, one_const_node,
+     zero_const_node, add_node, axes_node, end_unsqueeze_node, slice_node, insert_node],
+    'loop_body',
+    [iter_count, cond_in, opt_in],
+    [cond_out, seq_out]
+)
+
+node = onnx.helper.make_node(
+    'Loop',
+    inputs=['trip_count', 'cond', 'opt_seq'],
+    outputs=['seq_res'],
+    body=loop_body
+)
+
+trip_count = np.array(5).astype(np.int64)
+cond = np.array(1).astype(bool)
+seq_empty = []  # type: List[Any]
+seq_res = compute_loop_outputs(x, seq_empty, trip_count)
+expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
+       name='test_loop16_seq_none', opset_imports=[onnx.helper.make_opsetid("", 16)],
+       input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, trip_count.shape),
+                          onnx.helper.make_tensor_type_proto(onnx.TensorProto.BOOL, cond.shape),
+                          opt_in_tp])
 ```
 
 </details>
