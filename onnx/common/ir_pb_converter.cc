@@ -323,7 +323,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
         } else if (tensor_by_name_of.count(input)) {
           // If the node input can be found in the initializers
           // Convert this initializer tensor into a Value
-          // And add it into node inputs
+          // and add it into node inputs
           Tensor init_tensor = tensor_by_name_of.at(input);
           Value* init_value = new Value(n, n->inputSize());
           std::vector<Dimension> dim_sizes{init_tensor.sizes().cbegin(),
