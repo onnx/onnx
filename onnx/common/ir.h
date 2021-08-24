@@ -542,6 +542,10 @@ public:
     return inputs_.at(i);
   }
 
+  int inputSize() const {
+    return inputs_.size();
+  }
+
   // Graphs
 
   // Note [Topological invariant]

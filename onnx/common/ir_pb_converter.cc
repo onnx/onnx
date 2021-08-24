@@ -11,7 +11,8 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested);
+std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested,
+  const int ir_version);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   Tensor ret;
@@ -94,7 +95,8 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   return ret;
 }
 
-void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n) {
+void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n,
+  const int ir_version) {
   Symbol sym = Symbol(ap.name());
   switch (ap.type()) {
     case ONNX_NAMESPACE::AttributeProto_AttributeType_FLOAT:
@@ -158,13 +160,13 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n) {
       break;
     }
     case ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPH:
-      n->g_(sym, graphProtoToGraph(ap.g(), true));
+      n->g_(sym, graphProtoToGraph(ap.g(), true, ir_version));
       break;
     case ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPHS: {
       std::vector<std::shared_ptr<Graph>> graphs;
       graphs.reserve(ap.graphs_size());
       for (int i = 0; i < ap.graphs_size(); i++) {
-        graphs.push_back(graphProtoToGraph(ap.graphs(i), true));
+        graphs.push_back(graphProtoToGraph(ap.graphs(i), true, ir_version));
       }
       n->gs_(sym, std::move(graphs));
       break;
@@ -179,9 +181,9 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n) {
   }
 }
 
-void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n) {
+void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version) {
   for (int i = 0; i < np.attribute_size(); i++) {
-    convertAttribute(np.attribute(i), n);
+    convertAttribute(np.attribute(i), n, ir_version);
   }
 }
 
@@ -202,7 +204,8 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
   return dims;
 }
 
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested) {
+std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
+  bool nested, const int ir_version) {
   std::unique_ptr<Graph> g(new Graph());
 
   if (gp.has_name()) {
@@ -227,6 +230,11 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   // objects out of them, and equal strings must be mapped to the same
   // Value object.
   std::unordered_map<std::string, Value*> value_by_name_of;
+
+  // Maintain a tensor map from initializer. If a node cannot find a input
+  // from graph inputs, it will look into graph initializers by this map.
+  std::unordered_map<std::string, Tensor> tensor_by_name_of;
+
 
   // We initialize Node inputs in a separate pass from the Nodes
   // themselves. To do so, we need to have access to the names of the
@@ -259,6 +267,16 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     value_by_name_of[vip.name()] = v;
   }
 
+  for (int i = 0; i < gp.initializer_size(); ++i) {
+    auto init = tensorProtoToTensor(gp.initializer(i));
+    g->addInitializer(init, init.name());
+    // If ir_version >= 4, initializer does not have to be included in input
+    // Save initializer into a tensor map for later use (node input)
+    if (ir_version >= 4) {
+      tensor_by_name_of[init.name()] = init;
+    }
+  }
+
   for (int i = 0; i < gp.node_size(); i++) {
     auto np = gp.node(i);
     auto* n = g->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
@@ -270,7 +288,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
       out->setUniqueName(np.output(j));
       value_by_name_of[np.output(j)] = out;
     }
-    convertAttributes(np, n);
+    convertAttributes(np, n, ir_version);
     std::vector<std::string> inputs;
     inputs.reserve(np.input_size());
     for (int j = 0; j < np.input_size(); j++) {
@@ -294,13 +312,28 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
       continue;
     }
     for (auto input : search->second) {
-      if (!value_by_name_of.count(input) && nested) {
-        // Undefined reference to an input in a nested block. This may be a
-        // captured value. Create a dummy node that we ignore later.
-        auto* undef = g->create(kCaptured, 1);
-        g->appendNode(undef);
-        undef->outputs()[0]->setUniqueName(input);
-        value_by_name_of[input] = undef->outputs()[0];
+      if (!value_by_name_of.count(input)) {
+        if (nested) {
+          // Undefined reference to an input in a nested block. This may be a
+          // captured value. Create a dummy node that we ignore later.
+          auto* undef = g->create(kCaptured, 1);
+          g->appendNode(undef);
+          undef->outputs()[0]->setUniqueName(input);
+          value_by_name_of[input] = undef->outputs()[0];
+        } else if (tensor_by_name_of.count(input)) {
+          // If the node input can be found in the initializers
+          // Convert this initializer tensor into a Value
+          // And add it into node inputs
+          Tensor init_tensor = tensor_by_name_of.at(input);
+          Value* init_value = new Value(n, n->inputSize());
+          std::vector<Dimension> dim_sizes{init_tensor.sizes().cbegin(),
+                                          init_tensor.sizes().cend()};
+          init_value->setUniqueName(input);
+          init_value->setSizes(dim_sizes);
+          init_value->setElemType(init_tensor.elem_type());
+          n->addInput(init_value);
+          continue;
+        }
       }
 
       if (!value_by_name_of.count(input)) {
@@ -343,11 +376,6 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     }
   }
 
-  for (int i = 0; i < gp.initializer_size(); i++) {
-    auto init = tensorProtoToTensor(gp.initializer(i));
-    g->addInitializer(init, init.name());
-  }
-
   return g;
 }
 
@@ -358,7 +386,7 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
     return nullptr;
   }
 
-  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
+  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false, mp.ir_version()));
   for (int i = 0; i < mp.opset_import_size(); i++) {
     OpSetID new_opset_version(mp.opset_import(i).domain(), mp.opset_import(i).version());
     g->forSelfAndEachSubGraph(
