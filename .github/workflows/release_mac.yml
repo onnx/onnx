@@ -106,7 +106,7 @@ jobs:
         
         # Test the uploaded source distribution
         python -m pip uninstall -y onnx
-        python -m pip install -i https://test.pypi.org/simple/ --no-binary :all: onnx
+        python -m pip install -i https://test.pypi.org/simple/ --no-binary :all: onnx-weekly
         pytest
 
     - name: Verify ONNX with the latest numpy
