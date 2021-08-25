@@ -400,17 +400,8 @@ Status OnnxParser::Parse(FunctionProto& fn) {
     } while (Matches(','));
     MATCH('>');
   }
-  // TODO: opset import
-  std::string domain("");
   std::string id;
   ParseIdentifier(id);
-  while (Matches('.')) {
-    if (!domain.empty())
-      domain += ".";
-    domain += id;
-    ParseIdentifier(id);
-  }
-  fn.set_domain(domain);
   fn.set_name(id);
 
   PARSE('<', *fn.mutable_attribute(), '>');
