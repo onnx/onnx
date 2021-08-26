@@ -25,6 +25,11 @@ else:
 
 
 class ModelInfo(object):
+    """
+    A class to represent a model's property and metadata in the ONNX Hub.
+    It extracts model name, path, sha, tags, etc. from the passed in raw_model_info dict.
+    """
+
     def __init__(self, raw_model_info: Dict[str, Any]) -> None:
         self.model = cast(str, raw_model_info["model"])
 
