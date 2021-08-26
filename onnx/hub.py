@@ -144,7 +144,8 @@ def get_model_info(model: str, repo: str = "onnx/models:master", opset: Optional
     """
     manifest = list_models(repo)
     matching_models = [m for m in manifest if m.model.lower() == model.lower()]
-    assert len(matching_models) != 0, "No models found with name {}".format(model)
+    if not matching_models:
+        raise AssertionError("No models found with name {}".format(model))
 
     if opset is None:
         selected_models = sorted(matching_models, key=lambda m: m.opset)
