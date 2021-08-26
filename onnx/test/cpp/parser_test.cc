@@ -234,6 +234,31 @@ agraph (float[N] y, float[N] z) => (float[N] w)
   EXPECT_EQ(graph.value_info_size(), 1);
 }
 
+TEST(ParserTest, FunctionTest) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+f (y, z) => (w)
+{
+    x = Add(y, z)
+    w = Mul(x, y)
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
+
+  EXPECT_EQ(fp.name(), "f");
+  EXPECT_EQ(fp.input_size(), 2);
+  EXPECT_EQ(fp.output_size(), 1);
+  EXPECT_EQ(fp.node_size(), 2);
+  EXPECT_EQ(fp.attribute_size(), 0);
+  EXPECT_EQ(fp.opset_import_size(), 1);
+}
+
 TEST(ParserTest, InitializerTest) {
   const char* code = R"ONNX(
 agraph (float y = {1.0}, float[N] z) => (float[N] w)
@@ -330,6 +355,42 @@ iftest (bool b, float[128] X, float[128] Y) => (float[128] Z)
       then_branch = g1 () => (float[128] z_then) { z_then = Identity(X) },
       else_branch = g2 () => (float[128] z_else) { z_else = Identity(Y) }
       >
+}
+)ONNX";
+
+  CheckModel(code);
+}
+
+TEST(ParserTest, FunModelTest) {
+  const char* code = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 10, "local" : 1 ]
+>
+agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+{
+  T = local.foo (X, W, B)
+  C = local.square(T)
+}
+
+<
+  opset_import: [ "" : 10 ],
+  domain: "local",
+  doc_string: "Function foo."
+>
+foo (x, w, b) => (c) {
+  T = MatMul(x, w)
+  S = Add(T, b)
+  c = Softmax(S)
+}
+
+<
+  opset_import: [ "" : 10 ],
+  domain: "local",
+  doc_string: "Function square."
+>
+square (x) => (y) {
+  y = Mul (x, x)
 }
 )ONNX";
 
