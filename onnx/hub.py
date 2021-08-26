@@ -28,9 +28,21 @@ class ModelInfo(object):
     """
     A class to represent a model's property and metadata in the ONNX Hub.
     It extracts model name, path, sha, tags, etc. from the passed in raw_model_info dict.
+
+    Attributes:
+        model: The name of the model.
+        model_path: The path to the model, relative to the model zoo (https://github.com/onnx/models/) repo root.
+        metadata: Additional metadata of the model, such as the size of the model, IO ports, etc.
+        model_sha: The SHA256 digest of the model file.
+        tags: A set of tags associated with the model.
+        opset: The opset version of the model.
     """
 
     def __init__(self, raw_model_info: Dict[str, Any]) -> None:
+        """
+        Parameters:
+            raw_model_info: A JSON dict containing the model info.
+        """
         self.model = cast(str, raw_model_info["model"])
 
         self.model_path = cast(str, raw_model_info["model_path"])
