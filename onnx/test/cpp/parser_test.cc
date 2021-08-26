@@ -369,18 +369,28 @@ TEST(ParserTest, FunModelTest) {
 >
 agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
 {
-  C = local.foo (X, W, B)
+  T = local.foo (X, W, B)
+  C = local.square(T)
 }
 
 <
   opset_import: [ "" : 10 ],
   domain: "local",
-  doc_string: "A function test case."
+  doc_string: "Function foo."
 >
 foo (x, w, b) => (c) {
   T = MatMul(x, w)
   S = Add(T, b)
   c = Softmax(S)
+}
+
+<
+  opset_import: [ "" : 10 ],
+  domain: "local",
+  doc_string: "Function square."
+>
+square (x) => (y) {
+  y = Mul (x, x)
 }
 )ONNX";
 
