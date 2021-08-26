@@ -229,11 +229,10 @@ def load(
         downloaded_sha = hashlib.sha256(model_bytes).hexdigest()
         if not downloaded_sha == selected_model.model_sha:
             raise AssertionError(
-                "The cached model has SHA256 {} while checksum should be {}. "
-                + "The model in the hub may have been updated. Use force_reload to download the model from the model hub.".format(
-                    downloaded_sha, selected_model.model_sha
-                )
+                (
+                    "The cached model has SHA256 {} while checksum should be {}. "
+                    + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
+                ).format(downloaded_sha, selected_model.model_sha)
             )
 
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
-

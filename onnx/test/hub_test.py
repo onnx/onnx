@@ -76,4 +76,3 @@ class TestModelHub(unittest.TestCase):
         hub.get_model_info("mnist", self.repo, opset=8)
         hub.get_model_info("mnist", self.repo)
         self.assertRaises(AssertionError, lambda: hub.get_model_info("mnist", self.repo, opset=-1))
-
