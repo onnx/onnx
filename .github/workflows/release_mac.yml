@@ -94,10 +94,20 @@ jobs:
         name: wheels
         path: dist
 
-    - name: Upload wheel to TestPyPI weekly
+    - name: Upload wheel/source distribution to TestPyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
-        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+        twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+        
+        # Build and upload source distribution to TestPyPI
+        git clean -xdf
+        python setup.py sdist
+        twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+        
+        # Test the uploaded source distribution
+        python -m pip uninstall -y onnx
+        python -m pip install -i https://test.pypi.org/simple/ --no-binary :all: onnx-weekly
+        pytest
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
