@@ -164,4 +164,26 @@ std::ostream& operator<<(std::ostream& os, const GraphProto& graph) {
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const OperatorSetIdProto& opset) {
+  os << "\"" << opset.domain() << "\" : " << opset.version();
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const FunctionProto& fn) {
+  os << "<\n";
+  os << "  " << "domain: \"" << fn.domain() << "\",\n";
+  os << "  " << "opset_import: ";
+  print (os, "[", ",", "]", fn.opset_import());
+  os << "\n>\n";
+  os << fn.name() << " ";
+  if (fn.attribute_size() > 0)
+    print(os, "<", ",", ">", fn.attribute());
+  print(os, "(", ", ", ")", fn.input());
+  os << " => ";
+  print(os, "(", ", ", ")", fn.output());
+  os << "\n";
+  os << fn.node();
+  return os;
+}
+
 } // namespace ONNX_NAMESPACE
