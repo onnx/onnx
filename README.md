@@ -50,6 +50,15 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 # Installation
 
+## Prerequisites
+
+```
+numpy >= 1.16.6
+protobuf >= 3.12.0
+six
+typing-extensions >= 3.6.2.1
+```
+
 ## Official Python packages
 ONNX released packages are published in PyPi.
 ```

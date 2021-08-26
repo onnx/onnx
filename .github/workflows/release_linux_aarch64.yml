@@ -104,7 +104,20 @@ jobs:
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy && \
+          python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          python -m pip install pytest && \
+          pytest && \
+          deactivate'
+
+    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+      if: ${{ always() }}
+      run: |
+         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          python -m pip uninstall -y onnx && python -m pip install protobuf==3.12.0 && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           python -m pip install pytest && \
           pytest && \

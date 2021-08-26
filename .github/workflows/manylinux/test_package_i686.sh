@@ -43,4 +43,9 @@ $PIP_UNINSTALL_COMMAND protobuf onnx && $PIP_INSTALL_COMMAND protobuf
 $PIP_INSTALL_COMMAND dist/*manylinux2010_i686.whl
 $PYTEST_COMMAND
 
+# Verify ONNX the minimum supported protobuf (from requirements.txt)
+$PIP_UNINSTALL_COMMAND protobuf onnx && $PIP_INSTALL_COMMAND protobuf==3.12.0
+$PIP_INSTALL_COMMAND dist/*manylinux2010_i686.whl
+$PYTEST_COMMAND
+
 echo "Succesfully test the wheel"
