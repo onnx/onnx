@@ -107,7 +107,7 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
 
 def list_models(repo: str = "onnx/models:master", tags: Optional[List[str]] = None) -> List[ModelInfo]:
     """
-    Get the list of model info consistent with a given name and opset
+    Get the list of model info consistent with a given name and tags
 
     @param repo: The location of the model repo in format "user/repo[:branch]".
         If no branch is found will default to "master"
