@@ -6,6 +6,7 @@
 #include "tensor_proto_util.h"
 #include <vector>
 #include "onnx/common/platform_helpers.h"
+#include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -34,6 +35,13 @@ namespace ONNX_NAMESPACE {
   template <>                                                              \
   const std::vector<type> ParseData(const TensorProto* tensor_proto) {     \
     std::vector<type> res;                                                 \
+    if (tensor_proto->data_type() == TensorProto_DataType_INT64 &&         \
+      !std::is_same<type, int64_t>::value) {                               \
+      fail_shape_inference("ParseData type mismatch. It should be int64"); \
+    } else if (tensor_proto->data_type() == TensorProto_DataType_INT32 &&  \
+      !std::is_same<type, int32_t>::value) {                               \
+      fail_shape_inference("ParseData type mismatch. It should be int32"); \
+    }                                                                      \
     if (!tensor_proto->has_raw_data()) {                                   \
       const auto& data = tensor_proto->typed_data_fetch();                 \
       res.insert(res.end(), data.begin(), data.end());                     \
