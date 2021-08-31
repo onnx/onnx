@@ -687,25 +687,34 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TensorProto*>& inputData) {
   SymbolTable* symbolTable = getSymbolTable();
   int numInputs = int(inputTypes.size());
+  std::unordered_set<std::string> initializerNameSet;
+  for (const auto& tp : g_->initializer()) {
+    initializerNameSet.insert(tp.name());
+  }
 
   if (getIRVersion() >= 4) {
     if (g_->input_size() != numInputs) {
       fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided");
     }
-  } else {
-    std::unordered_set<std::string> initializerNameSet;
-    for (const auto& tp : g_->initializer()) {
-      initializerNameSet.insert(tp.name());
+    for (int i = 0; i < g_->input_size(); ++i) {
+      if (initializerNameSet.count(g_->input(i).name()) > 0) {
+        fail_shape_inference("Cannot use the same name as both a subgraph initializer and subgraph input: ",
+          g_->input(i).name());
+      }
     }
+  } else {
     // IR < 4 requires all initializers to be optional inputs
     // So the number of graph input can be larger than the number of node input 
     if (numInputs > g_->input_size()) {
       fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided.",
         "The number of graph input cannot be smaller than the number of node input" );
     } else if (numInputs < g_->input_size()) {
-      // Since the number is different, further check whether the additional input is in initializers
       for (int i = numInputs; i < g_->input_size(); ++i) {
-        if (initializerNameSet.count(g_->input(i).name()) == 0) {
+        if (i < numInputs && initializerNameSet.count(g_->input(i).name()) > 0) {
+          fail_shape_inference("Graph initializer names must appear after the actual inputs: ",
+            g_->input(i).name());
+        } else if (i >= numInputs && initializerNameSet.count(g_->input(i).name()) == 0) {
+          // Further check whether the additional input is in initializers
           fail_shape_inference("Cannot find missing input: ", g_->input(i).name(), "in initializers. ");
         }
       }
