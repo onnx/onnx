@@ -119,7 +119,14 @@ jobs:
       run: |
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
-        pytest        
+        pytest
+
+    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+      if: ${{ always() }}
+      run: |
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
 
     - name: Verify ONNX with ort-nightly
       if: ${{ always() }}
