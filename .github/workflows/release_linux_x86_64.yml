@@ -80,6 +80,7 @@ jobs:
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+        TEST_HUB=1 pytest
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
