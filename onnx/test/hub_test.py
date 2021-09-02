@@ -56,7 +56,7 @@ class TestModelHub(unittest.TestCase):
         hub.set_dir(old_cache)
 
     def test_download_with_opset(self):  # type: () -> None
-        model = hub.load(self.name, self.repo, opset=12)
+        model = hub.load(self.name, self.repo, opset=8)
         self.assertIsInstance(model, ModelProto)
 
     def test_opset_error(self):  # type: () -> None
