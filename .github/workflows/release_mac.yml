@@ -97,13 +97,11 @@ jobs:
     - name: Upload wheel/source distribution to TestPyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
-        twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
-        
+        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
         # Build and upload source distribution to TestPyPI
         git clean -xdf
         python setup.py sdist
         twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
-        
         # Test the uploaded source distribution
         python -m pip uninstall -y onnx
         python -m pip install -i https://test.pypi.org/simple/ --no-binary :all: onnx-weekly
@@ -121,7 +119,14 @@ jobs:
       run: |
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
-        pytest        
+        pytest
+
+    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+      if: ${{ always() }}
+      run: |
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
 
     - name: Verify ONNX with ort-nightly
       if: ${{ always() }}
