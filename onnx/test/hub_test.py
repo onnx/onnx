@@ -5,13 +5,19 @@ import onnx.hub as hub
 from onnx import ModelProto
 import glob
 from os.path import join
+import pytest  # type: ignore
+import os
 
 
+@pytest.mark.skipif(
+    'TEST_HUB' not in os.environ or not os.environ['TEST_HUB'],
+    reason="Conserving Git LFS quota"
+)
 class TestModelHub(unittest.TestCase):
     def setUp(self):  # type: () -> None
-        self.name = "T5-encoder"
+        self.name = "MNIST"
         self.repo = "onnx/models:master"
-        self.opset = 1
+        self.opset = 7
 
     def test_force_reload(self):  # type: () -> None
         model = hub.load(self.name, self.repo, force_reload=True)
