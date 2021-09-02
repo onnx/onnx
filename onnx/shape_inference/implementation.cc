@@ -709,7 +709,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", numInputs, " were provided.",
         "The number of graph input cannot be smaller than the number of node input" );
     } else if (numInputs < g_->input_size()) {
-      for (int i = numInputs; i < g_->input_size(); ++i) {
+      for (int i = 0; i < g_->input_size(); ++i) {
         if (i < numInputs && initializerNameSet.count(g_->input(i).name()) > 0) {
           fail_shape_inference("Graph initializer names must appear after the actual inputs: ",
             g_->input(i).name());
