@@ -37,10 +37,16 @@ namespace ONNX_NAMESPACE {
     std::vector<type> res;                                                 \
     if (tensor_proto->data_type() == TensorProto_DataType_INT64 &&         \
       !std::is_same<type, int64_t>::value) {                               \
-      fail_shape_inference("ParseData type mismatch. It should be int64"); \
+      fail_shape_inference("ParseData type mismatch: "                     \
+        "it should not be int64.");                                        \
     } else if (tensor_proto->data_type() == TensorProto_DataType_INT32 &&  \
       !std::is_same<type, int32_t>::value) {                               \
-      fail_shape_inference("ParseData type mismatch. It should be int32"); \
+      fail_shape_inference("ParseData type mismatch: "                     \
+        "it should not be int32.");                                        \
+    } else if (tensor_proto->data_type() == TensorProto_DataType_FLOAT &&  \
+      !std::is_same<type, float>::value) {                                 \
+      fail_shape_inference("ParseData type mismatch: "                     \
+        "it should not be float.");                                        \
     }                                                                      \
     if (!tensor_proto->has_raw_data()) {                                   \
       const auto& data = tensor_proto->typed_data_fetch();                 \
