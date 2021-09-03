@@ -281,7 +281,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
       const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
       std::unordered_map<std::string, TensorShapeProto>& generatedShapeData)
-      : generatedShapeData_{generatedShapeData} {
+      : generatedShapeData_(generatedShapeData) {
     size_t input_idx = 0;
   
     for (auto& attr : *n.mutable_attribute()) {
