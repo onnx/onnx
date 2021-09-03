@@ -10,3 +10,4 @@ jupyter
 pyzmq
 setuptools
 twine
+wget
