@@ -2473,7 +2473,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
-    14,
+    16,
     OpSchema()
         .SetDoc("Identity operator")
         .Input(
@@ -2499,10 +2499,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](){
               auto t = OpSchema::all_tensor_types_with_bfloat();
               auto s = OpSchema::all_tensor_sequence_types();
+              auto o = OpSchema::all_optional_types();
               t.insert(t.end(), s.begin(), s.end());
+              t.insert(t.end(), o.begin(), o.end());
               return t;
             }(),
-            "Constrain input and output types to all tensor and sequence types.")
+            "Constrain input and output types to all tensor, sequence, and optional types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Compress_ver11_doc = R"DOC(
