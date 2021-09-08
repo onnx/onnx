@@ -23,8 +23,4 @@ void LoadProtoFromPath(const std::string proto_path, T& proto) {
     "Unable to parse proto from file: ", proto_path, ". Please check if it is a valid protobuf file of proto. ");
   }
 }
-
-void LoadExternalTensor(const TensorProto& external_tensor, std::string& loaded_raw_data,
-  const std::string model_dir);
-
 } // namespace ONNX_NAMESPACE

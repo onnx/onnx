@@ -36,18 +36,11 @@ class ExternalDataInfo(object):
 def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text) -> None
     """
     Load data from an external file for tensor.
-
+    Even if the tensor has raw_data, it will load from external data and override existing raw_data anyway.
     @params
     tensor: a TensorProto object.
     base_dir: directory that contains the external data.
     """
-    # If it has already loaded, override the raw_data from external tensor
-    if tensor.HasField("raw_data"):
-        # Empty raw_data for the following load
-        print("Warning: raw_data and external data exist simultaneously."
-              "External data will override raw_data")
-        tensor.ClearField("raw_data")
-
     info = ExternalDataInfo(tensor)
     file_location = _sanitize_path(info.location)
     external_data_file_path = os.path.join(base_dir, file_location)
@@ -262,18 +255,10 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
     @return
     The modified model object.
     """
-    any_not_save_external_tensor = False
     for tensor in _get_all_tensors(model):
-        if uses_external_data(tensor):
-            if tensor.HasField("raw_data"):
-                save_external_data(tensor, filepath)
-                tensor.ClearField(str('raw_data'))
-            else:
-                # If the model did not load external data, it's possible there is no raw_data
-                any_not_save_external_tensor = True
-
-    if any_not_save_external_tensor:
-        print("Warning: Please note that some external tensors were not saved",
-              "because they were not loaded before. ")
+        if tensor.HasField("raw_data"):
+            save_external_data(tensor, filepath)
+            tensor.ClearField(str('raw_data'))
+        # if raw_data does not exist, simply skip since it should be loaded into external tensors already 
 
     return model
