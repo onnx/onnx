@@ -11,7 +11,7 @@ import os
 import os.path as Path
 
 import onnx
-from onnx import checker, helper, parser, shape_inference
+from onnx import checker, helper, shape_inference
 from onnx import ModelProto, TensorProto
 from onnx.external_data_helper import set_external_data
 from onnx.external_data_helper import convert_model_to_external_data
