@@ -4993,8 +4993,8 @@ expect(if_node, inputs=[cond], outputs=[res], name='test_if',
 
 ```python
 # Given a bool scalar input cond, return an empty optional sequence of
-# tensor if True, return the an optional sequence with value x
-# (of the input optional sequence) otherwise.
+# tensor if True, return an optional sequence with value x
+# (the input optional sequence) otherwise.
 
 ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
