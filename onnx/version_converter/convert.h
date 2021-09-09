@@ -52,8 +52,6 @@
 #include "onnx/version_converter/adapters/batch_normalization_13_14.h"
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/roialign_15_16.h"
-#include "onnx/version_converter/adapters/scatterelements_15_16.h"
-#include "onnx/version_converter/adapters/scatternd_15_16.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -760,8 +758,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
       /******** 15 -> 16 ********/
       registerAdapter(make_unique<RoiAlign_15_16>());
-      registerAdapter(make_unique<ScatterElements_15_16>());
-      registerAdapter(make_unique<ScatterND_15_16>());
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ScatterElements", OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>(
+          "ScatterND", OpSetID(15), OpSetID(16)));
     }
 
     ModelProto convert_version(
