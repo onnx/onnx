@@ -259,6 +259,6 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
         if uses_external_data(tensor) and tensor.HasField("raw_data"):
             save_external_data(tensor, filepath)
             tensor.ClearField(str('raw_data'))
-        # if raw_data does not exist, simply skip since it should be loaded into external tensors already 
+        # if raw_data does not exist, simply skip since it should be loaded into external tensors already
 
     return model
