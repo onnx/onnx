@@ -256,7 +256,7 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
     The modified model object.
     """
     for tensor in _get_all_tensors(model):
-        if tensor.HasField("raw_data"):
+        if uses_external_data(tensor) and tensor.HasField("raw_data"):
             save_external_data(tensor, filepath)
             tensor.ClearField(str('raw_data'))
         # if raw_data does not exist, simply skip since it should be loaded into external tensors already 

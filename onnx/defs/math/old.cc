@@ -1008,7 +1008,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             const auto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
-            const auto& shape_data = ParseData<int64_t>(shape_initializer, ctx.getModelDir());
+            const auto& shape_data = ParseData<int64_t>(shape_initializer);
 
             TensorShapeProto second_shape;
             for (const auto& e : shape_data) {
@@ -3367,7 +3367,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             if (k->data_type() == TensorProto::INT64) {
-              const auto& data = ParseData<int64_t>(k, ctx.getModelDir());
+              const auto& data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
               fail_shape_inference("K input must be of type int64.");

@@ -250,7 +250,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // The targetShapeProto represents the specified shape for output.
           TensorShapeProto targetShapeProto;
           if (targetShapeInitializer) {
-            auto targetShape = ParseData<int64_t>(targetShapeInitializer, ctx.getModelDir());
+            auto targetShape = ParseData<int64_t>(targetShapeInitializer);
             for (auto val : targetShape) {
               targetShapeProto.add_dim()->set_dim_value(val);
             }
@@ -721,7 +721,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // skip if split is not an initializer
               return;
             }
-            split = ParseData<int64_t>(split_proto, ctx.getModelDir());
+            split = ParseData<int64_t>(split_proto);
             if (split.size() != ctx.getNumOutputs()) {
               fail_shape_inference(
                   "Mismatch between number of splits (",
@@ -930,14 +930,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
 
           auto get_initializer_data =
-              [](const TensorProto* initializer,
-              const std::string model_dir) -> std::vector<int64_t> {
+              [](const TensorProto* initializer) -> std::vector<int64_t> {
             std::vector<int64_t> vec;
             if (initializer->data_type() == TensorProto::INT64) {
-              const auto& data = ParseData<int64_t>(initializer, model_dir);
+              const auto& data = ParseData<int64_t>(initializer);
               vec.insert(vec.end(), data.begin(), data.end());
             } else if (initializer->data_type() == TensorProto::INT32) {
-              const auto& data = ParseData<int32_t>(initializer, model_dir);
+              const auto& data = ParseData<int32_t>(initializer);
               vec.insert(vec.end(), data.begin(), data.end());
             } else {
               // unaccepted data type
@@ -947,8 +946,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return vec;
           };
 
-          std::vector<int64_t> starts = get_initializer_data(startsInitializer, ctx.getModelDir());
-          std::vector<int64_t> ends = get_initializer_data(endsInitializer, ctx.getModelDir());
+          std::vector<int64_t> starts = get_initializer_data(startsInitializer);
+          std::vector<int64_t> ends = get_initializer_data(endsInitializer);
 
           if (starts.size() != ends.size()) {
             fail_shape_inference(
@@ -961,7 +960,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!axesInitializer) {
             std::iota(axes.begin(), axes.end(), 0);
           } else {
-            axes = get_initializer_data(axesInitializer, ctx.getModelDir());
+            axes = get_initializer_data(axesInitializer);
             if (axes.size() != starts.size()) {
               fail_shape_inference("Input axes has incorrect length");
             }
@@ -971,7 +970,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!stepsInitializer) {
             steps = std::vector<int64_t>(starts.size(), 1);
           } else {
-            steps = get_initializer_data(stepsInitializer, ctx.getModelDir());
+            steps = get_initializer_data(stepsInitializer);
             if (steps.size() != axes.size()) {
               fail_shape_inference("Input steps has incorrect length");
             }
@@ -1865,7 +1864,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // skip if axes is not an initializer
               return;
             }
-            axes = ParseData<int64_t>(axes_proto, ctx.getModelDir());
+            axes = ParseData<int64_t>(axes_proto);
           } else {
               // axes not specified
               axes_not_specified = true;
@@ -1982,7 +1981,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // skip if axes is not an initializer
             return;
           }
-          axes = ParseData<int64_t>(axes_proto, ctx.getModelDir());
+          axes = ParseData<int64_t>(axes_proto);
 
           // validate 'axes' for duplicate entries
           std::unordered_set<int64_t> unique_values;
@@ -2273,7 +2272,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   fail_shape_inference("'Repeats' input must be 1D tensor of type int64");
                 }
 
-            const auto& repeats_data = ParseData<int64_t>(repeats_inputs, ctx.getModelDir());
+            const auto& repeats_data = ParseData<int64_t>(repeats_inputs);
 
             if (repeats_data.size() != static_cast<size_t>(input_rank)) {
               fail_shape_inference(
@@ -2474,7 +2473,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
-    14,
+    16,
     OpSchema()
         .SetDoc("Identity operator")
         .Input(
@@ -2500,10 +2499,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](){
               auto t = OpSchema::all_tensor_types_with_bfloat();
               auto s = OpSchema::all_tensor_sequence_types();
+              auto o = OpSchema::all_optional_types();
               t.insert(t.end(), s.begin(), s.end());
+              t.insert(t.end(), o.begin(), o.end());
               return t;
             }(),
-            "Constrain input and output types to all tensor and sequence types.")
+            "Constrain input and output types to all tensor, sequence, and optional types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Compress_ver11_doc = R"DOC(
@@ -3619,7 +3620,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
             }
 
-            const auto& pads_data = ParseData<int64_t>(pads_initializer, ctx.getModelDir());
+            const auto& pads_data = ParseData<int64_t>(pads_initializer);
             if (pads_data.size() != static_cast<size_t>(2 * input_rank)) {
               fail_shape_inference("Pads has incorrect number of values");
             }

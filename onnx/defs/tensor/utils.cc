@@ -76,7 +76,7 @@ void resizeShapeInference(InferenceContext& ctx, bool is_resize_op) {
     const auto* sizes = ctx.getInputData(3);
     if (nullptr != sizes) {
       if (sizes->data_type() == TensorProto::INT64) {
-        const auto sizes_data = ParseData<int64_t>(sizes, ctx.getModelDir());
+        const auto sizes_data = ParseData<int64_t>(sizes);
         if (sizes_data.size() != static_cast<size_t>(input_shape.dim_size())) {
           fail_shape_inference(
               "Number of elements of input 'sizes' must be same as rank of input 'X'");
@@ -89,7 +89,7 @@ void resizeShapeInference(InferenceContext& ctx, bool is_resize_op) {
   } else if (nullptr != scales) {
     // Infer output shape's dimension value if 'scales' is known.
     if (scales->data_type() == TensorProto::FLOAT) {
-      const auto& scales_data = ParseData<float>(scales, ctx.getModelDir());
+      const auto& scales_data = ParseData<float>(scales);
       if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
         fail_shape_inference(
             "Number of elements of input 'scales' must be same as rank of input 'X'");
@@ -157,7 +157,7 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
   if (nullptr != scales) {
     // Infer output shape's dimension value if 'scales' is known.
     if (scales->data_type() == TensorProto::FLOAT) {
-      const auto& scales_data = ParseData<float>(scales, ctx.getModelDir());
+      const auto& scales_data = ParseData<float>(scales);
       if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
         fail_shape_inference(
             "Number of elements of input 'scales' must be same as rank of input 'X'");

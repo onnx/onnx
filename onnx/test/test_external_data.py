@@ -422,7 +422,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         load_external_data_for_tensor(initializer_tensor, self.temp_dir)
         self.assertEqual(initializer_tensor.raw_data, original_raw_data)
 
-    def test_reshape_inference_with_external_data(self):  # type: () -> None
+    def test_reshape_inference_with_external_data_fail(self):  # type: () -> None
         reshape_shape = (2, 12)
         X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [2, 3, 4])
         C = helper.make_tensor_value_info('C', TensorProto.INT64, reshape_shape)
@@ -453,12 +453,12 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         with tempfile.TemporaryDirectory() as temp_dir:
             model_file_path = os.path.join(temp_dir, 'model.onnx')
             onnx.save_model(model, model_file_path, save_as_external_data=True, all_tensors_to_one_file=False, size_threshold=0)
-            # Only infer_shapes_path can work with models in different directory
-            shape_inference.infer_shapes_path(model_file_path)
-            inferred_model = onnx.load(model_file_path)
-            inferred_shape = (inferred_model.graph.value_info[0].type.tensor_type.shape.dim[0].dim_value,
-                inferred_model.graph.value_info[0].type.tensor_type.shape.dim[1].dim_value)
-            self.assertEqual(inferred_shape, reshape_shape)
+            model_without_external_data = onnx.load(model_file_path, load_external_data=False)
+            # Shape inference of Reshape uses ParseData
+            # ParseData cannot handle external data and should throw the error as follows:
+            # Cannot parse data from external tensors. Please load external data into raw data for tensor: Shape
+            self.assertRaises(shape_inference.InferenceError, shape_inference.infer_shapes,
+                model_without_external_data, strict_mode=True)
 
 
 if __name__ == '__main__':

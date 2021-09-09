@@ -267,7 +267,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // In this case, we extract the shape values from input tensor
           // and create output tensor of that shape.
           // First, extract target shape value.
-          std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer, ctx.getModelDir());
+          std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer);
 
           // Next, set output shape to the target shape.
           auto final_output_shape =
@@ -695,17 +695,16 @@ template <typename T>
 inline int64_t compute_output_dim_for_range(
     const TensorProto* start,
     const TensorProto* limit,
-    const TensorProto* delta,
-    const std::string model_dir) {
+    const TensorProto* delta) {
   if (start->dims().size() != 0 || limit->dims().size() != 0 ||
       delta->dims().size() != 0) {
     fail_shape_inference(
         "Input to 'Range' op should be scalars (Tensor with only one element and shape empty)");
   }
 
-  const auto& start_data = ParseData<T>(start, model_dir);
-  const auto& limit_data = ParseData<T>(limit, model_dir);
-  const auto& delta_data = ParseData<T>(delta, model_dir);
+  const auto& start_data = ParseData<T>(start);
+  const auto& limit_data = ParseData<T>(limit);
+  const auto& delta_data = ParseData<T>(delta);
 
   int64_t n = static_cast<int64_t>(
       ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
@@ -869,20 +868,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             // stored in initializer list.
             if (start_initializer->data_type() == TensorProto::FLOAT) {
               output_dim->set_dim_value(compute_output_dim_for_range<float>(
-                  start_initializer, limit_initializer, delta_initializer,
-                  ctx.getModelDir()));
+                  start_initializer, limit_initializer, delta_initializer));
             } else if (start_initializer->data_type() == TensorProto::INT32) {
               output_dim->set_dim_value(compute_output_dim_for_range<int32_t>(
-                  start_initializer, limit_initializer, delta_initializer,
-                  ctx.getModelDir()));
+                  start_initializer, limit_initializer, delta_initializer));
             } else if (start_initializer->data_type() == TensorProto::INT64) {
               output_dim->set_dim_value(compute_output_dim_for_range<int64_t>(
-                  start_initializer, limit_initializer, delta_initializer,
-                  ctx.getModelDir()));
+                  start_initializer, limit_initializer, delta_initializer));
             } else if (start_initializer->data_type() == TensorProto::DOUBLE) {
               output_dim->set_dim_value(compute_output_dim_for_range<double>(
-                  start_initializer, limit_initializer, delta_initializer,
-                  ctx.getModelDir()));
+                  start_initializer, limit_initializer, delta_initializer));
             } else {
               // 'float16' has no native CPU type -
               // stop with rank inference, no action here
