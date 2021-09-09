@@ -36,7 +36,7 @@ class ExternalDataInfo(object):
 def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text) -> None
     """
     Load data from an external file for tensor.
-    Even if the tensor has raw_data, it will load from external data and override existing raw_data anyway.
+    Ideally TensorProto should not hold any raw data but if it does it will be ignored.
     @params
     tensor: a TensorProto object.
     base_dir: directory that contains the external data.
@@ -256,9 +256,11 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
     The modified model object.
     """
     for tensor in _get_all_tensors(model):
+        # Only write those external tensors (which use external data_location) with existing raw_data
+        # If the tensors use default data_location (its raw_data), no need to write them as external tensors
         if uses_external_data(tensor) and tensor.HasField("raw_data"):
             save_external_data(tensor, filepath)
             tensor.ClearField(str('raw_data'))
-        # if raw_data does not exist, simply skip since it should be loaded into external tensors already
+        # If raw_data does not exist, simply skip since it should be loaded into external tensors already
 
     return model

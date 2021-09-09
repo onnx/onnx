@@ -352,7 +352,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
                         convert_attribute=False)
         # Save without load_external_data
         model = onnx.load_model(model_file_path, load_external_data=False)
-        onnx.save_model(self.model,
+        onnx.save_model(model,
                         model_file_path,
                         save_as_external_data=True,
                         location=None,

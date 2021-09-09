@@ -37,7 +37,11 @@ namespace ONNX_NAMESPACE {
   template <>                                                                  \
   const std::vector<type> ParseData(const TensorProto* tensor_proto) {         \
     std::vector<type> res;                                                     \
-    if (!tensor_proto->has_raw_data() && tensor_proto->has_data_location() &&  \
+    if (!tensor_proto->has_data_type() ||                                      \
+      tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {           \
+      fail_shape_inference("The type of Tensor: ", tensor_proto->name(),       \
+        " is undefined and so it cannot be parsed.");                          \
+    } else if (tensor_proto->has_data_location() &&                            \
       tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) {    \
       fail_shape_inference("Cannot parse data from external tensors. Please ", \
         "load external data into raw data for tensor: ", tensor_proto->name());\
@@ -46,11 +50,12 @@ namespace ONNX_NAMESPACE {
       res.insert(res.end(), data.begin(), data.end());                         \
       return res;                                                              \
     }                                                                          \
+    /* The given tensor does have raw_data itself so parse it by given type */ \
     /* make copy as we may have to reverse bytes */                            \
     std::string raw_data = tensor_proto->raw_data();                           \
     /* okay to remove const qualifier as we have already made a copy */        \
     char* bytes = const_cast<char*>(raw_data.c_str());                         \
-    /*onnx is little endian serialized always-tweak byte order if needed*/     \
+    /* onnx is little endian serialized always-tweak byte order if needed */   \
     if (!is_processor_little_endian()) {                                       \
       const size_t element_size = sizeof(type);                                \
       const size_t num_elements = raw_data.size() / element_size;              \
