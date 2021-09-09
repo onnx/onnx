@@ -102,7 +102,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(float)")
         .Attr(
             "axis",
-            "(Optional) The axis of the dequantizing dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input). If either y_zero_point or y_scale is a 1D tensor, then an axis must be specified. If both are scalars, axis is ignored.",
+            "(Optional) The axis of the dequantizing dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input). If both are scalars, axis is ignored.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .TypeConstraint(
