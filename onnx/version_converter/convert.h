@@ -762,6 +762,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
           "ScatterElements", OpSetID(15), OpSetID(16)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "ScatterND", OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("Identity",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("Loop",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("If",
+        OpSetID(15), OpSetID(16)));
     }
 
     ModelProto convert_version(

@@ -100,6 +100,14 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
       fail_type_inference("target sequence type missing element type.");
     }
     UnionTypeInfo(source_type.sequence_type().elem_type(), *target_type.mutable_sequence_type()->mutable_elem_type());
+  } else if (target_case == TypeProto::ValueCase::kOptionalType) {
+    if (!source_type.optional_type().has_elem_type()) {
+      fail_type_inference("source optional type missing element type.");
+    }
+    if (!target_type.optional_type().has_elem_type()) {
+      fail_type_inference("target optional type missing element type.");
+    }
+    UnionTypeInfo(source_type.optional_type().elem_type(), *target_type.mutable_optional_type()->mutable_elem_type());
   }
 }
 
