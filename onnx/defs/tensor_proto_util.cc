@@ -5,8 +5,6 @@
 
 #include "tensor_proto_util.h"
 #include <vector>
-#include "onnx/common/file_utils.h"
-#include "onnx/common/path.h"
 #include "onnx/common/platform_helpers.h"
 #include "onnx/defs/shape_inference.h"
 
