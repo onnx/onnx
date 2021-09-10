@@ -959,7 +959,7 @@ public:
     Value* init_value = initializerNode_->addOutput();
     std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(),
                                     initializer.sizes().cend()};
-    init_value->setUniqueName(initializer.name());
+    init_value->setUniqueName(name);
     init_value->setSizes(dim_sizes);
     init_value->setElemType(initializer.elem_type());
     return init_value;
