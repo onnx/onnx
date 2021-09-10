@@ -35,18 +35,22 @@ namespace ONNX_NAMESPACE {
   template <>                                                              \
   const std::vector<type> ParseData(const TensorProto* tensor_proto) {     \
     std::vector<type> res;                                                 \
-    if (tensor_proto->data_type() == TensorProto_DataType_INT64 &&         \
-      !std::is_same<type, int64_t>::value) {                               \
-      fail_shape_inference("ParseData type mismatch: "                     \
-        "it should not be int64.");                                        \
-    } else if (tensor_proto->data_type() == TensorProto_DataType_INT32 &&  \
-      !std::is_same<type, int32_t>::value) {                               \
-      fail_shape_inference("ParseData type mismatch: "                     \
-        "it should not be int32.");                                        \
-    } else if (tensor_proto->data_type() == TensorProto_DataType_FLOAT &&  \
-      !std::is_same<type, float>::value) {                                 \
-      fail_shape_inference("ParseData type mismatch: "                     \
-        "it should not be float.");                                        \
+    if (std::is_same<type, int64_t>::value  &&                             \
+      tensor_proto->data_type() != TensorProto_DataType_INT64) {           \
+      fail_shape_inference("ParseData type mismatch. The type of tensor: ",\
+      tensor_proto->name(), " should be int64.");                          \
+    } else if (std::is_same<type, int32_t>::value  &&                      \
+      tensor_proto->data_type() != TensorProto_DataType_INT32) {           \
+      fail_shape_inference("ParseData type mismatch. The type of tensor: ",\
+      tensor_proto->name(), " should be int32.");                          \
+    } else if (std::is_same<type, float>::value  &&                        \
+      tensor_proto->data_type() != TensorProto_DataType_FLOAT) {           \
+      fail_shape_inference("ParseData type mismatch. The type of tensor: ",\
+      tensor_proto->name(), " should be float.");                          \
+    } else if (std::is_same<type, double>::value  &&                       \
+      tensor_proto->data_type() != TensorProto_DataType_DOUBLE) {          \
+      fail_shape_inference("ParseData type mismatch. The type of tensor: ",\
+      tensor_proto->name(), " should be double.");                         \
     }                                                                      \
     if (!tensor_proto->has_raw_data()) {                                   \
       const auto& data = tensor_proto->typed_data_fetch();                 \
