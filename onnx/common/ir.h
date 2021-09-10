@@ -542,10 +542,6 @@ public:
     return inputs_.at(i);
   }
 
-  int inputSize() const {
-    return inputs_.size();
-  }
-
   // Graphs
 
   // Note [Topological invariant]
@@ -883,6 +879,8 @@ private:
   // having corner cases where the list is empty.
   Node * const output_;
   Node * const input_;
+  // Create an independent node list for initializer to prevent same name issue in inputs (SSA)
+  Node * const initializerNode_;
 
   std::vector<Tensor> initializers_;
   std::vector<std::string> initializer_names_;
@@ -936,6 +934,7 @@ public:
   , new_node_stage_(0)
   , output_(initOutput(create(kReturn, 0)))
   , input_(create(kParam, 0))
+  , initializerNode_(create(kParam, 0))
   , has_name_(false)
   , has_doc_string_(false) {}
 
@@ -953,6 +952,17 @@ public:
   void addInitializer(Tensor initializer, std::string name) {
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
+  }
+  // For IR >= 4, initializer is not required to exist in input
+  // Add initializer into initializer node list and return its Value
+  Value* addInitializerNode(Tensor initializer, std::string name) {
+    Value* init_value = initializerNode_->addOutput();
+    std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(),
+                                    initializer.sizes().cend()};
+    init_value->setUniqueName(initializer.name());
+    init_value->setSizes(dim_sizes);
+    init_value->setElemType(initializer.elem_type());
+    return init_value;
   }
   void eraseInitializer(const std::string &name) {
     initializers_.erase(
