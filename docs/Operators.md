@@ -14045,7 +14045,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input). If either y_zero_point or y_scale is a 1D tensor, then an axis must be specified. If both are scalars, axis is ignored.</dd>
+<dd>(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input). If both are scalars, axis is ignored.</dd>
 </dl>
 
 #### Inputs (2 - 3)
