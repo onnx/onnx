@@ -15285,7 +15285,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input). If both are scalars, axis is ignored.</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input). If both x_scale and x_zero_point are scalars, axis is ignored.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -17097,7 +17097,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input). If both are scalars, axis is ignored.</dd>
+<dd>(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input). If both y_scale and y_zero_point are scalars, axis is ignored.</dd>
 </dl>
 
 #### Inputs (2 - 3)
