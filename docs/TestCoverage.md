@@ -4931,7 +4931,7 @@ expect(node, inputs=[data], outputs=[data], name='test_identity_sequence')
 
 
 ### If
-There are 4 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>if</summary>
 
@@ -4989,91 +4989,32 @@ expect(if_node, inputs=[cond], outputs=[res], name='test_if',
 
 </details>
 <details>
-<summary>if_opt_input</summary>
+<summary>if_optional</summary>
 
 ```python
-# Given a bool scalar input cond and an optional sequence of tensor,
-# return an empty tensor sequence if true, return the input sequence
-# tensor element otherwise
+# Given a bool scalar input cond, return an empty optional sequence of
+# tensor if True, return an optional sequence with value x
+# (the input optional sequence) otherwise.
 
 ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
 opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
-opt_in = onnx.helper.make_value_info('opt_seq_in', opt_in_tp)
-
-then_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
-then_out_seq_tp = onnx.helper.make_sequence_type_proto(then_out_tensor_tp)
-then_out = onnx.helper.make_value_info('then_out', then_out_seq_tp)
-else_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
-else_out_seq_tp = onnx.helper.make_sequence_type_proto(else_out_tensor_tp)
-else_out = onnx.helper.make_value_info('else_out', else_out_seq_tp)
-
-seq_empty_in = onnx.helper.make_node(
-    'SequenceEmpty',
-    inputs=[],
-    outputs=['seq_empty']
-)
-
-then_body = onnx.helper.make_graph(
-    [seq_empty_in],
-    'then_body',
-    [],
-    [then_out]
-)
-
-optional_get_elem = onnx.helper.make_node(
-    'OptionalGetElement',
-    inputs=['opt_seq_in'],
-    outputs=['seq_in']
-)
-
-else_body = onnx.helper.make_graph(
-    [optional_get_elem],
-    'else_body',
-    [opt_in],
-    [else_out]
-)
-
-if_node = onnx.helper.make_node(
-    'If',
-    inputs=['cond'],
-    outputs=['sequence'],
-    then_branch=then_body,
-    else_branch=else_body
-)
-
-x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
-cond = np.array(0).astype(bool)
-res = compute_if_outputs(x, cond)
-
-expect(if_node, inputs=[cond], outputs=[res], name='test_if_opt_input',
-       opset_imports=[onnx.helper.make_opsetid("", 16)])
-```
-
-</details>
-<details>
-<summary>if_optional_output</summary>
-
-```python
-# Given a bool scalar input cond and an optional sequence of tensor, return an empty
-# optional sequence of tensor if True, return the identity
-# (of the input optional sequence) otherwise.
-
-ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
-seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
-opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
-opt_in = onnx.helper.make_value_info('opt_seq_in', opt_in_tp)
 
 then_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 then_out_seq_tp = onnx.helper.make_sequence_type_proto(then_out_tensor_tp)
 then_out_opt_tp = onnx.helper.make_optional_type_proto(then_out_seq_tp)
 then_out = onnx.helper.make_value_info('then_out', then_out_opt_tp)
+
 else_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 else_out_seq_tp = onnx.helper.make_sequence_type_proto(else_out_tensor_tp)
 else_out_opt_tp = onnx.helper.make_optional_type_proto(else_out_seq_tp)
 else_out = onnx.helper.make_value_info('else_out', else_out_opt_tp)
 
-seq_empty_in = onnx.helper.make_node(
+x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
+cond = np.array(0).astype(bool)
+res = compute_if_outputs(x, cond)
+
+opt_empty_in = onnx.helper.make_node(
     'Optional',
     inputs=[],
     outputs=['optional_empty'],
@@ -5081,22 +5022,35 @@ seq_empty_in = onnx.helper.make_node(
 )
 
 then_body = onnx.helper.make_graph(
-    [seq_empty_in],
+    [opt_empty_in],
     'then_body',
     [],
     [then_out]
 )
 
-optional_get_elem = onnx.helper.make_node(
-    'Identity',
-    inputs=['opt_seq_in'],
-    outputs=['optional_seq']
+else_const_node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['x'],
+    value=onnx.numpy_helper.from_array(x[0])
+)
+
+else_seq_node = onnx.helper.make_node(
+    'SequenceConstruct',
+    inputs=['x'],
+    outputs=['else_seq']
+)
+
+else_optional_seq_node = onnx.helper.make_node(
+    'Optional',
+    inputs=['else_seq'],
+    outputs=['else_opt']
 )
 
 else_body = onnx.helper.make_graph(
-    [optional_get_elem],
+    [else_const_node, else_seq_node, else_optional_seq_node],
     'else_body',
-    [opt_in],
+    [],
     [else_out]
 )
 
@@ -5108,11 +5062,8 @@ if_node = onnx.helper.make_node(
     else_branch=else_body
 )
 
-x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
-cond = np.array(0).astype(bool)
-res = compute_if_outputs(x, cond)
-
-expect(if_node, inputs=[cond], outputs=[res], name='test_if_opt_output',
+expect(if_node, inputs=[cond], outputs=[res], name='test_if_opt',
+       output_type_protos=[else_out_opt_tp],
        opset_imports=[onnx.helper.make_opsetid("", 16)])
 ```
 
@@ -11587,7 +11538,7 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
 
 
 ### ScatterElements
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>scatter_elements_with_axis</summary>
 
@@ -11609,6 +11560,31 @@ y = scatter_elements(data, indices, updates, axis)
 
 expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_elements_with_axis')
+```
+
+</details>
+<details>
+<summary>scatter_elements_with_duplicate_indices</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    'ScatterElements',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=axis,
+    reduction='add',
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction='add')
+# print(y) produces
+# [[1.0, 5.2, 3.0, 4.0, 5.0]]
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+        name='test_scatter_elements_with_duplicate_indices')
 ```
 
 </details>
@@ -11663,7 +11639,7 @@ expect(node, inputs=[data, indices, updates], outputs=[y],
 
 
 ### ScatterND
-There are 1 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>scatternd</summary>
 
@@ -11690,6 +11666,66 @@ updates = np.array(
 output = scatter_nd_impl(data, indices, updates)
 expect(node, inputs=[data, indices, updates], outputs=[output],
        name='test_scatternd')
+```
+
+</details>
+<details>
+<summary>scatternd_add</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ScatterND',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    reduction='add',
+)
+data = np.array(
+    [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+indices = np.array([[0], [0]], dtype=np.int64)
+updates = np.array(
+    [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+        [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]], dtype=np.float32)
+# Expecting output as np.array(
+#    [[[7, 8, 9, 10], [13, 14, 15, 16], [18, 17, 16, 15], [16, 15, 14, 13]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction='add')
+expect(node, inputs=[data, indices, updates], outputs=[output],
+       name='test_scatternd_add')
+```
+
+</details>
+<details>
+<summary>scatternd_multiply</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ScatterND',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    reduction='mul',
+)
+data = np.array(
+    [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+indices = np.array([[0], [0]], dtype=np.int64)
+updates = np.array(
+    [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+        [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]], dtype=np.float32)
+# Expecting output as np.array(
+#    [[[5, 10, 15, 20], [60, 72, 84, 96], [168, 147, 126, 105], [128, 96, 64, 32]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction='mul')
+expect(node, inputs=[data, indices, updates], outputs=[output],
+       name='test_scatternd_multiply')
 ```
 
 </details>
