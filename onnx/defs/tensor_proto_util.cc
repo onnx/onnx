@@ -38,13 +38,22 @@ namespace ONNX_NAMESPACE {
     if (!tensor_proto->has_data_type() ||                                      \
       tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {           \
       fail_shape_inference("The type of Tensor: ", tensor_proto->name(),       \
-        " is undefined and so it cannot be parsed.");                          \
+        " is undefined so it cannot be parsed.");                              \
     } else if (tensor_proto->has_data_location() &&                            \
       tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) {    \
       fail_shape_inference("Cannot parse data from external tensors. Please ", \
         "load external data into raw data for tensor: ", tensor_proto->name());\
     } else if (!tensor_proto->has_raw_data()) {                                \
       const auto& data = tensor_proto->typed_data_fetch();                     \
+      int expected_size = 1;                                                   \
+      for (int i = 0; i < tensor_proto->dims_size(); ++i) {                    \
+        expected_size *= tensor_proto->dims(i);                                \
+      }                                                                        \
+      if (tensor_proto->dims_size() != 0 && data.size() != expected_size) {    \
+        fail_shape_inference("The data size of Tensor: ", tensor_proto->name(),\
+        " was expected to have (calculated by dims)", expected_size,           \
+        " but the actual data size was ", data.size());                        \
+      }                                                                        \
       res.insert(res.end(), data.begin(), data.end());                         \
       return res;                                                              \
     }                                                                          \
