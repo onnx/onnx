@@ -104,7 +104,7 @@ jobs:
         twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
         # Test the uploaded source distribution
         python -m pip uninstall -y onnx
-        python -m pip install --extra-index-url https://pypi.org/simple --index-url https://test.pypi.org/simple --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
+        python -m python -m pip install --index-url https://test.pypi.org/simple --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly
         pytest
         python -m pip uninstall -y onnx-weekly
 
