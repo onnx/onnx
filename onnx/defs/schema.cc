@@ -16,6 +16,7 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/stl_backports.h"
+#include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {
 // -1 means ONNX schema hasn't been loaded yet
@@ -674,6 +675,11 @@ bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx
     return functionBuilder_(ctx, *this, functionProto);
   else
     return false;
+}
+
+OpSchema& OpSchema::FunctionBody(const char *func_body) {
+  OnnxParser::Parse(*function_body_.mutable_node(), func_body);
+  return *this;
 }
 
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {

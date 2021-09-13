@@ -1117,13 +1117,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(FunctionBodyHelper::BuildNodes({
-            // nodes: {outputs, op, inputs, attributes}
-            {{"HS_X"},
-             "HardSigmoid",
-             {"X"},
-             {MakeAttribute("alpha", 1.0f/6.0f), MakeAttribute("beta", 0.5f)}},
-            {{"Y"}, "Mul", {"X", "HS_X"}}})));
+        .FunctionBody(R"ONNX(
+          {
+            HS_X = HardSigmoid<alpha = 0.1666667, beta = 0.5>(X) 
+            Y = Mul (X, HS_X)
+          }
+        )ONNX"));
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
