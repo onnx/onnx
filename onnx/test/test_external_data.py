@@ -370,7 +370,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
     def test_save_model_with_external_data_and_threshould(self):  # type: () -> None
-        # test onnx.save should respectively handle typical tensor and external tensor properly
+        # Test onnx.save should respectively handle typical tensor and external tensor properly
         model_file_path = self.get_temp_model_filename()
 
         data_w_small = np.ones((3, 3), np.float32)
