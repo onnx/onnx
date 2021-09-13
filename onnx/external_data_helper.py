@@ -256,8 +256,10 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
     The modified model object.
     """
     for tensor in _get_all_tensors(model):
-        # Only write those external tensors (which use external data_location) with existing raw_data
-        # If the tensors use default data_location (its raw_data), no need to write them as external tensors
+        # Writing to external data happens in 2 passes:
+        # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
+        # 2. The raw data in these tensors is serialized to a file
+        # Thus serialize only if tensor has raw data and it was marked for serialization
         if uses_external_data(tensor) and tensor.HasField("raw_data"):
             save_external_data(tensor, filepath)
             tensor.ClearField(str('raw_data'))
