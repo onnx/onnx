@@ -92,7 +92,8 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
 }
 
 Status OnnxParser::Parse(ValueInfoProto& valueinfo) {
-  PARSE(*valueinfo.mutable_type());
+  if (NextIsType())
+    PARSE(*valueinfo.mutable_type());
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
   valueinfo.set_name(name);
@@ -239,13 +240,17 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   return Status::OK();
 }
 
+bool OnnxParser::NextIsType() {
+  std::string id("");
+  (void)PeekIdentifier(id);
+  return (PrimitiveTypeNameMap::IsTypeName(id));
+}
+
 Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
   // Parse a single-value
   auto next = NextChar();
   if (isalpha(next) || next == '_') {
-    std::string id("");
-    (void)PeekIdentifier(id);
-    if (PrimitiveTypeNameMap::IsTypeName(id)) {
+    if (NextIsType()) {
       attr.set_type(AttributeProto_AttributeType_TENSOR);
       Parse(*attr.mutable_t());
     } else {

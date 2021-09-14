@@ -238,6 +238,23 @@ agraph (float[N] y, float[N] z) => (float[N] w)
   EXPECT_EQ(graph.value_info_size(), 1);
 }
 
+TEST(ParserTest, GraphPartialTypeTest) {
+  const char* code = R"ONNX(
+agraph (float[N] y, z) => (float[N] w)
+{
+    x = foo(y, z)
+    w = bar(x, y)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.name(), "agraph");
+  EXPECT_EQ(graph.input_size(), 2);
+  EXPECT_EQ(graph.output_size(), 1);
+}
+
 TEST(ParserTest, FunctionTest) {
   const char* code = R"ONNX(
 <

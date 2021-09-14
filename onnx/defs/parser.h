@@ -415,6 +415,8 @@ class OnnxParser : public ParserBase {
   Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
 
   Status Parse(OpsetIdList& opsets);
+
+  bool NextIsType();
 };
 
 } // namespace ONNX_NAMESPACE
