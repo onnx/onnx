@@ -78,11 +78,13 @@ struct GraphInferenceContext {
           outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int> opset_imports_in,
       SymbolTable* symbolTable_in,
-      const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance())
+      const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
+      const int ir_version_in = IR_VERSION)
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
         schema_registry{schema_registry_in},
-        symbolTable{symbolTable_in} {}
+        symbolTable{symbolTable_in},
+        ir_version{ir_version_in} {}
 
 
   const std::unordered_map<std::string, TypeProto*>*
@@ -90,6 +92,7 @@ struct GraphInferenceContext {
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
   SymbolTable* symbolTable;
+  const int ir_version;
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -103,6 +106,10 @@ class GraphInferencerImpl : public GraphInferencer {
 
   SymbolTable* getSymbolTable() {
     return context_->symbolTable;
+  }
+
+  int getIRVersion() const {
+    return context_->ir_version;
   }
 
  private:
@@ -252,7 +259,8 @@ struct InferenceContextImpl : public InferenceContext {
     }
 
     return inferencer;
-  }
+  } 
+
   std::vector<const TensorProto*> allInputData_;
   std::vector<const SparseTensorProto*> allInputSparseData_;
   std::vector<const TensorShapeProto*> allShapeInputData_;
