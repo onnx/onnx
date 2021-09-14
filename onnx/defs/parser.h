@@ -70,8 +70,7 @@ class StringIntMap {
 };
 
 class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
-public:
-
+ public:
   PrimitiveTypeNameMap() : StringIntMap() {
     map_["float"] = 1;
     map_["uint8"] = 2;
@@ -97,24 +96,22 @@ public:
 };
 
 class AttributeTypeNameMap : public StringIntMap<AttributeTypeNameMap> {
-public:
-
+ public:
   AttributeTypeNameMap() : StringIntMap() {
-   map_["float"] = 1;
-   map_["int"] = 2;
-   map_["string"] = 3;
-   map_["tensor"] = 4;
-   map_["graph"] = 5;
-   map_["sparse_tensor"] = 11;
-   map_["type_proto"] = 13;
-   map_["floats"] = 6;
-   map_["ints"] = 7;
-   map_["strings"] = 8;
-   map_["tensors"] = 9;
-   map_["graphs"] = 10;
-   map_["sparse_tensors"] = 12;
-   map_["type_protos"] = 14;
-
+    map_["float"] = 1;
+    map_["int"] = 2;
+    map_["string"] = 3;
+    map_["tensor"] = 4;
+    map_["graph"] = 5;
+    map_["sparse_tensor"] = 11;
+    map_["type_proto"] = 13;
+    map_["floats"] = 6;
+    map_["ints"] = 7;
+    map_["strings"] = 8;
+    map_["tensors"] = 9;
+    map_["graphs"] = 10;
+    map_["sparse_tensors"] = 12;
+    map_["type_protos"] = 14;
   }
 };
 
@@ -193,8 +190,15 @@ class ParserBase {
   }
 
   void SkipWhiteSpace() {
-    while ((next_ < end_) && (isspace(*next_)))
-      ++next_;
+    do {
+      while ((next_ < end_) && (isspace(*next_)))
+        ++next_;
+      if ((next_ >= end_) || ((*next_) != '#'))
+        return;
+      // Skip rest of the line:
+      while ((next_ < end_) && ((*next_) != '\n'))
+        ++next_;
+    } while (true);
   }
 
   int NextChar(bool skipspace = true) {

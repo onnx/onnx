@@ -222,7 +222,8 @@ TEST(ParserTest, GraphTest) {
 agraph (float[N] y, float[N] z) => (float[N] w)
 <float[2] w1 = {1.0, 2.0}, float[3] w2 = {4.0, 5.0, 6.0}, float[N] x>
 {
-    x = foo(y, z, w1)
+    # This is a comment.
+    x = foo(y, z, w1) # More comments.
     w = bar(x, y, w2)
 }
 )ONNX";
