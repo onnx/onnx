@@ -85,6 +85,8 @@ TEST(ParserTest, TensorProtoTest) {
 
   Parse(tensorProto, "float[5] {1, 2.0, 3.1, 4, 5.5}");
 
+  Parse(tensorProto, "float[5] {1e1, 2.0e-1, 3.1E-1, 4E+1, 5.5e-10}");
+
   Parse(tensorProto, "string[2] { \"Hello\", \"World\" }");
 }
 

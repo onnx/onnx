@@ -2469,7 +2469,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FunctionBody(R"ONNX(
         {
           Exponent = Constant <value = float {2.0}>()
-          Epsilon = Constant <value = float {0.000000001}>()
+          Epsilon = Constant <value = float {1e-9}>()
           X_RM = ReduceMean <axes : ints = @axes> (X)
           EX_squared = Pow (X_RM, Exponent)
           X_squared = Pow (X, Exponent)

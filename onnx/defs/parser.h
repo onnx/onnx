@@ -263,6 +263,16 @@ class ParserBase {
       if (next_ == from)
         return ParseError("Value expected but not found.");
 
+      // Optional exponent syntax: (e|E)(+|-)?[0-9]+
+      if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
+        decimal_point = true; // treat as float-literal
+        ++next_;
+        if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
+          ++next_;
+        while ((next_ < end_) && (isdigit(*next_)))
+          ++next_;
+      }
+
       result.value = std::string(from, next_ - from);
       result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
     }
