@@ -369,109 +369,6 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertFalse(attribute_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
-    def test_save_model_with_external_data_multiple_times(self):  # type: () -> None
-        # Test onnx.save should respectively handle typical tensor and external tensor properly
-        model_file_path = self.get_temp_model_filename()
-
-        data_w_small = np.ones((3, 3), np.float32)
-        w_small = helper.make_tensor(name='w_small', data_type=TensorProto.FLOAT, dims=data_w_small.shape, vals=data_w_small.flatten().astype(np.float32).tobytes(), raw=True)
-        data_w_large = np.random.rand(300, 300).astype(np.float32)
-        w_large = helper.make_tensor(name='w_large', data_type=TensorProto.FLOAT, dims=data_w_large.shape, vals=data_w_large.flatten().astype(np.float32).tobytes(), raw=True)
-
-        constant_node_small = onnx.helper.make_node(
-            'Constant',
-            inputs=[],
-            outputs=['values'],
-            value=w_small
-        )
-        constant_node_large = onnx.helper.make_node(
-            'Constant',
-            inputs=[],
-            outputs=['values'],
-            value=w_large
-        )
-        graph = helper.make_graph([constant_node_small, constant_node_large], "test_graph",
-                                  inputs=[], outputs=[],
-                                  initializer=[w_small, w_large])
-        model = helper.make_model(graph)
-        # 1st save: save two tensors which have raw_data
-        # Only w_large will be stored as external tensors since it's larger than 1024
-        onnx.save_model(model,
-                        model_file_path,
-                        save_as_external_data=True,
-                        all_tensors_to_one_file=False,
-                        location=None,
-                        size_threshold=1024,
-                        convert_attribute=True)
-        model_without_loading_external = onnx.load(model_file_path, load_external_data=False)
-
-        w_small_tensor = model.graph.initializer[0]
-        self.assertTrue(not w_small_tensor.HasField("data_location"))
-        self.assertTrue(np.allclose(to_array(w_small_tensor), data_w_small))
-
-        w_large_tensor = model.graph.initializer[1]
-        self.assertTrue(w_large_tensor.HasField("data_location"))
-        self.assertTrue(np.allclose(to_array(w_large_tensor, self.temp_dir), data_w_large))
-
-        # 2nd save: one tensor has raw_data (small); one external tensor (large)
-        # Save them both as external tensors this time
-        onnx.save_model(model_without_loading_external,
-                        model_file_path,
-                        save_as_external_data=True,
-                        all_tensors_to_one_file=False,
-                        location=None,
-                        size_threshold=0,
-                        convert_attribute=True)
-
-        model_without_loading_external = onnx.load(model_file_path, load_external_data=False)
-        w_small_tensor = model_without_loading_external.graph.initializer[0]
-        self.assertTrue(w_small_tensor.HasField("data_location"))
-        self.assertTrue(np.allclose(to_array(w_small_tensor, self.temp_dir), data_w_small))
-
-        w_large_tensor = model_without_loading_external.graph.initializer[1]
-        self.assertTrue(w_large_tensor.HasField("data_location"))
-        self.assertTrue(np.allclose(to_array(w_large_tensor, self.temp_dir), data_w_large))
-
-    def test_to_array_with_external_data(self):  # type: () -> None
-        x = data_w = np.ones((3, 3), np.float32)
-        w = helper.make_tensor(name='w', data_type=TensorProto.FLOAT, dims=data_w.shape, vals=data_w.flatten().astype(np.float32).tobytes(), raw=True)
-        V = helper.make_tensor_value_info('V', TensorProto.FLOAT, [3, 3])
-        Z = helper.make_tensor_value_info('Z', TensorProto.FLOAT, [3, 3])
-
-        X = helper.make_node(
-            'Constant',
-            inputs=[],
-            outputs=['X'],
-            value=onnx.helper.make_tensor(
-                name='const_x',
-                data_type=onnx.TensorProto.FLOAT,
-                dims=x.shape,
-                vals=x.flatten().astype(float),
-            ),
-        )
-        node_cf = helper.make_node(
-            'Gemm',
-            ['w', 'X'],
-            ['Z'],
-            name='gemm'
-        )
-        graph_def = helper.make_graph(
-            [X, node_cf],
-            'test-model',
-            [V],
-            [Z],
-            initializer=[w],
-        )
-        model_def = helper.make_model(graph_def, producer_name='onnx-example')
-
-        path = os.path.join(self.temp_dir, 'temp.onnx')
-        onnx.save_model(model_def, path, save_as_external_data=True, all_tensors_to_one_file=False, size_threshold=0)
-        # raw_data of external tensor is not loaded
-        model = onnx.load(path, load_external_data=False)
-        # Specify self.temp_dir to load external tensor
-        tensor_data = to_array(model.graph.initializer[0], self.temp_dir)
-        self.assertTrue(np.allclose(tensor_data, data_w))
-
     def test_save_model_with_existing_raw_data_should_override(self):  # type: () -> None
         model_file_path = self.get_temp_model_filename()
         original_raw_data = self.model.graph.initializer[0].raw_data
@@ -485,13 +382,27 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         load_external_data_for_tensor(initializer_tensor, self.temp_dir)
         self.assertEqual(initializer_tensor.raw_data, original_raw_data)
 
-    def test_reshape_inference_with_external_data_fail(self):  # type: () -> None
-        reshape_shape = (2, 12)
-        X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [2, 3, 4])
-        C = helper.make_tensor_value_info('C', TensorProto.INT64, reshape_shape)
-        shape_data = np.array(reshape_shape, np.int64)
+
+class TestExternalDataToArray(TestLoadExternalDataBase):
+    def setUp(self):  # type: () -> None
+        self.temp_dir = tempfile.mkdtemp()  # type: Text
+        self.model_file_path = os.path.join(self.temp_dir, 'model.onnx')
+        self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
+        self.small_data = (200, 300)
+        self.model = self.create_test_model()
+
+    def get_temp_model_filename(self):  # type: () -> Text
+        return os.path.join(self.temp_dir, str(uuid.uuid4()) + '.onnx')
+
+    def create_test_model(self):  # type: () -> Text
+        X = helper.make_tensor_value_info('X', TensorProto.FLOAT, self.large_data.shape)
+        input_init = helper.make_tensor(name='X', data_type=TensorProto.FLOAT,
+            dims=self.large_data.shape, vals=self.large_data.tobytes(), raw=True)
+
+        shape_data = np.array(self.small_data, np.int64)
         shape_init = helper.make_tensor(name='Shape', data_type=TensorProto.INT64,
             dims=shape_data.shape, vals=shape_data.tobytes(), raw=True)
+        C = helper.make_tensor_value_info('C', TensorProto.INT64, self.small_data)
 
         reshape = onnx.helper.make_node(
             'Reshape',
@@ -504,24 +415,79 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
             outputs=['C'],
             to=getattr(TensorProto, 'INT64')
         )
+
         graph_def = helper.make_graph(
             [reshape, cast],
             'test-model',
             [X],
             [C],
-            initializer=[shape_init],
+            initializer=[input_init, shape_init],
         )
         model = helper.make_model(graph_def, producer_name='onnx-example')
+        return model
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            model_file_path = os.path.join(temp_dir, 'model.onnx')
-            onnx.save_model(model, model_file_path, save_as_external_data=True, all_tensors_to_one_file=False, size_threshold=0)
-            model_without_external_data = onnx.load(model_file_path, load_external_data=False)
-            # Shape inference of Reshape uses ParseData
-            # ParseData cannot handle external data and should throw the error as follows:
-            # Cannot parse data from external tensors. Please load external data into raw data for tensor: Shape
-            self.assertRaises(shape_inference.InferenceError, shape_inference.infer_shapes,
-                model_without_external_data, strict_mode=True)
+    def test_check_model(self):  # type: () -> None
+        checker.check_model(self.model)
+
+    def test_reshape_inference_with_external_data_fail(self):  # type: () -> None
+        onnx.save_model(self.model, self.model_file_path, save_as_external_data=True, all_tensors_to_one_file=False, size_threshold=0)
+        model_without_external_data = onnx.load(self.model_file_path, load_external_data=False)
+        # Shape inference of Reshape uses ParseData
+        # ParseData cannot handle external data and should throw the error as follows:
+        # Cannot parse data from external tensors. Please load external data into raw data for tensor: Shape
+        self.assertRaises(shape_inference.InferenceError, shape_inference.infer_shapes,
+            model_without_external_data, strict_mode=True)
+
+    def test_to_array_with_external_data(self):  # type: () -> None
+        onnx.save_model(self.model,
+                        self.model_file_path,
+                        save_as_external_data=True,
+                        all_tensors_to_one_file=False,
+                        size_threshold=0)
+        # raw_data of external tensor is not loaded
+        model = onnx.load(self.model_file_path, load_external_data=False)
+        # Specify self.temp_dir to load external tensor
+        loaded_large_data = to_array(model.graph.initializer[0], self.temp_dir)
+        self.assertTrue(np.allclose(loaded_large_data, self.large_data))
+
+    def test_save_model_with_external_data_multiple_times(self):  # type: () -> None
+        # Test onnx.save should respectively handle typical tensor and external tensor properly
+        # 1st save: save two tensors which have raw_data
+        # Only w_large will be stored as external tensors since it's larger than 1024
+        onnx.save_model(self.model,
+                        self.model_file_path,
+                        save_as_external_data=True,
+                        all_tensors_to_one_file=False,
+                        location=None,
+                        size_threshold=1024,
+                        convert_attribute=True)
+        model_without_loading_external = onnx.load(self.model_file_path, load_external_data=False)
+        large_input_tensor = model_without_loading_external.graph.initializer[0]
+        self.assertTrue(large_input_tensor.HasField("data_location"))
+        self.assertTrue(np.allclose(to_array(large_input_tensor, self.temp_dir), self.large_data))
+
+        small_shape_tensor = model_without_loading_external.graph.initializer[1]
+        self.assertTrue(not small_shape_tensor.HasField("data_location"))
+        self.assertTrue(np.allclose(to_array(small_shape_tensor), self.small_data))
+
+        # 2nd save: one tensor has raw_data (small); one external tensor (large)
+        # Save them both as external tensors this time
+        onnx.save_model(model_without_loading_external,
+                        self.model_file_path,
+                        save_as_external_data=True,
+                        all_tensors_to_one_file=False,
+                        location=None,
+                        size_threshold=0,
+                        convert_attribute=True)
+
+        model_without_loading_external = onnx.load(self.model_file_path, load_external_data=False)
+        large_input_tensor = model_without_loading_external.graph.initializer[0]
+        self.assertTrue(large_input_tensor.HasField("data_location"))
+        self.assertTrue(np.allclose(to_array(large_input_tensor, self.temp_dir), self.large_data))
+
+        small_shape_tensor = model_without_loading_external.graph.initializer[1]
+        self.assertTrue(small_shape_tensor.HasField("data_location"))
+        self.assertTrue(np.allclose(to_array(small_shape_tensor, self.temp_dir), self.small_data))
 
 
 if __name__ == '__main__':
