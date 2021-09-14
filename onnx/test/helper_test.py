@@ -391,6 +391,30 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(string_list, list(tensor.string_data))
 
+    def test_make_float16_tensor(self):  # type: () -> None
+        np_array = np.random.randn(2, 3).astype(np.float16)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT16,
+            dims=np_array.shape,
+            vals=np_array
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+    def test_make_bfloat16_tensor(self):  # type: () -> None
+        np_array = np.random.randn(8, 7).astype(np.float16)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.BFLOAT16,
+            dims=np_array.shape,
+            vals=np_array
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
     def test_make_sparse_tensor(self):  # type: () -> None
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
         values_tensor = helper.make_tensor(

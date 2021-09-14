@@ -19,6 +19,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.INT64): np.dtype('int64'),
     int(TensorProto.BOOL): np.dtype('bool'),
     int(TensorProto.FLOAT16): np.dtype('float16'),
+    int(TensorProto.BFLOAT16): np.dtype('float16'),
     int(TensorProto.DOUBLE): np.dtype('float64'),
     int(TensorProto.COMPLEX64): np.dtype('complex64'),
     int(TensorProto.COMPLEX128): np.dtype('complex128'),
