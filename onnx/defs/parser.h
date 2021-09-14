@@ -41,9 +41,38 @@ using OpsetIdList = google::protobuf::RepeatedPtrField<OperatorSetIdProto>;
       return local_status_;         \
   }
 
-class PrimitiveTypeNameMap {
+template <typename Map>
+class StringIntMap {
  public:
-  PrimitiveTypeNameMap() {
+  static const std::unordered_map<std::string, int32_t>& Instance() {
+    static Map instance;
+    return instance.map_;
+  }
+
+  static int32_t Lookup(const std::string& dtype) {
+    auto it = Instance().find(dtype);
+    if (it != Instance().end())
+      return it->second;
+    return 0;
+  }
+
+  static const std::string& ToString(int32_t dtype) {
+    static std::string undefined("undefined");
+    for (const auto& pair : Instance()) {
+      if (pair.second == dtype)
+        return pair.first;
+    }
+    return undefined;
+  }
+
+ protected:
+  std::unordered_map<std::string, int32_t> map_;
+};
+
+class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
+public:
+
+  PrimitiveTypeNameMap() : StringIntMap() {
     map_["float"] = 1;
     map_["uint8"] = 2;
     map_["int8"] = 3;
@@ -62,33 +91,31 @@ class PrimitiveTypeNameMap {
     map_["bfloat16"] = 16;
   }
 
-  static const std::unordered_map<std::string, int32_t>& Instance() {
-    static PrimitiveTypeNameMap instance;
-    return instance.map_;
-  }
-
-  static int32_t Lookup(const std::string& dtype) {
-    auto it = Instance().find(dtype);
-    if (it != Instance().end())
-      return it->second;
-    return 0;
-  }
-
   static bool IsTypeName(const std::string& dtype) {
     return Lookup(dtype) != 0;
   }
+};
 
-  static const std::string& ToString(int32_t dtype) {
-    static std::string undefined("undefined");
-    for (const auto& pair : Instance()) {
-      if (pair.second == dtype)
-        return pair.first;
-    }
-    return undefined;
+class AttributeTypeNameMap : public StringIntMap<AttributeTypeNameMap> {
+public:
+
+  AttributeTypeNameMap() : StringIntMap() {
+   map_["float"] = 1;
+   map_["int"] = 2;
+   map_["string"] = 3;
+   map_["tensor"] = 4;
+   map_["graph"] = 5;
+   map_["sparse_tensor"] = 11;
+   map_["type_proto"] = 13;
+   map_["floats"] = 6;
+   map_["ints"] = 7;
+   map_["strings"] = 8;
+   map_["tensors"] = 9;
+   map_["graphs"] = 10;
+   map_["sparse_tensors"] = 12;
+   map_["type_protos"] = 14;
+
   }
-
- private:
-  std::unordered_map<std::string, int32_t> map_;
 };
 
 class KeyWordMap {
@@ -373,7 +400,7 @@ class OnnxParser : public ParserBase {
 
   Status Parse(IdList& idlist);
 
-  Status Parse(char open, IdList& idlist, char close); 
+  Status Parse(char open, IdList& idlist, char close);
 
   Status ParseSingleAttributeValue(AttributeProto& attr);
 
@@ -381,9 +408,9 @@ class OnnxParser : public ParserBase {
 
   Status Parse(ValueInfoList& vilist);
 
-  Status ParseInput(ValueInfoList& vilist, TensorList& initializers); 
+  Status ParseInput(ValueInfoList& vilist, TensorList& initializers);
 
-  Status ParseValueInfo(ValueInfoList& vilist, TensorList& initializers); 
+  Status ParseValueInfo(ValueInfoList& vilist, TensorList& initializers);
 
   Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
 

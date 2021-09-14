@@ -116,6 +116,10 @@ TEST(ParserTest, AttributeTest) {
   Parse(attr, "x = [\"abc\", \"def\"]");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS);
 
+  Parse(attr, "x : ints = @xyz");
+  EXPECT_EQ(attr.ref_attr_name(), "xyz");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
+
   Parse(attr, R"ONNX(
     body = somegraph (float[N] y, float[N] z) => (float[N] w)
       {

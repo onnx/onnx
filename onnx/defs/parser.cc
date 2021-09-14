@@ -252,6 +252,10 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
       attr.set_type(AttributeProto_AttributeType_GRAPH);
       Parse(*attr.mutable_g());
     }
+  } else if (Matches('@')) {
+    std::string name;
+    CHECK_PARSER_STATUS(ParseIdentifier(name));
+    attr.set_ref_attr_name(name);
   } else {
     Literal literal;
     PARSE_TOKEN(literal);
@@ -279,6 +283,15 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
   attr.set_name(name);
+  if (Matches(':')) {
+    CHECK_PARSER_STATUS(ParseIdentifier(name));
+    int attrtype = AttributeTypeNameMap::Lookup(name);
+    if (attrtype != 0) {
+      attr.set_type(static_cast<AttributeProto_AttributeType>(attrtype));
+    } else {
+      return ParseError("Unexpected attribute type.");
+    }
+  }
   MATCH('=');
   if (NextChar() == '[') {
     // Parse a list of values. For now, empty list is not allowed, as we need to
