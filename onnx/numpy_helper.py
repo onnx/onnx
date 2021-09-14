@@ -57,7 +57,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         if (tensor_dtype == TensorProto.COMPLEX64
                 or tensor_dtype == TensorProto.COMPLEX128):
             data = combine_pairs_to_complex(data)
-        # float16/bloat16 is stored as int32 (uint16 type); Need view to get the original value
+        # float16/bfloat16 is stored as int32 (uint16 type); Need view to get the original value
         elif (tensor_dtype == TensorProto.FLOAT16
                 or tensor_dtype == TensorProto.BFLOAT16):
             return (
