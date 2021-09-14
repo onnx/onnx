@@ -342,7 +342,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertFalse(attribute_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
-    def test_save_model_does_not_load_external_tensor(self):  # type: () -> None
+    def test_save_model_without_loading_external_data(self):  # type: () -> None
         model_file_path = self.get_temp_model_filename()
         onnx.save_model(self.model,
                         model_file_path,
@@ -369,7 +369,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertFalse(attribute_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
-    def test_save_model_with_external_data_and_threshould(self):  # type: () -> None
+    def test_save_model_with_external_data_multiple_times(self):  # type: () -> None
         # Test onnx.save should respectively handle typical tensor and external tensor properly
         model_file_path = self.get_temp_model_filename()
 
@@ -395,7 +395,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
                                   initializer=[w_small, w_large])
         model = helper.make_model(graph)
         # 1st save: save two tensors which have raw_data
-        # Only w_large will be stored as external tensors since it's large than 1024
+        # Only w_large will be stored as external tensors since it's larger than 1024
         onnx.save_model(model,
                         model_file_path,
                         save_as_external_data=True,
@@ -413,21 +413,22 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertTrue(w_large_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(w_large_tensor, self.temp_dir), data_w_large))
 
-        # 2nd save: one tensor has raw_data (small); save one external tensor (large)
+        # 2nd save: one tensor has raw_data (small); one external tensor (large)
+        # Save them both as external tensors this time
         onnx.save_model(model_without_loading_external,
                         model_file_path,
                         save_as_external_data=True,
                         all_tensors_to_one_file=False,
                         location=None,
-                        size_threshold=1024,
+                        size_threshold=0,
                         convert_attribute=True)
 
         model_without_loading_external = onnx.load(model_file_path, load_external_data=False)
-        w_small_tensor = model.graph.initializer[0]
-        self.assertTrue(not w_small_tensor.HasField("data_location"))
-        self.assertTrue(np.allclose(to_array(w_small_tensor), data_w_small))
+        w_small_tensor = model_without_loading_external.graph.initializer[0]
+        self.assertTrue(w_small_tensor.HasField("data_location"))
+        self.assertTrue(np.allclose(to_array(w_small_tensor, self.temp_dir), data_w_small))
 
-        w_large_tensor = model.graph.initializer[1]
+        w_large_tensor = model_without_loading_external.graph.initializer[1]
         self.assertTrue(w_large_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(w_large_tensor, self.temp_dir), data_w_large))
 

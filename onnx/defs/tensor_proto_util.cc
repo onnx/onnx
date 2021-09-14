@@ -50,9 +50,9 @@ namespace ONNX_NAMESPACE {
         expected_size *= tensor_proto->dims(i);                                \
       }                                                                        \
       if (tensor_proto->dims_size() != 0 && data.size() != expected_size) {    \
-        fail_shape_inference("The data size of tensor: ", tensor_proto->name(),\
-        " was expected to have (calculated by dims) ", expected_size,          \
-        " but the actual data size was ", data.size());                        \
+        fail_shape_inference("Data size mismatch. Tensor: ",                   \
+        tensor_proto->name(), " expected size ", expected_size,                \
+        " does not match the actual size", data.size());                       \
       }                                                                        \
       res.insert(res.end(), data.begin(), data.end());                         \
       return res;                                                              \
