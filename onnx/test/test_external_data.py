@@ -383,13 +383,16 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertEqual(initializer_tensor.raw_data, original_raw_data)
 
 
-class TestExternalDataToArray(TestLoadExternalDataBase):
+class TestExternalDataToArray(unittest.TestCase):
     def setUp(self):  # type: () -> None
         self.temp_dir = tempfile.mkdtemp()  # type: Text
         self.model_file_path = os.path.join(self.temp_dir, 'model.onnx')  # type: Text
         self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
         self.small_data = (200, 300)
         self.model = self.create_test_model()
+
+    def tearDown(self):  # type: () -> None
+        shutil.rmtree(self.temp_dir)
 
     def get_temp_model_filename(self):  # type: () -> Text
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + '.onnx')
