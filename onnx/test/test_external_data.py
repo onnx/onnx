@@ -386,7 +386,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
 class TestExternalDataToArray(TestLoadExternalDataBase):
     def setUp(self):  # type: () -> None
         self.temp_dir = tempfile.mkdtemp()  # type: Text
-        self.model_file_path = os.path.join(self.temp_dir, 'model.onnx')
+        self.model_file_path = os.path.join(self.temp_dir, 'model.onnx')  # type: Text
         self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
         self.small_data = (200, 300)
         self.model = self.create_test_model()
@@ -394,7 +394,7 @@ class TestExternalDataToArray(TestLoadExternalDataBase):
     def get_temp_model_filename(self):  # type: () -> Text
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + '.onnx')
 
-    def create_test_model(self):  # type: () -> Text
+    def create_test_model(self):  # type: () -> ModelProto
         X = helper.make_tensor_value_info('X', TensorProto.FLOAT, self.large_data.shape)
         input_init = helper.make_tensor(name='X', data_type=TensorProto.FLOAT,
             dims=self.large_data.shape, vals=self.large_data.tobytes(), raw=True)
