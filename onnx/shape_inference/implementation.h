@@ -82,21 +82,24 @@ struct GraphInferenceContext {
       const std::unordered_map<std::string, int> opset_imports_in,
       SymbolTable* symbol_table_in = nullptr,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
+      const int ir_version_in = IR_VERSION,
       const ModelLocalFunctionsMap& model_local_functions_in = {},
       GetFunctionMapIdFn get_func_id = nullptr)
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
         symbol_table{symbol_table_in},
         schema_registry{schema_registry_in},
+        ir_version{ ir_version_in },
         model_local_functions{model_local_functions_in},
         function_identifier {get_func_id} {}
 
   const std::unordered_map<std::string, TypeProto*>* outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   SymbolTable* symbol_table;
-  const GetFunctionMapIdFn function_identifier;
-  const ModelLocalFunctionsMap& model_local_functions;
   const ISchemaRegistry* schema_registry;
+  const int ir_version;
+  const ModelLocalFunctionsMap& model_local_functions;
+  const GetFunctionMapIdFn function_identifier;
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -259,7 +262,8 @@ struct InferenceContextImpl : public InferenceContext {
     }
 
     return inferencer;
-  }
+  } 
+
   std::vector<const TensorProto*> allInputData_;
   std::vector<const SparseTensorProto*> allInputSparseData_;
   std::vector<const TensorShapeProto*> allShapeInputData_;

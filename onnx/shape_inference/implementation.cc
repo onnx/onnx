@@ -243,7 +243,7 @@ static void InferShapesImpl(
   std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
 
   GraphInferenceContext graph_inference_context{
-      value_types_by_name, opset_imports, symbol_table, schema_registry, model_local_functions_map, get_func_id};
+      value_types_by_name, opset_imports, symbol_table, schema_registry, ir_version, model_local_functions_map, get_func_id};
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type()) {
       value_types_by_name[vi.name()] = vi.mutable_type();
@@ -764,9 +764,43 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TensorProto*>& input_data) {
   SymbolTable* symbol_table = getSymbolTable();
   int num_inputs = int(input_types.size());
+  std::unordered_set<std::string> initializer_name_set;
+  for (const auto& tp : g_->initializer()) {
+    initializer_name_set.insert(tp.name());
+  }
 
-  if (g_->input_size() != num_inputs) {
-    fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", num_inputs, " were provided");
+  if (context_->ir_version >= 4) {
+    if (g_->input_size() != num_inputs) {
+      fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", num_inputs, " were provided");
+    }
+    for (int i = 0; i < g_->input_size(); ++i) {
+      if (initializer_name_set.count(g_->input(i).name()) > 0) {
+        fail_shape_inference("Cannot use the same name as both a subgraph initializer and subgraph input: ",
+          g_->input(i).name());
+      }
+    }
+  } else {
+    // IR < 4 requires all initializers to be optional inputs
+    // So the number of graph input can be larger than the number of node input 
+    if (num_inputs > g_->input_size()) {
+      fail_shape_inference(
+          "Graph has ",
+          g_->input_size(),
+          " inputs but ",
+          num_inputs,
+          " were provided.",
+        "The number of graph input cannot be smaller than the number of node input" );
+    } else if (num_inputs < g_->input_size()) {
+      for (int i = 0; i < g_->input_size(); ++i) {
+        if (i < num_inputs && initializer_name_set.count(g_->input(i).name()) > 0) {
+          fail_shape_inference("Graph initializer names must appear after the actual inputs: ",
+            g_->input(i).name());
+        } else if (i >= num_inputs && initializer_name_set.count(g_->input(i).name()) == 0) {
+          // Further check whether the additional input is in initializers
+          fail_shape_inference("Cannot find missing input: ", g_->input(i).name(), "in initializers. ");
+        }
+      }
+    }
   }
 
   for (int i = 0, end = num_inputs; i < end; ++i) {
@@ -776,18 +810,14 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       continue;
 
     TypeProto* graph_input = g_->mutable_input(i)->mutable_type();
-
+    // Bail out early if shape inference does nothing useful.
     if (inferred_input->value_case() == TypeProto::kTensorType) {
       const auto& inferred_type = inferred_input->tensor_type();
-
-      // Bail out early if shape inference does nothing useful.
       if (inferred_type.elem_type() == TensorProto::UNDEFINED && !inferred_type.has_shape()) {
         continue;
       }
     } else if (inferred_input->value_case() == TypeProto::kSparseTensorType) {
       const auto& inferred_type = inferred_input->sparse_tensor_type();
-
-      // Bail out early if shape inference does nothing useful.
       if (inferred_type.elem_type() == TensorProto::UNDEFINED && !inferred_type.has_shape()) {
         continue;
       }
