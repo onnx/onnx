@@ -456,6 +456,8 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
     const ShapeInferenceOptions& options = {},
+    const ModelLocalFunctionsMap& model_local_functions_map = {},
+    GetFunctionMapIdFn get_model_local_func_id = nullptr,
     SymbolTable* symbolTable = nullptr,
     std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName = nullptr);
 

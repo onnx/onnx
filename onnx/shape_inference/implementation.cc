@@ -326,26 +326,18 @@ static void InferShapesImpl(
   }
 
   bool has_experimental_op = false;
-  // If encounter experimental op, stop checking
+  // Collect data from constant nodes and check if any experimental ops exist
   for (const auto& n : g->node()) {
     if (checker::check_is_experimental_op(n.op_type())) {
-      std::cerr << "Warning: Shape inference does not support"
-                << " models with experimental operators: " << n.op_type() << std::endl;
       has_experimental_op = true;
-    }
-  }
-
-  // Collect data from constant nodes.
-  for (const auto& n : g->node()) {
-    if (n.op_type() != "Constant" || n.output().size() != 1) {
-      continue;
-    }
-    for (const auto& attr : n.attribute()) {
-      if (attr.name() == "value") {
-        if (attr.type() == AttributeProto::TENSOR && attr.has_t()) {
-          input_data_by_name[n.output(0)] = &attr.t();
-        } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
-          input_sparse_data_by_name[n.output(0)] = &attr.sparse_tensor();
+    } else if (n.op_type() == "Constant" &&  n.output().size() == 1) {
+      for (const auto& attr : n.attribute()) {
+        if (attr.name() == "value") {
+          if (attr.type() == AttributeProto::TENSOR && attr.has_t()) {
+            input_data_by_name[n.output(0)] = &attr.t();
+          } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
+            input_sparse_data_by_name[n.output(0)] = &attr.sparse_tensor();
+          }
         }
       }
     }
@@ -353,12 +345,12 @@ static void InferShapesImpl(
 
   std::vector<std::string> inference_errors;
   bool has_unsupported_op = false; // check whether exist unsupported ops
-
   for (auto& n : *g->mutable_node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
-      continue;
+      fail_type_inference("Cannot infer type and shape for node name ", n.name(), ". No opset import for domain",
+          n.domain(), " optype ", n.op_type());
     }
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
@@ -369,70 +361,72 @@ static void InferShapesImpl(
         input_sparse_data_by_name,
         &generated_shape_data_by_name,
         &graph_inference_context);
-    if (!schema) {
-      std::cerr << "Warning: Unsupported operator " << n.op_type() << ". No schema registered for this operator."
-                << std::endl;
-      has_unsupported_op = true;
-      continue;
-    } else if (schema->has_type_and_shape_inference_function()) {
-      ONNX_TRY {
-        schema->GetTypeAndShapeInferenceFunction()(ctx);
-      }
-      ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
-        ONNX_HANDLE_EXCEPTION([&]() {
-          // onnx does not support unsupported/experimental operators
-          // so it won't consider it as an error
-          if (!has_unsupported_op && !has_experimental_op) {
-            inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
-          }
-        });
-        // Continue with inference for remaining nodes
-        continue;
-      }
-    } else if (schema->HasFunction()) {
-      ONNX_TRY {
-        const auto func_proto = schema->GetFunction();
-        std::unordered_map<std::string, int> function_opset_imports;
-        for (const auto& opset_import : func_proto->opset_import()) {
-            function_opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
-        }
 
-        InferShapeForFunctionNode(
-            *func_proto,
-            function_opset_imports,
-            schema_registry,
-            ctx,
-            options,
-            model_local_functions_map, 
-            get_func_id,
-            symbol_table,
-            &generated_shape_data_by_name);
-      }
-      ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
-        ONNX_HANDLE_EXCEPTION([&]() {
-          // onnx does not support unsupported/experimental operators
-          // so it won't consider it as an error
-          if (!has_unsupported_op && !has_experimental_op) {
-            inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
-          }
-        });
-        // Continue with inference for remaining nodes
+    ONNX_TRY {
+      if (schema) {
+        if (schema->has_type_and_shape_inference_function()) {
+          schema->GetTypeAndShapeInferenceFunction()(ctx);
+        } else if (schema->HasFunction()) {
+          InferShapeForFunctionNode(
+              *(schema->GetFunction()),
+              schema_registry,
+              ctx,
+              options,
+              model_local_functions_map,
+              get_func_id,
+              symbol_table,
+              &generated_shape_data_by_name);
+        } else {
+          // Continue with inference for remaining nodes
+          continue;
+        }
+      } else if (model_local_functions_map.size() >= 0 && get_func_id != nullptr) {
+        auto iter = model_local_functions_map.find(get_func_id(n.domain(), n.op_type()));
+        if (iter != model_local_functions_map.end()) {
+          InferShapeForFunctionNode(
+              *(iter->second),
+              schema_registry,
+              ctx,
+              options,
+              model_local_functions_map,
+              get_func_id,
+              symbol_table,
+              &generated_shape_data_by_name);
+        } else {
+          has_unsupported_op = true;
+          continue;
+        }
+      } else {
+        has_unsupported_op = true;
         continue;
       }
-    } else {
+    }
+    ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        // onnx does not support unsupported/experimental operators
+        // so it won't consider it as an error
+        if (!has_unsupported_op && !has_experimental_op) {
+          inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
+        }
+      });
       // Continue with inference for remaining nodes
       continue;
     }
 
     ONNX_TRY {
       // check the type-equality for input and output
-      if (options.check_type) {
+      if (options.check_type && schema) {
         schema->CheckInputOutputType(ctx);
       }
+
       for (int i = 0; i < n.output_size(); ++i) {
         auto* inferred_type = ctx.getOutputType(i);
         if (inferred_type->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
           continue;
+        }
+
+        if (symbol_table) {
+          MaterializeSymbolicShape(inferred_type, *symbol_table);
         }
 
         // Find any pre-existing type and shape info. If there is such,
@@ -455,33 +449,27 @@ static void InferShapesImpl(
           }
         }
 
-        if (symbol_table) {
-          MaterializeSymbolicShape(inferred_type, *symbol_table);
-        }
-
         // Now we can merge pre-existing and inferred info
         mergeShapesAndTypes(*inferred_type, existing_type);
-        if (options.enable_data_propagation && schema->has_data_propagation_function()) {
+
+        // If data propagation is enabled, propagate shape data if i exists.
+        if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
           DataPropagationContextImpl dataPropagationCtx(
               n, value_types_by_name, input_data_by_name, generated_shape_data_by_name);
           schema->GetDataPropagationFunction()(dataPropagationCtx);
         }
+
         // Make merged info available to further inference.
         value_types_by_name[n.output(i)] = existing_type;
       }
     }
     ONNX_CATCH(const std::runtime_error& err) {
-      ONNX_HANDLE_EXCEPTION([&]() {
-        fail_shape_inference(GetErrorWithNodeInfo(n, err));
-      });
+      ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)); });
     }
   }
-  // Throw shape inference error if any
-  // Error mode right now only supports 0 and 1
-  // When set to 0, any node level shape inference errors
-  // are not thrown. This is to support backward compatiblity
-  // with 1.7 and earlier releases. When set to 1 it will throw
-  // all exceptions.
+  // Throw shape inference error if any. Error mode right now only supports 0 and 1. 
+  // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
+  // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
   // TODO: Add a more granular way for exception handling.
   if (options.error_mode > 0 && !inference_errors.empty()) {
     std::string full_errors = "Shape inference error(s): ";
@@ -652,24 +640,11 @@ void InferShapeForFunctionNode(
     ONNX_NAMESPACE::shape_inference::InferenceContextImpl func_node_ctx(
         copy_n, value_types_by_name, initializers_by_name, sparse_initializers_by_name, {});
 
-    if (schema) {
+    if (schema && schema->has_type_and_shape_inference_function()) {
       schema->GetTypeAndShapeInferenceFunction()(func_node_ctx);
-    } else if (model_local_functions_map.size() > 0 && get_model_local_func_id != nullptr) {
-      // check model local functions for FunctionProto
-      auto iter = model_local_functions_map.find(get_model_local_func_id(n.domain(), n.op_type()));
-      if (iter == model_local_functions_map.end()) {
-        return;
-      }
-
-      // generate opset imports for function node
-      std::unordered_map<std::string, int> func_node_opset_imports;
-      for (const auto& opset_import : iter->second->opset_import()) {
-        func_node_opset_imports.insert({opset_import.domain(), static_cast<int>(opset_import.version())});
-      }
-
+    } else if (schema && schema->HasFunction()) {
       InferShapeForFunctionNode(
-          *iter->second,
-          func_node_opset_imports,
+          *(schema->GetFunction()),
           schema_registry,
           func_node_ctx,
           options,
@@ -677,8 +652,23 @@ void InferShapeForFunctionNode(
           get_model_local_func_id,
           symbol_table,
           generated_shape_data_by_name);
-    }
-    else {
+    } else if (model_local_functions_map.size() > 0 && get_model_local_func_id != nullptr) {
+      // check model local functions for FunctionProto
+      auto iter = model_local_functions_map.find(get_model_local_func_id(n.domain(), n.op_type()));
+      if (iter == model_local_functions_map.end()) {
+        return;
+      }
+
+      InferShapeForFunctionNode(
+          *iter->second,
+          schema_registry,
+          func_node_ctx,
+          options,
+          model_local_functions_map,
+          get_model_local_func_id,
+          symbol_table,
+          generated_shape_data_by_name);
+    } else {
       // Cannot find the function definition in onnx defined schemas and model local functions map, so return.
       return;
     }
@@ -718,7 +708,7 @@ void InferShapeForFunctionNode(
         MaterializeSymbolicShape(inferred_output_type, *symbol_table);
       }
       mergeShapesAndTypes(*inferred_output_type, existing_type);
-      if (options.enable_data_propagation && schema->has_data_propagation_function()) {
+      if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
         DataPropagationContextImpl data_propagation_ctx(
             copy_n, value_types_by_name, initializers_by_name, *generated_shape_data_by_name);
         schema->GetDataPropagationFunction()(data_propagation_ctx);
@@ -747,8 +737,8 @@ void InferShapeForFunctionNode(
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
     const ShapeInferenceOptions& options,
-    const std::unordered_map<std::string, const FunctionProto*>& in_model_functions,
-    GetFunctionMapIdFn get_func_id,
+    const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
+    GetFunctionMapIdFn get_model_local_func_id,
     SymbolTable* symbol_table,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
 
@@ -763,8 +753,8 @@ void InferShapeForFunctionNode(
       schema_registry,
       ctx,
       options,
-      in_model_functions,
-      get_func_id,
+      model_local_functions_map,
+      get_model_local_func_id,
       symbol_table,
       generated_shape_data_by_name);
 }
