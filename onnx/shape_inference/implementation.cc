@@ -380,7 +380,7 @@ static void InferShapesImpl(
           // Continue with inference for remaining nodes
           continue;
         }
-      } else if (model_local_functions_map.size() >= 0 && get_func_id != nullptr) {
+      } else if (model_local_functions_map.size() > 0 && get_func_id != nullptr) {
         auto iter = model_local_functions_map.find(get_func_id(n.domain(), n.op_type()));
         if (iter != model_local_functions_map.end()) {
           InferShapeForFunctionNode(
