@@ -36,13 +36,11 @@ class ExternalDataInfo(object):
 def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text) -> None
     """
     Load data from an external file for tensor.
-
+    Ideally TensorProto should not hold any raw data but if it does it will be ignored.
     @params
     tensor: a TensorProto object.
     base_dir: directory that contains the external data.
     """
-    if tensor.HasField("raw_data"):  # already loaded
-        return
     info = ExternalDataInfo(tensor)
     file_location = _sanitize_path(info.location)
     external_data_file_path = os.path.join(base_dir, file_location)
@@ -258,7 +256,11 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
     The modified model object.
     """
     for tensor in _get_all_tensors(model):
-        if uses_external_data(tensor):
+        # Writing to external data happens in 2 passes:
+        # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
+        # 2. The raw data in these tensors is serialized to a file
+        # Thus serialize only if tensor has raw data and it was marked for serialization
+        if uses_external_data(tensor) and tensor.HasField("raw_data"):
             save_external_data(tensor, filepath)
             tensor.ClearField(str('raw_data'))
 
