@@ -27,7 +27,7 @@ class Pad_10_11 final : public Adapter {
       node->addInput(v_pads);
       node->removeAttribute(kpads);
       // Turn value attribute into input
-      if (node->s(kmode) == "constant") {
+      if (!node->hasAttribute(kmode) || node->s(kmode) == "constant") {
         Tensor t_value;
         t_value.elem_type() = TensorProto_DataType_FLOAT;
         auto& data_value = t_value.floats();
