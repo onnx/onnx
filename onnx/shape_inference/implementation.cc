@@ -57,8 +57,8 @@ std::string getElemTypeString(const TypeProto_SparseTensor& type) {
 
 } // namespace
 
-template<class TensorTypeProto>
-void checkTensorShapesAndTypes(const TensorTypeProto& inferredType, const TensorTypeProto& existingType) {
+template<class T>
+void checkTensorShapesAndTypes(const T& inferredType, const T& existingType) {
   if (inferredType.elem_type() != TensorProto::UNDEFINED && existingType.elem_type() != TensorProto::UNDEFINED &&
       existingType.elem_type() != inferredType.elem_type()) {
     std::stringstream ss;
@@ -264,14 +264,12 @@ static void InferShapesImpl(
     }
   }
 
-  // save for free memory and preserve the address of the dynamically allocated
-  // TypeProto
+  // Holds the contructed type protos for graph initializers
   std::list<TypeProto> initializer_type_list;
-
+  // Create TypeProtos for all graph initializers including sparse initializers
   std::unordered_map<std::string, const TensorProto*> input_data_by_name;
   for (const auto& tp : g->initializer()) {
     input_data_by_name[tp.name()] = &tp;
-    // Consider the tensors from the initializer
     TypeProto initializer_type;
     TypeProto_Tensor* initializer_tensor_type = initializer_type.mutable_tensor_type();
     initializer_tensor_type->set_elem_type(tp.data_type());
@@ -300,7 +298,7 @@ static void InferShapesImpl(
   for (const auto& tp : g->sparse_initializer()) {
     const auto& name = tp.values().name();
     input_sparse_data_by_name[name] = &tp;
-    // Consider the tensors from the initializer
+    // Create TypeProto for sparse initializer
     TypeProto initializer_type;
     auto* initializer_sparse_tensor_type = initializer_type.mutable_sparse_tensor_type();
     initializer_sparse_tensor_type->set_elem_type(tp.values().data_type());
@@ -675,22 +673,6 @@ void InferShapeForFunctionNode(
 
     for (int i = 0; i < copy_n.output_size(); ++i) {
       TypeProto* inferred_output_type = func_node_ctx.getOutputType(i);
-      const auto type_value_case = inferred_output_type->value_case();
-      // Bail out early if shape inference does nothing useful.
-      if (type_value_case == TypeProto::kTensorType) {
-        const auto& tensor_type = inferred_output_type->tensor_type();
-        if (tensor_type.elem_type() == TensorProto::UNDEFINED && !tensor_type.has_shape()) {
-          continue;
-        }
-      } else if (type_value_case == TypeProto::kSparseTensorType) {
-        const auto& sparse_tensor_type = inferred_output_type->sparse_tensor_type();
-        if (sparse_tensor_type.elem_type() == TensorProto::UNDEFINED && !sparse_tensor_type.has_shape()) {
-          continue;
-        }
-      } else {
-        continue;
-      }
-
       // validate and merge the inferred type
       TypeProto* existing_type = nullptr;
       auto iter = value_types_by_name.find(n.output(i));
@@ -810,18 +792,6 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       continue;
 
     TypeProto* graph_input = g_->mutable_input(i)->mutable_type();
-    // Bail out early if shape inference does nothing useful.
-    if (inferred_input->value_case() == TypeProto::kTensorType) {
-      const auto& inferred_type = inferred_input->tensor_type();
-      if (inferred_type.elem_type() == TensorProto::UNDEFINED && !inferred_type.has_shape()) {
-        continue;
-      }
-    } else if (inferred_input->value_case() == TypeProto::kSparseTensorType) {
-      const auto& inferred_type = inferred_input->sparse_tensor_type();
-      if (inferred_type.elem_type() == TensorProto::UNDEFINED && !inferred_type.has_shape()) {
-        continue;
-      }
-    }
     // Even if graphInput doesn't have defined type, it will assign inferredType to it
     mergeShapesAndTypes(*inferred_input, graph_input);
 
