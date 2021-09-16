@@ -10,19 +10,19 @@ This document explains the limitations of shape inference and lays out a proposa
 ## Current onnx shape inference limitations (Pre ONNX 1.10) 
 Today, ONNX shape inference is not guaranteed to be complete. Wherever possible we fall back to rank inference however, there are scenarios when rank inference is not possible either. Here are the various limitations which block the completion of shape inference: 
 
-* Some dynamic behaviors block the flow of shape inference, and the shape inference stops. For example, reshape to a dynamically computed shape.
+1. Some dynamic behaviors block the flow of shape inference, and the shape inference stops. For example, reshape to a dynamically computed shape.
 
-* Shape inference works only with constants and simple variables. It does not support arithmetic expressions containing variables nor does it support symbol generation. For example, concatenation on tensors of shapes (5, 2) and (7, 2) can be inferred to produce a result of shape (12, 2), but concatenation on tensors of shapes (5, 2) and (N, 2) will simply produce (?, 2), where “?” represents a dimension with neither dim value nor dim param, rather than containing a representation of N+5 or generating a new symbol (M, 2). In such scenarios shape propagation stops. 
+2. Shape inference works only with constants and simple variables. It does not support arithmetic expressions containing variables nor does it support symbol generation. For example, concatenation on tensors of shapes (5, 2) and (7, 2) can be inferred to produce a result of shape (12, 2), but concatenation on tensors of shapes (5, 2) and (N, 2) will simply produce (?, 2), where “?” represents a dimension with neither dim value nor dim param, rather than containing a representation of N+5 or generating a new symbol (M, 2). In such scenarios shape propagation stops. 
 
-* All operators are not required to have a shape inference implementation. When such an op is encountered the shape inference stops. There are also cases when rank inference is not done as a fallback mechanism. (Note: We are working on an ongoing basis to identify and fix such issues. The current document does not focus on this limitation)  
+3. All operators are not required to have a shape inference implementation. When such an op is encountered the shape inference stops. There are also cases when rank inference is not done as a fallback mechanism. (Note: We are working on an ongoing basis to identify and fix such issues. The current document does not focus on this limitation)  
   
 
 ## Goals and Non-Goals 
 Our **goal** is to fix the shape inference gap in scenarios where: 
 
-* shape computations are done in branches (refer to limitation 1) 
+* Shape computations are done in branches (refer to limitation 1) 
 
-* symbolic dimensions are present (refer to limitation 2) 
+* Symbolic dimensions are present (refer to limitation 2) 
 
 By fixing these gaps we aim to:   
 
@@ -73,7 +73,7 @@ Per the current proposal, “[?]” in inferred shapes will be replaced by a new
 ### Partial data computation and propagation 
 When shape inputs are computed dynamically, shape inference post a reshape node stops. This can be prevented by making this data available to the reshape node during shape inference. We propose computation and propagation of data for operators which are used in shape computation. 
 
-It is called “partial” data computation and propagation because this will only be done for shape computations. It is not meant to be a full-fledged kernel for the operator. For the same reasons data computations will be implemented for a limited set of operators. While we will increase the coverage in the future iterations it is important to note that for some operators like LSTM, convolution ops, pooling ops etc. this will never be added because such ops are not used in shape computations. 
+It is called “partial” data computation and propagation because this will only be done for shape computations. It is not meant to be a full-fledged kernel for the operator. For the same reasons data computations will be implemented for a limited set of operators. While we will increase the coverage in the future iterations it is important to note that for some operators like LSTM, convolution ops, pooling ops etc. data propagation function will never be added because such ops are not used in shape computations. 
 
 The following operators will be picked in the first phase. (These operators are generally used for shape computations.) 
 
@@ -156,7 +156,7 @@ Inferred and existing shapes can be mismatched. Although failing shape inference
 
 
 ### Handling symbolic dimensions with data propagation 
-When the shape contains symbolic dimensions, we try and propagate them downstream, however in cases where some arithmetic operations are performed on these symbolic dims we create a new symbols and propagate them instead.   
+When the shape contains symbolic dimensions, we try and propagate them downstream, however in cases where some arithmetic operations are performed on these symbolic dims we create new symbols and propagate them instead.   
 
 
 ### Output shape is dependent on input data 
