@@ -112,13 +112,13 @@ class TestHelperAttributeFunctions(unittest.TestCase):
                 name='a',
                 data_type=TensorProto.FLOAT,
                 dims=(1,),
-                vals=np.ones(1).tolist()
+                vals=np.ones(1)
             ),
             helper.make_tensor(
                 name='b',
                 data_type=TensorProto.FLOAT,
                 dims=(1,),
-                vals=np.ones(1).tolist()
+                vals=np.ones(1)
             )]
         attr = helper.make_attribute("tensors", tensors)
         self.assertEqual(attr.name, "tensors")
@@ -366,7 +366,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             name='test',
             data_type=TensorProto.FLOAT,
             dims=(2, 3),
-            vals=np_array.reshape(6).tolist()
+            vals=np_array
         )
         self.assertEqual(tensor.name, 'test')
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
@@ -376,7 +376,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             name='test',
             data_type=TensorProto.FLOAT,
             dims=(2, 3),
-            vals=np_array.reshape(6).tobytes(),
+            vals=np_array.tobytes(),
             raw=True,
         )
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
