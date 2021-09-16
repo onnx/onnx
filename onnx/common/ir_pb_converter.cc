@@ -12,7 +12,7 @@ namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
 std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested,
-  const int ir_version);
+  const int ir_version=IR_VERSION);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   Tensor ret;
@@ -96,7 +96,7 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
 }
 
 void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n,
-  const int ir_version) {
+  const int ir_version=IR_VERSION) {
   Symbol sym = Symbol(ap.name());
   switch (ap.type()) {
     case ONNX_NAMESPACE::AttributeProto_AttributeType_FLOAT:
@@ -181,7 +181,7 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n,
   }
 }
 
-void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version) {
+void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version=IR_VERSION) {
   for (int i = 0; i < np.attribute_size(); i++) {
     convertAttribute(np.attribute(i), n, ir_version);
   }
