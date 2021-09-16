@@ -2470,10 +2470,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         {
           Exponent = Constant <value = float {2.0}>()
           Epsilon = Constant <value = float {1e-9}>()
-          X_RM = ReduceMean <axes = @axes> (X)
+          X_RM = ReduceMean <axes : ints = @axes> (X)
           EX_squared = Pow (X_RM, Exponent)
           X_squared = Pow (X, Exponent)
-          E_Xsquared = ReduceMean <axes = @axes> (X_squared)
+          E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)
           Variance = Sub (E_Xsquared, EX_squared)
           STD = Sqrt (Variance)
           X_variance = Sub (X, X_RM)
