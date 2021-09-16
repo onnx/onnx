@@ -166,24 +166,26 @@ ONNX_OPERATOR_SET_SCHEMA(
           "T2",
           {"tensor(uint8)"},
           "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
-      .FunctionBody(FunctionBodyHelper::BuildNodes(
-          {// nodes: {outputs, op, inputs, attributes}
-           FunctionBodyHelper::Const<float>("Q_Min", 0.f),
-           FunctionBodyHelper::Const<float>("Q_Max", 255.f),
-           {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
-           {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
-           {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
-           {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
-           {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
-           {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
-           {{"Min_Scaled"}, "Div", {"X_Min_Adjusted", "Scale"}},
-           {{"Initial_ZeroPoint_FP"}, "Sub", {"Q_Min", "Min_Scaled"}},
-           {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP", "Q_Min", "Q_Max"}},
-           {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
-           {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
-           {{"y_scale"}, "Identity", {"Scale"}},
-           {{"y_zero_point"}, "Identity", {"Zeropoint"}},
-           {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}}))
+      .FunctionBody(R"ONNX(
+        {
+           Q_Min = Constant<value = float {0.0}>()
+           Q_Max = Constant<value = float {255.0}>()
+           X_Min = ReduceMin <keepdims = 0> (x)
+           X_Min_Adjusted = Min (X_Min, Q_Min)
+           X_Max = ReduceMax <keepdims = 0> (x)
+           X_Max_Adjusted = Max (X_Max, Q_Min)
+           X_Range = Sub (X_Max_Adjusted, X_Min_Adjusted)
+           Scale = Div (X_Range, Q_Max)
+           Min_Scaled = Div (X_Min_Adjusted, Scale)
+           Initial_ZeroPoint_FP = Sub (Q_Min, Min_Scaled)
+           Clipped_ZeroPoint_FP = Clip (Initial_ZeroPoint_FP, Q_Min, Q_Max)
+           Rounded_ZeroPoint_FP = Round (Clipped_ZeroPoint_FP)
+           Zeropoint = Cast <to = 2> (Rounded_ZeroPoint_FP)
+           y_scale = Identity (Scale)
+           y_zero_point = Identity (Zeropoint)
+           y = QuantizeLinear (x, Scale, Zeropoint)
+        }
+        )ONNX")
         .TypeAndShapeInferenceFunction(
             [](ONNX_NAMESPACE::InferenceContext& ctx) {
               updateOutputElemType(ctx, 0, TensorProto::UINT8);

@@ -845,6 +845,9 @@ class OpSchema final {
   }
 
   OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
+
+  OpSchema& FunctionBody(const char *func_body);
+
   OpSchema& FunctionBody(
       const std::vector<NodeProto>& func_nodes,
       const std::vector<OperatorSetIdProto>& opsets);
