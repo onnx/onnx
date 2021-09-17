@@ -2466,24 +2466,21 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             FunctionBodyHelper::Const<float>("Exponent", 2.0f),
-             FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
-             {{"X_RM"},
-              "ReduceMean",
-              {"X"},
-              {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
-             {{"X_squared"}, "Pow", {"X", "Exponent"}},
-             {{"E_Xsquared"},
-              "ReduceMean",
-              {"X_squared"},
-              {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
-             {{"STD"}, "Sqrt", {"Variance"}},
-             {{"X_variance"}, "Sub", {"X", "X_RM"}},
-             {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
-             {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
+        .FunctionBody(R"ONNX(
+        {
+          Exponent = Constant <value = float {2.0}>()
+          Epsilon = Constant <value = float {1e-9}>()
+          X_RM = ReduceMean <axes : ints = @axes> (X)
+          EX_squared = Pow (X_RM, Exponent)
+          X_squared = Pow (X, Exponent)
+          E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)
+          Variance = Sub (E_Xsquared, EX_squared)
+          STD = Sqrt (Variance)
+          X_variance = Sub (X, X_RM)
+          Processed_STD = Add (STD, Epsilon)
+          Y = Div (X_variance, Processed_STD)
+        }
+        )ONNX"
+        ));
 
 } // namespace ONNX_NAMESPACE

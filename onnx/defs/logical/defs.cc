@@ -284,11 +284,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             {{"O1"}, "Less", {"A", "B"}},
-             {{"O2"}, "Equal", {"A", "B"}},
-             {{"C"}, "Or", {"O1", "O2"}}})));
+        .FunctionBody(R"ONNX(
+        {
+            O1 = Less (A, B)
+            O2 = Equal (A, B)
+            C = Or (O1, O2)
+        }
+        )ONNX"));
 
 ONNX_OPERATOR_SET_SCHEMA(
     GreaterOrEqual,
