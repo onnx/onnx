@@ -53,12 +53,8 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
     else:
-        data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
-        if (tensor_dtype == TensorProto.COMPLEX64
-                or tensor_dtype == TensorProto.COMPLEX128):
-            data = combine_pairs_to_complex(data)
         # float16/bfloat16 is stored as int32 (uint16 type); Need view to get the original value
-        elif (tensor_dtype == TensorProto.FLOAT16
+        if (tensor_dtype == TensorProto.FLOAT16
                 or tensor_dtype == TensorProto.BFLOAT16):
             return (
                 np.asarray(
@@ -66,7 +62,11 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
                     dtype=np.uint16)
                 .reshape(dims)
                 .view(np.float16))
-        # Otherwise simply use astype to convert; e.g., int->float, float->float
+        data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
+        if (tensor_dtype == TensorProto.COMPLEX64
+                or tensor_dtype == TensorProto.COMPLEX128):
+            data = combine_pairs_to_complex(data)
+
         return (
             np.asarray(
                 data,
