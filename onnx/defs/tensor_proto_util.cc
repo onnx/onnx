@@ -37,13 +37,13 @@ namespace ONNX_NAMESPACE {
   const std::vector<type> ParseData(const TensorProto* tensor_proto) {         \
     if (!tensor_proto->has_data_type() ||                                      \
       tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {           \
-      fail_shape_inference("The type of Tensor: ", tensor_proto->name(),       \
+      fail_shape_inference("The type of tensor: ", tensor_proto->name(),       \
         " is undefined so it cannot be parsed.");                              \
     } else if (tensor_proto->data_type() != tensorproto_datatype) {            \
       fail_shape_inference("ParseData type mismatch for tensor: ",             \
-      tensor_proto->name(), ". Expected: ",                                    \
-      Utils::DataTypeUtils::ToDataTypeString(tensorproto_datatype), "; Actual: ",      \
-      Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));              \
+      tensor_proto->name(), ". Expected:",                                     \
+      Utils::DataTypeUtils::ToDataTypeString(tensorproto_datatype), " Actual:",\
+      Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));      \
     }                                                                          \
     std::vector<type> res;                                                     \
     if (tensor_proto->has_data_location() &&                                   \
