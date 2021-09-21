@@ -6,6 +6,7 @@
 #include "tensor_proto_util.h"
 #include <vector>
 #include "onnx/common/platform_helpers.h"
+#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
@@ -40,7 +41,9 @@ namespace ONNX_NAMESPACE {
         " is undefined so it cannot be parsed.");                              \
     } else if (tensor_proto->data_type() != tensorproto_datatype) {            \
       fail_shape_inference("ParseData type mismatch for tensor: ",             \
-      tensor_proto->name());                                                   \
+      tensor_proto->name(), ". Expected: ",                                    \
+      Utils::DataTypeUtils::ToDataTypeString(tensorproto_datatype), "; Actual: ",      \
+      Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));              \
     }                                                                          \
     std::vector<type> res;                                                     \
     if (tensor_proto->has_data_location() &&                                   \
