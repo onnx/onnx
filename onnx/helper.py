@@ -251,17 +251,16 @@ def make_tensor(
         raise ValueError("Number of values does not match tensor's size. Expected {}, but it is {}. "
             .format(expected_size, len(vals)))
 
-    if (data_type == TensorProto.COMPLEX64
-            or data_type == TensorProto.COMPLEX128):
-        vals = split_complex_to_pairs(vals)
-    # floa16/bfloat16 are stored as uint16
-    elif (data_type == TensorProto.FLOAT16
-            or data_type == TensorProto.BFLOAT16):
-        vals = np.array(vals).astype(np.float16).view(dtype=np.uint16).flatten().tolist()
-
     if raw:
         tensor.raw_data = vals
     else:
+        if (data_type == TensorProto.COMPLEX64
+                or data_type == TensorProto.COMPLEX128):
+            vals = split_complex_to_pairs(vals)
+        # floa16/bfloat16 are stored as uint16
+        elif (data_type == TensorProto.FLOAT16
+                or data_type == TensorProto.BFLOAT16):
+            vals = np.array(vals).astype(np.float16).view(dtype=np.uint16).flatten().tolist()
         field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
             mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]]
         getattr(tensor, field).extend(vals)
