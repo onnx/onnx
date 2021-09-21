@@ -128,7 +128,7 @@ jobs:
         python onnx/test/test_with_ort.py
 
     - name: Build and upload source distribution to TestPyPI weekly
-      if: github.event_name == 'schedule' && matrix.python-version == '3.9' # Only triggered by weekly event on Python 3.9
+      if: matrix.python-version == '3.9' # Only triggered by weekly event on Python 3.9
       run: |
         # Build and upload source distribution to TestPyPI
         git clean -xdf
@@ -136,7 +136,7 @@ jobs:
         twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Test source distribution from TestPyPI
-      if: github.event_name == 'schedule' && matrix.python-version == '3.9'
+      if: matrix.python-version == '3.9'
       run: |
         python -m pip uninstall -y onnx
         python -m pip install setuptools
