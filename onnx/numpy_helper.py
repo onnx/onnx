@@ -68,7 +68,7 @@ def to_array(tensor, base_dir=""):  # type: (TensorProto, Text) -> np.ndarray[An
                     dtype=np.uint16)
                 .reshape(dims)
                 .view(np.float16))
-        data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
+        data = getattr(tensor, storage_field)
         if (tensor_dtype == TensorProto.COMPLEX64
                 or tensor_dtype == TensorProto.COMPLEX128):
             data = combine_pairs_to_complex(data)
