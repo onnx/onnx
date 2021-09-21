@@ -59,27 +59,27 @@ def to_array(tensor, base_dir=""):  # type: (TensorProto, Text) -> np.ndarray[An
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
     else:
-        data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
-        if (tensor_dtype == TensorProto.COMPLEX64
-                or tensor_dtype == TensorProto.COMPLEX128):
-            data = combine_pairs_to_complex(data)
-        # F16 is stored as int32; Need view to get the original value
-        if tensor_dtype == TensorProto.FLOAT16:
+        # float16/bfloat16 is stored as int32 (uint16 type); Need view to get the original value
+        if (tensor_dtype == TensorProto.FLOAT16
+                or tensor_dtype == TensorProto.BFLOAT16):
             return (
                 np.asarray(
                     tensor.int32_data,
                     dtype=np.uint16)
                 .reshape(dims)
                 .view(np.float16))
-        # Otherwise simply use astype to convert; e.g., int->float, float->float
-        else:
-            return (
-                np.asarray(
-                    data,
-                    dtype=storage_np_dtype)
-                .astype(np_dtype)
-                .reshape(dims)
-            )
+        data = getattr(tensor, storage_field)
+        if (tensor_dtype == TensorProto.COMPLEX64
+                or tensor_dtype == TensorProto.COMPLEX128):
+            data = combine_pairs_to_complex(data)
+
+        return (
+            np.asarray(
+                data,
+                dtype=storage_np_dtype)
+            .astype(np_dtype)
+            .reshape(dims)
+        )
 
 
 def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> TensorProto
