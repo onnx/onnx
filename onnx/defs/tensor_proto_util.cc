@@ -31,29 +31,16 @@ namespace ONNX_NAMESPACE {
     return t;                                                   \
   }
 
-#define DEFINE_PARSE_DATA(type, typed_data_fetch)                              \
+#define DEFINE_PARSE_DATA(type, typed_data_fetch, tensorproto_datatype)        \
   template <>                                                                  \
   const std::vector<type> ParseData(const TensorProto* tensor_proto) {         \
     if (!tensor_proto->has_data_type() ||                                      \
       tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {           \
       fail_shape_inference("The type of Tensor: ", tensor_proto->name(),       \
         " is undefined so it cannot be parsed.");                              \
-    } else if (std::is_same<type, int64_t>::value  &&                          \
-      tensor_proto->data_type() != TensorProto_DataType_INT64) {               \
-      fail_shape_inference("ParseData type mismatch. The type of tensor: ",    \
-      tensor_proto->name(), " should be int64.");                              \
-    } else if (std::is_same<type, int32_t>::value  &&                          \
-      tensor_proto->data_type() != TensorProto_DataType_INT32) {               \
-      fail_shape_inference("ParseData type mismatch. The type of tensor: ",    \
-      tensor_proto->name(), " should be int32.");                              \
-    } else if (std::is_same<type, float>::value  &&                            \
-      tensor_proto->data_type() != TensorProto_DataType_FLOAT) {               \
-      fail_shape_inference("ParseData type mismatch. The type of tensor: ",    \
-      tensor_proto->name(), " should be float.");                              \
-    } else if (std::is_same<type, double>::value  &&                           \
-      tensor_proto->data_type() != TensorProto_DataType_DOUBLE) {              \
-      fail_shape_inference("ParseData type mismatch. The type of tensor: ",    \
-      tensor_proto->name(), " should be double.");                             \
+    } else if (tensor_proto->data_type() != tensorproto_datatype) {            \
+      fail_shape_inference("ParseData type mismatch for tensor: ",             \
+      tensor_proto->name());                                                   \
     }                                                                          \
     std::vector<type> res;                                                     \
     if (tensor_proto->has_data_location() &&                                   \
@@ -123,9 +110,9 @@ DEFINE_TO_TENSOR_LIST(uint64_t, TensorProto_DataType_UINT64, uint64)
 DEFINE_TO_TENSOR_LIST(double, TensorProto_DataType_DOUBLE, double)
 DEFINE_TO_TENSOR_LIST(std::string, TensorProto_DataType_STRING, string)
 
-DEFINE_PARSE_DATA(int32_t, int32_data)
-DEFINE_PARSE_DATA(int64_t, int64_data)
-DEFINE_PARSE_DATA(float, float_data)
-DEFINE_PARSE_DATA(double, double_data)
+DEFINE_PARSE_DATA(int32_t, int32_data, TensorProto_DataType_INT32)
+DEFINE_PARSE_DATA(int64_t, int64_data, TensorProto_DataType_INT64)
+DEFINE_PARSE_DATA(float, float_data, TensorProto_DataType_FLOAT)
+DEFINE_PARSE_DATA(double, double_data, TensorProto_DataType_DOUBLE)
 
 } // namespace ONNX_NAMESPACE
