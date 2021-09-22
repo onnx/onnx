@@ -289,6 +289,8 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
     opt = None  # type: Optional[Any]
     elem_type = optional.elem_type
     value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
+    if not optional.HasField(value_field):
+        return opt
     value = getattr(optional, value_field)
     # TODO: create a map and replace conditional branches
     if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:
