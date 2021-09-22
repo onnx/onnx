@@ -13,6 +13,22 @@ namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
 
+struct ShapeInferenceOptions {
+  // Checks the type-equality for input and output
+  bool check_type;
+  // 1: Will throw any node level shape infer errors
+  // 0: Won't throw node-level shape infer errors, but other errors
+  // like merging existing shape with inferred etc are thrown
+  int error_mode;
+  // Enables data propagation for limited operators
+  // to perform shape computation
+  bool enable_data_propagation;
+  ShapeInferenceOptions(bool check_type_val = false,
+    int strict_mode_val = 0,bool data_prop_val = false):
+    check_type(check_type_val), error_mode(strict_mode_val),
+    enable_data_propagation(data_prop_val) {};
+};
+
 // Maintains a SymbolTable for symbolic shape inference
 class SymbolTable {
  public:
@@ -72,13 +88,41 @@ struct InferenceContext {
   virtual GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) = 0;
   virtual ~InferenceContext() {}
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
+  // Gets the shape inputs computed by partial data propagation.
+  virtual const TensorShapeProto* getSymbolicInput(size_t index) const = 0;
+};
+
+// We use data propagation to perform partial evaluation of the model, to compute statically
+// known information about tensor values. It is intended to improve the precision of shape
+// inference. We reuse TensorShapeProto to represent the statically known values. One
+// limitation of this is that TensorShapeProto can represent only integer values.
+// As an example, data-propagation is intended to handle code-fragments like below:
+//   shape = Shape(X)
+//   batchsize = Slice(shape, [0], [1])
+//   newshape = Concat (batchsize, [1024, 1024])
+//   Z = Reshape(Y, newshape)
+// If the shape of X is statically known, then data-propagation should be able to determine
+// the value of newshape, as well as the shape of Z.
+struct DataPropagationContext {
+  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
+  virtual size_t getNumInputs() const = 0;
+  virtual const TypeProto* getInputType(size_t index) const = 0;
+  virtual size_t getNumOutputs() const = 0;
+  virtual const TypeProto* getOutputType(size_t index) const = 0;
+  virtual ~DataPropagationContext() {}
+  virtual const TensorShapeProto* getInputData(size_t index) = 0;
+  virtual void addOutputData(size_t index, TensorShapeProto&& tp) = 0;
 };
 
 using InferenceFunction = std::function<void(InferenceContext&)>;
+using DataPropagationFunction = std::function<void(DataPropagationContext&)>;
 
 // This no-op inference function is used for operators without an
 // inference implementation.
-inline void dummyInferenceFunction(InferenceContext&){};
+inline void dummyInferenceFunction(InferenceContext&) {};
+
+// This no-op data propagation function is used for operators without a defined data propagator
+inline void dummyDataPropagationFunction(DataPropagationContext&) {};
 
 template <typename T>
 inline bool getRepeatedAttribute(InferenceContext& ctx, std::string attr_name, std::vector<T>& values) {
@@ -92,6 +136,13 @@ inline bool getRepeatedAttribute(InferenceContext& ctx, std::string attr_name, s
 }
 
 inline int64_t getAttribute(InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
+  auto attr_proto = ctx.getAttribute(attributeName);
+  if ((nullptr != attr_proto) && attr_proto->has_i())
+    return attr_proto->i();
+  return defaultValue;
+}
+
+inline int64_t getAttribute(DataPropagationContext& ctx, const std::string& attributeName, int64_t defaultValue) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
@@ -288,19 +339,26 @@ inline void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, si
     fail_type_inference("Input ", inputIndex, " expected to have sequence type");
   }
   auto input_seq_type = input_type->sequence_type();
-  if (input_seq_type.has_elem_type() && input_seq_type.elem_type().has_tensor_type()) {
-    if (input_seq_type.elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED) {
-      fail_type_inference("Element type of input ", inputIndex, " unknown");
-    }
-    auto output_type = ctx.getOutputType(outputIndex);
-    if (output_type->value_case() == TypeProto::kSequenceType ||
-        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-      output_type->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(
-          input_seq_type.elem_type().tensor_type().elem_type());
-    } else {
-      fail_type_inference("Output ", outputIndex, " expected to have sequence type. Got: ", input_type->value_case());
-    }
+  if (!input_seq_type.has_elem_type()) {
+    fail_type_inference("Element type of sequence input ", inputIndex, " unknown");
   }
+
+  auto output_type = ctx.getOutputType(outputIndex);
+  output_type->mutable_sequence_type()->mutable_elem_type()->CopyFrom(input_seq_type.elem_type());
+}
+
+inline void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+  auto input_type = ctx.getInputType(inputIndex);
+  if (nullptr == input_type || input_type->value_case() != TypeProto::kOptionalType) {
+    fail_type_inference("Input ", inputIndex, " expected to have optional type");
+  }
+  auto input_opt_type = input_type->optional_type();
+  if (!input_opt_type.has_elem_type()) {
+    fail_type_inference("Element type of optional input ", inputIndex, " unknown");
+  }
+
+  auto output_type = ctx.getOutputType(outputIndex);
+  output_type->mutable_optional_type()->mutable_elem_type()->CopyFrom(input_opt_type.elem_type());
 }
 
 inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
@@ -313,6 +371,8 @@ inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inp
     propagateElemTypeFromTensorInputToOutput(ctx, inputIndex, outputIndex);
   } else if (input_value_case == TypeProto::kSequenceType) {
     propagateElemTypeFromSequenceInputToOutput(ctx, inputIndex, outputIndex);
+  } else if (input_value_case == TypeProto::kOptionalType) {
+    propagateElemTypeFromOptionalInputToOutput(ctx, inputIndex, outputIndex);
   }
 }
 
@@ -367,15 +427,19 @@ inline bool hasShape(const TypeProto& type) {
     return type.sparse_tensor_type().has_shape();
   } else if (type.has_sequence_type() && type.sequence_type().has_elem_type()) {
     return hasShape(type.sequence_type().elem_type());
+  } else if (type.has_optional_type() && type.optional_type().has_elem_type()) {
+    return hasShape(type.optional_type().elem_type());
   }
   return false;
 }
 
-inline bool hasInputShape(InferenceContext& ctx, size_t n) {
+template <typename Context>
+inline bool hasInputShape(Context& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) && hasShape(*ctx.getInputType(n));
 }
 
-inline bool hasNInputShapes(InferenceContext& ctx, size_t n) {
+template <typename Context>
+inline bool hasNInputShapes(Context& ctx, size_t n) {
   for (size_t i = 0; i < n; i++) {
     if (!hasInputShape(ctx, i)) {
       return false;
@@ -449,6 +513,8 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
     }
   } else if (TypeProto::kSequenceType == from_type_case) {
     propagateShape(&from_type->sequence_type().elem_type(), to_type->mutable_sequence_type()->mutable_elem_type());
+  } else if (TypeProto::kOptionalType == from_type_case) {
+    propagateShape(&from_type->optional_type().elem_type(), to_type->mutable_optional_type()->mutable_elem_type());
   } else {
     fail_shape_inference("Unsupported Source/Target type=", from_type_case);
   }

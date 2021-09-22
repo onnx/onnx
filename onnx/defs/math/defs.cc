@@ -11,6 +11,45 @@
 
 namespace ONNX_NAMESPACE {
 
+inline int MathOpTwoIntegers(std::string op_type, int a, int b) {
+  if (op_type == "Add") {
+    return a + b;
+  } else if (op_type == "Sub") {
+    return a - b;
+  } else if (op_type == "Mul") {
+    return a * b;
+  }
+  fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
+}
+
+inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_type) {
+  const auto input_0 = ctx.getInputData(0);
+  const auto input_1 = ctx.getInputData(1);
+  if (input_0 == nullptr || input_1 == nullptr) {
+    return;
+  }
+  int size_0 = input_0->dim_size();
+  int size_1 = input_1->dim_size();
+  // Fails to broadcast if the ranks are different and no any rank is 1 
+  if (size_0 != size_1 && size_0 != 1 && size_1 != 1) {
+    fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (",
+        size_0, ") vs (", size_1, ").");
+  }
+  TensorShapeProto tsp;
+  for (int i = 0; i < std::max(size_0, size_1); ++i) {
+    auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
+    auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
+    if (input_dim_0.has_dim_value() && input_dim_1.has_dim_value()) {
+      tsp.mutable_dim()->Add()->set_dim_value(
+          MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
+    } else {
+      // Cannot compute the value; simply add an empty dim without value and param
+      tsp.mutable_dim()->Add();
+    }
+  }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
@@ -151,12 +190,18 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 ONNX_OPERATOR_SET_SCHEMA(
     Add,
     14,
-    OpSchema().FillUsing(MathDocGenerator("addition")));
+    OpSchema().FillUsing(MathDocGenerator("addition"))
+    .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+        MathOpDataPropagator(ctx, "Add");
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sub,
     14,
-    OpSchema().FillUsing(MathDocGenerator("subtraction")));
+    OpSchema().FillUsing(MathDocGenerator("subtraction"))
+    .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+        MathOpDataPropagator(ctx, "Sub");
+    }));
 
 static const char* Mod_doc = R"DOC(
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
@@ -224,7 +269,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     Mul,
     14,
-    OpSchema().FillUsing(MathDocGenerator("multiplication")));
+    OpSchema().FillUsing(MathDocGenerator("multiplication"))
+    .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+        MathOpDataPropagator(ctx, "Mul");
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Div,
@@ -1069,13 +1117,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(FunctionBodyHelper::BuildNodes({
-            // nodes: {outputs, op, inputs, attributes}
-            {{"HS_X"},
-             "HardSigmoid",
-             {"X"},
-             {MakeAttribute("alpha", 1.0f/6.0f), MakeAttribute("beta", 0.5f)}},
-            {{"Y"}, "Mul", {"X", "HS_X"}}})));
+        .FunctionBody(R"ONNX(
+          {
+            HS_X = HardSigmoid<alpha = 0.16666667163372, beta = 0.5>(X) 
+            Y = Mul (X, HS_X)
+          }
+        )ONNX"));
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
@@ -2340,12 +2387,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* QLinearMatMul_ver10_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
-It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, and computes the quantized output.
-The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it is rounding to nearest ties to even.
-Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
-They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
-the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
-and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
+It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, 
+and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point). 
+For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 
+Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor 
+(per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row 
+or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be 
+an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K] 
+for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may 
+have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
 Production must never overflow, and accumulation may overflow if and only if in 32 bits.
 )DOC";
 
@@ -2509,9 +2559,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "a_zero_point",
-            "Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, "
-            "which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements "
-            "should be equal to the number of rows of input 'A'.",
+            "Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or N-D tensor. "
+            "Scalar refers to per tensor quantization whereas N-D refers to per row quantization. "
+            "If the input is 2D of shape [M, K] then zero point tensor may be an M element vector [zp_1, zp_2, ..., zp_M]. "
+            "If the input is N-D tensor with shape [D1, D2, M, K] then zero point tensor may have shape [D1, D2, M, 1]. ",
             "T1",
             OpSchema::Optional,
             true,
@@ -2520,9 +2571,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "b_zero_point",
-            "Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
-            "which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number "
-            "of elements should be equal to the number of columns of input 'B'.",
+            "Zero point tensor for input 'B'. It's optional and default value is 0. It could be a scalar or a N-D tensor, "
+            "Scalar refers to per tensor quantization whereas N-D refers to per col quantization. "
+            "If the input is 2D of shape [K, N] then zero point tensor may be an N element vector [zp_1, zp_2, ..., zp_N]. "
+            "If the input is N-D tensor with shape [D1, D2, K, N] then zero point tensor may have shape [D1, D2, 1, N]. ",
             "T2",
             OpSchema::Optional,
             true,

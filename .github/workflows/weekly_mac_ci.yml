@@ -7,14 +7,17 @@ on:
   schedule:
     # run weekly on Sunday 23:59
     - cron:  '59 23 * * SUN'
+  pull_request:
+    branches: [master, rel-*]
   workflow_dispatch:
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'test ONNX Model Zoo')
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [3.7]
+        python-version: [3.8]
         architecture: ['x64']
     steps:
     - uses: actions/checkout@v2
@@ -25,16 +28,12 @@ jobs:
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
-    - name: Install Python dependencies
-      shell: bash
-      run: |
-        set -e
-        python -m pip -q install numpy==1.16.6 pytest==5.4.3 nbval setuptools wheel
 
     - name: Install protobuf dependencies
       run: |
@@ -54,7 +53,14 @@ jobs:
         make install
         export PATH=$(pwd)/bin:$PATH
         cd $ONNX_PATH
-         
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        set -e
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements-release.txt
+
     - name: Build, install and test ONNX
       shell: bash
       run: |
@@ -64,6 +70,7 @@ jobs:
         export ONNX_NAMESPACE=ONNX_REL_1_8
         export MACOSX_DEPLOYMENT_TARGET=10.15
         python setup.py --quiet install
+  
     - name: Test all models with onnx.checker and onnx.shape_inference
       run: |
         cd ..
