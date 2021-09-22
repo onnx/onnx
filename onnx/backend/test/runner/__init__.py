@@ -338,4 +338,3 @@ class Runner(object):
                 target_list.append(numpy_helper.to_optional(optional))
             else:
                 print('Loading proto of that specific type (Map/Sparse Tensor) is currently not supported')
-
