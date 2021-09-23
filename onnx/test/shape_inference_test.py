@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
+from onnx import checker, helper, numpy_helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
 from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
 from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
@@ -45,17 +45,17 @@ class TestShapeInference(unittest.TestCase):
                 nodes[:0] = [make_node("Reshape", ['SEED_' + seed_name, 'UNKNOWN_SHAPE_' + seed_name], [seed_name])]
         return helper.make_graph(nodes, "test", input_value_infos, [], initializer=initializer, value_info=value_info)
 
-    def _inferred(self, graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
+    def _inferred(self, graph, strict_mode_val=True, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         kwargs[str('producer_name')] = 'onnx-test'
         orig_model = helper.make_model(graph, **kwargs)
-        inferred_model = onnx.shape_inference.infer_shapes(orig_model, strict_mode=True)
+        inferred_model = onnx.shape_inference.infer_shapes(orig_model, strict_mode=strict_mode_val)
         checker.check_model(inferred_model)
         return inferred_model
 
-    def _assert_inferred(self, graph, vis, **kwargs):  # type: (GraphProto, List[ValueInfoProto], **Any) -> None
+    def _assert_inferred(self, graph, vis, strict_mode=True, **kwargs):  # type: (GraphProto, List[ValueInfoProto], **Any) -> None
         names_in_vis = set(x.name for x in vis)
         vis = list(x for x in graph.value_info if x.name not in names_in_vis) + vis
-        inferred_model = self._inferred(graph, **kwargs)
+        inferred_model = self._inferred(graph, strict_mode, **kwargs)
         inferred_vis = list(inferred_model.graph.value_info)
         vis = list(sorted(vis, key=lambda x: x.name))
         inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))
@@ -3872,6 +3872,22 @@ class TestShapeInference(unittest.TestCase):
              make_node('OptionalGetElement', ['optional'], ['output'])],
             [])
         self._assert_inferred(graph, [optional_val_info, sequence_val_into, output_val_into])  # type: ignore
+
+    def test_parse_data_with_invalid_tensor_type(self):  # type: () -> None
+        model = helper.make_model(
+            graph=helper.make_graph(
+                name='graph_with_wrong_type',
+                inputs=[],
+                outputs=[helper.make_tensor_value_info('y', TensorProto.FLOAT, shape=None)],
+                nodes=[make_node('ConstantOfShape', ['x'], ['y'])],
+                # ConstantOfShape only accepts np.int64 instead of np.int32
+                initializer=[numpy_helper.from_array(np.array([4, 3], dtype=np.int32), name='x')]))
+        # Strict shape inference should catch this invalid type error (int32 is not supported)
+        self.assertRaises(onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes, model, True, True)
+        # Even nornmal shape inference should not produce any invalid shape due to wrong type for ParseData
+        inferred_model = onnx.shape_inference.infer_shapes(model)
+        self.assertFalse(inferred_model.graph.output[0].type.tensor_type.HasField('shape'))
 
 
 if __name__ == '__main__':
