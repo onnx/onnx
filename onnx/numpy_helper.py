@@ -302,7 +302,7 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
     elif elem_type == OptionalProto.MAP:
         opt = to_dict(value)
     elif elem_type == OptionalProto.OPTIONAL:
-      return to_optional(value)
+        return to_optional(value)
     else:
         raise TypeError("The element type in the input optional is not supported.")
     return opt
