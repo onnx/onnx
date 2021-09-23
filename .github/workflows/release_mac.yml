@@ -20,7 +20,7 @@ jobs:
     runs-on: macos-10.15
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10.0-rc.2']
+        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
         architecture: ['x64']
 
     steps:
@@ -33,7 +33,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
