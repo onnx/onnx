@@ -288,6 +288,8 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
     """
     opt = None  # type: Optional[Any]
     elem_type = optional.elem_type
+    if elem_type == OptionalProto.UNDEFINED:
+        return opt
     value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
     if not optional.HasField(value_field):
         return opt
@@ -299,6 +301,8 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
         opt = to_list(value)
     elif elem_type == OptionalProto.MAP:
         opt = to_dict(value)
+    elif elem_type == OptionalProto.OPTIONAL:
+      return to_optional(value)
     else:
         raise TypeError("The element type in the input optional is not supported.")
     return opt
