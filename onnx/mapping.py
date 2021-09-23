@@ -29,6 +29,9 @@ TENSOR_TYPE_TO_NP_TYPE = {
 }
 
 NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items()}
+# Currently native numpy does not support bfloat16
+# Numpy float16 array is only reversed to TensorProto.FLOAT16
+NP_TYPE_TO_TENSOR_TYPE[np.dtype('float16')] = int(TensorProto.FLOAT16)
 
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.FLOAT): int(TensorProto.FLOAT),
