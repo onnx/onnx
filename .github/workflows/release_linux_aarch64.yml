@@ -42,7 +42,7 @@ jobs:
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
-          bash -exc '${{ env.py }} -m pip install virtualenv && ${{ env.py }} -m venv .env && \
+          bash -exc '${{ env.py }} -m pip install -q virtualenv && ${{ env.py }} -m venv .env && \
           source .env/bin/activate && \
           ${{ env.py }} -m pip install -U numpy protobuf==3.16.0 && \
           yum install -y protobuf-compiler protobuf-devel
@@ -67,9 +67,9 @@ jobs:
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip install --upgrade pip && \
-          pip install dist/*manylinux2014_aarch64.whl && \
-          pip install pytest nbval ipython==7.16.1 && \
+          python -m pip install -q --upgrade pip && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          python -m pip install -q -r requirements-release.txt && \
           pytest && \
           deactivate'
 
@@ -106,7 +106,6 @@ jobs:
           source .env/bin/activate && \
           python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
-          python -m pip install pytest && \
           pytest && \
           deactivate'
 
@@ -119,7 +118,6 @@ jobs:
           source .env/bin/activate && \
           python -m pip uninstall -y onnx && python -m pip install protobuf==3.12.2 && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
-          python -m pip install pytest && \
           pytest && \
           deactivate'
 
@@ -130,7 +128,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip install flatbuffers && \
+          python -m pip install -q flatbuffers && \
           python -m pip install -i https://test.pypi.org/simple/ ort-nightly && \
           python onnx/test/test_with_ort.py && \
           deactivate'
