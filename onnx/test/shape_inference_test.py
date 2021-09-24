@@ -3878,7 +3878,8 @@ class TestShapeInference(unittest.TestCase):
             [('cond', TensorProto.BOOL, (10,)), ('x', TensorProto.BFLOAT16, (10,)), ('y', TensorProto.BFLOAT16, (10,))],
             [make_node('Where', ['cond', 'x', 'y'], ['out'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.BFLOAT16, (10,))])  # type: ignore        
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.BFLOAT16, (10,))])  # type: ignore
+
 
 if __name__ == '__main__':
     unittest.main()
