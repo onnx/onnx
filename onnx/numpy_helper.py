@@ -291,8 +291,6 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
     if elem_type == OptionalProto.UNDEFINED:
         return opt
     value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
-    if not optional.HasField(value_field):
-        return opt
     value = getattr(optional, value_field)
     # TODO: create a map and replace conditional branches
     if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:
@@ -338,6 +336,8 @@ def from_optional(
         elem_type = OptionalProto.MAP
     elif isinstance(opt, list):
         elem_type = OptionalProto.SEQUENCE
+    elif opt is None:
+        elem_type = OptionalProto.UNDEFINED
     else:
         elem_type = OptionalProto.TENSOR
 
