@@ -2904,8 +2904,8 @@ static const char* Where_ver16_doc = R"DOC(
     Where behaves like numpy.where with three parameters:
     https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
 
-    (History)
-    Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
+**History**
+- Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
