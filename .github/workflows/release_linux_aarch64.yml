@@ -58,7 +58,8 @@ jobs:
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
           python -m pip install -q -r requirements-release.txt && \
-          python -m pip install -i https://test.pypi.org/simple/ onnx-weekly==1.10.1.dev20210830 && \
+          python -m pip install onnx && \
+          git checkout rel-1.10.1 \
           pytest && \
           deactivate'
 
