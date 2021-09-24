@@ -2898,18 +2898,21 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Where_ver9_doc = R"DOC(
+static const char* Where_ver16_doc = R"DOC(
     Return elements, either from X or Y, depending on condition
     (with Numpy-style broadcasting support).
     Where behaves like numpy.where with three parameters:
     https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+
+    (History)
+    Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
-    9,
+    16,
     OpSchema()
-        .SetDoc(Where_ver9_doc)
+        .SetDoc(Where_ver16_doc)
         .Input(
             0,
             "condition",
@@ -2949,8 +2952,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Constrain to boolean tensors.")
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
-            "Constrain input and output types to all tensor types.")
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types (including bfloat).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 1, 0);
           if (hasNInputShapes(ctx, 3)) {

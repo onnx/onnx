@@ -3873,6 +3873,12 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [optional_val_info, sequence_val_into, output_val_into])  # type: ignore
 
+    def test_where_bfloat(self):  # type: () -> None
+        graph = self._make_graph(
+            [('cond', TensorProto.BOOL, (10,)), ('x', TensorProto.BFLOAT16, (10,)), ('y', TensorProto.BFLOAT16, (10,))],
+            [make_node('Where', ['cond', 'x', 'y'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.BFLOAT16, (10,))])  # type: ignore        
 
 if __name__ == '__main__':
     unittest.main()
