@@ -245,7 +245,9 @@ void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
 
 void check_optional(const OptionalProto& optional, const CheckerContext& ctx) {
   enforce_has_field(optional, elem_type);
-  if (optional.elem_type() == OptionalProto::TENSOR) {
+  if (optional.elem_type() == OptionalProto::UNDEFINED) {
+    return;
+  } else if (optional.elem_type() == OptionalProto::TENSOR) {
     if (optional.has_tensor_value())
       check_tensor(optional.tensor_value(), ctx);
   } else if (optional.elem_type() == OptionalProto::SPARSE_TENSOR) {
