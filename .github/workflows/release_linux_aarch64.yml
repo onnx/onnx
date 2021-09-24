@@ -57,7 +57,7 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
-          python -m pip install onnx && \
+          python -m pip install -i https://test.pypi.org/simple/ onnx-weekly && \
           python -m pip install -q -r requirements-release.txt && \
           pytest && \
           deactivate'
