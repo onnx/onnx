@@ -70,7 +70,7 @@ jobs:
           python -m pip install -q --upgrade pip && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           python -m pip install -q -r requirements-release.txt && \
-          python -m pip install -q jupyter-client==7.0.2 && \
+          python -m pip install -q jupyter-client==7.0.2 jupyter_core==4.7.1  && \
           pytest && \
           deactivate'
 
