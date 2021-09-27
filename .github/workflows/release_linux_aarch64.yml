@@ -62,7 +62,7 @@ jobs:
           python -m pip install onnx && \
           python -m pip install -q -r requirements-release.txt && \
           python -m pip install --upgrade nbconvert  && \
-          jupyter nbconvert --execute --to notebook --inplace  onnx/examples/Protobufs.ipynb && \
+          jupyter nbconvert --to notebook --inplace --execute onnx/examples/Protobufs.ipynb && \
           pytest && \
           deactivate'
 
