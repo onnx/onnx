@@ -61,7 +61,8 @@ jobs:
           python -m pip install jupyter_core==4.7.1 jupyter_client==7.0.2 more_itertools==8.9.0 && \
           python -m pip install onnx && \
           python -m pip install -q -r requirements-release.txt && \
-          jupyter nbconvert --execute --to notebook --inplace  onnx/examples/Protobufs.ipynb \
+          python -m pip install --upgrade nbconvert  && \
+          jupyter nbconvert --execute --to notebook --inplace  onnx/examples/Protobufs.ipynb && \
           pytest && \
           deactivate'
 
@@ -97,7 +98,7 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
-          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          python -m pip install onnx && \
           pytest && \
           deactivate'
 
