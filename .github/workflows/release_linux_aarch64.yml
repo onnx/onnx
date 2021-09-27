@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         # the different python versions for building wheels
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39]
+        python-version: [cp36-cp36m, cp37-cp37m, cp38-cp38, cp39-cp39]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
@@ -69,8 +69,8 @@ jobs:
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
+          python -m pip install jupyter_core==4.7.1  && \
           python -m pip install -q -r requirements-release.txt && \
-          python -m pip install -q jupyter-client==6.4.0 jupyter_core==4.7.1  && \
           pytest && \
           deactivate'
 
