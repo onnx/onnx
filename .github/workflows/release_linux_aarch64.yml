@@ -25,8 +25,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      with:
-        ref: rel-1.10.1
     - name: Checkout submodules
       shell: bash
       run: |
@@ -61,9 +59,9 @@ jobs:
           python -m pip install jupyter_core==4.7.1 jupyter_client==7.0.2 more_itertools==8.9.0 && \
           python -m pip install onnx && \
           python -m pip install -q -r requirements-release.txt && \
-          python -m pip install --upgrade nbconvert  && \
+          python -m pip install --upgrade nbconvert jupyter && \
           jupyter nbconvert --to notebook --inplace --execute onnx/examples/Protobufs.ipynb && \
-          pytest && \
+          pytest onnx/examples/*.ipynb && \
           deactivate'
 
     - name: Test backend test data
@@ -99,7 +97,7 @@ jobs:
           source .env/bin/activate && \
           python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
           python -m pip install onnx && \
-          pytest && \
+          pytest onnx/examples/*.ipynb && \
           deactivate'
 
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
