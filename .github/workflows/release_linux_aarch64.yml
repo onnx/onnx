@@ -68,8 +68,8 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
+          python -m pip install jupyter_core==4.7.1 jupyter_client==7.0.2 && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
-          python -m pip install jupyter_core==4.7.1  && \
           python -m pip install -q -r requirements-release.txt && \
           pytest && \
           deactivate'
