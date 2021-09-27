@@ -29,6 +29,7 @@ jobs:
       shell: bash
       run: |
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git checkout rel-1.10.1
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
@@ -48,18 +49,6 @@ jobs:
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 
-      # using created virtual environment in new container and executing the script 
-    - name: Build manylinux2014_aarch64
-      run: |
-        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '\
-          source .env/bin/activate && \
-          yum install -y sudo && \
-          sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
-          sudo .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }}
-          deactivate'
-
       # using created virtual environment in new container and testing the wheel
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |
@@ -69,7 +58,7 @@ jobs:
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
           python -m pip install jupyter_core==4.7.1 jupyter_client==7.0.2 more_itertools==8.9.0 && \
-          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          python -m pip install onnx && \
           python -m pip install -q -r requirements-release.txt && \
           pytest && \
           deactivate'
