@@ -59,6 +59,7 @@ jobs:
           python -m pip install jupyterlab==3.1.10 && \
           python -m pip install onnx && \
           python -m pip install -q -r requirements-release.txt && \
+          jupyter troubleshoot && \
           jupyter nbconvert --to notebook --inplace --execute onnx/examples/Protobufs.ipynb && \
           pytest onnx/examples/*.ipynb && \
           deactivate'
