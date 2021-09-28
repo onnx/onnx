@@ -39,6 +39,8 @@ jobs:
       # and installing the dependencies inside that \
       # so that we can use installed dependencies.
     - name: Install dependencies
+      with:
+        image: tonistiigi/binfmt:qemu-v6.1.0
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
@@ -56,7 +58,7 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
-          python -m pip install jupyterlab==3.1.10 && \
+          python -m pip install jupyterlab==3.0.17 notebook==6.3.0 && \
           python -m pip install onnx && \
           python -m pip install -q -r requirements-release.txt && \
           jupyter troubleshoot && \
