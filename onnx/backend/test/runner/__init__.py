@@ -332,5 +332,9 @@ class Runner(object):
                 tensor = onnx.TensorProto()
                 tensor.ParseFromString(protobuf_content)
                 target_list.append(numpy_helper.to_array(tensor))
+            elif model_type_proto.HasField('optional_type'):
+                optional = onnx.OptionalProto()
+                optional.ParseFromString(protobuf_content)
+                target_list.append(numpy_helper.to_optional(optional))
             else:
                 print('Loading proto of that specific type (Map/Sparse Tensor) is currently not supported')

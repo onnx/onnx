@@ -240,19 +240,27 @@ def make_tensor(
         assert not raw, "Can not use raw_data to store string type"
 
     # Check number of vals specified equals tensor size
-    size = 1 if (not raw) else (mapping.TENSOR_TYPE_TO_NP_TYPE[data_type].itemsize)
+    expected_size = 1 if (not raw) else (mapping.TENSOR_TYPE_TO_NP_TYPE[data_type].itemsize)
+    # Flatten a numpy array if its rank > 1
+    if type(vals) is np.ndarray and len(vals.shape) > 1:
+        vals = vals.flatten()
     for d in dims:
-        size = size * d
-    if (len(vals) != size):
-        raise ValueError("Number of values does not match tensor's size.")
+        expected_size = expected_size * d
 
-    if (data_type == TensorProto.COMPLEX64
-            or data_type == TensorProto.COMPLEX128):
-        vals = split_complex_to_pairs(vals)
+    if len(vals) != expected_size:
+        raise ValueError("Number of values does not match tensor's size. Expected {}, but it is {}. "
+            .format(expected_size, len(vals)))
 
     if raw:
         tensor.raw_data = vals
     else:
+        if (data_type == TensorProto.COMPLEX64
+                or data_type == TensorProto.COMPLEX128):
+            vals = split_complex_to_pairs(vals)
+        # floa16/bfloat16 are stored as uint16
+        elif (data_type == TensorProto.FLOAT16
+                or data_type == TensorProto.BFLOAT16):
+            vals = np.array(vals).astype(np.float16).view(dtype=np.uint16).flatten().tolist()
         field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
             mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]]
         getattr(tensor, field).extend(vals)
