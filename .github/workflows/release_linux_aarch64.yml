@@ -35,7 +35,7 @@ jobs:
       # setting up qemu for enabling aarch64 binary execution on x86 machine
     - uses: docker/setup-qemu-action@v1
       with:
-        image: tonistiigi/binfmt:qemu-v6.1.0
+        image: tonistiigi/binfmt:master
 
       # Creating a virtual environment on machine with the help of docker container \
       # and installing the dependencies inside that \
