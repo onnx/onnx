@@ -13,7 +13,7 @@ on:
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         # the different python versions for building wheels
@@ -56,10 +56,9 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
-          python -m pip install jupyter_core==4.7.1 jupyter_client==7.0.2 more_itertools==8.9.0 && \
+          python -m pip install notebook==6.4.0 jupyter_core==4.7.1 jupyter_client==7.0.2 more_itertools==8.9.0 && \
           python -m pip install onnx && \
           python -m pip install -q -r requirements-release.txt && \
-          python -m pip install --upgrade nbconvert jupyter && \
           jupyter nbconvert --to notebook --inplace --execute onnx/examples/Protobufs.ipynb && \
           pytest onnx/examples/*.ipynb && \
           deactivate'
