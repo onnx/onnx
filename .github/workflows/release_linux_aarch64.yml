@@ -50,6 +50,18 @@ jobs:
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 
+      # using created virtual environment in new container and executing the script 
+    - name: Build manylinux2014_aarch64
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          yum install -y sudo && \
+          sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
+          sudo .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }}
+          deactivate'
+
       # using created virtual environment in new container and testing the wheel
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |
@@ -58,12 +70,9 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
-          python -m pip install jupyterlab==3.0.17 notebook==6.3.0 && \
-          python -m pip install onnx && \
           python -m pip install -q -r requirements-release.txt && \
-          jupyter troubleshoot && \
-          jupyter nbconvert --to notebook --inplace --execute onnx/examples/Protobufs.ipynb && \
-          pytest onnx/examples/*.ipynb && \
+          pip install dist/*manylinux2014_aarch64.whl && \
+          pytest && \
           deactivate'
 
     - name: Test backend test data
@@ -98,8 +107,8 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
-          python -m pip install onnx && \
-          pytest onnx/examples/*.ipynb && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          pytest && \
           deactivate'
 
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
