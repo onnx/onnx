@@ -4417,4 +4417,70 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor and sequence types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* Where_ver9_doc = R"DOC(
+    Return elements, either from X or Y, depending on condition
+    (with Numpy-style broadcasting support).
+    Where behaves like numpy.where with three parameters:
+    https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Where,
+    9,
+    OpSchema()
+        .SetDoc(Where_ver9_doc)
+        .Input(
+            0,
+            "condition",
+            "When True (nonzero), yield X, otherwise yield Y",
+            "B",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "X",
+            "values selected at indices where condition is True",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "Y",
+            "values selected at indices where condition is False",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of shape equal to the broadcasted shape of condition, X, and Y.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("B", {"tensor(bool)"}, "Constrain to boolean tensors.")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 1, 0);
+          if (hasNInputShapes(ctx, 3)) {
+            std::vector<const TensorShapeProto*> shapes;
+            shapes.push_back(&ctx.getInputType(0)->tensor_type().shape());
+            shapes.push_back(&ctx.getInputType(1)->tensor_type().shape());
+            shapes.push_back(&ctx.getInputType(2)->tensor_type().shape());
+            multidirectionalBroadcastShapeInference(
+                shapes,
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE

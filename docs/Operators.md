@@ -165,7 +165,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
 |<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
 |<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
-|<a href="#Where">Where</a>|<a href="Changelog.md#Where-9">9</a>|
+|<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|
@@ -24019,10 +24019,15 @@ expect(node, inputs=[data, scales], outputs=[output],
       (with Numpy-style broadcasting support).
       Where behaves like numpy.where with three parameters:
       https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+  
+  **History**
+  - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Where-9">9</a>
 
 #### Inputs
 
@@ -24047,8 +24052,8 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Constrain to boolean tensors.</dd>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types (including bfloat).</dd>
 </dl>
 
 
