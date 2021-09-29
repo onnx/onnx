@@ -112,13 +112,13 @@ class TestHelperAttributeFunctions(unittest.TestCase):
                 name='a',
                 data_type=TensorProto.FLOAT,
                 dims=(1,),
-                vals=np.ones(1).tolist()
+                vals=np.ones(1)
             ),
             helper.make_tensor(
                 name='b',
                 data_type=TensorProto.FLOAT,
                 dims=(1,),
-                vals=np.ones(1).tolist()
+                vals=np.ones(1)
             )]
         attr = helper.make_attribute("tensors", tensors)
         self.assertEqual(attr.name, "tensors")
@@ -366,7 +366,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             name='test',
             data_type=TensorProto.FLOAT,
             dims=(2, 3),
-            vals=np_array.reshape(6).tolist()
+            vals=np_array
         )
         self.assertEqual(tensor.name, 'test')
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
@@ -376,7 +376,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             name='test',
             data_type=TensorProto.FLOAT,
             dims=(2, 3),
-            vals=np_array.reshape(6).tobytes(),
+            vals=np_array.tobytes(),
             raw=True,
         )
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
@@ -390,6 +390,56 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=False
         )
         self.assertEqual(string_list, list(tensor.string_data))
+
+    def test_make_float16_tensor(self):  # type: () -> None
+        np_array = np.random.randn(2, 3).astype(np.float16)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT16,
+            dims=np_array.shape,
+            vals=np_array
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+    def test_make_float16_tensor_with_raw(self):  # type: () -> None
+        np_array = np.random.randn(2, 3).astype(np.float16)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT16,
+            dims=np_array.shape,
+            vals=np_array.view(dtype=np.uint16).flatten().tobytes(),
+            raw=True
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+    def test_make_bfloat16_tensor(self):  # type: () -> None
+        np_array = np.random.randn(8, 7).astype(np.float16)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.BFLOAT16,
+            dims=np_array.shape,
+            vals=np_array
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+    def test_make_bfloat16_tensor_with_raw(self):  # type: () -> None
+        np_array = np.random.randn(8, 7).astype(np.float16)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.BFLOAT16,
+            dims=np_array.shape,
+            vals=np_array.view(dtype=np.uint16).flatten().tobytes(),
+            raw=True
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
     def test_make_sparse_tensor(self):  # type: () -> None
         values = [1.1, 2.2, 3.3, 4.4, 5.5]

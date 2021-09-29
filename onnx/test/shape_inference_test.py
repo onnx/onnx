@@ -3873,6 +3873,12 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [optional_val_info, sequence_val_into, output_val_into])  # type: ignore
 
+    def test_where_bfloat(self):  # type: () -> None
+        graph = self._make_graph(
+            [('cond', TensorProto.BOOL, (10,)), ('x', TensorProto.BFLOAT16, (10,)), ('y', TensorProto.BFLOAT16, (10,))],
+            [make_node('Where', ['cond', 'x', 'y'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.BFLOAT16, (10,))])  # type: ignore
     def test_parse_data_with_unsupported_tensor_type(self):  # type: () -> None
         model = helper.make_model(
             graph=helper.make_graph(
@@ -3904,7 +3910,7 @@ class TestShapeInference(unittest.TestCase):
             onnx.shape_inference.infer_shapes, model, strict_mode=True)
         # Even nornmal shape inference should not produce any invalid shape due to undefined type for ParseData
         inferred_model = onnx.shape_inference.infer_shapes(model)
-        self.assertFalse(inferred_model.graph.output[0].type.tensor_type.HasField('shape'))
+        self.assertFalse(inferred_model.graph.output[0].type.tensor_type.HasField('shape')) 
 
 
 if __name__ == '__main__':
