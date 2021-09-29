@@ -32,7 +32,6 @@ TENSOR_TYPE_TO_NP_TYPE = {
 # Numpy float16 array is only reversed to TensorProto.FLOAT16
 NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16}
 
-
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.FLOAT): int(TensorProto.FLOAT),
     int(TensorProto.UINT8): int(TensorProto.INT32),
