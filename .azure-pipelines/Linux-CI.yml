@@ -32,6 +32,11 @@ jobs:
         onnx_ml: 1
         onnx_debug: 1
         onnx_lite: 0
+      py310:
+        python.version: '3.10'
+        onnx_ml: 0
+        onnx_debug: 0
+        onnx_lite: 1
     maxParallel: 6
 
   steps:
