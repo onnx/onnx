@@ -32,6 +32,8 @@ using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
 
 using TensorList = google::protobuf::RepeatedPtrField<TensorProto>;
 
+using OpsetIdList = google::protobuf::RepeatedPtrField<OperatorSetIdProto>;
+
 #define CHECK_PARSER_STATUS(status) \
   {                                 \
     auto local_status_ = status;    \
@@ -39,9 +41,37 @@ using TensorList = google::protobuf::RepeatedPtrField<TensorProto>;
       return local_status_;         \
   }
 
-class PrimitiveTypeNameMap {
+template <typename Map>
+class StringIntMap {
  public:
-  PrimitiveTypeNameMap() {
+  static const std::unordered_map<std::string, int32_t>& Instance() {
+    static Map instance;
+    return instance.map_;
+  }
+
+  static int32_t Lookup(const std::string& dtype) {
+    auto it = Instance().find(dtype);
+    if (it != Instance().end())
+      return it->second;
+    return 0;
+  }
+
+  static const std::string& ToString(int32_t dtype) {
+    static std::string undefined("undefined");
+    for (const auto& pair : Instance()) {
+      if (pair.second == dtype)
+        return pair.first;
+    }
+    return undefined;
+  }
+
+ protected:
+  std::unordered_map<std::string, int32_t> map_;
+};
+
+class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
+ public:
+  PrimitiveTypeNameMap() : StringIntMap() {
     map_["float"] = 1;
     map_["uint8"] = 2;
     map_["int8"] = 3;
@@ -60,33 +90,29 @@ class PrimitiveTypeNameMap {
     map_["bfloat16"] = 16;
   }
 
-  static const std::unordered_map<std::string, int32_t>& Instance() {
-    static PrimitiveTypeNameMap instance;
-    return instance.map_;
-  }
-
-  static int32_t Lookup(const std::string& dtype) {
-    auto it = Instance().find(dtype);
-    if (it != Instance().end())
-      return it->second;
-    return 0;
-  }
-
   static bool IsTypeName(const std::string& dtype) {
     return Lookup(dtype) != 0;
   }
+};
 
-  static const std::string& ToString(int32_t dtype) {
-    static std::string undefined("undefined");
-    for (const auto& pair : Instance()) {
-      if (pair.second == dtype)
-        return pair.first;
-    }
-    return undefined;
+class AttributeTypeNameMap : public StringIntMap<AttributeTypeNameMap> {
+ public:
+  AttributeTypeNameMap() : StringIntMap() {
+    map_["float"] = 1;
+    map_["int"] = 2;
+    map_["string"] = 3;
+    map_["tensor"] = 4;
+    map_["graph"] = 5;
+    map_["sparse_tensor"] = 11;
+    map_["type_proto"] = 13;
+    map_["floats"] = 6;
+    map_["ints"] = 7;
+    map_["strings"] = 8;
+    map_["tensors"] = 9;
+    map_["graphs"] = 10;
+    map_["sparse_tensors"] = 12;
+    map_["type_protos"] = 14;
   }
-
- private:
-  std::unordered_map<std::string, int32_t> map_;
 };
 
 class KeyWordMap {
@@ -164,8 +190,15 @@ class ParserBase {
   }
 
   void SkipWhiteSpace() {
-    while ((next_ < end_) && (isspace(*next_)))
-      ++next_;
+    do {
+      while ((next_ < end_) && (isspace(*next_)))
+        ++next_;
+      if ((next_ >= end_) || ((*next_) != '#'))
+        return;
+      // Skip rest of the line:
+      while ((next_ < end_) && ((*next_) != '\n'))
+        ++next_;
+    } while (true);
   }
 
   int NextChar(bool skipspace = true) {
@@ -229,6 +262,16 @@ class ParserBase {
 
       if (next_ == from)
         return ParseError("Value expected but not found.");
+
+      // Optional exponent syntax: (e|E)(+|-)?[0-9]+
+      if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
+        decimal_point = true; // treat as float-literal
+        ++next_;
+        if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
+          ++next_;
+        while ((next_ < end_) && (isdigit(*next_)))
+          ++next_;
+      }
 
       result.value = std::string(from, next_ - from);
       result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
@@ -356,6 +399,8 @@ class OnnxParser : public ParserBase {
 
   Status Parse(GraphProto& graph);
 
+  Status Parse(FunctionProto& fn);
+
   Status Parse(ModelProto& model);
 
   template <typename T>
@@ -369,17 +414,23 @@ class OnnxParser : public ParserBase {
 
   Status Parse(IdList& idlist);
 
+  Status Parse(char open, IdList& idlist, char close);
+
   Status ParseSingleAttributeValue(AttributeProto& attr);
 
   Status Parse(ValueInfoProto& valueinfo);
 
   Status Parse(ValueInfoList& vilist);
 
-  Status ParseInput(ValueInfoList& vilist, TensorList& initializers); 
+  Status ParseInput(ValueInfoList& vilist, TensorList& initializers);
 
-  Status ParseValueInfo(ValueInfoList& vilist, TensorList& initializers); 
+  Status ParseValueInfo(ValueInfoList& vilist, TensorList& initializers);
 
   Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
+
+  Status Parse(OpsetIdList& opsets);
+
+  bool NextIsType();
 };
 
 } // namespace ONNX_NAMESPACE

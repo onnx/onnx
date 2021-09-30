@@ -10,6 +10,7 @@ import sys
 import numpy as np  # type: ignore
 from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
+from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List, Dict
 
@@ -18,11 +19,12 @@ def combine_pairs_to_complex(fa):  # type: (Sequence[int]) -> Sequence[np.comple
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
+def to_array(tensor, base_dir=""):  # type: (TensorProto, Text) -> np.ndarray[Any]
     """Converts a tensor def object to a numpy array.
 
     Inputs:
         tensor: a TensorProto object.
+        base_dir: if external tensor exists, base_dir can help to find the path to it
     Returns:
         arr: the converted array.
     """
@@ -44,6 +46,10 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         ss = list(s.decode('utf-8') for s in utf8_strings)
         return np.asarray(ss).astype(np_dtype).reshape(dims)
 
+    # Load raw data from external tensor if it exists
+    if uses_external_data(tensor):
+        load_external_data_for_tensor(tensor, base_dir)
+
     if tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
         if sys.byteorder == 'big':
@@ -53,27 +59,27 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
     else:
-        data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
-        if (tensor_dtype == TensorProto.COMPLEX64
-                or tensor_dtype == TensorProto.COMPLEX128):
-            data = combine_pairs_to_complex(data)
-        # F16 is stored as int32; Need view to get the original value
-        if tensor_dtype == TensorProto.FLOAT16:
+        # float16/bfloat16 is stored as int32 (uint16 type); Need view to get the original value
+        if (tensor_dtype == TensorProto.FLOAT16
+                or tensor_dtype == TensorProto.BFLOAT16):
             return (
                 np.asarray(
                     tensor.int32_data,
                     dtype=np.uint16)
                 .reshape(dims)
                 .view(np.float16))
-        # Otherwise simply use astype to convert; e.g., int->float, float->float
-        else:
-            return (
-                np.asarray(
-                    data,
-                    dtype=storage_np_dtype)
-                .astype(np_dtype)
-                .reshape(dims)
-            )
+        data = getattr(tensor, storage_field)
+        if (tensor_dtype == TensorProto.COMPLEX64
+                or tensor_dtype == TensorProto.COMPLEX128):
+            data = combine_pairs_to_complex(data)
+
+        return (
+            np.asarray(
+                data,
+                dtype=storage_np_dtype)
+            .astype(np_dtype)
+            .reshape(dims)
+        )
 
 
 def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> TensorProto
@@ -282,6 +288,8 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
     """
     opt = None  # type: Optional[Any]
     elem_type = optional.elem_type
+    if elem_type == OptionalProto.UNDEFINED:
+        return opt
     value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
     value = getattr(optional, value_field)
     # TODO: create a map and replace conditional branches
@@ -291,6 +299,8 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
         opt = to_list(value)
     elif elem_type == OptionalProto.MAP:
         opt = to_dict(value)
+    elif elem_type == OptionalProto.OPTIONAL:
+        return to_optional(value)
     else:
         raise TypeError("The element type in the input optional is not supported.")
     return opt
@@ -326,6 +336,8 @@ def from_optional(
         elem_type = OptionalProto.MAP
     elif isinstance(opt, list):
         elem_type = OptionalProto.SEQUENCE
+    elif opt is None:
+        elem_type = OptionalProto.UNDEFINED
     else:
         elem_type = OptionalProto.TENSOR
 

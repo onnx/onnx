@@ -139,7 +139,15 @@ jobs:
         cd onnx
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest        
+        pytest
+
+    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+      if: ${{ always() }}
+      run: |
+        cd onnx
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest  
 
     - name: Verify ONNX with ort-nightly
       if: ${{ always() }}

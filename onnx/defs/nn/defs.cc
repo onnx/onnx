@@ -1748,9 +1748,21 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
           propagateShapeFromInputToOutput(ctx, 0, 0);
 
+          // Inputs 1 to 4 must be of rank 1.
+          checkInputRank(ctx, 1, 1);
+          checkInputRank(ctx, 2, 1);
+          checkInputRank(ctx, 3, 1);
+          checkInputRank(ctx, 4, 1);
+          
           Dim num_channels;
 
-          unifyInputDim(ctx, 0, 1, num_channels);
+          if (hasInputShape(ctx, 0)) {
+            if (getInputShape(ctx, 0).dim_size() > 1)
+              unifyInputDim(ctx, 0, 1, num_channels);
+            else
+              unifyDim(num_channels, 1);
+          }
+
           unifyInputDim(ctx, 1, 0, num_channels);
           unifyInputDim(ctx, 2, 0, num_channels);
           unifyInputDim(ctx, 3, 0, num_channels);
@@ -2454,24 +2466,21 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             FunctionBodyHelper::Const<float>("Exponent", 2.0f),
-             FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
-             {{"X_RM"},
-              "ReduceMean",
-              {"X"},
-              {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
-             {{"X_squared"}, "Pow", {"X", "Exponent"}},
-             {{"E_Xsquared"},
-              "ReduceMean",
-              {"X_squared"},
-              {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
-             {{"STD"}, "Sqrt", {"Variance"}},
-             {{"X_variance"}, "Sub", {"X", "X_RM"}},
-             {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
-             {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
+        .FunctionBody(R"ONNX(
+        {
+          Exponent = Constant <value = float {2.0}>()
+          Epsilon = Constant <value = float {1e-9}>()
+          X_RM = ReduceMean <axes : ints = @axes> (X)
+          EX_squared = Pow (X_RM, Exponent)
+          X_squared = Pow (X, Exponent)
+          E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)
+          Variance = Sub (E_Xsquared, EX_squared)
+          STD = Sqrt (Variance)
+          X_variance = Sub (X, X_RM)
+          Processed_STD = Add (STD, Epsilon)
+          Y = Div (X_variance, Processed_STD)
+        }
+        )ONNX"
+        ));
 
 } // namespace ONNX_NAMESPACE
