@@ -6,6 +6,7 @@
 #include "tensor_proto_util.h"
 #include <vector>
 #include "onnx/common/platform_helpers.h"
+#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
@@ -31,15 +32,21 @@ namespace ONNX_NAMESPACE {
     return t;                                                   \
   }
 
-#define DEFINE_PARSE_DATA(type, typed_data_fetch)                              \
+#define DEFINE_PARSE_DATA(type, typed_data_fetch, tensorproto_datatype)        \
   template <>                                                                  \
   const std::vector<type> ParseData(const TensorProto* tensor_proto) {         \
-    std::vector<type> res;                                                     \
     if (!tensor_proto->has_data_type() ||                                      \
       tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {           \
-      fail_shape_inference("The type of Tensor: ", tensor_proto->name(),       \
+      fail_shape_inference("The type of tensor: ", tensor_proto->name(),       \
         " is undefined so it cannot be parsed.");                              \
-    } else if (tensor_proto->has_data_location() &&                            \
+    } else if (tensor_proto->data_type() != tensorproto_datatype) {            \
+      fail_shape_inference("ParseData type mismatch for tensor: ",             \
+      tensor_proto->name(), ". Expected:",                                     \
+      Utils::DataTypeUtils::ToDataTypeString(tensorproto_datatype), " Actual:",\
+      Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));      \
+    }                                                                          \
+    std::vector<type> res;                                                     \
+    if (tensor_proto->has_data_location() &&                                   \
       tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) {    \
       fail_shape_inference("Cannot parse data from external tensors. Please ", \
         "load external data into raw data for tensor: ", tensor_proto->name());\
@@ -106,9 +113,9 @@ DEFINE_TO_TENSOR_LIST(uint64_t, TensorProto_DataType_UINT64, uint64)
 DEFINE_TO_TENSOR_LIST(double, TensorProto_DataType_DOUBLE, double)
 DEFINE_TO_TENSOR_LIST(std::string, TensorProto_DataType_STRING, string)
 
-DEFINE_PARSE_DATA(int32_t, int32_data)
-DEFINE_PARSE_DATA(int64_t, int64_data)
-DEFINE_PARSE_DATA(float, float_data)
-DEFINE_PARSE_DATA(double, double_data)
+DEFINE_PARSE_DATA(int32_t, int32_data, TensorProto_DataType_INT32)
+DEFINE_PARSE_DATA(int64_t, int64_data, TensorProto_DataType_INT64)
+DEFINE_PARSE_DATA(float, float_data, TensorProto_DataType_FLOAT)
+DEFINE_PARSE_DATA(double, double_data, TensorProto_DataType_DOUBLE)
 
 } // namespace ONNX_NAMESPACE
