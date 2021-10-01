@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for BatchNormalization in default domain from version 6 to 7
 
 #pragma once
@@ -19,8 +23,9 @@ struct BatchNormalization_6_7 final : public Adapter {
     }
   }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_batch_normalization_6_7(graph, node);
+    return node;
   }
 };
 

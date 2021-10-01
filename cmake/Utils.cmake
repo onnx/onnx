@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 #
 # Add MSVC RunTime Flag
 function(add_msvc_runtime_flag lib)
@@ -18,6 +19,10 @@ function(add_onnx_global_defines target)
   if(ONNX_USE_LITE_PROTO)
     target_compile_definitions(${target} PUBLIC "ONNX_USE_LITE_PROTO=1")
   endif()
+
+  if(ONNX_DISABLE_STATIC_REGISTRATION)
+    target_compile_definitions(${target} PUBLIC "__ONNX_DISABLE_STATIC_REGISTRATION")
+  endif()  
 endfunction()
 
 function(add_whole_archive_flag lib output_var)

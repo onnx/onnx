@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -16,25 +18,25 @@ class Squeeze(Base):
     def export_squeeze():  # type: () -> None
         node = onnx.helper.make_node(
             'Squeeze',
-            inputs=['x'],
+            inputs=['x', 'axes'],
             outputs=['y'],
-            axes=[0],
         )
         x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+        axes = np.array([0], dtype=np.int64)
         y = np.squeeze(x, axis=0)
 
-        expect(node, inputs=[x], outputs=[y],
+        expect(node, inputs=[x, axes], outputs=[y],
                name='test_squeeze')
 
     @staticmethod
     def export_squeeze_negative_axes():  # type: () -> None
         node = onnx.helper.make_node(
             'Squeeze',
-            inputs=['x'],
+            inputs=['x', 'axes'],
             outputs=['y'],
-            axes=[-2],
         )
         x = np.random.randn(1, 3, 1, 5).astype(np.float32)
+        axes = np.array([-2], dtype=np.int64)
         y = np.squeeze(x, axis=-2)
-        expect(node, inputs=[x], outputs=[y],
+        expect(node, inputs=[x, axes], outputs=[y],
                name='test_squeeze_negative_axes')

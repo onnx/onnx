@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX release management
 
 This describes the process by which versions of ONNX are officially released to the public.
@@ -5,7 +7,7 @@ This describes the process by which versions of ONNX are officially released to 
 Releases
 --------
 
-Releases are versioned according to [docs/Versioning.md](docs/Versioning.md). This describes IR and operator versioning policies, as well as propose how models themselves should be versioned.
+Releases are versioned according to [ONNX Versioning](docs/Versioning.md). This describes IR and operator versioning policies, as well as propose how models themselves should be versioned.
 
 On a regular basis, new versions of ONNX are published, representing the aggregate of changes in the IR and operator sets. Such releases use semantic versioning to describe the progression of the standard.
 

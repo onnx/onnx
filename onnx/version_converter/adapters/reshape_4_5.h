@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Reshape in default domain from version 4 to 5
 
 #pragma once
@@ -22,16 +26,18 @@ class Reshape_4_5 final : public RemoveConsumedInputs {
         data.emplace_back(shape);
       }
       // Add value as input to node
-      // Create Value
-      Value* v = graph->addInitializerAndInput(t);
-      node->addInput(v);
+      Node* constant = graph->create(kConstant);
+      constant->insertBefore(node);
+      constant->t_(kvalue, t);        
+      node->addInput(constant->output());
       // Remove kshape attribute
       node->removeAttribute(kshape);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       RemoveConsumedInputs::adapt(graph, node);
 	    adapt_reshape_4_5(graph, node);
+      return node;
     }
 };
 

@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <benchmark/benchmark.h>
 
 #include <onnx/onnx_pb.h>

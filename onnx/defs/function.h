@@ -1,5 +1,6 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
@@ -11,7 +12,7 @@
 #include "attr_proto_util.h"
 #include "onnx/common/constants.h"
 #include "onnx/common/status.h"
-#include "onnx/onnx-operators_pb.h"
+#include "onnx/defs/schema.h"
 #include "tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
@@ -41,25 +42,22 @@ class FunctionBodyHelper {
 
   struct NodeDef {
     NodeDef(
-        const std::vector<std::string>& outputs,
-        const std::string& op_type,
-        const std::vector<std::string>& inputs)
-        : outputs(outputs), op_type(op_type), inputs(inputs) {}
-
-    NodeDef(
-        const std::vector<std::string>& outputs,
-        const std::string& op_type,
-        const std::vector<std::string>& inputs,
-        const std::vector<AttributeProtoWrapper>& attributes)
-        : outputs(outputs),
-          op_type(op_type),
-          inputs(inputs),
-          attributes(attributes) {}
+        std::vector<std::string> outputs,
+        std::string op_type,
+        std::vector<std::string> inputs,
+        std::vector<AttributeProtoWrapper> attributes = {},
+        std::string domain = "")
+        : outputs(std::move(outputs)),
+          op_type(std::move(op_type)),
+          inputs(std::move(inputs)),
+          attributes(std::move(attributes)),
+          domain(std::move(domain)) {}
 
     std::vector<std::string> outputs;
     std::string op_type;
     std::vector<std::string> inputs;
     std::vector<AttributeProtoWrapper> attributes;
+    std::string domain;
   };
 
   /*
@@ -79,10 +77,23 @@ class FunctionBodyHelper {
     For refering an attribute from parent, use:
       {MakeRefAttribute("axes", AttributeProto::INTS)}}
 
+  To build a node which belongs to a domain other than onnx standard domain:
+    {{"Z"}, "Foo", {"X", "Y"}, "customdomain"} represents Z = customdomain.Foo(X,Y)
+    or
+    {{"Y"}, "Bar", {"X1", "X2", "X3"}, {{"axis", 1}}, "customdomain"}
+      represents Y = customdomain.Bar(X1,X2,X3) with axis = 1
+
   For more examples, please find the references of this function
   */
-  static std::vector<NodeProto> BuildNodes(
-      const std::vector<NodeDef>& node_defs);
+  static std::vector<NodeProto> BuildNodes(const std::vector<NodeDef>& node_defs);
+
+  static void BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs);
+
+  static bool BuildFunctionProto(
+      FunctionProto& functionProto,
+      const OpSchema& schema,
+      const std::vector<NodeDef>& node_defs,
+      const std::vector<OperatorSetIdProto>& relied_opsets);
 
   template <typename T>
   static NodeDef Const(const std::string& name, const T& value) {

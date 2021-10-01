@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -19,6 +21,7 @@ class RNN_Helper():
         R = str('R')
         B = str('B')
         H_0 = str('initial_h')
+        LAYOUT = str('layout')
 
         required_inputs = [X, W, R]
         for i in required_inputs:
@@ -34,14 +37,19 @@ class RNN_Helper():
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
 
+            layout = params[LAYOUT] if LAYOUT in params else 0
+            x = params[X]
+            x = x if layout == 0 else np.swapaxes(x, 0, 1)
             b = params[B] if B in params else np.zeros(2 * hidden_size, dtype=np.float32)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
 
-            self.X = params[X]
+            self.X = x
             self.W = params[W]
             self.R = params[R]
             self.B = b
             self.H_0 = h_0
+            self.LAYOUT = layout
+
         else:
             raise NotImplementedError()
 
@@ -49,17 +57,31 @@ class RNN_Helper():
         return np.tanh(x)
 
     def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
+        seq_length = self.X.shape[0]
+        hidden_size = self.H_0.shape[-1]
+        batch_size = self.X.shape[1]
+
+        Y = np.empty([seq_length, self.num_directions, batch_size, hidden_size])
         h_list = []
+
         H_t = self.H_0
         for x in np.split(self.X, self.X.shape[0], axis=0):
             H = self.f(np.dot(x, np.transpose(self.W)) + np.dot(H_t, np.transpose(self.R)) + np.add(
                 *np.split(self.B, 2)))
             h_list.append(H)
             H_t = H
+
         concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
-            output = np.expand_dims(concatenated, 1)
-        return output, h_list[-1]
+            Y[:, 0, :, :] = concatenated
+
+        if self.LAYOUT == 0:
+            Y_h = Y[-1]
+        else:
+            Y = np.transpose(Y, [2, 0, 1, 3])
+            Y_h = Y[:, :, -1, :]
+
+        return Y, Y_h
 
 
 class RNN(Base):
@@ -75,7 +97,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -98,7 +120,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -126,7 +148,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y'],
+            outputs=['', 'Y_h'],
             hidden_size=hidden_size
         )
 
@@ -141,3 +163,27 @@ class RNN(Base):
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = rnn.step()
         expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')
+
+    @staticmethod
+    def export_batchwise():  # type: () -> None
+        input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 4
+        weight_scale = 0.5
+        layout = 1
+
+        node = onnx.helper.make_node(
+            'RNN',
+            inputs=['X', 'W', 'R'],
+            outputs=['Y', 'Y_h'],
+            hidden_size=hidden_size,
+            layout=layout
+        )
+
+        W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+        rnn = RNN_Helper(X=input, W=W, R=R, layout=layout)
+        Y, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_simple_rnn_batchwise')

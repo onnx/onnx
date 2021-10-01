@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -12,12 +14,13 @@ import setuptools.command.build_ext
 
 from collections import namedtuple
 from contextlib import contextmanager
+from datetime import date
 import glob
 import os
 import shlex
 import subprocess
 import sys
-import struct
+import platform
 from textwrap import dedent
 import multiprocessing
 
@@ -26,6 +29,7 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, '.setuptools-cmake-build')
+PACKAGE_NAME = 'onnx'
 
 WINDOWS = (os.name == 'nt')
 
@@ -48,6 +52,7 @@ ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 ONNX_VERIFY_PROTO3 = bool(os.getenv('ONNX_VERIFY_PROTO3') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
+ONNX_DISABLE_EXCEPTIONS = bool(os.getenv('ONNX_DISABLE_EXCEPTIONS') == '1')
 
 DEBUG = bool(os.getenv('DEBUG'))
 COVERAGE = bool(os.getenv('COVERAGE'))
@@ -63,8 +68,14 @@ except (OSError, subprocess.CalledProcessError):
     git_version = None
 
 with open(os.path.join(TOP_DIR, 'VERSION_NUMBER')) as version_file:
+    VERSION_NUMBER = version_file.read().strip()
+    if '--weekly_build' in sys.argv:
+        today_number = date.today().strftime("%Y%m%d")
+        VERSION_NUMBER += '.dev' + today_number
+        PACKAGE_NAME = 'onnx-weekly'
+        sys.argv.remove('--weekly_build')
     VersionInfo = namedtuple('VersionInfo', ['version', 'git_version'])(
-        version=version_file.read().strip(),
+        version=VERSION_NUMBER,
         git_version=git_version
     )
 
@@ -139,10 +150,14 @@ class cmake_build(setuptools.Command):
     built = False
 
     def initialize_options(self):
-        self.jobs = multiprocessing.cpu_count()
+        self.jobs = None
 
     def finalize_options(self):
-        self.jobs = int(self.jobs)
+        if sys.version_info[0] >= 3:
+            self.set_undefined_options('build', ('parallel', 'jobs'))
+        if self.jobs is None and os.getenv("MAX_JOBS") is not None:
+            self.jobs = os.getenv("MAX_JOBS")
+        self.jobs = multiprocessing.cpu_count() if self.jobs is None else int(self.jobs)
 
     def run(self):
         if cmake_build.built:
@@ -179,16 +194,18 @@ class cmake_build(setuptools.Command):
                 ])
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append('-DONNX_USE_MSVC_STATIC_RUNTIME=ON')
-                if 8 * struct.calcsize("P") == 64:
-                    # Temp fix for CI
-                    # TODO: need a better way to determine generator
-                    cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
+                if platform.architecture()[0] == '64bit':
+                    cmake_args.extend(['-A', 'x64', '-T', 'host=x64'])
+                else:
+                    cmake_args.extend(['-A', 'Win32', '-T', 'host=x86'])
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
             if ONNX_VERIFY_PROTO3:
                 cmake_args.append('-DONNX_VERIFY_PROTO3=1')
             if ONNX_BUILD_TESTS:
                 cmake_args.append('-DONNX_BUILD_TESTS=ON')
+            if ONNX_DISABLE_EXCEPTIONS:
+                cmake_args.append('-DONNX_DISABLE_EXCEPTIONS=ON')
             if 'CMAKE_ARGS' in os.environ:
                 extra_cmake_args = shlex.split(os.environ['CMAKE_ARGS'])
                 # prevent crossfire with downstream scripts
@@ -196,6 +213,9 @@ class cmake_build(setuptools.Command):
                 log.info('Extra cmake args: {}'.format(extra_cmake_args))
                 cmake_args.extend(extra_cmake_args)
             cmake_args.append(TOP_DIR)
+            log.info('Using cmake args: {}'.format(cmake_args))
+            if '-DONNX_DISABLE_EXCEPTIONS=ON' in cmake_args:
+                raise RuntimeError("-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled.")
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, '--build', os.curdir]
@@ -289,13 +309,15 @@ ext_modules = [
 # no need to do fancy stuff so far
 packages = setuptools.find_packages()
 
-install_requires.extend([
-    'protobuf',
-    'numpy',
-    'six',
-    'typing>=3.6.4; python_version < "3.5"',
-    'typing-extensions>=3.6.2.1',
-])
+requirements_file = "requirements.txt"
+requirements_path = os.path.join(os.getcwd(), requirements_file)
+if not os.path.exists(requirements_path):
+    this = os.path.dirname(__file__)
+    requirements_path = os.path.join(this, requirements_file)
+if not os.path.exists(requirements_path):
+    raise FileNotFoundError("Unable to find " + requirements_file)
+with open(requirements_path) as f:
+    install_requires = f.read().splitlines()
 
 ################################################################################
 # Test
@@ -315,19 +337,22 @@ if sys.version_info[0] == 3:
 ################################################################################
 
 setuptools.setup(
-    name="onnx",
+    name=PACKAGE_NAME,
     version=VersionInfo.version,
     description="Open Neural Network Exchange",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     packages=packages,
+    license='Apache License v2.0',
     include_package_data=True,
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
     extras_require=extras_require,
-    author='bddppq',
-    author_email='jbai@fb.com',
+    author='ONNX',
+    author_email='onnx-technical-discuss@lists.lfai.foundation',
     url='https://github.com/onnx/onnx',
     entry_points={
         'console_scripts': [

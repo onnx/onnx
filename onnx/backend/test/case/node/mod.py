@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -192,10 +194,9 @@ class Mod(Base):
             outputs=['z'],
         )
 
-        x = np.arange(0, 30).reshape([3, 2, 5])
-        y = np.array([7])
+        x = np.arange(0, 30).reshape([3, 2, 5]).astype(np.int32)
+        y = np.array([7]).astype(np.int32)
         z = np.mod(x, y)
-        z
         #   array([[[0, 1, 2, 3, 4],
         #     [5, 6, 0, 1, 2]],
 

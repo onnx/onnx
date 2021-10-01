@@ -1,12 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-
 import uuid
 import os
+import re
+import sys
 from itertools import chain
 from typing import Iterable, Text, Optional
+
 from .onnx_pb import TensorProto, ModelProto
 
 
@@ -32,13 +36,11 @@ class ExternalDataInfo(object):
 def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text) -> None
     """
     Load data from an external file for tensor.
-
+    Ideally TensorProto should not hold any raw data but if it does it will be ignored.
     @params
     tensor: a TensorProto object.
     base_dir: directory that contains the external data.
     """
-    if tensor.HasField("raw_data"):  # already loaded
-        return
     info = ExternalDataInfo(tensor)
     file_location = _sanitize_path(info.location)
     external_data_file_path = os.path.join(base_dir, file_location)
@@ -65,6 +67,10 @@ def load_external_data_for_model(model, base_dir):  # type: (ModelProto, Text) -
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
             load_external_data_for_tensor(tensor, base_dir)
+            # After loading raw_data from external_data, change the state of tensors
+            tensor.data_location = TensorProto.DEFAULT
+            # and remove external data
+            del tensor.external_data[:]
 
 
 def set_external_data(tensor,  # type: TensorProto
@@ -74,6 +80,9 @@ def set_external_data(tensor,  # type: TensorProto
                       checksum=None,  # type: Optional[Text]
                       basepath=None  # type: Optional[Text]
                       ):  # type: (...) -> None
+    if not tensor.HasField("raw_data"):
+        raise ValueError("Tensor " + tensor.name + "does not have raw_data field. Cannot set external data for this tensor.")
+
     del tensor.external_data[:]
     tensor.data_location = TensorProto.EXTERNAL
     for (k, v) in {
@@ -89,31 +98,45 @@ def set_external_data(tensor,  # type: TensorProto
             entry.value = str(v)
 
 
-def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None):
-    # type: (ModelProto, bool, Optional[Text]) -> None
+def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None, size_threshold=1024, convert_attribute=False):
+    # type: (ModelProto, bool, Optional[Text], int, bool) -> None
     """
-    call to set all tensors as external data. save_model saves all the tensors data as external data after calling this function.
+    Call to set all tensors with raw data as external data. This call should preceed 'save_model'.
+    'save_model' saves all the tensors data as external data after calling this function.
     @params
     model: ModelProto to be converted.
     all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
                              If false, save each tensor to a file named with the tensor name.
     location: specify the external file that all tensors to save to.
               If not specified, will use the model name.
+    size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold
+    it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
+    convert_attribute: If true, convert all tensors to external data
+                       If false, convert only non-attribute tensors to external data
     """
+    tensors = _get_initializer_tensors(model)
+    if convert_attribute:
+        tensors = _get_all_tensors(model)
+
     if all_tensors_to_one_file:
         file_name = Text(uuid.uuid1())
         if location:
             file_name = location
-        for tensor in _get_all_tensors(model):
-            set_external_data(tensor, file_name)
+        for tensor in tensors:
+            if tensor.HasField("raw_data") and sys.getsizeof(tensor.raw_data) >= size_threshold:
+                set_external_data(tensor, file_name)
     else:
-        for tensor in _get_all_tensors(model):
-            set_external_data(tensor, tensor.name)
+        for tensor in tensors:
+            if tensor.HasField("raw_data") and sys.getsizeof(tensor.raw_data) >= size_threshold:
+                tensor_location = tensor.name
+                if not _is_valid_filename(tensor_location):
+                    tensor_location = Text(uuid.uuid1())
+                set_external_data(tensor, tensor_location)
 
 
 def convert_model_from_external_data(model):  # type: (ModelProto) -> None
     """
-    call to set all tensors data as embedded data. save_model saves all the tensors data as embedded data after calling this function.
+    Call to set all tensors which use external data as embedded data. save_model saves all the tensors data as embedded data after calling this function.
     @params
     model: ModelProto to be converted.
     """
@@ -189,6 +212,16 @@ def _sanitize_path(path):  # type: (Text) -> Text
     return path.lstrip('/.')
 
 
+def _is_valid_filename(filename):  # type: (Text) -> bool
+    """Utility to check whether the provided filename is valid."""
+    exp = re.compile("^[^<>:;,?\"*|/]+$")
+    match = exp.match(filename)
+    if match:
+        return True
+    else:
+        return False
+
+
 def uses_external_data(tensor):  # type: (TensorProto) -> bool
     """Return true if the tensor stores data in an external location."""
     return tensor.HasField("data_location") and tensor.data_location == TensorProto.EXTERNAL
@@ -211,7 +244,7 @@ def remove_external_data_field(tensor, field_key):  # type: (TensorProto, Text) 
 
 def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) -> ModelProto
     """
-    Write external data of all tensors to files on disk.
+    Serializes data for all the tensors which have data location set to TensorProto.External.
 
     Note: This function also strips basepath information from all tensors' external_data fields.
 
@@ -223,7 +256,11 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
     The modified model object.
     """
     for tensor in _get_all_tensors(model):
-        if uses_external_data(tensor):
+        # Writing to external data happens in 2 passes:
+        # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
+        # 2. The raw data in these tensors is serialized to a file
+        # Thus serialize only if tensor has raw data and it was marked for serialization
+        if uses_external_data(tensor) and tensor.HasField("raw_data"):
             save_external_data(tensor, filepath)
             tensor.ClearField(str('raw_data'))
 

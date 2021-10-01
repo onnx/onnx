@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for BatchNormalization and Dropout in default domain from version 7 to 6
 
 #pragma once
@@ -14,8 +18,9 @@ struct SetIsTest final : public Adapter {
     node->i_(kis_test, 1);
   }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_set_is_test(graph, node);
+    return node;
   }
 };
 

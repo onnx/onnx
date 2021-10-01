@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Cast in default domain from version 9 to 8
 
 #pragma once
@@ -16,8 +20,9 @@ class Cast_9_8 final : public Adapter {
             ONNX_ASSERT("Casting From/To STRING data type is not supported")
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_cast_9_8(graph, node);
+      return node;
     }
 };
 

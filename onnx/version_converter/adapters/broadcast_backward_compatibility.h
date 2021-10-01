@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for broadcasting ops in default domain from version 7 to 6
 
 #pragma once
@@ -35,8 +39,9 @@ class BroadcastBackwardCompatibility final : public Adapter {
       }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_broadcast_backward_compatibility(graph, node);
+      return node;
     }
 };
 

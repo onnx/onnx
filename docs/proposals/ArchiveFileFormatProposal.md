@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX File Format Proposal
 
 ## Summary
@@ -38,6 +40,6 @@ This file format represents a generic key-value store that is scalable to many e
 
 
 
-[0] https://github.com/onnx/onnx/issues/251 
-[1] https://stackoverflow.com/questions/34128872/google-protobuf-maximum-size 
-[2] https://developer.android.com/studio/command-line/zipalign.html implementation https://github.com/aosp-mirror/platform_build/blob/master/tools/zipalign/ZipAlign.cpp 
+[0] https://github.com/onnx/onnx/issues/251
+[1] https://stackoverflow.com/questions/34128872/google-protobuf-maximum-size
+[2] https://developer.android.com/studio/command-line/zipalign.html implementation https://github.com/aosp-mirror/platform_build/blob/master/tools/zipalign/ZipAlign.cpp

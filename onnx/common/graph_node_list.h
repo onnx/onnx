@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
@@ -50,6 +54,8 @@ struct generic_graph_node_list_iterator final {
     : cur(cur), d(d) {}
   generic_graph_node_list_iterator(const generic_graph_node_list_iterator & rhs)
     : cur(rhs.cur), d(rhs.d) {}
+  generic_graph_node_list_iterator & operator=(
+    const generic_graph_node_list_iterator&) = default;
   T * operator*() const { return cur; }
   T * operator->() const { return cur; }
   generic_graph_node_list_iterator & operator++() {

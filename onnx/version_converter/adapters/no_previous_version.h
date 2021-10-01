@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter indicating lack of a previous version of some op before a given
 // opset version.
 
@@ -13,8 +17,9 @@ class NoPreviousVersionAdapter final : public Adapter {
       initial, const OpSetID& target): Adapter(op_name,
       initial, target) {}
 
-  void adapt(std::shared_ptr<Graph>, Node*) const override {
+  Node* adapt(std::shared_ptr<Graph>, Node* node) const override {
     ONNX_ASSERTM(false, "No Previous Version of %s exists", name().c_str());
+    return node;
   }
 };
 

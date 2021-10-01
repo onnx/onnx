@@ -1,0 +1,144 @@
+name: MacRelease
+
+on:
+  schedule:
+    # Run weekly on Monday 00:00
+    - cron:  '00 00 * * MON'
+  push:
+    branches: [master, rel-*]
+  pull_request:
+    branches: [master, rel-*]
+  workflow_dispatch:
+
+# Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
+env:
+  MACOSX_DEPLOYMENT_TARGET: 10.12
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    runs-on: macos-10.15
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        architecture: ['x64']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+
+    - name: Install protobuf dependencies
+      run: |
+        # Install protobuf 3.16.0
+        export NUM_CORES=`sysctl -n hw.ncpu`
+        echo Using $NUM_CORES cores
+        brew update
+        brew install autoconf && brew install automake
+        export ONNX_PATH=$(pwd)
+        cd ..
+        wget https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz
+        tar -xvf protobuf-cpp-3.16.0.tar.gz
+        cd protobuf-3.16.0
+        mkdir build_source && cd build_source
+        cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+        make -j${NUM_CORES}
+        make install
+        export PATH=$(pwd)/bin:$PATH
+        cd $ONNX_PATH
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements-release.txt
+
+    - name: Build wheel and install
+      env:
+        CC: "clang"
+        CXX: "clang++"
+        ONNX_ML: 1
+      run: |
+        # Currently GitHub Action agent is using 10.14 Python, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
+        # Change -p if MACOSX_DEPLOYMENT_TARGET is different
+        if [ '${{ github.event_name }}' == 'schedule' ]; then
+          python setup.py bdist_wheel -p macosx_10_12_x86_64 --weekly_build
+        else
+          python setup.py bdist_wheel -p macosx_10_12_x86_64
+        fi
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+
+    - name: Test the installed wheel
+      run: |
+        pytest
+
+    - name: Test backend test data
+      run: |
+        # onnx.checker all existing backend data
+        python workflow_scripts/test_generated_backend.py
+        # onnx.checker all generated backend data
+        python onnx/backend/test/cmd_tools.py generate-data
+        python workflow_scripts/test_generated_backend.py
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: wheels
+        path: dist
+
+    - name: Upload wheel to TestPyPI weekly
+      if: github.event_name == 'schedule' # Only triggered by weekly event
+      run: |
+        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+
+    - name: Verify ONNX with the latest numpy
+      if: ${{ always() }}
+      run: |
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
+
+    - name: Verify ONNX with the latest protobuf
+      if: ${{ always() }}
+      run: |
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
+
+    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+      if: ${{ always() }}
+      run: |
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
+
+    - name: Verify ONNX with ort-nightly
+      if: ${{ always() }}
+      run: |
+        python -m pip install -q flatbuffers
+        python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
+        python onnx/test/test_with_ort.py
+
+    - name: Build and upload source distribution to TestPyPI weekly
+      if: github.event_name == 'schedule' && matrix.python-version == '3.9' # Only triggered by weekly event on Python 3.9
+      run: |
+        # Build and upload source distribution to TestPyPI
+        git clean -xdf
+        python setup.py sdist --weekly_build
+        twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+
+    - name: Test source distribution from TestPyPI
+      if: github.event_name == 'schedule' && matrix.python-version == '3.9'
+      run: |
+        python -m pip uninstall -y onnx
+        python -m pip install setuptools
+        python -m pip install --index-url https://test.pypi.org/simple --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly
+        pytest

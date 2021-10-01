@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX Interface for Framework Integration: API Proposal
 
 ## Background
@@ -47,7 +49,7 @@ We propose a small C-based API, which includes the following functionality:
 
     b. For every subgraph the user estimates time to do inference using the roofline model.
 
-    c. The user additionally estimates time to transfer subgraph inputs to the backend using `ONNX_BACKEND_CPU_MEMORY_READ_BANDWIDTH` information query and to transfer subgraph outputs from the backend using `ONNX_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH`. 
+    c. The user additionally estimates time to transfer subgraph inputs to the backend using `ONNX_BACKEND_CPU_MEMORY_READ_BANDWIDTH` information query and to transfer subgraph outputs from the backend using `ONNX_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH`.
 
     d. If predicted time to transfer inputs to the backend, do inference, and transfer outputs from the backend exceeds predicted time to do the inference on default engine (e.g. CPU), the user falls back to a different ONNX backend, or to the default engine.
 
@@ -98,7 +100,7 @@ Magic is an arbitrary 32-bit integer unique for a library implementing the API. 
 
 During one-time library initialization, the implementation of the API would detect `n` supported devices and map them to backend indices in `0...(n-1)` range. The implementation of device discovery and checking required device characteristics is highly vendor- and platform-specific, e.g.:
 - A CPU implementation may always expose 1 device.
-- A CUDA-based implementation may call `cudaGetDeviceCount` to get the number of CUDA-enabled devices, then 
+- A CUDA-based implementation may call `cudaGetDeviceCount` to get the number of CUDA-enabled devices, then
  call `cudaGetDeviceProperties` for each device, and map CUDA devices which satisfy the minimum required functionality, such as compute capability, to backend indices.
 - An OpenCL-based implementation for a mobile GPU would try to load OpenCL library, call `clGetPlatformIDs` and `clGetPlatformInfo` to find a supported platform, then call `clGetDeviceIDs` and `clGetDeviceInfo` to find a supported GPU device, and map it to the only exposed backend if such device exists, or expose 0 devices otherwise.
 - An implementation for hardware neural network accelerators would call vendor-specific driver API to discover accelerator devices installed in the system and map them to backend indices.

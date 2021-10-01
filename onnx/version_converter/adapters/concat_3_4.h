@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Concat in default domain from version 3 to 4
 
 #pragma once
@@ -16,8 +20,9 @@ class Concat_3_4 final : public Adapter {
       if(!(node->hasAttribute(kaxis))) node->i_(kaxis, 1);
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_concat_3_4(graph, node);
+      return node;
     }
 };
 

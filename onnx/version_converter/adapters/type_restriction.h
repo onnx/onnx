@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Add in default domain from version 6 to 5
 
 #pragma once
@@ -24,8 +28,9 @@ class TypeRestriction : public Adapter {
       }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_type_restriction(graph, node);
+      return node;
     }
 
   private:

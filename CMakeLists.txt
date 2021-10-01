@@ -16,7 +16,7 @@ cmake_policy(SET CMP0063 NEW)
 # Project
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
-option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag " OFF)
+option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag and Protobuf_USE_STATIC_LIBS. " OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
@@ -25,6 +25,9 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNXIFI_ENABLE_EXT "Enable onnxifi extensions." OFF)
+option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
+option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
+
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
     set(DEFAULT_ONNX_ML $ENV{ONNX_ML})
@@ -45,15 +48,14 @@ if(NOT DEFINED ONNX_VERIFY_PROTO3)
   option(ONNX_VERIFY_PROTO3 "Generate code by proto3" ${PROTO3_ENABLED})
 endif()
 
- if (ONNX_USE_PROTOBUF_SHARED_LIBS)
-  if(MSVC AND ONNX_USE_MSVC_STATIC_RUNTIME)
+if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+  if(MSVC)
+    #TODO: if ONNX_USE_MSVC_STATIC_RUNTIME is ON, it may not work
     add_definitions(-DPROTOBUF_USE_DLLS)
-  else()
-    message(
-      FATAL_ERROR 
-        "Building ONNX with Protobuf as shared lib is only available for MSVC compilers and that too when USE_MSVC_STATIC_RUNTIME environment variable is set to 1. Please read the build instructions for more details."
-    )
   endif()
+  set(Protobuf_USE_STATIC_LIBS OFF)
+else()
+  set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
 # Set C++11 as standard for the whole project
@@ -80,6 +82,40 @@ endif()
 if(NOT ONNX_NAMESPACE)
   set(ONNX_NAMESPACE "onnx")
 endif()
+
+if(MSVC)
+  if(NOT ONNX_DISABLE_EXCEPTIONS)
+    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
+    string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
+  endif()
+endif()
+
+if(ONNX_DISABLE_EXCEPTIONS)
+  add_compile_definitions("ONNX_NO_EXCEPTIONS")
+  # Disable C++ exceptions.
+  if(MSVC)
+    string(REGEX REPLACE "/EHsc" "/EHs-c-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    add_definitions(-D_HAS_EXCEPTIONS=0)
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
+  endif()
+endif()
+
+if(ONNX_WERROR)
+  if(MSVC)
+    string(APPEND CMAKE_CXX_FLAGS " /WX")
+    string(APPEND CMAKE_C_FLAGS " /WX")
+  else()
+    string(APPEND CMAKE_CXX_FLAGS " -Werror")
+    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
+  endif()
+endif()
+
+# find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
+# Use the following command in the future; now this is only compatible with the latest pybind11
+# find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
+find_package(PythonInterp ${PY_VERSION} REQUIRED)
+find_package(PythonLibs ${PY_VERSION})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
@@ -127,7 +163,7 @@ else()
         NAMES protobuf-lite
         PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
         NO_DEFAULT_PATH)
-    else(ONNX_USE_LITE_PROTO)
+    else()
       find_library(Protobuf_LIBRARY
         NAMES protobuf
         PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
@@ -167,7 +203,8 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     set(ABS_FILE ${ROOT_DIR}/${INFILE})
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
-    if(ONNX_ML)
+    # "onnx-data" check is because we do not want to create/compile an "onnx-data-ml.proto" file
+    if(ONNX_ML AND NOT(FILE_WE STREQUAL "onnx-data"))
       if(ONNX_NAMESPACE STREQUAL "onnx")
         set(GENERATED_FILE_WE "${FILE_WE}-ml")
       else()
@@ -198,11 +235,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       file(MAKE_DIRECTORY "${OUTPUT_PROTO_DIR}")
     endif()
 
-    if("${PYTHON_EXECUTABLE}" STREQUAL "")
-      set(_python_exe "python")
-    else()
-      set(_python_exe "${PYTHON_EXECUTABLE}")
-    endif()
     set(GEN_PROTO_ARGS
         -p
         "${ONNX_NAMESPACE}"
@@ -224,7 +256,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
+                       COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -242,11 +274,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       if(ONNX_GEN_PB_TYPE_STUBS)
         # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
-          # If onnx was packaged to pypi from Windows, protoc-gen-mypy.py is
-          # missing the +x flag. Add it.
-          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.py)
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.py)
-        else(NOT WIN32)
+          # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
+          configure_file(
+            ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
+            ${ROOT_DIR}/tools/protoc-gen-mypy.sh
+            @ONLY)
+          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
+          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
+        else()
           set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
         endif()
         list(APPEND PROTOC_ARGS
@@ -306,16 +341,26 @@ relative_protobuf_generate_cpp(gen_onnx_operators_proto
 list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
 list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
 
+relative_protobuf_generate_cpp(gen_onnx_data_proto
+                               __tmp_srcs
+                               __tmp_hdrs
+                               ${ONNX_ROOT}
+                               gen_onnx_proto
+                               onnx/onnx-data.in.proto)
+list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
+list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
+
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
-	"${ONNX_ROOT}/onnx/test/cpp/*.cc"
-	"${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
-	"${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
+    "${ONNX_ROOT}/onnx/test/cpp/*.cc"
+    "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
+    "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
 
 add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
+add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
@@ -441,26 +486,20 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    find_package(PythonInterp ${PY_VERSION} REQUIRED)
-    find_package(PythonLibs ${PY_VERSION} REQUIRED)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
-                                   /WX
-                                   /wd4800 # disable warning type' : forcing
-                                           # value to bool 'true' or 'false'
-                                           # (performance warning)
-                                   /wd4503 # identifier' : decorated name length
-                                           # exceeded, name was truncated
-                                   /wd4146 # unary minus operator applied to
-                                           # unsigned type, result still
-                                           # unsigned from include\google\protob
-                                           # uf\wire_format_lite.h
+                                   /wd4244 # 'argument': conversion from 'google::
+                                           # protobuf::uint64' to 'int', possible
+                                           # loss of data
+                                   /wd4267 # Conversion from 'size_t' to 'int',
+                                           # possible loss of data
+                                   /wd4996 # The second parameter is ignored.
                                    ${EXTRA_FLAGS})
     if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_cpp2py_export 
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to 
-                                             # have dll-interface to be used by 
+      target_compile_options(onnx_cpp2py_export
+                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
+                                             # have dll-interface to be used by
                                              # clients of class 'type2'
                             )
     endif()
@@ -500,36 +539,29 @@ endif()
 if(MSVC)
   target_compile_options(onnx_proto
                          PRIVATE /MP
-                                 /WX
-                                 /wd4800 # disable warning type' : forcing value
-                                         # to bool 'true' or 'false'
-                                         # (performance warning)
-                                 /wd4503 # identifier' : decorated name length
-                                         # exceeded, name was truncated
-                                 /wd4146 # unary minus operator applied to
-                                         # unsigned type, result still unsigned:
-                                         # include\google\protobuf\wire_format_l
-                                         # ite.h
+                                 /wd4244 #'argument': conversion from 'google::
+                                         #protobuf::uint64' to 'int', possible
+                                         # loss of data
+                                 /wd4267 # Conversion from 'size_t' to 'int',
+                                         # possible loss of data
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
-                                 /WX
-                                 /wd4800 # disable warning type' : forcing value
-                                         # to bool 'true' or 'false'
-                                         # (performance warning)
-                                 /wd4503 # identifier' : decorated name length
-                                         # exceeded, name was truncated
-                                 /wd4146 # unary minus operator applied to
-                                         # unsigned type, result still unsigned
+                                 /wd4244 # 'argument': conversion from 'google::
+                                         # protobuf::uint64' to 'int', possible
+                                         # loss of data
+                                 /wd4267 # Conversion from 'size_t' to 'int',
+                                         # possible loss of data
+                                 /wd4996 # The second parameter is ignored.
                                  ${EXTRA_FLAGS})
   if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_proto 
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to 
-                                             # have dll-interface to be used by 
+      target_compile_options(onnx_proto
+                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
+                                             # have dll-interface to be used by
                                              # clients of class 'type2'
                             )
-      target_compile_options(onnx 
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to 
+      target_compile_options(onnx
+                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
                                              # have dll-interface to be used by
                                              # clients of class 'type2'
                             )
@@ -548,9 +580,6 @@ elseif(APPLE)
 
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
-  if(${ONNX_WERROR})
-    target_compile_options(onnx PRIVATE -Werror)
-  endif()
 endif()
 
 if(APPLE)
@@ -583,6 +612,9 @@ endif()
 if (NOT ANDROID AND NOT IOS)
   # ---[ ONNXIFI wrapper
   add_library(onnxifi_wrapper MODULE onnx/onnxifi_wrapper.c)
+  if(MSVC)
+    add_msvc_runtime_flag(onnxifi_wrapper)
+  endif()
   target_include_directories(onnxifi_wrapper PRIVATE
     $<BUILD_INTERFACE:${ONNX_ROOT}>
     $<INSTALL_INTERFACE:include>)
@@ -622,14 +654,21 @@ target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
 target_compile_definitions(onnxifi_dummy PRIVATE ONNXIFI_BUILD_LIBRARY=TRUE)
 if(MSVC)
   add_msvc_runtime_flag(onnxifi_dummy)
+
+  target_compile_options(onnxifi_dummy
+                         PRIVATE /wd4113 # 'identifier1' differs in parameter
+                                         # lists from 'identifier2'
+                        )
 endif()
 
+include(GNUInstallDirs)
+
 install(DIRECTORY ${ONNX_ROOT}/onnx
-        DESTINATION include
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING
         PATTERN "*.h")
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx
-        DESTINATION include
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING
         PATTERN "*.h")
 
@@ -644,13 +683,13 @@ configure_file(
 install(FILES
   ${PROJECT_BINARY_DIR}/ONNXConfigVersion.cmake
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
-  DESTINATION share/cmake/ONNX
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ONNX
   COMPONENT dev)
-install(EXPORT ONNXTargets DESTINATION share/cmake/ONNX)
+install(EXPORT ONNXTargets DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX")
 install(TARGETS
   onnx onnx_proto
   onnxifi onnxifi_dummy onnxifi_loader
-  EXPORT ONNXTargets DESTINATION lib)
+  EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(NOT ANDROID AND NOT IOS)
   install(TARGETS onnxifi_wrapper

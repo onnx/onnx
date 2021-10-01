@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Operator Conventions
 
 To maintain consistency in operator signatures, we use the following principles:

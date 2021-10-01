@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef ONNXIFI_EXT_H
 #define ONNXIFI_EXT_H 1
 

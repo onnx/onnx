@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "onnxifi_utils.h"
 
 namespace ONNX_NAMESPACE {

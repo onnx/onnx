@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
@@ -107,6 +111,7 @@ namespace ONNX_NAMESPACE {
   _(eq)                           \
   _(equal)                        \
   _(Exp)                          \
+  _(ends)                         \
   _(expm1)                        \
   _(floor)                        \
   _(fmod)                         \
@@ -132,6 +137,7 @@ namespace ONNX_NAMESPACE {
   _(sinh)                         \
   _(Sqrt)                         \
   _(sub)                          \
+  _(starts)                       \
   _(tan)                          \
   _(trunc)                        \
   _(zeros)                        \
@@ -165,8 +171,14 @@ namespace ONNX_NAMESPACE {
   _(Greater)                      \
   _(Less)                         \
   _(scales)                       \
-  _(Upsample)
- 
+  _(Upsample)                     \
+  _(RNN)                          \
+  _(layout)                       \
+  _(k)                            \
+  _(Flatten)                      \
+  _(ScatterElements)              \
+  _(Resize)
+
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,
   FORALL_BUILTIN_SYMBOLS(DEFINE_SYMBOL)

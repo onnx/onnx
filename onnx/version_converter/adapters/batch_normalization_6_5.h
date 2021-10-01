@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for BatchNormalization in default domain from version 6 to 5
 
 #pragma once
@@ -16,8 +20,9 @@ class BatchNormalization_6_5 final : public Adapter {
       node->is_(kconsumed_inputs, {0, 0});
     }
 
-     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+     Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_batch_normalization_6_5(graph, node);
+      return node;
     }
 };
 

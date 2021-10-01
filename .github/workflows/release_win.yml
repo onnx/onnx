@@ -1,0 +1,161 @@
+name: WindowsRelease
+
+on:
+  schedule:
+    # Run weekly on Monday 00:00
+    - cron:  '00 00 * * MON'
+  push:
+    branches: [master, rel-*]
+  pull_request:
+    branches: [master, rel-*]
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        architecture: ['x64', 'x86']
+    steps:         
+    - name: Checkout Protobuf 
+      uses: actions/checkout@master
+      with:
+        repository: protocolbuffers/protobuf
+        ref: refs/tags/v3.16.0
+        path: ./protobuf_root/protobuf
+  
+    - name: Checkout Protobuf submodules
+      shell: bash
+      run: |
+         cd ./protobuf_root/protobuf
+         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+         git submodule sync --recursive
+         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+        
+    - name: Checkout ONNX
+      uses: actions/checkout@v2
+      with:
+         path: ./onnx
+
+    - name: Checkout ONNX submodules
+      shell: bash
+      run: |
+         cd onnx
+         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+         git submodule sync --recursive
+         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}    
+          
+    - name: Install python dependencies
+      run: |
+        python -m pip install -q --upgrade pip
+        cd onnx
+        python -m pip install -q -r requirements-release.txt
+
+    - name: Build ONNX wheel
+      run: |        
+        $arch = 'x64'
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          $arch = 'Win32'
+        }
+        echo "Install protobuf"
+        cd ./protobuf_root
+        $protobuf_root_dir = Get-Location
+        mkdir protobuf_install
+        cd ./protobuf/cmake
+
+        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+        msbuild protobuf.sln /m /p:Configuration=Release
+        msbuild INSTALL.vcxproj /p:Configuration=Release
+        echo "Protobuf installation complete."
+
+        echo "Set paths"
+        $protoc_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\bin"
+        $protoc_lib_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\lib"
+        $protobuf_include_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\include"
+        $Env:PATH="$ENV:PATH;$protoc_path;$protoc_lib_path;$protobuf_include_path"
+        $($Env:PATH).Split(';')
+        protoc
+
+        cd ../../../onnx
+        dir
+        echo "Install ONNX"
+        $Env:USE_MSVC_STATIC_RUNTIME=1
+        $Env:ONNX_ML=1
+        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+
+        if ('${{ github.event_name }}' -eq 'schedule') {
+          echo "Build weekly TestPyPI package"
+          python setup.py bdist_wheel --weekly_build
+        } else {
+          python setup.py bdist_wheel
+        }
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname} 
+  
+    - name: Test the installed wheel
+      run: |
+        cd onnx
+        pytest
+
+    - name: Test the uploaded backend test data
+      run: |
+        cd onnx
+        # onnx.checker all existing backend data
+        python workflow_scripts\test_generated_backend.py
+        # onnx.checker all generated backend data
+        python onnx\backend\test\cmd_tools.py generate-data
+        python workflow_scripts\test_generated_backend.py
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: wheels
+        path: ./onnx/dist
+  
+    - name: Upload wheel to TestPyPI weekly
+      if: (github.event_name == 'schedule') # Only triggered by weekly event
+      run: |
+        twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+
+    - name: Verify ONNX with the latest numpy
+      if: ${{ always() }}
+      run: |
+        cd onnx
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest
+
+    - name: Verify ONNX with the latest protobuf
+      if: ${{ always() }}
+      run: |
+        cd onnx
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest
+
+    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+      if: ${{ always() }}
+      run: |
+        cd onnx
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest  
+
+    - name: Verify ONNX with ort-nightly
+      if: ${{ always() }}
+      run: |
+        # ort-nightly does not support x86
+        if ('${{ matrix.architecture }}' -eq 'x64') {
+          python -m pip install -q flatbuffers
+          python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
+          python onnx\onnx\test\test_with_ort.py
+        }

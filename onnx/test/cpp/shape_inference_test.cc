@@ -1,9 +1,13 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <iostream>
 #include "gtest/gtest.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx_pb.h"
-
+#include "onnx/defs/parser.h"
 #include "onnx/shape_inference/implementation.h"
 
 using namespace ONNX_NAMESPACE::shape_inference;
@@ -16,7 +20,8 @@ void ScanInferenceFunction(InferenceContext& ctx);
 
 namespace Test {
 
-static void CreateDims(TypeProto_Tensor& proto, int num_dims) {
+template<class Type>
+void CreateDims(Type& proto, int num_dims) {
   auto mutable_shape = proto.mutable_shape();
   mutable_shape->clear_dim();
 
@@ -24,8 +29,9 @@ static void CreateDims(TypeProto_Tensor& proto, int num_dims) {
     mutable_shape->add_dim();
 }
 
-static void SetDimValues(
-    TypeProto_Tensor& proto,
+template <class Type>
+void SetDimValues(
+    Type& proto,
     const std::vector<int>& values) {
   auto* mutable_shape = proto.mutable_shape();
   EXPECT_TRUE(mutable_shape->dim_size() == values.size());
@@ -38,8 +44,9 @@ static void SetDimValues(
   }
 }
 
-static void SetDimParams(
-    TypeProto_Tensor& proto,
+template <class Type>
+void SetDimParams(
+    Type& proto,
     const std::vector<const std::string*>& values) {
   auto mutable_shape = proto.mutable_shape();
   EXPECT_TRUE(mutable_shape->dim_size() == values.size());
@@ -52,7 +59,8 @@ static void SetDimParams(
   }
 }
 
-static void Dump(TypeProto_Tensor& t) {
+template <class Type>
+void Dump(const Type& t) {
   auto& s_shape = t.shape();
   auto num_dims = s_shape.dim_size();
   std::cout << num_dims << " dims. ";
@@ -86,6 +94,33 @@ TEST(ShapeInferenceTest, mergeShapeInfo_HasShape) {
   {
     TypeProto_Tensor source;
     TypeProto_Tensor target;
+
+    CreateDims(target, 1);
+    SetDimValues(target, {1});
+    mergeInShapeInfo(source, target);
+
+    Dump(target);
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim_size() == 1 && shape.dim(0).dim_value() == 1);
+  }
+  // source has shape, target doesn't
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
+
+    CreateDims(source, 1);
+    SetDimValues(source, {1});
+    mergeInShapeInfo(source, target);
+
+    Dump(target);
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim_size() == 1 && shape.dim(0).dim_value() == 1);
+  }
+
+  // source has no shape, target does
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
 
     CreateDims(target, 1);
     SetDimValues(target, {1});
@@ -155,6 +190,24 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
     EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
   }
 
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
+
+    CreateDims(source, 2);
+    SetDimValues(source, {-1, 2});
+
+    CreateDims(target, 2);
+    SetDimValues(target, {1, -1});
+
+    mergeInShapeInfo(source, target);
+
+    Dump(target);
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
+  }
+
+
   // prefer value over param,
   {
     TypeProto_Tensor source;
@@ -176,9 +229,30 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
     auto& shape = target.shape();
     EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
   }
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
+
+    CreateDims(source, 2);
+    SetDimValues(source, {-1, 2});
+
+    CreateDims(target, 2);
+    SetDimValues(target, {1, 0});
+    // replace second dim with a param. the value from the source should be
+    // preferred
+    const std::string param = "A";
+    target.mutable_shape()->mutable_dim(1)->set_dim_param(param);
+
+    mergeInShapeInfo(source, target);
+
+    Dump(target);
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
+  }
 }
 
 TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
+#ifndef ONNX_NO_EXCEPTIONS
   // mismatched num dims
   {
     TypeProto_Tensor source;
@@ -193,6 +267,20 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
     EXPECT_THROW(
         mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
   }
+
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
+
+    CreateDims(source, 2);
+    SetDimValues(source, {-1, 2});
+
+    CreateDims(target, 3);
+    SetDimValues(target, {1, -1, 1});
+
+    EXPECT_THROW(mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
+  }
+
 
   // mismatched dim values
   {
@@ -209,10 +297,40 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
         mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
   }
 
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
+
+    CreateDims(source, 2);
+    SetDimValues(source, {2, 2});
+
+    CreateDims(target, 2);
+    SetDimValues(target, {2, 1});
+
+    EXPECT_THROW(mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
+  }
+#endif
   // mismatched param value. prefer target
   {
     TypeProto_Tensor source;
     TypeProto_Tensor target;
+    const std::string param_a = "A";
+    const std::string param_b = "B";
+
+    CreateDims(source, 1);
+    SetDimParams(source, {&param_a});
+
+    CreateDims(target, 1);
+    SetDimParams(target, {&param_b});
+
+    mergeInShapeInfo(source, target);
+
+    auto& shape = target.shape();
+    EXPECT_TRUE(shape.dim(0).dim_param() == "B");
+  }
+  {
+    TypeProto_SparseTensor source;
+    TypeProto_SparseTensor target;
     const std::string param_a = "A";
     const std::string param_b = "B";
 
@@ -293,7 +411,9 @@ static void doInferencingTest(bool use_scan_opset8) {
   opset_imports[ONNX_DOMAIN] = 8; // Scan is v8
 
   const std::unordered_map<std::string, TypeProto*> outer_scope_value_types;
-  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports);
+  SymbolTableImpl symbolTable;
+  symbolTable.addFromGraph(subgraph);
+  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, &symbolTable);
   GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
 
   // loop_state_in and scan_in are the two inputs.
@@ -376,7 +496,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   valueTypesByName["loop_state_start"] = &loop_state_in_tensor;
   valueTypesByName["scan_op_in"] = &scan_in_tensor;
 
-  InferenceContextImpl ctx(scan, valueTypesByName, {}, &graphInfCtx);
+  InferenceContextImpl ctx(scan, valueTypesByName, {}, {}, {}, & graphInfCtx);
   if (use_scan_opset8)
     ScanInferenceFunctionOpset8(ctx);
   else
@@ -395,6 +515,105 @@ TEST(GraphInferencerImplTest, Scan8_BasicTest) {
 // Check subgraph inferencing via GraphInferencer using a Scan (from opset 9)
 TEST(GraphInferencerImplTest, Scan9_BasicTest) {
   doInferencingTest(false);
+}
+
+void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+
+  ShapeInferenceOptions options{true, 1, true};
+  ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
+
+  const auto inferredShape = model.graph().output()[0].type().tensor_type().shape();
+  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size());
+
+  for (int i = 0; i < inferredShape.dim_size(); i++) {
+    EXPECT_TRUE(
+        (inferredShape.dim(i).has_dim_value() && expectedShape.dim(i).has_dim_value()) ||
+        (inferredShape.dim(i).has_dim_param() && expectedShape.dim(i).has_dim_param()));
+
+    EXPECT_TRUE(
+        inferredShape.dim(i).has_dim_value() ? inferredShape.dim(i).dim_value() == expectedShape.dim(i).dim_value()
+                                             : inferredShape.dim(i).dim_param() == expectedShape.dim(i).dim_param());
+  }
+
+}
+TEST(ShapeInferenceTest, ReshapeTestWithShapeAsSymInput) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 15],
+  producer_name: "DataPropagationTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for data propagation."
+>
+agraph (float[batch_size, 256, 768, 3] x, float[batch_size, 196608] m) => (float[?, ?, ?] z)
+{
+    y = Shape<start = 0, end = 3>(x)
+    z = Reshape(m, y)
+}
+)ONNX";
+
+  TensorShapeProto expectedShape;
+  expectedShape.mutable_dim()->Add()->set_dim_param("batch_size");
+  expectedShape.mutable_dim()->Add()->set_dim_value(256);
+  expectedShape.mutable_dim()->Add()->set_dim_value(768);
+
+  RunReshapeShapeInfTest(modelStr, expectedShape);
+}
+
+TEST(ShapeInferenceTest, ReshapeTestWithShapeAsInitializer) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 15],
+  producer_name: "DataPropagationTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for data propagation."
+>
+agraph (float[1, 196608] m) => (float[?, ?, ?] z)
+<int64[3] shape = {1, 768, 256}>
+{
+    z = Reshape(m, shape)
+}
+)ONNX";
+
+  TensorShapeProto expectedShape;
+  expectedShape.mutable_dim()->Add()->set_dim_value(1);
+  expectedShape.mutable_dim()->Add()->set_dim_value(768);
+  expectedShape.mutable_dim()->Add()->set_dim_value(256);
+
+  RunReshapeShapeInfTest(modelStr, expectedShape);
+}
+
+TEST(ShapeInferenceTest, ReshapeTestWithShapeAsInitializer1) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 15],
+  producer_name: "DataPropagationTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for data propagation."
+>
+agraph (float[1, 196608] m) => (float[?, ?, ?] z)
+<int64[3] shape = {1, -1, 256}>
+{
+    z = Reshape(m, shape)
+}
+)ONNX";
+
+  TensorShapeProto expectedShape;
+  expectedShape.mutable_dim()->Add()->set_dim_value(1);
+  expectedShape.mutable_dim()->Add()->set_dim_value(768);
+  expectedShape.mutable_dim()->Add()->set_dim_value(256);
+
+  RunReshapeShapeInfTest(modelStr, expectedShape);
 }
 
 } // namespace Test

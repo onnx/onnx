@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Dimension Denotation
 
 Dimension Denotation is an experimental attempt to give tensor axis semantic descriptions and thus types and perform verification steps based on them subsequently.

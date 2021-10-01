@@ -1,0 +1,77 @@
+trigger:
+- master
+
+jobs:
+
+- job: 'Test'
+  pool:
+    vmImage: 'vs2017-win2016'
+  strategy:
+    matrix:
+      py37:
+        python.version: '3.7'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+      py36:
+        python.version: '3.6'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+      py37_onnx_ml:
+        python.version: '3.7'
+        onnx_ml: 1
+        onnx_verify_proto: 0
+      py36_verify_proto:
+        python.version: '3.6'
+        onnx_ml: 0
+        onnx_verify_proto: 1
+    maxParallel: 4
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda to PATH
+
+  - script: |
+      conda create --yes --quiet --name py$(python.version) python=$(python.version)
+      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf=3.16.0
+    displayName: Create Anaconda environment
+
+  - script: |
+      call activate py$(python.version)
+      python -m pip install -q --upgrade pip
+      python -m pip install -q -r requirements-release.txt
+
+      git submodule update --init --recursive
+      set ONNX_BUILD_TESTS=1
+      set ONNX_ML=$(onnx_ml)
+      set ONNX_VERIFY_PROTO_3=$(onnx_verify_proto)
+      set USE_MSVC_STATIC_RUNTIME=0
+      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
+
+      python setup.py -q install
+      pytest
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "pytest failed"
+        EXIT 1
+      )
+
+      python onnx/defs/gen_doc.py
+      python onnx/gen_proto.py -l
+      python onnx/gen_proto.py -l --ml
+      
+      git diff --exit-code  -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "git diff returned failures"
+        EXIT 1
+      )
+
+      rm -rf .setuptools-cmake-build
+      python -m pip install -q -e .[mypy]
+      python setup.py -q typecheck
+
+
+    displayName: Install and test ONNX

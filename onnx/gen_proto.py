@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -133,6 +136,13 @@ def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):  # type: (Te
 def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_path=''):  # type: (Text, Text, Text, bool, bool, Text) -> None
     proto_in = qualify("{}.in.proto".format(stem))
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
+    # Having a separate variable for import_ml ensures that the import statements for the generated
+    # proto files can be set separately from the ONNX_ML environment variable setting.
+    import_ml = do_onnx_ml
+    # We do not want to generate the onnx-data-ml.proto files for onnx-data.in.proto,
+    # as there is no change between onnx-data.proto and the ML version.
+    if 'onnx-data' in proto_in:
+        do_onnx_ml = False
     if do_onnx_ml:
         proto_base = "{}_{}-ml".format(stem, package_name) if need_rename else "{}-ml".format(stem)
     else:
@@ -146,13 +156,13 @@ def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_pat
         print("Writing {}".format(proto))
         with io.open(proto, 'w', newline='') as fout:
             fout.write(autogen_header)
-            fout.write(translate(source, proto=2, onnx_ml=do_onnx_ml, package_name=package_name))
+            fout.write(translate(source, proto=2, onnx_ml=import_ml, package_name=package_name))
             if lite:
                 fout.write(LITE_OPTION)
         print("Writing {}".format(proto3))
         with io.open(proto3, 'w', newline='') as fout:
             fout.write(autogen_header)
-            fout.write(translate(source, proto=3, onnx_ml=do_onnx_ml, package_name=package_name))
+            fout.write(translate(source, proto=3, onnx_ml=import_ml, package_name=package_name))
             if lite:
                 fout.write(LITE_OPTION)
         if protoc_path:
@@ -214,7 +224,7 @@ def main():  # type: () -> None
     parser.add_argument('--protoc_path',
                         default='',
                         help='path to protoc for proto3 file validation')
-    parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators'],
+    parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators', 'onnx-data'],
                         help='list of .in.proto file stems '
                         '(default: %(default)s)')
     args = parser.parse_args()

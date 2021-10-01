@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include <stdexcept>
@@ -5,6 +9,7 @@
 #include <unordered_set>
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
+#include "onnx/onnx-data_pb.h"
 #include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
@@ -21,17 +26,15 @@ class ValidationError final : public std::runtime_error {
     return std::runtime_error::what();
   }
   void AppendContext(const std::string& context) {
-    expanded_message_ = ONNX_NAMESPACE::MakeString(
-        std::runtime_error::what(), "\n\n==> Context: ", context);
+    expanded_message_ = ONNX_NAMESPACE::MakeString(std::runtime_error::what(), "\n\n==> Context: ", context);
   }
 
  private:
   std::string expanded_message_;
 };
 
-#define fail_check(...)                           \
-  throw ONNX_NAMESPACE::checker::ValidationError( \
-      ONNX_NAMESPACE::MakeString(__VA_ARGS__));
+#define fail_check(...) \
+  ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
 
 class CheckerContext final {
  public:
@@ -90,8 +93,7 @@ class LexicalScopeContext final {
   // of the new instance. Alternatively, if that cannot be guaranteed, create an
   // instance with the default constructor and populate output_names with the
   // values from the parent scope so the values are copied instead.
-  LexicalScopeContext(const LexicalScopeContext& parent_context)
-      : parent_context_{&parent_context} {}
+  LexicalScopeContext(const LexicalScopeContext& parent_context) : parent_context_{&parent_context} {}
 
   void add(const std::string& name) {
     output_names.insert(name);
@@ -102,8 +104,7 @@ class LexicalScopeContext final {
   }
 
   bool this_or_ancestor_graph_has(const std::string& name) const {
-    return this_graph_has(name) ||
-        (parent_context_ && parent_context_->this_or_ancestor_graph_has(name));
+    return this_graph_has(name) || (parent_context_ && parent_context_->this_or_ancestor_graph_has(name));
   }
 
   // public for backwards compatibility. please prefer the public interface of
@@ -117,28 +118,34 @@ class LexicalScopeContext final {
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext&);
 void check_tensor(const TensorProto& tensor, const CheckerContext&);
-void check_sparse_tensor(
-    const SparseTensorProto& sparse_tensor,
-    const CheckerContext&);
-void check_attribute(
-    const AttributeProto& attr,
-    const CheckerContext&,
-    const LexicalScopeContext&);
-void check_node(
+void check_sparse_tensor(const SparseTensorProto& sparse_tensor, const CheckerContext&);
+void check_sequence(const SequenceProto& sequence, const CheckerContext&);
+void check_map(const MapProto& map, const CheckerContext&);
+void check_optional(const OptionalProto& opt, const CheckerContext&);
+void check_attribute(const AttributeProto& attr, const CheckerContext&, const LexicalScopeContext&);
+void check_node(const NodeProto& node, const CheckerContext&, const LexicalScopeContext&);
+void check_graph(const GraphProto& graph, const CheckerContext&, const LexicalScopeContext&);
+void check_function(const FunctionProto& function, const CheckerContext&, const LexicalScopeContext&);
+
+// Check schema compatibility for 2 opset versions for a given node.
+// Checks whether the schema for 2 versions is same, this is true when the opschema
+// does not change between versions.
+void check_opset_compatibility(
     const NodeProto& node,
-    const CheckerContext&,
-    const LexicalScopeContext&);
-void check_graph(
-    const GraphProto& graph,
-    const CheckerContext&,
-    const LexicalScopeContext&);
-void check_function(
-    const FunctionProto& function,
-    const CheckerContext&,
-    const LexicalScopeContext&);
+    const CheckerContext& ctx,
+    const std::unordered_map<std::string, int>& func_opset_imports,
+    const std::unordered_map<std::string, int>& model_opset_imports);
+
+// Checks all model local functions present in ModelProto
+void check_model_local_functions(
+    const ModelProto& model,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& parent_lex);
 
 void check_model(const ModelProto& model);
 void check_model(const std::string& model_path);
+
+bool check_is_experimental_op(std::string node_op_type);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE

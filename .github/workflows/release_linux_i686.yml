@@ -1,0 +1,64 @@
+name: LinuxRelease_i686
+
+on:
+  schedule:
+    # Run weekly on Monday 00:00
+    - cron:  '00 00 * * MON'
+  push:
+    branches: [master, rel-*]
+  pull_request:
+    branches: [master, rel-*]
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        architecture: ['x64']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+
+    - name: Install python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install numpy protobuf==3.16.0
+        sudo apt-get install protobuf-compiler libprotoc-dev
+
+    - name: Build manylinux2010_i686
+      uses: docker://quay.io/pypa/manylinux2010_i686
+      with:
+        entrypoint: bash
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_i686 ${{ github.event_name }}
+
+    - name: Test manylinux2010_i686 package in a clean docker environment
+      uses: docker://quay.io/pypa/manylinux2010_i686
+      with:
+        entrypoint: bash
+        args: .github/workflows/manylinux/test_package_i686.sh ${{ matrix.python-version }}
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: wheels
+        path: dist
+
+    - name: Upload wheel to TestPyPI weekly
+      if: (github.event_name == 'schedule') # Only triggered by weekly event
+      run: |
+        python -m pip install -q twine
+        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}

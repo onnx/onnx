@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Sum in default domain from version 8 to 7
 
 #pragma once
@@ -21,8 +25,9 @@ class Sum_8_7 final : public Adapter {
       }
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_sum_8_7(graph, node);
+      return node;
     }
 };
 

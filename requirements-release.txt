@@ -1,0 +1,9 @@
+numpy == 1.16.6
+protobuf == 3.16.0
+pytest
+nbval
+ipython
+wheel
+setuptools
+twine
+wget

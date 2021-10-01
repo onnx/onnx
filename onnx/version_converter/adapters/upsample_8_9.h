@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Upsample in default domain from version 8 to 9
 
 #pragma once
@@ -23,16 +27,17 @@ struct Upsample_8_9 final: public Adapter {
         data.emplace_back((float)scale);
       }
 
-      Value* v = graph->addInitializerAndInput(t, "scales");
-      std::vector<Dimension> new_sizes {Dimension(dim)};
-      v->setSizes(new_sizes);
-      node->addInput(v);
+      Node* constant = graph->create(kConstant);
+      constant->insertBefore(node);
+      constant->t_(kvalue, t);        
+      node->addInput(constant->output());
       node->removeAttribute(kscales);
       }
     }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_upsample_8_9(graph, node);
+    return node;
   }
 };
 

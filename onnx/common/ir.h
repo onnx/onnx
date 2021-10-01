@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
@@ -21,6 +25,7 @@
 #include "onnx/common/interned_strings.h"
 #include "onnx/common/graph_node_list.h"
 #include "onnx/common/tensor.h"
+#include "onnx/common/common.h"
 
 
 #define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
@@ -67,11 +72,13 @@ public:
 
 
 struct Dimension final {
+  Dimension() : is_unknown(true) {}
   Dimension(std::string param)
-    : is_int(false), dim(-1), param(std::move(param)) {
+    : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {
   }
-  Dimension(int64_t dim) : is_int(true), dim(dim) {}
+  Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {}
 
+  bool is_unknown;
   bool is_int;
   int64_t dim;
   std::string param;
@@ -80,13 +87,13 @@ struct Dimension final {
 
 enum class AttributeKind : uint8_t {
   // float, float list, int, int list, string, string list,
-  // tensor, tensor list, subgraph, subgraph list
-  f, fs, i, is, s, ss, t, ts, g, gs
+  // tensor, tensor list, subgraph, subgraph list. type proto, type proto list
+  f, fs, i, is, s, ss, t, ts, g, gs, tp, tps
 };
 
 
 static inline const char * toString(AttributeKind kind) {
-  static constexpr const char* names[] = {"f","fs", "i", "is", "s", "ss", "t", "ts", "g", "gs"};
+  static constexpr const char* names[] = {"f","fs", "i", "is", "s", "ss", "t", "ts", "g", "gs", "tp", "tps"};
   ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(const char*));
   return names[int(kind)];
 }
@@ -151,6 +158,8 @@ using TensorAttr = ScalarAttributeValue<Tensor,AttributeKind::t>;
 using TensorsAttr = VectorAttributeValue<Tensor,AttributeKind::ts>;
 using GraphAttr = ScalarAttributeValue<std::shared_ptr<Graph>,AttributeKind::g>;
 using GraphsAttr = VectorAttributeValue<std::shared_ptr<Graph>,AttributeKind::gs>;
+using TypeProtoAttr = ScalarAttributeValue<TypeProto,AttributeKind::tp>;
+using TypeProtosAttr = VectorAttributeValue<TypeProto,AttributeKind::tps>;
 
 
 // CRTP so that Node which inherits Attributes can be return for
@@ -178,7 +187,7 @@ struct Attributes {
     return This();
   }
   bool hasAttributes() const {
-    return values_.size() > 0;
+    return !values_.empty();
   }
   // The names are returned in order, since name actually is the index.
   std::vector<Symbol> attributeNames() const {
@@ -206,6 +215,8 @@ struct Attributes {
   CREATE_ACCESSOR(Tensors,ts)
   CREATE_ACCESSOR(Graph,g)
   CREATE_ACCESSOR(Graphs,gs)
+  CREATE_ACCESSOR(TypeProto,tp)
+  CREATE_ACCESSOR(TypeProtos,tps)
 
   #undef CREATE_ACCESSOR
 
@@ -290,7 +301,7 @@ private:
   size_t offset_;
   size_t unique_ = 0;          // unique id
   size_t stage_ = 0;           // 0-forward, 1-backward, 2-double-backward,...
-  use_list uses_;
+  use_list uses_in_current_graph_;
   bool has_unique_name_;
   std::string unique_name_;
   int32_t elem_type_;
@@ -311,6 +322,11 @@ public:
     sizes_ = std::move(sizes);
     return this;
   }
+  Value* wipeSizes() {
+    has_sizes_ = false;
+    sizes_ = std::vector<Dimension>();
+    return this;
+  }
   const std::vector<Dimension>& sizes() const {
     return sizes_;
   }
@@ -325,11 +341,7 @@ public:
       return unique_name_;
     return ONNX_NAMESPACE::to_string(unique());
   }
-  Value* setUniqueName(std::string name) {
-    has_unique_name_ = true;
-    unique_name_ = std::move(name);
-    return this;
-  }
+  Value* setUniqueName(const std::string &name, bool rename_subgraph_captured_nodes=true);
   Value* setStage(size_t s) {
     stage_ = s;
     return this;
@@ -349,9 +361,7 @@ public:
   Graph * owningGraph();
   const Graph * owningGraph() const;
   // TODO: make this more const correct
-  const use_list & uses() const {
-    return uses_;
-  }
+  const use_list uses() const;
 
   // Replaces all uses of this node with 'newValue'.
   //
@@ -418,7 +428,7 @@ protected:
   Node(Graph * graph_, NodeKind kind_); //defined after graph
 
 public:
-  bool has_name() {
+  bool has_name() const {
     return has_name_;
   }
   const std::string& name() const {
@@ -428,7 +438,7 @@ public:
     has_name_ = true;
     name_ = std::move(name);
   }
-  bool has_domain() {
+  bool has_domain() const {
     return has_domain_;
   }
   const std::string& domain() const {
@@ -441,7 +451,7 @@ public:
   bool has_doc_string() const {
     return has_doc_string_;
   }
-  const std::string& docString() {
+  const std::string& docString() const {
     return doc_string_;
   }
   void setDocString(std::string doc_string) {
@@ -494,7 +504,7 @@ public:
   }
   bool hasUses() const {
     for(auto o : outputs()) {
-      if(o->uses().size() > 0)
+      if(!o->uses().empty())
         return true;
     }
     return false;
@@ -519,6 +529,10 @@ public:
   const Value * input() const {
     ONNX_ASSERT(inputs_.size() == 1);
     return inputs_.at(0);
+  }
+  Value * output() const {
+    ONNX_ASSERT(outputs_.size() == 1);
+    return outputs_.at(0);
   }
   // Access a particular input.  This is a checked index.
   Value * input(size_t i) {
@@ -550,7 +564,7 @@ public:
   // Result:  %3 = f(%1, %2, %4)
   Value* addInput(Value * node) {
     ONNX_ASSERT(graph_ == node->owningGraph());
-    node->uses_.emplace_back(this, inputs_.size());
+    node->uses_in_current_graph_.emplace_back(this, inputs_.size());
     inputs_.push_back(node);
     return node;
   }
@@ -565,7 +579,7 @@ public:
     ONNX_ASSERT(newValue->owningGraph() == graph_);
     Value * old = dropInput(i);
     inputs_[i] = newValue;
-    newValue->uses_.emplace_back(this, i);
+    newValue->uses_in_current_graph_.emplace_back(this, i);
     return old;
   }
 
@@ -727,7 +741,7 @@ public:
 private:
   // Lookup iterator in use list of _input i_ that corresponds to its use of _this_
   use_list::iterator findUseForInput(size_t i) {
-    auto & input_uses = inputs_[i]->uses_;
+    auto & input_uses = inputs_[i]->uses_in_current_graph_;
     // O(N) on the use list, but unless we get nodes with +100 uses
     // vector traversal still is probably faster than linked list
     auto use_it = std::find(input_uses.begin(), input_uses.end(), Use(this, i));
@@ -742,7 +756,7 @@ private:
     ONNX_ASSERT(i < inputs_.size());
     auto input_node = inputs_[i];
     auto use_it = findUseForInput(i);
-    input_node->uses_.erase(use_it);
+    input_node->uses_in_current_graph_.erase(use_it);
     inputs_[i] = nullptr;
     return input_node;
   }
@@ -807,13 +821,23 @@ class OpSetID final {
 
     // target must be in the form "<domain>&<version>"
     static OpSetID fromString(const std::string& target) {
-      try {
+      ONNX_TRY {
         std::string new_domain = target.substr(0, target.find("$"));
         int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
         return OpSetID(std::move(new_domain), new_version);
-      } catch (const std::runtime_error& e) {
-        ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
+      } ONNX_CATCH (const std::runtime_error& e) {
+        ONNX_HANDLE_EXCEPTION([&]() {
+          ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
+        });
       }
+
+      // The control will never reach here. 
+      // In the default build where exceptions are turned on in case of any error
+      // the control will enter catch block where an exception will be thrown again.
+      // In case of "no exception build" the code aborts at the site of first exception.
+      // Adding this to appease the warning "control may reach end of non-void function"
+      // as the mac build fails when ONNX_WERROR==ON
+      return OpSetID("", 0);
     }
 
     const std::string& domain() const {
@@ -866,6 +890,42 @@ private:
 
   std::vector <OpSetID> opset_versions_;
 
+  bool isNameUnique(const std::string& name) const {
+    if (std::find(initializer_names_.cbegin(), initializer_names_.cend(), name) !=
+        initializer_names_.cend()) {
+      return false;
+    }
+    const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
+    for (const Node* node : all_nodes) {
+      for (const auto& attr : node->attributeNames()) {
+        if (node->kindOf(attr) == AttributeKind::g) {
+          const auto& subgraph = node->g(attr);
+          if (!subgraph->isNameUnique(name)) {
+            return false;
+          }
+        } else if (node->kindOf(attr) == AttributeKind::gs) {
+          for (const auto& subgraph : node->gs(attr)) {
+            if (!subgraph->isNameUnique(name)) {
+              return false;
+            }
+          }
+        }
+      }
+      const auto found_in =
+          std::find_if(node->inputs().begin(), node->inputs().end(), f);
+      if (found_in != node->inputs().end()) {
+        return false;
+      }
+      const auto found_out =
+          std::find_if(node->outputs().begin(), node->outputs().end(), f);
+      if (found_out != node->outputs().end()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+
 public:
   Graph()
   : next_unique_(0)
@@ -875,7 +935,7 @@ public:
   , has_name_(false)
   , has_doc_string_(false) {}
 
-  bool has_doc_string() {
+  bool has_doc_string() const {
     return has_doc_string_;
   }
   const std::string& docString() {
@@ -890,7 +950,7 @@ public:
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
   }
-  void eraseInitializer(std::string name) {
+  void eraseInitializer(const std::string &name) {
     initializers_.erase(
         std::remove_if(
             initializers_.begin(),
@@ -910,13 +970,13 @@ public:
     initializers_.clear();
     initializer_names_.clear();
   }
-  const std::vector<Tensor>& initializers() {
+  const std::vector<Tensor>& initializers() const {
     return initializers_;
   }
-  const std::vector<std::string>& initializer_names() {
+  const std::vector<std::string>& initializer_names() const {
     return initializer_names_;
   }
-  std::vector<Tensor>::const_iterator getInitializer(const std::string& name) {
+  std::vector<Tensor>::const_iterator getInitializer(const std::string& name) const {
     for (auto it = initializers_.cbegin(); it != initializers_.cend(); ++it) {
       if (name == it->name()) {
         return it;
@@ -946,6 +1006,14 @@ public:
 
   std::vector<OpSetID>& opset_versions_mutable() {
     return opset_versions_;
+  }
+
+  size_t getNextUnique() {
+      std::string next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
+      while(!isNameUnique(next_unique_name)) {
+          next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
+      }
+      return next_unique_;
   }
 
   // These invocations of begin() on output of function are OK
@@ -1046,12 +1114,12 @@ public:
     new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializerCopy.elem_type());
-    addInitializer(std::move(initializerCopy), name);
+    addInitializer(std::move(initializerCopy), std::move(name));
     return new_init;
   }
 
   Value* addInitializerAndInput(const Tensor &initializer) {
-    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(next_unique_++));
+    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(getNextUnique()));
   }
 
 
@@ -1085,10 +1153,45 @@ public:
 
   void setName(std::string name) {
     has_name_ = true;
-    name_ = name;
+    name_ = std::move(name);
   }
 
   friend std::ostream& operator<<(std::ostream & out, const Graph & g);
+
+  void forSelfAndEachSubGraph(std::function<void(Graph*)> fn) {
+    fn(this);
+
+    for (const Node* node : all_nodes) {
+      for (const auto& attr : node->attributeNames()) {
+        if (node->kindOf(attr) == AttributeKind::g) {
+          std::shared_ptr<Graph> subgraph = node->g(attr);
+          subgraph->forSelfAndEachSubGraph(fn);
+        } else if (node->kindOf(attr) == AttributeKind::gs) {
+          for (const auto& subgraph : node->gs(attr)) {
+            subgraph->forSelfAndEachSubGraph(fn);
+          }
+        }
+      }
+    }
+  }
+
+  void forSelfAndEachSubGraph(std::function<void(const Graph*)> fn) const {
+    std::function<void(Graph*)> tmp_fn = [fn](Graph* graph) {fn(graph);};
+    const_cast<Graph*>(this)->forSelfAndEachSubGraph(tmp_fn);
+  }
+
+  void forEachNode(std::function<void(Node*)> fn) {
+    forSelfAndEachSubGraph([fn](Graph *graph) {
+      for(Node* node : graph->nodes()) {
+        fn(node);
+      }
+    });
+  }
+
+  void forEachNode(std::function<void(const Node*)> fn) const {
+    std::function<void(Node*)> tmp_fn = [fn](Node* node) {fn(node);};
+    const_cast<Graph*>(this)->forEachNode(tmp_fn);
+  }
 
 private:
 
@@ -1114,7 +1217,7 @@ private:
 };
 
 inline Value::Value(Node *node_, size_t offset_)
-    : node_(node_), offset_(offset_), unique_(node_->graph_->next_unique_++),
+    : node_(node_), offset_(offset_), unique_(node_->graph_->getNextUnique()),
       stage_(node_->graph_->new_node_stage_), has_unique_name_(false),
       elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
       has_sizes_(false) {
@@ -1129,13 +1232,68 @@ inline const Graph * Value::owningGraph() const {
   return node()->owningGraph();
 }
 
-inline void Value::replaceAllUsesWith(Value * newValue) {
-  ONNX_ASSERT(owningGraph() == newValue->owningGraph());
-  for(auto u : uses()) {
-    u.user->inputs_[u.offset] = newValue;
-    newValue->uses_.push_back(u);
+// `captured` nodes in subgraph determines which value it captures
+// by storing the value's unique name, so old unique names in `captured` nodes
+// should also be updated.
+inline Value* Value::setUniqueName(const std::string &name, bool rename_subgraph_captured_nodes) {
+  if (has_unique_name() && rename_subgraph_captured_nodes) {
+    auto *graph = owningGraph();
+    graph->forEachNode([this, &name](Node *node) {
+      if (node->owningGraph() == this->owningGraph()) {
+        // skip non-subgraph
+        return;
+      }
+      if (node->kind() == kCaptured) {
+        Value *output = node->output();
+        if (output->uniqueName() == this->uniqueName()) {
+          output->setUniqueName(name, false);
+        }
+      }
+    });
   }
-  uses_.clear();
+  unique_name_ = name;
+  has_unique_name_ = true;
+  return this;
+}
+
+inline void Value::replaceAllUsesWith(Value * newValue) {
+  auto* graph = owningGraph();
+  ONNX_ASSERT(graph == newValue->owningGraph());
+  // propagate sizes and elem type
+  if (this->has_sizes()) {
+    newValue->setSizes(this->sizes());
+  }
+  if (this->elemType() != ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED) {
+    newValue->setElemType(this->elemType());
+  }
+  const auto unique_name = this->uniqueName();
+  // We do not want the optimization to change the graph output name
+  if (std::find(graph->outputs().rbegin(), graph->outputs().rend(),
+                this) != graph->outputs().rend()) {
+    newValue->setUniqueName(unique_name);
+    // The "unique" semantic of unique_name should be kept or uses()
+    // will return an incorrect result when the value is used in subgraph
+    this->setUniqueName(ONNX_NAMESPACE::to_string(graph->getNextUnique()), false);
+  }
+  newValue->uses_in_current_graph_.reserve(this->uses_in_current_graph_.size());
+  for(auto u : uses_in_current_graph_) {
+    u.user->inputs_[u.offset] = newValue;
+    newValue->uses_in_current_graph_.push_back(u);
+  }
+  graph->forEachNode([this, &newValue, &unique_name](Node *node) {
+    if (node->owningGraph() == this->owningGraph()) {
+      // skip non-subgraph
+      return;
+    }
+    if (node->kind() == kCaptured) {
+      Value *output = node->output();
+      if (output->uniqueName() == unique_name) {
+        output->setUniqueName(newValue->uniqueName());
+      }
+    }
+  });
+  uses_in_current_graph_.clear();
+  assert(this->uses().empty());
 }
 
 inline Node::Node(Graph * graph_, NodeKind kind_) :
@@ -1150,7 +1308,7 @@ inline Node::Node(Graph * graph_, NodeKind kind_) :
 
 inline void Node::eraseOutput(size_t i) {
   ONNX_ASSERT(i < outputs_.size());
-  ONNX_ASSERT(outputs_[i]->uses().size() == 0);
+  ONNX_ASSERT(outputs_[i]->uses().empty());
   Value * n = outputs_[i];
   outputs_.erase(outputs_.begin() + i);
   owningGraph()->freeValue(n);
@@ -1183,7 +1341,7 @@ inline bool Node::isBefore(Node* n) {
 
 inline void Node::destroy() {
   ONNX_ASSERT(inGraphList());
-  while(outputs().size() > 0)
+  while(!outputs().empty())
     eraseOutput(outputs().size() - 1);
   removeAllInputs();
   removeFromList();
@@ -1203,6 +1361,28 @@ inline const_graph_node_list_iterator Node::iterator() const {
 }
 inline const_graph_node_list_iterator Node::reverseIterator() const {
   return iterator().reverse();
+}
+
+// Returns a list about which nodes are using this value,
+// nodes in subgraph are also included.
+// This method is usually used to check whether it is
+// safe to delete a Value.
+inline const use_list Value::uses() const {
+  use_list all_uses = uses_in_current_graph_;
+  owningGraph()->forEachNode([this, &all_uses](const Node* node) {
+    if (node->owningGraph() == this->owningGraph()) {
+      // skip non-subgraph
+      return;
+    }
+    if (node->kind() == kCaptured) {
+      const Value* output = node->outputs()[0];
+      if (output->uniqueName() == this->uniqueName()) {
+        const auto output_uses = output->uses();
+        all_uses.insert(all_uses.end(), output_uses.begin(), output_uses.end());
+      }
+    }
+  });
+  return all_uses;
 }
 
 

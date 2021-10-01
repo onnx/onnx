@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -116,3 +118,30 @@ class Conv(Base):
                                                 [171., 183.]]]]).astype(np.float32)
         expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_padding],
                name='test_conv_with_strides_and_asymmetric_padding')
+
+    @staticmethod
+    def export_conv_with_autopad_same():  # type: () -> None
+
+        x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 5, 5) input tensor
+                        [5., 6., 7., 8., 9.],
+                        [10., 11., 12., 13., 14.],
+                        [15., 16., 17., 18., 19.],
+                        [20., 21., 22., 23., 24.]]]]).astype(np.float32)
+        W = np.array([[[[1., 1., 1.],  # (1, 1, 3, 3) tensor for convolution weights
+                        [1., 1., 1.],
+                        [1., 1., 1.]]]]).astype(np.float32)
+
+        # Convolution with auto_pad='SAME_LOWER' and strides=2
+        node = onnx.helper.make_node(
+            'Conv',
+            inputs=['x', 'W'],
+            outputs=['y'],
+            auto_pad='SAME_LOWER',
+            kernel_shape=[3, 3],
+            strides=[2, 2],
+        )
+        y = np.array([[[[12., 27., 24.],
+                     [63., 108., 81.],
+                     [72., 117., 84.]]]]).astype(np.float32)
+        expect(node, inputs=[x, W], outputs=[y],
+               name='test_conv_with_autopad_same')

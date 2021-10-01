@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include <google/protobuf/io/coded_stream.h>
@@ -16,7 +20,10 @@ namespace ONNX_NAMESPACE {
 #ifdef ONNX_USE_LITE_PROTO
 using ::google::protobuf::MessageLite;
 inline std::string ProtoDebugString(const MessageLite& proto) {
-  return proto.SerializeAsString();
+  // Since the MessageLite interface does not support reflection, there is very
+  // little information that this and similar methods can provide.
+  // But when using lite proto this is the best we can provide.
+  return proto.ShortDebugString();
 }
 #else
 using ::google::protobuf::Message;
@@ -27,11 +34,17 @@ inline std::string ProtoDebugString(const Message& proto) {
 
 template <typename Proto>
 bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
-  // Total bytes hard limit / warning limit are set to 1GB and 512MB
-  // respectively.
   ::google::protobuf::io::ArrayInputStream input_stream(buffer, static_cast<int>(length));
   ::google::protobuf::io::CodedInputStream coded_stream(&input_stream);
-  coded_stream.SetTotalBytesLimit((2048LL << 20) - 1, 512LL << 20);
+  int total_bytes_limit = (2048LL << 20) - 1;
+#if GOOGLE_PROTOBUF_VERSION >= 3011000
+    // Only take one parameter since protobuf 3.11
+    coded_stream.SetTotalBytesLimit(total_bytes_limit);
+#else
+    // Total bytes hard limit / warning limit are set to 2GB and 512MB respectively.
+    coded_stream.SetTotalBytesLimit(total_bytes_limit, 512LL << 20);
+#endif
+
   return proto->ParseFromCodedStream(&coded_stream);
 }
 

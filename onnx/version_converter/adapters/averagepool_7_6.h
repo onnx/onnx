@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for AveragePool in default domain from version 7 to 6
 
 #pragma once
@@ -16,8 +20,9 @@ class AveragePool_7_6 final : public Adapter {
             "Version 6 does not support including pad");
     }
 
-    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
       adapt_averagepool_7_6(graph, node);
+      return node;
     }
 };
 

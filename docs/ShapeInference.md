@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX Shape Inference
 
 ONNX provides an optional implementation of shape inference on ONNX
@@ -7,6 +9,10 @@ to invoke the existing shape inference functionality on your graphs,
 or to define shape inference implementations to go along with your
 custom operators (or both!). Shape inference functions are stored as a
 member of the OpSchema objects.
+
+In ONNX 1.10 release, symbol generation and propagation along with shape 
+data propagation was added to ONNX graph level shape inference. 
+Detailed proposal is [here](proposals/SymbolicShapeInfProposal.md)
 
 ## Invoking Shape Inference
 
@@ -41,7 +47,7 @@ methods. `InferenceContext` is the core struct which is provided to
 your inference function. It allows accessing information about the
 operator's inputs, and also allows writing out inferred information.
 
-To see numerous examples, search for occurences of
+To see numerous examples, search for occurrences of
 `TypeAndShapeInferenceFunction` in the codebase. One that is
 relatively involved is the implementation for `Concat`, in
 onnx/defs/tensor/defs.cc.
@@ -60,7 +66,7 @@ inferred to produce a result of shape `(12, 2)`, but `Concat` on
 tensors of shapes `(5, 2)` and `(N, 2)` will simply produce `(M, 2)`,
 rather than containing a representation of `N+5`. Note that differing
 unknown symbolic values will be propagated, so the `M` here represents
-an unknown quantity that is the same as other occurences of `M`.
+an unknown quantity that is the same as other occurrences of `M`.
 
 These limitations are a property of the current implementation, not
 fundamental constraints - if you are in need of something more

@@ -1,5 +1,7 @@
-// Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 
 #ifndef ONNX_ONNX_PB_H
 #define ONNX_ONNX_PB_H

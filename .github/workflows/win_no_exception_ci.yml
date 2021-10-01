@@ -1,0 +1,100 @@
+name: Windows_No_Exception_CI
+
+on:
+   push:
+    branches: [ master, rel-* ]
+   pull_request:
+    branches: [ master, rel-* ]
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        architecture: ['x64']
+    steps:
+    - name: Checkout Protobuf 
+      uses: actions/checkout@master
+      with:
+        repository: protocolbuffers/protobuf
+        ref: refs/tags/v3.16.0
+        path: ./protobuf_root/protobuf
+
+    - name: Checkout Protobuf submodules
+      shell: bash
+      run: |
+         cd ./protobuf_root/protobuf
+         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+         git submodule sync --recursive
+         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Checkout ONNX
+      uses: actions/checkout@v2
+      with:
+         path: ./onnx
+
+    - name: Checkout ONNX submodules
+      shell: bash
+      run: |
+         cd onnx
+         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+         git submodule sync --recursive
+         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+
+    - name: Build and test ONNX binaries
+      run: |
+        $arch = 'x64'
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          $arch = 'Win32'
+        }
+        echo "Install protobuf"
+        cd ./protobuf_root
+        $protobuf_root_dir = Get-Location
+        mkdir protobuf_install
+        cd ./protobuf/cmake
+
+        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+        msbuild protobuf.sln /m /p:Configuration=Release
+        msbuild INSTALL.vcxproj /p:Configuration=Release
+        echo "Protobuf installation complete."
+
+        echo "Set paths"
+        $protoc_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\bin"
+        $protoc_lib_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\lib"
+        $protobuf_include_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\include"
+        $Env:PATH="$ENV:PATH;$protoc_path;$protoc_lib_path;$protobuf_include_path"
+
+        cd ../../../onnx
+
+        echo "Build ONNX"
+        cmake -G "Visual Studio 16 2019" -A $arch -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_DISABLE_EXCEPTIONS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=ON -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -S . -B .setuptools-cmake-build\
+        cd .setuptools-cmake-build\
+        msbuild onnx.sln /m /p:Configuration=Release
+
+        echo "Run gtests"
+        Release\onnx_gtests.exe
+        if($lastexitcode -ne 0) {
+          EXIT 1
+        }
+
+        cd ..
+        git clean -xdf
+        echo "Build ONNX with non-static registration for testing selective ONNX schema loading"
+        cmake -G "Visual Studio 16 2019" -A $arch -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=ON -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -DONNX_DISABLE_STATIC_REGISTRATION=ON -S . -B .setuptools-cmake-build\
+        cd .setuptools-cmake-build\
+        msbuild onnx.sln /m /p:Configuration=Release
+
+        echo "Only test selective ONNX schema loading"
+        Release\onnx_gtests.exe --gtest_filter="SchemaRegistrationTest*"
+        if($lastexitcode -ne 0) {
+          EXIT 1
+        }

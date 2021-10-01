@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Version converter interface for ONNX models between different opset versions.
 
 #pragma once
@@ -54,10 +58,10 @@ class BaseVersionConverter {
           if (adapter_ptr != target_map->second.end()) {
             return *(adapter_ptr->second);
           } else {
-            ONNX_ASSERTM(false, "No Adapter To Version %s for %s", initial.c_str(), op_name.c_str());
+            ONNX_ASSERTM(false, "No Adapter To Version %s for %s", target.c_str(), op_name.c_str());
           }
         } else {
-          ONNX_ASSERTM(false, "No Adapter For Current Version %s for %s", initial.c_str(), op_name.c_str());
+          ONNX_ASSERTM(false, "No Adapter From Version %s for %s", initial.c_str(), op_name.c_str());
         }
       } else {
         // No adapters exist for the given op

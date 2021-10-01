@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 // Adapter for Scan in default domain from version 8 to 9
 
 #pragma once
@@ -48,8 +52,9 @@ struct Scan_8_9 final : public Adapter {
     }
   }
 
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_scan_8_9(graph, node);
+    return node;
   }
 
 };

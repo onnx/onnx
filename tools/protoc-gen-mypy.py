@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# SPDX-License-Identifier: Apache-2.0
+
+
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy
 # (Apache 2.0 License)
 # with own fixes to
@@ -41,6 +44,7 @@ if MYPY:
         Set,
         Text,
         cast,
+        Optional
     )
 else:
     # Provide minimal mypy identifiers to make code run without typing module present
@@ -71,14 +75,18 @@ class PkgWriter(object):
         self.imports = defaultdict(set)  # type: Dict[Text, Set[Text]]
         self.locals = set()  # type: Set[Text]
 
-    def _import(self, path, name):
-        # type: (Text, Text) -> Text
+    def _import(self, path, name, import_as=None):
+        # type: (Text, Text, Optional[Text]) -> Text
         """Imports a stdlib path and returns a handle to it
         eg. self._import("typing", "Optional") -> "Optional"
         """
         imp = path.replace('/', '.')
-        self.imports[imp].add(name)
-        return name
+        if import_as is not None:
+            self.imports[imp].add("{} as {}".format(name, import_as))
+            return import_as
+        else:
+            self.imports[imp].add(name)
+            return name
 
     def _import_message(self, type_name):
         # type: (d.FieldDescriptorProto) -> Text
@@ -196,13 +204,13 @@ class PkgWriter(object):
                         if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
                             if field.type_name != '' and self.descriptors.messages[field.type_name].options.map_entry:
                                 msg = self.descriptors.messages[field.type_name]
-                                line("{} : {}[{}[{}, {}]] = None,", field.name, self._import("typing", "Optional"),
+                                line("{} : {}[{}[{}, {}]] = None,", field.name, self._import("typing", "Optional", "OptionalType"),
                                     self._import("typing", "Mapping"), self.python_type(msg.field[0]), self.python_type(msg.field[1]))
                             else:
-                                line("{} : {}[{}[{}]] = None,", field.name, self._import("typing", "Optional"),
+                                line("{} : {}[{}[{}]] = None,", field.name, self._import("typing", "Optional", "OptionalType"),
                                   self._import("typing", "Iterable"), self.python_type(field))
                         else:
-                            line("{} : {}[{}] = None,", field.name, self._import("typing", "Optional"),
+                            line("{} : {}[{}] = None,", field.name, self._import("typing", "Optional", "OptionalType"),
                               self.python_type(field))
                     line(") -> None: ...")
 

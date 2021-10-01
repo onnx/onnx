@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <cctype>
 #include <iostream>
 #include <iterator>
@@ -111,7 +115,9 @@ DataType DataTypeUtils::ToType(const std::string& type_str) {
 const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
   auto it = GetTypeStrToProtoMap().find(*data_type);
-  assert(it != GetTypeStrToProtoMap().end());
+  if (GetTypeStrToProtoMap().end() == it) {
+    ONNX_THROW_EX(std::invalid_argument("Invalid data type " + *data_type));
+  }
   return it->second;
 }
 
@@ -130,7 +136,10 @@ std::string DataTypeUtils::ToString(
       return ToString(
           type_proto.sequence_type().elem_type(), left + "seq(", ")" + right);
     }
-
+    case TypeProto::ValueCase::kOptionalType: {
+      return ToString(
+          type_proto.optional_type().elem_type(), left + "optional(", ")" + right);
+    }
     case TypeProto::ValueCase::kMapType: {
       std::string map_str =
           "map(" + ToDataTypeString(type_proto.map_type().key_type()) + ",";
@@ -152,6 +161,7 @@ std::string DataTypeUtils::ToString(
       result.append(")").append(right);
       return result;
     }
+#endif
     case TypeProto::ValueCase::kSparseTensorType: {
       // Note: We do not distinguish tensors with zero rank (a shape consisting
       // of an empty sequence of dimensions) here.
@@ -159,17 +169,17 @@ std::string DataTypeUtils::ToString(
           ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" +
           right;
     }
-#endif
     default:
-      assert(false);
-      return std::string();
+      ONNX_THROW_EX(std::invalid_argument("Unsuported type proto value case."));
   }
 }
 
 std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
-  assert(t.TensorDataTypeToTypeStr().end() != iter);
+  if (t.TensorDataTypeToTypeStr().end() == iter) {
+    ONNX_THROW_EX(std::invalid_argument("Invalid tensor data type "));
+  }
   return iter->second;
 }
 
@@ -183,6 +193,11 @@ void DataTypeUtils::FromString(
     return FromString(
         std::string(s.Data(), s.Size()),
         *type_proto.mutable_sequence_type()->mutable_elem_type());
+  } else if (s.LStrip("optional")) {
+    s.ParensWhitespaceStrip();
+    return FromString(
+        std::string(s.Data(), s.Size()),
+        *type_proto.mutable_optional_type()->mutable_elem_type());
   } else if (s.LStrip("map")) {
     s.ParensWhitespaceStrip();
     size_t key_size = s.Find(',');
@@ -214,14 +229,14 @@ void DataTypeUtils::FromString(
         opaque_type->mutable_name()->assign(s.Data(), s.Size());
       }
     }
-  } else if (s.LStrip("sparse_tensor")) {
+  } else
+#endif
+  if (s.LStrip("sparse_tensor")) {
     s.ParensWhitespaceStrip();
     int32_t e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
     type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
-  } else
-#endif
-      if (s.LStrip("tensor")) {
+  } else if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
     int32_t e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
@@ -246,7 +261,9 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
 void DataTypeUtils::FromDataTypeString(
     const std::string& type_str,
     int32_t& tensor_data_type) {
-  assert(IsValidDataTypeString(type_str));
+  if (!IsValidDataTypeString(type_str)) {
+    ONNX_THROW_EX(std::invalid_argument("DataTypeUtils::FromDataTypeString - Received invalid data type string " + type_str));
+  }
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   tensor_data_type = t.TypeStrToTensorDataType()[type_str];

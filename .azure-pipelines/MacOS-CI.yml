@@ -1,0 +1,116 @@
+trigger:
+- master
+
+jobs:
+- job: 'Test'
+  pool:
+    vmImage: 'macOS-10.14'
+  strategy:
+    matrix:
+      py36:
+        python.version: '3.6'
+        onnx_ml: 0
+        onnx_debug: 0
+        onnx_lite: 1
+      py36-ml:
+        python.version: '3.6'
+        onnx_ml: 1
+        onnx_debug: 0
+        onnx_lite: 1
+      py36-ml-debug:
+        python.version: '3.6'
+        onnx_ml: 1
+        onnx_debug: 1
+        onnx_lite: 0
+    maxParallel: 6
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+
+  - script: |
+      # Install protobuf 3.16.0 from source
+      export NUM_CORES=`sysctl -n hw.ncpu`
+      echo Using $NUM_CORES cores
+      brew update
+      brew install autoconf && brew install automake
+      export ONNX_PATH=$(pwd)
+      cd ..
+      wget https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz
+      tar -xvf protobuf-cpp-3.16.0.tar.gz
+      cd protobuf-3.16.0
+      mkdir build_source && cd build_source
+      cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+      make -j${NUM_CORES}
+      make install
+      export PATH=$(pwd)/bin:$PATH
+      cd $ONNX_PATH
+
+      git submodule update --init --recursive
+      python -m pip install -q --upgrade pip
+      python -m pip install -q -r requirements-release.txt
+      export ONNX_BUILD_TESTS=1
+      if [ '$(onnx_debug)' == '1' ]; then
+        export DEBUG=1
+      fi
+      if [ '$(onnx_ml)' == '1' ]; then
+        export ONNX_ML=1
+      fi
+      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+      if [ '$(onnx_lite)' == '1' ]; then
+        export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
+      fi
+      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+      python setup.py -q install
+    displayName: 'Install dependencies and ONNX'
+
+  - script: |
+      # lint python code
+      python -m pip install -q flake8
+      flake8
+      if [ $? -ne 0 ]; then
+        echo "flake8 returned failures"
+        exit 1
+      fi
+
+      # check auto-gen files up-to-date
+      python onnx/defs/gen_doc.py
+      python onnx/gen_proto.py -l
+      python onnx/gen_proto.py -l --ml
+      python onnx/backend/test/stat_coverage.py
+
+      git status
+      git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
+      if [ $? -ne 0 ]; then
+        echo "git diff returned failures"
+        exit 1
+      fi
+
+      # Do not hardcode onnx's namespace in the c++ source code, so that
+      # other libraries who statically link with onnx can hide onnx symbols
+      # in a private namespace.
+      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
+      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
+
+      pytest
+      if [ $? -ne 0 ]; then
+        echo "pytest failed"
+        exit 1
+      fi
+
+      # onnx c++ API tests
+      export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+      ./.setuptools-cmake-build/onnx_gtests
+      if [ $? -ne 0 ]; then
+        echo "onnx_gtests failed"
+        exit 1
+      fi
+
+      ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
+      if [ $? -ne 0 ]; then
+        echo "onnxifi_test_driver_gtests failed"
+        exit 1
+      fi
+
+    displayName: 'Run ONNX Tests'

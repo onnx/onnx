@@ -1,0 +1,79 @@
+# Weekly ci workflow for model zoo.
+# Runs model checker for all models
+name: Weekly CI with latest onnx.checker
+
+# Triggers the workflow on push or pull request events but only for the master branch
+on:
+  schedule:
+    # run weekly on Sunday 23:59
+    - cron:  '59 23 * * SUN'
+  pull_request:
+    branches: [master, rel-*]
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'test ONNX Model Zoo')
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+        architecture: ['x64']
+    steps:
+    - uses: actions/checkout@v2
+      name: Checkout repo
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+
+    - name: Install protobuf dependencies
+      run: |
+        # Install protobuf 3.16.0 due to compatibility
+        export NUM_CORES=`sysctl -n hw.ncpu`
+        echo Using $NUM_CORES cores
+        brew update
+        brew install autoconf && brew install automake
+        export ONNX_PATH=$(pwd)
+        cd ..
+        wget https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz
+        tar -xvf protobuf-cpp-3.16.0.tar.gz
+        cd protobuf-3.16.0
+        mkdir build_source && cd build_source
+        cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+        make -j${NUM_CORES}
+        make install
+        export PATH=$(pwd)/bin:$PATH
+        cd $ONNX_PATH
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        set -e
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements-release.txt
+
+    - name: Build, install and test ONNX
+      shell: bash
+      run: |
+        export CC=clang
+        export CXX=clang++
+        export ONNX_ML=1
+        export ONNX_NAMESPACE=ONNX_REL_1_8
+        export MACOSX_DEPLOYMENT_TARGET=10.15
+        python setup.py --quiet install
+  
+    - name: Test all models with onnx.checker and onnx.shape_inference
+      run: |
+        cd ..
+        git clone https://github.com/onnx/models.git
+        cd models
+        python ../onnx/workflow_scripts/test_model_zoo.py

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -10,6 +12,13 @@ from ..base import Base
 from . import expect
 
 
+def logsoftmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
+    x_max = np.max(x, axis=axis, keepdims=True)
+    tmp = np.exp(x - x_max)
+    s = np.sum(tmp, axis=axis, keepdims=True)
+    return (x - x_max) - np.log(s)
+
+
 class LogSoftmax(Base):
 
     @staticmethod
@@ -20,22 +29,20 @@ class LogSoftmax(Base):
             outputs=['y'],
         )
         x = np.array([[-1, 0, 1]]).astype(np.float32)
-        # expected output [[-2.40760589, -1.40760589, -0.40760589]]
-        y = x - np.log(np.sum(np.exp(x), axis=1))
+        # expected output
+        # [[-2.4076061 -1.407606  -0.407606 ]]
+        y = logsoftmax(x)
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_example_1')
 
     @staticmethod
     def export_logsoftmax_axis():  # type: () -> None
-        def logsoftmax_2d(x):  # type: (np.ndarray) -> np.ndarray
-            max_x = np.max(x, axis=1).reshape((-1, 1))
-            exp_x = np.exp(x - max_x)
-            return x - max_x - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
-
-        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
-        # expected output [[-3.4401896, -2.4401896, -1.44018972, -0.44018969],
-        #                 [-3.4401896, -2.4401896, -1.44018972, -0.44018969]]
-        y = logsoftmax_2d(x)
+        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]
+                     ).astype(np.float32)
+        # expected output
+        # [[-3.4401896  -2.4401896  -1.4401896  -0.44018966]
+        # [-3.4401896  -2.4401896  -1.4401896  -0.44018966]]
+        y = logsoftmax(x)
 
         node = onnx.helper.make_node(
             'LogSoftmax',
@@ -52,7 +59,7 @@ class LogSoftmax(Base):
             outputs=['y'],
             axis=0,
         )
-        y = logsoftmax_2d(x.reshape(1, 60)).reshape(3, 4, 5)
+        y = logsoftmax(x, axis=0)
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_axis_0')
 
@@ -62,18 +69,9 @@ class LogSoftmax(Base):
             outputs=['y'],
             axis=1,
         )
-        y = logsoftmax_2d(x.reshape(3, 20)).reshape(3, 4, 5)
+        y = logsoftmax(x, axis=1)
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_axis_1')
-
-        # default axis is 1
-        node = onnx.helper.make_node(
-            'LogSoftmax',
-            inputs=['x'],
-            outputs=['y'],
-        )
-        expect(node, inputs=[x], outputs=[y],
-               name='test_logsoftmax_default_axis')
 
         node = onnx.helper.make_node(
             'LogSoftmax',
@@ -81,7 +79,7 @@ class LogSoftmax(Base):
             outputs=['y'],
             axis=2,
         )
-        y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+        y = logsoftmax(x, axis=2)
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_axis_2')
 
@@ -91,6 +89,15 @@ class LogSoftmax(Base):
             outputs=['y'],
             axis=-1,
         )
-        y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
+        y = logsoftmax(x, axis=-1)
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_negative_axis')
+
+        # default axis is -1
+        node = onnx.helper.make_node(
+            'LogSoftmax',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        expect(node, inputs=[x], outputs=[y],
+               name='test_logsoftmax_default_axis')

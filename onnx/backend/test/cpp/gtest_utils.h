@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "gtest/gtest.h"
 #include "onnx/backend/test/cpp/driver/test_driver.h"
 namespace ONNX_NAMESPACE {
