@@ -184,9 +184,29 @@ class ParserBase {
     return ONNX_NAMESPACE::MakeString("(line: ", line, " column: ", col, ")");
   }
 
+  // Return a suitable suffix of what has been parsed to provide error message context:
+  // return the line containing the last non-space character preceding the error (if it exists).
+  std::string GetErrorContext() {
+    // Special cases: empty input string, and parse-error at first character.
+    const char* p = next_ < end_ ? next_ : next_ - 1;
+    while ((p > start_) && isspace(*p))
+      --p;
+    while ((p > start_) && (*p != '\n'))
+      --p;
+    // Start at character after '\n' unless we are at start of input
+    const char* context_start = (p > start_) ? (p + 1) : start_;
+    for (p = context_start; (p < end_) && (*p != '\n'); ++p)
+      ;
+    return std::string(context_start, p-context_start);
+  }
+
   template <typename... Args>
   Status ParseError(const Args&... args) {
-    return Status(NONE, FAIL, ONNX_NAMESPACE::MakeString("[ParseError at position ", GetCurrentPos(), "]", args...));
+    return Status(
+        NONE,
+        FAIL,
+        ONNX_NAMESPACE::MakeString(
+            "[ParseError at position ", GetCurrentPos(), "]\n", "Error context: ", GetErrorContext(), "\n", args...));
   }
 
   void SkipWhiteSpace() {
@@ -219,7 +239,7 @@ class ParserBase {
 
   Status Match(char ch, bool skipspace = true) {
     if (!Matches(ch, skipspace))
-      return ParseError("Expected character ", ch, " not found", ch);
+      return ParseError("Expected character ", ch, " not found.");
     return Status::OK();
   }
 
