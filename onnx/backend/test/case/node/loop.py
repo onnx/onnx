@@ -290,7 +290,7 @@ class Loop(Base):
             outputs=['seq_empty']
         )
 
-        then_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+        then_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_empty', onnx.TensorProto.FLOAT, None)
         then_body = onnx.helper.make_graph(
             [seq_empty_in],
             'then_body',
@@ -298,7 +298,7 @@ class Loop(Base):
             [then_seq_out]
         )
 
-        else_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+        else_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, None)
         else_body = onnx.helper.make_graph(
             [optional_get_elem],
             'else_body',

@@ -282,6 +282,25 @@ inline void propagateSequenceElemTypeWithValidation(const TypeProto* input_type,
   }
 }
 
+inline void propagateOptionalElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
+  if (nullptr == input_type) {
+    fail_type_inference("Input type was null");
+  }
+
+  if (input_type->value_case() != TypeProto::kOptionalType) {
+    fail_type_inference("Input was expected to have optional type. Got ", input_type->value_case());
+  }
+
+  auto input_seq_type = input_type->optional_type();
+
+  if (input_seq_type.has_elem_type()) {
+    propagateElemTypeWithValidation(
+        &input_seq_type.elem_type(), output_type->mutable_optional_type()->mutable_elem_type());
+  } else {
+    fail_type_inference("Element type of input was unknown");
+  }
+}
+
 // propagate the element type from an input type to an output type.
 // if an existing output element type exists, validate it matches.
 inline void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
@@ -294,8 +313,10 @@ inline void propagateElemTypeWithValidation(const TypeProto* input_type, TypePro
     propagateTensorElemTypeWithValidation(input_type, output_type);
   } else if (input_value_case == TypeProto::kSequenceType) {
     propagateSequenceElemTypeWithValidation(input_type, output_type);
+  } else if (input_value_case == TypeProto::kOptionalType) {
+    propagateOptionalElemTypeWithValidation(input_type, output_type);
   } else {
-    fail_type_inference("Input was expected to have either tensor or sequence type. Got ", input_value_case);
+    fail_type_inference("Input was expected to have either tensor, sequence, or optional type. Got ", input_value_case);
   }
 }
 

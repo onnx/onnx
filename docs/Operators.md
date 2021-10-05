@@ -8112,17 +8112,16 @@ expect(if_node, inputs=[cond], outputs=[res], name='test_if',
 
 ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
-opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
 
 then_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 then_out_seq_tp = onnx.helper.make_sequence_type_proto(then_out_tensor_tp)
 then_out_opt_tp = onnx.helper.make_optional_type_proto(then_out_seq_tp)
-then_out = onnx.helper.make_value_info('then_out', then_out_opt_tp)
+then_out = onnx.helper.make_value_info('optional_empty', then_out_opt_tp)
 
 else_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 else_out_seq_tp = onnx.helper.make_sequence_type_proto(else_out_tensor_tp)
 else_out_opt_tp = onnx.helper.make_optional_type_proto(else_out_seq_tp)
-else_out = onnx.helper.make_value_info('else_out', else_out_opt_tp)
+else_out = onnx.helper.make_value_info('else_opt', else_out_opt_tp)
 
 x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
 cond = np.array(0).astype(bool)
@@ -8132,7 +8131,7 @@ opt_empty_in = onnx.helper.make_node(
     'Optional',
     inputs=[],
     outputs=['optional_empty'],
-    type=opt_in_tp
+    type=seq_in_tp
 )
 
 then_body = onnx.helper.make_graph(
@@ -9825,7 +9824,7 @@ seq_empty_in = onnx.helper.make_node(
     outputs=['seq_empty']
 )
 
-then_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+then_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_empty', onnx.TensorProto.FLOAT, None)
 then_body = onnx.helper.make_graph(
     [seq_empty_in],
     'then_body',
@@ -9833,7 +9832,7 @@ then_body = onnx.helper.make_graph(
     [then_seq_out]
 )
 
-else_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+else_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, None)
 else_body = onnx.helper.make_graph(
     [optional_get_elem],
     'else_body',
