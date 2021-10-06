@@ -4079,6 +4079,9 @@ data = np.arange(10).astype(np.float32)
 indices = np.array([0, -9, -10])
 y = np.take(data, indices, axis=0)
 
+# print(y)
+# [0. 1. 0.]
+
 expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_negative_indices')
 ```
@@ -8196,6 +8199,11 @@ node = onnx.helper.make_node(
     axis=axisValue
 )
 indices = np.array([0, -7, -8], dtype=np.int64)
+
+# print(y)
+# [[3. 1. 1. 1. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 1. 3. 1. 1. 1. 1. 1. 1.]
+#  [1. 1. 3. 1. 1. 1. 1. 1. 1. 1.]]
 
 depth = np.array([10], dtype=np.float32)
 values = np.array([off_value, on_value], dtype=output_type)
