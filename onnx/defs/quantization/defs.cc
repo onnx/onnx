@@ -90,7 +90,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "x_zero_point",
-            "Zero point for input 'x'. Shape must match y_scale. "
+            "Zero point for input 'x'. Shape must match x_scale. "
             "It's optional. Zero point is 0 when it's not specified.",
             "T",
             OpSchema::Optional)
