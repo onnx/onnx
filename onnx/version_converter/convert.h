@@ -8,32 +8,23 @@
 #pragma once
 
 #include "onnx/version_converter/BaseConverter.h"
-#include "onnx/version_converter/adapters/argmax_argmin_12_11.h"
-#include "onnx/version_converter/adapters/averagepool_7_6.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
-#include "onnx/version_converter/adapters/batch_normalization_6_5.h"
-#include "onnx/version_converter/adapters/batch_normalization_6_7.h"
-#include "onnx/version_converter/adapters/batch_normalization_8_9.h"
 #include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
 #include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/clip_10_11.h"
 #include "onnx/version_converter/adapters/compatible.h"
-#include "onnx/version_converter/adapters/concat_3_4.h"
 #include "onnx/version_converter/adapters/dropout_11_12.h"
-#include "onnx/version_converter/adapters/dropout_6_7.h"
 #include "onnx/version_converter/adapters/extend_supported_types.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
-#include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
-#include "onnx/version_converter/adapters/set_is_test.h"
 #include "onnx/version_converter/adapters/split_12_13.h"
 #include "onnx/version_converter/adapters/split_13_12.h"
 #include "onnx/version_converter/adapters/sum_8_7.h"
@@ -42,8 +33,6 @@
 #include "onnx/version_converter/adapters/upsample_6_7.h"
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
-#include "onnx/version_converter/adapters/add_layout.h"
-#include "onnx/version_converter/adapters/remove_layout.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
 #include "onnx/version_converter/adapters/topk_9_10.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -51,7 +40,6 @@
 #include "onnx/version_converter/adapters/softmax_12_13.h"
 #include "onnx/version_converter/adapters/batch_normalization_13_14.h"
 #include "onnx/version_converter/adapters/upsample_9_10.h"
-#include "onnx/version_converter/adapters/roialign_15_16.h"
 
 #include "onnx/version_converter/adapters/transformers.h"
 
@@ -137,7 +125,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       // Missing in this group: GRU
 
       /******** 3 -> 4 ********/
-      registerAdapter(make_unique<Concat_3_4>());
+      registerAdapter("Concat", 3, 4, SetAttributeIfAbsent(kaxis, 1));
 
       /******** 4 -> 3 ********/
       std::vector<TensorProto_DataType> concat_unallowed_types = {
@@ -259,7 +247,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter("BatchNormalization", 7, 6, SetAttribute(kis_test, 1));
       registerAdapter("Dropout", 7, 6, SetAttribute(kis_test, 1));
       registerAdapter(make_unique<Gemm_7_6>());
-      registerAdapter(make_unique<AveragePool_7_6>());
+      registerAdapter("AveragePool", 7, 6, RemoveAttribute(kcount_include_pad, 0));
 
       /******** 7 -> 8 ********/
       registerAdapter(make_unique<CompatibleAdapter>("Max",
