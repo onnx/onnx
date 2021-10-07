@@ -16,7 +16,7 @@ namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
 inline NodeTransformerFunction RemoveAttribute(Symbol attr) {
-  return [=](std::shared_ptr<Graph> graph, Node* node) {
+  return NODE_TRANSFORMER(node) {
     if (node->hasAttribute(attr)) {
       node->removeAttribute(attr);
     }
