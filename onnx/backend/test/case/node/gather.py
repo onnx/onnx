@@ -71,8 +71,8 @@ class Gather(Base):
         indices = np.array([0, -9, -10])
         y = np.take(data, indices, axis=0)
 
-        expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
-               name='test_gather_negative_indices')
-
         # print(y)
         # [0. 1. 0.]
+
+        expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+               name='test_gather_negative_indices')
