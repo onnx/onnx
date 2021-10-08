@@ -796,9 +796,13 @@ computes the output.)DOC";
         "the operation expects the weight tensor to arrive "
         "with the dimension denotation of [FILTER_OUT_CHANNEL, "
         "FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
-        "X.shape[1] == (W.shape[1] * group) == C "
-        "(assuming zero based indices for the shape array). "
-        "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
+        "Assuming zero based indices for the shape array, "
+        "X.shape[1] == (W.shape[1] * group) == C and "
+        "W.shape[0] mod G == 0. Or in other words "
+        "FILTER_IN_CHANNEL multiplied by the number of groups "
+        "should be equal to DATA_CHANNEL and the number of "
+        "feature maps M should be a multiple of the number of "
+        "groups G.",
         "T",
         OpSchema::Single,
         true,
