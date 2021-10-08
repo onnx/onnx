@@ -58,7 +58,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* DequantizeLinear_ver10_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
-The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
+The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' are both scalars.
 'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
 there's no zero point (zero point is supposed to be 0).
 )DOC";
