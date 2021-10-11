@@ -47,6 +47,7 @@ class DataTypeUtils final {
   // If the DataType input is invalid, this function will throw std::invalid_argument exception.
   // If ONNX_NO_EXCEPTIONS is set it will abort.
   static const TypeProto& ToTypeProto(const DataType& data_type);
+  static std::string ToDataTypeString(int32_t tensor_data_type);
  
  private:
   static void FromString(const std::string& type_str, TypeProto& type_proto);
@@ -57,7 +58,6 @@ class DataTypeUtils final {
 
   // If int32_t input is invalid, this function will throw an exception.
   // If ONNX_NO_EXCEPTIONS is set it will abort.
-  static std::string ToDataTypeString(int32_t tensor_data_type);
 
   static bool IsValidDataTypeString(const std::string& type_str);
 
