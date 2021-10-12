@@ -984,6 +984,7 @@ public:
         initializer_names_.end());
     if (initializer_offset_.count(name) > 0) {
       initializer_node_->eraseOutput(initializer_offset_[name]);
+      initializer_offset_.erase(name);
     }
   }
   void clearInitializers() {
