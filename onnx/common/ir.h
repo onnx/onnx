@@ -879,11 +879,13 @@ private:
   // having corner cases where the list is empty.
   Node * const output_;
   Node * const input_;
-  // Create an independent node list for initializer to prevent same name issue in inputs (SSA)
-  Node * const initializerNode_;
+  // Create an independent node list for those initializers do not exist in input
+  Node * const initializer_node_;
 
   std::vector<Tensor> initializers_;
   std::vector<std::string> initializer_names_;
+  // Store a name to offset map for erasing initializer node
+  std::map<std::string, int> initializer_offset_;
 
   bool has_name_;
   std::string name_;
@@ -934,7 +936,7 @@ public:
   , new_node_stage_(0)
   , output_(initOutput(create(kReturn, 0)))
   , input_(create(kParam, 0))
-  , initializerNode_(create(kParam, 0))
+  , initializer_node_(create(kParam, 0))
   , has_name_(false)
   , has_doc_string_(false) {}
 
@@ -956,12 +958,13 @@ public:
   // For IR >= 4, initializer is not required to exist in input
   // Add initializer into initializer node list and return its Value
   Value* addInitializerNode(Tensor initializer, std::string name) {
-    Value* init_value = initializerNode_->addOutput();
+    Value* init_value = initializer_node_->addOutput();
     std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(),
                                     initializer.sizes().cend()};
     init_value->setUniqueName(name);
     init_value->setSizes(dim_sizes);
     init_value->setElemType(initializer.elem_type());
+    initializer_offset_[name] = init_value->offset();
     return init_value;
   }
   void eraseInitializer(const std::string &name) {
@@ -979,6 +982,9 @@ public:
             initializer_names_.end(),
             name),
         initializer_names_.end());
+    if (initializer_offset_.count(name) >= 0) {
+      initializer_node_->eraseOutput(initializer_offset_[name]);
+    }
   }
   void clearInitializers() {
     initializers_.clear();

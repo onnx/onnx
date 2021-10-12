@@ -295,9 +295,10 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
     auto init = tensorProtoToTensor(gp.initializer(i));
     g->addInitializer(init, init.name());
     // If ir_version >= 4, initializer does not have to be included in input
-    // Create a Value from initializer by addInitializerNode
+    // Create a Value from initializer by addInitializerNode if name does not exist in input
     // and save it into value_by_name_of for later use (node input)
-    if (ir_version >= 4) {
+    // which means it will prioritize input value over initializer value if both exist
+    if (ir_version >= 4 && value_by_name_of.count(init.name()) == 0) {
       value_by_name_of[init.name()] = g->addInitializerNode(init, init.name());
     }
   }
