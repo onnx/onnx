@@ -982,7 +982,7 @@ public:
             initializer_names_.end(),
             name),
         initializer_names_.end());
-    if (initializer_offset_.count(name) >= 0) {
+    if (initializer_offset_.count(name) > 0) {
       initializer_node_->eraseOutput(initializer_offset_[name]);
     }
   }
