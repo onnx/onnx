@@ -237,7 +237,7 @@ A name belonging to the Value namespace may appear in multiple places, namely as
 
 A value name used in a graph must have a unique definition, with the exception that the same name MAY appear in both the graph input list and graph initializer list. (Further exceptions apply in the presence of nested subgraphs, as described later.)
 
-When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input unless the corresponding op's specification explicitly allows it.
+When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In models with IR version >= 4, in nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input unless the corresponding op's specification explicitly allows it. In models with IR version <= 3, users MAY use the same name as both a subgraph initializer and subgraph input, but this is restricted to support constants via initializers that are not intended to correspond to any actual inputs passed from the node into the subgraph. In particular, the control-flow operator semantics determines the set of inputs supplied to the execution of the subgraph, and these input names MUST NOT appear as subgraph initializers. Subgraph initializer names must appear in the graph input list _after_ the actual inputs. This allows the actual inputs and formal inputs to be matched positionally.
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
@@ -336,7 +336,7 @@ The following types are used to define the types of graph and node inputs and ou
 ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
 ONNX|sequence|Sequences are dense, ordered, collections of elements that are of homogeneous types.
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
-ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](docs/ONNXTypes.md)
+ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](ONNXTypes.md)
 
 #### Static tensor shapes
 
