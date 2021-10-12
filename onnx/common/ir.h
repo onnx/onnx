@@ -425,7 +425,7 @@ private:
   std::string doc_string_;
 
 protected:
-  Node(Graph * graph_, NodeKind kind_); //defined after graph
+  Node(Graph * graph_, NodeKind kind_); // defined after graph
 
 public:
   bool has_name() const {
@@ -951,22 +951,29 @@ public:
     doc_string_ = std::move(doc_string);
   }
 
-  void addInitializer(Tensor initializer, std::string name) {
-    initializers_.push_back(std::move(initializer));
-    initializer_names_.push_back(std::move(name));
+  void addInitializer(Tensor& initializer) {
+    if (initializer.name().empty()) {
+      initializer.setName(ONNX_NAMESPACE::to_string(getNextUnique()));
+    }
+    Tensor initializerCopy = initializer;
+    initializers_.push_back(std::move(initializerCopy));
+    initializer_names_.push_back(std::move(initializerCopy.name()));
   }
+  
   // For IR >= 4, initializer is not required to exist in input
   // Add initializer into initializer node list and return its Value
-  Value* addInitializerNode(Tensor initializer, std::string name) {
+  Value* addInitializerAndCreateValue(Tensor& initializer) {
+    addInitializer(initializer);
     Value* init_value = initializer_node_->addOutput();
     std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(),
                                     initializer.sizes().cend()};
-    init_value->setUniqueName(name);
+    init_value->setUniqueName(initializer.name());
     init_value->setSizes(dim_sizes);
     init_value->setElemType(initializer.elem_type());
-    initializer_offset_[name] = init_value->offset();
+    initializer_offset_[initializer.name()] = init_value->offset();
     return init_value;
   }
+
   void eraseInitializer(const std::string &name) {
     initializers_.erase(
         std::remove_if(
@@ -1124,8 +1131,9 @@ public:
     return n;
   }
 
-  //Adds to graph initializer list, initializer names list, and as a graph input
-  //Also syncs the initializer name, tensor name, and value name
+  // Adds to graph initializer list, initializer names list, and as a graph input
+  // Also syncs the initializer name, tensor name, and value name
+  // Create an initializer whose value is stored in input
   Value* addInitializerAndInput(const Tensor& initializer, std::string name) {
     Tensor initializerCopy = initializer;
     std::vector<Dimension> dim_sizes{initializerCopy.sizes().cbegin(),
@@ -1135,7 +1143,7 @@ public:
     new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializerCopy.elem_type());
-    addInitializer(std::move(initializerCopy), std::move(name));
+    addInitializer(initializerCopy);
     return new_init;
   }
 
@@ -1143,9 +1151,8 @@ public:
     return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(getNextUnique()));
   }
 
-
-  //Erases from graph initializer list, initializer names list, and as a graph input
-  //Must have no uses
+  // Erases from graph initializer list, initializer names list, and as a graph input
+  // Must have no uses
   void eraseInitializerAndInput(Value* v) {
     eraseInitializer(v->uniqueName());
     eraseInput(v->offset());
