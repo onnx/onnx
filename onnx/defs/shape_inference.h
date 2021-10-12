@@ -339,19 +339,26 @@ inline void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, si
     fail_type_inference("Input ", inputIndex, " expected to have sequence type");
   }
   auto input_seq_type = input_type->sequence_type();
-  if (input_seq_type.has_elem_type() && input_seq_type.elem_type().has_tensor_type()) {
-    if (input_seq_type.elem_type().tensor_type().elem_type() == TensorProto::UNDEFINED) {
-      fail_type_inference("Element type of input ", inputIndex, " unknown");
-    }
-    auto output_type = ctx.getOutputType(outputIndex);
-    if (output_type->value_case() == TypeProto::kSequenceType ||
-        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-      output_type->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(
-          input_seq_type.elem_type().tensor_type().elem_type());
-    } else {
-      fail_type_inference("Output ", outputIndex, " expected to have sequence type. Got: ", input_type->value_case());
-    }
+  if (!input_seq_type.has_elem_type()) {
+    fail_type_inference("Element type of sequence input ", inputIndex, " unknown");
   }
+
+  auto output_type = ctx.getOutputType(outputIndex);
+  output_type->mutable_sequence_type()->mutable_elem_type()->CopyFrom(input_seq_type.elem_type());
+}
+
+inline void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+  auto input_type = ctx.getInputType(inputIndex);
+  if (nullptr == input_type || input_type->value_case() != TypeProto::kOptionalType) {
+    fail_type_inference("Input ", inputIndex, " expected to have optional type");
+  }
+  auto input_opt_type = input_type->optional_type();
+  if (!input_opt_type.has_elem_type()) {
+    fail_type_inference("Element type of optional input ", inputIndex, " unknown");
+  }
+
+  auto output_type = ctx.getOutputType(outputIndex);
+  output_type->mutable_optional_type()->mutable_elem_type()->CopyFrom(input_opt_type.elem_type());
 }
 
 inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
@@ -364,6 +371,8 @@ inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inp
     propagateElemTypeFromTensorInputToOutput(ctx, inputIndex, outputIndex);
   } else if (input_value_case == TypeProto::kSequenceType) {
     propagateElemTypeFromSequenceInputToOutput(ctx, inputIndex, outputIndex);
+  } else if (input_value_case == TypeProto::kOptionalType) {
+    propagateElemTypeFromOptionalInputToOutput(ctx, inputIndex, outputIndex);
   }
 }
 
@@ -418,6 +427,8 @@ inline bool hasShape(const TypeProto& type) {
     return type.sparse_tensor_type().has_shape();
   } else if (type.has_sequence_type() && type.sequence_type().has_elem_type()) {
     return hasShape(type.sequence_type().elem_type());
+  } else if (type.has_optional_type() && type.optional_type().has_elem_type()) {
+    return hasShape(type.optional_type().elem_type());
   }
   return false;
 }
@@ -502,6 +513,8 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
     }
   } else if (TypeProto::kSequenceType == from_type_case) {
     propagateShape(&from_type->sequence_type().elem_type(), to_type->mutable_sequence_type()->mutable_elem_type());
+  } else if (TypeProto::kOptionalType == from_type_case) {
+    propagateShape(&from_type->optional_type().elem_type(), to_type->mutable_optional_type()->mutable_elem_type());
   } else {
     fail_shape_inference("Unsupported Source/Target type=", from_type_case);
   }

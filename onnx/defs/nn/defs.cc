@@ -796,9 +796,13 @@ computes the output.)DOC";
         "the operation expects the weight tensor to arrive "
         "with the dimension denotation of [FILTER_OUT_CHANNEL, "
         "FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
-        "X.shape[1] == (W.shape[1] * group) == C "
-        "(assuming zero based indices for the shape array). "
-        "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
+        "Assuming zero based indices for the shape array, "
+        "X.shape[1] == (W.shape[1] * group) == C and "
+        "W.shape[0] mod G == 0. Or in other words "
+        "FILTER_IN_CHANNEL multiplied by the number of groups "
+        "should be equal to DATA_CHANNEL and the number of "
+        "feature maps M should be a multiple of the number of "
+        "groups G.",
         "T",
         OpSchema::Single,
         true,
@@ -2466,24 +2470,21 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             FunctionBodyHelper::Const<float>("Exponent", 2.0f),
-             FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
-             {{"X_RM"},
-              "ReduceMean",
-              {"X"},
-              {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
-             {{"X_squared"}, "Pow", {"X", "Exponent"}},
-             {{"E_Xsquared"},
-              "ReduceMean",
-              {"X_squared"},
-              {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
-             {{"STD"}, "Sqrt", {"Variance"}},
-             {{"X_variance"}, "Sub", {"X", "X_RM"}},
-             {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
-             {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
+        .FunctionBody(R"ONNX(
+        {
+          Exponent = Constant <value = float {2.0}>()
+          Epsilon = Constant <value = float {1e-9}>()
+          X_RM = ReduceMean <axes : ints = @axes> (X)
+          EX_squared = Pow (X_RM, Exponent)
+          X_squared = Pow (X, Exponent)
+          E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)
+          Variance = Sub (E_Xsquared, EX_squared)
+          STD = Sqrt (Variance)
+          X_variance = Sub (X, X_RM)
+          Processed_STD = Add (STD, Epsilon)
+          Y = Div (X_variance, Processed_STD)
+        }
+        )ONNX"
+        ));
 
 } // namespace ONNX_NAMESPACE

@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
+from onnx import checker, helper, numpy_helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
 from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
 from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
@@ -66,6 +66,9 @@ class TestShapeInference(unittest.TestCase):
     def _compare_value_infos(self, vi_type, inferred_vi_type):  # type: (TypeProto, TypeProto) -> None
         if vi_type.HasField('tensor_type'):
             assert inferred_vi_type.HasField('tensor_type')
+            assert vi_type.tensor_type.HasField('elem_type')
+            assert inferred_vi_type.tensor_type.HasField('elem_type')
+            assert vi_type.tensor_type.elem_type == inferred_vi_type.tensor_type.elem_type
             for dim_i in range(len(vi_type.tensor_type.shape.dim)):
                 dim = vi_type.tensor_type.shape.dim[dim_i]
                 inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
@@ -876,6 +879,37 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (2, None, 4)),  # type: ignore
              make_tensor_sequence_value_info('output_sequence', TensorProto.FLOAT, (2, None, 4))])  # type: ignore
+
+    def test_identity_optional(self):  # type: () -> None
+        graph = self._make_graph(
+            [('in_tensor', TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('Optional', ['in_tensor'], ['in_optional']),
+             make_node('Identity', ['in_optional'], ['output_optional'])],
+            [])
+        tensor_type_proto = helper.make_tensor_type_proto(TensorProto.FLOAT, (2, 3, 4))
+        optional_type_proto = helper.make_optional_type_proto(tensor_type_proto)
+        self._assert_inferred(
+            graph,
+            [helper.make_value_info('in_optional', optional_type_proto),  # type: ignore
+             helper.make_value_info('output_optional', optional_type_proto)])  # type: ignore
+
+    def test_identity_optional_sequence(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input1', TensorProto.FLOAT, (2, 3, 4)),
+             ('input2', TensorProto.FLOAT, (2, 3, 4)),
+             ('input3', TensorProto.FLOAT, (2, 5, 4))],
+            [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['in_sequence']),
+             make_node('Optional', ['in_sequence'], ['in_optional']),
+             make_node('Identity', ['in_optional'], ['output_optional'])],
+            [])
+        tensor_type_proto = helper.make_tensor_type_proto(TensorProto.FLOAT, (2, None, 4))
+        sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
+        optional_type_proto = helper.make_optional_type_proto(sequence_type_proto)
+        self._assert_inferred(
+            graph,
+            [helper.make_value_info('in_sequence', sequence_type_proto),  # type: ignore
+             helper.make_value_info('in_optional', optional_type_proto),  # type: ignore
+             helper.make_value_info('output_optional', optional_type_proto)])  # type: ignore
 
     def test_add(self):  # type: () -> None
         graph = self._make_graph(
@@ -2020,6 +2054,45 @@ class TestShapeInference(unittest.TestCase):
         )
 
         self._assert_inferred(graph, [make_tensor_value_info('if_output', TensorProto.FLOAT, (None,))])  # type: ignore
+
+    def test_if_with_different_optional_shapes_in_then_else_branches(self):  # type: () -> None
+        # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
+        # subtracts.
+        # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
+        # this breaks the subgraph inferencing as it expects the subgraphs to have zero inputs
+        then_tensor_proto = helper.make_tensor_type_proto(elem_type=TensorProto.UNDEFINED, shape=[1, ])
+        then_optional_type_proto = helper.make_optional_type_proto(then_tensor_proto)
+        then_optional_vi = helper.make_value_info('then_optional_output', then_optional_type_proto)
+        then_subgraph = helper.make_graph(
+            [make_node('Optional', ['then_tensor_value'], ['then_optional_output'])],
+            "then_subgraph",
+            [],  # no inputs
+            [then_optional_vi],
+        )
+
+        else_tensor_proto = helper.make_tensor_type_proto(elem_type=TensorProto.UNDEFINED, shape=[5, ])
+        else_optional_type_proto = helper.make_optional_type_proto(else_tensor_proto)
+        else_optional_vi = helper.make_value_info('else_optional_output', else_optional_type_proto)
+        else_subgraph = helper.make_graph(
+            [make_node('Optional', ['else_tensor_value'], ['else_optional_output'])],
+            "else_subgraph",
+            [],  # no inputs
+            [else_optional_vi],
+        )
+
+        graph = self._make_graph(
+            [('cond', TensorProto.BOOL, (1,)),
+             ('then_tensor_value', TensorProto.FLOAT, (1,)),
+             ('else_tensor_value', TensorProto.FLOAT, (5,))],
+            [make_node('If', ['cond'], ['if_output'],
+                       then_branch=then_subgraph, else_branch=else_subgraph)],
+            []
+        )
+
+        output_tensor_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=None)
+        output_optional_type_proto = helper.make_optional_type_proto(output_tensor_proto)
+        output_optional_vi = helper.make_value_info('if_output', output_optional_type_proto)
+        self._assert_inferred(graph, [output_optional_vi])  # type: ignore
 
     def test_maxunpool_shape_without_output_shape(self):  # type: () -> None
         graph = self._make_graph(
@@ -3799,6 +3872,46 @@ class TestShapeInference(unittest.TestCase):
              make_node('OptionalGetElement', ['optional'], ['output'])],
             [])
         self._assert_inferred(graph, [optional_val_info, sequence_val_into, output_val_into])  # type: ignore
+
+    def test_where_bfloat(self):  # type: () -> None
+        graph = self._make_graph(
+            [('cond', TensorProto.BOOL, (10,)), ('x', TensorProto.BFLOAT16, (10,)), ('y', TensorProto.BFLOAT16, (10,))],
+            [make_node('Where', ['cond', 'x', 'y'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.BFLOAT16, (10,))])  # type: ignore
+
+    def test_parse_data_with_unsupported_tensor_type(self):  # type: () -> None
+        model = helper.make_model(
+            graph=helper.make_graph(
+                name='graph_with_unsupported_type',
+                inputs=[],
+                outputs=[helper.make_tensor_value_info('y', TensorProto.FLOAT, shape=None)],
+                nodes=[make_node('ConstantOfShape', ['x'], ['y'])],
+                # ConstantOfShape only accepts np.int64 instead of np.int32
+                initializer=[numpy_helper.from_array(np.array([4, 3], dtype=np.int32), name='x')]))
+        # Strict shape inference should catch this invalid type error (int32 is not supported)
+        self.assertRaises(onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes, model, strict_mode=True)
+        # Even nornmal shape inference should not produce any invalid shape due to wrong type for ParseData
+        inferred_model = onnx.shape_inference.infer_shapes(model)
+        self.assertFalse(inferred_model.graph.output[0].type.tensor_type.HasField('shape'))
+
+    def test_parse_data_with_undefined_tensor_type(self):  # type: () -> None
+        model = helper.make_model(
+            graph=helper.make_graph(
+                name='graph_with_undefined_type',
+                inputs=[],
+                outputs=[helper.make_tensor_value_info('y', TensorProto.FLOAT, shape=None)],
+                nodes=[make_node('ConstantOfShape', ['x'], ['y'])],
+                initializer=[numpy_helper.from_array(np.array([4, 3], dtype=np.int64), name='x')]))
+        # Hardcode the tensor type as UNDEFINED to test catching undefined type error
+        model.graph.initializer[0].data_type = TensorProto.UNDEFINED
+        # Strict shape inference should catch this undefined type error
+        self.assertRaises(onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes, model, strict_mode=True)
+        # Even nornmal shape inference should not produce any invalid shape due to undefined type for ParseData
+        inferred_model = onnx.shape_inference.infer_shapes(model)
+        self.assertFalse(inferred_model.graph.output[0].type.tensor_type.HasField('shape'))
 
 
 if __name__ == '__main__':
