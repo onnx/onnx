@@ -361,6 +361,24 @@ inline void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, si
   output_type->mutable_optional_type()->mutable_elem_type()->CopyFrom(input_opt_type.elem_type());
 }
 
+inline void propagateElemTypeFromMapInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+  auto input_type = ctx.getInputType(inputIndex);
+  if (nullptr == input_type || input_type->value_case() != TypeProto::kMapType) {
+    fail_type_inference("Input ", inputIndex, " expected to have map type");
+  }
+  auto input_map_type = input_type->map_type();
+  if (!input_map_type.has_key_type()) {
+    fail_type_inference("Key type of map input ", inputIndex, " unknown");
+  }
+  if (!input_map_type.has_value_type()) {
+    fail_type_inference("Value type of map input ", inputIndex, " unknown");
+  }
+
+  auto output_type = ctx.getOutputType(outputIndex);
+  output_type->mutable_map_type()->set_key_type(input_map_type.key_type());
+  output_type->mutable_map_type()->mutable_value_type()->CopyFrom(input_map_type.value_type());
+}
+
 inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type) {
@@ -373,6 +391,8 @@ inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inp
     propagateElemTypeFromSequenceInputToOutput(ctx, inputIndex, outputIndex);
   } else if (input_value_case == TypeProto::kOptionalType) {
     propagateElemTypeFromOptionalInputToOutput(ctx, inputIndex, outputIndex);
+  } else if (input_value_case == TypeProto::kMapType) {
+    propagateElemTypeFromMapInputToOutput(ctx, inputIndex, outputIndex);
   }
 }
 
@@ -515,6 +535,8 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
     propagateShape(&from_type->sequence_type().elem_type(), to_type->mutable_sequence_type()->mutable_elem_type());
   } else if (TypeProto::kOptionalType == from_type_case) {
     propagateShape(&from_type->optional_type().elem_type(), to_type->mutable_optional_type()->mutable_elem_type());
+  } else if (TypeProto::kMapType == from_type_case) {
+    propagateShape(&from_type->map_type().value_type(), to_type->mutable_map_type()->mutable_value_type());
   } else {
     fail_shape_inference("Unsupported Source/Target type=", from_type_case);
   }

@@ -108,6 +108,27 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
       fail_type_inference("target optional type missing element type.");
     }
     UnionTypeInfo(source_type.optional_type().elem_type(), *target_type.mutable_optional_type()->mutable_elem_type());
+  } else if (target_case == TypeProto::ValueCase::kMapType) {
+    if (!source_type.map_type().has_key_type()) {
+      fail_type_inference("source map type missing key type.");
+    }
+    if (!target_type.map_type().has_key_type()) {
+      fail_type_inference("target map type missing key type.");
+    }
+    auto source_key_type = source_type.map_type().key_type();
+    auto target_key_type = target_type.map_type().key_type();
+    if (source_key_type != target_key_type) {
+      fail_type_inference(
+          "Mismatched map tensor key type:", " source=", source_key_type, " target=", target_key_type);
+    }
+
+    if (!source_type.map_type().has_value_type()) {
+      fail_type_inference("source map type missing value type.");
+    }
+    if (!target_type.map_type().has_value_type()) {
+      fail_type_inference("target map type missing value type.");
+    }
+    UnionTypeInfo(source_type.map_type().value_type(), *target_type.mutable_map_type()->mutable_value_type());
   }
 }
 

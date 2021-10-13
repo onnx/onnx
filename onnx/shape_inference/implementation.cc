@@ -232,6 +232,9 @@ void mergeShapesAndTypes(const TypeProto& inferredType, TypeProto* existingType)
   } else if (inferred_val_case == TypeProto::kOptionalType) {
     mergeShapesAndTypes(
         inferredType.optional_type().elem_type(), existingType->mutable_optional_type()->mutable_elem_type());
+  } else if (inferred_val_case == TypeProto::kMapType) {
+    mergeShapesAndTypes(
+      inferredType.map_type().value_type(), existingType->mutable_map_type()->mutable_value_type());
   }
 }
 
