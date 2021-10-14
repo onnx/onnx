@@ -7,6 +7,76 @@
 
 namespace ONNX_NAMESPACE {
 
+/*
+Merge shape information from a source shape into a target shape.
+* merges each TensorShapeProto_Dimension separately.
+* prefer values over params.
+* If both have values, values must match.
+* prefer target param over source param if mismatched.
+* Fail if there are mismatches in number of dimensions or dimension values.
+*/
+void mergeInShapeInfo(const TensorShapeProto& source, TensorShapeProto& target) {
+  auto num_source_dims = source.dim_size();
+  auto num_target_dims = target.dim_size();
+  if (num_source_dims != num_target_dims) {
+    fail_shape_inference(
+        "Mismatch between number of source and target dimensions. Source=",
+        num_source_dims,
+        " Target=",
+        num_target_dims);
+  }
+
+  auto& source_dims = source.dim();
+  auto* target_dims = target.mutable_dim();
+
+  for (int i = 0, end = source_dims.size(); i < end; ++i) {
+    auto& source_dim = source_dims.Get(i);
+    auto& target_dim = *target_dims->Mutable(i);
+    mergeInDimensionInfo(source_dim, target_dim, i);
+  }
+}
+
+void mergeInShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& target_type) {
+  if (target_type.has_shape()) {
+    // merge with existing info.
+    mergeInShapeInfo(source_shape, *target_type.mutable_shape());
+  } else {
+    // copy to target
+    (*target_type.mutable_shape()) = source_shape;
+  }
+}
+
+void mergeInShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor& target_type) {
+  if (target_type.has_shape()) {
+    // merge with existing info.
+    mergeInShapeInfo(source_shape, *target_type.mutable_shape());
+  } else {
+    // copy to target
+    (*target_type.mutable_shape()) = source_shape;
+  }
+}
+
+/*
+Merge the shape information from two TypeProto_Tensor instances.
+Values are merged into target from source.
+If target has no shape information, copy from source.
+If source has no shape information, ignore source.
+If both have shape information:
+- merge each TensorShapeProto_Dimension separately.
+- Prefer values over params. If both have values, values must match.
+- Prefer target param over source param if mismatched.
+Fail if there are mismatches in number of dimensions or dimension values.
+*/
+void mergeInShapeInfo(const TypeProto_Tensor& source, TypeProto_Tensor& target) {
+  if (source.has_shape())
+    mergeInShapeInfo(source.shape(), target);
+}
+
+void mergeInShapeInfo(const TypeProto_SparseTensor& source, TypeProto_SparseTensor& target) {
+  if (source.has_shape())
+    mergeInShapeInfo(source.shape(), target);
+}
+
 /// <summary>
 /// Utility function for UnionShapeInfoForTensor.
 /// Both shapes must be of the same rank
