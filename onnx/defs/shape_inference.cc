@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "onnx/defs/data_type_utils.h"
 #include "shape_inference.h"
 
 namespace ONNX_NAMESPACE {
@@ -119,7 +120,9 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
     auto target_key_type = target_type.map_type().key_type();
     if (source_key_type != target_key_type) {
       fail_type_inference(
-          "Mismatched map tensor key type:", " source=", source_key_type, " target=", target_key_type);
+          "Mismatched map tensor key type:", " source=", 
+          Utils::DataTypeUtils::ToDataTypeString(source_key_type),
+          " target=", Utils::DataTypeUtils::ToDataTypeString(target_key_type));
     }
 
     if (!source_type.map_type().has_value_type()) {
