@@ -92,7 +92,8 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
 }
 
 Status OnnxParser::Parse(ValueInfoProto& valueinfo) {
-  PARSE(*valueinfo.mutable_type());
+  if (NextIsType())
+    PARSE(*valueinfo.mutable_type());
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
   valueinfo.set_name(name);
@@ -239,19 +240,27 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   return Status::OK();
 }
 
+bool OnnxParser::NextIsType() {
+  std::string id("");
+  (void)PeekIdentifier(id);
+  return (PrimitiveTypeNameMap::IsTypeName(id));
+}
+
 Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
   // Parse a single-value
   auto next = NextChar();
   if (isalpha(next) || next == '_') {
-    std::string id("");
-    (void)PeekIdentifier(id);
-    if (PrimitiveTypeNameMap::IsTypeName(id)) {
+    if (NextIsType()) {
       attr.set_type(AttributeProto_AttributeType_TENSOR);
       Parse(*attr.mutable_t());
     } else {
       attr.set_type(AttributeProto_AttributeType_GRAPH);
       Parse(*attr.mutable_g());
     }
+  } else if (Matches('@')) {
+    std::string name;
+    CHECK_PARSER_STATUS(ParseIdentifier(name));
+    attr.set_ref_attr_name(name);
   } else {
     Literal literal;
     PARSE_TOKEN(literal);
@@ -279,6 +288,15 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
   attr.set_name(name);
+  if (Matches(':')) {
+    CHECK_PARSER_STATUS(ParseIdentifier(name));
+    int attrtype = AttributeTypeNameMap::Lookup(name);
+    if (attrtype != 0) {
+      attr.set_type(static_cast<AttributeProto_AttributeType>(attrtype));
+    } else {
+      return ParseError("Unexpected attribute type.");
+    }
+  }
   MATCH('=');
   if (NextChar() == '[') {
     // Parse a list of values. For now, empty list is not allowed, as we need to

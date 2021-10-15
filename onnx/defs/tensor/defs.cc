@@ -433,18 +433,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           auto* output_length = output_shape->add_dim();
 
-          if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
-            int64_t start = getAttribute(ctx, "start", 0);
-            if (start < 0)
-              start += rank;
-            start = (start < 0) ? 0 : (start > rank) ? rank : start;
-            int64_t end = getAttribute(ctx, "end", rank);
-            if (end < 0)
-              end += rank;
-            end = (end < 0) ? 0 : (end > rank) ? rank : end;
-            output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
           }
+
+          int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
+          int64_t start = getAttribute(ctx, "start", 0);
+          if (start < 0)
+            start += rank;
+          start = (start < 0) ? 0 : (start > rank) ? rank : start;
+          int64_t end = getAttribute(ctx, "end", rank);
+          if (end < 0)
+            end += rank;
+          end = (end < 0) ? 0 : (end > rank) ? rank : end;
+          output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           if (ctx.getInputType(0)->tensor_type().has_shape()) {
@@ -2898,18 +2900,21 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Where_ver9_doc = R"DOC(
+static const char* Where_ver16_doc = R"DOC(
     Return elements, either from X or Y, depending on condition
     (with Numpy-style broadcasting support).
     Where behaves like numpy.where with three parameters:
     https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+
+**History**
+- Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
-    9,
+    16,
     OpSchema()
-        .SetDoc(Where_ver9_doc)
+        .SetDoc(Where_ver16_doc)
         .Input(
             0,
             "condition",
@@ -2949,8 +2954,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Constrain to boolean tensors.")
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
-            "Constrain input and output types to all tensor types.")
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types (including bfloat).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 1, 0);
           if (hasNInputShapes(ctx, 3)) {

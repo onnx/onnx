@@ -16,6 +16,7 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/stl_backports.h"
+#include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {
 // -1 means ONNX schema hasn't been loaded yet
@@ -676,6 +677,16 @@ bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx
     return false;
 }
 
+OpSchema& OpSchema::FunctionBody(const char* func_body) {
+  OnnxParser parser(func_body);
+  auto status = parser.Parse(*function_body_.mutable_node());
+  if (!status.IsOK())
+    ONNX_THROW_EX(std::logic_error("Error parsing function body:" + status.ErrorMessage()));
+  if (!parser.EndOfInput())
+    ONNX_THROW_EX(std::logic_error("Extra unparsed input unexpected."));
+  return *this;
+}
+
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
   for (const auto& node : func_nodes) {
     auto new_node = function_body_.add_node();
@@ -722,7 +733,7 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   // In a typical onnx function where the function and all the
   // ops in function body belong to the same domain we implicitly add
   // {domain_, since_version_} to funciton opset imports if it is not already added.
-  // This is simply for convienince. If any of the function body ops do not belong to same 
+  // This is simply for convienince. If any of the function body ops do not belong to same
   // domain as function itself, then the function author needs to explicitly add all the relevant
   // opset imports.
   if (function_body.opset_import().size() == 0) {

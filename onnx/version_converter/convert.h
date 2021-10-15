@@ -768,6 +768,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(15), OpSetID(16)));
       registerAdapter(make_unique<CompatibleAdapter>("If",
         OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("Where",
+        OpSetID(15), OpSetID(16)));
     }
 
     ModelProto convert_version(
