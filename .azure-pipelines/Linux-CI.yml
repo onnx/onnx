@@ -144,3 +144,12 @@ jobs:
       python -m pip install -q .
 
     displayName: 'Run ONNX tests'
+
+  - script: |
+      # onnx.checker all existing backend data
+      python workflow_scripts/test_generated_backend.py
+      # onnx.checker all generated backend data
+      python onnx/backend/test/cmd_tools.py generate-data
+      python workflow_scripts/test_generated_backend.py
+
+    displayName: Test backend test data

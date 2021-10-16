@@ -89,7 +89,9 @@ After having installed mypy, you can run the type checks:
 ```
 python setup.py typecheck
 ```
+# CI Pipelines
 
+Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipelines.md).
 
 # Other developer documentation
 
