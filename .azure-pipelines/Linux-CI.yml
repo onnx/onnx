@@ -146,6 +146,7 @@ jobs:
     displayName: 'Run ONNX tests'
 
   - script: |
+      source py$(python.version)/bin/activate
       # onnx.checker all existing backend data
       python workflow_scripts/test_generated_backend.py
       # onnx.checker all generated backend data
