@@ -4,10 +4,7 @@
 
 #pragma once
 
-// To use PRId64 in older GNU
-#if defined(__GNUC__) && __GNUC__ < 5
 #define __STDC_FORMAT_MACROS
-#endif
 #include <cinttypes>
 
 // Node transformers commonly used in version-adapters:
