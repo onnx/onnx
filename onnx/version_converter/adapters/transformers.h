@@ -6,6 +6,10 @@
 
 #include <cinttypes>
 
+#if defined(__GNUC__) && __GNUC__ < 5
+#define __STDC_FORMAT_MACROS
+#endif
+
 // Node transformers commonly used in version-adapters:
 
 // Capture context by copying values; the graph is unused by these transformers.
