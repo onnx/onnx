@@ -4,7 +4,7 @@
 
 #pragma once
 
-#define __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
 #include <cinttypes>
 
 // Node transformers commonly used in version-adapters:
