@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 152/168 (90.48%, 5 generators excluded) common operators.
+Node tests have covered 153/168 (91.07%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -13306,6 +13306,66 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### SpaceToDepth
+There are 2 test cases, listed as following:
+<details>
+<summary>example</summary>
+
+```python
+node = onnx.helper.make_node(
+    'SpaceToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=2,
+)
+
+# (1, 1, 4, 6) input tensor
+x = np.array([[[[0, 6, 1, 7, 2, 8],
+                [12, 18, 13, 19, 14, 20],
+                [3, 9, 4, 10, 5, 11],
+                [15, 21, 16, 22, 17, 23]]]]).astype(np.float32)
+
+# (1, 4, 2, 3) output tensor
+y = np.array([[[[0, 1, 2],
+                [3, 4, 5]],
+               [[6, 7, 8],
+                [9, 10, 11]],
+               [[12, 13, 14],
+                [15, 16, 17]],
+               [[18, 19, 20],
+                [21, 22, 23]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_spacetodepth_example')
+```
+
+</details>
+<details>
+<summary>spacetodepth</summary>
+
+```python
+b, c, h, w = shape = (2, 2, 6, 6)
+blocksize = 2
+node = onnx.helper.make_node(
+    'SpaceToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=blocksize,
+)
+x = np.random.random_sample(shape).astype(np.float32)
+tmp = np.reshape(x, [b, c,
+                     h // blocksize, blocksize,
+                     w // blocksize, blocksize])
+tmp = np.transpose(tmp, [0, 3, 5, 1, 2, 4])
+y = np.reshape(tmp, [b, c * (blocksize**2),
+                     h // blocksize,
+                     w // blocksize])
+expect(node, inputs=[x], outputs=[y],
+       name='test_spacetodepth')
+```
+
+</details>
+
+
 ### Split
 There are 4 test cases, listed as following:
 <details>
@@ -15188,9 +15248,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### SequenceLength (call for test cases)
-
-
-### SpaceToDepth (call for test cases)
 
 
 ### SplitToSequence (call for test cases)
