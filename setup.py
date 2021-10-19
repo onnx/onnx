@@ -177,6 +177,7 @@ class cmake_build(setuptools.Command):
                 '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
                 '-DPY_EXT_SUFFIX={}'.format(sysconfig.get_config_var('EXT_SUFFIX') or ''),
+                '-D__STDC_FORMAT_MACROS',
             ]
             if COVERAGE:
                 cmake_args.append('-DONNX_COVERAGE=ON')
