@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import collections
+import collections.abc  # type: ignore
 import numbers
 from six import text_type, integer_types, binary_type
 
@@ -18,6 +18,7 @@ from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 from typing import Text, Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
 import numpy as np  # type: ignore
+import warnings
 
 VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, int]]
 VersionTableType = List[VersionRowType]
@@ -39,7 +40,8 @@ VERSION_TABLE = [
     ('1.8.0', 7, 13, 2, 1),
     ('1.8.1', 7, 13, 2, 1),
     ('1.9.0', 7, 14, 2, 1),
-    ('1.10.0', 8, 15, 2, 1)
+    ('1.10.0', 8, 15, 2, 1),
+    ('1.10.1', 8, 15, 2, 1)
 ]  # type: VersionTableType
 
 VersionMapType = Dict[Tuple[Text, int], int]
@@ -238,19 +240,27 @@ def make_tensor(
         assert not raw, "Can not use raw_data to store string type"
 
     # Check number of vals specified equals tensor size
-    size = 1 if (not raw) else (mapping.TENSOR_TYPE_TO_NP_TYPE[data_type].itemsize)
+    expected_size = 1 if (not raw) else (mapping.TENSOR_TYPE_TO_NP_TYPE[data_type].itemsize)
+    # Flatten a numpy array if its rank > 1
+    if type(vals) is np.ndarray and len(vals.shape) > 1:
+        vals = vals.flatten()
     for d in dims:
-        size = size * d
-    if (len(vals) != size):
-        raise ValueError("Number of values does not match tensor's size.")
+        expected_size = expected_size * d
 
-    if (data_type == TensorProto.COMPLEX64
-            or data_type == TensorProto.COMPLEX128):
-        vals = split_complex_to_pairs(vals)
+    if len(vals) != expected_size:
+        raise ValueError("Number of values does not match tensor's size. Expected {}, but it is {}. "
+            .format(expected_size, len(vals)))
 
     if raw:
         tensor.raw_data = vals
     else:
+        if (data_type == TensorProto.COMPLEX64
+                or data_type == TensorProto.COMPLEX128):
+            vals = split_complex_to_pairs(vals)
+        # floa16/bfloat16 are stored as uint16
+        elif (data_type == TensorProto.FLOAT16
+                or data_type == TensorProto.BFLOAT16):
+            vals = np.array(vals).astype(np.float16).view(dtype=np.uint16).flatten().tolist()
         field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
             mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]]
         getattr(tensor, field).extend(vals)
@@ -359,7 +369,7 @@ def make_attribute(
     if doc_string:
         attr.doc_string = doc_string
 
-    is_iterable = isinstance(value, collections.Iterable)
+    is_iterable = isinstance(value, collections.abc.Iterable)
     bytes_or_false = _to_bytes_or_false(value)
     # First, singular cases
     # float
@@ -905,3 +915,16 @@ def make_training_info(algorithm, algorithm_bindings, initialization, initializa
             binding.value = v
 
     return training_info
+
+
+# For backwards compatibility
+def make_sequence_value_info(
+        name,  # type: Text
+        elem_type,  # type: int
+        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
+        doc_string="",  # type: Text
+        elem_shape_denotation=None,  # type: Optional[List[Text]]
+):  # type: (...) -> ValueInfoProto
+    """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
+    warnings.warn(str("`onnx.helper.make_sequence_value_info` is a deprecated alias for `onnx.helper.make_tensor_sequence_value_info`. To silence this warning, please use `make_tensor_sequence_value_info` for `TensorProto` sequences. Deprecated in ONNX v1.10.0, `onnx.helper.make_sequence_value_info alias` will be removed in an upcoming release."), DeprecationWarning, stacklevel=2)
+    return make_tensor_sequence_value_info(name, elem_type, shape, doc_string, elem_shape_denotation)
