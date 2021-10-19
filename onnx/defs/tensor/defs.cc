@@ -276,7 +276,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
           const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
           std::vector<bool> unresolvedZeros(targetShapeProto.dim_size(), false);
+          // We consider the product of both int64 dims and parameterized dims
           int64_t outputProduct = 1;
+          std::multiset<std::string> outputParamProduct;
           bool outputProductValid = true;
           for (int i = 0; i < static_cast<int>(targetShapeProto.dim_size()); ++i) {
             // Add a new dimension to outputShape
@@ -287,7 +289,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // symbol can be erroneous. This should be a very rare scenario and in such a
               // case an option is to turn off data propagation during shape inference.
               new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
-              outputProductValid = false;
+              outputParamProduct.insert(targetShapeProto.dim(i).dim_param());
             } else {
               if (!targetShapeProto.dim(i).has_dim_value()) {
                 outputProductValid = false;
@@ -351,7 +353,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (!outputProduct) {
               fail_shape_inference("Invalid Target shape product of 0. Product cannot be 0 in combination with -1");
             }
+            // We consider the product of both int64 dims and parameterized dims
             int64_t inputProduct = 1;
+            std::multiset<std::string> inputParamProduct;
             bool inputProductValid = true;
             if (!dataInputTensorType.has_shape()) {
               inputProductValid = false;
@@ -359,6 +363,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               for (int i = 0; i < dataInputTensorType.shape().dim_size(); ++i) {
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
                   inputProduct *= dataInputTensorType.shape().dim(i).dim_value();
+                } else if (dataInputTensorType.shape().dim(i).has_dim_param()) {
+                  inputParamProduct.insert(dataInputTensorType.shape().dim(i).dim_param());
                 } else if (i >= static_cast<int>(unresolvedZeros.size()) || !unresolvedZeros[i]) {
                   inputProductValid = false;
                   break;
@@ -366,10 +372,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
             }
             if (inputProductValid) {
-              if (inputProduct % outputProduct != 0) {
-                fail_shape_inference("Dimension could not be inferred: incompatible shapes");
+              if (inputParamProduct == outputParamProduct) {
+                if (inputProduct % outputProduct != 0) {
+                  fail_shape_inference("Dimension could not be inferred: incompatible shapes");
+                }
+                negativeOneDim->set_dim_value(inputProduct / outputProduct);
               }
-              negativeOneDim->set_dim_value(inputProduct / outputProduct);
             }
           }
         }));
