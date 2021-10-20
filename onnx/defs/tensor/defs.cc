@@ -377,6 +377,17 @@ ONNX_OPERATOR_SET_SCHEMA(
                   fail_shape_inference("Dimension could not be inferred: incompatible shapes");
                 }
                 negativeOneDim->set_dim_value(inputProduct / outputProduct);
+              } else if (inputProduct == outputProduct && inputParamProduct.size() == outputParamProduct.size() + 1) {
+                std::multiset<std::string> dif;
+                std::set_difference(
+                    inputParamProduct.begin(),
+                    inputParamProduct.end(),
+                    outputParamProduct.begin(),
+                    outputParamProduct.end(),
+                    std::inserter(dif, dif.end()));
+                if (dif.size() == 1) {
+                  negativeOneDim->set_dim_param(*dif.begin());
+                }
               }
             }
           }
