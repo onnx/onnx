@@ -37,7 +37,7 @@ namespace ONNX_NAMESPACE {
   const std::vector<type> ParseData(const TensorProto* tensor_proto) {                  \
     if (!tensor_proto->has_data_type() ||                                               \
       tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {                    \
-      fail_shape_inference("The type of tensor: ", tensor_proto->name(),                \
+      fail_shape_inference("The data_type of tensor: ", tensor_proto->name(),           \
         " is undefined so it cannot be parsed.");                                       \
     } else if (supported_tensorproto_datatypes.count(tensor_proto->data_type()) == 0) { \
       std::string supported_types = "{";                                                \
@@ -69,7 +69,8 @@ namespace ONNX_NAMESPACE {
       return res;                                                                       \
     }                                                                                   \
     if (tensor_proto->data_type() == TensorProto_DataType_STRING) {                     \
-      fail_shape_inference("If raw_data exists, the data_type cannot be STRING.");      \
+      fail_shape_inference("The data_type of tensor: ", tensor_proto->name(),           \
+      " cannot be string because it has raw_data which disallows string.");             \
     }                                                                                   \
     /* The given tensor does have raw_data itself so parse it by given type */          \
     /* make copy as we may have to reverse bytes */                                     \
