@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "onnx/onnx_pb.h"
 #include "onnx/version_converter/helper.h"
 
@@ -43,6 +45,21 @@ class Adapter {
     const OpSetID& target_version() const {
       return target_version_;
     }
+};
+
+using NodeTransformerFunction = std::function<Node*(std::shared_ptr<Graph>, Node* node)>;
+
+class GenericAdapter final : public Adapter {
+ public:
+  GenericAdapter(const char* op, int64_t from, int64_t to, NodeTransformerFunction transformer)
+      : Adapter(op, OpSetID(from), OpSetID(to)), transformer_(transformer) {}
+
+  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+    return transformer_(graph, node);
+  }
+
+ private:
+  NodeTransformerFunction transformer_;
 };
 
 }} // namespace ONNX_NAMESPACE::version_conversion
