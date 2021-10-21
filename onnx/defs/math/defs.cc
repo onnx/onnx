@@ -2119,30 +2119,77 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-          // Shape inference
-          // For shape inference (and rank inference), we need both input shape
-          // and values in 'shape' tensor
           const auto* shape_initializer = ctx.getInputData(1);
-          if (hasNInputShapes(ctx, 2) && nullptr != shape_initializer) {
-            const auto& shape_initializer_shape =
-                ctx.getInputType(1)->tensor_type().shape();
-            if (shape_initializer_shape.dim_size() != 1 ||
-                shape_initializer->data_type() != TensorProto::INT64) {
-                    fail_shape_inference("'shape' input must be 1D tensor of type INT64");
+          const TensorShapeProto* shapeInput = ctx.getSymbolicInput(1);
+          if (hasNInputShapes(ctx, 2)) {
+            if (nullptr != shape_initializer) {
+              const auto& shape_initializer_shape = ctx.getInputType(1)->tensor_type().shape();
+              if (shape_initializer_shape.dim_size() != 1 ||
+                  shape_initializer->data_type() != TensorProto::INT64) {
+                fail_shape_inference("'shape' input must be 1D tensor of type INT64");
+              }
+
+              const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+              const auto& shape_data = ParseData<int64_t>(shape_initializer);
+
+              TensorShapeProto second_shape;
+              for (const auto& e : shape_data) {
+                auto* dim = second_shape.add_dim();
+                dim->set_dim_value(e);
+              }
+
+              bidirectionalBroadcastShapeInference(
+                  input_shape, second_shape, *getOutputShape(ctx, 0));
+            } else if (shapeInput) {
+              const TensorShapeProto& dataShape = getInputShape(ctx, 0);
+              int dataNdim = dataShape.dim_size();
+              int shapeNdim = shapeInput->dim_size();
+              // TODO: Consider this case
+              if (dataNdim != shapeNdim)
+                return;
+              TensorShapeProto targetShapeProto;
+              for (int i = 0; i < dataNdim; i++) {
+                const auto& dataDim = dataShape.dim(i);
+                const auto& shapeDim = shapeInput->dim(i);
+                if (dataDim.has_dim_value()) {
+                  if (dataDim.dim_value() == 1) {
+                    // output dim is shapeDim
+                    *targetShapeProto.add_dim() = shapeDim;
+                  } else {
+                    // output dim is dataDim.dim_value()
+                    if (shapeDim.has_dim_value() && shapeDim.dim_value() != 1) {
+                      if (dataDim.dim_value() != shapeDim.dim_value()) {
+                        fail_shape_inference(
+                            "Cannot broadcast shapes ",
+                            dataDim.dim_value(),
+                            " and ",
+                            shapeDim.dim_value());
+                      }
+                    }
+                    targetShapeProto.add_dim()->set_dim_value(dataDim.dim_value());
+                  }
+                } else if (shapeDim.has_dim_value()) {
+                  if (shapeDim.dim_value() == 1) {
+                    // output dim is dataDim
+                    *targetShapeProto.add_dim() = dataDim;
+                  } else {
+                    // output dim is shapeDim.dim_value()
+                    targetShapeProto.add_dim()->set_dim_value(shapeDim.dim_value());
+                  }
+                } else {
+                  // both dataDim and shapeDim do not have dim_values
+                  if (dataDim.has_dim_param() && shapeDim.has_dim_param() &&
+                      dataDim.dim_param() == shapeDim.dim_param()) {
+                    // output dim is dataDim
+                    *targetShapeProto.add_dim() = dataDim;
+                  } else {
+                    // insert an empty dim
+                    targetShapeProto.add_dim();
+                  }
                 }
-
-            const auto& input_shape =
-                ctx.getInputType(0)->tensor_type().shape();
-            const auto& shape_data = ParseData<int64_t>(shape_initializer);
-
-            TensorShapeProto second_shape;
-            for (const auto& e : shape_data) {
-              auto* dim = second_shape.add_dim();
-              dim->set_dim_value(e);
+              }
+              *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = targetShapeProto;
             }
-
-            bidirectionalBroadcastShapeInference(
-                input_shape, second_shape, *getOutputShape(ctx, 0));
           }
           return;
         }));
