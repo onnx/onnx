@@ -46,7 +46,7 @@ namespace ONNX_NAMESPACE {
       }                                                                            \
       supported_types.replace(supported_types.length() - 1, 1, "}");               \
       fail_shape_inference("ParseData type mismatch for tensor: ",                 \
-      tensor_proto->name(), ". Expected: ", supported_types, ", Actual:",          \
+      tensor_proto->name(), ". Expected: ", supported_types, ", Actual: ",         \
       Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));          \
     }                                                                              \
     std::vector<type> res;                                                         \
