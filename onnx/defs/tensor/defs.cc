@@ -713,33 +713,36 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           int split_dim_value = static_cast<int>(split_dim.dim_value());
 
-          std::vector<int64_t> split;
+          TensorShapeProto splitProto;
           size_t num_inputs = ctx.getNumInputs();
           if ((num_inputs == 2) && ctx.getInputType(1)) { //'split' is input
-            auto split_proto = ctx.getInputData(1);
-            if (split_proto == nullptr) {
-              // skip if split is not an initializer
-              return;
+            if (!ctx.getInputData(1)) {
+              // Use symbolic input if initializer is not available
+              const TensorShapeProto* splitInput = ctx.getSymbolicInput(1);
+              if (!splitInput) return;
+              splitProto.CopyFrom(*splitInput);
+            } else {
+              std::vector<int64_t> split_vec = ParseData<int64_t>(ctx.getInputData(1));
+              int64_t total_dim = 0;
+              for (int64_t d : split_vec) {
+                splitProto.add_dim()->set_dim_value(d);
+                total_dim += d;
+              }
+              if (total_dim != split_dim_value) {
+                fail_shape_inference(
+                    "Mismatch between the sum of 'split' (",
+                    total_dim,
+                    ") and the split dimension of the input (",
+                    split_dim_value,
+                    ")");
+              }
             }
-            split = ParseData<int64_t>(split_proto);
-            if (split.size() != ctx.getNumOutputs()) {
+            if (splitProto.dim_size() != ctx.getNumOutputs()) {
               fail_shape_inference(
                   "Mismatch between number of splits (",
-                  split.size(),
+                  splitProto.dim_size(),
                   ") and outputs (",
                   ctx.getNumOutputs(),
-                  ")");
-            }
-            int64_t total_dim = 0;
-            for (int64_t d : split) {
-              total_dim += d;
-            }
-            if (total_dim != split_dim_value) {
-              fail_shape_inference(
-                  "Mismatch between the sum of 'split' (",
-                  total_dim,
-                  ") and the split dimension of the input (",
-                  split_dim_value,
                   ")");
             }
           } else { // no value available for 'split'
@@ -748,19 +751,17 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("The input is not evenly splittable");
             }
             int chunk_size = split_dim_value / num_outputs;
-            split.reserve(ctx.getNumOutputs());
             for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
-              split.push_back(chunk_size);
+              splitProto.add_dim()->set_dim_value(chunk_size);
             }
           }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
             *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
                 shape;
-            ctx.getOutputType(i)
+            *ctx.getOutputType(i)
                 ->mutable_tensor_type()
                 ->mutable_shape()
-                ->mutable_dim(axis)
-                ->set_dim_value(split[i]);
+                ->mutable_dim(axis) = splitProto.dim(i);
           }
         }));
 
