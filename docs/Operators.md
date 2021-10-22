@@ -12978,7 +12978,7 @@ node = onnx.helper.make_node(
 )
 indices = np.array([[1, 9],
                     [2, 4]], dtype=np.float32)
-depth = np.array([10], dtype=np.float32)
+depth = np.float32(10)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
@@ -13004,7 +13004,7 @@ node = onnx.helper.make_node(
 )
 indices = np.array([[1, 9],
                     [2, 4]], dtype=np.float32)
-depth = np.array([10], dtype=np.float32)
+depth = np.float32(10)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
@@ -13035,7 +13035,7 @@ indices = np.array([0, -7, -8], dtype=np.int64)
 #  [1. 1. 1. 3. 1. 1. 1. 1. 1. 1.]
 #  [1. 1. 3. 1. 1. 1. 1. 1. 1. 1.]]
 
-depth = np.array([10], dtype=np.float32)
+depth = np.float32(10)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
