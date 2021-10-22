@@ -261,7 +261,7 @@ void propagateSequenceElemTypeWithValidation(const TypeProto* input_type, TypePr
     propagateElemTypeWithValidation(
         &input_seq_type.elem_type(), output_type->mutable_sequence_type()->mutable_elem_type());
   } else {
-    fail_type_inference("Element type of input was unknown");
+    fail_type_inference("Element type of sequence input was unknown");
   }
 }
 
@@ -280,8 +280,30 @@ void propagateOptionalElemTypeWithValidation(const TypeProto* input_type, TypePr
     propagateElemTypeWithValidation(
         &input_opt_type.elem_type(), output_type->mutable_optional_type()->mutable_elem_type());
   } else {
-    fail_type_inference("Element type of input was unknown");
+    fail_type_inference("Element type of optional input was unknown");
   }
+}
+
+void propagateMapElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
+  if (nullptr == input_type) {
+    fail_type_inference("Input type was null");
+  }
+
+  if (input_type->value_case() != TypeProto::kMapType) {
+    fail_type_inference("Input was expected to have map type. Got ", input_type->value_case());
+  }
+
+  auto input_map_type = input_type->map_type();
+
+  if (!input_map_type.has_key_type()) {
+    fail_type_inference("Key type of map input was unknown");
+  }
+  if (!input_map_type.has_value_type()) {
+    fail_type_inference("Value type of map input was unknown");
+  }
+  output_type->mutable_map_type()->set_key_type(input_map_type.key_type());
+  propagateElemTypeWithValidation(
+      &input_map_type.value_type(), output_type->mutable_map_type()->mutable_value_type());
 }
 
 // propagate the element type from an input type to an output type.
@@ -298,8 +320,10 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
     propagateSequenceElemTypeWithValidation(input_type, output_type);
   } else if (input_value_case == TypeProto::kOptionalType) {
     propagateOptionalElemTypeWithValidation(input_type, output_type);
+  } else if (input_value_case == TypeProto::kMapType) {
+    propagateMapElemTypeWithValidation(input_type, output_type);
   } else {
-    fail_type_inference("Input was expected to have either tensor, sequence, or optional type. Got ", input_value_case);
+    fail_type_inference("Input was expected to have either tensor, sequence, optional or map type. Got ", input_value_case);
   }
 }
 
