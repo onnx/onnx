@@ -737,7 +737,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                     ")");
               }
             }
-            if (splitProto.dim_size() != ctx.getNumOutputs()) {
+            if (splitProto.dim_size() != (int)ctx.getNumOutputs()) {
               fail_shape_inference(
                   "Mismatch between number of splits (",
                   splitProto.dim_size(),
