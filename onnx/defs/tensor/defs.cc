@@ -1411,6 +1411,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          const TensorShapeProto* inputShape = ctx.getInputData(0);
+          if (!inputShape) return;
+          TensorShapeProto tsp = *inputShape;
+          ctx.addOutputData(0, std::move(tsp));
         }));
 
 static const char* ScatterElements_ver13_doc = R"DOC(
