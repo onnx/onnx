@@ -320,7 +320,7 @@ Primitive numeric, string, and Boolean types MUST be used as elements of tensors
 
 Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
 
-Mathematically, a tensor can be defined as pair of sequences/lists (V, S) where S is the shape of the tensor (a list of non-negative integers) and V is a list of values with length equal to the product of the dimensions in S. Two tensors (V, S) and (V', S') are equal if and only if V = V' and S = S'. The length of S is referred to as the rank.
+Mathematically, a tensor can be defined as a pair of sequences/lists (V, S) where S is the shape of the tensor (a list of non-negative integers) and V is a list of values with length equal to the product of the dimensions in S. Two tensors (V, S) and (V', S') are equal if and only if V = V' and S = S'. The length of S is referred to as the rank.
 
  - If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
  - S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
