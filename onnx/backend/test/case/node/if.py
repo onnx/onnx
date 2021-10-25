@@ -144,6 +144,7 @@ class If(Base):
 
         ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
         seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
+        opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
 
         then_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
         then_out_seq_tp = onnx.helper.make_sequence_type_proto(then_out_tensor_tp)
@@ -159,15 +160,21 @@ class If(Base):
         cond = np.array(0).astype(bool)
         res = compute_if_outputs(x, cond)
 
+        seq_empty_node = onnx.helper.make_node(
+            'SequenceEmpty',
+            inputs=[],
+            outputs=['seq_empty_out']
+        )
+        
         opt_empty_in = onnx.helper.make_node(
             'Optional',
-            inputs=[],
+            inputs=['seq_empty_out'],
             outputs=['optional_empty'],
-            type=seq_in_tp
+            type=opt_in_tp
         )
 
         then_body = onnx.helper.make_graph(
-            [opt_empty_in],
+            [seq_empty_node, opt_empty_in],
             'then_body',
             [],
             [then_out]
