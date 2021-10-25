@@ -327,11 +327,10 @@ Mathematically, a tensor can be defined as a pair of sequences/lists (V, S) wher
  - If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
  - A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
 
-A tensor's shape S is a list but can be converted to a tensor with values S and shape [R] where R is the rank of the tensor.
+A tensor's shape S is a list but can be represented as a tensor with values S and shape [R] where R is the rank of the tensor.
 
  - For a tensor (V, S), the tensor representing its shape is (S, [R]).
- - The shape of a scalar is []. The shape of the tensor representing the shape of a scalar is [0].
- - The tensor [1] is the only tensor where the tensor representing its shape is equivalent to itself.
+ - The shape of a scalar is []. Represented as a tensor, [] has shape [0].
 
 #### Representation
 
