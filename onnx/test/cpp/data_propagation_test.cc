@@ -338,18 +338,37 @@ agraph (int32[1,2,3,4,5,6] x) => (int32[2] w)
 
 TEST(DataPropagationImplTest, ScatterNDTest) {
   const char* code = R"ONNX(
-agraph (int32[1,2,3] x, int32[4,5] y) => (int32[3] w)
+agraph (int32[1,2,3] x) => (int32[3] w)
 {
     xs = Shape(x)
     indices = Constant<value = int64[1] {0}>()
-    updates = Size(y)
+    updates = Constant<value = int64 {4}>()
     z = ScatterND(xs, indices, updates)
     w = Cast<to = 7>(z)
 }
 )ONNX";
   TensorShapeProto expected_tsp;
-  expected_tsp.mutable_dim()->Add()->set_dim_value(20);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(4);
   expected_tsp.mutable_dim()->Add()->set_dim_value(2);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(3);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, ScatterNDNegativeIndicesTest) {
+  const char* code = R"ONNX(
+agraph (int32[1,2,3] x) => (int32[3] w)
+{
+    xs = Shape(x)
+    indices = Constant<value = int64[1] {-2}>()
+    updates = Constant<value = int64 {5}>()
+    z = ScatterND(xs, indices, updates)
+    w = Cast<to = 7>(z)
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(1);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(5);
   expected_tsp.mutable_dim()->Add()->set_dim_value(3);
   const auto propagated_tsp = RunDataPropagation(code);
   EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
