@@ -1413,9 +1413,45 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const TensorShapeProto* inputShape = ctx.getInputData(0);
-          if (!inputShape) return;
-          TensorShapeProto tsp = *inputShape;
+          // Currently, only supporting data[index] = update for data: 1D tensor, index: 1D tensor of single element
+          const auto input_data = ctx.getInputData(0);
+          const auto input_indices = ctx.getInputData(1);
+          const auto input_updates = ctx.getInputData(2);
+          if (input_data == nullptr || input_indices == nullptr || input_updates == nullptr) {
+            return;
+          }
+          if (input_indices->dim_size() != 1) return;
+          if (input_updates->dim_size() != 1) {
+            fail_shape_inference("Expected input_update of dim_size 1, but got ", input_updates->dim_size());
+          }
+          int index = input_indices->dim(0).dim_value();
+          if (index < 0) index += input_data->dim_size();
+          if (index >= input_data->dim_size()) {
+            fail_shape_inference(
+                "Index should be in [",
+                -input_data->dim_size(),
+                ", ",
+                (int)input_data->dim_size() - 1,
+                "], but got ",
+                index);
+          }
+          const int64_t update = input_updates->dim(0).dim_value();
+          TensorShapeProto tsp = *input_data;
+          const int64_t orig_value = input_data->dim(index).dim_value();
+
+          int64_t new_value = [&ctx, &orig_value, update]() -> int64_t {
+            std::string reduction = getAttribute(ctx, "reduction", "none");
+            if (reduction == "none") {
+              return update;
+            } else if (reduction == "add") {
+              return orig_value + update;
+            } else if (reduction == "mul") {
+              return orig_value * update;
+            } else {
+              fail_shape_inference("Unexpected reduction type: ", reduction);
+            }
+          }();
+          tsp.mutable_dim(index)->set_dim_value(new_value);
           ctx.addOutputData(0, std::move(tsp));
         }));
 
