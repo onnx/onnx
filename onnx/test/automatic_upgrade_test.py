@@ -821,9 +821,15 @@ class TestAutomaticUpgrade(unittest.TestCase):
             attrs={'hidden_size': 6}
         )
 
-    def test_RoiAlign(self):  # type: () -> None
+    def test_RoiAlign_1(self):  # type: () -> None
         self._test_op_upgrade('RoiAlign', 10, [[2, 3, 20, 20], [10, 4], [10]], [[10, 3, 1, 1]],
             [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64]
+        )
+
+    def test_RoiAlign_2(self):  # type: () -> None
+        self._test_op_upgrade('RoiAlign', 16, [[2, 3, 20, 20], [10, 4], [10]], [[10, 3, 1, 1]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64],
+            attrs={'coordinate_transformation_mode': 'half_pixel'}
         )
 
     def test_Round(self):  # type: () -> None
@@ -835,16 +841,30 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [TensorProto.FLOAT]
         )
 
-    def test_ScatterElements(self):  # type: () -> None
+    def test_ScatterElements_1(self):  # type: () -> None
         self._test_op_upgrade('ScatterElements', 11, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
             [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
             [TensorProto.FLOAT]
         )
 
-    def test_ScatterND(self):  # type: () -> None
+    def test_ScatterElements_2(self):  # type: () -> None
+        self._test_op_upgrade('ScatterElements', 16, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
+            [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+            attrs={'reduction': 'add'}
+        )
+
+    def test_ScatterND_1(self):  # type: () -> None
         self._test_op_upgrade('ScatterND', 11, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
             [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
             [TensorProto.FLOAT]
+        )
+
+    def test_ScatterND_2(self):  # type: () -> None
+        self._test_op_upgrade('ScatterND', 16, [[2, 3], [1, 2], [1, 2]], [[2, 3]],
+            [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+            attrs={'reduction': 'mul'}
         )
 
     def test_Scan(self):  # type: () -> None

@@ -49,7 +49,6 @@ jobs:
       set ONNX_BUILD_TESTS=1
       set ONNX_ML=$(onnx_ml)
       set ONNX_VERIFY_PROTO_3=$(onnx_verify_proto)
-      set USE_MSVC_STATIC_RUNTIME=0
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
 
       python setup.py -q install

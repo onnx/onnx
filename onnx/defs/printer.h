@@ -36,4 +36,6 @@ std::ostream& operator<<(std::ostream& os, const NodeList& nodelist);
 
 std::ostream& operator<<(std::ostream& os, const GraphProto& graph);
 
+std::ostream& operator<<(std::ostream& os, const FunctionProto& fn);
+
 } // namespace ONNX_NAMESPACE

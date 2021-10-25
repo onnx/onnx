@@ -324,7 +324,7 @@ TEST(DataPropagationImplTest, GatherNegativeIndicesTest) {
 agraph (int32[1,2,3,4,5,6] x) => (int32[2] w)
 {
     xs = Shape(x)
-    indices = Constant<value = int64[3] {-2,-1}>()
+    indices = Constant<value = int64[2] {-2,-1}>()
     z = Gather<axis = 0>(xs, indices)
     w = Cast<to = 7>(z)
 }

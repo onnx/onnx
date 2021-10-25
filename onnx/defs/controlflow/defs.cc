@@ -250,6 +250,22 @@ void IfInferenceFunction(InferenceContext& ctx) {
   }
 }
 
+void ClearShape(TypeProto& input_type) {
+  if (input_type.has_tensor_type()) {
+    input_type.mutable_tensor_type()->clear_shape();
+  } else if (input_type.has_sequence_type()) {
+    auto& seq_type = *input_type.mutable_sequence_type();
+    if (seq_type.has_elem_type()) {
+      ClearShape(*(seq_type.mutable_elem_type()));
+    }
+  } else if (input_type.has_optional_type()) {
+    auto& opt_type = *input_type.mutable_optional_type();
+    if (opt_type.has_elem_type()) {
+      ClearShape(*(opt_type.mutable_elem_type()));
+    }
+  }
+}
+
 void LoopInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   assert(num_inputs >= 2);
@@ -282,15 +298,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
     temporary_type_protos.push_back(*ctx.getInputType(i));
     auto& input_type = temporary_type_protos.back();
 
-    if (input_type.has_tensor_type()) {
-      input_type.mutable_tensor_type()->clear_shape();
-    } else if (input_type.has_sequence_type()) {
-      auto& seq_type = *input_type.mutable_sequence_type();
-      if (seq_type.has_elem_type() && seq_type.elem_type().has_tensor_type()) {
-        seq_type.mutable_elem_type()->mutable_tensor_type()->clear_shape();
-      }
-    }
-
+    ClearShape(input_type);
     subgraph_input_types.push_back(&input_type);
   }
 
@@ -330,9 +338,9 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
       const bool is_loop_state_var = i < num_loop_state_vars;
 
-      if (!subgraph_output_type->has_tensor_type() && !subgraph_output_type->has_sequence_type()) {
+      if (!subgraph_output_type->has_tensor_type() && !subgraph_output_type->has_sequence_type() && !subgraph_output_type->has_optional_type()) {
         fail_type_inference(
-            "Loop 'body' subgraph outputs should all be tensors or sequences but output ",
+            "Loop 'body' subgraph outputs should all be tensors or sequences or optionals, but output ",
             i,
             " was ",
             subgraph_output_type->value_case());
@@ -384,7 +392,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
 ONNX_OPERATOR_SET_SCHEMA(
     If,
-    13,
+    16,
     OpSchema()
         .SetDoc("If conditional")
         .Input(0, "cond", "Condition for the if", "B")
@@ -427,14 +435,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](){
               auto t = OpSchema::all_tensor_types();
               auto s = OpSchema::all_tensor_sequence_types();
+              auto o = OpSchema::all_optional_types();
               t.insert(t.end(), s.begin(), s.end());
+              t.insert(t.end(), o.begin(), o.end());
               return t;
             }(),
-            "All Tensor and Sequence types")
+            "All Tensor, Sequence, and optional types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* Loop_ver13_doc = R"DOC(
+static const char* Loop_ver16_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -574,9 +584,9 @@ The input/output of subgraph (produced by loop node) matching is based on order 
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
-    13,
+    16,
     OpSchema()
-        .SetDoc(Loop_ver13_doc)
+        .SetDoc(Loop_ver16_doc)
         .Input(
             0,
             "M",
@@ -622,7 +632,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](){
               auto t = OpSchema::all_tensor_types();
               auto s = OpSchema::all_tensor_sequence_types();
+              auto o = OpSchema::all_optional_types();
               t.insert(t.end(), s.begin(), s.end());
+              t.insert(t.end(), o.begin(), o.end());
               return t;
             }(),
             "All Tensor and Sequence types")
