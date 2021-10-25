@@ -165,7 +165,7 @@ class If(Base):
             inputs=[],
             outputs=['seq_empty_out']
         )
-        
+
         opt_empty_in = onnx.helper.make_node(
             'Optional',
             inputs=['seq_empty_out'],
