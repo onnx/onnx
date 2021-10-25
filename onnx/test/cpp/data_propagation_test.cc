@@ -40,7 +40,7 @@ inline bool CompareShape(
   return true;
 }
 
- TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 15) {
+ TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 16) {
   // Parses the graph from graphCode
   GraphProto graph;
   OnnxParser parser(graphCode);
