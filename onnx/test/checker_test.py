@@ -272,9 +272,7 @@ class TestChecker(unittest.TestCase):
         graph = helper.make_graph(
             [n1, n2],
             "nested",
-            inputs=[
-                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
-            ],
+            inputs=[],
             outputs=[
                 helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])
             ]
@@ -294,7 +292,6 @@ class TestChecker(unittest.TestCase):
         )
 
         checker.check_graph(graph)
-        #self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
     def test_nested_graph_without_subgraph_input_shape(self):  # type: () -> None
         n1 = helper.make_node(
@@ -307,9 +304,7 @@ class TestChecker(unittest.TestCase):
         graph = helper.make_graph(
             [n1, n2],
             "nested",
-            inputs=[
-                input_x
-            ],
+            inputs=[],
             outputs=[
                 helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])
             ]
