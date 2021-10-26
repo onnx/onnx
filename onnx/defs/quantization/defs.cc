@@ -60,9 +60,9 @@ ONNX_OPERATOR_SET_SCHEMA(
               } else {
                 updateOutputElemType(ctx, 0, TensorProto::UINT8);
               }
-
-              if (!hasInputShape(ctx, 0))
+              if (!hasInputShape(ctx, 0)) {
                 return;
+              }
 
               auto& input_shape = getInputShape(ctx, 0);
               updateOutputShape(ctx, 0, input_shape);
