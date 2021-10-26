@@ -47,8 +47,9 @@ class TestShapeInference(unittest.TestCase):
 
     def _inferred(self, graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         kwargs[str('producer_name')] = 'onnx-test'
+        data_prop = kwargs.pop('data_prop', False)
         orig_model = helper.make_model(graph, **kwargs)
-        inferred_model = onnx.shape_inference.infer_shapes(orig_model, strict_mode=True)
+        inferred_model = onnx.shape_inference.infer_shapes(orig_model, strict_mode=True, data_prop=data_prop)
         checker.check_model(inferred_model)
         return inferred_model
 
@@ -357,6 +358,18 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (3, 4))])
+
+    def test_expand_symbolic_input(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (3, 1, 2)),
+             ('y', TensorProto.INT32, (1, 4, 2))],
+            [make_node("Shape", ['y'], ['shape']),
+             make_node("Expand", ['x', 'shape'], ['z'])],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('shape', TensorProto.INT64, (3,)),
+            make_tensor_value_info('z', TensorProto.INT32, (3, 4, 2))],
+            data_prop=True)
 
     def test_resize_size(self):  # type: () -> None
         graph = self._make_graph(
