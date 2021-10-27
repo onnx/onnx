@@ -1178,7 +1178,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               } else {
                 // check if any perm is repeated
                 if (seen[fromDimIndex]) {
-                  fail_type_inference("Attribute perm for Transpose cannot be repeated: ", fromDimIndex);
+                  fail_type_inference("Attribute perm for Transpose has repeated value: ", fromDimIndex);
                 }
                 seen[fromDimIndex] = true;
               }
