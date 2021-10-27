@@ -2124,9 +2124,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasNInputShapes(ctx, 2)) {
             const auto& shape_input_shape =
                 ctx.getInputType(1)->tensor_type().shape();
-            if (shape_input_shape.dim_size() != 1 ||
-                shape_initializer->data_type() != TensorProto::INT64) {
-                    fail_shape_inference("'shape' input must be 1D tensor of type INT64");
+            if (shape_input_shape.dim_size() != 1) {
+                    fail_shape_inference("'shape' input must be 1D tensor");
                 }
 
             const auto& input_shape =
