@@ -3184,7 +3184,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               starts.size() != ends.size()) {
             fail_shape_inference(
                 "Incorrect or missing attribute value for starts and ends");
-            ;
+          }
+          auto is_negative = [](int64_t index) {
+            return index < 0;
+          };
+          if (!std::none_of(starts.begin(), starts.end(), is_negative)) {
+            fail_shape_inference("Attribute start cannot have negative value.");
+          } else if (!std::none_of(ends.begin(), ends.end(), is_negative)) {
+            fail_shape_inference("Attribute end cannot have negative value.");
           }
           std::vector<int64_t> axes;
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
@@ -3193,7 +3200,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           } else if (axes.size() != starts.size()) {
             fail_shape_inference("Attribute axes has incorrect length");
-            ;
+          } else if (!std::none_of(axes.begin(), axes.end(), is_negative)) {
+            fail_shape_inference("Attribute axes cannot have negative value.");
           } else if (!std::is_sorted(axes.begin(), axes.end())) {
             // TODO support shape inference for unsorted axes
             return;
