@@ -57,6 +57,9 @@ class TestComposeFunctions(unittest.TestCase):
         # Edge names are different
         self.assertEqual([item.name for item in g3.node], [item.name for item in g0.node] + [item.name for item in g1.node])
 
+        m3 = helper.make_model(g3, producer_name='test')
+        onnx.checker.check_model(m3)
+
         # Test 2: Connecting some outputs/inputs
         g4 = onnx.compose.merge(g0, g1, io_map=[("B00", "B01"), ("B10", "B11")])
 
@@ -69,6 +72,9 @@ class TestComposeFunctions(unittest.TestCase):
         self.assertEqual(len(g4.output), 2)
         self.assertEqual(g4.output[0], g0.output[2])  # B20
         self.assertEqual(g4.output[1], g1.output[0])  # D0
+
+        m4 = helper.make_model(g4, producer_name='test')
+        onnx.checker.check_model(m4)
 
 
 if __name__ == '__main__':

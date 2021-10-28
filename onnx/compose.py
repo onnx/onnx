@@ -45,13 +45,10 @@ def merge(
         g2_in_name = io_pair[1]
         found = False
         for node in g.node:
-            if found:
-                break
             for index, name in enumerate(node.input):
                 if name == g2_in_name:
                     node.input[index] = g1_out_name
                     found = True
-                    break
         if not found:
             raise ValueError(f"Could not find an input named \"{g2_in_name}\" in g2")
 
