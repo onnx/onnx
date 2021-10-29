@@ -3273,7 +3273,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // 'indices', 'inverse_indices', and 'counts' are 1-D tensors of
           // unknown dimension.
           auto num_outputs = ctx.getNumOutputs();
-          if (num_outputs >= 2) {
+          if (num_outputs >= 2 && !ctx.outputIsEmpty(1)) {
             indicesTensorProto = ctx.getOutputType(1);
             updateOutputElemType(ctx, 1, TensorProto::INT64);
             indicesTensorProto->mutable_tensor_type()
@@ -3281,7 +3281,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ->add_dim();
           }
 
-          if (num_outputs >= 3) {
+          if (num_outputs >= 3 && !ctx.outputIsEmpty(2)) {
             inverseIndicesTensorProto = ctx.getOutputType(2);
             updateOutputElemType(ctx, 2, TensorProto::INT64);
             inverseIndicesTensorProto->mutable_tensor_type()
@@ -3289,7 +3289,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ->add_dim();
           }
 
-          if (num_outputs >= 4) {
+          if (num_outputs >= 4 && !ctx.outputIsEmpty(3)) {
             countsTensorProto = ctx.getOutputType(3);
             updateOutputElemType(ctx, 3, TensorProto::INT64);
             countsTensorProto->mutable_tensor_type()

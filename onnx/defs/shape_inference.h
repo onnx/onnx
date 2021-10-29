@@ -90,6 +90,7 @@ struct InferenceContext {
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
   // Gets the shape inputs computed by partial data propagation.
   virtual const TensorShapeProto* getSymbolicInput(size_t index) const = 0;
+  virtual bool outputIsEmpty(size_t index) const = 0;
 };
 
 // We use data propagation to perform partial evaluation of the model, to compute statically
