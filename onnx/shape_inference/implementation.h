@@ -180,7 +180,7 @@ struct InferenceContextImpl : public InferenceContext {
         }
       }
     }
-    // Mark which outputs have empty name; they should not be propagated
+    // Marks which outputs have empty name; they should not be propagated
     for (const auto& output : n.output()) {
       allOutputIsEmpty.push_back(output.empty());
     }
@@ -232,7 +232,7 @@ struct InferenceContextImpl : public InferenceContext {
   size_t getNumOutputs() const override {
     return allOutputTypes_.size();
   }
-
+  // If output is missing (lack name), getOutputType will return dummy TypeProto
   TypeProto* getOutputType(size_t index) override {
     if (index >= allOutputTypes_.size()) {
       ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
