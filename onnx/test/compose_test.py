@@ -143,7 +143,7 @@ class TestComposeFunctions(unittest.TestCase):
             return [out.type.tensor_type.shape.dim[d].dim_value \
                 for d in range(len(out.type.tensor_type.shape.dim))]
 
-        for dim_idx in [0]:
+        for dim_idx in [0, 2, -1, -3]:
             g1 = onnx.compose.expand_out_dim(g0, dim_idx)
 
             for out0, out1 in zip(g0.output, g1.output):
