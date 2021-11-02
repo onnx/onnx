@@ -103,6 +103,9 @@ def add_prefix(
         rename_inputs (bool): Whether to prefix input names
         rename_outputs (bool): Whether to prefix output names
     """
+    if type(g) is not GraphProto:
+        raise ValueError("g argument is not an ONNX graph")
+
     g = copy.deepcopy(g)
 
     def prefixed(prefix, name):
@@ -151,6 +154,9 @@ def expand_out_dim(
         dim_idx (int): Index of the dimension to be inserted.
                        A negative value means counting dimensions from the back.
     """
+    if type(g) is not GraphProto:
+        raise ValueError("g argument is not an ONNX graph")
+
     g = copy.deepcopy(g)
 
     expand_dim_k = g.name + "_expand_dim_idx"
