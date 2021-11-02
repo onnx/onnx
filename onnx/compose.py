@@ -10,6 +10,7 @@ from typing import List, Tuple, Text, Optional
 from onnx import GraphProto, helper
 from onnx import TensorProto as tp
 
+
 def merge(
         g1,  # type: GraphProto
         g2,  # type: GraphProto
@@ -24,17 +25,29 @@ def merge(
     Arguments:
         g1 (GraphProto): First graph
         g2 (GraphProto): Second graph
-        io_map (list of pairs of strings): The pairs of names [(out0, in0), (out1, in1), ...]
-                                           representing outputs of the first graph and inputs of the second
-                                           to be connected
+        io_map (list of pairs of string): The pairs of names [(out0, in0), (out1, in1), ...]
+                                          representing outputs of the first graph and inputs of the second
+                                          to be connected
+        name (string): Optional name for the combined graph
+                       By default, the name is g1.name and g2.name joined with a double undescore delimiter
+        doc_string (string): Optional docstring for the combined graph
+                             If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
     """
     if type(g1) is not GraphProto:
         raise ValueError("g1 argument is not an ONNX graph")
     if type(g2) is not GraphProto:
         raise ValueError("g2 argument is not an ONNX graph")
 
-    g1_outs = [io[0] for io in io_map]
-    g2_ins = [io[1] for io in io_map]
+    io_map_g1_outs = [io[0] for io in io_map]
+    io_map_g2_ins = [io[1] for io in io_map]
+    g1_outs = [o.name for o in g1.output]
+    g2_ins = [i.name for i in g2.input]
+
+    for g1_out_name, g2_in_name in io_map:
+        if g1_out_name not in g1_outs:
+            raise ValueError(f"Output {g1_out_name} not present in g1")
+        if g2_in_name not in g2_ins:
+            raise ValueError(f"Input {g2_in_name} not present in g2")
 
     g = GraphProto()
 
@@ -42,21 +55,18 @@ def merge(
     g.node.extend(g2.node)
 
     # Connecting outputs of the first graph with the inputs of the second
-    for io_pair in io_map:
-        g1_out_name, g2_in_name = io_pair
-        found = False
+    for g1_out_name, g2_in_name in io_map:
         for node in g.node:
             for index, name in enumerate(node.input):
                 if name == g2_in_name:
                     node.input[index] = g1_out_name
-                    found = True
-        if not found:
-            raise ValueError(f"Could not find an input named \"{g2_in_name}\" in g2")
 
     g.input.extend(g1.input)
-    g.input.extend([item for item in g2.input if item.name not in g2_ins])
+    g.input.extend(
+        [item for item in g2.input if item.name not in io_map_g2_ins])
 
-    g.output.extend([item for item in g1.output if item.name not in g1_outs])
+    g.output.extend(
+        [item for item in g1.output if item.name not in io_map_g1_outs])
     g.output.extend(g2.output)
 
     g.initializer.extend(g1.initializer)
@@ -163,8 +173,8 @@ def expand_out_dim(
     g.node.append(
         helper.make_node(
             'Constant', inputs=[], outputs=[expand_dim_k], name=f"{expand_dim_k}-constant",
-            value=helper.make_tensor(name="{expand_dim_k}-value", data_type=tp.INT64,
-                                     dims=[1,], vals=[dim_idx,]))
+            value=helper.make_tensor(name=f"{expand_dim_k}-value", data_type=tp.INT64,
+                                     dims=[1, ], vals=[dim_idx, ]))
     )
 
     for _ in range(len(g.output)):
@@ -172,7 +182,7 @@ def expand_out_dim(
         new_name = o.name + '_expanded'
         g.node.append(
             helper.make_node('Unsqueeze', inputs=[o.name, expand_dim_k],
-                             outputs=[new_name], name=f'unsqueeze-{o.name}')
+                             outputs=[new_name], name=f"unsqueeze-{o.name}")
         )
         new_shape = [d.dim_value for d in o.type.tensor_type.shape.dim]
         new_shape.insert(dim_idx, 1)
