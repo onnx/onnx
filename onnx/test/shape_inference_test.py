@@ -139,6 +139,13 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 4))])
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
+    def test_transpose_incorrect_repeated_perm(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 1])],
+            [])
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     def _make_matmul_test_all_dims_known(self, shape1, shape2):  # type: (Sequence[int], Sequence[int]) -> None
         expected_out_shape = np.matmul(np.arange(np.product(shape1)).reshape(shape1),
                                        np.arange(np.product(shape2)).reshape(shape2)).shape
@@ -2469,6 +2476,14 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (30, 4, 5)),
              ('y_scale', TensorProto.FLOAT, ())],
             [make_node('QuantizeLinear', ['x', 'y_scale'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5))])
+
+    def test_quantizelinear_optional_input(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y_scale', TensorProto.FLOAT, ())],
+            [make_node('QuantizeLinear', ['x', 'y_scale', ''], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5))])
 
