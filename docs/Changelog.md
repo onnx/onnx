@@ -20384,13 +20384,12 @@ This version of the operator has been available since version 16 of the default 
 
 ### <a name="Where-16"></a>**Where-16**</a>
 
-  Return elements, either from X or Y, depending on condition
-      (with Numpy-style broadcasting support).
-      Where behaves like numpy.where with three parameters:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+  Return elements, either from X or Y, depending on condition.
+      Where behaves like
+      [numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+      with three parameters.
   
-  **History**
-  - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
