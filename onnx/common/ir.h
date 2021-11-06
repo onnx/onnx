@@ -1240,6 +1240,7 @@ private:
   void freeValue(Value * v) {
     auto it = all_values.find(v);
     ONNX_ASSERT(it != all_values.end());
+    delete *it;
     all_values.erase(it);
   }
 };

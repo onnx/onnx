@@ -6,6 +6,7 @@
 #include <fstream>
 #include <list>
 #include "onnx/checker.h"
+#include "onnx/defs/data_type_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -115,6 +116,15 @@ void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existin
     checkShapesAndTypes(inferredType.sequence_type().elem_type(), existingType.sequence_type().elem_type());
   } else if (inferredTypeCase == TypeProto::kOptionalType && existingTypeCase == TypeProto::kOptionalType) {
     checkShapesAndTypes(inferredType.optional_type().elem_type(), existingType.optional_type().elem_type());
+  } else if (inferredTypeCase == TypeProto::TypeProto::kMapType && existingTypeCase == TypeProto::TypeProto::kMapType) {
+    if (inferredType.map_type().key_type() != existingType.map_type().key_type()) {
+      fail_type_inference(
+          "key type mismatch from MapProto. existing=",
+          Utils::DataTypeUtils::ToDataTypeString(existingType.map_type().key_type()),
+          " inferred=",
+          Utils::DataTypeUtils::ToDataTypeString(inferredType.map_type().key_type()));
+    }
+    checkShapesAndTypes(inferredType.map_type().value_type(), existingType.map_type().value_type());
   } else {
     fail_type_inference("type case unsupported. existing=", existingTypeCase, " inferred=", inferredTypeCase);
   }
@@ -145,6 +155,8 @@ void materializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable)
     materializeSymbolicShape(inferredType->mutable_sequence_type()->mutable_elem_type(), symbolTable);
   } else if (inferred_val_case == TypeProto::kOptionalType) {
     materializeSymbolicShape(inferredType->mutable_optional_type()->mutable_elem_type(), symbolTable);
+  } else if (inferred_val_case == TypeProto::TypeProto::kMapType) {
+    materializeSymbolicShape(inferredType->mutable_map_type()->mutable_value_type(), symbolTable);
   } else {
     fail_shape_inference("type case unsupported for symbolic shape inference. inferred=", inferred_val_case);
   }
@@ -220,6 +232,9 @@ void mergeShapesAndTypes(const TypeProto& inferredType, TypeProto* existingType)
   } else if (inferred_val_case == TypeProto::kOptionalType) {
     mergeShapesAndTypes(
         inferredType.optional_type().elem_type(), existingType->mutable_optional_type()->mutable_elem_type());
+  } else if (inferred_val_case == TypeProto::kMapType) {
+    mergeShapesAndTypes(
+      inferredType.map_type().value_type(), existingType->mutable_map_type()->mutable_value_type());
   }
 }
 
