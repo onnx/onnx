@@ -425,7 +425,7 @@ private:
   std::string doc_string_;
 
 protected:
-  Node(Graph * graph_, NodeKind kind_); //defined after graph
+  Node(Graph * graph_, NodeKind kind_); // defined after graph
 
 public:
   bool has_name() const {
@@ -540,10 +540,6 @@ public:
   }
   const Value * input(size_t i) const {
     return inputs_.at(i);
-  }
-
-  int inputSize() const {
-    return inputs_.size();
   }
 
   // Graphs
@@ -883,9 +879,13 @@ private:
   // having corner cases where the list is empty.
   Node * const output_;
   Node * const input_;
+  // Create an independent node list for those initializers do not exist in input
+  Node * const initializer_node_;
 
   std::vector<Tensor> initializers_;
   std::vector<std::string> initializer_names_;
+  // Store a name to offset map for erasing initializer node
+  std::map<std::string, int> initializer_offset_;
 
   bool has_name_;
   std::string name_;
@@ -936,6 +936,7 @@ public:
   , new_node_stage_(0)
   , output_(initOutput(create(kReturn, 0)))
   , input_(create(kParam, 0))
+  , initializer_node_(create(kParam, 0))
   , has_name_(false)
   , has_doc_string_(false) {}
 
@@ -950,10 +951,29 @@ public:
     doc_string_ = std::move(doc_string);
   }
 
-  void addInitializer(Tensor initializer, std::string name) {
-    initializers_.push_back(std::move(initializer));
-    initializer_names_.push_back(std::move(name));
+  void addInitializer(Tensor& initializer) {
+    if (initializer.name().empty()) {
+      initializer.setName(ONNX_NAMESPACE::to_string(getNextUnique()));
+    }
+    Tensor initializerCopy = initializer;
+    initializers_.push_back(std::move(initializerCopy));
+    initializer_names_.push_back(std::move(initializerCopy.name()));
   }
+  
+  // For IR >= 4, initializer is not required to exist in input
+  // Add initializer into initializer node list and return its Value
+  Value* addInitializerAndCreateValue(Tensor& initializer) {
+    addInitializer(initializer);
+    Value* init_value = initializer_node_->addOutput();
+    std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(),
+                                    initializer.sizes().cend()};
+    init_value->setUniqueName(initializer.name());
+    init_value->setSizes(dim_sizes);
+    init_value->setElemType(initializer.elem_type());
+    initializer_offset_[initializer.name()] = init_value->offset();
+    return init_value;
+  }
+
   void eraseInitializer(const std::string &name) {
     initializers_.erase(
         std::remove_if(
@@ -969,6 +989,10 @@ public:
             initializer_names_.end(),
             name),
         initializer_names_.end());
+    if (initializer_offset_.count(name) > 0) {
+      initializer_node_->eraseOutput(initializer_offset_[name]);
+      initializer_offset_.erase(name);
+    }
   }
   void clearInitializers() {
     initializers_.clear();
@@ -1107,8 +1131,9 @@ public:
     return n;
   }
 
-  //Adds to graph initializer list, initializer names list, and as a graph input
-  //Also syncs the initializer name, tensor name, and value name
+  // Adds to graph initializer list, initializer names list, and as a graph input
+  // Also syncs the initializer name, tensor name, and value name
+  // Create an initializer whose value is stored in input
   Value* addInitializerAndInput(const Tensor& initializer, std::string name) {
     Tensor initializerCopy = initializer;
     std::vector<Dimension> dim_sizes{initializerCopy.sizes().cbegin(),
@@ -1118,7 +1143,7 @@ public:
     new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializerCopy.elem_type());
-    addInitializer(std::move(initializerCopy), std::move(name));
+    addInitializer(initializerCopy);
     return new_init;
   }
 
@@ -1126,9 +1151,8 @@ public:
     return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(getNextUnique()));
   }
 
-
-  //Erases from graph initializer list, initializer names list, and as a graph input
-  //Must have no uses
+  // Erases from graph initializer list, initializer names list, and as a graph input
+  // Must have no uses
   void eraseInitializerAndInput(Value* v) {
     eraseInitializer(v->uniqueName());
     eraseInput(v->offset());
