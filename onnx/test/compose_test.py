@@ -38,8 +38,6 @@ class TestComposeFunctions(unittest.TestCase):
         B01 = create_tensor("B01")
         B11 = create_tensor("B11")
         B21 = create_tensor("B21")
-        C0 = create_tensor("C0")
-        C1 = create_tensor("C1")
         D0 = create_tensor("D0")
 
         L1_0 = helper.make_node("Add", ["B01", "B11"], ["C0"], "L1_0")
