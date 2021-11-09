@@ -3884,6 +3884,46 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [optional_val_info, sequence_val_into, output_val_into])  # type: ignore
 
+    def test_where_bfloat(self):  # type: () -> None
+        graph = self._make_graph(
+            [('cond', TensorProto.BOOL, (10,)), ('x', TensorProto.BFLOAT16, (10,)), ('y', TensorProto.BFLOAT16, (10,))],
+            [make_node('Where', ['cond', 'x', 'y'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.BFLOAT16, (10,))])  # type: ignore
+
+    def test_parse_data_with_unsupported_tensor_type(self):  # type: () -> None
+        model = helper.make_model(
+            graph=helper.make_graph(
+                name='graph_with_unsupported_type',
+                inputs=[],
+                outputs=[helper.make_tensor_value_info('y', TensorProto.FLOAT, shape=None)],
+                nodes=[make_node('ConstantOfShape', ['x'], ['y'])],
+                # ConstantOfShape only accepts np.int64 instead of np.int32
+                initializer=[numpy_helper.from_array(np.array([4, 3], dtype=np.int32), name='x')]))
+        # Strict shape inference should catch this invalid type error (int32 is not supported)
+        self.assertRaises(onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes, model, strict_mode=True)
+        # Even nornmal shape inference should not produce any invalid shape due to wrong type for ParseData
+        inferred_model = onnx.shape_inference.infer_shapes(model)
+        self.assertFalse(inferred_model.graph.output[0].type.tensor_type.HasField('shape'))
+
+    def test_parse_data_with_undefined_tensor_type(self):  # type: () -> None
+        model = helper.make_model(
+            graph=helper.make_graph(
+                name='graph_with_undefined_type',
+                inputs=[],
+                outputs=[helper.make_tensor_value_info('y', TensorProto.FLOAT, shape=None)],
+                nodes=[make_node('ConstantOfShape', ['x'], ['y'])],
+                initializer=[numpy_helper.from_array(np.array([4, 3], dtype=np.int64), name='x')]))
+        # Hardcode the tensor type as UNDEFINED to test catching undefined type error
+        model.graph.initializer[0].data_type = TensorProto.UNDEFINED
+        # Strict shape inference should catch this undefined type error
+        self.assertRaises(onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes, model, strict_mode=True)
+        # Even nornmal shape inference should not produce any invalid shape due to undefined type for ParseData
+        inferred_model = onnx.shape_inference.infer_shapes(model)
+        self.assertFalse(inferred_model.graph.output[0].type.tensor_type.HasField('shape'))
+
     def test_gridsample(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (1, 1, 3, 3)),
