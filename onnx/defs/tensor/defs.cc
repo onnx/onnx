@@ -2901,11 +2901,17 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Where_ver16_doc = R"DOC(
-    Return elements, either from X or Y, depending on condition.
-    Where behaves like
-    [numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
-    with three parameters.
+Return elements, either from X or Y, depending on condition.
+Where behaves like
+[numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+with three parameters.
 
+)DOC";
+
+static const char* Where_ver16_history = R"DOC(
+
+**History**
+  - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2913,7 +2919,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     16,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()))
+            std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()) +
+            std::string(Where_ver16_history))
         .Input(
             0,
             "condition",

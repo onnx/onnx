@@ -4418,17 +4418,18 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Where_ver9_doc = R"DOC(
-    Return elements, either from X or Y, depending on condition
-    (with Numpy-style broadcasting support).
-    Where behaves like numpy.where with three parameters:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+Return elements, either from X or Y, depending on condition.
+Where behaves like
+[numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+with three parameters.
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
     9,
     OpSchema()
-        .SetDoc(Where_ver9_doc)
+        .SetDoc(Where_ver9_doc + GenerateBroadcastingDocMul())
         .Input(
             0,
             "condition",
