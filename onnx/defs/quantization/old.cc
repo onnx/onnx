@@ -47,10 +47,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(QuantizeLinear_ver10_doc)
         .TypeAndShapeInferenceFunction(
             [](ONNX_NAMESPACE::InferenceContext& ctx) {
-              propagateElemTypeFromInputToOutput(ctx, 2, 0);
-
-              if (!hasInputShape(ctx, 0))
+              if (ctx.getNumInputs() == 3 && ctx.getInputType(2) != nullptr) {
+                propagateElemTypeFromInputToOutput(ctx, 2, 0);
+              } else {
+                updateOutputElemType(ctx, 0, TensorProto::UINT8);
+              }
+              if (!hasInputShape(ctx, 0)) {
                 return;
+              }
 
               auto& input_shape = getInputShape(ctx, 0);
               updateOutputShape(ctx, 0, input_shape);
