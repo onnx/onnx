@@ -24106,7 +24106,7 @@ expect(node, inputs=[data, scales], outputs=[output],
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
   
   **History**
-    - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
+  - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
 
 #### Version
 

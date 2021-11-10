@@ -2911,7 +2911,7 @@ with three parameters.
 static const char* Where_ver16_history = R"DOC(
 
 **History**
-  - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
+- Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
