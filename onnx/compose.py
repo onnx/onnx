@@ -7,11 +7,10 @@ from __future__ import unicode_literals
 
 import copy
 from typing import List, Tuple, Text, Optional
-from onnx import GraphProto, helper
+from onnx import ModelProto, GraphProto, OperatorSetIdProto, helper, checker
 from onnx import TensorProto as tp
 
-
-def merge(
+def merge_graphs(
         g1,  # type: GraphProto
         g2,  # type: GraphProto
         io_map,  # type: List[Tuple[Text, Text]]
@@ -20,7 +19,8 @@ def merge(
 ):  # type: (...) -> GraphProto
     """Combines two ONNX graphs into a single one.
 
-    The combined graph is defined by connecting the specified set of outputs/inputs.
+    The combined graph is defined by connecting the specified set of outputs/inputs. Those inputs/outputs
+    not specified in the io_map argument will remain as inputs/outputs of the combined graph.
 
     Arguments:
         g1 (GraphProto): First graph
@@ -29,7 +29,7 @@ def merge(
                                           representing outputs of the first graph and inputs of the second
                                           to be connected
         name (string): Optional name for the combined graph
-                       By default, the name is g1.name and g2.name joined with a double undescore delimiter
+                       By default, the name is g1.name and g2.name concatenated with an undescore delimiter
         doc_string (string): Optional docstring for the combined graph
                              If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
     """
@@ -78,18 +78,79 @@ def merge(
     g.value_info.extend(g1.value_info)
     g.value_info.extend(g2.value_info)
 
-    if name:
-        g.name = name
-    else:
-        g.name = g1.name + "__" + g2.name
+    g.name = name if name is not None else "_".join(g1.name, g2.name)
 
-    if doc_string:
-        g.doc_string = doc_string
-    else:
-        g.doc_string = f"Graph combining {g1.name} and {g2.name}\n" + \
+    if doc_string is None:
+        doc_string = f"Graph combining {g1.name} and {g2.name}\n" + \
             g1.name + "\n\n" + g1.doc_string + "\n\n" + g2.name + "\n\n" + g2.doc_string
+    g.doc_string = doc_string
 
     return g
+
+def merge_models(
+        m1,  # type: ModelProto
+        m2,  # type: ModelProto
+        io_map,  # type: List[Tuple[Text, Text]]
+        name=None,  # type: Optional[Text]
+        doc_string=None,  # type: Optional[Text]
+        producer_name='onnx.compose',  # type: Optional[Text]
+        ir_version=None,  # type: Optional[int]
+):  # type: (...) -> ModelProto
+    """Combines two ONNX models into a single one.
+
+    The combined model is defined by connecting the specified set of outputs/inputs. Those inputs/outputs
+    not specified in the io_map argument will remain as inputs/outputs of the combined model.
+
+    Arguments:
+        m1 (ModelProto): First model
+        m2 (ModelProto): Second model
+        io_map (list of pairs of string): The pairs of names [(out0, in0), (out1, in1), ...]
+                                          representing outputs of the first graph and inputs of the second
+                                          to be connected
+        name (string): Optional name for the combined graph
+                       By default, the name is g1.name and g2.name concatenated with an undescore delimiter
+        doc_string (string): Optional docstring for the combined graph
+                             If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
+        producer_name (string): Optional producer name for the combined model. Default: 'onnx.compose'
+        ir_version (int): Optional target IR version. By default the highest IR version from the two graphs will be used
+                          The target IR version should be compatible with the Operator Set versions used by
+                          the models to be combined.
+    """
+    if type(m1) is not ModelProto:
+        raise ValueError("m1 argument is not an ONNX model")
+    if type(m2) is not ModelProto:
+        raise ValueError("m2 argument is not an ONNX model")
+
+    opset_import_map = {}
+    opset_imports = \
+        [entry for entry in m1.opset_import] + \
+        [entry for entry in m2.opset_import]
+
+    for entry in opset_imports:
+        if entry.domain in opset_import_map:
+            found_version = opset_import_map[entry.domain]
+            if entry.version != found_version:
+                raise ValueError(
+                    "Can't merge two models with different operator set ids for a given domain. "
+                    f"Got: {m1.opset_import} and {m2.opset_import}")
+        else:
+            opset_import_map[entry.domain] = entry.version
+
+    min_ir_version = helper.find_min_ir_version_for(opset_imports)
+    if ir_version is None:
+        ir_version = max(min_ir_version, max(
+            m1.ir_version, m2.ir_version))
+    if ir_version < min_ir_version:
+        raise ValueError(
+            f"IR version {ir_version} is not sufficient to support "
+            f"the models operator set ids: {opset_imports}")
+
+    graph = merge_graphs(m1.graph, m2.graph, io_map, name, doc_string)
+    model = helper.make_model(graph, producer_name=producer_name,
+                              opset_imports=opset_imports,
+                              ir_version=ir_version)
+    checker.check_model(model)
+    return model
 
 
 def add_prefix(

@@ -5,95 +5,137 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import os
-import shutil
-import tempfile
 import unittest
 
 import onnx
+import onnx.version_converter
 from onnx import helper, TensorProto
 
+def _create_tensor(name, dtype=TensorProto.FLOAT, shape=[1, 2]):  # type: ignore
+    return helper.make_tensor_value_info(name, TensorProto.FLOAT, shape)
 
 class TestComposeFunctions(unittest.TestCase):
     def test_merge(self):  # type: () -> None
-        def create_tensor(name):  # type: ignore
-            return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1, 2])
-
-        A0 = create_tensor("A0")
-        A1 = create_tensor("A1")
-        B00 = create_tensor("B00")
-        B10 = create_tensor("B10")
-        B20 = create_tensor("B20")
+        A0 = _create_tensor("A0")
+        A1 = _create_tensor("A1")
+        B00 = _create_tensor("B00")
+        B10 = _create_tensor("B10")
+        B20 = _create_tensor("B20")
 
         L0_0 = helper.make_node("Add", ["A0", "A1"], ["B00"], "L0_0")
         L0_1 = helper.make_node("Sub", ["A0", "A1"], ["B10"], "L0_1")
         L0_2 = helper.make_node("Mul", ["A0", "A1"], ["B20"], "L0_2")
 
-        g0 = helper.make_graph(
+        g1 = helper.make_graph(
             [L0_0, L0_1, L0_2],
             "test1",
             [A0, A1],
             [B00, B10, B20])
 
-        B01 = create_tensor("B01")
-        B11 = create_tensor("B11")
-        B21 = create_tensor("B21")
-        D0 = create_tensor("D0")
+        B01 = _create_tensor("B01")
+        B11 = _create_tensor("B11")
+        B21 = _create_tensor("B21")
+        D0 = _create_tensor("D0")
 
         L1_0 = helper.make_node("Add", ["B01", "B11"], ["C0"], "L1_0")
         L1_1 = helper.make_node("Sub", ["B11", "B21"], ["C1"], "L1_1")
         L2_0 = helper.make_node("Mul", ["C0", "C1"], ["D0"], "L2_0")
 
-        g1 = helper.make_graph(
+        g2 = helper.make_graph(
             [L1_0, L1_1, L2_0],
             "test2",
             [B01, B11, B21],
             [D0])
 
         # Test 1: Connecting all outputs/inputs
-        g3 = onnx.compose.merge(
-            g0, g1, io_map=[("B00", "B01"), ("B10", "B11"), ("B20", "B21")])
-        self.assertEqual(g3.input, g0.input)
-        self.assertEqual(g3.output, g1.output)
-        # Edge names are different
-        self.assertEqual([item.name for item in g3.node],
-                         [item.name for item in g0.node] + [item.name for item in g1.node])
+        io_map_g3 = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
+        g3 = onnx.compose.merge_graphs(
+            g1, g2, io_map=io_map_g3)
+        def check_g3(g1, g2, g3):
+            self.assertEqual(g3.input, g1.input)
+            self.assertEqual(g3.output, g2.output)
+            # Edge names are different
+            self.assertEqual([item.name for item in g3.node],
+                            [item.name for item in g1.node] + [item.name for item in g2.node])
 
-        m3 = helper.make_model(g3, producer_name='test')
+        check_g3(g1, g2, g3)
+        m3 = helper.make_model(g3, producer_name='test',
+                               opset_imports=[onnx.helper.make_opsetid("", 15)])
         onnx.checker.check_model(m3)
 
+        # Test merge models API
+        m1 = helper.make_model(g1, producer_name='test',
+                               opset_imports=[onnx.helper.make_opsetid("", 15)])
+        m2 = helper.make_model(g2, producer_name='test',
+                               opset_imports=[onnx.helper.make_opsetid("", 15)])
+
+        m3 = onnx.compose.merge_models(m1, m2, io_map_g3)
+        onnx.checker.check_model(m3)
+        check_g3(m1.graph, m2.graph, m3.graph)
+
         # Test 2: Connecting some outputs/inputs
-        g4 = onnx.compose.merge(g0, g1, io_map=[("B00", "B01"), ("B10", "B11")])
+        io_map_g4 = [("B00", "B01"), ("B10", "B11")]
+        g4 = onnx.compose.merge_graphs(g1, g2, io_map=io_map_g4)
 
-        # B20 <-> B21 not connected. They should still be present in the intputs and outputs of the combined graph
-        self.assertEqual(len(g4.input), 3)
-        self.assertEqual(g4.input[0], g0.input[0])  # A0
-        self.assertEqual(g4.input[1], g0.input[1])  # A1
-        self.assertEqual(g4.input[2], g1.input[2])  # B21
+        def check_g4(g1, g2, g4):
+            # B20 <-> B21 not connected. They should still be present in the intputs and outputs of the combined graph
+            self.assertEqual(len(g4.input), 3)
+            self.assertEqual(g4.input[0], g1.input[0])  # A0
+            self.assertEqual(g4.input[1], g1.input[1])  # A1
+            self.assertEqual(g4.input[2], g2.input[2])  # B21
 
-        self.assertEqual(len(g4.output), 2)
-        self.assertEqual(g4.output[0], g0.output[2])  # B20
-        self.assertEqual(g4.output[1], g1.output[0])  # D0
+            self.assertEqual(len(g4.output), 2)
+            self.assertEqual(g4.output[0], g1.output[2])  # B20
+            self.assertEqual(g4.output[1], g2.output[0])  # D0
 
+        check_g4(g1, g2, g4)
         m4 = helper.make_model(g4, producer_name='test')
         onnx.checker.check_model(m4)
 
+        # Test merge models API
+        m4 = onnx.compose.merge_models(m1, m2, io_map_g4)
+        onnx.checker.check_model(m4)
+        check_g4(m1.graph, m2.graph, m4.graph)
+
         # Wrong output name
         self.assertRaises(ValueError,
-                          onnx.compose.merge, g0, g1, io_map=[("wrong_outname", "B01"), ("B10", "B11"), ("B20", "B21")])
+                          onnx.compose.merge_graphs, g1, g2, io_map=[("wrong_outname", "B01"), ("B10", "B11"), ("B20", "B21")])
 
+        # Wrong output name
         self.assertRaises(ValueError,
-                          onnx.compose.merge, g0, g1, io_map=[("B00", "wrong_input"), ("B10", "B11"), ("B20", "B21")])
+                          onnx.compose.merge_graphs, g1, g2, io_map=[("B00", "wrong_input"), ("B10", "B11"), ("B20", "B21")])
+
+        # Wrong IR version.
+        min_ir_version = helper.find_min_ir_version_for(m1.opset_import)
+        wrong_ir_version = min_ir_version - 1
+        self.assertRaises(ValueError,
+                          onnx.compose.merge_models, m1, m2, io_map=io_map_g3, ir_version=wrong_ir_version)
+
+        # Minimum IR version should work
+        m3 = onnx.compose.merge_models(m1, m2, io_map=io_map_g3, ir_version=min_ir_version)
+        onnx.checker.check_model(m3)
+        check_g3(m1.graph, m2.graph, m3.graph)
+
+        # Not compatible operator sets
+        m1_10 = helper.make_model(g1, producer_name='test',
+                                  opset_imports=[onnx.helper.make_opsetid("", 10)])
+        m2_15 = helper.make_model(g2, producer_name='test',
+                                  opset_imports=[onnx.helper.make_opsetid("", 15)])
+        self.assertRaises(ValueError,
+                          onnx.compose.merge_models, m1_10, m2_15, io_map=io_map_g3)
+
+        # Converting to the same Operator set version, should work
+        m1_15 = onnx.version_converter.convert_version(m1_10, 15)
+        m3 = onnx.compose.merge_models(m1_15, m2_15, io_map=io_map_g3)
+        onnx.checker.check_model(m3)
+        check_g3(m1.graph, m2.graph, m3.graph)
 
     def test_add_prefix(self):  # type: () -> None
-        def create_tensor(name):  # type: ignore
-            return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1, 2])
-
-        A0 = create_tensor("A0")
-        A1 = create_tensor("A1")
-        B00 = create_tensor("B00")
-        B10 = create_tensor("B10")
-        B20 = create_tensor("B20")
+        A0 = _create_tensor("A0")
+        A1 = _create_tensor("A1")
+        B00 = _create_tensor("B00")
+        B10 = _create_tensor("B10")
+        B20 = _create_tensor("B20")
 
         L0_0 = helper.make_node("Add", ["A0", "A1"], ["B00"], "L0_0")
         L0_1 = helper.make_node("Sub", ["A0", "A1"], ["B10"], "L0_1")
@@ -129,15 +171,12 @@ class TestComposeFunctions(unittest.TestCase):
         onnx.checker.check_model(m)
 
     def test_expand_out_dim(self):  # type: () -> None
-        def create_tensor(name, shape=[1, 2]):  # type: ignore
-            return helper.make_tensor_value_info(name, TensorProto.FLOAT, shape)
-
-        A0 = create_tensor("A0", shape=[5, 4])
-        A1 = create_tensor("A1", shape=[5, 4])
-        B0 = create_tensor("B0", shape=[3, 2])
-        B1 = create_tensor("B1", shape=[3, 2])
-        C0 = create_tensor("C0", shape=[5, 4])
-        C1 = create_tensor("C1", shape=[3, 2])
+        A0 = _create_tensor("A0", shape=[5, 4])
+        A1 = _create_tensor("A1", shape=[5, 4])
+        B0 = _create_tensor("B0", shape=[3, 2])
+        B1 = _create_tensor("B1", shape=[3, 2])
+        C0 = _create_tensor("C0", shape=[5, 4])
+        C1 = _create_tensor("C1", shape=[3, 2])
 
         L0 = helper.make_node("Add", ["A0", "A1"], ["C0"], "L0")
         L1 = helper.make_node("Sub", ["B0", "B1"], ["C1"], "L1")
