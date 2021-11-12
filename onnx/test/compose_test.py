@@ -7,9 +7,11 @@ from __future__ import unicode_literals
 
 import unittest
 
+from typing import Text, List
+
 import onnx
 import onnx.version_converter
-from onnx import helper, TensorProto
+from onnx import helper, TensorProto, GraphProto, ValueInfoProto
 
 
 def _create_tensor(name, dtype=TensorProto.FLOAT, shape=[1, 2]):  # type: ignore
@@ -54,7 +56,7 @@ class TestComposeFunctions(unittest.TestCase):
         g3 = onnx.compose.merge_graphs(
             g1, g2, io_map=io_map_g3)
 
-        def check_g3(g1, g2, g3):
+        def check_g3(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
             self.assertEqual(g3.input, g1.input)
             self.assertEqual(g3.output, g2.output)
             # Edge names are different
@@ -80,7 +82,7 @@ class TestComposeFunctions(unittest.TestCase):
         io_map_g4 = [("B00", "B01"), ("B10", "B11")]
         g4 = onnx.compose.merge_graphs(g1, g2, io_map=io_map_g4)
 
-        def check_g4(g1, g2, g4):
+        def check_g4(g1, g2, g4):  # type: (GraphProto, GraphProto, GraphProto) -> None
             # B20 <-> B21 not connected. They should still be present in the intputs and outputs of the combined graph
             self.assertEqual(len(g4.input), 3)
             self.assertEqual(g4.input[0], g1.input[0])  # A0
@@ -109,7 +111,7 @@ class TestComposeFunctions(unittest.TestCase):
                           onnx.compose.merge_graphs, g1, g2, io_map=[("B00", "wrong_input"), ("B10", "B11"), ("B20", "B21")])
 
         # Wrong IR version.
-        min_ir_version = helper.find_min_ir_version_for(m1.opset_import)
+        min_ir_version = helper.find_min_ir_version_for([entry for entry in m1.opset_import])
         wrong_ir_version = min_ir_version - 1
         self.assertRaises(ValueError,
                           onnx.compose.merge_models, m1, m2, io_map=io_map_g3, ir_version=wrong_ir_version)
@@ -153,23 +155,23 @@ class TestComposeFunctions(unittest.TestCase):
 
         g1 = onnx.compose.add_prefix(g0, 'g0/')
 
-        for e1, e0 in zip(g1.input, g0.input):
-            self.assertEqual(e1.name, 'g0/'
-                             + e0.name if len(e0.name) > 0 else e0.name)
+        def prefixed(prefix, s):  # type: (Text, Text) -> Text
+            return prefix + s if len(s) > 0 else s
 
-        for e1, e0 in zip(g1.output, g0.output):
-            self.assertEqual(e1.name, 'g0/'
-                             + e0.name if len(e0.name) > 0 else e0.name)
+        for in1, in0 in zip(g1.input, g0.input):
+            self.assertEqual(in1.name, prefixed('g0/', in0.name))
+
+        for out1, out0 in zip(g1.output, g0.output):
+            self.assertEqual(out1.name, prefixed('g0/', out0.name))
 
         for n1, n0 in zip(g1.node, g0.node):
-            self.assertEqual(n1.name, 'g0/'
-                             + n0.name if len(n0.name) > 0 else n0.name)
+            self.assertEqual(n1.name, prefixed('g0/', n0.name))
 
             for e1, e0 in zip(n1.input, n0.input):
-                self.assertEqual(e1, 'g0/' + e0 if len(e0) > 0 else e0)
+                self.assertEqual(e1, prefixed('g0/', e0))
 
             for e1, e0 in zip(n1.output, n0.output):
-                self.assertEqual(e1, 'g0/' + e0 if len(e0) > 0 else e0)
+                self.assertEqual(e1, prefixed('g0/', e0))
 
         m = helper.make_model(g1, producer_name='test')
         onnx.checker.check_model(m)
@@ -191,7 +193,7 @@ class TestComposeFunctions(unittest.TestCase):
             [A0, A1, B0, B1],
             [C0, C1])
 
-        def out_shape(out):
+        def out_shape(out):  # type: (ValueInfoProto) -> List[int]
             return [out.type.tensor_type.shape.dim[d].dim_value
                     for d in range(len(out.type.tensor_type.shape.dim))]
 

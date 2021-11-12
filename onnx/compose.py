@@ -6,7 +6,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import copy
-from typing import List, Tuple, Text, Optional
+from typing import List, Tuple, Text, Optional, MutableMapping
+from google.protobuf.internal.containers import RepeatedScalarFieldContainer
 from onnx import ModelProto, GraphProto, OperatorSetIdProto, helper, checker
 from onnx import TensorProto as tp
 
@@ -79,7 +80,7 @@ def merge_graphs(
     g.value_info.extend(g1.value_info)
     g.value_info.extend(g2.value_info)
 
-    g.name = name if name is not None else "_".join(g1.name, g2.name)
+    g.name = name if name is not None else "_".join([g1.name, g2.name])
 
     if doc_string is None:
         doc_string = f"Graph combining {g1.name} and {g2.name}\n" + \
@@ -123,7 +124,7 @@ def merge_models(
     if type(m2) is not ModelProto:
         raise ValueError("m2 argument is not an ONNX model")
 
-    opset_import_map = {}
+    opset_import_map = {}  # type: MutableMapping[Text, int]
     opset_imports = \
         [entry for entry in m1.opset_import] + \
         [entry for entry in m2.opset_import]
@@ -138,7 +139,8 @@ def merge_models(
         else:
             opset_import_map[entry.domain] = entry.version
 
-    min_ir_version = helper.find_min_ir_version_for(opset_imports)
+    min_ir_version = helper.find_min_ir_version_for(
+        [entry for entry in opset_imports])
     if ir_version is None:
         ir_version = max(min_ir_version, max(
             m1.ir_version, m2.ir_version))
@@ -181,7 +183,7 @@ def add_prefix(
 
     g = copy.deepcopy(g)
 
-    def prefixed(prefix, name):
+    def prefixed(prefix, name):  # type: (Text, Text) -> Text
         return prefix + name if len(name) > 0 else name
 
     if rename_nodes:
@@ -189,7 +191,7 @@ def add_prefix(
             n.name = prefixed(prefix, n.name)
 
     if rename_edges:
-        def clear(lst):
+        def clear(lst):  # type: (RepeatedScalarFieldContainer[Text]) -> None
             for _ in range(len(lst)):
                 lst.pop()
 
