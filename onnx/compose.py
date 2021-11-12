@@ -10,6 +10,7 @@ from typing import List, Tuple, Text, Optional
 from onnx import ModelProto, GraphProto, OperatorSetIdProto, helper, checker
 from onnx import TensorProto as tp
 
+
 def merge_graphs(
         g1,  # type: GraphProto
         g2,  # type: GraphProto
@@ -86,6 +87,7 @@ def merge_graphs(
     g.doc_string = doc_string
 
     return g
+
 
 def merge_models(
         m1,  # type: ModelProto

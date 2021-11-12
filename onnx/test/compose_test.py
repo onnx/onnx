@@ -11,8 +11,10 @@ import onnx
 import onnx.version_converter
 from onnx import helper, TensorProto
 
+
 def _create_tensor(name, dtype=TensorProto.FLOAT, shape=[1, 2]):  # type: ignore
     return helper.make_tensor_value_info(name, TensorProto.FLOAT, shape)
+
 
 class TestComposeFunctions(unittest.TestCase):
     def test_merge(self):  # type: () -> None
@@ -51,12 +53,13 @@ class TestComposeFunctions(unittest.TestCase):
         io_map_g3 = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
         g3 = onnx.compose.merge_graphs(
             g1, g2, io_map=io_map_g3)
+
         def check_g3(g1, g2, g3):
             self.assertEqual(g3.input, g1.input)
             self.assertEqual(g3.output, g2.output)
             # Edge names are different
             self.assertEqual([item.name for item in g3.node],
-                            [item.name for item in g1.node] + [item.name for item in g2.node])
+                             [item.name for item in g1.node] + [item.name for item in g2.node])
 
         check_g3(g1, g2, g3)
         m3 = helper.make_model(g3, producer_name='test',
@@ -112,7 +115,8 @@ class TestComposeFunctions(unittest.TestCase):
                           onnx.compose.merge_models, m1, m2, io_map=io_map_g3, ir_version=wrong_ir_version)
 
         # Minimum IR version should work
-        m3 = onnx.compose.merge_models(m1, m2, io_map=io_map_g3, ir_version=min_ir_version)
+        m3 = onnx.compose.merge_models(
+            m1, m2, io_map=io_map_g3, ir_version=min_ir_version)
         onnx.checker.check_model(m3)
         check_g3(m1.graph, m2.graph, m3.graph)
 
