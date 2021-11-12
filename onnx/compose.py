@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import copy
 from typing import List, Tuple, Text, Optional, MutableMapping
 from google.protobuf.internal.containers import RepeatedScalarFieldContainer
-from onnx import ModelProto, GraphProto, OperatorSetIdProto, helper, checker
+from onnx import ModelProto, GraphProto, helper, checker
 from onnx import TensorProto as tp
 
 
