@@ -6,7 +6,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from typing import List, Tuple, Text, Optional, MutableMapping
-from google.protobuf.internal.containers import RepeatedScalarFieldContainer
 from onnx import ModelProto, GraphProto, helper, checker
 from onnx import TensorProto as tp
 

@@ -9,9 +9,7 @@ import unittest
 
 from typing import Text, List
 
-import onnx
-import onnx.version_converter
-from onnx import helper, parser, checker, ModelProto, GraphProto, ValueInfoProto
+from onnx import helper, parser, checker, compose, version_converter, ModelProto, GraphProto, ValueInfoProto
 
 
 def _load_model(m_def):  # type: (Text) -> ModelProto
@@ -74,7 +72,7 @@ class TestComposeFunctions(unittest.TestCase):
         m1, m2 = _load_model(m1_def), _load_model(m2_def)
 
         io_map = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
-        g3 = onnx.compose.merge_graphs(m1.graph, m2.graph, io_map=io_map)
+        g3 = compose.merge_graphs(m1.graph, m2.graph, io_map=io_map)
         checker.check_graph(g3)
 
         def check_graph(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
@@ -86,7 +84,7 @@ class TestComposeFunctions(unittest.TestCase):
 
         check_graph(m1.graph, m2.graph, g3)
 
-        m3 = onnx.compose.merge_models(m1, m2, io_map=io_map)
+        m3 = compose.merge_models(m1, m2, io_map=io_map)
         checker.check_model(m3)
         check_graph(m1.graph, m2.graph, m3.graph)
 
@@ -99,7 +97,7 @@ class TestComposeFunctions(unittest.TestCase):
         m1, m2 = _load_model(m1_def), _load_model(m2_def)
 
         io_map = [("B00", "B01"), ("B10", "B11")]
-        g3 = onnx.compose.merge_graphs(m1.graph, m2.graph, io_map=io_map)
+        g3 = compose.merge_graphs(m1.graph, m2.graph, io_map=io_map)
         checker.check_graph(g3)
 
         def check_graph(g1, g2, g4):  # type: (GraphProto, GraphProto, GraphProto) -> None
@@ -115,7 +113,7 @@ class TestComposeFunctions(unittest.TestCase):
 
         check_graph(m1.graph, m2.graph, g3)
 
-        m3 = onnx.compose.merge_models(m1, m2, io_map=io_map)
+        m3 = compose.merge_models(m1, m2, io_map=io_map)
         checker.check_model(m3)
         check_graph(m1.graph, m2.graph, m3.graph)
 
@@ -127,18 +125,18 @@ class TestComposeFunctions(unittest.TestCase):
         helper.set_model_props(m2, {'p3': 'v3', 'p4': 'v4'})
 
         io_map = [("B00", "B01")]
-        m3 = onnx.compose.merge_models(m1, m2, io_map=io_map)
+        m3 = compose.merge_models(m1, m2, io_map=io_map)
         assert len(m3.metadata_props) == 4
 
         # Overlap, but same value
         helper.set_model_props(m2, {'p1': 'v1', 'p4': 'v4'})
-        m3 = onnx.compose.merge_models(m1, m2, io_map=io_map)
+        m3 = compose.merge_models(m1, m2, io_map=io_map)
         assert len(m3.metadata_props) == 3
 
         # Same keys but not same value. Error
         helper.set_model_props(m2, {'p1': 'v5', 'p4': 'v4'})
         self.assertRaises(ValueError,
-                          onnx.compose.merge_models, m1, m2, io_map=io_map)
+                          compose.merge_models, m1, m2, io_map=io_map)
 
     def test_error_wrong_input_output_name(self):  # type: () -> None
         '''
@@ -147,12 +145,12 @@ class TestComposeFunctions(unittest.TestCase):
         m1, m2 = _load_model(m1_def), _load_model(m2_def)
 
         self.assertRaises(ValueError,
-                          onnx.compose.merge_models, m1, m2,
+                          compose.merge_models, m1, m2,
                           io_map=[("wrong_outname", "B01"), ("B10", "B11"), ("B20", "B21")])
 
         # Wrong output name
         self.assertRaises(ValueError,
-                          onnx.compose.merge_models, m1, m2,
+                          compose.merge_models, m1, m2,
                           io_map=[("B00", "wrong_input"), ("B10", "B11"), ("B20", "B21")])
 
     def test_error_ir_version_mismatch(self):  # type: () -> None
@@ -179,7 +177,7 @@ class TestComposeFunctions(unittest.TestCase):
     ''')
         # Wrong IR version name
         self.assertRaises(ValueError,
-                          onnx.compose.merge_models, m1, m2,
+                          compose.merge_models, m1, m2,
                           io_map=[("Y0", "X1")])
 
     def test_error_opset_import_mismatch(self):  # type: () -> None
@@ -188,18 +186,18 @@ class TestComposeFunctions(unittest.TestCase):
         '''
         m1, m2 = _load_model(m1_def), _load_model(m2_def)
         m1 = helper.make_model(m1.graph, producer_name='test',
-                               opset_imports=[onnx.helper.make_opsetid("", 10)])
+                               opset_imports=[helper.make_opsetid("", 10)])
         m2 = helper.make_model(m2.graph, producer_name='test',
-                               opset_imports=[onnx.helper.make_opsetid("", 15)])
+                               opset_imports=[helper.make_opsetid("", 15)])
 
         io_map = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
         self.assertRaises(ValueError,
-                          onnx.compose.merge_models, m1, m2, io_map)
+                          compose.merge_models, m1, m2, io_map)
 
         # Converting to the same Operator set version, should work
-        m1 = onnx.version_converter.convert_version(m1, 15)
-        m3 = onnx.compose.merge_models(m1, m2, io_map=io_map)
-        onnx.checker.check_model(m3)
+        m1 = version_converter.convert_version(m1, 15)
+        m3 = compose.merge_models(m1, m2, io_map=io_map)
+        checker.check_model(m3)
 
     def _test_add_prefix(self,
                          rename_nodes=False, rename_edges=False,
@@ -212,14 +210,14 @@ class TestComposeFunctions(unittest.TestCase):
         if inplace:
             m2 = ModelProto()
             m2.CopyFrom(m1)
-            onnx.compose.add_prefix(m2, prefix,
+            compose.add_prefix(m2, prefix,
                                     rename_nodes=rename_nodes,
                                     rename_edges=rename_edges,
                                     rename_inputs=rename_inputs,
                                     rename_outputs=rename_outputs,
                                     inplace=True)
         else:
-            m2 = onnx.compose.add_prefix(m1, prefix,
+            m2 = compose.add_prefix(m1, prefix,
                                         rename_nodes=rename_nodes,
                                         rename_edges=rename_edges,
                                         rename_inputs=rename_inputs,
@@ -314,14 +312,14 @@ class TestComposeFunctions(unittest.TestCase):
                 self.assertEqual(_get_shape(out_g2), expected_out_shape)
 
         for dim_idx in [0, 2, -1, -3]:
-            m2 = onnx.compose.expand_out_dim(m1, dim_idx)
+            m2 = compose.expand_out_dim(m1, dim_idx)
             _check_model(m1, m2, dim_idx)
 
         # Test inplace
         m2 = ModelProto()
         m2.CopyFrom(m1)
         dim_idx = 0
-        onnx.compose.expand_out_dim(m2, dim_idx, inplace=True)
+        compose.expand_out_dim(m2, dim_idx, inplace=True)
         _check_model(m1, m2, dim_idx)
 
 
