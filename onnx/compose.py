@@ -5,7 +5,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import copy
 from typing import List, Tuple, Text, Optional, MutableMapping
 from google.protobuf.internal.containers import RepeatedScalarFieldContainer
 from onnx import ModelProto, GraphProto, helper, checker
@@ -96,13 +95,17 @@ def merge_models(
         io_map,  # type: List[Tuple[Text, Text]]
         name=None,  # type: Optional[Text]
         doc_string=None,  # type: Optional[Text]
-        producer_name='onnx.compose',  # type: Optional[Text]
-        ir_version=None,  # type: Optional[int]
+        producer_name='onnx.compose.merge_models',  # type: Optional[Text]
+        producer_version="1.0",  # type: Optional[Text]
+        domain="",  # type: Optional[Text]
+        model_version=1  # type: Optional[int]
 ):  # type: (...) -> ModelProto
     """Combines two ONNX models into a single one.
 
     The combined model is defined by connecting the specified set of outputs/inputs. Those inputs/outputs
     not specified in the io_map argument will remain as inputs/outputs of the combined model.
+
+    Both models should have the same IR version, and same operator sets imported.
 
     Arguments:
         m1 (ModelProto): First model
@@ -115,14 +118,20 @@ def merge_models(
         doc_string (string): Optional docstring for the combined graph
                              If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
         producer_name (string): Optional producer name for the combined model. Default: 'onnx.compose'
-        ir_version (int): Optional target IR version. By default the highest IR version from the two graphs will be used
-                          The target IR version should be compatible with the Operator Set versions used by
-                          the models to be combined.
+        producer_version (string): Optional producer version for the combined model. Default: "1.0"
+        domain (string): Optional domain of the combined model. Default: ""
+        model_version (int): Optional version of the graph encoded. Default: 1
     """
     if type(m1) is not ModelProto:
         raise ValueError("m1 argument is not an ONNX model")
     if type(m2) is not ModelProto:
         raise ValueError("m2 argument is not an ONNX model")
+
+    if m1.ir_version != m2.ir_version:
+        raise ValueError(
+            f"IR version mismatch {m1.ir_version} != {m2.ir_version}."
+            " Both models should have have the same IR version")
+    ir_version = m1.ir_version
 
     opset_import_map = {}  # type: MutableMapping[Text, int]
     opset_imports = \
@@ -139,102 +148,151 @@ def merge_models(
         else:
             opset_import_map[entry.domain] = entry.version
 
-    min_ir_version = helper.find_min_ir_version_for(
-        [entry for entry in opset_imports])
-    if ir_version is None:
-        ir_version = max(min_ir_version, max(
-            m1.ir_version, m2.ir_version))
-    if ir_version < min_ir_version:
-        raise ValueError(
-            f"IR version {ir_version} is not sufficient to support "
-            f"the models operator set ids: {opset_imports}")
-
     graph = merge_graphs(m1.graph, m2.graph, io_map, name, doc_string)
-    model = helper.make_model(graph, producer_name=producer_name,
+    model = helper.make_model(graph,
+                              producer_name=producer_name,
+                              producer_version=producer_version,
+                              domain=domain,
+                              model_version=model_version,
                               opset_imports=opset_imports,
                               ir_version=ir_version)
+
+    # Merging model metadata props
+    model_props = {}
+    for meta_entry in m1.metadata_props:
+        model_props[meta_entry.key] = meta_entry.value
+    for meta_entry in m2.metadata_props:
+        if meta_entry.key in model_props:
+            value = model_props[meta_entry.key]
+            if value != meta_entry.value:
+                raise ValueError(
+                    "Can't merge models with different values for the same model metadata property."
+                    f" Found: property = {meta_entry.key}, with values {value} and {meta_entry.value}."
+                )
+        else:
+            model_props[meta_entry.key] = meta_entry.value
+    helper.set_model_props(model, model_props)
+
+    # Merging functions
+    model.functions.MergeFrom(m1.functions)
+    model.functions.MergeFrom(m2.functions)
+
     checker.check_model(model)
     return model
 
 
 def add_prefix(
-        g,  # type: GraphProto
+        model,  # type: ModelProto
         prefix,  # type: Text
         rename_nodes=True,  # type: Optional[bool]
         rename_edges=True,  # type: Optional[bool]
         rename_inputs=True,  # type: Optional[bool]
         rename_outputs=True,  # type: Optional[bool]
-):  # type: (...) -> GraphProto
+        inplace=False,  # type: Optional[bool]
+):  # type: (...) -> ModelProto
     """Adds a prefix to names of elements in a graph: Nodes, Edges, Inputs, Outputs
 
     It can be used as a utility before merging graphs that have overlapping names.
-    Empty names are not prefixed.
+    Empty names are not _prefixed.
 
     Arguments:
-        g (GraphProto): Graph
+        g (ModelProto): Model
         prefix (Text): Prefix to be added to each name in the graph
         rename_nodes (bool): Whether to prefix node names
         rename_edges (bool): Whether to prefix node edge names
         rename_inputs (bool): Whether to prefix input names
         rename_outputs (bool): Whether to prefix output names
+        inplace (bool): If True, mutates the model directly.
+                        Otherwise, a copy will be created
     """
-    if type(g) is not GraphProto:
-        raise ValueError("g argument is not an ONNX graph")
+    if type(model) is not ModelProto:
+        raise ValueError("model argument is not an ONNX model")
 
-    g = copy.deepcopy(g)
+    if not inplace:
+        m = ModelProto()
+        m.CopyFrom(model)
+        model = m
 
-    def prefixed(prefix, name):  # type: (Text, Text) -> Text
+    g = model.graph
+
+    def _prefixed(prefix, name):  # type: (Text, Text) -> Text
         return prefix + name if len(name) > 0 else name
+
+    name_map = {}
+    if rename_edges:
+        for n in g.node:
+            for e in n.input:
+                name_map[e] = _prefixed(prefix, e)
+            for e in n.output:
+                name_map[e] = _prefixed(prefix, e)
+    else:
+        if rename_outputs:
+            for entry in g.output:
+                name_map[entry.name] = _prefixed(prefix, entry.name)
+        if rename_inputs:
+            for entry in g.input:
+                name_map[entry.name] = _prefixed(prefix, entry.name)
 
     if rename_nodes:
         for n in g.node:
-            n.name = prefixed(prefix, n.name)
+            n.name = _prefixed(prefix, n.name)
 
-    if rename_edges:
-        def clear(lst):  # type: (RepeatedScalarFieldContainer[Text]) -> None
-            for _ in range(len(lst)):
-                lst.pop()
+    for n in g.node:
+        for i in range(len(n.output)):
+            if n.output[i] in name_map:
+                n.output[i] = name_map[n.output[i]]
+        for i in range(len(n.input)):
+            if n.input[i] in name_map:
+                n.input[i] = name_map[n.input[i]]
 
-        for n in g.node:
-            out_names = [prefixed(prefix, name) for name in n.output]
-            clear(n.output)
-            n.output.extend(out_names)
+    for in_desc in g.input:
+        if in_desc.name in name_map:
+            in_desc.name = name_map[in_desc.name]
+    for out_desc in g.output:
+        if out_desc.name in name_map:
+            out_desc.name = name_map[out_desc.name]
 
-            in_names = [prefixed(prefix, name) for name in n.input]
-            clear(n.input)
-            n.input.extend(in_names)
-
-    if rename_inputs:
-        for i in g.input:
-            i.name = prefixed(prefix, i.name)
-
-    if rename_outputs:
-        for o in g.output:
-            o.name = prefixed(prefix, o.name)
-
-    return g
+    return model
 
 
 def expand_out_dim(
-        g,  # type: GraphProto
+        model,  # type: ModelProto
         dim_idx,  # type: int
-):  # type: (...) -> GraphProto
+        inplace=False,  # type: Optional[bool]
+):  # type: (...) -> ModelProto
     """Inserts an extra dimension with extent 1 to each output in the graph.
 
     Inserts and Unsqueeze node for each output. It can be used as a utility before merging graphs,
     for example when the second one expects a batch dimension.
 
     Arguments:
-        g (GraphProto): Graph
+        model (ModelProto): Model
         dim_idx (int): Index of the dimension to be inserted.
                        A negative value means counting dimensions from the back.
+        inplace (bool): If True, mutates the model directly.
+                        Otherwise, a copy will be created
     """
-    if type(g) is not GraphProto:
-        raise ValueError("g argument is not an ONNX graph")
+    if type(model) is not ModelProto:
+        raise ValueError("m argument is not an ONNX model")
 
-    g = copy.deepcopy(g)
+    if not inplace:
+        m = ModelProto()
+        m.CopyFrom(model)
+        model = m
 
-    expand_dim_k = g.name + "_expand_dim_idx"
+    g = model.graph
+
+    orig_out_names = [output.name for output in g.output]
+
+    for n in g.node:
+        for i in range(len(n.output)):
+            if n.output[i] in orig_out_names:
+                n.output[i] = n.output[i] + f'_collapsed_dim_{dim_idx}'
+        for i in range(len(n.input)):
+            if n.input[i] in orig_out_names:
+                n.input[i] = n.input[i] + f'_collapsed_dim_{dim_idx}'
+
+    expand_dim_k = g.name + "_expand_out_dim_idx"
     g.node.append(
         helper.make_node(
             'Constant', inputs=[], outputs=[expand_dim_k], name=f"{expand_dim_k}-constant",
@@ -244,13 +302,13 @@ def expand_out_dim(
 
     for _ in range(len(g.output)):
         o = g.output.pop(0)
-        new_name = o.name + '_expanded'
+        prev_output = o.name + f'_collapsed_dim_{dim_idx}'
         g.node.append(
-            helper.make_node('Unsqueeze', inputs=[o.name, expand_dim_k],
-                             outputs=[new_name], name=f"unsqueeze-{o.name}")
+            helper.make_node('Unsqueeze', inputs=[prev_output, expand_dim_k],
+                             outputs=[o.name], name=f"unsqueeze-{o.name}")
         )
         new_shape = [d.dim_value for d in o.type.tensor_type.shape.dim]
         new_shape.insert(dim_idx, 1)
         g.output.append(
-            helper.make_tensor_value_info(new_name, o.type.tensor_type.elem_type, new_shape))
-    return g
+            helper.make_tensor_value_info(o.name, o.type.tensor_type.elem_type, new_shape))
+    return model
