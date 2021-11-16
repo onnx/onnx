@@ -10,9 +10,8 @@ import unittest
 from typing import Text, List
 
 import onnx
-from onnx.onnx_ml_pb2 import ModelProto
 import onnx.version_converter
-from onnx import helper, parser, checker, TensorProto, GraphProto, ValueInfoProto
+from onnx import helper, parser, checker, ModelProto, GraphProto, ValueInfoProto
 
 
 def _load_model(m_def):  # type: (Text) -> ModelProto
