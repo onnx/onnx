@@ -64,6 +64,11 @@ namespace ONNX_NAMESPACE {
       res.insert(res.end(), data.begin(), data.end());                         \
       return res;                                                              \
     }                                                                          \
+    if (tensor_proto->data_type() == TensorProto_DataType_STRING) {            \
+      fail_shape_inference(tensor_proto->name()," data type is string. string",\
+      " content is required to be stored in repeated bytes string_data field.",\
+      " raw_data type cannot be string.");                                     \
+    }                                                                          \
     /* The given tensor does have raw_data itself so parse it by given type */ \
     /* make copy as we may have to reverse bytes */                            \
     std::string raw_data = tensor_proto->raw_data();                           \
