@@ -107,7 +107,7 @@ git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
 git checkout v3.16.0
 cd cmake
-cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobug_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobug_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=Release
 msbuild INSTALL.vcxproj /p:Configuration=Release
 ```
@@ -233,14 +233,14 @@ to verify it works.
 For full list refer to CMakeLists.txt  
 **Environment variables**  
 * `USE_MSVC_STATIC_RUNTIME` should be 1 or 0, not ON or OFF. When set to 1 onnx links statically to runtime library.  
-**Default**: USE_MSVC_STATIC_RUNTIME=1
+**Default**: USE_MSVC_STATIC_RUNTIME=0
 
 * `DEBUG` should be 0 or 1. When set to 1 onnx is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file][CMakeLists] and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.  
 **Default**: Debug=0
 
 **CMake variables**
 * `ONNX_USE_PROTOBUF_SHARED_LIBS` should be ON or OFF.  
-**Default**: ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=1  
+**Default**: ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=0
 `ONNX_USE_PROTOBUF_SHARED_LIBS` determines how onnx links to protobuf libraries.  
     - When set to ON - onnx will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/master/cmake/README.md#dlls-vs-static-linking), Protobuf_USE_STATIC_LIBS will be set to OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
     - When set to OFF - onnx will link statically to protobuf, and Protobuf_USE_STATIC_LIBS will be set to ON (to force the use of the static libraries) and `USE_MSVC_STATIC_RUNTIME` can be 0 or 1.  

@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
+from onnx import checker, helper, numpy_helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
 from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
 from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
@@ -137,6 +137,13 @@ class TestShapeInference(unittest.TestCase):
             [("X", TensorProto.FLOAT, (2, 3, 4))],
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
             [make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 4))])
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_transpose_incorrect_repeated_perm(self):  # type: () -> None
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 1])],
+            [])
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
     def _make_matmul_test_all_dims_known(self, shape1, shape2):  # type: (Sequence[int], Sequence[int]) -> None
@@ -360,6 +367,17 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (3, 4))])
+
+    def test_expand_dynamic_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (1, 2, None)),
+             ('shape', TensorProto.INT64, (3,))],
+            [make_node("Expand", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (None, 2, None))])
 
     def test_resize_size(self):  # type: () -> None
         graph = self._make_graph(
@@ -2472,6 +2490,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5))])
 
+    def test_quantizelinear_optional_input(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y_scale', TensorProto.FLOAT, ())],
+            [make_node('QuantizeLinear', ['x', 'y_scale', ''], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (30, 4, 5))])
+
     def test_dequantizelinear(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (30, 4, 5)),
@@ -3879,6 +3905,69 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Where', ['cond', 'x', 'y'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.BFLOAT16, (10,))])  # type: ignore
+
+    def test_parse_data_with_unsupported_tensor_type(self):  # type: () -> None
+        model = helper.make_model(
+            graph=helper.make_graph(
+                name='graph_with_unsupported_type',
+                inputs=[],
+                outputs=[helper.make_tensor_value_info('y', TensorProto.FLOAT, shape=None)],
+                nodes=[make_node('ConstantOfShape', ['x'], ['y'])],
+                # ConstantOfShape only accepts np.int64 instead of np.int32
+                initializer=[numpy_helper.from_array(np.array([4, 3], dtype=np.int32), name='x')]))
+        # Strict shape inference should catch this invalid type error (int32 is not supported)
+        self.assertRaises(onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes, model, strict_mode=True)
+        # Even nornmal shape inference should not produce any invalid shape due to wrong type for ParseData
+        inferred_model = onnx.shape_inference.infer_shapes(model)
+        self.assertFalse(inferred_model.graph.output[0].type.tensor_type.HasField('shape'))
+
+    def test_parse_data_with_undefined_tensor_type(self):  # type: () -> None
+        model = helper.make_model(
+            graph=helper.make_graph(
+                name='graph_with_undefined_type',
+                inputs=[],
+                outputs=[helper.make_tensor_value_info('y', TensorProto.FLOAT, shape=None)],
+                nodes=[make_node('ConstantOfShape', ['x'], ['y'])],
+                initializer=[numpy_helper.from_array(np.array([4, 3], dtype=np.int64), name='x')]))
+        # Hardcode the tensor type as UNDEFINED to test catching undefined type error
+        model.graph.initializer[0].data_type = TensorProto.UNDEFINED
+        # Strict shape inference should catch this undefined type error
+        self.assertRaises(onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes, model, strict_mode=True)
+        # Even nornmal shape inference should not produce any invalid shape due to undefined type for ParseData
+        inferred_model = onnx.shape_inference.infer_shapes(model)
+        self.assertFalse(inferred_model.graph.output[0].type.tensor_type.HasField('shape'))
+
+    def test_gridsample(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, 1, 3, 3)),
+             ('grid', TensorProto.INT64, (1, 3, 3, 2))],
+            [make_node("GridSample", ['x', 'grid'], ['y'], mode='nearest', padding_mode='border', align_corners=1)],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 3, 3))])  # type: ignore
+
+    def test_gridsample_defaults(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('N', 'C', 'H', 'W')),
+             ('grid', TensorProto.FLOAT, ('N', 'H_out', 'W_out', 2))],
+            [make_node("GridSample", ['x', 'grid'], ['y'])],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, ('N', 'C', 'H_out', 'W_out'))])  # type: ignore
+
+    def test_gridsample_no_dim(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('N', 'C', None, None)),
+             ('grid', TensorProto.FLOAT, ('N', None, None, 2))],
+            [make_node("GridSample", ['x', 'grid'], ['y'], mode='bilinear', padding_mode='border')],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, ('N', 'C', None, None))])  # type: ignore
 
 
 if __name__ == '__main__':
