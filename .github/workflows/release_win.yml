@@ -74,7 +74,7 @@ jobs:
         mkdir protobuf_install
         cd ./protobuf/cmake
 
-        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=ON -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
         msbuild protobuf.sln /m /p:Configuration=Release
         msbuild INSTALL.vcxproj /p:Configuration=Release
         echo "Protobuf installation complete."
@@ -90,7 +90,6 @@ jobs:
         cd ../../../onnx
         dir
         echo "Install ONNX"
-        $Env:USE_MSVC_STATIC_RUNTIME=1
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 

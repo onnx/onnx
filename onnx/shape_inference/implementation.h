@@ -60,6 +60,12 @@ class SymbolTableImpl : public SymbolTable {
         case TypeProto::kSequenceType:
           AddExistingSymbolicDims(typeProto.sequence_type().elem_type());
           break;
+        case TypeProto::kOptionalType:
+          AddExistingSymbolicDims(typeProto.optional_type().elem_type());
+          break;
+        case TypeProto::kMapType:
+          AddExistingSymbolicDims(typeProto.map_type().value_type());
+          break;
         default:
           break;
     }
