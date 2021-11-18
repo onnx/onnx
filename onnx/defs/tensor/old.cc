@@ -3211,7 +3211,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else if (!std::none_of(axes.begin(), axes.end(), is_negative)) {
             // Since negative axes are not supported before opset-10
             // Simply performs rank inference for negative axes
-            for (size_t i = 0, j = 0; (int64_t)i <
+            for (size_t i = 0; (int64_t)i <
                 ctx.getInputType(0)->tensor_type().shape().dim_size();
                 ++i) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
@@ -3776,7 +3776,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
 
-          for (int i = 0; i < input_shape.dim_size(); ++i) {
+          for (int i = 0, j = 0; i < input_shape.dim_size(); ++i) {
             if (static_cast<size_t>(j) < axes.size() && axes[j] == i) {
               if (input_shape.dim(i).has_dim_value() &&
                   input_shape.dim(i).dim_value() != 1) {
