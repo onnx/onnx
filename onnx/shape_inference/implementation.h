@@ -180,6 +180,7 @@ struct InferenceContextImpl : public InferenceContext {
         }
       }
     }
+
     allOutputTypes_.resize(n.output_size());
   }
 
