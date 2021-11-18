@@ -44,6 +44,7 @@ Multidirectional broadcasting is supported by the following operators in ONNX:
 - [Pow](Operators.md#Pow)
 - [Sub](Operators.md#Sub)
 - [Sum](Operators.md#Sum)
+- [Where](Operators.md#Where)
 - [Xor](Operators.md#Xor)
 
 ## Unidirectional Broadcasting
