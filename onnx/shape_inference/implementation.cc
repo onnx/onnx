@@ -426,7 +426,9 @@ static void InferShapesImpl(
       }
       for (int i = 0; i < n.output_size(); ++i) {
         auto* inferredType = ctx.getOutputType(i);
-        if (inferredType->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
+        // If output is missing (lack name), shape inference should not be inferred
+        if (inferredType->value_case() == TypeProto::ValueCase::VALUE_NOT_SET &&
+          n.output(i).empty()) {
           continue;
         }
 

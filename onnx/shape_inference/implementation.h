@@ -180,10 +180,6 @@ struct InferenceContextImpl : public InferenceContext {
         }
       }
     }
-    // Marks which outputs have empty name; they should not be propagated
-    for (const auto& output : n.output()) {
-      allOutputIsEmpty.push_back(output.empty());
-    }
     allOutputTypes_.resize(n.output_size());
   }
 
@@ -232,23 +228,12 @@ struct InferenceContextImpl : public InferenceContext {
   size_t getNumOutputs() const override {
     return allOutputTypes_.size();
   }
-  // If output is missing (lack name), getOutputType will return dummy TypeProto
+
   TypeProto* getOutputType(size_t index) override {
     if (index >= allOutputTypes_.size()) {
       ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
-    if (outputIsEmpty(index)) {
-      TypeProto emptyTypeProto;
-      allOutputTypes_[index] = emptyTypeProto;
-    }
     return &allOutputTypes_[index];
-  }
-
-  bool outputIsEmpty(size_t index) const override {
-    if (index >= allOutputTypes_.size()) {
-      ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
-    }
-    return allOutputIsEmpty[index];
   }
 
   GraphInferencer* getGraphAttributeInferencer(
@@ -288,7 +273,6 @@ struct InferenceContextImpl : public InferenceContext {
   std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
-  std::vector<bool> allOutputIsEmpty;
   GraphInferenceContext* graphInferenceContext_;
 
   // mutable as internal cache of GraphInferencer instances
