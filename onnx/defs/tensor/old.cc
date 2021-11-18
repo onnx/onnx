@@ -3193,14 +3193,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference(
                 "Incorrect or missing attribute value for starts and ends");
           }
+
           auto is_negative = [](int64_t index) {
             return index < 0;
           };
-          if (!std::none_of(starts.begin(), starts.end(), is_negative)) {
-            fail_shape_inference("Attribute start cannot have negative value.");
-          } else if (!std::none_of(ends.begin(), ends.end(), is_negative)) {
-            fail_shape_inference("Attribute end cannot have negative value.");
+          bool has_negative_axis = false;
+          if (!std::none_of(starts.begin(), starts.end(), is_negative) ||
+              !std::none_of(ends.begin(), ends.end(), is_negative)) {
+            has_negative_axis = true;
           }
+
           std::vector<int64_t> axes;
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
             for (int i = 0; (size_t)i < starts.size(); ++i) {
@@ -3209,6 +3211,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else if (axes.size() != starts.size()) {
             fail_shape_inference("Attribute axes has incorrect length");
           } else if (!std::none_of(axes.begin(), axes.end(), is_negative)) {
+            has_negative_axis = true;
+          } else if (!std::is_sorted(axes.begin(), axes.end())) {
+            // TODO support shape inference for unsorted axes
+            return;
+          }
+          if (has_negative_axis) {
             // Since negative axes are not supported before opset-10
             // Simply performs rank inference for negative axes
             for (size_t i = 0; (int64_t)i <
@@ -3217,11 +3225,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             }
             return;
-          } else if (!std::is_sorted(axes.begin(), axes.end())) {
-            // TODO support shape inference for unsorted axes
-            return;
           }
-
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           for (size_t i = 0, j = 0; (int64_t)i <
