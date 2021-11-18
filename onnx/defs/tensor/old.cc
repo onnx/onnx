@@ -3209,7 +3209,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else if (axes.size() != starts.size()) {
             fail_shape_inference("Attribute axes has incorrect length");
           } else if (!std::none_of(axes.begin(), axes.end(), is_negative)) {
-            fail_shape_inference("Attribute axes cannot have negative value.");
+            // Since negative axes are not supported before opset-10
+            // Simply performs rank inference for negative axes
+            for (size_t i = 0, j = 0; (int64_t)i <
+                ctx.getInputType(0)->tensor_type().shape().dim_size();
+                ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
+            return;
           } else if (!std::is_sorted(axes.begin(), axes.end())) {
             // TODO support shape inference for unsorted axes
             return;
