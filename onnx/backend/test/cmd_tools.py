@@ -31,7 +31,7 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
     # If op_type is specified, only include those testcases including the given operator
     # Otherwise, include all of the testcases
     cases += node_test.collect_testcases(args.op_type, args.opset_version)
-    
+
     for case in cases:
         output_dir = os.path.join(
             args.output, case.kind, case.name)
@@ -95,7 +95,7 @@ def parse_args():  # type: () -> argparse.Namespace
     subparser.add_argument('-t', '--op_type', default=None,
                            help='op_type for test case generation. (generates test data for the specified op_type only.)')
     subparser.add_argument('-v', '--opset_version', default=None,
-                           help='opset_version for test case generation. (generates test data with the specified opset_version)')    
+                           help='opset_version for test case generation. (generates test data with the specified opset_version)')
     subparser.set_defaults(func=generate_data)
 
     return parser.parse_args()
