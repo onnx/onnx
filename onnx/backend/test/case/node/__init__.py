@@ -19,7 +19,8 @@ from ..test_case import TestCase
 
 
 _NodeTestCases = []
-_TargetOpType = ""
+_TargetOpType = None
+_TargetOpsetVersion = None
 
 from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto
 
@@ -155,10 +156,12 @@ def expect(node,  # type: onnx.NodeProto
         inputs=inputs_vi,
         outputs=outputs_vi)
     kwargs[str('producer_name')] = 'backend-test'
-    # To make sure the model will use the same opset_version after opset changes
-    # Uses since_version as opset_version for produced models
-    since_version = onnx.defs.get_schema(node.op_type).since_version
-    kwargs[str('opset_imports')] = [onnx.helper.make_operatorsetid('', since_version)]
+    # To make sure the model will be produced with the same opset_version after opset changes
+    # By default, it uses since_version as opset_version for produced models
+    since_version = onnx.defs.get_schema(node.op_type, node.domain).since_version
+    produce_opset_version = _TargetOpsetVersion if _TargetOpsetVersion is not None else since_version
+
+    kwargs[str('opset_imports')] = [onnx.helper.make_operatorsetid('', produce_opset_version)]
     model = onnx.helper.make_model(graph, **kwargs)
 
     _NodeTestCases.append(TestCase(
@@ -206,18 +209,14 @@ def expect(node,  # type: onnx.NodeProto
         ))
 
 
-def collect_testcases():  # type: () -> List[TestCase]
-    '''Collect node test cases defined in python/numpy code.
-    '''
-    import_recursive(sys.modules[__name__])
-    return _NodeTestCases
-
-
-def collect_testcases_by_operator(op_type):  # type: (Text) -> List[TestCase]
-    '''Collect node test cases which include specific operator
+def collect_testcases(op_type, opset_version):  # type: (Text, int) -> List[TestCase]
+    '''Collect node test cases
     '''
     # only keep those tests related to this operator
     global _TargetOpType
     _TargetOpType = op_type
+
+    global _TargetOpsetVersion
+    _TargetOpsetVersion = opset_version
     import_recursive(sys.modules[__name__])
     return _NodeTestCases
