@@ -8,7 +8,7 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-static const char* RoiAlign_ver1_doc = R"DOC(
+static const char* RoiAlign_ver16_doc = R"DOC(
 Region of Interest (RoI) align operation described in the
 [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
 RoiAlign consumes an input tensor X and region of interests (rois)
@@ -24,9 +24,9 @@ through bilinear interpolation.
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
-    10,
+    16,
     OpSchema()
-        .SetDoc(RoiAlign_ver1_doc)
+        .SetDoc(RoiAlign_ver16_doc)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -60,6 +60,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Default is 'avg'.",
             AttributeProto::STRING,
             std::string("avg"))
+        .Attr(
+            "coordinate_transformation_mode",
+            "Allowed values are 'half_pixel' and 'output_half_pixel'. "
+            "Use the value 'half_pixel' to pixel shift the input coordinates by -0.5 (the recommended behavior). "
+            "Use the value 'output_half_pixel' to omit the pixel shift for the input (use this for a "
+            "backward-compatible behavior).",
+            AttributeProto::STRING,
+            std::string("half_pixel"))
         .Input(
             0,
             "X",

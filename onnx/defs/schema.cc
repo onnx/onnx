@@ -16,6 +16,7 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/stl_backports.h"
+#include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {
 // -1 means ONNX schema hasn't been loaded yet
@@ -288,6 +289,11 @@ void OpSchema::Verify(const NodeProto& node) const {
           fail_check("Attribute '", name, "' is expected to have field 'g'");
         }
         break;
+      case AttributeProto::TYPE_PROTO:
+        if (!attr_proto.has_tp()) {
+          fail_check("Attribute '", name, "' is expected to have field 'type_proto'");
+        }
+        break;
       case AttributeProto::FLOATS:
         if (!attr_proto.floats_size()) {
           fail_check("Attribute '", name, "' is expected to have field 'floats'");
@@ -316,6 +322,11 @@ void OpSchema::Verify(const NodeProto& node) const {
       case AttributeProto::GRAPHS:
         if (!attr_proto.graphs_size()) {
           fail_check("Attribute '", name, "' is expected to have field 'graphs'");
+        }
+        break;
+      case AttributeProto::TYPE_PROTOS:
+        if (!attr_proto.type_protos_size()) {
+          fail_check("Attribute '", name, "' is expected to have field 'type_protos'");
         }
         break;
       default:
@@ -361,6 +372,11 @@ OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
 
 OpSchema& OpSchema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction) {
   tensor_inference_function_ = std::move(inferenceFunction);
+  return *this;
+}
+
+OpSchema& OpSchema::PartialDataPropagationFunction(DataPropagationFunction dataPropagationFunction) {
+  data_propagation_function_ = std::move(dataPropagationFunction);
   return *this;
 }
 
@@ -489,11 +505,13 @@ ATTR_SETTER_WITH_SINGLE_VALUE(float, f, AttributeProto::FLOAT)
 ATTR_SETTER_WITH_SINGLE_VALUE(std::string, s, AttributeProto::STRING)
 ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(TensorProto, t, AttributeProto::TENSOR)
 ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(GraphProto, g, AttributeProto::GRAPH)
+ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(TypeProto, tp, AttributeProto::TYPE_PROTO)
 ATTR_SETTER_WITH_LIST_VALUE(int64_t, ints, AttributeProto::INTS)
 ATTR_SETTER_WITH_LIST_VALUE(float, floats, AttributeProto::FLOATS)
 ATTR_SETTER_WITH_LIST_COMPLEXVALUE(std::string, strings, AttributeProto::STRINGS)
 ATTR_SETTER_WITH_LIST_COMPLEXVALUE(TensorProto, tensors, AttributeProto::TENSORS)
 ATTR_SETTER_WITH_LIST_COMPLEXVALUE(GraphProto, graphs, AttributeProto::GRAPHS)
+ATTR_SETTER_WITH_LIST_COMPLEXVALUE(TypeProto, type_protos, AttributeProto::TYPE_PROTOS)
 
 OpSchema& OpSchema::AllowUncheckedAttributes() {
   allows_unchecked_attributes_ = true;
@@ -659,6 +677,16 @@ bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx
     return false;
 }
 
+OpSchema& OpSchema::FunctionBody(const char* func_body) {
+  OnnxParser parser(func_body);
+  auto status = parser.Parse(*function_body_.mutable_node());
+  if (!status.IsOK())
+    ONNX_THROW_EX(std::logic_error("Error parsing function body:" + status.ErrorMessage()));
+  if (!parser.EndOfInput())
+    ONNX_THROW_EX(std::logic_error("Extra unparsed input unexpected."));
+  return *this;
+}
+
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
   for (const auto& node : func_nodes) {
     auto new_node = function_body_.add_node();
@@ -688,11 +716,10 @@ OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   return *this;
 }
 
-void OpSchema::BuildFunction(FunctionProto& function_body, const std::vector<OperatorSetIdProto>& relied_opsets) const {
+void OpSchema::BuildFunction(FunctionProto& function_body) const {
   function_body.set_name(this->name_);
   function_body.set_doc_string(this->doc_);
-  function_body.set_since_version(this->since_version_);
-  function_body.set_status(OperatorStatus(1 - (int)this->support_));
+  function_body.set_domain(this->domain_);
   for (auto& i : inputs_) {
     function_body.add_input(i.GetName());
   }
@@ -703,8 +730,16 @@ void OpSchema::BuildFunction(FunctionProto& function_body, const std::vector<Ope
     function_body.add_attribute(a.first);
   }
 
-  for (auto& relied_opset : relied_opsets) {
-    *(function_body.mutable_opset_import()->Add()) = relied_opset;
+  // In a typical onnx function where the function and all the
+  // ops in function body belong to the same domain we implicitly add
+  // {domain_, since_version_} to funciton opset imports if it is not already added.
+  // This is simply for convienince. If any of the function body ops do not belong to same
+  // domain as function itself, then the function author needs to explicitly add all the relevant
+  // opset imports.
+  if (function_body.opset_import().size() == 0) {
+    auto* schema_opset = function_body.mutable_opset_import()->Add();
+    schema_opset->set_domain(domain_);
+    schema_opset->set_version(since_version_);
   }
 }
 

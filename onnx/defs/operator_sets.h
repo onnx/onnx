@@ -966,19 +966,56 @@ class OpSet_Onnx_ver14 {
 
 
 // Forward declarations for ai.onnx version 15
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, BatchNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Bernoulli);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Optional);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalHasElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalGetElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, CastLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Shape);
 
 // Iterate over schema from ai.onnx version 15
 class OpSet_Onnx_ver15 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, BatchNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Bernoulli)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Optional)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalHasElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, OptionalGetElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, CastLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Shape)>());
   }
 };
 
+
+// Forward declarations for ai.onnx version 16
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, RoiAlign);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterND);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterElements);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, If);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Loop);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Identity);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Where);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, GridSample);
+
+// Iterate over schema from ai.onnx version 16
+class OpSet_Onnx_ver16 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, RoiAlign)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterND)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterElements)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, If)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Loop)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Identity)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Where)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, GridSample)>());
+  }
+};
 inline void RegisterOnnxOperatorSetSchema() {
-  // 0 means all versions of ONNX schema have been loaded
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
   RegisterOpSetSchema<OpSet_Onnx_ver3>();
@@ -994,13 +1031,16 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver13>();
   RegisterOpSetSchema<OpSet_Onnx_ver14>();
   RegisterOpSetSchema<OpSet_Onnx_ver15>();
+  RegisterOpSetSchema<OpSet_Onnx_ver16>();
+  // 0 means all versions of ONNX schema have been loaded
+  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
 
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
-  // Sets to record the loaded version and prevent the full operator check in Debug mode
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(target_version);
   // Update here if opset_version bumps 
   // These calls for schema registration here are required to be in descending order for this to work correctly
+  RegisterOpSetSchema<OpSet_Onnx_ver16>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver15>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver14>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver13>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver12>(target_version);
@@ -1015,6 +1055,8 @@ inline void RegisterOnnxOperatorSetSchema(int target_version) {
   RegisterOpSetSchema<OpSet_Onnx_ver3>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver2>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver1>(target_version);
+  // Sets to record the loaded version and prevent the full operator check in Debug mode
+  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(target_version);
 }
 
 } // namespace ONNX_NAMESPACE

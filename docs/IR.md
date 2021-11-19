@@ -31,7 +31,7 @@ ONNX is an open specification that consists of the following components:
 
 #1 and #2 together make up the ONNX Intermediate Representation, or 'IR', specification which is covered herein; the built-in operators are covered in documents listed at the end. Specifically, built-in operators are divided into a set of primitive operators and functions. A function is an operator whose semantics is formally expressed via expansion into a sub-graph (called the function body) using other operators (and functions). Functionality-wise, an ONNX compatible framework or runtime may inline a function body to execute it if it does not have corresponding implementation of the function.
 
-There are two official ONNX variants; the main distinction between the two is found in the supported types and the default operator sets. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps. __ONNX-ML__ extends the __ONNX__ operator set with ML algorithms that are not based on neural networks.
+There are two official ONNX variants; the main distinction between the two is found in the default operator sets. __ONNX-ML__ extends the __ONNX__ operator set with ML algorithms that are not based on neural networks.
 
 Up to IR version 6, the ONNX specification and model format addressed only inference (also known as scoring). Starting from IR version 7, the ONNX specification and model format also support training. An ONNX training model is an extension of the inference-model. An inference-only runtime can consume a training model ignoring the training-related extensions. However, an inference-only model may enable a representation that is more optimal for inference purposes than a training model.
 
@@ -83,6 +83,7 @@ Each model has the following components:
 |graph|Graph|The parameterized graph that is evaluated to execute the model.|
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
 |training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
+|functions|FunctionProto[]|An optional list of functions local to the model.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
@@ -163,7 +164,7 @@ There are two distinct ways to pass information to operators – inputs and attr
 A graph is used to describe a side-effect-free computation (function).
 A serialized graph is comprised of a set of metadata fields, a list of model parameters, and a list of computation nodes.
 
-Each computation dataflow graph is structured as a topologically sorted list of nodes that form a graph, which MUST be free of cycles. Each node represents a call to an operator. Each node has zero or more inputs and one or more outputs.
+Each computation dataflow graph is structured as a topologically sorted list of nodes that form a graph, which MUST be free of cycles. Each node represents a call to an operator or a model local function. Each node has zero or more inputs and one or more outputs.
 
 Graphs have the following properties:
 
@@ -236,7 +237,7 @@ A name belonging to the Value namespace may appear in multiple places, namely as
 
 A value name used in a graph must have a unique definition, with the exception that the same name MAY appear in both the graph input list and graph initializer list. (Further exceptions apply in the presence of nested subgraphs, as described later.)
 
-When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input unless the corresponding op's specification explicitly allows it.
+When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In models with IR version >= 4, in nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input unless the corresponding op's specification explicitly allows it. In models with IR version <= 3, users MAY use the same name as both a subgraph initializer and subgraph input, but this is restricted to support constants via initializers that are not intended to correspond to any actual inputs passed from the node into the subgraph. In particular, the control-flow operator semantics determines the set of inputs supplied to the execution of the subgraph, and these input names MUST NOT appear as subgraph initializers. Subgraph initializer names must appear in the graph input list _after_ the actual inputs. This allows the actual inputs and formal inputs to be matched positionally.
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
@@ -309,11 +310,33 @@ More details can be found in [External Data](ExternalData.md).
 
 There are two official ONNX variants; the main distinction between the two is found in the supported types and the supported operators.
 
-With respect to supported types, the __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension __ONNX-ML__ also recognizes sequences and maps.
+With respect to supported types, both __ONNX__ and __ONNX-ML__ definition recognize tensors, sparse tensors, sequences, maps, and optionals as input and output types. Sequences and maps were supported from the IR version 6 (ONNX 1.6.0 release). Optional type was supported from IR vesion 8 (ONNX 1.10.0 release).
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the initializers of a graph.
 
 Primitive numeric, string, and Boolean types MUST be used as elements of tensors.
+
+### Tensor Definition
+
+Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
+
+Mathematically, a tensor can be defined as a pair of sequences/lists (V, S) where S is the shape of the tensor (a list of non-negative integers) and V is a list of values with length equal to the product of the dimensions in S. Two tensors (V, S) and (V', S') are equal if and only if V = V' and S = S'. The length of S is referred to as the rank.
+
+ - If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
+ - S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
+ - If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
+ - A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
+
+A tensor's shape S is a list but can be represented as a tensor with values S and shape [R] where R is the rank of the tensor.
+
+ - For a tensor (V, S), the tensor representing its shape is (S, [R]).
+ - The shape of a scalar is []. Represented as a tensor, [] has shape [0].
+
+#### Representation
+
+It is common to represent a tensor as a nested list. This generally works fine, but is problematic when zero dimensions are involved. A tensor of shape (5, 0) can be represented as [[], [], [], [], []], but (0, 5) is represented as [] which loses the information that the second dimension is 5.
+
+ - A nested list is not a complete representation of a tensor with dimensions of value zero.
 
 ### Tensor Element Types
 
@@ -332,11 +355,10 @@ The following types are used to define the types of graph and node inputs and ou
 
 |Variant | Type | Description |
 |---|---|---|
-ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
+ONNX|dense tensors|Represents a Tensor. See definition above. 
 ONNX|sequence|Sequences are dense, ordered, collections of elements that are of homogeneous types.
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
-
-ONNX currently does not define a sparse tensor type.
+ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](ONNXTypes.md)
 
 #### Static tensor shapes
 
@@ -377,7 +399,7 @@ The name of each dimension variable MUST adhere to [C90 identifier syntax rules]
 
 Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph.
 
-ONNX-ML supports richer types such as Sequences of Tensors. The global scoping of dimension variables means that a variable with type "Sequence<Tensor<float, [M,N]>" represents a sequence of tensors that *all have the same shape*. The dimension variables M or N must be omitted from the above type if that dimension does not have a fixed size across all tensors in the sequence. The entire shape must be omitted from the type if different tensors in the sequence may have different ranks.
+ONNX supports types such as Sequences of Tensors. The global scoping of dimension variables means that a variable with type "Sequence<Tensor<float, [M,N]>" represents a sequence of tensors that *all have the same shape*. The dimension variables M or N must be omitted from the above type if that dimension does not have a fixed size across all tensors in the sequence. The entire shape must be omitted from the type if different tensors in the sequence may have different ranks.
 
 For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and producing an output of shape [K,N].
 
@@ -387,7 +409,7 @@ _Historical Notes_: The following extensions were considered early on, but were 
 * The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set.
 * The use of the string "\*" (as a dimension variable) to denote a sequence of zero or more dimensions of unknown cardinality. This is not supported. In the current implementation, the number of dimensions in a shape MUST represent the rank of the tensor. A tensor of unknown rank is represented using a TypeProto::Tensor object with no shape, which is legal.
 * A scoping mechanism to allow dimension variables that are local to a sub-graph (such as the body of a loop) may be useful, but is not currently supported.
-* ONNX-ML supports richer types such as Sequences of Tensors. A scoping mechanism for the dimension variables local to a type may be useful to distinguish between the following two types: a sequence of square matrices (of differing sizes) vs a sequence of square matrices (all of same size). This is not currently supported.
+* ONNX supports types such as Sequences of Tensors. A scoping mechanism for the dimension variables local to a type may be useful to distinguish between the following two types: a sequence of square matrices (of differing sizes) vs a sequence of square matrices (all of same size). This is not currently supported.
 
 ### Attribute Types
 

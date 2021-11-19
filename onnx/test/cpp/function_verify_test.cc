@@ -8,6 +8,7 @@
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/parser.h"
 #include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
 
@@ -83,11 +84,8 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int
   }
   CheckerContext ctx;
   std::unordered_map<std::string, int> op_set;
-  if ((int)function_proto->since_version() != op.since_version()) {
-    fail_check("Unmatched since_version defined in function op '", op.Name(), "'");
-  }
   auto version_range = OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(op.domain());
-  if (function_proto->since_version() > version_range.second || function_proto->since_version() < version_range.first) {
+  if (op.since_version() > version_range.second || op.since_version() < version_range.first) {
     fail_check("Invalid function version in function op '", op.Name(), "'");
   }
 
@@ -181,24 +179,37 @@ void RegisterFunctionSchema() {
       .Output(2, "y_zero_point", "Output zero point. It's a scalar, which means a per-tensor/layer quantization.", "T2")
       .TypeConstraint("T1", {"tensor(float)"}, "Constrain 'x' to float tensor.")
       .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
-      .FunctionBody(FunctionBodyHelper::BuildNodes(
-          {// nodes: {outputs, op, inputs, attributes}
-           FunctionBodyHelper::Const<float>("Q_Min", 0.f),
-           FunctionBodyHelper::Const<float>("Q_Max", 255.f),
-           {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
-           {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
-           {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
-           {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
-           {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
-           {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
-           {{"Min_Scaled"}, "Div", {"X_Min_Adjusted", "Scale"}},
-           {{"Initial_ZeroPoint_FP"}, "Sub", {"Q_Min", "Min_Scaled"}},
-           {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP", "Q_Min", "Q_Max"}},
-           {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
-           {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
-           {{"y_scale"}, "Identity", {"Scale"}},
-           {{"y_zero_point"}, "Identity", {"Zeropoint"}},
-           {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}}));
+      .FunctionBody(
+          FunctionBodyHelper::BuildNodes(
+              {// nodes: {outputs, op, inputs, attributes}
+               FunctionBodyHelper::Const<float>("Q_Min", 0.f),
+               FunctionBodyHelper::Const<float>("Q_Max", 255.f),
+               {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
+               {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
+               {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
+               {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
+               {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
+               {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
+               {{"Min_Scaled"}, "Div", {"X_Min_Adjusted", "Scale"}},
+               {{"Initial_ZeroPoint_FP"}, "Sub", {"Q_Min", "Min_Scaled"}},
+               {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP", "Q_Min", "Q_Max"}},
+               {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
+               {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
+               {{"y_scale"}, "Identity", {"Scale"}},
+               {{"y_zero_point"}, "Identity", {"Zeropoint"}},
+               {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}}),
+          []() {
+            std::vector<OperatorSetIdProto> operator_sets(2);
+            auto& onnx_opset = operator_sets[0];
+            onnx_opset.set_domain("");
+            onnx_opset.set_version(13);
+
+            auto& test_opset = operator_sets[1];
+            test_opset.set_domain(AI_ONNX_ML_DOMAIN);
+            test_opset.set_version(2);
+
+            return operator_sets;
+          }());
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(function_schema);
   (void)unused;
 }
@@ -211,32 +222,55 @@ TEST(FunctionVerification, VerifyFunctionBodyWithMultipleDomains) {
   EXPECT_TRUE(schema->HasFunction());
   EXPECT_FALSE(schema->HasContextDependentFunction());
 
-  NodeProto nodeProto;
-  nodeProto.set_op_type("DynamicQuantizeLinear_Fake");
-  nodeProto.add_input("x");
-  nodeProto.add_output("y");
-  nodeProto.add_output("y_scale");
-  nodeProto.add_output("y_zero_point");
-
-  std::vector<OperatorSetIdProto> operator_sets(2);
-  auto& onnx_opset = operator_sets[0];
-  onnx_opset.set_domain("");
-  onnx_opset.set_version(13);
-
-  auto& test_opset = operator_sets[1];
-  test_opset.set_domain(AI_ONNX_ML_DOMAIN);
-  test_opset.set_version(2);
-
-  FunctionProto fnProto;
-  schema->BuildFunction(fnProto, operator_sets);
-  // EXPECT_EQ(fnProto.node_size(), 14);
+  const FunctionProto* fnProto = schema->GetFunction();
+  EXPECT_EQ(fnProto->node_size(), 16);
 
   LexicalScopeContext lexicalScope;
   CheckerContext checkerCtx;
   std::unordered_map<std::string, int> opset_imports({{AI_ONNX_ML_DOMAIN, 2}, {"", 13}});
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
-  check_function(fnProto, checkerCtx, lexicalScope);
+  check_function(*fnProto, checkerCtx, lexicalScope);
+}
+
+TEST(FunctionVerification, VerifyModelLocalFunctions) {
+  const char* code = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 13, "custom_domain" : 1],
+  producer_name: "FunctionProtoTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for model local functions."
+>
+agraph (float[N] x) => (float[N] w)
+{
+    y = custom_domain.foo(x)
+    w = Identity(y)
+}
+
+<
+  domain: "custom_domain",
+  opset_import: [ "" : 13],
+  doc_string: "Test function proto"
+>
+foo (x) => (y) {
+      Q_Min = Constant <value = float[1] {0.0}> ()
+      Q_Max = Constant <value = float[1] {255.0}> ()
+      X_Min = ReduceMin <keepdims = 0> (x)
+      X_Max = ReduceMax <keepdims = 0> (x)
+      X_Range = Sub (X_Max, X_Min)
+      Scale = Div (X_Range, Q_Max)
+      ZeroPoint_FP = Sub (Q_Min, Scale)
+      Zeropoint = Cast <to = 2> (ZeroPoint_FP)
+      y = QuantizeLinear (x, Scale, Zeropoint)
+}
+)ONNX";
+
+  ModelProto model;
+  auto status = OnnxParser::Parse(model, code);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  check_model(model);
 }
 
 } // namespace Test

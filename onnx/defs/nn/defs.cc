@@ -796,9 +796,13 @@ computes the output.)DOC";
         "the operation expects the weight tensor to arrive "
         "with the dimension denotation of [FILTER_OUT_CHANNEL, "
         "FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
-        "X.shape[1] == (W.shape[1] * group) == C "
-        "(assuming zero based indices for the shape array). "
-        "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
+        "Assuming zero based indices for the shape array, "
+        "X.shape[1] == (W.shape[1] * group) == C and "
+        "W.shape[0] mod G == 0. Or in other words "
+        "FILTER_IN_CHANNEL multiplied by the number of groups "
+        "should be equal to DATA_CHANNEL and the number of "
+        "feature maps M should be a multiple of the number of "
+        "groups G.",
         "T",
         OpSchema::Single,
         true,
@@ -1588,7 +1592,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver14_doc = R"DOC(
+static const char* BatchNormalization_ver15_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 There are five required inputs 'X', 'scale', 'B', 'input_mean' and
@@ -1620,6 +1624,8 @@ where N is the population size (this formula does not use sample size N - 1).
 
 ```
 
+The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
+
 When training_mode=False:
 ```
 Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
@@ -1631,10 +1637,10 @@ to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormali
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    14,
+    15,
     OpSchema()
         .NumOutputs({1, 3})
-        .SetDoc(BatchNormalization_ver14_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(BatchNormalization_ver15_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1670,7 +1676,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "scale",
             "Scale tensor of shape (C).",
-            "T",
+            "T1",
             OpSchema::Single,
             true,
             1,
@@ -1679,7 +1685,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "B",
             "Bias tensor of shape (C).",
-            "T",
+            "T1",
             OpSchema::Single,
             true,
             1,
@@ -1688,7 +1694,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "input_mean",
             "running (training) or estimated (testing) mean tensor of shape (C).",
-            "U",
+            "T2",
             OpSchema::Single,
             true,
             1,
@@ -1697,7 +1703,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             4,
             "input_var",
             "running (training) or estimated (testing) variance tensor of shape (C).",
-            "U",
+            "T2",
             OpSchema::Single,
             true,
             1,
@@ -1715,7 +1721,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "running_mean",
             "The running mean after the BatchNormalization operator.",
-            "U",
+            "T2",
             OpSchema::Optional,
             true,
             1,
@@ -1725,7 +1731,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "running_var",
             "The running variance after the BatchNormalization operator. This op uses the population size (N) for "
             "calculating variance, and not the sample size N-1.",
-            "U",
+            "T2",
             OpSchema::Optional,
             true,
             1,
@@ -1735,16 +1741,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint(
-            "U",
+            "T1",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
-            "Constrain mean and variance types to float tensors. It allows all float type for U.")
+            "Constrain scale and bias types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain mean and variance types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           propagateShapeFromInputToOutput(ctx, 0, 0);
 
+          // Inputs 1 to 4 must be of rank 1.
+          checkInputRank(ctx, 1, 1);
+          checkInputRank(ctx, 2, 1);
+          checkInputRank(ctx, 3, 1);
+          checkInputRank(ctx, 4, 1);
+          
           Dim num_channels;
 
-          unifyInputDim(ctx, 0, 1, num_channels);
+          if (hasInputShape(ctx, 0)) {
+            if (getInputShape(ctx, 0).dim_size() > 1)
+              unifyInputDim(ctx, 0, 1, num_channels);
+            else
+              unifyDim(num_channels, 1);
+          }
+
           unifyInputDim(ctx, 1, 0, num_channels);
           unifyInputDim(ctx, 2, 0, num_channels);
           unifyInputDim(ctx, 3, 0, num_channels);
@@ -2448,24 +2470,21 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             FunctionBodyHelper::Const<float>("Exponent", 2.0f),
-             FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
-             {{"X_RM"},
-              "ReduceMean",
-              {"X"},
-              {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
-             {{"X_squared"}, "Pow", {"X", "Exponent"}},
-             {{"E_Xsquared"},
-              "ReduceMean",
-              {"X_squared"},
-              {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
-             {{"STD"}, "Sqrt", {"Variance"}},
-             {{"X_variance"}, "Sub", {"X", "X_RM"}},
-             {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
-             {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
+        .FunctionBody(R"ONNX(
+        {
+          Exponent = Constant <value = float {2.0}>()
+          Epsilon = Constant <value = float {1e-9}>()
+          X_RM = ReduceMean <axes : ints = @axes> (X)
+          EX_squared = Pow (X_RM, Exponent)
+          X_squared = Pow (X, Exponent)
+          E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)
+          Variance = Sub (E_Xsquared, EX_squared)
+          STD = Sqrt (Variance)
+          X_variance = Sub (X, X_RM)
+          Processed_STD = Add (STD, Epsilon)
+          Y = Div (X_variance, Processed_STD)
+        }
+        )ONNX"
+        ));
 
 } // namespace ONNX_NAMESPACE

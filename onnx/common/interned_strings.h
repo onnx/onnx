@@ -14,6 +14,9 @@
 namespace ONNX_NAMESPACE {
 
 #define FORALL_BUILTIN_SYMBOLS(_) \
+  _(spatial)                      \
+  _(select_last_index)            \
+  _(coordinate_transformation_mode) \
   _(PythonOp)                     \
   _(CppOp)                        \
   _(Param)                        \
@@ -175,7 +178,9 @@ namespace ONNX_NAMESPACE {
   _(RNN)                          \
   _(layout)                       \
   _(k)                            \
-  _(Flatten)
+  _(Flatten)                      \
+  _(ScatterElements)              \
+  _(Resize)
 
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,

@@ -47,15 +47,15 @@ extras_require = {}
 
 # Default value is set to TRUE\1 to keep the settings same as the current ones.
 # However going forward the recomemded way to is to set this to False\0
-USE_MSVC_STATIC_RUNTIME = bool(os.getenv('USE_MSVC_STATIC_RUNTIME', '1') == '1')
 ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 ONNX_VERIFY_PROTO3 = bool(os.getenv('ONNX_VERIFY_PROTO3') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 ONNX_DISABLE_EXCEPTIONS = bool(os.getenv('ONNX_DISABLE_EXCEPTIONS') == '1')
 
-DEBUG = bool(os.getenv('DEBUG'))
-COVERAGE = bool(os.getenv('COVERAGE'))
+USE_MSVC_STATIC_RUNTIME = bool(os.getenv('USE_MSVC_STATIC_RUNTIME', '0') == '1')
+DEBUG = bool(os.getenv('DEBUG', '0') == '1')
+COVERAGE = bool(os.getenv('COVERAGE', '0') == '1')
 
 ################################################################################
 # Version
@@ -309,13 +309,15 @@ ext_modules = [
 # no need to do fancy stuff so far
 packages = setuptools.find_packages()
 
-install_requires.extend([
-    'protobuf',
-    'numpy>=1.16.6',
-    'six',
-    'typing>=3.6.4; python_version < "3.5"',
-    'typing-extensions>=3.6.2.1',
-])
+requirements_file = "requirements.txt"
+requirements_path = os.path.join(os.getcwd(), requirements_file)
+if not os.path.exists(requirements_path):
+    this = os.path.dirname(__file__)
+    requirements_path = os.path.join(this, requirements_file)
+if not os.path.exists(requirements_path):
+    raise FileNotFoundError("Unable to find " + requirements_file)
+with open(requirements_path) as f:
+    install_requires = f.read().splitlines()
 
 ################################################################################
 # Test

@@ -11,6 +11,45 @@
 
 namespace ONNX_NAMESPACE {
 
+inline int MathOpTwoIntegers(std::string op_type, int a, int b) {
+  if (op_type == "Add") {
+    return a + b;
+  } else if (op_type == "Sub") {
+    return a - b;
+  } else if (op_type == "Mul") {
+    return a * b;
+  }
+  fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
+}
+
+inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_type) {
+  const auto input_0 = ctx.getInputData(0);
+  const auto input_1 = ctx.getInputData(1);
+  if (input_0 == nullptr || input_1 == nullptr) {
+    return;
+  }
+  int size_0 = input_0->dim_size();
+  int size_1 = input_1->dim_size();
+  // Fails to broadcast if the ranks are different and no any rank is 1 
+  if (size_0 != size_1 && size_0 != 1 && size_1 != 1) {
+    fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (",
+        size_0, ") vs (", size_1, ").");
+  }
+  TensorShapeProto tsp;
+  for (int i = 0; i < std::max(size_0, size_1); ++i) {
+    auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
+    auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
+    if (input_dim_0.has_dim_value() && input_dim_1.has_dim_value()) {
+      tsp.mutable_dim()->Add()->set_dim_value(
+          MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
+    } else {
+      // Cannot compute the value; simply add an empty dim without value and param
+      tsp.mutable_dim()->Add();
+    }
+  }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
@@ -151,12 +190,18 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 ONNX_OPERATOR_SET_SCHEMA(
     Add,
     14,
-    OpSchema().FillUsing(MathDocGenerator("addition")));
+    OpSchema().FillUsing(MathDocGenerator("addition"))
+    .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+        MathOpDataPropagator(ctx, "Add");
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sub,
     14,
-    OpSchema().FillUsing(MathDocGenerator("subtraction")));
+    OpSchema().FillUsing(MathDocGenerator("subtraction"))
+    .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+        MathOpDataPropagator(ctx, "Sub");
+    }));
 
 static const char* Mod_doc = R"DOC(
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
@@ -224,7 +269,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     Mul,
     14,
-    OpSchema().FillUsing(MathDocGenerator("multiplication")));
+    OpSchema().FillUsing(MathDocGenerator("multiplication"))
+    .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+        MathOpDataPropagator(ctx, "Mul");
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Div,
@@ -1069,13 +1117,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(FunctionBodyHelper::BuildNodes({
-            // nodes: {outputs, op, inputs, attributes}
-            {{"HS_X"},
-             "HardSigmoid",
-             {"X"},
-             {MakeAttribute("alpha", 1.0f/6.0f), MakeAttribute("beta", 0.5f)}},
-            {{"Y"}, "Mul", {"X", "HS_X"}}})));
+        .FunctionBody(R"ONNX(
+          {
+            HS_X = HardSigmoid<alpha = 0.16666667163372, beta = 0.5>(X) 
+            Y = Mul (X, HS_X)
+          }
+        )ONNX"));
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
@@ -2072,27 +2119,32 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
-          // For shape inference (and rank inference), we need both input shape
-          // and values in 'shape' tensor
+          // For shape inference, we need both input shape
           const auto* shape_initializer = ctx.getInputData(1);
-          if (hasNInputShapes(ctx, 2) && nullptr != shape_initializer) {
-            const auto& shape_initializer_shape =
+          if (hasNInputShapes(ctx, 2)) {
+            const auto& shape_input_shape =
                 ctx.getInputType(1)->tensor_type().shape();
-            if (shape_initializer_shape.dim_size() != 1 ||
-                shape_initializer->data_type() != TensorProto::INT64) {
-                    fail_shape_inference("'shape' input must be 1D tensor of type INT64");
+            if (shape_input_shape.dim_size() != 1) {
+                    fail_shape_inference("'shape' input must be 1D tensor");
                 }
 
             const auto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
-            const auto& shape_data = ParseData<int64_t>(shape_initializer);
-
             TensorShapeProto second_shape;
-            for (const auto& e : shape_data) {
-              auto* dim = second_shape.add_dim();
-              dim->set_dim_value(e);
-            }
+            if (nullptr != shape_initializer) {
+              const auto& shape_data = ParseData<int64_t>(shape_initializer);
 
+              for (const auto& e : shape_data) {
+                auto* dim = second_shape.add_dim();
+                dim->set_dim_value(e);
+              }
+            } else if (shape_input_shape.dim(0).has_dim_value()) {
+              // Attempt rank inference using shape of shape input
+              int64_t dim_value = shape_input_shape.dim(0).dim_value();
+              for (int64_t i = 0; i < dim_value; ++i) {
+                second_shape.add_dim();
+              }
+            }
             bidirectionalBroadcastShapeInference(
                 input_shape, second_shape, *getOutputShape(ctx, 0));
           }
@@ -2340,12 +2392,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* QLinearMatMul_ver10_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
-It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, and computes the quantized output.
-The quantization formula is y = saturate((x / y_scale) + y_zero_point). For (x / y_scale), it is rounding to nearest ties to even.
-Refer to https://en.wikipedia.org/wiki/Rounding for details. Scale and zero point must have same shape.
-They must be either scalar (per tensor) or 1-D tensor (per row for 'a' and per column for 'b'). If scale and zero point are 1-D tensor,
-the number of elements of scale and zero point tensor of input 'a' and output 'y' should be equal to the number of rows of input 'a',
-and the number of elements of scale and zero point tensor of input 'b' should be equal to the number of columns of input 'b'.
+It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, 
+and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point). 
+For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 
+Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor 
+(per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row 
+or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be 
+an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K] 
+for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may 
+have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
 Production must never overflow, and accumulation may overflow if and only if in 32 bits.
 )DOC";
 
@@ -2509,9 +2564,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "a_zero_point",
-            "Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or a 1-D tensor, "
-            "which means a per-tensor or per-row quantization. If it's a 1-D tensor, its number of elements "
-            "should be equal to the number of rows of input 'A'.",
+            "Zero point tensor for input 'A'. It's optional and default value is 0. It could be a scalar or N-D tensor. "
+            "Scalar refers to per tensor quantization whereas N-D refers to per row quantization. "
+            "If the input is 2D of shape [M, K] then zero point tensor may be an M element vector [zp_1, zp_2, ..., zp_M]. "
+            "If the input is N-D tensor with shape [D1, D2, M, K] then zero point tensor may have shape [D1, D2, M, 1]. ",
             "T1",
             OpSchema::Optional,
             true,
@@ -2520,9 +2576,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "b_zero_point",
-            "Zero point tensor for input 'B'. It's optional and default value is 0.  It could be a scalar or a 1-D tensor, "
-            "which means a per-tensor or per-column quantization. If it's a 1-D tensor, its number "
-            "of elements should be equal to the number of columns of input 'B'.",
+            "Zero point tensor for input 'B'. It's optional and default value is 0. It could be a scalar or a N-D tensor, "
+            "Scalar refers to per tensor quantization whereas N-D refers to per col quantization. "
+            "If the input is 2D of shape [K, N] then zero point tensor may be an N element vector [zp_1, zp_2, ..., zp_N]. "
+            "If the input is N-D tensor with shape [D1, D2, K, N] then zero point tensor may have shape [D1, D2, 1, N]. ",
             "T2",
             OpSchema::Optional,
             true,
@@ -2859,6 +2916,9 @@ bool BuildContextDependentFunctionBody(
   }
   auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
   bool float_input = input_type == TensorProto_DataType_FLOAT;
+  auto reduction_attr_proto = ctx.getAttribute("reduction");
+  std::string reduction_attr =
+      reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
   std::vector<FunctionBodyHelper::NodeDef> body;
   body.push_back(
       {{"const_zero"},
@@ -2898,7 +2958,7 @@ bool BuildContextDependentFunctionBody(
          {"loss_NCdd", "const_zero", "const_one", "const_one"}});
 
     if (!ctx.hasInput(2)) {
-      if (ctx.getAttribute("reduction")->s() == "none") {
+      if (reduction_attr == "none") {
         body.push_back(
             {{"loss"},
              "Squeeze",
@@ -2908,7 +2968,7 @@ bool BuildContextDependentFunctionBody(
             {{"loss_Ndd"},
              "Squeeze",
              {"loss_N1dd", "axes"}});
-        if (ctx.getAttribute("reduction")->s() == "mean") {
+        if (reduction_attr == "mean") {
           body.push_back(
               {{"loss"},
                "ReduceMean",
@@ -2928,12 +2988,12 @@ bool BuildContextDependentFunctionBody(
           {{"loss_unweighted"},
            "Squeeze",
            {"loss_N1dd", "axes"}});
-      if (ctx.getAttribute("reduction")->s() == "none") {
+      if (reduction_attr == "none") {
         body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
       } else {
         body.push_back(
             {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-        if (ctx.getAttribute("reduction")->s() == "mean") {
+        if (reduction_attr == "mean") {
           body.push_back(
               {{"loss_sum"},
                "ReduceSum",
@@ -3052,12 +3112,12 @@ bool BuildContextDependentFunctionBody(
         {{"loss_unweighted"},
          "Squeeze",
          {"loss_N1dd", "axes"}});
-    if (ctx.getAttribute("reduction")->s() == "none") {
+    if (reduction_attr == "none") {
       body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
     } else {
       body.push_back(
           {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
-      if (ctx.getAttribute("reduction")->s() == "mean") {
+      if (reduction_attr == "mean") {
         body.push_back(
             {{"loss_sum"},
              "ReduceSum",
@@ -3201,7 +3261,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto* output_shape =
                 ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-            if (ctx.getAttribute("reduction")->s() == "none") {
+            if (getAttribute(ctx, "reduction", "mean") == "none") {
               // output tensor is of shape (N, d1, d2, ..., dk) if
               // reduction attribute is "none".
               for (int i = 0; i < input_rank - 1; i++) {

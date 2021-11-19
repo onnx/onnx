@@ -18,6 +18,7 @@ You can find the schedule of meetings on the [LF AI wiki](https://wiki.lfai.foun
 | ------------------ | ------------- |
 | [Release](https://lfaifoundation.slack.com/archives/C018VGGJUGK) | Improve the release process for ONNX |
 | [Training](https://lfaifoundation.slack.com/archives/C018K560U14) | Expand ONNX to support training as well as inference |
+| [Preprocessing](https://lfaifoundation.slack.com/archives/C02AANGFBJB) | Make data preprocessing part of ONNX |
 
 ## Completed working groups
 
