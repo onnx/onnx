@@ -209,7 +209,7 @@ def expect(node,  # type: onnx.NodeProto
         ))
 
 
-def collect_testcases(op_type, opset_version):  # type: (Text, int) -> List[TestCase]
+def collect_testcases(op_type, opset_version):  # type: (Text, Text) -> List[TestCase]
     '''Collect node test cases
     '''
     # only keep those tests related to this operator
