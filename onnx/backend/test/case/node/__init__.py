@@ -155,6 +155,10 @@ def expect(node,  # type: onnx.NodeProto
         inputs=inputs_vi,
         outputs=outputs_vi)
     kwargs[str('producer_name')] = 'backend-test'
+    # To make sure the model will use the same opset_version after opset changes
+    # Uses since_version as opset_version for produced models
+    since_version = onnx.defs.get_schema(node.op_type).since_version
+    kwargs[str('opset_imports')] = [onnx.helper.make_operatorsetid('', since_version)]
     model = onnx.helper.make_model(graph, **kwargs)
 
     _NodeTestCases.append(TestCase(
