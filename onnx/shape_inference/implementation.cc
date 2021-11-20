@@ -425,7 +425,7 @@ static void InferShapesImpl(
         schema->CheckInputOutputType(ctx);
       }
       for (int i = 0; i < n.output_size(); ++i) {
-        // If an output is missing (lacks name), shape inference should not infer shape
+        // skip type and shape propagation for missing optional outputs.
         if (n.output(i).empty()) {
           continue;
         }
