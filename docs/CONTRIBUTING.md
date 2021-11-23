@@ -10,12 +10,8 @@ way to get these dependencies is via [Anaconda](https://www.anaconda.com/downloa
 conda install -c conda-forge protobuf numpy
 ```
 
-During development, it's convenient to install ONNX in development mode (to disable ONNX-ML, set environment variable `ONNX_ML=0`):
+You can follow the [document](https://github.com/onnx/onnx#build-onnx-from-source) to build ONNX from source.
 
-```
-git clone --recursive https://github.com/onnx/onnx.git
-pip install -e onnx/
-```
 Then, after you have made changes to Python and C++ files:
 
 - `Python files`: the changes are effective immediately in your installation. You don't need to install these again.
@@ -24,8 +20,11 @@ Then, after you have made changes to Python and C++ files:
 ## Folder structure
 
 - `onnx/`: the main folder that all code lies under
-  - `onnx.proto`: the protobuf (v2.6.1) that contains all the structures
+  - `onnx.proto`: the protobuf that contains all the structures
   - `checker.py`: a utility to check whether a serialized ONNX proto is legal
+  - `shape_inference.py`: a utility to infer types and shapes for ONNX models
+  - `version_converter.py`: a utility to upgrade or downgrade version for ONNX models
+  - `parser.py`: a utility to create an ONNX model or graph from a textual representation
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
   - `test/`: test files
