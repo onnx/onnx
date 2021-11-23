@@ -34,9 +34,9 @@ NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k !
 
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.FLOAT): int(TensorProto.FLOAT),
-    int(TensorProto.UINT8): int(TensorProto.INT32),
+    int(TensorProto.UINT8): int(TensorProto.UINT32),
     int(TensorProto.INT8): int(TensorProto.INT32),
-    int(TensorProto.UINT16): int(TensorProto.INT32),
+    int(TensorProto.UINT16): int(TensorProto.UINT32),
     int(TensorProto.INT16): int(TensorProto.INT32),
     int(TensorProto.INT32): int(TensorProto.INT32),
     int(TensorProto.INT64): int(TensorProto.INT64),
