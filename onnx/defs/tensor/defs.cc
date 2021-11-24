@@ -260,6 +260,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
+          if (targetShapeProto.dim_size() == 0) {
+            fail_shape_inference("Target shape cannot be empty.");
+          }
+
           int allowzero = static_cast<int>(getAttribute(ctx, "allowzero", 0));
 
           // Iterate through targetShape, adding dimensions in the outputShape
