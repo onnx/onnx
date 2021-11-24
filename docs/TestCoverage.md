@@ -5352,7 +5352,6 @@ expect(if_node, inputs=[cond], outputs=[res], name='test_if',
 
 ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
-opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
 
 then_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 then_out_seq_tp = onnx.helper.make_sequence_type_proto(then_out_tensor_tp)
@@ -5378,7 +5377,7 @@ opt_empty_in = onnx.helper.make_node(
     'Optional',
     inputs=['seq_empty_out'],
     outputs=['optional_empty'],
-    type=opt_in_tp
+    type=seq_in_tp
 )
 
 then_body = onnx.helper.make_graph(
