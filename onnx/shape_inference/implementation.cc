@@ -425,6 +425,10 @@ static void InferShapesImpl(
         schema->CheckInputOutputType(ctx);
       }
       for (int i = 0; i < n.output_size(); ++i) {
+        // skip type and shape propagation for missing optional outputs.
+        if (n.output(i).empty()) {
+          continue;
+        }
         auto* inferredType = ctx.getOutputType(i);
         if (inferredType->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
           continue;
