@@ -48,6 +48,10 @@ class Softmax_12_13 final : public Adapter {
 
         // Set shape input of Reshape
         const std::vector<Dimension>& target_shape = flatten->inputs()[0]->sizes();
+
+        ONNX_ASSERTM(target_shape.size() != 0, "Version conversion for Softmax failed because "
+          "input shape is unknown.");
+
         Tensor t;
         t.elem_type() = TensorProto_DataType_INT64;
         t.sizes() = std::vector<int64_t> {static_cast<int64_t>(target_shape.size())};
