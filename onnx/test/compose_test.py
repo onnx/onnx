@@ -5,11 +5,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import numpy as np  # type: ignore
 import unittest
 
-from typing import Text, List
+from typing import Text, List, Optional, Tuple, Callable
 
-from onnx import helper, parser, checker, compose, version_converter, ModelProto, GraphProto, ValueInfoProto
+from onnx import helper, parser, checker, compose, version_converter, \
+                 ModelProto, GraphProto, ValueInfoProto, TensorProto, SparseTensorProto
 
 
 def _load_model(m_def):  # type: (Text) -> ModelProto
@@ -62,31 +64,166 @@ m2_def = '''
     }
     '''
 
-
 class TestComposeFunctions(unittest.TestCase):
+    def _test_merge_models(self,
+                           m1def,  # type: Text
+                           m2def,  # type: Text
+                           io_map,  # type: List[Tuple[Text, Text]]
+                           check_expectations,  # type: Callable[[GraphProto, GraphProto, GraphProto], None]
+                           inputs=None,  # type: Optional[List[Text]]
+                           outputs=None,  # type: Optional[List[Text]]
+                           prefix1=None,  # type: Optional[Text]
+                           prefix2=None,  # type: Optional[Text]
+    ):  # type: (...) -> None
+        m1, m2 = _load_model(m1def), _load_model(m2def)
+        g3 = compose.merge_graphs(
+            m1.graph, m2.graph, io_map=io_map,
+            inputs=inputs, outputs=outputs,
+            prefix1=prefix1, prefix2=prefix2,
+        )
+        checker.check_graph(g3)
+        check_expectations(m1.graph, m2.graph, g3)
+        m3 = compose.merge_models(
+            m1, m2, io_map=io_map,
+            inputs=inputs, outputs=outputs,
+            prefix1=prefix1, prefix2=prefix2,
+        )
+        checker.check_model(m3)
+        check_expectations(m1.graph, m2.graph, m3.graph)
+
     def test_case_connect_all_no_name_collision(self):  # type: () -> None
         '''
         Tests a simple scenario where two models without overlapping names are merged by
         connecting all the outputs in the first models to all the inputs in the second model
         '''
-        m1, m2 = _load_model(m1_def), _load_model(m2_def)
-
-        io_map = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
-        g3 = compose.merge_graphs(m1.graph, m2.graph, io_map=io_map)
-        checker.check_graph(g3)
-
-        def check_graph(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
+        def check_expectations(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
             self.assertEqual(g3.input, g1.input)
             self.assertEqual(g3.output, g2.output)
-            # Edge names are different
-            self.assertEqual([item.name for item in g3.node],
-                             [item.name for item in g1.node] + [item.name for item in g2.node])
+            self.assertEqual(['Add', 'Sub', 'Mul', 'Add', 'Sub', 'Mul'],
+                             [item.op_type for item in g3.node])
+        io_map = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
+        self._test_merge_models(m1_def, m2_def, io_map, check_expectations)
 
-        check_graph(m1.graph, m2.graph, g3)
+    def test_case_connect_same_output_twice(self):  # type: () -> None
+        '''
+        Tests a scenario where we merge two models by connecting a single output in the first model
+        to all the inputs in the second
+        '''
+        def check_expectations(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
+            self.assertEqual(g3.input, g1.input)
+            self.assertEqual(['B10', 'B20', 'D0'], [elem.name for elem in g3.output])
+            self.assertEqual(['Add', 'Sub', 'Mul', 'Add', 'Sub', 'Mul'],
+                             [item.op_type for item in g3.node])
+        io_map = [("B00", "B01"), ("B00", "B11"), ("B00", "B21")]
+        self._test_merge_models(m1_def, m2_def, io_map, check_expectations)
 
-        m3 = compose.merge_models(m1, m2, io_map=io_map)
-        checker.check_model(m3)
-        check_graph(m1.graph, m2.graph, m3.graph)
+    def test_case_connect_same_output_drop_outputs(self):  # type: () -> None
+        '''
+        Tests a scenario where we merge two models by connecting a single output in the first model
+        to all the inputs in the second, while dropping the rest of the outputs in the first model
+        '''
+        def check_expectations(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
+            self.assertEqual(g3.input, g1.input)
+            self.assertEqual(['D0'], [elem.name for elem in g3.output])
+            self.assertEqual(['Add', 'Add', 'Sub', 'Mul'], [item.op_type for item in g3.node])
+        io_map = [("B00", "B01"), ("B00", "B11"), ("B00", "B21")]
+        outputs = ['D0']
+        self._test_merge_models(m1_def, m2_def, io_map, check_expectations, outputs=outputs)
+
+    def test_case_connect_same_input_output_name(self):  # type: () -> None
+        '''
+        Tests a scenario where we merge two models, where the inputs/outputs connected
+        are named exactly the same
+        '''
+
+        m1_def = '''
+            <
+                ir_version: 7,
+                opset_import: [ "": 10]
+            >
+            agraph (float[N, M] A) => (float[N, M] B)
+            {
+                B = Add(A, A)
+            }
+            '''
+        m2_def = '''
+            <
+                ir_version: 7,
+                opset_import: [ "": 10]
+            >
+            agraph (float[N, M] B) => (float[N, M] C)
+            {
+                C = Add(B, B)
+            }
+            '''
+        io_map = [("B", "B")]
+        def check_expectations(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
+            self.assertEqual(['A'], [elem.name for elem in g3.input])
+            self.assertEqual(['C'], [elem.name for elem in g3.output])
+        self._test_merge_models(m1_def, m2_def, io_map, check_expectations)
+
+    def test_case_drop_inputs_outputs(self):  # type: () -> None
+        '''
+        Tests a scenario where we merge two models, not including some of the inputs/outputs
+        '''
+
+        m1_def = '''
+            <
+                ir_version: 7,
+                opset_import: [ "": 10]
+            >
+            agraph (float[N] A0, float[N] B0) => (float[N] A1, float[N] B1)
+            {
+                A1 = Add(A0, A0)
+                B1 = Sub(B0, B0)
+            }
+            '''
+        m2_def = '''
+            <
+                ir_version: 7,
+                opset_import: [ "": 10]
+            >
+            agraph (float[N] A2, float[N] B2) => (float[N] A3, float[N] B3)
+            {
+                A3 = Add(A2, A2)
+                B3 = Sub(B2, B2)
+            }
+            '''
+        io_map = [("A1", "B2")]
+        def check_expectations(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
+            self.assertEqual(['A0'], [elem.name for elem in g3.input])
+            self.assertEqual(['B3'], [elem.name for elem in g3.output])
+            self.assertEqual(['Add', 'Sub'], [elem.op_type for elem in g3.node])
+
+        inputs=['A0']
+        outputs=['B3']
+        self._test_merge_models(
+            m1_def, m2_def, io_map, check_expectations, inputs=inputs, outputs=outputs)
+
+    def test_case_name_collision_prefix(self):  # type: () -> None
+        '''
+        Tests a scenario where we merge two models that have name collisions, but they
+        are avoided by prefixing the models model.
+        '''
+
+        m1_def = '''
+            <
+                ir_version: 7,
+                opset_import: [ "": 10]
+            >
+            agraph (float[N] A, float[N] B) => (float[N] C)
+            {
+                C = Add(A, B)
+            }
+            '''
+        io_map = [("C", "A")]
+        def check_expectations(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
+            self.assertEqual(['m1/A', 'm1/B', 'm2/B'], [elem.name for elem in g3.input])
+            self.assertEqual(['m2/C'], [elem.name for elem in g3.output])
+            self.assertEqual(['Add', 'Add'], [elem.op_type for elem in g3.node])
+
+        self._test_merge_models(
+            m1_def, m1_def, io_map, check_expectations, prefix1='m1/', prefix2='m2/')
 
     def test_case_connect_partially_no_name_collision(self):  # type: () -> None
         '''
@@ -94,28 +231,13 @@ class TestComposeFunctions(unittest.TestCase):
         connecting some outputs from the first model to some inputs in the second.
         The remaining inputs/outputs should be present in the combined model
         '''
-        m1, m2 = _load_model(m1_def), _load_model(m2_def)
-
+        def check_expectations(g1, g2, g4):  # type: (GraphProto, GraphProto, GraphProto) -> None
+            # B20 <-> B21 not connected. They should still be present
+            # in the inputs and outputs of the combined graph
+            self.assertEqual(['A0', 'A1', 'B21'], [elem.name for elem in g4.input])
+            self.assertEqual(['B20', 'D0'], [elem.name for elem in g4.output])
         io_map = [("B00", "B01"), ("B10", "B11")]
-        g3 = compose.merge_graphs(m1.graph, m2.graph, io_map=io_map)
-        checker.check_graph(g3)
-
-        def check_graph(g1, g2, g4):  # type: (GraphProto, GraphProto, GraphProto) -> None
-            # B20 <-> B21 not connected. They should still be present in the intputs and outputs of the combined graph
-            self.assertEqual(len(g4.input), 3)
-            self.assertEqual(g4.input[0], g1.input[0])  # A0
-            self.assertEqual(g4.input[1], g1.input[1])  # A1
-            self.assertEqual(g4.input[2], g2.input[2])  # B21
-
-            self.assertEqual(len(g4.output), 2)
-            self.assertEqual(g4.output[0], g1.output[2])  # B20
-            self.assertEqual(g4.output[1], g2.output[0])  # D0
-
-        check_graph(m1.graph, m2.graph, g3)
-
-        m3 = compose.merge_models(m1, m2, io_map=io_map)
-        checker.check_model(m3)
-        check_graph(m1.graph, m2.graph, m3.graph)
+        self._test_merge_models(m1_def, m2_def, io_map, check_expectations)
 
     def test_merge_models_with_metadata_props(self):  # type: () -> None
         m1 = _load_model(m1_def)
@@ -202,7 +324,8 @@ class TestComposeFunctions(unittest.TestCase):
     def _test_add_prefix(self,
                          rename_nodes=False, rename_edges=False,
                          rename_inputs=False, rename_outputs=False,
-                         inplace=False):  # type: (bool, bool, bool, bool, bool) -> None
+                         rename_initializers=False, rename_value_infos=False,
+                         inplace=False):  # type: (bool, bool, bool, bool, bool, bool, bool) -> None
         m1 = _load_model(m1_def)
 
         prefix = 'pre/'
@@ -211,21 +334,25 @@ class TestComposeFunctions(unittest.TestCase):
             m2 = ModelProto()
             m2.CopyFrom(m1)
             compose.add_prefix(m2, prefix,
+                               rename_nodes=rename_nodes,
+                               rename_edges=rename_edges,
+                               rename_inputs=rename_inputs,
+                               rename_outputs=rename_outputs,
+                               rename_initializers=rename_initializers,
+                               rename_value_infos=rename_value_infos,
+                               inplace=True)
+        else:
+            m2 = compose.add_prefix(m1, prefix,
                                     rename_nodes=rename_nodes,
                                     rename_edges=rename_edges,
                                     rename_inputs=rename_inputs,
                                     rename_outputs=rename_outputs,
-                                    inplace=True)
-        else:
-            m2 = compose.add_prefix(m1, prefix,
-                                        rename_nodes=rename_nodes,
-                                        rename_edges=rename_edges,
-                                        rename_inputs=rename_inputs,
-                                        rename_outputs=rename_outputs)
+                                    rename_initializers=rename_initializers,
+                                    rename_value_infos=rename_value_infos)
         g_in = m1.graph
         g_out = m2.graph
 
-        if rename_edges or rename_inputs or rename_outputs:
+        if rename_edges or rename_inputs or rename_outputs or rename_initializers or rename_value_infos:
             name_mapping = {}
 
             # Rename inputs/outputs/edges. Propagate name changes from and to edges
@@ -243,6 +370,19 @@ class TestComposeFunctions(unittest.TestCase):
                     for elem in g_in.output:
                         name_mapping[elem.name] = _prefixed(prefix, elem.name)
 
+            if rename_initializers:
+                for init in g_in.initializer:
+                    name_mapping[init.name] = _prefixed(prefix, init.name)
+                for sparse_init in g_in.sparse_initializer:
+                    name_mapping[sparse_init.values.name] = \
+                        _prefixed(prefix, sparse_init.values.name)
+                    name_mapping[sparse_init.indices.name] = \
+                        _prefixed(prefix, sparse_init.indices.name)
+
+            if rename_value_infos:
+                for value_info in g_in.output:
+                    name_mapping[value_info.name] = _prefixed(prefix, value_info.name)
+
             for n1, n0 in zip(g_out.node, g_in.node):
                 for e1, e0 in zip(n1.input, n0.input):
                     self.assertEqual(name_mapping.get(e0, e0), e1)
@@ -252,6 +392,19 @@ class TestComposeFunctions(unittest.TestCase):
                 self.assertEqual(name_mapping.get(i0.name, i0.name), i1.name)
             for o1, o0 in zip(g_out.output, g_in.output):
                 self.assertEqual(name_mapping.get(o0.name, o0.name), o1.name)
+
+            for init1, init0 in zip(g_out.initializer, g_in.initializer):
+                self.assertEqual(name_mapping.get(
+                    init0.name, init0.name), init1.name)
+
+            for sparse_init1, sparse_init0 in zip(g_out.sparse_initializer, g_in.sparse_initializer):
+                self.assertEqual(name_mapping.get(
+                    sparse_init0.values.name, sparse_init0.values.name), sparse_init1.values.name)
+                self.assertEqual(name_mapping.get(
+                    sparse_init0.indices.name, sparse_init0.indices.name), sparse_init1.indices.name)
+
+            for vi1, vi0 in zip(g_out.value_info, g_in.value_info):
+                self.assertEqual(name_mapping.get(vi0.name, vi0.name), vi1.name)
 
             if rename_nodes:
                 for n1, n0 in zip(g_out.node, g_in.node):
@@ -285,15 +438,13 @@ class TestComposeFunctions(unittest.TestCase):
         '''
         Tests prefixing all names in the graph
         '''
-        self._test_add_prefix(rename_nodes=True, rename_edges=True,
-                              rename_inputs=True, rename_outputs=True)
+        self._test_add_prefix(True, True, True, True, True, True)
 
     def test_add_prefix_inplace(self):  # type: () -> None
         '''
-        Tests prefixing all names in the graph
+        Tests prefixing inplace
         '''
-        self._test_add_prefix(rename_nodes=True, rename_edges=True,
-                              rename_inputs=True, rename_outputs=True, inplace=True)
+        self._test_add_prefix(inplace=True)
 
     def test_expand_out_dim(self):  # type: () -> None
         '''
@@ -321,6 +472,142 @@ class TestComposeFunctions(unittest.TestCase):
         dim_idx = 0
         compose.expand_out_dim(m2, dim_idx, inplace=True)
         _check_model(m1, m2, dim_idx)
+
+    def _test_overlapping_names(
+        self,
+        inputs0=['i0', 'i1'],  # type: List[Text]
+        inputs1=['i2', 'i3'],  # type: List[Text]
+        outputs0=['o0', 'o1'],  # type: List[Text]
+        outputs1=['o2', 'o3'],  # type: List[Text]
+        value_info0=['v0', 'v1'],  # type: List[Text]
+        value_info1=['v2', 'v3'],  # type: List[Text]
+        initializer0=['init0', 'init1'],  # type: List[Text]
+        initializer1=['init2', 'init3'],  # type: List[Text]
+        sparse_initializer0=['sparse_init0', 'sparse_init1'],  # type: List[Text]
+        sparse_initializer1=['sparse_init2', 'sparse_init3'],  # type: List[Text]
+    ):  # type: (...) -> None
+        n0 = [helper.make_node('Identity', inputs=[inputs0[i]], outputs=[outputs0[i]]) \
+            for i in range(len(inputs0))]
+        i0 = [helper.make_tensor_value_info(inputs0[i], TensorProto.FLOAT, []) \
+            for i in range(len(inputs0))]
+        o0 = [helper.make_tensor_value_info(outputs0[i], TensorProto.FLOAT, []) \
+            for i in range(len(outputs0))]
+        vi0 = [helper.make_tensor_value_info(value_info0[i], TensorProto.FLOAT, []) \
+            for i in range(len(value_info0))]
+        init0 = [helper.make_tensor(name=initializer0[i], data_type=TensorProto.INT64, dims=(), vals=[1]) \
+            for i in range(len(initializer0))]
+
+        def _make_sparse_tensor(name):  # type: (Text) -> SparseTensorProto
+            dense_shape = [3, 3]
+            linear_indicies = [2, 3, 5]
+            sparse_values = [1.7, 0.4, 0.9]
+            values_tensor = helper.make_tensor(
+                name=name + "_values", data_type=TensorProto.FLOAT,
+                dims=[len(sparse_values)],
+                vals=np.array(sparse_values).astype(np.float32), raw=False)
+
+            indices_tensor = helper.make_tensor(
+                name=name + "_idx" , data_type=TensorProto.INT64,
+                dims=[len(linear_indicies)],
+                vals=np.array(linear_indicies).astype(np.int64), raw=False)
+            return helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
+
+        sparse_init0 = [_make_sparse_tensor(sparse_initializer0[i]) for i in range(len(sparse_initializer0))]
+
+        n1 = [helper.make_node('Identity', inputs=[inputs1[i]], outputs=[outputs1[i]]) \
+            for i in range(len(inputs1))]
+        i1 = [helper.make_tensor_value_info(inputs1[i], TensorProto.FLOAT, []) \
+            for i in range(len(inputs1))]
+        o1 = [helper.make_tensor_value_info(outputs1[i], TensorProto.FLOAT, []) \
+            for i in range(len(outputs1))]
+        vi1 = [helper.make_tensor_value_info(value_info1[i], TensorProto.FLOAT, []) \
+            for i in range(len(value_info1))]
+        init1 = [helper.make_tensor(name=initializer1[i], data_type=TensorProto.INT64, dims=(), vals=[1]) \
+            for i in range(len(initializer1))]
+        sparse_init1 = [_make_sparse_tensor(sparse_initializer1[i]) for i in range(len(sparse_initializer1))]
+
+        ops = [helper.make_opsetid("", 10)]
+        m0 = helper.make_model(
+            helper.make_graph(
+                nodes=n0, name='g0', inputs=i0, outputs=o0, value_info=vi0,
+                initializer=init0, sparse_initializer=sparse_init0),
+            producer_name='test',
+            opset_imports=ops)
+        m1 = helper.make_model(
+            helper.make_graph(
+                nodes=n1, name='g1', inputs=i1, outputs=o1, value_info=vi1,
+                initializer=init1, sparse_initializer=sparse_init1),
+            producer_name='test',
+            opset_imports=ops)
+
+        overlap = compose.check_overlapping_names(m0.graph, m1.graph)
+        i = 0
+
+        overlapping_inputs = list(set(inputs0) & set(inputs1))
+        overlapping_outputs = list(set(outputs0) & set(outputs1))
+        overlapping_edges = list(set(overlapping_inputs + overlapping_outputs))
+        if len(overlapping_edges) > 0:
+            self.assertEqual(overlap[i], ('edge', overlapping_edges))
+            i += 1
+
+        overlapping_vis = list(set(value_info0) & set(value_info1))
+        if len(overlapping_vis) > 0:
+            self.assertEqual(overlap[i], ('value_info', overlapping_vis))
+            i += 1
+
+        overlapping_init = list(set(initializer0) & set(initializer1))
+        if len(overlapping_init) > 0:
+            self.assertEqual(overlap[i], ('initializer', overlapping_init))
+            i += 1
+
+        overlapping_sparse_init = list(set(sparse_initializer0) & set(sparse_initializer1))
+        if len(overlapping_sparse_init) > 0:
+            expected_overlap = []
+            for overlapping_name in overlapping_sparse_init:
+                expected_overlap.append(overlapping_name + '_values')
+                expected_overlap.append(overlapping_name + '_idx')
+            self.assertEqual(overlap[i], ('sparse_initializer', expected_overlap))
+            i += 1
+
+        m0_new = compose.add_prefix(m0, prefix='g0/')
+        overlap = compose.check_overlapping_names(m0_new.graph, m1.graph)
+        self.assertEqual(0, len(overlap))
+
+    def test_overlapping_input_names(self):  # type: () -> None
+        '''
+        Tests error checking when the name of the inputs overlaps
+        '''
+        self._test_overlapping_names(
+            inputs0=['i0', 'i1'], inputs1=['i1', 'i2'])
+
+    def test_overlapping_output_names(self):  # type: () -> None
+        '''
+        Tests error checking when the name of the output overlaps
+        '''
+        self._test_overlapping_names(
+            outputs0=['o0', 'o1'], outputs1=['o1', 'o2'])
+
+    def test_overlapping_value_info_names(self):  # type: () -> None
+        '''
+        Tests error checking when the name of value_info entries overlaps
+        '''
+        self._test_overlapping_names(
+            value_info0=['vi0', 'vi1'], value_info1=['vi1', 'vi2'])
+
+    def test_overlapping_initializer_names(self):  # type: () -> None
+        '''
+        Tests error checking when the name of initializer entries overlaps
+        '''
+        self._test_overlapping_names(
+            initializer0=['init0', 'init1'], initializer1=['init1', 'init2'])
+
+    def test_overlapping_sparse_initializer_names(self):  # type: () -> None
+        '''
+        Tests error checking when the name of sparse_initializer entries overlaps
+        '''
+        self._test_overlapping_names(
+            sparse_initializer0=['sparse_init0', 'sparse_init1'],
+            sparse_initializer1=['sparse_init1', 'sparse_init2'])
 
 
 if __name__ == '__main__':
