@@ -10,6 +10,7 @@ from onnx import ModelProto, GraphProto, helper, checker
 from onnx import TensorProto as tp
 from onnx import utils
 
+
 def check_overlapping_names(
     g1,  # type: GraphProto
     g2,  # type: GraphProto
@@ -75,6 +76,7 @@ def check_overlapping_names(
 
     return result
 
+
 def merge_graphs(
         g1,  # type: GraphProto
         g2,  # type: GraphProto
@@ -123,8 +125,8 @@ def merge_graphs(
             g2 = add_prefix_graph(g2, prefix=prefix2)
         io_map = [
             (prefix1 + io[0] if prefix1 else io[0],
-             prefix2 + io[1] if prefix2 else io[1]) \
-                for io in io_map]
+             prefix2 + io[1] if prefix2 else io[1])
+            for io in io_map]
 
     io_map_g1_outs = set([io[0] for io in io_map])
     io_map_g2_ins = set([io[1] for io in io_map])
@@ -171,8 +173,8 @@ def merge_graphs(
         category, names = overlapping_names[0]
         raise ValueError(
             "Cant merge two graphs with overlapping names. "
-            f"Found repeated {category} names: " + ", ".join(names) + "\n" +
-            "Consider using ``onnx.compose.add_prefix`` to add a prefix to names in one of the graphs."
+            f"Found repeated {category} names: " + ", ".join(names) + "\n"
+            + "Consider using ``onnx.compose.add_prefix`` to add a prefix to names in one of the graphs."
         )
 
     g = GraphProto()
@@ -326,13 +328,14 @@ def merge_models(
     if function_overlap:
         raise ValueError(
             "Can't merge models with overlapping local function names."
-            f" Found in both graphs: " + ', '.join(function_overlap)
+            " Found in both graphs: " + ', '.join(function_overlap)
         )
     model.functions.MergeFrom(m1.functions)
     model.functions.MergeFrom(m2.functions)
 
     checker.check_model(model)
     return model
+
 
 def add_prefix_graph(
         graph,  # type: GraphProto
@@ -485,6 +488,7 @@ def add_prefix(
     )
     return model
 
+
 def expand_out_dim_graph(
         graph,  # type: GraphProto
         dim_idx,  # type: int
@@ -541,6 +545,7 @@ def expand_out_dim_graph(
         g.output.append(
             helper.make_tensor_value_info(o.name, o.type.tensor_type.elem_type, new_shape))
     return g
+
 
 def expand_out_dim(
         model,  # type: ModelProto

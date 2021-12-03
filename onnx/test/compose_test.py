@@ -11,7 +11,7 @@ import unittest
 from typing import Text, List, Optional, Tuple, Callable
 
 from onnx import helper, parser, checker, compose, version_converter, \
-                 ModelProto, GraphProto, ValueInfoProto, TensorProto, SparseTensorProto
+    ModelProto, GraphProto, ValueInfoProto, TensorProto, SparseTensorProto
 
 
 def _load_model(m_def):  # type: (Text) -> ModelProto
@@ -64,16 +64,18 @@ m2_def = '''
     }
     '''
 
+
 class TestComposeFunctions(unittest.TestCase):
-    def _test_merge_models(self,
-                           m1def,  # type: Text
-                           m2def,  # type: Text
-                           io_map,  # type: List[Tuple[Text, Text]]
-                           check_expectations,  # type: Callable[[GraphProto, GraphProto, GraphProto], None]
-                           inputs=None,  # type: Optional[List[Text]]
-                           outputs=None,  # type: Optional[List[Text]]
-                           prefix1=None,  # type: Optional[Text]
-                           prefix2=None,  # type: Optional[Text]
+    def _test_merge_models(
+        self,
+        m1def,  # type: Text
+        m2def,  # type: Text
+        io_map,  # type: List[Tuple[Text, Text]]
+        check_expectations,  # type: Callable[[GraphProto, GraphProto, GraphProto], None]
+        inputs=None,  # type: Optional[List[Text]]
+        outputs=None,  # type: Optional[List[Text]]
+        prefix1=None,  # type: Optional[Text]
+        prefix2=None  # type: Optional[Text]
     ):  # type: (...) -> None
         m1, m2 = _load_model(m1def), _load_model(m2def)
         g3 = compose.merge_graphs(
@@ -157,6 +159,7 @@ class TestComposeFunctions(unittest.TestCase):
             }
             '''
         io_map = [("B", "B")]
+
         def check_expectations(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
             self.assertEqual(['A'], [elem.name for elem in g3.input])
             self.assertEqual(['C'], [elem.name for elem in g3.output])
@@ -190,13 +193,14 @@ class TestComposeFunctions(unittest.TestCase):
             }
             '''
         io_map = [("A1", "B2")]
+
         def check_expectations(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
             self.assertEqual(['A0'], [elem.name for elem in g3.input])
             self.assertEqual(['B3'], [elem.name for elem in g3.output])
             self.assertEqual(['Add', 'Sub'], [elem.op_type for elem in g3.node])
 
-        inputs=['A0']
-        outputs=['B3']
+        inputs = ['A0']
+        outputs = ['B3']
         self._test_merge_models(
             m1_def, m2_def, io_map, check_expectations, inputs=inputs, outputs=outputs)
 
@@ -217,6 +221,7 @@ class TestComposeFunctions(unittest.TestCase):
             }
             '''
         io_map = [("C", "A")]
+
         def check_expectations(g1, g2, g3):  # type: (GraphProto, GraphProto, GraphProto) -> None
             self.assertEqual(['m1/A', 'm1/B', 'm2/B'], [elem.name for elem in g3.input])
             self.assertEqual(['m2/C'], [elem.name for elem in g3.output])
@@ -486,16 +491,16 @@ class TestComposeFunctions(unittest.TestCase):
         sparse_initializer0=['sparse_init0', 'sparse_init1'],  # type: List[Text]
         sparse_initializer1=['sparse_init2', 'sparse_init3'],  # type: List[Text]
     ):  # type: (...) -> None
-        n0 = [helper.make_node('Identity', inputs=[inputs0[i]], outputs=[outputs0[i]]) \
-            for i in range(len(inputs0))]
-        i0 = [helper.make_tensor_value_info(inputs0[i], TensorProto.FLOAT, []) \
-            for i in range(len(inputs0))]
-        o0 = [helper.make_tensor_value_info(outputs0[i], TensorProto.FLOAT, []) \
-            for i in range(len(outputs0))]
-        vi0 = [helper.make_tensor_value_info(value_info0[i], TensorProto.FLOAT, []) \
-            for i in range(len(value_info0))]
-        init0 = [helper.make_tensor(name=initializer0[i], data_type=TensorProto.INT64, dims=(), vals=[1]) \
-            for i in range(len(initializer0))]
+        n0 = [helper.make_node('Identity', inputs=[inputs0[i]], outputs=[outputs0[i]])
+              for i in range(len(inputs0))]
+        i0 = [helper.make_tensor_value_info(inputs0[i], TensorProto.FLOAT, [])
+              for i in range(len(inputs0))]
+        o0 = [helper.make_tensor_value_info(outputs0[i], TensorProto.FLOAT, [])
+              for i in range(len(outputs0))]
+        vi0 = [helper.make_tensor_value_info(value_info0[i], TensorProto.FLOAT, [])
+               for i in range(len(value_info0))]
+        init0 = [helper.make_tensor(name=initializer0[i], data_type=TensorProto.INT64, dims=(), vals=[1])
+                 for i in range(len(initializer0))]
 
         def _make_sparse_tensor(name):  # type: (Text) -> SparseTensorProto
             dense_shape = [3, 3]
@@ -507,24 +512,26 @@ class TestComposeFunctions(unittest.TestCase):
                 vals=np.array(sparse_values).astype(np.float32), raw=False)
 
             indices_tensor = helper.make_tensor(
-                name=name + "_idx" , data_type=TensorProto.INT64,
+                name=name + "_idx", data_type=TensorProto.INT64,
                 dims=[len(linear_indicies)],
                 vals=np.array(linear_indicies).astype(np.int64), raw=False)
             return helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
 
-        sparse_init0 = [_make_sparse_tensor(sparse_initializer0[i]) for i in range(len(sparse_initializer0))]
+        sparse_init0 = [_make_sparse_tensor(
+            sparse_initializer0[i]) for i in range(len(sparse_initializer0))]
 
-        n1 = [helper.make_node('Identity', inputs=[inputs1[i]], outputs=[outputs1[i]]) \
-            for i in range(len(inputs1))]
-        i1 = [helper.make_tensor_value_info(inputs1[i], TensorProto.FLOAT, []) \
-            for i in range(len(inputs1))]
-        o1 = [helper.make_tensor_value_info(outputs1[i], TensorProto.FLOAT, []) \
-            for i in range(len(outputs1))]
-        vi1 = [helper.make_tensor_value_info(value_info1[i], TensorProto.FLOAT, []) \
-            for i in range(len(value_info1))]
-        init1 = [helper.make_tensor(name=initializer1[i], data_type=TensorProto.INT64, dims=(), vals=[1]) \
-            for i in range(len(initializer1))]
-        sparse_init1 = [_make_sparse_tensor(sparse_initializer1[i]) for i in range(len(sparse_initializer1))]
+        n1 = [helper.make_node('Identity', inputs=[inputs1[i]], outputs=[outputs1[i]])
+              for i in range(len(inputs1))]
+        i1 = [helper.make_tensor_value_info(inputs1[i], TensorProto.FLOAT, [])
+              for i in range(len(inputs1))]
+        o1 = [helper.make_tensor_value_info(outputs1[i], TensorProto.FLOAT, [])
+              for i in range(len(outputs1))]
+        vi1 = [helper.make_tensor_value_info(value_info1[i], TensorProto.FLOAT, [])
+               for i in range(len(value_info1))]
+        init1 = [helper.make_tensor(name=initializer1[i], data_type=TensorProto.INT64, dims=(), vals=[1])
+                 for i in range(len(initializer1))]
+        sparse_init1 = [_make_sparse_tensor(sparse_initializer1[i])
+                        for i in range(len(sparse_initializer1))]
 
         ops = [helper.make_opsetid("", 10)]
         m0 = helper.make_model(
