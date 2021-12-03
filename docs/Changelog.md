@@ -3667,6 +3667,7 @@ This version of the operator has been available since version 1 of the default O
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
   from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
 #### Version
 
@@ -4949,6 +4950,7 @@ This version of the operator has been available since version 4 of the default O
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
   from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
 #### Version
 
@@ -17632,6 +17634,7 @@ This version of the operator has been available since version 13 of the default 
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
   from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
 #### Version
 
@@ -19351,7 +19354,9 @@ This version of the operator has been available since version 14 of the default 
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
   from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
-  dimension will be set explicitly to zero (i.e. not taken from input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+  dimension will be set explicitly to zero (i.e. not taken from input tensor).
+  Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
 #### Version
 
