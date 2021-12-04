@@ -92,7 +92,6 @@ struct GraphInferenceContext {
         symbolTable{symbolTable_in},
         ir_version{ir_version_in} {}
 
-
   const std::unordered_map<std::string, TypeProto*>*
       outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
@@ -460,6 +459,13 @@ void InferShapes(
 void InferShapes(
     const std::string& model_path,
     const std::string& save_path = "",
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const ShapeInferenceOptions& options = {}
+    );
+
+void InferShapesAndDataPropagation(
+    ModelProto& m,
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const ShapeInferenceOptions& options = {}
     );

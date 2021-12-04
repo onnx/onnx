@@ -370,7 +370,7 @@ static void InferShapesImpl(
     }
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
-    InferenceContextImpl ctx(n, valueTypesByName, inputDataByName,inputSparseDataByName,
+    InferenceContextImpl ctx(n, valueTypesByName, inputDataByName, inputSparseDataByName,
       &generatedShapeDataByName, &graphInferenceContext);
     if (!schema) {
       std::cerr << "Warning: Unsupported operator " << n.op_type() << ". No schema registered for this operator."
@@ -550,6 +550,30 @@ void InferShapes(
   ONNX_CATCH(...) {
     fail_check("Unable to save inferred model to the target path:", save_path);
   }
+}
+
+void InferShapesAndDataPropagation(
+    ModelProto& m,
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
+    const ISchemaRegistry* schema_registry,
+    const ShapeInferenceOptions& options) {
+  std::unordered_map<std::string, int> opset_imports;
+  for (const auto& opset_import : m.opset_import()) {
+    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+  }
+  auto* g = m.mutable_graph();
+  SymbolTableImpl symbolTable;
+  traverseGraphsToAddExistingSymbols(*g, symbolTable);
+
+  InferShapesImpl(
+      g,
+      std::unordered_map<std::string, TypeProto*>(0),
+      opset_imports,
+      options,
+      &symbolTable,
+      generatedShapeDataByName,
+      schema_registry,
+      m.ir_version());
 }
 
 void InferShapeForFunctionNode(
