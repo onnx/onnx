@@ -244,12 +244,12 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, int>& opset_imports,
     const ShapeInferenceOptions& options,
     SymbolTable* symbolTable,
+    std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
 ) {
   std::unordered_map<std::string, TypeProto*> valueTypesByName{outer_scope_value_types_by_name};
   std::unordered_map<std::string, TypeProto*> undefinedValueTypesByName{outer_scope_value_types_by_name};
-  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
 
   GraphInferenceContext graphInferenceContext{valueTypesByName, opset_imports, symbolTable, schema_registry, ir_version};
   for (auto& vi : *g->mutable_value_info()) {
@@ -499,7 +499,8 @@ void InferShapes(
   SymbolTableImpl symbolTable;
   traverseGraphsToAddExistingSymbols(*g, symbolTable);
   InferShapesImpl(
-      g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, options, &symbolTable, schema_registry);
+      g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, options, &symbolTable,
+      std::unordered_map<std::string, TensorShapeProto>(0), schema_registry);
 }
 
 void InferShapes(
@@ -519,6 +520,7 @@ void InferShapes(
       opset_imports,
       options,
       &symbolTable,
+      std::unordered_map<std::string, TensorShapeProto>(0),
       schema_registry,
       m.ir_version());
 }
@@ -805,6 +807,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       context_->opset_imports,
       options,
       symbolTable,
+      std::unordered_map<std::string, TensorShapeProto>(0),
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
