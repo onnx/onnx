@@ -4,6 +4,7 @@ import argparse
 import config
 import gc
 import onnx
+from onnx import version_converter
 import os
 from pathlib import Path
 import subprocess
@@ -72,6 +73,7 @@ def main():
         try:
             pull_lfs_file(model_path)
             model = onnx.load(model_path)
+            model = version_converter.convert_version(model, 16)
             # stricter onnx.checker with onnx.shape_inference
             onnx.checker.check_model(model, True)
             # remove the model to save space in CIs
