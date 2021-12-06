@@ -244,7 +244,7 @@ static void InferShapesImpl(
     const std::unordered_map<std::string, int>& opset_imports,
     const ShapeInferenceOptions& options,
     SymbolTable* symbolTable,
-    std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName,
+    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
 ) {
@@ -498,9 +498,10 @@ void InferShapes(
     const ShapeInferenceOptions& options) {
   SymbolTableImpl symbolTable;
   traverseGraphsToAddExistingSymbols(*g, symbolTable);
+  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
   InferShapesImpl(
       g, std::unordered_map<std::string, TypeProto*>(0), opset_imports, options, &symbolTable,
-      std::unordered_map<std::string, TensorShapeProto>(0), schema_registry);
+      generatedShapeDataByName, schema_registry);
 }
 
 void InferShapes(
@@ -514,13 +515,14 @@ void InferShapes(
   auto* g = m.mutable_graph();
   SymbolTableImpl symbolTable;
   traverseGraphsToAddExistingSymbols(*g, symbolTable);
+  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
       options,
       &symbolTable,
-      std::unordered_map<std::string, TensorShapeProto>(0),
+      generatedShapeDataByName,
       schema_registry,
       m.ir_version());
 }
@@ -557,8 +559,7 @@ void InferShapes(
 void InferShapesAndDataPropagation(
     ModelProto& m,
     std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
-    const ISchemaRegistry* schema_registry,
-    const ShapeInferenceOptions& options) {
+    const ISchemaRegistry* schema_registry) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
@@ -566,6 +567,7 @@ void InferShapesAndDataPropagation(
   auto* g = m.mutable_graph();
   SymbolTableImpl symbolTable;
   traverseGraphsToAddExistingSymbols(*g, symbolTable);
+  ShapeInferenceOptions options{true, true, true};
 
   InferShapesImpl(
       g,
@@ -684,6 +686,7 @@ void InferShapeForFunctionNode(
         materializeSymbolicShape(inferred_output_type, *symbolTable);
       }
       mergeShapesAndTypes(*inferred_output_type, existingType);
+
       if (options.enable_data_propagation && schema->has_data_propagation_function()) {
         DataPropagationContextImpl temp_dataPropagationCtx(
             copy_n, temp_valueTypesByName, temp_initializersByName, *generatedShapeDataByName);
@@ -801,13 +804,15 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // updating initializers that match subgraph inputs.
   (void)inputData;
   ShapeInferenceOptions options {};
+  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
+
   InferShapesImpl(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
       options,
       symbolTable,
-      std::unordered_map<std::string, TensorShapeProto>(0),
+      generatedShapeDataByName,
       context_->schema_registry);
 
   std::vector<const TypeProto*> graphOutputTypes;
