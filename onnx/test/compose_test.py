@@ -11,7 +11,8 @@ import unittest
 from typing import Text, List, Optional, Tuple, Callable
 
 from onnx import helper, parser, checker, compose, version_converter, \
-    ModelProto, GraphProto, ValueInfoProto, TensorProto, SparseTensorProto
+    ModelProto, GraphProto, ValueInfoProto, TensorProto, SparseTensorProto, \
+    FunctionProto, NodeProto
 
 
 def _load_model(m_def):  # type: (Text) -> ModelProto
@@ -36,6 +37,22 @@ def _get_shape(value_info):  # type: (ValueInfoProto) -> List[int]
     '''
     return [value_info.type.tensor_type.shape.dim[d].dim_value
             for d in range(len(value_info.type.tensor_type.shape.dim))]
+
+
+def _make_sparse_tensor(name):  # type: (Text) -> SparseTensorProto
+    dense_shape = [3, 3]
+    linear_indices = [2, 3, 5]
+    sparse_values = [1.7, 0.4, 0.9]
+    values_tensor = helper.make_tensor(
+        name=name + "_values", data_type=TensorProto.FLOAT,
+        dims=[len(sparse_values)],
+        vals=np.array(sparse_values).astype(np.float32), raw=False)
+
+    indices_tensor = helper.make_tensor(
+        name=name + "_idx", data_type=TensorProto.INT64,
+        dims=[len(linear_indices)],
+        vals=np.array(linear_indices).astype(np.int64), raw=False)
+    return helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
 
 
 m1_def = '''
@@ -502,21 +519,6 @@ class TestComposeFunctions(unittest.TestCase):
         init0 = [helper.make_tensor(name=initializer0[i], data_type=TensorProto.INT64, dims=(), vals=[1])
                  for i in range(len(initializer0))]
 
-        def _make_sparse_tensor(name):  # type: (Text) -> SparseTensorProto
-            dense_shape = [3, 3]
-            linear_indicies = [2, 3, 5]
-            sparse_values = [1.7, 0.4, 0.9]
-            values_tensor = helper.make_tensor(
-                name=name + "_values", data_type=TensorProto.FLOAT,
-                dims=[len(sparse_values)],
-                vals=np.array(sparse_values).astype(np.float32), raw=False)
-
-            indices_tensor = helper.make_tensor(
-                name=name + "_idx", data_type=TensorProto.INT64,
-                dims=[len(linear_indicies)],
-                vals=np.array(linear_indicies).astype(np.int64), raw=False)
-            return helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
-
         sparse_init0 = [_make_sparse_tensor(
             sparse_initializer0[i]) for i in range(len(sparse_initializer0))]
 
@@ -615,6 +617,174 @@ class TestComposeFunctions(unittest.TestCase):
         self._test_overlapping_names(
             sparse_initializer0=['sparse_init0', 'sparse_init1'],
             sparse_initializer1=['sparse_init1', 'sparse_init2'])
+
+    def test_overlapping_function_names(self):  # type: () -> None
+        '''
+        Tests error checking when the name of local function entries overlaps
+        '''
+        ops = [
+            helper.make_opsetid("", 10),
+            helper.make_opsetid("local", 10)
+        ]
+
+        def _make_function(
+            domain,  # type: Text
+            fname,  # type: Text
+            inputs,  # type: List[Text]
+            outputs,  # type: List[Text]
+            nodes,  # type: List[NodeProto]
+        ):  # type: (...) -> FunctionProto
+            f = FunctionProto()
+            f.domain = domain
+            f.name = fname
+            f.input.extend(inputs)
+            f.output.extend(outputs)
+            f.node.extend(nodes)
+            f.opset_import.extend(ops)
+            return f
+
+        ops = [
+            helper.make_opsetid("", 10),
+            helper.make_opsetid("local", 10)
+        ]
+
+        g = GraphProto()
+        g.input.extend([
+            helper.make_tensor_value_info('x0', TensorProto.FLOAT, []),
+            helper.make_tensor_value_info('x1', TensorProto.FLOAT, [])
+        ])
+        g.output.extend([
+            helper.make_tensor_value_info('y', TensorProto.FLOAT, []),
+        ])
+        g.node.extend([
+            helper.make_node(
+                'f1', domain='local', inputs=['x0', 'x1'], outputs=['y'])
+        ])
+
+        g1 = GraphProto()
+        g1.CopyFrom(g)
+        g1.name = 'g1'
+        m1 = helper.make_model(g1, producer_name='test', opset_imports=ops)
+        m1.functions.extend([
+            _make_function(
+                'local', 'f1', ['x0', 'x1'], ['y'],
+                [helper.make_node('Add', inputs=['x0', 'x1'], outputs=['y'])]
+            )
+        ])
+        checker.check_model(m1)
+
+        g2 = GraphProto()
+        g2.CopyFrom(g)
+        g2.name = 'g2'
+        m2 = helper.make_model(g2, producer_name='test', opset_imports=ops)
+        m2.functions.extend([
+            _make_function(
+                'local', 'f1', ['x0', 'x1'], ['y'],
+                [helper.make_node('Mul', inputs=['x0', 'x1'], outputs=['y'])]
+            )
+        ])
+        checker.check_model(m2)
+
+        m = compose.merge_models(
+            m1, m2,
+            io_map=[('y', 'x0'), ('y', 'x1')],
+            prefix1='m1/', prefix2='m2/'
+        )
+        checker.check_model(m)
+
+        nodes = [n.op_type for n in m.graph.node]
+        self.assertEqual(['m1/f1', 'm2/f1'], nodes)
+
+        functions = [f.name for f in m.functions]
+        self.assertEqual(['m1/f1', 'm2/f1'], functions)
+
+        g3 = GraphProto()
+        g3.CopyFrom(g)
+        g3.name = 'g3'
+        g3.node[0].op_type = 'f2'
+        m3 = helper.make_model(g3, producer_name='test', opset_imports=ops)
+        m3.functions.extend([
+            _make_function(
+                'local', 'f1', ['x0', 'x1'], ['y'],
+                [
+                    helper.make_node('Add', inputs=['x0', 'x1'], outputs=['y0']),
+                    helper.make_node('Mul', inputs=['x0', 'x1'], outputs=['y1']),
+                    helper.make_node('Add', inputs=['y0', 'y1'], outputs=['y'])
+                ]
+            ),
+            _make_function(
+                'local', 'f2', ['x0', 'x1'], ['y'],
+                [
+                    helper.make_node('f1', domain='local', inputs=['x0', 'x1'], outputs=['y0']),
+                    helper.make_node('Mul', inputs=['x0', 'x1'], outputs=['y1']),
+                    helper.make_node('Add', inputs=['y0', 'y1'], outputs=['y'])
+                ]
+            )
+        ])
+        checker.check_model(m3)
+
+        m = compose.merge_models(
+            m1, m3,
+            io_map=[('y', 'x0'), ('y', 'x1')],
+            prefix1='m1/', prefix2='m3/'
+        )
+        checker.check_model(m)
+
+        nodes = [n.op_type for n in m.graph.node]
+        self.assertEqual(['m1/f1', 'm3/f2'], nodes)
+
+        functions = [f.name for f in m.functions]
+        self.assertEqual(['m1/f1', 'm3/f1', 'm3/f2'], functions)
+
+        self.assertEqual(
+            ['Add'], [n.op_type for n in m.functions[0].node])
+        self.assertEqual(
+            ['Add', 'Mul', 'Add'], [n.op_type for n in m.functions[1].node])
+        self.assertEqual(
+            ['m3/f1', 'Mul', 'Add'], [n.op_type for n in m.functions[2].node])
+
+    def test_merge_drop_unnecessary_initializers(self):  # type: () -> None
+        '''
+        Tests automatic removal of initializers when merging graphs
+        '''
+        ops = [helper.make_opsetid("", 10)]
+
+        g = GraphProto()
+        g.input.extend([helper.make_tensor_value_info('x', TensorProto.FLOAT, [])])
+        g.output.extend([helper.make_tensor_value_info('y', TensorProto.FLOAT, [])])
+        g.node.extend([helper.make_node('Identity', inputs=['x'], outputs=['y'])])
+
+        g1 = GraphProto()
+        g1.CopyFrom(g)
+        g1.name = 'g1'
+        m1 = helper.make_model(g1, producer_name='test', opset_imports=ops)
+        checker.check_model(m1)
+
+        g2 = GraphProto()
+        g2.CopyFrom(g)
+        g2.name = 'g2'
+        g2.initializer.extend(
+            [helper.make_tensor(name='x', data_type=TensorProto.FLOAT, dims=(), vals=[0])]
+        )
+        m2 = helper.make_model(g2, producer_name='test', opset_imports=ops)
+        checker.check_model(m2)
+
+        g3 = GraphProto()
+        g3.CopyFrom(g)
+        g3.name = 'g3'
+        g3.sparse_initializer.extend(
+            [_make_sparse_tensor('x')]
+        )
+        m3 = helper.make_model(g3, producer_name='test', opset_imports=ops)
+        checker.check_model(m3)
+
+        # Initializer 'x' from m1 is removed, because there is no longer an input with that name
+        out_m1 = compose.merge_models(m1, m2, prefix1='m1/', io_map=[('y', 'x')])
+        self.assertEqual(0, len(out_m1.graph.initializer))
+
+        # Sparse initializer 'x' from m1 is removed, because there is no longer an input with that name
+        out_m2 = compose.merge_models(m1, m3, prefix1='m1/', io_map=[('y', 'x')])
+        self.assertEqual(0, len(out_m2.graph.initializer))
 
 
 if __name__ == '__main__':

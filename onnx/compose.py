@@ -48,13 +48,11 @@ def check_overlapping_names(
 
     if not io_map:
         io_map = []
-    io_map_outputs = set([elem[0] for elem in io_map])
     io_map_inputs = set([elem[1] for elem in io_map])
 
-    # Edges already covered input/output
+    # Edges already cover input/output
     overlap = _overlapping(
-        _edge_names(g1, exclude=io_map_outputs),
-        _edge_names(g2, exclude=io_map_inputs)
+        _edge_names(g1), _edge_names(g2, exclude=io_map_inputs)
     )
     if len(overlap) > 0:
         result.append(('edge', overlap))
@@ -120,8 +118,14 @@ def merge_graphs(
     # Prefixing names in the graph if requested, adjusting io_map accordingly
     if prefix1 or prefix2:
         if prefix1:
+            g1_copy = GraphProto()
+            g1_copy.CopyFrom(g1)
+            g1 = g1_copy
             g1 = add_prefix_graph(g1, prefix=prefix1)
         if prefix2:
+            g2_copy = GraphProto()
+            g2_copy.CopyFrom(g2)
+            g2 = g2_copy
             g2 = add_prefix_graph(g2, prefix=prefix2)
         io_map = [
             (prefix1 + io[0] if prefix1 else io[0],
@@ -180,10 +184,13 @@ def merge_graphs(
     g = GraphProto()
 
     g.node.extend(g1.node)
+    g2_nodes_begin = len(g.node)
     g.node.extend(g2.node)
+    g2_nodes_end = len(g.node)
 
     # Connecting outputs of the first graph with the inputs of the second
-    for node in g.node:
+    for node_idx in range(g2_nodes_begin, g2_nodes_end):
+        node = g.node[node_idx]
         for index, name in enumerate(node.input):
             if name in reversed_io_map:
                 node.input[index] = reversed_io_map[name]
@@ -205,10 +212,12 @@ def merge_graphs(
         g.output.extend(g2.output)
 
     g.initializer.extend(g1.initializer)
-    g.initializer.extend(g2.initializer)
+    g.initializer.extend(
+        [init for init in g2.initializer if init.name not in io_map_g2_ins])
 
     g.sparse_initializer.extend(g1.sparse_initializer)
-    g.sparse_initializer.extend(g2.sparse_initializer)
+    g.sparse_initializer.extend(
+        [init for init in g2.sparse_initializer if init.values.name not in io_map_g2_ins])
 
     g.value_info.extend(g1.value_info)
     g.value_info.extend(g2.value_info)
@@ -295,9 +304,25 @@ def merge_models(
         else:
             opset_import_map[entry.domain] = entry.version
 
+    # Prefixing names in the graph if requested, adjusting io_map accordingly
+    if prefix1 or prefix2:
+        if prefix1:
+            m1_copy = ModelProto()
+            m1_copy.CopyFrom(m1)
+            m1 = m1_copy
+            m1 = add_prefix(m1, prefix=prefix1)
+        if prefix2:
+            m2_copy = ModelProto()
+            m2_copy.CopyFrom(m2)
+            m2 = m2_copy
+            m2 = add_prefix(m2, prefix=prefix2)
+        io_map = [
+            (prefix1 + io[0] if prefix1 else io[0],
+             prefix2 + io[1] if prefix2 else io[1])
+            for io in io_map]
+
     graph = merge_graphs(m1.graph, m2.graph, io_map,
                          inputs=inputs, outputs=outputs,
-                         prefix1=prefix1, prefix2=prefix2,
                          name=name, doc_string=doc_string)
     model = helper.make_model(graph,
                               producer_name=producer_name,
@@ -362,7 +387,7 @@ def add_prefix_graph(
         rename_inputs (bool): Whether to prefix input names
         rename_outputs (bool): Whether to prefix output names
         rename_initializers (bool): Whether to prefix initializer and sparse initializer names
-        rename_value_infos (bool): Whether to prefix value info nanes
+        rename_value_infos (bool): Whether to prefix value info names
         inplace (bool): If True, mutates the graph directly.
                         Otherwise, a copy will be created
     """
@@ -448,10 +473,11 @@ def add_prefix(
         rename_outputs=True,  # type: Optional[bool]
         rename_initializers=True,  # type: Optional[bool]
         rename_value_infos=True,  # type: Optional[bool]
+        rename_functions=True,  # type: Optional[bool]
         inplace=False,  # type: Optional[bool]
 ):  # type: (...) -> ModelProto
     """Adds a prefix to names of elements in a graph: nodes, edges, inputs, outputs,
-    initializers, sparse initializer, value infos.
+    initializers, sparse initializer, value infos, and local functions.
 
     It can be used as a utility before merging graphs that have overlapping names.
     Empty names are not _prefixed.
@@ -465,6 +491,7 @@ def add_prefix(
         rename_outputs (bool): Whether to prefix output names
         rename_initializers (bool): Whether to prefix initializer and sparse initializer names
         rename_value_infos (bool): Whether to prefix value info nanes
+        rename_functions (bool): Whether to prefix local function names
         inplace (bool): If True, mutates the model directly.
                         Otherwise, a copy will be created
     """
@@ -486,6 +513,24 @@ def add_prefix(
         rename_value_infos=rename_value_infos,
         inplace=True  # No need to create a copy, since it's a new model
     )
+
+    if rename_functions:
+        f_name_map = {}
+        for f in model.functions:
+            new_f_name = prefix + f.name
+            f_name_map[f.name] = new_f_name
+            f.name = new_f_name
+        # Adjust references to local functions in other local function
+        # definitions
+        for f in model.functions:
+            for n in f.node:
+                if n.op_type in f_name_map:
+                    n.op_type = f_name_map[n.op_type]
+        # Adjust references to local functions in the graph
+        for n in model.graph.node:
+            if n.op_type in f_name_map:
+                n.op_type = f_name_map[n.op_type]
+
     return model
 
 
