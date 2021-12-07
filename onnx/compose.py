@@ -220,7 +220,7 @@ def merge_graphs(
         [init for init in g2.sparse_initializer if init.values.name not in io_map_g2_ins])
 
     g.value_info.extend(g1.value_info)
-    g.value_info.extend(g2.value_info)
+    g.value_info.extend([vi for vi in g2.value_info if vi.name not in io_map_g2_ins])
 
     g.name = name if name is not None else "_".join([g1.name, g2.name])
 

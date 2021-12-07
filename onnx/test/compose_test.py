@@ -743,7 +743,7 @@ class TestComposeFunctions(unittest.TestCase):
         self.assertEqual(
             ['m3/f1', 'Mul', 'Add'], [n.op_type for n in m.functions[2].node])
 
-    def test_merge_drop_unnecessary_initializers(self):  # type: () -> None
+    def test_merge_drop_unnecessary_initializers_and_value_info(self):  # type: () -> None
         '''
         Tests automatic removal of initializers when merging graphs
         '''
@@ -778,6 +778,15 @@ class TestComposeFunctions(unittest.TestCase):
         m3 = helper.make_model(g3, producer_name='test', opset_imports=ops)
         checker.check_model(m3)
 
+        g4 = GraphProto()
+        g4.CopyFrom(g)
+        g4.name = 'g3'
+        g4.value_info.extend(
+            [helper.make_tensor_value_info('x', TensorProto.FLOAT, [])]
+        )
+        m4 = helper.make_model(g4, producer_name='test', opset_imports=ops)
+        checker.check_model(m4)
+
         # Initializer 'x' from m1 is removed, because there is no longer an input with that name
         out_m1 = compose.merge_models(m1, m2, prefix1='m1/', io_map=[('y', 'x')])
         self.assertEqual(0, len(out_m1.graph.initializer))
@@ -785,6 +794,10 @@ class TestComposeFunctions(unittest.TestCase):
         # Sparse initializer 'x' from m1 is removed, because there is no longer an input with that name
         out_m2 = compose.merge_models(m1, m3, prefix1='m1/', io_map=[('y', 'x')])
         self.assertEqual(0, len(out_m2.graph.initializer))
+
+        # Value info 'x' from m1 is removed, because there is no longer an input with that name
+        out_m3 = compose.merge_models(m1, m4, prefix1='m1/', io_map=[('y', 'x')])
+        self.assertEqual(0, len(out_m3.graph.value_info))
 
 
 if __name__ == '__main__':
