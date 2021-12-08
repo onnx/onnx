@@ -70,26 +70,27 @@ def main():
             skip_models.append(model_path)
             continue
         print('-----------------Testing: {}-----------------'.format(model_name))
-        try:
-            pull_lfs_file(model_path)
-            model = onnx.load(model_path)
-            if model.ir_version < 4:
+        pull_lfs_file(model_path)
+        model = onnx.load(model_path)
+        if model.ir_version < 4:
+            try:
                 model = version_converter.convert_version(model, 9)
                 # stricter onnx.checker with onnx.shape_inference
-                # onnx.checker.check_model(model, True)
-                # remove the model to save space in CIs
-                if os.path.exists(model_path):
-                    os.remove(model_path)
-                # clean git lfs cache
-                run_lfs_prune()
-                print('[PASS]: {} is checked by onnx. '.format(model_name))
-            else:
-                print('[SKIP]: {}.'.format(model_name))
+                onnx.checker.check_model(model, True)
+            except Exception as e:
+                print('[FAIL]: {}'.format(e))
+                failed_models.append(model_path)
+                failed_messages.append((model_name, e))
 
-        except Exception as e:
-            print('[FAIL]: {}'.format(e))
-            failed_models.append(model_path)
-            failed_messages.append((model_name, e))
+            # remove the model to save space in CIs
+            if os.path.exists(model_path):
+                os.remove(model_path)
+            # clean git lfs cache
+            run_lfs_prune()
+            print('[PASS]: {} is checked by onnx. '.format(model_name))
+        else:
+            print('[SKIP]: {}.'.format(model_name))
+
         end = time.time()
         print('--------------Time used: {} secs-------------'.format(end - start))
         # enable gc collection to prevent MemoryError by loading too many large models
