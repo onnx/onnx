@@ -94,8 +94,8 @@ def parse_args():  # type: () -> argparse.Namespace
                            help='output directory (default: %(default)s)')
     subparser.add_argument('-t', '--op_type', default=None,
                            help='op_type for test case generation. (generates test data for the specified op_type only.)')
-    subparser.add_argument('-v', '--opset_version', default=None,
-                           help='opset_version for test case generation. (generates test data with the specified opset_version)')
+    subparser.add_argument('-v', '--use_max_opset_version', default=None,
+                           help='opset_version for test case generation. (generates test data for the latest opset vesion that supports.)')
     subparser.set_defaults(func=generate_data)
 
     return parser.parse_args()

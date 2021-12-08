@@ -127,6 +127,10 @@ def _extract_value_info(input, name, type_proto=None):  # type: (Union[List[Any]
 # E.g., for an op with 3 inputs, if the second parameter is optional and we wish to omit it,
 # node.inputs would look like ["Param1", "", "Param3"], while inputs would look like
 # [input-1-value, input-3-value]
+# Instead of creating model with latest version, it now generates models for since_version by default.
+# Thus it can make every model uses the same opset version after every opset change.
+# Besides, user can specify "use_max_opset_version" to generate models for
+# the latest opset vesion that supports before targeted opset version
 def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]
            outputs,  # type: Sequence[np.ndarray]
@@ -160,8 +164,12 @@ def expect(node,  # type: onnx.NodeProto
     if 'opset_imports' not in kwargs:
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
-        since_version = onnx.defs.get_schema(node.op_type, node.domain).since_version
-        produce_opset_version = int(_TargetOpsetVersion) if _TargetOpsetVersion is not None else since_version  # type: ignore
+        if _TargetOpsetVersion is None:
+            produce_opset_version = onnx.defs.get_schema(node.op_type, node.domain).since_version
+        # If given targeted opset version
+        # it will generate test data for the latest opset vesion that supports before targeted opset version
+        else:
+            produce_opset_version = onnx.defs.get_schema(node.op_type, int(_TargetOpsetVersion), node.domain).since_version
         kwargs[str('opset_imports')] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
 
     model = onnx.helper.make_model(graph, **kwargs)
