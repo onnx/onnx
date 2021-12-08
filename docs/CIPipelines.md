@@ -17,17 +17,17 @@
   [MacRelease](https://github.com/onnx/onnx/blob/master/.github/workflows/release_win.yml) | <ul><li>Main branch</li><li>Release branch</li><li>Weekly</li></ul> | <ul><li>macos-10.15</li><li> MACOSX_DEPLOYMENT_TARGET=10.12(5) </li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li></ul>| <ul><li>Release Mac wheel</li><li>Release onnx-weekly package</li><li>Verify backend node data</li><li>Verify node test generation</li><li>Verify with different dependency versions - latest numpy version, latest and min supported protobuf version</li><li>Verify ONNX with the latest ort-nightly.</li><li>Test source distribution generation</li><li>Test build with source distribution</li><li>Release onnx-weekly source distribution</li></ul>  
   [Weekly CI with latest onnx.checker](https://github.com/onnx/onnx/blob/master/.github/workflows/weekly_mac_ci.yml) | weekly(6) |<ul><li>macos-latest</li><li>MACOSX_DEPLOYMENT_TARGET=10.15</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li></ul>| <ul><li>Test latest ONNX checker</li><li>Test latest ONNX shape inference</li><li>With all models from [onnx/models](https://github.com/onnx/models)(7)</li></ul> |  
   
-  * (1):
-    * After a PR merges into main/rel-* branch, the CI will be run.
-    * These release CIs will be run weekly (Sunday midnight) and release Python wheel to [onnx-weekly](https://test.pypi.org/project/onnx-weekly/) package in TestPyPI.
-    * The PR to merge into rel-* branch will be run because they are supposed to be released soon.
-    * To manually run it, add PR label "run release CIs" (only maintainers have permission).
+  * (1) When the release CIs will run:
+    * After a PR has been merged into main/rel-* branch
+    * Run weekly (Sunday midnight) and release Python wheel to [onnx-weekly](https://test.pypi.org/project/onnx-weekly/) package on TestPyPI.
+    * Any PR targeting rel-* branch
+    * To manually run them, add a PR label "run release CIs" (only maintainers have permission).
   * (2) Minimum supported versions are listed [here](https://github.com/onnx/onnx/blob/master/requirements.txt).  
-  * (3) [Test](https://github.com/onnx/onnx/blob/master/onnx/test/test_with_ort.py) ONNX Python wheel with `onnxruntime.InferenceSession` from latest ONNXRuntime. Please note that ort-nightly does support Linux-i686 and Windows-x86 thus their verification are skipped.  
-  * (4) TEST_HUB=1 will test [onnx.hub](https://github.com/onnx/onnx/blob/master/onnx/test/hub_test.py) by using this API to download a ONNX model from onnx/models. 
+  * (3) [Test](https://github.com/onnx/onnx/blob/master/onnx/test/test_with_ort.py) ONNX Python wheel with `onnxruntime.InferenceSession` from latest ONNXRuntime. Please note that ort-nightly does not support Linux-i686 and Windows-x86 thus their verification are skipped.  
+  * (4) TEST_HUB=1 will test [onnx.hub](https://github.com/onnx/onnx/blob/master/onnx/test/hub_test.py) by using this API to download an ONNX model from onnx/models. This test is restricted to only 1 pipeline for saving quota usage.
   * (5) Although the build envioronment is macos-10.15, use MACOSX_DEPLOYMENT_TARGET=10.12 and -p [macosx_10_12_x86_64](https://github.com/onnx/onnx/blob/2e048660ffa8243596aaf3338e60c7c0575458f2/.github/workflows/release_mac.yml#L74) to force the wheel to support 10.12+.  
   
   * (6):
     * The ONNX Model Zoo test will run weekly (Sunday midnight)
-    * To manually trigger it, add PR label "test ONNX Model Zoo" (only maintainers have permission). Please note that it will need a lot of download bandwidth from [onnx/models](https://github.com/onnx/models) so use it with caution.
+    * To manually trigger it, add a PR label "test ONNX Model Zoo" (only maintainers have permission). Please note that it will need a lot of download bandwidth from [onnx/models](https://github.com/onnx/models) so use it with caution.
   * (7) Some old deprecated models (opset-1) are [skipped](https://github.com/onnx/onnx/blob/master/workflow_scripts/config.py).
