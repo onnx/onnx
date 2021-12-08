@@ -30,7 +30,7 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
     cases = model_test.collect_testcases()
     # If op_type is specified, only include those testcases including the given operator
     # Otherwise, include all of the testcases
-    cases += node_test.collect_testcases(args.op_type, args.opset_version)
+    cases += node_test.collect_testcases(args.op_type, args.use_max_opset_version)
 
     for case in cases:
         output_dir = os.path.join(
