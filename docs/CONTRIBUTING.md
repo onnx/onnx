@@ -10,7 +10,7 @@ way to get these dependencies is via [Anaconda](https://www.anaconda.com/downloa
 conda install -c conda-forge protobuf numpy
 ```
 
-You can follow the [document](https://github.com/onnx/onnx#build-onnx-from-source) to build ONNX from source.
+To build ONNX from source please follow the instructions listed [here](https://github.com/onnx/onnx#build-onnx-from-source).
 
 Then, after you have made changes to Python and C++ files:
 
@@ -25,6 +25,8 @@ Then, after you have made changes to Python and C++ files:
   - `shape_inference.py`: a utility to infer types and shapes for ONNX models
   - `version_converter.py`: a utility to upgrade or downgrade version for ONNX models
   - `parser.py`: a utility to create an ONNX model or graph from a textual representation
+  - `hub.py`: tools for downloading models from [ONNX Model Zoo](https://github.com/onnx/models)
+  - `compose.py`: tools for creating combines models out of several graphs.
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
   - `test/`: test files
