@@ -2921,7 +2921,7 @@ bool BuildContextDependentFunctionBody(
             loss = Div (loss_sum, weight_gather_sum)
         )");
       } else {
-        builder.Add("loss = ReduceSum <keepdims = 0> (loss_Ndd");
+        builder.Add("loss = ReduceSum <keepdims = 0> (loss_Ndd)");
       }
     }
   }
@@ -3279,9 +3279,9 @@ bool BuildContextDependentFunctionBodySCE(
       .Const("Shape3D", std::vector<int64_t>({0, 0, -1})) //
       .Add(R"(
         X_NCD = Reshape (scores, Shape3D)
-        X_NDC = Transpose <perm = {0, 2, 1}> (X_NCD)
+        X_NDC = Transpose <perm = [0, 2, 1]> (X_NCD)
         X_LogSM = LogSoftmax <axis = 2> (X_NDC)
-        X_LogSM_NCD = Transpose <perm = {0, 2, 1}> (X_LogSM)
+        X_LogSM_NCD = Transpose <perm = [0, 2, 1]> (X_LogSM)
         X_shape = Shape (scores)
         X_Log = Reshape (X_LogSM_NCD, X_shape)
       )");
@@ -3301,8 +3301,8 @@ bool BuildContextDependentFunctionBodySCE(
   if (ctx.hasInput(2))
     builder.Add(
         ctx.hasInput(2)
-            ? "output = NegativeLogLikelihoodLoss <reduction : STRING = @reduction, ignore_index : INT = @ignore_index> (X_Log, labels, weights)"
-            : "output = NegativeLogLikelihoodLoss <reduction : STRING = @reduction, ignore_index : INT = @ignore_index> (X_Log, labels)");
+            ? "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels, weights)"
+            : "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels)");
 
   schema.BuildFunction(functionProto);
   return true;
