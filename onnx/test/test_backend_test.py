@@ -42,8 +42,9 @@ class DummyBackend(onnx.backend.base.Backend):
         super(DummyBackend, cls).prepare(model, device, **kwargs)
 
         # test strict shape inference
+        onnx.checker.check_model(model)
         model = onnx.shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
-        onnx.checker.check_model(model, True)
+
         value_infos = {vi.name: vi for vi in itertools.chain(model.graph.value_info, model.graph.output)}
 
         if do_enforce_test_coverage_whitelist(model):
