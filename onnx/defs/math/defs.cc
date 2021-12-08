@@ -2904,8 +2904,8 @@ bool BuildContextDependentFunctionBody(
     } else {
       builder.Add("weight_gather_temp = Gather (weight, transform_targets)");
       builder.Add(
-          float_input ? "weight_gather_temp_1 = Where (mask, const_zero_float, weight_gather_temp"
-                      : "weight_gather_temp_1 = Where (mask, const_zero_casted, weight_gather_temp");
+          float_input ? "weight_gather_temp_1 = Where (mask, const_zero_float, weight_gather_temp)"
+                      : "weight_gather_temp_1 = Where (mask, const_zero_casted, weight_gather_temp)");
       builder.Add("weight_gather = Squeeze (weight_gather_temp_1, axes)");
     }
 
