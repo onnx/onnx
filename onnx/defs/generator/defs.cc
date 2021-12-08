@@ -892,7 +892,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto dtype = ctx.getAttribute("dtype") != nullptr
                              ? static_cast<TensorProto_DataType>(ctx.getAttribute("dtype")->i())
                              : input_type;
-              auto seed_attr = ctx.getAttribute("seed");
               FunctionBuilder builder(functionProto);
               builder
                 .Add("X_random = RandomUniformLike <low = 0.0, high = 1.0, seed = @seed> (input)", "dtype", int64_t(input_type))
