@@ -61,6 +61,10 @@ def main():
     failed_models = []
     failed_messages = []
     skip_models = []
+
+    pass_total = 0
+    skip_total = 0
+
     for model_path in model_list:
         start = time.time()
         model_name = model_path.split('/')[-1]
@@ -70,27 +74,28 @@ def main():
             skip_models.append(model_path)
             continue
         print('-----------------Testing: {}-----------------'.format(model_name))
-        pull_lfs_file(model_path)
-        model = onnx.load(model_path)
-        if model.ir_version < 4:
-            try:
+        try:
+            pull_lfs_file(model_path)
+            model = onnx.load(model_path)
+            if model.ir_version < 4 and model.opset_import[0].version > 1:
                 model = version_converter.convert_version(model, 9)
                 # stricter onnx.checker with onnx.shape_inference
                 onnx.checker.check_model(model, True)
-            except Exception as e:
-                print('[FAIL]: {}'.format(e))
-                failed_models.append(model_path)
-                failed_messages.append((model_name, e))
+                # remove the model to save space in CIs
+                if os.path.exists(model_path):
+                    os.remove(model_path)
+                # clean git lfs cache
+                run_lfs_prune()
+                print('[PASS]: {} is checked by onnx. '.format(model_name))
+                pass_total += 1
+            else:
+                print('[SKIP]: {}.'.format(model_name))
+                skip_total += 1
 
-            # remove the model to save space in CIs
-            if os.path.exists(model_path):
-                os.remove(model_path)
-            # clean git lfs cache
-            run_lfs_prune()
-            print('[PASS]: {} is checked by onnx. '.format(model_name))
-        else:
-            print('[SKIP]: {}.'.format(model_name))
-
+        except Exception as e:
+            print('[FAIL]: {}'.format(e))
+            failed_models.append(model_path)
+            failed_messages.append((model_name, e))
         end = time.time()
         print('--------------Time used: {} secs-------------'.format(end - start))
         # enable gc collection to prevent MemoryError by loading too many large models
@@ -99,7 +104,7 @@ def main():
     if len(failed_models) == 0:
         print('{} models have been checked. {} models were skipped.'.format(len(model_list), len(skip_models)))
     else:
-        print('In all {} models, {} models failed, {} models were skipped'.format(len(model_list), len(failed_models), len(skip_models)))
+        print('In all {} models, {} models failed, {} models were skipped; pass {}, skip {}'.format(len(model_list), len(failed_models), len(skip_models), pass_total, skip_total))
         for model, error in failed_messages:
             print('{} failed because: {}'.format(model, error))
         sys.exit(1)
