@@ -3194,15 +3194,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                 "Incorrect or missing attribute value for starts and ends");
           }
 
-          auto is_negative = [](int64_t index) {
-            return index < 0;
-          };
-          bool has_negative_axis = false;
-          if (!std::none_of(starts.begin(), starts.end(), is_negative) ||
-              !std::none_of(ends.begin(), ends.end(), is_negative)) {
-            has_negative_axis = true;
-          }
-
           std::vector<int64_t> axes;
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
             for (int i = 0; (size_t)i < starts.size(); ++i) {
@@ -3210,15 +3201,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           } else if (axes.size() != starts.size()) {
             fail_shape_inference("Attribute axes has incorrect length");
-          } else if (!std::none_of(axes.begin(), axes.end(), is_negative)) {
-            has_negative_axis = true;
           } else if (!std::is_sorted(axes.begin(), axes.end())) {
             // TODO support shape inference for unsorted axes
             return;
           }
-          if (has_negative_axis) {
-            // Since negative axes are not supported before opset-10
-            // Simply performs rank inference for negative axes
+
+          auto is_negative = [](int64_t index) {
+            return index < 0;
+          };
+          if (std::any_of(starts.begin(), starts.end(), is_negative) ||
+              std::any_of(ends.begin(), ends.end(), is_negative) ||
+              std::any_of(axes.begin(), axes.end(), is_negative)) {
+            // Negative axes were not explicitly discussed in the spec before opset-10.
+            // Hence, they are officially not part of the spec, but some models/runtimes may use them.
+            // So we perform simple rank inference in this case.
             for (size_t i = 0; (int64_t)i <
                 ctx.getInputType(0)->tensor_type().shape().dim_size();
                 ++i) {
@@ -3226,6 +3222,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             return;
           }
+
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           for (size_t i = 0, j = 0; (int64_t)i <
