@@ -567,7 +567,7 @@ void InferShapesAndDataPropagation(
   auto* g = m.mutable_graph();
   SymbolTableImpl symbolTable;
   traverseGraphsToAddExistingSymbols(*g, symbolTable);
-  ShapeInferenceOptions options{true, true, true};
+  ShapeInferenceOptions options{true, 1, true};
 
   InferShapesImpl(
       g,
