@@ -634,4 +634,297 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* SequenceMap_ver16_doc = R"DOC(
+Applies a sub-graph to each sample in the input sequence(s).
+
+Inputs can be either tensors or sequences, with the exception of the first input which must
+be a sequence. The length of the first input sequence will determine the number of samples in the
+outputs. The number of inputs and outputs, should match the one of the subgraph.
+
+For each element in the output, a sample will be extracted from the input sequence(s) and the sub-graph
+will be applied to it. The outputs will contain the outputs of the sub-graph for each sample.)DOC";
+
+void SequenceMapInferenceFunction(InferenceContext& ctx) {
+  auto num_inputs = ctx.getNumInputs();
+  assert(num_inputs > 0);
+
+  auto num_outputs = ctx.getNumOutputs();
+  assert(num_outputs > 0);
+
+  std::vector<TypeProto> tmp_type_protos;
+  std::vector<const TypeProto*> subgraph_input_types;
+  subgraph_input_types.reserve(num_inputs);
+  for (size_t inputIndex = 0; inputIndex < num_inputs; inputIndex++) {
+    auto input_type = ctx.getInputType(inputIndex);
+    if (input_type == nullptr) {
+      fail_type_inference("Input ", inputIndex, " expected to have type info");
+    }
+    if (input_type->value_case() == TypeProto::kSequenceType) {
+      tmp_type_protos.emplace_back();
+      tmp_type_protos.back().CopyFrom(input_type->sequence_type().elem_type());
+      subgraph_input_types.push_back(&tmp_type_protos.back());
+    } else {
+      if (inputIndex == 0)
+        fail_type_inference("Input ", inputIndex, " expected to be a sequence type");
+      subgraph_input_types.push_back(input_type);
+    }
+  }
+
+  GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
+  if (graphInferencer) {
+    std::vector<const TensorProto*> input_data(num_inputs, nullptr);
+    std::vector<const TypeProto*> subgraph_output_types =
+      graphInferencer->doInferencing(subgraph_input_types, input_data);
+
+    // if empty(), assume inferencing was skipped
+    if (!subgraph_output_types.empty()) {
+      if (subgraph_output_types.size() != num_outputs) {
+        fail_type_inference(
+            "Graph attribute inferencing returned type information for ",
+            subgraph_output_types.size(), " outputs. Expected ", num_outputs);
+      }
+
+      for (size_t outputIndex = 0; outputIndex < num_outputs; outputIndex++) {
+        auto* subgraph_output_type = subgraph_output_types[outputIndex];
+        ctx.getOutputType(outputIndex)
+            ->mutable_sequence_type()
+            ->mutable_elem_type()
+            ->CopyFrom(*subgraph_output_type);
+      }
+    }
+  }
+}
+
+bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
+                              const OpSchema& schema,
+                              FunctionProto& functionProto) {
+  auto body_attr = ctx.getAttribute("body");
+  if (!body_attr || !body_attr->has_g())
+    throw std::invalid_argument("Invalid ``body`` argument. Expected a graph");
+  const GraphProto& body = body_attr->g();
+
+  auto g_inputs = body.input();
+  auto g_outputs = body.output();
+
+  auto node_inputs = ctx.getInputs();
+  int ninputs = node_inputs.size();
+  auto node_outputs = ctx.getOutputs();
+  int noutputs = node_outputs.size();
+
+  if (g_inputs.size() != ninputs) {
+    throw std::invalid_argument(MakeString(
+        "Number of inputs mismatch. ``body`` subgraph has ",
+        g_inputs.size(),
+        " inputs but ",
+        ninputs,
+        " were provided to the node."));
+  }
+
+  if (g_outputs.size() != noutputs) {
+    throw std::invalid_argument(MakeString(
+        "Number of outputs mismatch. ``body`` subgraph has ",
+        g_outputs.size(),
+        " outputs but ",
+        noutputs,
+        " were provided to the node."));
+  }
+
+  if (!ctx.hasInput(0))
+    throw std::invalid_argument("At least one input is required.");
+  const auto* first_input_type = ctx.getInputType(0);
+  assert(first_input_type);
+
+  if (!first_input_type->has_sequence_type()) {
+    throw std::invalid_argument("Expected a sequence type for input 0");
+  }
+
+  // Loop body subgraph
+  std::string loopbody_graph_name("SequenceMap_loop_body");
+  GraphProto loopbody_graph;
+  loopbody_graph.set_name(loopbody_graph_name);
+  {
+    TypeProto int64_type;
+    int64_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType_INT64);
+    int64_type.mutable_tensor_type()->mutable_shape()->Clear();
+
+    TypeProto bool_type;
+    bool_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType_BOOL);
+    bool_type.mutable_tensor_type()->mutable_shape()->Clear();
+
+    ValueInfoProto iter_count;
+    std::string iter_count_name = MakeString(loopbody_graph_name, "_itercount");
+    iter_count.set_name(iter_count_name);
+    *iter_count.mutable_type() = int64_type;
+    *loopbody_graph.add_input() = iter_count;
+
+    ValueInfoProto cond_in;
+    std::string cond_in_name = MakeString(loopbody_graph_name, "_cond_in");
+    cond_in.set_name(cond_in_name);
+    *cond_in.mutable_type() = bool_type;
+    *loopbody_graph.add_input() = cond_in;
+
+    ValueInfoProto cond_out;
+    std::string cond_out_name = MakeString(loopbody_graph_name, "_cond_out");
+    cond_out.set_name(cond_out_name);
+    *cond_out.mutable_type() = bool_type;
+    *loopbody_graph.add_output() = cond_out;
+
+    NodeProto cond_identity;
+    cond_identity.set_domain(ONNX_DOMAIN);
+    cond_identity.set_op_type("Identity");
+    cond_identity.add_input(cond_in_name);
+    cond_identity.add_output(cond_out_name);
+    *loopbody_graph.add_node() = cond_identity;
+
+    for (int inputIndex = 0; inputIndex < ninputs; inputIndex++) {
+      const auto* input_type = ctx.getInputType(0);
+      if (input_type && input_type->has_sequence_type()) {
+        // If it's a sequence input, extract ``iter_count`` element
+        NodeProto seq_at_node;
+        seq_at_node.set_domain(ONNX_DOMAIN);
+        seq_at_node.set_op_type("SequenceAt");
+        seq_at_node.add_input(node_inputs[inputIndex]);
+        seq_at_node.add_input(iter_count_name);
+        seq_at_node.add_output(g_inputs[inputIndex].name());
+        *loopbody_graph.add_node() = seq_at_node;
+      } else {
+        // If not a sequence, simply connect
+        NodeProto identity;
+        identity.set_domain(ONNX_DOMAIN);
+        identity.set_op_type("Identity");
+        identity.add_input(node_inputs[inputIndex]);
+        identity.add_output(g_inputs[inputIndex].name());
+        *loopbody_graph.add_node() = identity;
+      }
+    }
+
+    // TODO: should we copy initializers, value infos, etc?
+    for (const auto& node : body.node()) {
+      *loopbody_graph.add_node() = node;
+    }
+
+    for (int outputIndex = 0; outputIndex < noutputs; outputIndex++) {
+      const auto &body_out_i = body.output(outputIndex);
+      assert(body_out_i.type().has_tensor_type());
+      std::string prefix = MakeString(loopbody_graph_name, "_", body_out_i.name());
+      std::string loopbody_in_name = MakeString(prefix, "_in");
+
+      ValueInfoProto tmp;
+      *tmp.mutable_type()
+          ->mutable_sequence_type()
+          ->mutable_elem_type()
+          ->mutable_tensor_type() = body_out_i.type().tensor_type();
+      tmp.set_name(loopbody_in_name);
+      *loopbody_graph.add_input() = tmp;
+
+      std::string loopbody_out_name = MakeString(prefix, "_out");
+      tmp.set_name(loopbody_out_name);
+      *loopbody_graph.add_output() = tmp;
+
+      NodeProto seq_insert_node;
+      seq_insert_node.set_domain(ONNX_DOMAIN);
+      seq_insert_node.set_op_type("SequenceInsert");
+      seq_insert_node.add_input(loopbody_in_name);
+      seq_insert_node.add_input(body_out_i.name());
+      seq_insert_node.add_output(loopbody_out_name);
+      *loopbody_graph.add_node() = seq_insert_node;
+    }
+  }
+
+  std::vector<FunctionBodyHelper::NodeDef> nodes;
+
+  // TODO: figure out a way to prevent name collisions?
+  std::string prefix = MakeString("SequenceMap_", node_inputs[0]);
+  std::string seqlen = MakeString(prefix, "_seqlen");
+  nodes.push_back({{seqlen}, "SequenceLength", {node_inputs[0]}});
+
+  std::string cond_bool = MakeString(prefix, "cond");
+  nodes.push_back(FunctionBodyHelper::Const<bool>(cond_bool, true));
+
+  std::vector<std::string> loop_node_inputs = {seqlen, cond_bool};
+  std::vector<std::string> loop_node_outputs;
+  for (int outputIndex = 0; outputIndex < noutputs; outputIndex++) {
+    std::string out_prefix = MakeString("SequenceMap_", node_outputs[outputIndex]);
+
+    std::string seqempty_name = MakeString(out_prefix, "_seqempty");
+    int64_t dtype = g_outputs[outputIndex].type().tensor_type().elem_type();
+    nodes.push_back({
+      {seqempty_name},
+      "SequenceEmpty",
+      {},
+      {MakeAttribute("dtype", dtype)}
+    });
+    loop_node_inputs.push_back(seqempty_name);
+
+    loop_node_outputs.push_back(node_outputs[outputIndex]);
+  }
+
+  nodes.push_back({
+    loop_node_outputs,
+    "Loop",
+    loop_node_inputs,
+    {MakeAttribute("body", loopbody_graph)}
+  });
+
+  auto func_nodes = FunctionBodyHelper::BuildNodes(nodes);
+  for (const auto& node : func_nodes) {
+    auto new_node = functionProto.add_node();
+    new_node->CopyFrom(node);
+  }
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SequenceMap,
+    16,
+    OpSchema()
+        .SetDoc(SequenceMap_ver16_doc)
+        .Attr(
+            "body",
+            "The graph run for each sample in the sequence(s). "
+            "It should have as many tensor inputs and tensor outputs as inputs and "
+            "outputs to the SequenceMap function. "
+            "The first input (input_sequence) must be a sequence, and its length will "
+            "determine the number of elements in the output sequence. "
+            "Additional inputs are allowed to be either sequence or tensor inputs. "
+            "Sequence elements will be extracted from sequence inputs, before connecting "
+            "to the ``body`` subgraph.",
+            AttributeProto::GRAPH)
+        .Input(
+            0,
+            "input_sequence",
+            "Input sequence.",
+            "S")
+        .Input(
+            1,
+            "additional_inputs",
+            "Additional inputs to the graph",
+            "V",
+            OpSchema::Variadic,
+            true,
+            0)
+        .Output(
+            0,
+            "out_sequence",
+            "Output sequence",
+            "S",
+            OpSchema::Variadic)
+        .TypeConstraint(
+            "S",
+            OpSchema::all_tensor_sequence_types(),
+            "Constrain input types to any sequence type.")
+        .TypeConstraint(
+            "V",
+            [](){
+              auto t = OpSchema::all_tensor_types();
+              auto s = OpSchema::all_tensor_sequence_types();
+              t.insert(t.end(), s.begin(), s.end());
+              return t;
+            }(),
+            "Constrain to any tensor or sequence type.")
+        .SetContextDependentFunctionBodyBuilder(BuildSequenceMapBodyFunc)
+        .TypeAndShapeInferenceFunction(SequenceMapInferenceFunction));
+
+
 } // namespace ONNX_NAMESPACE

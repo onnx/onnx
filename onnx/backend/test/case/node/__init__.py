@@ -51,11 +51,15 @@ def function_expand_helper(node: NodeProto,
         for internal_name in internal_node.input:
             if internal_name in io_names_map:
                 new_node.input.append(io_names_map[internal_name])
+            elif internal_name in node.input:
+                new_node.input.append(internal_name)
             else:
                 new_node.input.append(op_prefix + internal_name)
         for internal_name in internal_node.output:
             if internal_name in io_names_map:
                 new_node.output.append(io_names_map[internal_name])
+            elif internal_name in node.output:
+                new_node.output.append(internal_name)
             else:
                 new_node.output.append(op_prefix + internal_name)
         for attr in internal_node.attribute:
