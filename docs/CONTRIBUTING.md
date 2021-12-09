@@ -24,7 +24,7 @@ from onnx root dir should work.
   - `version_converter.py`: a utility to upgrade or downgrade version for ONNX models
   - `parser.py`: a utility to create an ONNX model or graph from a textual representation
   - `hub.py`: a utility for downloading models from [ONNX Model Zoo](https://github.com/onnx/models)
-  - `compose.py`: a utility to merge onnx models
+  - `compose.py`: a utility to merge ONNX models
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
   - `test/`: test files
