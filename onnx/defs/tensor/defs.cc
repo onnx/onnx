@@ -3390,6 +3390,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // 'indices', 'inverse_indices', and 'counts' are 1-D tensors of
           // unknown dimension.
+          // Shape inference will happen even in case of empty optional outputs,
+          // graph-level shape inference should not propagate the shape downstream for empty optional outputs.
           auto num_outputs = ctx.getNumOutputs();
           if (num_outputs >= 2) {
             indicesTensorProto = ctx.getOutputType(1);

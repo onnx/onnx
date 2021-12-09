@@ -267,7 +267,7 @@ private:
   template <>                                     \
   inline type* Tensor::data<type>() {             \
     if (is_raw_data_) {                           \
-      return (type*)&raw_data_.data()[0];         \
+      return (type*)const_cast<char*>(&raw_data_.data()[0]); \
     } else {                                      \
       return field.data();                        \
     }                                             \
@@ -276,7 +276,7 @@ private:
   template <>                                     \
   inline const type* Tensor::data<type>() const { \
     if (is_raw_data_) {                           \
-      return (type*)(raw_data_.data());           \
+      return (const type*)(raw_data_.data());     \
     } else {                                      \
       return field.data();                        \
     }                                             \
