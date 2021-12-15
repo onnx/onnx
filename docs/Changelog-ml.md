@@ -972,7 +972,7 @@ This version of the operator has been available since version 2 of the 'ai.onnx.
 ## Version 3 of the 'ai.onnx.ml' operator set
 ### <a name="ai.onnx.ml.TreeEnsembleClassifier-3"></a>**ai.onnx.ml.TreeEnsembleClassifier-3**</a>
 
-  Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
+  Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
       The attributes named 'nodes_X' form a sequence of tuples, associated by
       index into the sequences, which must all be of equal length. These tuples
       define the nodes.<br>
@@ -981,6 +981,8 @@ This version of the operator has been available since version 2 of the 'ai.onnx.
       the associated class_weights index.<br>
       One and only one of classlabels_strings or classlabels_int64s
       will be defined. The class_ids are indices into this list.
+      All fields of type TENSOR may have float or double elements,
+      this type should be the same as the input type.
 
 #### Version
 
@@ -1060,6 +1062,8 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
       All fields prefixed with target_ are tuples of votes at the leaves.<br>
       A leaf may have multiple votes, where each vote is weighted by
       the associated target_weights index.<br>
+      All fields of type TENSOR may have float or double elements,
+      this type should be the same as the input type.
       All trees must have their node ids start at 0 and increment by 1.<br>
       Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 
