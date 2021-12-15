@@ -172,13 +172,8 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor*
   }
 
   if (!existingType->has_shape()) {
-    // Ensure the shape is initialized. Note that this must be done
-    // even for (zero-dimensional) scalars.
-    existingType->mutable_shape();
-
-    for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
-      existingType->mutable_shape()->add_dim();
-    }
+    *existingType->mutable_shape() = inferredType.shape();
+    return;
   }
 
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
@@ -201,13 +196,8 @@ void mergeShapesAndTypes(const TypeProto_SparseTensor& inferredType, TypeProto_S
   }
 
   if (!existingType->has_shape()) {
-    // Ensure the shape is initialized. Note that this must be done
-    // even for (zero-dimensional) scalars.
-    existingType->mutable_shape();
-
-    for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
-      existingType->mutable_shape()->add_dim();
-    }
+    *existingType->mutable_shape() = inferredType.shape();
+    return;
   }
 
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
