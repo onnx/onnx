@@ -1054,7 +1054,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr(
             "nodes_hitrates",
             "Popularity of each node, used for performance and may be omitted.",
-            AttributeProto::FLOATS,
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .Attr(
             "nodes_modes",

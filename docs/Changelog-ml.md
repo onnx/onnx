@@ -1080,7 +1080,7 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 <dd>Child node if expression is false</dd>
 <dt><tt>nodes_featureids</tt> : list of ints</dt>
 <dd>Feature id for each node.</dd>
-<dt><tt>nodes_hitrates</tt> : list of floats</dt>
+<dt><tt>nodes_hitrates</tt> : tensor</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
 <dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
