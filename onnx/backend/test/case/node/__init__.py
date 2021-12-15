@@ -171,7 +171,13 @@ def expect(node,  # type: onnx.NodeProto
         else:
             produce_opset_version = onnx.defs.get_schema(node.op_type, int(_TargetOpsetVersion), node.domain).since_version
         kwargs[str('opset_imports')] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
-
+    else:
+        # Also, for the same reason above, convert given opset.version (from opset_imports) to max_inclusive_version
+        max_inclusive_versions = []
+        for opset in kwargs[str('opset_imports')]:
+            produce_opset_version = onnx.defs.get_schema(node.op_type, opset.version, opset.domain).since_version
+            max_inclusive_versions.append(onnx.helper.make_operatorsetid(opset.domain, produce_opset_version))
+        kwargs[str('opset_imports')] = max_inclusive_versions
     model = onnx.helper.make_model(graph, **kwargs)
 
     _NodeTestCases.append(TestCase(
