@@ -81,9 +81,9 @@ class TestSymbolicShape(unittest.TestCase):
 
         onnx_model = make_model(graph_def)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
-        self._assert_valueinfo_shape(inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (2, -1))])
-        # the symbolic shape of C and output should be the same
-        assert self._get_shape_from_name(inferred_model, 'C') == self._get_shape_from_name(inferred_model, 'output')
+        self._assert_valueinfo_shape(inferred_model, [
+            make_tensor_value_info("C", TensorProto.FLOAT, (2, -1)),
+            make_tensor_value_info("output", TensorProto.FLOAT, (2, 'M'))])
 
     def test_two_symbolic_concat(self):  # type: () -> None
         concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
@@ -104,9 +104,8 @@ class TestSymbolicShape(unittest.TestCase):
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         self._assert_valueinfo_shape(inferred_model, [
             make_tensor_value_info("C", TensorProto.FLOAT, (2, -1)),
-            make_tensor_value_info("E", TensorProto.FLOAT, (2, -1))])
-        # the symbolic shape of E and output should be the same
-        assert self._get_shape_from_name(inferred_model, 'E') == self._get_shape_from_name(inferred_model, 'output')
+            make_tensor_value_info("E", TensorProto.FLOAT, (2, -1)),
+            make_tensor_value_info("output", TensorProto.FLOAT, (2, 'M'))])
 
     def test_duplicate_symbolic_shape(self):  # type: () -> None
         concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
