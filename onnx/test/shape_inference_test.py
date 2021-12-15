@@ -74,7 +74,7 @@ class TestShapeInference(unittest.TestCase):
                 inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
                 # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
                 if dim.dim_param:
-                    assert inferred_dim.dim_param, '\n%s\n%s\n' % (vi_type, inferred_vi_type)
+                    assert dim.dim_param == inferred_dim.dim_param, '\n%s\n%s\n' % (vi_type, inferred_vi_type)
                 else:
                     assert dim.dim_value == inferred_dim.dim_value, '\n%s\n%s\n' % (vi_type, inferred_vi_type)
         elif vi_type.HasField('sequence_type'):
@@ -3774,6 +3774,13 @@ class TestShapeInference(unittest.TestCase):
             [make_node('NonZero', ['x'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (None, None))])  # type: ignore
+
+    def test_nonzero_existing_dim_param(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3,))],
+            [make_node('NonZero', ['x'], ['y'])],
+            [make_tensor_value_info('y', TensorProto.INT64, (None, 'NZ'))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1, 'NZ'))])  # type: ignore
 
     def test_optional_construct_empty_tensor(self):  # type: () -> None
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[1, 2, 3])

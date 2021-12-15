@@ -184,7 +184,8 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor*
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
     const auto& inferredDim = inferredType.shape().dim(i);
     auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
-    if (!existingDim->has_dim_value()) {
+    if ((!existingDim->has_dim_value() && !existingDim->has_dim_param()) ||
+        inferredDim.has_dim_value()) {
       *existingDim = inferredDim;
     }
   }
@@ -212,7 +213,8 @@ void mergeShapesAndTypes(const TypeProto_SparseTensor& inferredType, TypeProto_S
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
     const auto& inferredDim = inferredType.shape().dim(i);
     auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
-    if (!existingDim->has_dim_value()) {
+    if ((!existingDim->has_dim_value() && !existingDim->has_dim_param()) ||
+        inferredDim.has_dim_value()) {
       *existingDim = inferredDim;
     }
   }
