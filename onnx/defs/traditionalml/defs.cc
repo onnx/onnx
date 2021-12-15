@@ -871,7 +871,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             std::string("NONE"))
         .Attr("rho", "", AttributeProto::FLOATS, OPTIONAL_VALUE));
 
-static const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
+static const char* TreeEnsembleClassifier_ver3_doc = R"DOC(
     Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
     The attributes named 'nodes_X' form a sequence of tuples, associated by
     index into the sequences, which must all be of equal length. These tuples
@@ -885,9 +885,9 @@ static const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleClassifier,
-    1,
+    3,
     OpSchema()
-        .SetDoc(TreeEnsembleClassifier_ver1_doc)
+        .SetDoc(TreeEnsembleClassifier_ver3_doc)
         .Input(0, "X", "Input of shape [N,F]", "T1")
         .Output(0, "Y", "N, Top class for each point", "T2")
         .Output(
@@ -924,12 +924,12 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr(
             "nodes_values",
             "Thresholds to do the splitting on for each node.",
-            AttributeProto::FLOATS,
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .Attr(
             "nodes_hitrates",
             "Popularity of each node, used for performance and may be omitted.",
-            AttributeProto::FLOATS,
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .Attr(
             "nodes_modes",
@@ -969,7 +969,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr(
             "class_weights",
             "The weight for the class in class_id.",
-            AttributeProto::FLOATS,
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .Attr(
             "classlabels_strings",
@@ -989,7 +989,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr(
             "base_values",
             "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
-            AttributeProto::FLOATS,
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           std::vector<std::string> label_strs;
@@ -1004,7 +1004,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
+static const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
     All args with nodes_ are fields of a tuple of tree nodes, and
     it is assumed they are the same length, and an index i will decode the
@@ -1019,9 +1019,9 @@ static const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleRegressor,
-    1,
+    3,
     OpSchema()
-        .SetDoc(TreeEnsembleRegressor_ver1_doc)
+        .SetDoc(TreeEnsembleRegressor_ver3_doc)
         .Input(0, "X", "Input of shape [N,F]", "T")
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
@@ -1049,7 +1049,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr(
             "nodes_values",
             "Thresholds to do the splitting on for each node.",
-            AttributeProto::FLOATS,
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .Attr(
             "nodes_hitrates",
@@ -1094,7 +1094,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr(
             "target_weights",
             "The weight for each target",
-            AttributeProto::FLOATS,
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .Attr(
             "n_targets",
@@ -1114,7 +1114,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr(
             "base_values",
             "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
-            AttributeProto::FLOATS,
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE));
 
 static const char* ZipMap_ver1_doc = R"DOC(
