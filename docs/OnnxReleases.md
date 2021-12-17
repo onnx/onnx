@@ -1,6 +1,6 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-The ONNX project, going forward, will plan to release roughly on a two month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
+The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
 ## Preparation
 
@@ -84,7 +84,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 
 **Source distribution verification**
-* Test the source distribution by doing ``pip install -i https://test.pypi.org/simple/ --no-binary :all: onnx`` in a new environment.
+* Test the source distribution by doing ``pip install --index-url https://test.pypi.org/simple --no-binary onnx onnx`` in a new environment.
 
 ## Upload to official PyPI
 **NOTE: Once the packages are uploaded to PyPI, you cannot overwrite it on the same PyPI instance. Please make sure everything is good on TestPyPI before uploading to PyPI**
@@ -96,7 +96,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 **Source Distribution**
 * Follow the same process in TestPyPI to produce the source distribution.
 * Use ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`` instead to upload to the official PyPI.
-* Test with ``pip install --no-binary :all: onnx``
+* Test with ``pip install --no-binary onnx onnx``
 
 ## After PyPI Release
 

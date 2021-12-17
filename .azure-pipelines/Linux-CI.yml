@@ -4,7 +4,7 @@ trigger:
 jobs:
 - job: 'Test'
   pool:
-    vmImage: 'Ubuntu-16.04'
+    vmImage: 'Ubuntu-18.04'
   strategy:
     matrix:
       py36:
@@ -144,3 +144,13 @@ jobs:
       python -m pip install -q .
 
     displayName: 'Run ONNX tests'
+
+  - script: |
+      source py$(python.version)/bin/activate
+      # onnx.checker all existing backend data
+      python workflow_scripts/test_generated_backend.py
+      # onnx.checker all generated backend data
+      python onnx/backend/test/cmd_tools.py generate-data
+      python workflow_scripts/test_generated_backend.py
+
+    displayName: Test backend test data

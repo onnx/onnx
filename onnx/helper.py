@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import collections
+import collections.abc  # type: ignore
 import numbers
 from six import text_type, integer_types, binary_type
 
@@ -41,7 +41,8 @@ VERSION_TABLE = [
     ('1.8.1', 7, 13, 2, 1),
     ('1.9.0', 7, 14, 2, 1),
     ('1.10.0', 8, 15, 2, 1),
-    ('1.10.1', 8, 15, 2, 1)
+    ('1.10.1', 8, 15, 2, 1),
+    ('1.10.2', 8, 15, 2, 1)
 ]  # type: VersionTableType
 
 VersionMapType = Dict[Tuple[Text, int], int]
@@ -240,19 +241,27 @@ def make_tensor(
         assert not raw, "Can not use raw_data to store string type"
 
     # Check number of vals specified equals tensor size
-    size = 1 if (not raw) else (mapping.TENSOR_TYPE_TO_NP_TYPE[data_type].itemsize)
+    expected_size = 1 if (not raw) else (mapping.TENSOR_TYPE_TO_NP_TYPE[data_type].itemsize)
+    # Flatten a numpy array if its rank > 1
+    if type(vals) is np.ndarray and len(vals.shape) > 1:
+        vals = vals.flatten()
     for d in dims:
-        size = size * d
-    if (len(vals) != size):
-        raise ValueError("Number of values does not match tensor's size.")
+        expected_size = expected_size * d
 
-    if (data_type == TensorProto.COMPLEX64
-            or data_type == TensorProto.COMPLEX128):
-        vals = split_complex_to_pairs(vals)
+    if len(vals) != expected_size:
+        raise ValueError("Number of values does not match tensor's size. Expected {}, but it is {}. "
+            .format(expected_size, len(vals)))
 
     if raw:
         tensor.raw_data = vals
     else:
+        if (data_type == TensorProto.COMPLEX64
+                or data_type == TensorProto.COMPLEX128):
+            vals = split_complex_to_pairs(vals)
+        # floa16/bfloat16 are stored as uint16
+        elif (data_type == TensorProto.FLOAT16
+                or data_type == TensorProto.BFLOAT16):
+            vals = np.array(vals).astype(np.float16).view(dtype=np.uint16).flatten().tolist()
         field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
             mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]]
         getattr(tensor, field).extend(vals)
@@ -361,7 +370,7 @@ def make_attribute(
     if doc_string:
         attr.doc_string = doc_string
 
-    is_iterable = isinstance(value, collections.Iterable)
+    is_iterable = isinstance(value, collections.abc.Iterable)
     bytes_or_false = _to_bytes_or_false(value)
     # First, singular cases
     # float

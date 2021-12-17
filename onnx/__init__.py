@@ -19,6 +19,7 @@ import onnx.checker  # noqa
 import onnx.defs  # noqa
 import onnx.helper  # noqa
 import onnx.utils  # noqa
+import onnx.compose  # noqa
 
 import google.protobuf.message
 

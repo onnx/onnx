@@ -41,9 +41,37 @@ using OpsetIdList = google::protobuf::RepeatedPtrField<OperatorSetIdProto>;
       return local_status_;         \
   }
 
-class PrimitiveTypeNameMap {
+template <typename Map>
+class StringIntMap {
  public:
-  PrimitiveTypeNameMap() {
+  static const std::unordered_map<std::string, int32_t>& Instance() {
+    static Map instance;
+    return instance.map_;
+  }
+
+  static int32_t Lookup(const std::string& dtype) {
+    auto it = Instance().find(dtype);
+    if (it != Instance().end())
+      return it->second;
+    return 0;
+  }
+
+  static const std::string& ToString(int32_t dtype) {
+    static std::string undefined("undefined");
+    for (const auto& pair : Instance()) {
+      if (pair.second == dtype)
+        return pair.first;
+    }
+    return undefined;
+  }
+
+ protected:
+  std::unordered_map<std::string, int32_t> map_;
+};
+
+class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
+ public:
+  PrimitiveTypeNameMap() : StringIntMap() {
     map_["float"] = 1;
     map_["uint8"] = 2;
     map_["int8"] = 3;
@@ -62,33 +90,29 @@ class PrimitiveTypeNameMap {
     map_["bfloat16"] = 16;
   }
 
-  static const std::unordered_map<std::string, int32_t>& Instance() {
-    static PrimitiveTypeNameMap instance;
-    return instance.map_;
-  }
-
-  static int32_t Lookup(const std::string& dtype) {
-    auto it = Instance().find(dtype);
-    if (it != Instance().end())
-      return it->second;
-    return 0;
-  }
-
   static bool IsTypeName(const std::string& dtype) {
     return Lookup(dtype) != 0;
   }
+};
 
-  static const std::string& ToString(int32_t dtype) {
-    static std::string undefined("undefined");
-    for (const auto& pair : Instance()) {
-      if (pair.second == dtype)
-        return pair.first;
-    }
-    return undefined;
+class AttributeTypeNameMap : public StringIntMap<AttributeTypeNameMap> {
+ public:
+  AttributeTypeNameMap() : StringIntMap() {
+    map_["float"] = 1;
+    map_["int"] = 2;
+    map_["string"] = 3;
+    map_["tensor"] = 4;
+    map_["graph"] = 5;
+    map_["sparse_tensor"] = 11;
+    map_["type_proto"] = 13;
+    map_["floats"] = 6;
+    map_["ints"] = 7;
+    map_["strings"] = 8;
+    map_["tensors"] = 9;
+    map_["graphs"] = 10;
+    map_["sparse_tensors"] = 12;
+    map_["type_protos"] = 14;
   }
-
- private:
-  std::unordered_map<std::string, int32_t> map_;
 };
 
 class KeyWordMap {
@@ -160,14 +184,41 @@ class ParserBase {
     return ONNX_NAMESPACE::MakeString("(line: ", line, " column: ", col, ")");
   }
 
+  // Return a suitable suffix of what has been parsed to provide error message context:
+  // return the line containing the last non-space character preceding the error (if it exists).
+  std::string GetErrorContext() {
+    // Special cases: empty input string, and parse-error at first character.
+    const char* p = next_ < end_ ? next_ : next_ - 1;
+    while ((p > start_) && isspace(*p))
+      --p;
+    while ((p > start_) && (*p != '\n'))
+      --p;
+    // Start at character after '\n' unless we are at start of input
+    const char* context_start = (p > start_) ? (p + 1) : start_;
+    for (p = context_start; (p < end_) && (*p != '\n'); ++p)
+      ;
+    return std::string(context_start, p-context_start);
+  }
+
   template <typename... Args>
   Status ParseError(const Args&... args) {
-    return Status(NONE, FAIL, ONNX_NAMESPACE::MakeString("[ParseError at position ", GetCurrentPos(), "]", args...));
+    return Status(
+        NONE,
+        FAIL,
+        ONNX_NAMESPACE::MakeString(
+            "[ParseError at position ", GetCurrentPos(), "]\n", "Error context: ", GetErrorContext(), "\n", args...));
   }
 
   void SkipWhiteSpace() {
-    while ((next_ < end_) && (isspace(*next_)))
-      ++next_;
+    do {
+      while ((next_ < end_) && (isspace(*next_)))
+        ++next_;
+      if ((next_ >= end_) || ((*next_) != '#'))
+        return;
+      // Skip rest of the line:
+      while ((next_ < end_) && ((*next_) != '\n'))
+        ++next_;
+    } while (true);
   }
 
   int NextChar(bool skipspace = true) {
@@ -188,7 +239,7 @@ class ParserBase {
 
   Status Match(char ch, bool skipspace = true) {
     if (!Matches(ch, skipspace))
-      return ParseError("Expected character ", ch, " not found", ch);
+      return ParseError("Expected character ", ch, " not found.");
     return Status::OK();
   }
 
@@ -231,6 +282,16 @@ class ParserBase {
 
       if (next_ == from)
         return ParseError("Value expected but not found.");
+
+      // Optional exponent syntax: (e|E)(+|-)?[0-9]+
+      if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
+        decimal_point = true; // treat as float-literal
+        ++next_;
+        if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
+          ++next_;
+        while ((next_ < end_) && (isdigit(*next_)))
+          ++next_;
+      }
 
       result.value = std::string(from, next_ - from);
       result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
@@ -373,7 +434,7 @@ class OnnxParser : public ParserBase {
 
   Status Parse(IdList& idlist);
 
-  Status Parse(char open, IdList& idlist, char close); 
+  Status Parse(char open, IdList& idlist, char close);
 
   Status ParseSingleAttributeValue(AttributeProto& attr);
 
@@ -381,13 +442,15 @@ class OnnxParser : public ParserBase {
 
   Status Parse(ValueInfoList& vilist);
 
-  Status ParseInput(ValueInfoList& vilist, TensorList& initializers); 
+  Status ParseInput(ValueInfoList& vilist, TensorList& initializers);
 
-  Status ParseValueInfo(ValueInfoList& vilist, TensorList& initializers); 
+  Status ParseValueInfo(ValueInfoList& vilist, TensorList& initializers);
 
   Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
 
   Status Parse(OpsetIdList& opsets);
+
+  bool NextIsType();
 };
 
 } // namespace ONNX_NAMESPACE

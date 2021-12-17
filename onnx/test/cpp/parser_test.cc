@@ -85,6 +85,8 @@ TEST(ParserTest, TensorProtoTest) {
 
   Parse(tensorProto, "float[5] {1, 2.0, 3.1, 4, 5.5}");
 
+  Parse(tensorProto, "float[5] {1e1, 2.0e-1, 3.1E-1, 4E+1, 5.5e-10}");
+
   Parse(tensorProto, "string[2] { \"Hello\", \"World\" }");
 }
 
@@ -115,6 +117,10 @@ TEST(ParserTest, AttributeTest) {
 
   Parse(attr, "x = [\"abc\", \"def\"]");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS);
+
+  Parse(attr, "x : ints = @xyz");
+  EXPECT_EQ(attr.ref_attr_name(), "xyz");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
 
   Parse(attr, R"ONNX(
     body = somegraph (float[N] y, float[N] z) => (float[N] w)
@@ -218,7 +224,8 @@ TEST(ParserTest, GraphTest) {
 agraph (float[N] y, float[N] z) => (float[N] w)
 <float[2] w1 = {1.0, 2.0}, float[3] w2 = {4.0, 5.0, 6.0}, float[N] x>
 {
-    x = foo(y, z, w1)
+    # This is a comment.
+    x = foo(y, z, w1) # More comments.
     w = bar(x, y, w2)
 }
 )ONNX";
@@ -232,6 +239,23 @@ agraph (float[N] y, float[N] z) => (float[N] w)
   EXPECT_EQ(graph.node_size(), 2);
   EXPECT_EQ(graph.initializer_size(), 2);
   EXPECT_EQ(graph.value_info_size(), 1);
+}
+
+TEST(ParserTest, GraphPartialTypeTest) {
+  const char* code = R"ONNX(
+agraph (float[N] y, z) => (float[N] w)
+{
+    x = foo(y, z)
+    w = bar(x, y)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.name(), "agraph");
+  EXPECT_EQ(graph.input_size(), 2);
+  EXPECT_EQ(graph.output_size(), 1);
 }
 
 TEST(ParserTest, FunctionTest) {

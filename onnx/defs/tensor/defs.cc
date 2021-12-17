@@ -433,18 +433,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           auto* output_length = output_shape->add_dim();
 
-          if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
-            int64_t start = getAttribute(ctx, "start", 0);
-            if (start < 0)
-              start += rank;
-            start = (start < 0) ? 0 : (start > rank) ? rank : start;
-            int64_t end = getAttribute(ctx, "end", rank);
-            if (end < 0)
-              end += rank;
-            end = (end < 0) ? 0 : (end > rank) ? rank : end;
-            output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
           }
+
+          int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
+          int64_t start = getAttribute(ctx, "start", 0);
+          if (start < 0)
+            start += rank;
+          start = (start < 0) ? 0 : (start > rank) ? rank : start;
+          int64_t end = getAttribute(ctx, "end", rank);
+          if (end < 0)
+            end += rank;
+          end = (end < 0) ? 0 : (end > rank) ? rank : end;
+          output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           if (ctx.getInputType(0)->tensor_type().has_shape()) {
@@ -1156,7 +1158,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               perm.push_back(i);
           } else if (!perm.empty()) {
             // check if every index is valid
-            for (int64_t fromDimIndex : perm)
+            std::vector<bool> seen(shape.dim_size(), false);
+            for (int64_t fromDimIndex : perm) {
               if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
@@ -1172,7 +1175,14 @@ ONNX_OPERATOR_SET_SCHEMA(
                   oss << "}";
                 }
                 fail_type_inference(oss.str());
+              } else {
+                // check if any perm is repeated
+                if (seen[fromDimIndex]) {
+                  fail_type_inference("Attribute perm for Transpose has repeated value: ", fromDimIndex);
+                }
+                seen[fromDimIndex] = true;
               }
+            }
           }
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2518,6 +2528,110 @@ ONNX_OPERATOR_SET_SCHEMA(
           resizeShapeInference(ctx, true);
         }));
 
+static const char* GridSample_ver16_doc = R"DOC(
+Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
+Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
+the `output` will have shape (N, C, H_out, W_out).
+For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
+which are used to interpolate the output value `output[N, C, H_out, W_out]`.
+
+The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
+See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GridSample,
+    16,
+    OpSchema()
+        .Attr(
+            "mode",
+            "Three interpolation modes: bilinear (default), nearest and bicubic.",
+            AttributeProto::STRING,
+            std::string("bilinear"))
+        .Attr(
+            "padding_mode",
+            "Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. "
+            "zeros: use 0 for out-of-bound grid locations, "
+            "border: use border values for out-of-bound grid locations, "
+            "reflection: use values at locations reflected by the border for out-of-bound grid locations. "
+            "If index 0 represents the margin pixel, the reflected value at index -1 will be the same as the value at index 1. "
+            "For location far away from the border, it will keep being reflected until becoming in bound. "
+            "If pixel location x = -3.5 reflects by border -1 and becomes x' = 1.5, then reflects by border 1 and becomes x'' = 0.5.",
+            AttributeProto::STRING,
+            std::string("zeros"))
+        .Attr(
+            "align_corners",
+            "If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. "
+            "If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            0,
+            "X",
+            "4-D tensor of shape (N, C, H, W), "
+            "where N is the batch size, C is the numbers of channels, "
+            "H and W are the height and width of the input data.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "grid",
+            "Input offset, 4-D tensor of shape (N, H_out, W_out, 2), "
+            "where H_out and W_out are the height and width of grid and output, "
+            "Grid specifies the sampling pixel locations normalized by the input spatial dimensions. "
+            "Therefore, it should have most values in the range of [-1, 1]. "
+            "If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "4-D tensor of shape (N, C, H_out, W_out).",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_tensor_types(),
+            "Constrain input types to all tensor types.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain output types to float tensors.")
+        .SetDoc(GridSample_ver16_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          size_t input_param = 0, grid_param = 1;
+
+          checkInputRank(ctx, input_param, 4);
+          checkInputRank(ctx, grid_param, 4);
+
+          // Output dimensions, initialized to an unknown-dimension-value
+          Dim N, C, H_out, W_out;
+
+          // Get value of N from dim 0 of input_param, if available
+          unifyInputDim(ctx, input_param, 0, N);
+          // Get value of C from dim 1 of input_param, if available
+          unifyInputDim(ctx, input_param, 1, C);
+
+          // Get value of H_out from dim 1 of grid_param, if available
+          unifyInputDim(ctx, grid_param, 1, H_out);
+          // Get value of W_out from dim 2 of grid_param, if available
+          unifyInputDim(ctx, grid_param, 2, W_out);
+
+          // set output shape:
+          updateOutputShape(ctx, 0, {N, C, H_out, W_out});
+        }));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
     16,
@@ -2898,18 +3012,27 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Where_ver9_doc = R"DOC(
-    Return elements, either from X or Y, depending on condition
-    (with Numpy-style broadcasting support).
-    Where behaves like numpy.where with three parameters:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+static const char* Where_ver16_doc = R"DOC(
+Return elements, either from X or Y, depending on condition.
+Where behaves like
+[numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+with three parameters.
+
+)DOC";
+
+static const char* Where_ver16_history = R"DOC(
+
+**History**
+- Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
-    9,
+    16,
     OpSchema()
-        .SetDoc(Where_ver9_doc)
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()) +
+            std::string(Where_ver16_history))
         .Input(
             0,
             "condition",
@@ -2949,8 +3072,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Constrain to boolean tensors.")
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types(),
-            "Constrain input and output types to all tensor types.")
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types (including bfloat).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 1, 0);
           if (hasNInputShapes(ctx, 3)) {
@@ -3267,6 +3390,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // 'indices', 'inverse_indices', and 'counts' are 1-D tensors of
           // unknown dimension.
+          // Shape inference will happen even in case of empty optional outputs,
+          // graph-level shape inference should not propagate the shape downstream for empty optional outputs.
           auto num_outputs = ctx.getNumOutputs();
           if (num_outputs >= 2) {
             indicesTensorProto = ctx.getOutputType(1);

@@ -6,6 +6,7 @@
 #include <fstream>
 #include <list>
 #include "onnx/checker.h"
+#include "onnx/defs/data_type_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -115,6 +116,15 @@ void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existin
     checkShapesAndTypes(inferredType.sequence_type().elem_type(), existingType.sequence_type().elem_type());
   } else if (inferredTypeCase == TypeProto::kOptionalType && existingTypeCase == TypeProto::kOptionalType) {
     checkShapesAndTypes(inferredType.optional_type().elem_type(), existingType.optional_type().elem_type());
+  } else if (inferredTypeCase == TypeProto::TypeProto::kMapType && existingTypeCase == TypeProto::TypeProto::kMapType) {
+    if (inferredType.map_type().key_type() != existingType.map_type().key_type()) {
+      fail_type_inference(
+          "key type mismatch from MapProto. existing=",
+          Utils::DataTypeUtils::ToDataTypeString(existingType.map_type().key_type()),
+          " inferred=",
+          Utils::DataTypeUtils::ToDataTypeString(inferredType.map_type().key_type()));
+    }
+    checkShapesAndTypes(inferredType.map_type().value_type(), existingType.map_type().value_type());
   } else {
     fail_type_inference("type case unsupported. existing=", existingTypeCase, " inferred=", inferredTypeCase);
   }
@@ -130,19 +140,15 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor*
   }
 
   if (!existingType->has_shape()) {
-    // Ensure the shape is initialized. Note that this must be done
-    // even for (zero-dimensional) scalars.
-    existingType->mutable_shape();
-
-    for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
-      existingType->mutable_shape()->add_dim();
-    }
+    *existingType->mutable_shape() = inferredType.shape();
+    return;
   }
 
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
     const auto& inferredDim = inferredType.shape().dim(i);
     auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
-    if (!existingDim->has_dim_value()) {
+    if ((!existingDim->has_dim_value() && !existingDim->has_dim_param()) ||
+        inferredDim.has_dim_value()) {
       *existingDim = inferredDim;
     }
   }
@@ -158,19 +164,15 @@ void mergeShapesAndTypes(const TypeProto_SparseTensor& inferredType, TypeProto_S
   }
 
   if (!existingType->has_shape()) {
-    // Ensure the shape is initialized. Note that this must be done
-    // even for (zero-dimensional) scalars.
-    existingType->mutable_shape();
-
-    for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
-      existingType->mutable_shape()->add_dim();
-    }
+    *existingType->mutable_shape() = inferredType.shape();
+    return;
   }
 
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
     const auto& inferredDim = inferredType.shape().dim(i);
     auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
-    if (!existingDim->has_dim_value()) {
+    if ((!existingDim->has_dim_value() && !existingDim->has_dim_param()) ||
+        inferredDim.has_dim_value()) {
       *existingDim = inferredDim;
     }
   }
@@ -190,6 +192,9 @@ void mergeShapesAndTypes(const TypeProto& inferredType, TypeProto* existingType)
   } else if (inferred_val_case == TypeProto::kOptionalType) {
     mergeShapesAndTypes(
         inferredType.optional_type().elem_type(), existingType->mutable_optional_type()->mutable_elem_type());
+  } else if (inferred_val_case == TypeProto::kMapType) {
+    mergeShapesAndTypes(
+      inferredType.map_type().value_type(), existingType->mutable_map_type()->mutable_value_type());
   }
 }
 
@@ -418,6 +423,10 @@ static void InferShapesImpl(
       }
 
       for (int i = 0; i < n.output_size(); ++i) {
+        // skip type and shape propagation for missing optional outputs.
+        if (n.output(i).empty()) {
+          continue;
+        }
         auto* inferred_type = ctx.getOutputType(i);
         if (inferred_type->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
           continue;
