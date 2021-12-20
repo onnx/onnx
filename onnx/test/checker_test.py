@@ -127,11 +127,7 @@ class TestChecker(unittest.TestCase):
 
         model = helper.make_model(graph, producer_name='test')
 
-        self.assertRaises(
-            onnx.onnx_cpp2py_export.shape_inference.InferenceError,
-            checker.check_model,
-            model,
-            True)
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
         checker.check_graph(graph)
 
