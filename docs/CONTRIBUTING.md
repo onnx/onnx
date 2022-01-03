@@ -2,30 +2,29 @@
 
 # Development
 
-You will need to install protobuf and numpy to build ONNX. An easy
-way to get these dependencies is via [Anaconda](https://www.anaconda.com/download/):
+To build ONNX from source please follow the instructions listed [here](https://github.com/onnx/onnx#build-onnx-from-source).
 
-```
-# Use conda-forge protobuf, as defaults doesn't come with protoc
-conda install -c conda-forge protobuf numpy
-```
-
-During development, it's convenient to install ONNX in development mode (to disable ONNX-ML, set environment variable `ONNX_ML=0`):
-
-```
-git clone --recursive https://github.com/onnx/onnx.git
-pip install -e onnx/
-```
 Then, after you have made changes to Python and C++ files:
 
 - `Python files`: the changes are effective immediately in your installation. You don't need to install these again.
 - `C++ files`: you need to install these again to trigger the native extension build.
 
+Assuming build succeed in the initial step, simply running
+```
+pip install -e .
+```
+from onnx root dir should work.
+
 ## Folder structure
 
 - `onnx/`: the main folder that all code lies under
-  - `onnx.proto`: the protobuf (v2.6.1) that contains all the structures
+  - `onnx.proto`: the protobuf that contains all the structures
   - `checker.py`: a utility to check whether a serialized ONNX proto is legal
+  - `shape_inference.py`: a utility to infer types and shapes for ONNX models
+  - `version_converter.py`: a utility to upgrade or downgrade version for ONNX models
+  - `parser.py`: a utility to create an ONNX model or graph from a textual representation
+  - `hub.py`: a utility for downloading models from [ONNX Model Zoo](https://github.com/onnx/models)
+  - `compose.py`: a utility to merge ONNX models
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
   - `test/`: test files
@@ -89,7 +88,9 @@ After having installed mypy, you can run the type checks:
 ```
 python setup.py typecheck
 ```
+# CI Pipelines
 
+Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipelines.md).
 
 # Other developer documentation
 

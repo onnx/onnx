@@ -49,7 +49,7 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
     }
   }
 
-  const AttributeProto* getAttribute(const std::string& name) const {
+  const AttributeProto* getAttribute(const std::string& name) const override {
     auto iter = attributesByName_.find(name);
     if (iter == attributesByName_.end()) {
       return nullptr;
@@ -58,19 +58,19 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
     }
   }
 
-  bool hasInput(int inputIndex) const {
+  bool hasInput(int inputIndex) const override {
     if (inputIndex >= node_proto_.input_size())
       return false;
     return node_proto_.input(inputIndex) != "";
   }
 
-  bool hasOutput(int inputIndex) const {
+  bool hasOutput(int inputIndex) const override {
     if (inputIndex >= node_proto_.output_size())
       return false;
     return node_proto_.output(inputIndex) != "";
   }
 
-  const TypeProto* getInputType(int inputIndex) const {
+  const TypeProto* getInputType(int inputIndex) const override {
     if (inputIndex < 0) return nullptr;
     size_t j = static_cast<size_t>(inputIndex);
     if (j >= input_types_.size())
