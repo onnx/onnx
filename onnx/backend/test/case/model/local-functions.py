@@ -15,7 +15,7 @@ from typing import Sequence
 from onnx import helper, parser, checker, compose, version_converter, \
     ModelProto, GraphProto, ValueInfoProto, TensorProto, SparseTensorProto, \
     FunctionProto, NodeProto
-import onnx
+
 
 class LocalFunctions(Base):
 
@@ -45,7 +45,8 @@ class LocalFunctions(Base):
         m1.functions.extend([
             helper.make_function(
                 'local', 'f', ['x0', 'x1'], ['y'],
-                [helper.make_node('Add', inputs=['x0', 'x1'], outputs=['y'])]
+                [helper.make_node('Add', inputs=['x0', 'x1'], outputs=['y'])],
+                opset_imports=ops
             )
         ])
         checker.check_model(m1)

@@ -13,7 +13,7 @@ from typing import Text, List, Optional, Tuple, Callable
 from onnx import helper, parser, checker, compose, version_converter, \
     ModelProto, GraphProto, ValueInfoProto, TensorProto, SparseTensorProto, \
     FunctionProto, NodeProto
-import onnx
+
 
 def _load_model(m_def):  # type: (Text) -> ModelProto
     '''

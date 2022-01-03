@@ -220,15 +220,15 @@ def make_function(
     inputs,  # type: List[Text]
     outputs,  # type: List[Text]
     nodes,  # type: List[NodeProto]
-    ops,    # type: Sequence[OperatorSetIdProto]
-    ):  # type: (...) -> FunctionProto
+    opset_imports,    # type: Sequence[OperatorSetIdProto]
+):  # type: (...) -> FunctionProto
     f = FunctionProto()
     f.domain = domain
     f.name = fname
     f.input.extend(inputs)
     f.output.extend(outputs)
     f.node.extend(nodes)
-    f.opset_import.extend(ops)
+    f.opset_import.extend(opset_imports)
     return f
 
 
