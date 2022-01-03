@@ -13,7 +13,7 @@ from typing import Text, List, Optional, Tuple, Callable
 from onnx import helper, parser, checker, compose, version_converter, \
     ModelProto, GraphProto, ValueInfoProto, TensorProto, SparseTensorProto, \
     FunctionProto, NodeProto
-
+import onnx
 
 def _load_model(m_def):  # type: (Text) -> ModelProto
     '''
@@ -627,27 +627,6 @@ class TestComposeFunctions(unittest.TestCase):
             helper.make_opsetid("local", 10)
         ]
 
-        def _make_function(
-            domain,  # type: Text
-            fname,  # type: Text
-            inputs,  # type: List[Text]
-            outputs,  # type: List[Text]
-            nodes,  # type: List[NodeProto]
-        ):  # type: (...) -> FunctionProto
-            f = FunctionProto()
-            f.domain = domain
-            f.name = fname
-            f.input.extend(inputs)
-            f.output.extend(outputs)
-            f.node.extend(nodes)
-            f.opset_import.extend(ops)
-            return f
-
-        ops = [
-            helper.make_opsetid("", 10),
-            helper.make_opsetid("local", 10)
-        ]
-
         g = GraphProto()
         g.input.extend([
             helper.make_tensor_value_info('x0', TensorProto.FLOAT, []),
@@ -666,9 +645,10 @@ class TestComposeFunctions(unittest.TestCase):
         g1.name = 'g1'
         m1 = helper.make_model(g1, producer_name='test', opset_imports=ops)
         m1.functions.extend([
-            _make_function(
+            helper.make_function(
                 'local', 'f1', ['x0', 'x1'], ['y'],
-                [helper.make_node('Add', inputs=['x0', 'x1'], outputs=['y'])]
+                [helper.make_node('Add', inputs=['x0', 'x1'], outputs=['y'])],
+                opset_imports=ops
             )
         ])
         checker.check_model(m1)
@@ -678,9 +658,10 @@ class TestComposeFunctions(unittest.TestCase):
         g2.name = 'g2'
         m2 = helper.make_model(g2, producer_name='test', opset_imports=ops)
         m2.functions.extend([
-            _make_function(
+            helper.make_function(
                 'local', 'f1', ['x0', 'x1'], ['y'],
-                [helper.make_node('Mul', inputs=['x0', 'x1'], outputs=['y'])]
+                [helper.make_node('Mul', inputs=['x0', 'x1'], outputs=['y'])],
+                opset_imports=ops
             )
         ])
         checker.check_model(m2)
@@ -704,21 +685,23 @@ class TestComposeFunctions(unittest.TestCase):
         g3.node[0].op_type = 'f2'
         m3 = helper.make_model(g3, producer_name='test', opset_imports=ops)
         m3.functions.extend([
-            _make_function(
+            helper.make_function(
                 'local', 'f1', ['x0', 'x1'], ['y'],
                 [
                     helper.make_node('Add', inputs=['x0', 'x1'], outputs=['y0']),
                     helper.make_node('Mul', inputs=['x0', 'x1'], outputs=['y1']),
                     helper.make_node('Add', inputs=['y0', 'y1'], outputs=['y'])
-                ]
+                ],
+                opset_imports=ops
             ),
-            _make_function(
+            helper.make_function(
                 'local', 'f2', ['x0', 'x1'], ['y'],
                 [
                     helper.make_node('f1', domain='local', inputs=['x0', 'x1'], outputs=['y0']),
                     helper.make_node('Mul', inputs=['x0', 'x1'], outputs=['y1']),
                     helper.make_node('Add', inputs=['y0', 'y1'], outputs=['y'])
-                ]
+                ],
+                opset_imports=ops
             )
         ])
         checker.check_model(m3)

@@ -11,7 +11,7 @@ from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
-    TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
+    TensorShapeProto, NodeProto, FunctionProto, ModelProto, GraphProto, OperatorSetIdProto, \
     TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto
 from onnx import defs
 from onnx import mapping
@@ -212,6 +212,24 @@ def set_model_props(model, dict_value):  # type: (ModelProto, Dict[Text, Text]) 
         entry.key = k
         entry.value = v
         # model.metadata_properties.append(entry)
+
+
+def make_function(
+    domain,  # type: Text
+    fname,  # type: Text
+    inputs,  # type: List[Text]
+    outputs,  # type: List[Text]
+    nodes,  # type: List[NodeProto]
+    ops,    # type: Sequence[OperatorSetIdProto]
+    ):  # type: (...) -> FunctionProto
+    f = FunctionProto()
+    f.domain = domain
+    f.name = fname
+    f.input.extend(inputs)
+    f.output.extend(outputs)
+    f.node.extend(nodes)
+    f.opset_import.extend(ops)
+    return f
 
 
 def split_complex_to_pairs(ca):  # type: (Sequence[np.complex64]) -> Sequence[int]
