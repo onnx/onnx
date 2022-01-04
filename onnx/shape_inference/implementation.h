@@ -12,7 +12,6 @@
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
-using GetFunctionMapIdFn = std::function<std::string(const std::string&, const std::string&)>;
 using ModelLocalFunctionsMap = std::unordered_map<std::string, const FunctionProto*>;
 
 class SymbolTableImpl : public SymbolTable {
@@ -89,15 +88,13 @@ struct GraphInferenceContext {
       SymbolTable* symbol_table_in = nullptr,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       const int ir_version_in = IR_VERSION,
-      const ModelLocalFunctionsMap& model_local_functions_in = {},
-      GetFunctionMapIdFn get_func_id = nullptr)
+      const ModelLocalFunctionsMap& model_local_functions_in = {})
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
         symbol_table{symbol_table_in},
         schema_registry{schema_registry_in},
-        ir_version{ ir_version_in },
-        model_local_functions{model_local_functions_in},
-        function_identifier {get_func_id} {}
+        ir_version{ir_version_in},
+        model_local_functions{model_local_functions_in} {}
 
   const std::unordered_map<std::string, TypeProto*>* outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
@@ -105,7 +102,6 @@ struct GraphInferenceContext {
   const ISchemaRegistry* schema_registry;
   const int ir_version;
   const ModelLocalFunctionsMap& model_local_functions;
-  const GetFunctionMapIdFn function_identifier;
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -450,8 +446,7 @@ void InferShapes(
     const std::unordered_map<std::string, int>& opset_imports,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const ShapeInferenceOptions& options = {},
-    const ModelLocalFunctionsMap& in_model_functions = {},
-    GetFunctionMapIdFn get_func_map_id = nullptr
+    const ModelLocalFunctionsMap& in_model_functions = {}
     );
 
 void InferShapes(
@@ -467,7 +462,6 @@ void InferShapeForFunctionNode(
     InferenceContext& ctx,
     const ShapeInferenceOptions& options = {},
     const ModelLocalFunctionsMap& model_local_functions_map = {},
-    GetFunctionMapIdFn get_model_local_func_id = nullptr,
     SymbolTable* symbolTable = nullptr,
     std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName = nullptr);
 
@@ -478,7 +472,6 @@ void InferShapeForFunctionNode(
     InferenceContext& ctx,
     const ShapeInferenceOptions& options = {},
     const ModelLocalFunctionsMap& model_local_functions_map = {},
-    GetFunctionMapIdFn get_model_local_func_id = nullptr,
     SymbolTable* symbolTable = nullptr,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr);
 
