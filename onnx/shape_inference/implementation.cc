@@ -232,6 +232,10 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
   }
 }
 
+std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const std::string& func_name) {
+  return domain + ":" + func_name;
+}
+
 static void InferShapesImpl(
     GraphProto* g,
     const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name,
@@ -382,7 +386,7 @@ static void InferShapesImpl(
           continue;
         }
       } else if (model_local_functions_map.size() > 0) {
-        auto iter = model_local_functions_map.find(n.domain() + ":" + n.op_type());
+        auto iter = model_local_functions_map.find(GetModelLocalFunctionsMapIdentifier(n.domain(), n.op_type()));
         if (iter != model_local_functions_map.end()) {
           InferShapeForFunctionNode(
               *(iter->second),
@@ -511,11 +515,10 @@ void InferShapes(
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
 
-  auto get_model_local_func_id = [](const std::string& domain, const std::string& func_name) { return domain + ":" + func_name; };
   ModelLocalFunctionsMap model_local_functions_by_id;
   for (const auto& function_proto : m.functions()) {
     model_local_functions_by_id.insert(
-        {get_model_local_func_id(function_proto.domain(), function_proto.name()), &function_proto});
+        {GetModelLocalFunctionsMapIdentifier(function_proto.domain(), function_proto.name()), &function_proto});
   }
 
   auto* g = m.mutable_graph();
@@ -652,10 +655,8 @@ void InferShapeForFunctionNode(
           symbol_table,
           generated_shape_data_by_name);
     } else if (model_local_functions_map.size() > 0) {
-      auto get_model_local_func_id = [](const std::string& domain, const std::string& func_name) 
-                                       { return domain + ":" + func_name; };
       // check model local functions for FunctionProto
-      auto iter = model_local_functions_map.find(get_model_local_func_id(n.domain(), n.op_type()));
+      auto iter = model_local_functions_map.find(GetModelLocalFunctionsMapIdentifier(n.domain(), n.op_type()));
       if (iter == model_local_functions_map.end()) {
         return;
       }

@@ -441,6 +441,10 @@ void InferShapes(
     const ShapeInferenceOptions& options = {}
     );
 
+///
+/// ModelLocalFunctionsMap is a map of function id -> model local function proto
+/// All the ONNX helper utilities expect the function id == <function_proto.domain>:<function_proto.name>
+///
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
@@ -456,6 +460,10 @@ void InferShapes(
     const ShapeInferenceOptions& options = {}
     );
 
+///
+/// ModelLocalFunctionsMap is a map of function id -> model local function proto
+/// All the ONNX helper utilities expect the function id == <function_proto.domain>:<function_proto.name>
+///
 void InferShapeForFunctionNode(
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
@@ -465,6 +473,10 @@ void InferShapeForFunctionNode(
     SymbolTable* symbolTable = nullptr,
     std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName = nullptr);
 
+///
+/// ModelLocalFunctionsMap is a map of function id -> model local function proto
+/// All the ONNX helper utilities expect the function id == <function_proto.domain>:<function_proto.name>
+///
 void InferShapeForFunctionNode(
     const FunctionProto& func_proto,
     const std::unordered_map<std::string, int>& func_opset_imports,
