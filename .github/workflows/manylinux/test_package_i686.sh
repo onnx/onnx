@@ -21,7 +21,7 @@ $PIP_INSTALL_COMMAND --upgrade pip
 
 # pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
 if [ "PY_VERSION" == "3.8" ] || [ "PY_VERSION" == "3.9" ]; then
-    $PIP_INSTALL_COMMAND numpy==1.21.5 protobuf==3.16.0 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
+    $PIP_INSTALL_COMMAND numpy==1.21.4 protobuf==3.16.0 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
 else
     $PIP_INSTALL_COMMAND numpy==1.16.6 protobuf==3.16.0 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
 fi
@@ -39,7 +39,7 @@ $PYTHON_COMAND workflow_scripts/test_generated_backend.py
 
 # Verify ONNX with the latest numpy
 if [ "PY_VERSION" == "3.8" ] || [ "PY_VERSION" == "3.9" ]; then
-    $PIP_UNINSTALL_COMMAND numpy==1.21.5 onnx && $PIP_INSTALL_COMMAND numpy
+    $PIP_UNINSTALL_COMMAND numpy==1.21.4 onnx && $PIP_INSTALL_COMMAND numpy
 else
     $PIP_UNINSTALL_COMMAND numpy onnx && $PIP_INSTALL_COMMAND numpy
 fi
