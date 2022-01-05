@@ -47,7 +47,11 @@ jobs:
   - script: |
       call activate py$(python.version)
       python -m pip install -q --upgrade pip
-      python -m pip install -q -r requirements-release.txt
+      if [ '$(python.version)' == '3.10' ]; then
+      python -m pip install -q numpy protobuf nbval pytest ipython wheel setuptools
+      else
+        python -m pip install -q -r requirements-release.txt
+      fi
 
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1
