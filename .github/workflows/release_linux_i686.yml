@@ -41,13 +41,13 @@ jobs:
         sudo apt-get install protobuf-compiler libprotoc-dev
 
     - name: Build manylinux2010_i686
-      uses: docker://quay.io/pypa/manylinux2010_i686
+      uses: docker://quay.io/pypa/manylinux2010_i686:6be8011a073feeca08d256ac64335a19fc8eee4c6312668b6781ace71db0de20
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2010_i686 ${{ github.event_name }}
 
     - name: Test manylinux2010_i686 package in a clean docker environment
-      uses: docker://quay.io/pypa/manylinux2010_i686
+      uses: docker://quay.io/pypa/manylinux2010_i686:6be8011a073feeca08d256ac64335a19fc8eee4c6312668b6781ace71db0de20
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/test_package_i686.sh ${{ matrix.python-version }}
