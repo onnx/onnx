@@ -20787,7 +20787,7 @@ This version of the operator has been available since version 16 of the default 
 
 <dl>
 <dt><tt>out_sequence</tt> (variadic) : S</dt>
-<dd>Output sequence</dd>
+<dd>Output sequence(s)</dd>
 </dl>
 
 #### Type Constraints

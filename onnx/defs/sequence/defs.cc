@@ -698,44 +698,52 @@ void SequenceMapInferenceFunction(InferenceContext& ctx) {
 bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
                               const OpSchema& schema,
                               FunctionProto& functionProto) {
+  schema.BuildFunction(functionProto);
+
+  // variadic input/outputs will be expanded
+  functionProto.clear_input();
+  functionProto.clear_output();
+
   auto body_attr = ctx.getAttribute("body");
   if (!body_attr || !body_attr->has_g())
     throw std::invalid_argument("Invalid ``body`` argument. Expected a graph");
   const GraphProto& body = body_attr->g();
 
   auto g_inputs = body.input();
+  int ninputs = g_inputs.size();
+  if (ninputs < 1)
+    throw std::invalid_argument("Expected 1 or more inputs.");
+
   auto g_outputs = body.output();
-
-  auto node_inputs = ctx.getInputs();
-  int ninputs = node_inputs.size();
-  auto node_outputs = ctx.getOutputs();
-  int noutputs = node_outputs.size();
-
-  if (g_inputs.size() != ninputs) {
-    throw std::invalid_argument(MakeString(
-        "Number of inputs mismatch. ``body`` subgraph has ",
-        g_inputs.size(),
-        " inputs but ",
-        ninputs,
-        " were provided to the node."));
-  }
-
-  if (g_outputs.size() != noutputs) {
-    throw std::invalid_argument(MakeString(
-        "Number of outputs mismatch. ``body`` subgraph has ",
-        g_outputs.size(),
-        " outputs but ",
-        noutputs,
-        " were provided to the node."));
-  }
+  int noutputs = g_outputs.size();
+  if (noutputs < 1)
+    throw std::invalid_argument("Expected 1 or more outputs.");
 
   if (!ctx.hasInput(0))
-    throw std::invalid_argument("At least one input is required.");
+    throw std::invalid_argument(MakeString("Input 0 expected but not provided"));
+
   const auto* first_input_type = ctx.getInputType(0);
   assert(first_input_type);
-
-  if (!first_input_type->has_sequence_type()) {
+  if (!first_input_type->has_sequence_type())
     throw std::invalid_argument("Expected a sequence type for input 0");
+
+  auto schema_inputs = schema.inputs();
+  auto input_0_name = schema_inputs[0].GetName();
+  auto input_1_name = schema_inputs[1].GetName();  // variadic input
+
+  *functionProto.add_input() = input_0_name;
+  for (int i = 1; i < ninputs; i++) {
+    if (!ctx.hasInput(i))
+      throw std::invalid_argument(MakeString("Input ", i, " expected but not provided"));
+    *functionProto.add_input() = MakeString(input_1_name, "_", i);
+  }
+
+  auto schema_outputs = schema.outputs();
+  auto output_0_name = schema_outputs[0].GetName();
+  for (int i = 0; i < noutputs; i++) {
+    if (!ctx.hasOutput(i))
+      throw std::invalid_argument(MakeString("Output ", i, " expected but not provided"));
+    *functionProto.add_output() = MakeString(output_0_name, "_", i);
   }
 
   // Loop body subgraph
@@ -783,7 +791,7 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
         NodeProto seq_at_node;
         seq_at_node.set_domain(ONNX_DOMAIN);
         seq_at_node.set_op_type("SequenceAt");
-        seq_at_node.add_input(node_inputs[inputIndex]);
+        seq_at_node.add_input(functionProto.input(inputIndex));
         seq_at_node.add_input(iter_count_name);
         seq_at_node.add_output(g_inputs[inputIndex].name());
         *loopbody_graph.add_node() = seq_at_node;
@@ -792,7 +800,7 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
         NodeProto identity;
         identity.set_domain(ONNX_DOMAIN);
         identity.set_op_type("Identity");
-        identity.add_input(node_inputs[inputIndex]);
+        identity.add_input(functionProto.input(inputIndex));
         identity.add_output(g_inputs[inputIndex].name());
         *loopbody_graph.add_node() = identity;
       }
@@ -834,9 +842,10 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
   std::vector<FunctionBodyHelper::NodeDef> nodes;
 
   // TODO: figure out a way to prevent name collisions?
-  std::string prefix = MakeString("SequenceMap_", node_inputs[0]);
+  auto first_input_name = functionProto.input(0);
+  std::string prefix = MakeString("SequenceMap_", first_input_name);
   std::string seqlen = MakeString(prefix, "_seqlen");
-  nodes.push_back({{seqlen}, "SequenceLength", {node_inputs[0]}});
+  nodes.push_back({{seqlen}, "SequenceLength", {first_input_name}});
 
   std::string cond_bool = MakeString(prefix, "cond");
   nodes.push_back(FunctionBodyHelper::Const<bool>(cond_bool, true));
@@ -844,7 +853,8 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
   std::vector<std::string> loop_node_inputs = {seqlen, cond_bool};
   std::vector<std::string> loop_node_outputs;
   for (int outputIndex = 0; outputIndex < noutputs; outputIndex++) {
-    std::string out_prefix = MakeString("SequenceMap_", node_outputs[outputIndex]);
+    auto output_name = functionProto.output(outputIndex);
+    std::string out_prefix = MakeString("SequenceMap_", output_name);
 
     std::string seqempty_name = MakeString(out_prefix, "_seqempty");
     int64_t dtype = g_outputs[outputIndex].type().tensor_type().elem_type();
@@ -855,8 +865,7 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
       {MakeAttribute("dtype", dtype)}
     });
     loop_node_inputs.push_back(seqempty_name);
-
-    loop_node_outputs.push_back(node_outputs[outputIndex]);
+    loop_node_outputs.push_back(output_name);
   }
 
   nodes.push_back({
@@ -871,7 +880,7 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
     auto new_node = functionProto.add_node();
     new_node->CopyFrom(node);
   }
-  schema.BuildFunction(functionProto);
+
   return true;
 }
 
@@ -907,7 +916,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "out_sequence",
-            "Output sequence",
+            "Output sequence(s)",
             "S",
             OpSchema::Variadic)
         .TypeConstraint(

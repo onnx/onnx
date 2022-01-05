@@ -8,6 +8,7 @@ import numpy as np  # type: ignore
 
 import onnx
 import onnx.mapping
+import onnx.helper
 
 from ..utils import import_recursive
 from ..test_case import TestCase
@@ -32,6 +33,13 @@ def function_expand_helper(node: NodeProto,
         io_names_map[function_proto.input[idx]] = node.input[idx] \
             if idx in range(len(node.input)) else ""
 
+        # Some nodes in the function body might contain subgraphs, and those could depend on the
+        # function input names. By inserting an identity node we keep the edge names valid in any
+        # subgraphs.
+        if idx in range(len(node.input)):
+            node_list.append(onnx.helper.make_node(
+                'Identity', [node.input[idx]], [function_proto.input[idx]]))
+
     for idx in range(len(function_proto.output)):
         # Even if the node has been created with optional outputs missing, we
         # can't assume that the function body handles this correctly, such as in
@@ -51,15 +59,11 @@ def function_expand_helper(node: NodeProto,
         for internal_name in internal_node.input:
             if internal_name in io_names_map:
                 new_node.input.append(io_names_map[internal_name])
-            elif internal_name in node.input:
-                new_node.input.append(internal_name)
             else:
                 new_node.input.append(op_prefix + internal_name)
         for internal_name in internal_node.output:
             if internal_name in io_names_map:
                 new_node.output.append(io_names_map[internal_name])
-            elif internal_name in node.output:
-                new_node.output.append(internal_name)
             else:
                 new_node.output.append(op_prefix + internal_name)
         for attr in internal_node.attribute:

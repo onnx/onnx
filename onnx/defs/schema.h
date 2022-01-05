@@ -28,17 +28,11 @@ namespace ONNX_NAMESPACE {
 
 struct FunctionBodyBuildContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
-
   virtual bool hasInput(int inputIndex) const = 0;
-  virtual bool hasOutput(int iutputIndex) const = 0;
-
-  virtual std::vector<std::string> getInputs() const = 0;
-  virtual std::vector<std::string> getOutputs() const = 0;
-
+  virtual bool hasOutput(int inputIndex) const = 0;
   // getInputType(i) should return null for missing optional inputs, or if
   // type-inference could not infer the input-type (erroneous model).
   virtual const TypeProto* getInputType(int inputIndex) const = 0;
-
   virtual ~FunctionBodyBuildContext() {}
 };
 
@@ -74,20 +68,6 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
     if (inputIndex >= node_proto_.output_size())
       return false;
     return node_proto_.output(inputIndex) != "";
-  }
-
-  std::vector<std::string> getInputs() const override {
-    std::vector<std::string> inputs;
-    for (const auto& input : node_proto_.input())
-      inputs.push_back(input);
-    return inputs;
-  }
-
-  std::vector<std::string> getOutputs() const override {
-    std::vector<std::string> outputs;
-    for (const auto& output : node_proto_.output())
-      outputs.push_back(output);
-    return outputs;
   }
 
   const TypeProto* getInputType(int inputIndex) const override {
@@ -916,7 +896,7 @@ class OpSchema final {
 
   bool has_data_propagation_function() const {
     return data_propagation_function_ ? true : false;
-  }
+  }  
 
   bool HasFunction() const {
     return function_body_.node_size() > 0;
