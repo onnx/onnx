@@ -1,10 +1,10 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/master/docs/ONNX_logo_main.png" /></p>
+<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/ONNX_logo_main.png" /></p>
 
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=master)
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=master)
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/6?label=MacOS&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=master)
+[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=main)
+[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)
+[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/6?label=MacOS&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=main)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
@@ -245,7 +245,7 @@ For full list refer to CMakeLists.txt
 * `ONNX_USE_PROTOBUF_SHARED_LIBS` should be ON or OFF.  
 **Default**: ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=0
 `ONNX_USE_PROTOBUF_SHARED_LIBS` determines how onnx links to protobuf libraries.  
-    - When set to ON - onnx will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/master/cmake/README.md#dlls-vs-static-linking), Protobuf_USE_STATIC_LIBS will be set to OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
+    - When set to ON - onnx will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/main/cmake/README.md#dlls-vs-static-linking), Protobuf_USE_STATIC_LIBS will be set to OFF and `USE_MSVC_STATIC_RUNTIME` must be 0.  
     - When set to OFF - onnx will link statically to protobuf, and Protobuf_USE_STATIC_LIBS will be set to ON (to force the use of the static libraries) and `USE_MSVC_STATIC_RUNTIME` can be 0 or 1.  
 
 * `ONNX_USE_LITE_PROTO` should be ON or OFF. When set to ON onnx uses lite protobuf instead of full protobuf.  
@@ -276,7 +276,7 @@ pytest
 
 # Development
 
-Check out the [contributor guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) for instructions.
+Check out the [contributor guide](https://github.com/onnx/onnx/blob/main/docs/CONTRIBUTING.md) for instructions.
 
 # License
 
@@ -292,17 +292,17 @@ NOTE: these are absolute rather than repo-relative because we
 this document is rendered by PyPI which doesn't seem to handle
 relative links properly. See https://github.com/dhimmel/obonet/issues/12.
 -->
-[overview]: https://github.com/onnx/onnx/blob/master/docs/Overview.md
-[ir]: https://github.com/onnx/onnx/blob/master/docs/IR.md
-[versioning]: https://github.com/onnx/onnx/blob/master/docs/Versioning.md
-[operators]: https://github.com/onnx/onnx/blob/master/docs/Operators.md
-[python_api]: https://github.com/onnx/onnx/blob/master/docs/PythonAPIOverview.md
-[shape_inference]: https://github.com/onnx/onnx/blob/master/docs/ShapeInference.md
-[version_converter]: https://github.com/onnx/onnx/blob/master/docs/VersionConverter.md
-[new_op]: https://github.com/onnx/onnx/blob/master/docs/AddNewOp.md
-[community]: https://github.com/onnx/onnx/tree/master/community
-[sigs]: https://github.com/onnx/onnx/tree/master/community/sigs.md
-[wgs]: https://github.com/onnx/onnx/tree/master/community/working-groups.md
-[contributing]: https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md
-[CMakeLists]: https://github.com/onnx/onnx/blob/master/CMakeLists.txt
-[license]: https://github.com/onnx/onnx/blob/master/LICENSE
+[overview]: https://github.com/onnx/onnx/blob/main/docs/Overview.md
+[ir]: https://github.com/onnx/onnx/blob/main/docs/IR.md
+[versioning]: https://github.com/onnx/onnx/blob/main/docs/Versioning.md
+[operators]: https://github.com/onnx/onnx/blob/main/docs/Operators.md
+[python_api]: https://github.com/onnx/onnx/blob/main/docs/PythonAPIOverview.md
+[shape_inference]: https://github.com/onnx/onnx/blob/main/docs/ShapeInference.md
+[version_converter]: https://github.com/onnx/onnx/blob/main/docs/VersionConverter.md
+[new_op]: https://github.com/onnx/onnx/blob/main/docs/AddNewOp.md
+[community]: https://github.com/onnx/onnx/tree/main/community
+[sigs]: https://github.com/onnx/onnx/tree/main/community/sigs.md
+[wgs]: https://github.com/onnx/onnx/tree/main/community/working-groups.md
+[contributing]: https://github.com/onnx/onnx/blob/main/docs/CONTRIBUTING.md
+[CMakeLists]: https://github.com/onnx/onnx/blob/main/CMakeLists.txt
+[license]: https://github.com/onnx/onnx/blob/main/LICENSE

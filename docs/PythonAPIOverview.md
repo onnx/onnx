@@ -108,7 +108,7 @@ from onnx import AttributeProto, TensorProto, GraphProto
 
 
 # The protobuf definition can be found here:
-# https://github.com/onnx/onnx/blob/master/onnx/onnx.proto
+# https://github.com/onnx/onnx/blob/main/onnx/onnx.proto
 
 
 # Create one input (ValueInfoProto)
@@ -240,7 +240,7 @@ original_model = onnx.load(model_path)
 print('The model before conversion:\n{}'.format(original_model))
 
 # A full list of supported adapters can be found here:
-# https://github.com/onnx/onnx/blob/master/onnx/version_converter.py#L21
+# https://github.com/onnx/onnx/blob/main/onnx/version_converter.py#L21
 # Apply the version conversion on the original model
 converted_model = version_converter.convert_version(original_model, <int target_version>)
 
