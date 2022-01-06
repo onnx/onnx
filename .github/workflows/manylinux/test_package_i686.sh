@@ -24,7 +24,7 @@ $PIP_INSTALL_COMMAND --upgrade pip
 if [ "$PY_VERSION" == "3.8" ] || [ "$PY_VERSION" == "3.9" ]; then
     $PIP_INSTALL_COMMAND numpy==1.21.5 protobuf==3.16.0 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
 else
-    $PIP_INSTALL_COMMAND numpy==1.16.6 protobuf==3.16.0 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
+    $PIP_INSTALL_COMMAND numpy protobuf==3.16.0 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
 fi
 $PIP_INSTALL_COMMAND dist/*manylinux2010_i686.whl
 
