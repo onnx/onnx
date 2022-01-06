@@ -124,14 +124,3 @@ jobs:
           pytest && \
           deactivate'
 
-    - name: Verify ONNX with ort-nightly
-      if: ${{ always() }}
-      run: |
-         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '\
-          source .env/bin/activate && \
-          python -m pip install -q flatbuffers && \
-          python -m pip install -i https://test.pypi.org/simple/ ort-nightly && \
-          python onnx/test/test_with_ort.py && \
-          deactivate'
