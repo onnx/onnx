@@ -115,8 +115,5 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 **Merge into main branch**
 * After everything above is done, merge the release branch into the main branch to make it consistent.
 
-## TODO list for next release
-* Remove `onnx.optimizer` in ONNX 1.9
-* Be aware of protobuf version gap issue (like building onnx with protobuf>=3.12 is not compatible with older protobuf)
-* (Optional) Deprecate Python 3.5 and add Python 3.9.
-* (Optional) Automatically upload created wheels for Windows
+**Remove old onnx-weekly packages on TestPyPI**
+* Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://test.pypi.org/project/onnx-weekly/#history) on TestPyPI to save space.
