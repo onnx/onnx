@@ -117,3 +117,4 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 **Remove old onnx-weekly packages on TestPyPI**
 * Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://test.pypi.org/project/onnx-weekly/#history) on TestPyPI to save space.
+* Steps: Login and go [here](https://test.pypi.org/manage/project/onnx-weekly/releases/) -> Choose target package -> Options -> Delete.
