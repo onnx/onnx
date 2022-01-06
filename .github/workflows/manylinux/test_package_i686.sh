@@ -29,9 +29,12 @@ $PYTEST_COMMAND
 # Test backend test data
 # onnx.checker all existing backend data
 $PYTHON_COMAND workflow_scripts/test_generated_backend.py
+# onnx.checker all generated backend data
+$PYTHON_COMAND onnx/backend/test/cmd_tools.py generate-data
+$PYTHON_COMAND workflow_scripts/test_generated_backend.py
 
 # Verify ONNX with the latest numpy
-$PIP_UNINSTALL_COMMAND numpy onnx && $PIP_INSTALL_COMMAND numpy
+$PIP_UNINSTALL_COMMAND numpy onnx && $PIP_INSTALL_COMMAND numpy==1.21.5
 $PIP_INSTALL_COMMAND dist/*manylinux2010_i686.whl
 $PYTEST_COMMAND
 
