@@ -29,9 +29,6 @@ $PYTEST_COMMAND
 # Test backend test data
 # onnx.checker all existing backend data
 $PYTHON_COMAND workflow_scripts/test_generated_backend.py
-# onnx.checker all generated backend data
-$PYTHON_COMAND onnx/backend/test/cmd_tools.py generate-data
-$PYTHON_COMAND workflow_scripts/test_generated_backend.py
 
 # Verify ONNX with the latest numpy
 if [ "PY_VERSION" == "3.8" ] || [ "PY_VERSION" == "3.9" ]; then
