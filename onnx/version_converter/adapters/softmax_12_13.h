@@ -19,7 +19,7 @@ class Softmax_12_13 final : public Adapter {
       int old_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 1;
       int input_rank = node->inputs()[0]->sizes().size();
 
-      if(old_axis < 0) old_axis = input_rank + old_axis + 1;
+      if(old_axis < 0) old_axis = input_rank + old_axis;
 
       if(old_axis == input_rank - 1)
         node->i_(kaxis, -1);
