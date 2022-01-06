@@ -1036,16 +1036,19 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
           if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
             fail_shape_inference(
-                "Only one of the attributes 'nodes_values', 'nodes_values_as_tensor'.");
+                "Only one of the attributes 'nodes_values', 'nodes_values_as_tensor' should be specified.");
           }
           if (nullptr != nodes_hitrates && nullptr != nodes_hitrates_as_tensor) {
-            fail_shape_inference("Only one of the attributes 'nodes_hitrates', 'nodes_hitrates'.");
+            fail_shape_inference(
+                "Only one of the attributes 'nodes_hitrates', 'nodes_hitrates' should be specified.");
           }
           if (nullptr != class_weights && nullptr != class_weights_as_tensor) {
-            fail_shape_inference("Only one of the attributes 'class_weights', 'class_weights_as_tensor'.");
+            fail_shape_inference(
+                "Only one of the attributes 'class_weights', 'class_weights_as_tensor' should be specified.");
           }
           if (nullptr != base_values && nullptr != base_values_as_tensor) {
-            fail_shape_inference("Only one of the attributes 'base_values', 'base_values_as_tensor'.");
+            fail_shape_inference(
+                "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
           }
         }));
 
@@ -1194,16 +1197,20 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           auto* base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
 
           if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
-            fail_shape_inference("Only one of the attributes 'nodes_values', 'nodes_values_as_tensor'.");
+            fail_shape_inference(
+                "Only one of the attributes 'nodes_values', 'nodes_values_as_tensor' should be specified.");
           }
           if (nullptr != nodes_hitrates && nullptr != nodes_hitrates_as_tensor) {
-            fail_shape_inference("Only one of the attributes 'nodes_hitrates', 'nodes_hitrates'.");
+            fail_shape_inference(
+                "Only one of the attributes 'nodes_hitrates', 'nodes_hitrates' should be specified.");
           }
           if (nullptr != target_weights && nullptr != target_weights_as_tensor) {
-            fail_shape_inference("Only one of the attributes 'target_weights', 'target_weights_as_tensor'.");
+            fail_shape_inference(
+                "Only one of the attributes 'target_weights', 'target_weights_as_tensor' should be specified.");
           }
           if (nullptr != base_values && nullptr != base_values_as_tensor) {
-            fail_shape_inference("Only one of the attributes 'base_values', 'base_values_as_tensor'.");
+            fail_shape_inference(
+                "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
           }
         }));
 
