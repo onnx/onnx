@@ -76,7 +76,7 @@ class TestSymbolicShape(unittest.TestCase):
             nodes=[concat, cast],
             inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'A']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3])],
-            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'M'])]
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, None])]
         )
 
         onnx_model = make_model(graph_def)
@@ -97,7 +97,7 @@ class TestSymbolicShape(unittest.TestCase):
             inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'A']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3]),
                 helper.make_tensor_value_info('D', TensorProto.FLOAT, [2, 'D'])],
-            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'M'])]
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, None])]
         )
 
         onnx_model = make_model(graph_def)
