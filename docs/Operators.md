@@ -62,6 +62,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#GlobalLpPool">GlobalLpPool</a>|<a href="Changelog.md#GlobalLpPool-2">2</a>, <a href="Changelog.md#GlobalLpPool-1">1</a>|
 |<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-1">1</a>|
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
+|<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-16">16</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
@@ -668,7 +669,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     keepdims=keepdims)
 
-# result: [[1], [1]]
+# result: [[1, 1]]
 result = argmax_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example')
 
@@ -826,7 +827,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[0, 1]]
+# result: [0, 1]
 result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example')
 
@@ -853,7 +854,7 @@ node = onnx.helper.make_node(
     axis=axis,
     keepdims=keepdims,
     select_last_index=True)
-# result: [[1, 1]]
+# result: [1, 1]
 result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example_select_last_index')
 
@@ -7607,6 +7608,413 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
+
+
+### <a name="GridSample"></a><a name="gridsample">**GridSample**</a>
+
+  Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
+  Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
+  the `output` will have shape (N, C, H_out, W_out).
+  For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
+  which are used to interpolate the output value `output[N, C, H_out, W_out]`.
+  
+  The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
+  See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>align_corners</tt> : int (default is 0)</dt>
+<dd>If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.</dd>
+<dt><tt>mode</tt> : string (default is bilinear)</dt>
+<dd>Three interpolation modes: bilinear (default), nearest and bicubic.</dd>
+<dt><tt>padding_mode</tt> : string (default is zeros)</dt>
+<dd>Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. zeros: use 0 for out-of-bound grid locations, border: use border values for out-of-bound grid locations, reflection: use values at locations reflected by the border for out-of-bound grid locations. If index 0 represents the margin pixel, the reflected value at index -1 will be the same as the value at index 1. For location far away from the border, it will keep being reflected until becoming in bound. If pixel location x = -3.5 reflects by border -1 and becomes x' = 1.5, then reflects by border 1 and becomes x'' = 0.5.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T1</dt>
+<dd>4-D tensor of shape (N, C, H, W), where N is the batch size, C is the numbers of channels, H and W are the height and width of the input data.</dd>
+<dt><tt>grid</tt> (non-differentiable) : T1</dt>
+<dd>Input offset, 4-D tensor of shape (N, H_out, W_out, 2), where H_out and W_out are the height and width of grid and output, Grid specifies the sampling pixel locations normalized by the input spatial dimensions. Therefore, it should have most values in the range of [-1, 1]. If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T2</dt>
+<dd>4-D tensor of shape (N, C, H_out, W_out).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input types to all tensor types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gridsample</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='bilinear',
+    padding_mode='zeros',
+    align_corners=0,
+)
+# X shape, [N, C, H, W] - [1, 1, 4, 4]
+X = np.array(
+    [
+        [
+            [
+                [0., 1., 2., 3.],
+                [4., 5., 6., 7.],
+                [8., 9., 10., 11.],
+                [12., 13., 14., 15.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Grid shape, [N, H_out, W_out, 2] - [1, 6, 6, 2]
+Grid = np.array(
+    [
+        [
+            [
+                [-1.0000, -1.0000],
+                [-0.6000, -1.0000],
+                [-0.2000, -1.0000],
+                [0.2000, -1.0000],
+                [0.6000, -1.0000],
+                [1.0000, -1.0000]
+            ],
+            [
+                [-1.0000, -0.6000],
+                [-0.6000, -0.6000],
+                [-0.2000, -0.6000],
+                [0.2000, -0.6000],
+                [0.6000, -0.6000],
+                [1.0000, -0.6000]
+            ],
+            [
+                [-1.0000, -0.2000],
+                [-0.6000, -0.2000],
+                [-0.2000, -0.2000],
+                [0.2000, -0.2000],
+                [0.6000, -0.2000],
+                [1.0000, -0.2000]
+            ],
+            [
+                [-1.0000, 0.2000],
+                [-0.6000, 0.2000],
+                [-0.2000, 0.2000],
+                [0.2000, 0.2000],
+                [0.6000, 0.2000],
+                [1.0000, 0.2000]
+            ],
+            [
+                [-1.0000, 0.6000],
+                [-0.6000, 0.6000],
+                [-0.2000, 0.6000],
+                [0.2000, 0.6000],
+                [0.6000, 0.6000],
+                [1.0000, 0.6000]
+            ],
+            [
+                [-1.0000, 1.0000],
+                [-0.6000, 1.0000],
+                [-0.2000, 1.0000],
+                [0.2000, 1.0000],
+                [0.6000, 1.0000],
+                [1.0000, 1.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 6, 6]
+Y = np.array(
+    [
+        [
+            [
+                [0.0000, 0.1500, 0.5500, 0.9500, 1.3500, 0.7500],
+                [0.6000, 1.5000, 2.3000, 3.1000, 3.9000, 2.1000],
+                [2.2000, 4.7000, 5.5000, 6.3000, 7.1000, 3.7000],
+                [3.8000, 7.9000, 8.7000, 9.5000, 10.3000, 5.3000],
+                [5.4000, 11.1000, 11.9000, 12.7000, 13.5000, 6.9000],
+                [3.0000, 6.1500, 6.5500, 6.9500, 7.3500, 3.7500]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+expect(node, inputs=[X, Grid], outputs=[Y],
+       name='test_gridsample')
+```
+
+</details>
+
+
+<details>
+<summary>gridsample_mode_aligncorners</summary>
+
+```python
+# X shape, [N, C, H, W] - [1, 1, 3, 2]
+X = np.array(
+    [
+        [
+            [
+                [0., 1.],
+                [2., 3.],
+                [4., 5.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Grid shape, [N, H_out, W_out, 2] - [1, 2, 4, 2]
+Grid = np.array(
+    [
+        [
+            [
+                [-1.0000, -1.0000],
+                [-0.5000, -0.5000],
+                [-0.2000, -0.2000],
+                [0.0000, 0.0000]
+            ],
+
+            [
+                [0.0000, 0.0000],
+                [-0.2000, -0.2000],
+                [0.5000, 0.5000],
+                [1.0000, 1.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+# setting mode = 'bilinear', default align_corners = 0
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='bilinear',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [0.0000, 0.5000, 1.7000, 2.5000],
+                [2.5000, 1.7000, 4.5000, 1.2500]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_bilinear],
+       name='test_gridsample_bilinear')
+
+# setting mode = 'bilinear', align_corners = 1
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='bilinear',
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_align_corners = np.array(
+    [
+        [
+            [
+                [0.0000, 1.2500, 2.0000, 2.5000],
+                [2.5000, 2.0000, 3.7500, 5.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_align_corners],
+       name='test_gridsample_aligncorners_true')
+
+# setting mode = 'nearest'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='nearest',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [0., 0., 2., 2.],
+                [2., 2., 5., 0.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_nearest],
+       name='test_gridsample_nearest')
+
+# setting mode = 'bicubic'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='bicubic',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [-0.1406, 0.3828, 1.7556, 2.9688],
+                [2.9688, 1.7556, 5.1445, 1.3906]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_bicubic],
+       name='test_gridsample_bicubic')
+```
+
+</details>
+
+
+<details>
+<summary>gridsample_paddingmode</summary>
+
+```python
+# X shape, [N, C, H, W] - [1, 1, 3, 2]
+X = np.array(
+    [
+        [
+            [
+                [0., 1.],
+                [2., 3.],
+                [4., 5.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Grid shape, [N, H_out, W_out, 2] - [1, 2, 4, 2]
+Grid = np.array(
+    [
+        [
+            [
+                [-10.0000, -10.0000],
+                [-5.0000, -5.0000],
+                [-0.2000, -0.2000],
+                [10.0000, 10.0000]
+            ],
+
+            [
+                [10.0000, 10.0000],
+                [-0.2000, -0.2000],
+                [5.0000, 5.0000],
+                [10.0000, 10.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+# setting padding_mode = 'zeros'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    padding_mode='zeros',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_zeros = np.array(
+    [
+        [
+            [
+                [0.0000, 0.0000, 1.7000, 0.0000],
+                [0.0000, 1.7000, 0.0000, 0.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_zeros],
+       name='test_gridsample_zeros_padding')
+
+# setting padding_mode = 'border'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    padding_mode='border',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_border = np.array(
+    [
+        [
+            [
+                [0.0000, 0.0000, 1.7000, 5.0000],
+                [5.0000, 1.7000, 5.0000, 5.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_border],
+       name='test_gridsample_border_padding')
+
+# setting padding_mode = 'reflection'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    padding_mode='reflection',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_reflection = np.array(
+    [
+        [
+            [
+                [2.5000, 0.0000, 1.7000, 2.5000],
+                [2.5000, 1.7000, 5.0000, 2.5000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_reflection],
+       name='test_gridsample_reflection_padding')
+```
+
+</details>
 
 
 ### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
@@ -24098,10 +24506,12 @@ expect(node, inputs=[data, scales], outputs=[output],
 
 ### <a name="Where"></a><a name="where">**Where**</a>
 
-  Return elements, either from X or Y, depending on condition
-      (with Numpy-style broadcasting support).
-      Where behaves like numpy.where with three parameters:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+  Return elements, either from X or Y, depending on condition.
+  Where behaves like
+  [numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+  with three parameters.
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
   
   **History**
   - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).

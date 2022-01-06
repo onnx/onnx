@@ -41,7 +41,7 @@ class ArgMax(Base):
             outputs=['result'],
             axis=axis,
             keepdims=keepdims)
-        # result: [[0, 1]]
+        # result: [0, 1]
         result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example')
 
@@ -80,7 +80,7 @@ class ArgMax(Base):
             outputs=['result'],
             keepdims=keepdims)
 
-        # result: [[1], [1]]
+        # result: [[1, 1]]
         result = argmax_use_numpy(data, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example')
 
@@ -121,7 +121,7 @@ class ArgMax(Base):
             axis=axis,
             keepdims=keepdims,
             select_last_index=True)
-        # result: [[1, 1]]
+        # result: [1, 1]
         result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
         expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example_select_last_index')
 
