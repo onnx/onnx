@@ -29,7 +29,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Graph Optimization](https://github.com/onnx/optimizer)
 * [Opset Version Conversion][version_converter]
 
-# WARNING: ONNX now uses main branch as default branch
+# NOTICE: ONNX now uses main branch as default branch
 Here are the [steps](https://github.com/onnx/onnx/wiki/How-to-migrate-to-main-branch-in-local-repo) from ONNX wiki for migrating to main branch in local repo.
 
 # Contribute
