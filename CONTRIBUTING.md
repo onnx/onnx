@@ -24,7 +24,7 @@ Attend ONNX Steering Committee meetings - they are open to all in the community.
 
 ## Contributing code
 
-You can submit a pull request (PR) with your code. The [SIG](https://github.com/onnx/onnx/blob/main/community/sigs.md) or [Working Group](https://github.com/onnx/onnx/blob/main/community/working-groups.md) that is responsible for the area of the project your PR touches will review it and merge once any comments are addressed.
+You can submit a pull request (PR) with your code. The [SIG](community/sigs.md) or [Working Group](community/working-groups.md) that is responsible for the area of the project your PR touches will review it and merge once any comments are addressed.
 
 ### DCO
 ONNX has adopted the [DCO](https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin). All code repositories under ONNX require a DCO. (ONNX previously used a CLA, which is being replaced with the DCO.)
