@@ -1277,7 +1277,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
                FunctionProto& functionProto) -> bool {
-              const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
               FunctionBuilder builder(functionProto);
               builder.Const1D("axes", axis)
                   .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input)", "axes", std::vector<int64_t>({axis}))
@@ -1301,7 +1301,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
                FunctionProto& functionProto) -> bool {
-              const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
               FunctionBuilder builder(functionProto);
               builder.Const1D("axes", axis)
                   .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input)", "axes", std::vector<int64_t>({axis}))
@@ -2833,9 +2833,9 @@ bool BuildContextDependentFunctionBody(
       reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
 
   FunctionBuilder builder(functionProto);
-  builder.Const1D("const_zero", 0)
-      .Const1D("const_one", 1)
-      .Const1D("axes", 1)
+  builder.Const1D("const_zero", int64_t(0))
+      .Const1D("const_one", int64_t(1))
+      .Const1D("axes", int64_t(1))
       .Add("expanded_target = Unsqueeze (target, axes)");
 
   if (ctx.getAttribute("ignore_index") == nullptr) {
