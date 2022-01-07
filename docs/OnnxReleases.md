@@ -1,6 +1,6 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-The ONNX project, going forward, will plan to release roughly on a two month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
+The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
 ## Preparation
 
@@ -115,8 +115,6 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 **Merge into main branch**
 * After everything above is done, merge the release branch into the main branch to make it consistent.
 
-## TODO list for next release
-* Remove `onnx.optimizer` in ONNX 1.9
-* Be aware of protobuf version gap issue (like building onnx with protobuf>=3.12 is not compatible with older protobuf)
-* (Optional) Deprecate Python 3.5 and add Python 3.9.
-* (Optional) Automatically upload created wheels for Windows
+**Remove old onnx-weekly packages on TestPyPI**
+* Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://test.pypi.org/project/onnx-weekly/#history) on TestPyPI to save space.
+* Steps: Login and go [here](https://test.pypi.org/manage/project/onnx-weekly/releases/) -> Choose target package -> Options -> Delete.
