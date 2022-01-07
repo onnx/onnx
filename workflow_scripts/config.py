@@ -4,7 +4,7 @@
 # Skip them in test_model_zoo.py for now
 # TODO: fix these checker failures
 SKIP_CHECKER_MODELS = {'vision/classification/alexnet/model/bvlcalexnet-3.onnx',  # opset1 typeinference function missing
-                       'vision/classification/caffenet/model/caffenet-3.onnx',  # this should be caffenet-3.onnx; missing too
+                       'vision/classification/caffenet/model/caffenet-3.onnx',  # opset1 typeinference function missing
                        'vision/classification/densenet-121/model/densenet-3.onnx',  # opset1 typeinference function missing
                        'vision/classification/inception_and_googlenet/inception_v1/model/inception-v1-3.onnx',  # opset1 typeinference function missing
                        'vision/classification/inception_and_googlenet/inception_v2/model/inception-v2-3.onnx',  # opset1 typeinference function missing

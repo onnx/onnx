@@ -1261,20 +1261,7 @@ void convTransposeShapeInference1(InferenceContext& ctx) {
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
-        int64_t residual = 0;
-        int64_t stride = strides[i];
-        if (stride > 1) {
-          if (!input_shape.dim(2 + i).has_dim_value()) {
-            continue;
-          }
-          residual = input_shape.dim(2 + i).dim_value();
-          while (residual >= stride) {
-            residual -= stride;
-          }
-        }
-        int64_t total_pad = residual == 0
-            ? effective_kernel_shape[i] - stride
-            : effective_kernel_shape[i] - residual;
+        int64_t total_pad = effective_kernel_shape[i] - strides[i];
         if (total_pad < 0)
           total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
