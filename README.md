@@ -300,9 +300,9 @@ relative links properly. See https://github.com/dhimmel/obonet/issues/12.
 [shape_inference]: https://github.com/onnx/onnx/blob/main/docs/ShapeInference.md
 [version_converter]: https://github.com/onnx/onnx/blob/main/docs/VersionConverter.md
 [new_op]: https://github.com/onnx/onnx/blob/main/docs/AddNewOp.md
-[community]: https://github.com/onnx/onnx/tree/main/community
-[sigs]: https://github.com/onnx/onnx/tree/main/community/sigs.md
-[wgs]: https://github.com/onnx/onnx/tree/main/community/working-groups.md
+[community]: https://github.com/onnx/onnx/blob/main/community
+[sigs]: https://github.com/onnx/onnx/blob/main/community/sigs.md
+[wgs]: https://github.com/onnx/onnx/blob/main/community/working-groups.md
 [contributing]: https://github.com/onnx/onnx/blob/main/docs/CONTRIBUTING.md
 [CMakeLists]: https://github.com/onnx/onnx/blob/main/CMakeLists.txt
 [license]: https://github.com/onnx/onnx/blob/main/LICENSE
