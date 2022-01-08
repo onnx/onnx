@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from typing import Text, Sequence, Any, Type, Tuple, NewType, Optional, Dict
 
-import six
 import numpy  # type: ignore
 
 import onnx.checker
@@ -44,7 +43,7 @@ def namedtupledict(typename, field_names, *args, **kwargs):  # type: (Text, Sequ
     data = namedtuple(typename, field_names, *args, **kwargs)  # type: ignore
 
     def getitem(self, key):  # type: (Any, Any) -> Any
-        if isinstance(key, six.string_types):
+        if isinstance(key, str):
             key = field_names_map[key]
         return super(type(self), self).__getitem__(key)  # type: ignore
     data.__getitem__ = getitem

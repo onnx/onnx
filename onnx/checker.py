@@ -24,7 +24,6 @@ import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
 from google.protobuf.message import Message
 from typing import TypeVar, Callable, Any, Type, cast, Union, Text
-from six import string_types, binary_type
 import onnx.shape_inference
 import sys
 
@@ -93,12 +92,12 @@ def check_sparse_tensor(sparse, ctx=DEFAULT_CONTEXT):  # type: (SparseTensorProt
 
 def check_model(model, full_check=False):  # type: (Union[ModelProto, Text, bytes], bool) -> None
     # If model is a path instead of ModelProto
-    if isinstance(model, string_types):
+    if isinstance(model, str):
         C.check_model_path(model)
         if full_check:
             onnx.shape_inference.infer_shapes_path(model, check_type=True, strict_mode=True)
     else:
-        protobuf_string = model if isinstance(model, binary_type) else model.SerializeToString()
+        protobuf_string = model if isinstance(model, str) else model.SerializeToString()
         # If the protobuf is larger than 2GB,
         # remind users should use the model path to check
         if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
