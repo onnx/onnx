@@ -48,8 +48,8 @@ Once the criteria of proposing new operator/function has been satisfied, you wil
 4. Write unit test, that cover main usage and corner cases.
     1. The testing examples will be extracted to the doc.
     2. We also generate binary data for it.
-    3. Example: /onnx/backend/test/case/node/abs.py
-5. Add at least one automatic upgrade test for your operator in /onnx/test/automatic_upgrade_test.py using `_test_op_upgrade`. These tests create a given operator at a given opset version (usually the version the operator was introduced in) and test that the version converter is able to convert them to the highest available version. So for a new operator `_test_op_upgrade` will not test anything, but as soon as the operator gets updated in a future opset the test will autoamtically become nontrivial.
+    3. Example: [onnx/backend/test/case/node/abs.py](/onnx/backend/test/case/node/abs.py)
+5. Add at least one automatic upgrade test for your operator in [onnx/test/automatic_upgrade_test.py](/onnx/test/automatic_upgrade_test.py) using `_test_op_upgrade`. These tests create a given operator at a given opset version (usually the version the operator was introduced in) and test that the version converter is able to convert them to the highest available version. So for a new operator `_test_op_upgrade` will not test anything, but as soon as the operator gets updated in a future opset the test will autoamtically become nontrivial.
 6. Update the documentation and generate the test data.
     1. Running [the script](/tools/update_doc.sh)
 to update the doc and generate the test data.
@@ -57,8 +57,8 @@ to update the doc and generate the test data.
     1. Please provide a shape inference function in cases where it is meaningful and applicable.
     2. In cases where shape inference is not possible, it must have logic to perform
 rank inference at the very least (adding right amount of dimensions to the output shape)
-    3. Shape inference functions must be accompanied by unit tests (/onnx/test/shape_inference_test.py).
-    4. You can refer to the shape inference function for the `TopK` operator while implementing your own function (/onnx/defs/math/defs.cc#L943)
+    3. Shape inference functions must be accompanied by unit tests ([onnx/test/shape_inference_test.py](/onnx/test/shape_inference_test.py)).
+    4. You can refer to the shape inference function for the `TopK` operator while implementing your own function ([onnx/defs/math/defs.cc](/onnx/defs/math/defs.cc))
 
 ### Example to Follow
 [PR 1959](https://github.com/onnx/onnx/pull/1959) is a good example to follow.
@@ -82,7 +82,7 @@ Any operator in ONNX was added because it was required by a model and/or framewo
     * Or a set of primitive operators that together can implement the same functionality and behavior of the deprecated operator (Function).
 * If the deprecated operator can be decomposed by existing operators then it must be converted to a function.
 * If replacement isn’t in ONNX standard yet, then add the replacement operator or set of operators first.
-* Add a version adapter which turns the operator into its replacement for the version converter. Example: /onnx/version_converter/adapters/upsample_9_10.h
+* Add a version adapter which turns the operator into its replacement for the version converter. Example: [onnx/version_converter/adapters/upsample_9_10.h](/onnx/version_converter/adapters/upsample_9_10.h)
 * No grace period is needed for deprecated operators.
 
 ## Removing function <a name="removing_function"></a>
