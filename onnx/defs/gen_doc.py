@@ -12,7 +12,7 @@ import io
 import os
 import sys
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from onnx import defs, FunctionProto, helper
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN

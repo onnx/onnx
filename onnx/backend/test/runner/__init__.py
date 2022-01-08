@@ -18,7 +18,7 @@ from typing import (Any, Callable, Dict, Iterable, List, Optional, Pattern,
                     Sequence, Set, Text, Type, Union)
 from urllib.request import urlretrieve
 
-import numpy as np  # type: ignore
+import numpy as np
 import onnx
 from onnx import ModelProto, NodeProto, TypeProto, helper, numpy_helper
 from onnx.backend.base import Backend

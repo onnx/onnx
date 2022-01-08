@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 import unittest
 
 from typing import Sequence, Text
-import numpy as np  # type: ignore
+import numpy as np
 
 from onnx import checker, helper, numpy_helper, shape_inference
 from onnx import TensorProto, GraphProto, SparseTensorProto

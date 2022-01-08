@@ -12,7 +12,7 @@ from typing import Sequence, Union, Text, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
 import os
-import numpy as np  # type: ignore
+import numpy as np
 
 
 class TestShapeInference(unittest.TestCase):

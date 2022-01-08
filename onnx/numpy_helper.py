@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 import sys
 
-import numpy as np  # type: ignore
+import numpy as np
 from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data

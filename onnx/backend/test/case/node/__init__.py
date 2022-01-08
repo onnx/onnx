@@ -9,7 +9,7 @@ import sys
 import re
 
 from typing import List, Text, Sequence, Any, Union, Optional
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 import onnx.mapping

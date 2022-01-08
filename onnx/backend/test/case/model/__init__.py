@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 import sys
 
 import onnx.defs
-import numpy as np  # type: ignore
+import numpy as np
 from onnx import ModelProto
 from typing import List, Optional, Text, Sequence
 from ..utils import import_recursive

@@ -4,7 +4,7 @@ import onnx
 from onnx import helper, TensorProto, shape_inference, version_converter, ValueInfoProto
 from typing import Text, List, Dict, Any, Union, Callable, Optional, cast
 import string
-import numpy as np  # type: ignore
+import numpy as np
 import unittest
 
 #####################################################################################

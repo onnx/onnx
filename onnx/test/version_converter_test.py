@@ -9,7 +9,7 @@ from onnx import checker, helper, ModelProto, TensorProto, GraphProto, NodeProto
 from typing import Sequence, Text, Tuple, List, Callable
 from onnx import numpy_helper
 
-import numpy as np  # type: ignore
+import numpy as np
 import struct
 
 import onnx.version_converter

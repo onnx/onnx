@@ -9,7 +9,7 @@ import pkgutil
 from types import ModuleType
 from typing import Optional, List
 
-import numpy as np  # type: ignore
+import numpy as np
 
 
 all_numeric_dtypes = [

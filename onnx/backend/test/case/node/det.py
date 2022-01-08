@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 import math
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from ..base import Base

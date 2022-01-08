@@ -4,7 +4,7 @@ import tempfile
 import unittest
 import uuid
 
-import numpy as np  # type: ignore
+import numpy as np
 import shutil
 
 import os

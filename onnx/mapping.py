@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from onnx import TensorProto, SequenceProto, OptionalProto
 from typing import Text, Any
-import numpy as np  # type: ignore
+import numpy as np 
 
 TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.FLOAT): np.dtype('float32'),
