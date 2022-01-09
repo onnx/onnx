@@ -11,7 +11,7 @@ Releases are versioned according to [ONNX Versioning](docs/Versioning.md). This 
 
 On a regular basis, new versions of ONNX are published, representing the aggregate of changes in the IR and operator sets. Such releases use semantic versioning to describe the progression of the standard.
 
-The GitHub repo for ONNX provides release branches where the project is stabilized as per the process described here. Release notes are used to communicate the stability and status of a release. The master branch will be used to continue work for subsequent releases.
+The GitHub repo for ONNX provides release branches where the project is stabilized as per the process described here. Release notes are used to communicate the stability and status of a release. The main branch will be used to continue work for subsequent releases.
 
 Major, minor and patch releases will have branch names and version numbers reflecting the nature of the change as per semantic versioning definitions.
 
@@ -33,7 +33,7 @@ to be produced.
 
 - The release manager announces the initial commit for testing. The first
   period lasts a week; any regressions found should be fixed, typically via
-  the master branch. Incomplete features should be done or excised during this
+  the main branch. Incomplete features should be done or excised during this
   period. A distribution can be made available with an -RC1 suffix.
 
 - The release manager announces a second round of testing (unless it's only a
