@@ -30,7 +30,7 @@ import "onnx/onnx-ml.proto";
 // no symbolic/constant value. Finally, "Sequence<Tensor<float, omitted>>" means
 // that the different tensors can have different ranks, when the "shape" itself
 // is omitted from the tensor-type. For a more complete description, refer to
-// https://github.com/onnx/onnx/blob/master/docs/IR.md#static-tensor-shapes.
+// https://github.com/onnx/onnx/blob/main/docs/IR.md#static-tensor-shapes.
 //
 message SequenceProto {
 
