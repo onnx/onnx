@@ -99,7 +99,7 @@ Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipel
 
 # License
 
-[Apache License v2.0](https://github.com/onnx/onnx/blob/master/LICENSE)
+[Apache License v2.0](/LICENSE)
 
 # Code of Conduct
 

@@ -8,7 +8,7 @@ on:
     # run weekly on Sunday 23:59
     - cron:  '59 23 * * SUN'
   pull_request:
-    branches: [master, rel-*]
+    branches: [main, rel-*]
   workflow_dispatch:
 
 jobs:
