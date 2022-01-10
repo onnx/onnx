@@ -235,12 +235,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Shape inference based on input shape
           const TensorProto* targetShapeInitializer = ctx.getInputData(0);
           if (!targetShapeInitializer) {
-            // This is the case when exact shape input is not available.
-            // In this case, if the number of dimensions can be infered
-            // from the input 'shape' tensor, then we add the same number
-            // of dimensions (without any dim_value information) to the
-            // output.
-            if (hasInputShape(ctx, 0)) {
+            const auto* shapeInput = ctx.getSymbolicInput(0);
+            if (shapeInput) {
+              // Gets the shape data from data propagation
+              auto* outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+              for (int i = 0; i < static_cast<int>(shapeInput->dim_size()); ++i) {
+                auto* new_dim = outputShape->add_dim();
+                if (shapeInput->dim(i).has_dim_value()) {
+                  new_dim->set_dim_value(shapeInput->dim(i).dim_value());
+                }
+              }
+            } else if (hasInputShape(ctx, 0)) {
+              // This is the case when exact shape input is not available.
+              // In this case, if the number of dimensions can be infered
+              // from the input 'shape' tensor, then we add the same number
+              // of dimensions (without any dim_value information) to the
+              // output.
               auto& input_shape = getInputShape(ctx, 0);
               auto input_shape_dim_size = input_shape.dim_size();
               if (input_shape_dim_size > 1) {
@@ -281,6 +291,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Invalid shape value: ", targetShapeElem);
             }
           }
+
         }));
 
 static const char* EyeLike_ver9_doc = R"DOC(
