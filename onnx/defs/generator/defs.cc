@@ -291,7 +291,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Invalid shape value: ", targetShapeElem);
             }
           }
-
         }));
 
 static const char* EyeLike_ver9_doc = R"DOC(
