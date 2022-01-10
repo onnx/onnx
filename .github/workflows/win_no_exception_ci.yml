@@ -2,9 +2,9 @@ name: Windows_No_Exception_CI
 
 on:
    push:
-    branches: [ master, rel-* ]
+    branches: [ main, rel-* ]
    pull_request:
-    branches: [ master, rel-* ]
+    branches: [ main, rel-* ]
 jobs:
   build:
     runs-on: windows-latest
