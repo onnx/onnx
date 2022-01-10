@@ -806,10 +806,14 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
       }
     }
 
-    // TODO: should we copy initializers, value infos, etc?
-    for (const auto& node : body.node()) {
-      *loopbody_graph.add_node() = node;
-    }
+    for (const auto& item : body.node())
+      *loopbody_graph.add_node() = item;
+    for (const auto& item : body.value_info())
+      *loopbody_graph.add_value_info() = item;
+    for (const auto& item : body.initializer())
+      *loopbody_graph.add_initializer() = item;
+    for (const auto& item : body.sparse_initializer())
+      *loopbody_graph.add_sparse_initializer() = item;
 
     for (int outputIndex = 0; outputIndex < noutputs; outputIndex++) {
       const auto &body_out_i = body.output(outputIndex);
