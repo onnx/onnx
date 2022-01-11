@@ -5,9 +5,9 @@ on:
     # Run weekly on Monday 00:00
     - cron:  '00 00 * * MON'
   push:
-    branches: [master, rel-*]
+    branches: [main, rel-*]
   pull_request:
-    branches: [master, rel-*]
+    branches: [main, rel-*]
   workflow_dispatch:
 
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
@@ -95,7 +95,7 @@ jobs:
         path: dist
 
     - name: Upload wheel to TestPyPI weekly
-      if: (github.event_name == 'schedule') # Only triggered by weekly event
+      if: github.event_name == 'schedule' # Only triggered by weekly event
       run: |
         twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
@@ -111,7 +111,14 @@ jobs:
       run: |
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
-        pytest        
+        pytest
+
+    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+      if: ${{ always() }}
+      run: |
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
 
     - name: Verify ONNX with ort-nightly
       if: ${{ always() }}
@@ -119,3 +126,19 @@ jobs:
         python -m pip install -q flatbuffers
         python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
         python onnx/test/test_with_ort.py
+
+    - name: Build and upload source distribution to TestPyPI weekly
+      if: github.event_name == 'schedule' && matrix.python-version == '3.9' # Only triggered by weekly event on Python 3.9
+      run: |
+        # Build and upload source distribution to TestPyPI
+        git clean -xdf
+        python setup.py sdist --weekly_build
+        twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
+
+    - name: Test source distribution from TestPyPI
+      if: github.event_name == 'schedule' && matrix.python-version == '3.9'
+      run: |
+        python -m pip uninstall -y onnx
+        python -m pip install setuptools
+        python -m pip install --index-url https://test.pypi.org/simple --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly
+        pytest

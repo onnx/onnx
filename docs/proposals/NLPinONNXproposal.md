@@ -41,7 +41,7 @@ Vanilla seq2seq with attention and non-backtracking beam search does NOT include
 
 ## Standard Recurrent Network Constructs
 
-Standard recurrent network architectures such as LSTM or GRU are very common, and we can get very far supporting these. We already have the [LSTM](https://github.com/onnx/onnx/blob/master/docs/Operators.md#LSTM) and [GRU](https://github.com/onnx/onnx/blob/master/docs/Operators.md#GRU) operators, which execute the standard LSTM and GRU[4] operations over a sequence of inputs. These high-level operators are great, since they give backends a semantic view of the computation to be performed, and thus backends can make informed decisions about optimization. Many NLP use cases can get away with using just these operators.
+Standard recurrent network architectures such as LSTM or GRU are very common, and we can get very far supporting these. We already have the [LSTM](/docs/Operators.md#LSTM) and [GRU](/docs/Operators.md#GRU) operators, which execute the standard LSTM and GRU[4] operations over a sequence of inputs. These high-level operators are great, since they give backends a semantic view of the computation to be performed, and thus backends can make informed decisions about optimization. Many NLP use cases can get away with using just these operators.
 
 [4] http://colah.github.io/posts/2015-08-Understanding-LSTMs/
 

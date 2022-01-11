@@ -7,14 +7,17 @@ on:
   schedule:
     # run weekly on Sunday 23:59
     - cron:  '59 23 * * SUN'
+  pull_request:
+    branches: [main, rel-*]
   workflow_dispatch:
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'test ONNX Model Zoo')
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [3.7]
+        python-version: [3.8]
         architecture: ['x64']
     steps:
     - uses: actions/checkout@v2

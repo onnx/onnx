@@ -20,11 +20,11 @@ Old operator        |New Operator
 
 ## Adding Experimental Operators [Deprecated - as of v1.5 experimental ops are no longer supported]
 
-The experimental flag in ONNX operator definitions indicates that a customer of ONNX may not be able to take a long term dependency on that op. Ops in the ONNX namespace (ai.onnx) in the _master_ branch, whether experimental or not, go through the regular review process.
+The experimental flag in ONNX operator definitions indicates that a customer of ONNX may not be able to take a long term dependency on that op. Ops in the ONNX namespace (ai.onnx) in the _main_ branch, whether experimental or not, go through the regular review process.
 
 Experimental ops that are being worked on that do not have consensus yet can be managed in one of 2 ways:
 1. Use a fork or branch – what you do in the fork or branch is entirely up to you. When you are ready, you can submit a PR using the normal process. This is the recommended way.
-2. If a fork/branch is not workable (for example due to complexity of mapping different branches between multiple repos), put the experimental ops in a custom namespace in the master branch.
+2. If a fork/branch is not workable (for example due to complexity of mapping different branches between multiple repos), put the experimental ops in a custom namespace in the main branch.
 The specific process for this is:
  * Submit an Issue with a proposal explaining the motivation and plan. It does not need to include detailed technical design. Issues will be tagged as "experimental op".
  * Reviewers will generally approve by default unless the proposal directly conflicts with existing ops or somehow goes against general ONNX strategy. Approval is indicated by adding the "experiment approved" tag.

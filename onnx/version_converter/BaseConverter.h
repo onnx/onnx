@@ -79,6 +79,10 @@ class BaseVersionConverter {
     const OpSetID& tv = a_ptr->target_version();
     adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::move(a_ptr);
   }
+
+  void registerAdapter(const char* op, int64_t from, int64_t to, NodeTransformerFunction transformer) {
+    registerAdapter(make_unique<GenericAdapter>(op, from, to, transformer));
+  }
 };
 
 }} // namespace ONNX_NAMESPACE::version_conversion

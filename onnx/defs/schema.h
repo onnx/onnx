@@ -49,7 +49,7 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
     }
   }
 
-  const AttributeProto* getAttribute(const std::string& name) const {
+  const AttributeProto* getAttribute(const std::string& name) const override {
     auto iter = attributesByName_.find(name);
     if (iter == attributesByName_.end()) {
       return nullptr;
@@ -58,19 +58,19 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
     }
   }
 
-  bool hasInput(int inputIndex) const {
+  bool hasInput(int inputIndex) const override {
     if (inputIndex >= node_proto_.input_size())
       return false;
     return node_proto_.input(inputIndex) != "";
   }
 
-  bool hasOutput(int inputIndex) const {
+  bool hasOutput(int inputIndex) const override {
     if (inputIndex >= node_proto_.output_size())
       return false;
     return node_proto_.output(inputIndex) != "";
   }
 
-  const TypeProto* getInputType(int inputIndex) const {
+  const TypeProto* getInputType(int inputIndex) const override {
     if (inputIndex < 0) return nullptr;
     size_t j = static_cast<size_t>(inputIndex);
     if (j >= input_types_.size())
@@ -845,6 +845,9 @@ class OpSchema final {
   }
 
   OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
+
+  OpSchema& FunctionBody(const char *func_body);
+
   OpSchema& FunctionBody(
       const std::vector<NodeProto>& func_nodes,
       const std::vector<OperatorSetIdProto>& opsets);
@@ -933,7 +936,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 15);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 16);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so

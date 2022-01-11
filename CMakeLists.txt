@@ -54,7 +54,7 @@ if(ONNX_USE_PROTOBUF_SHARED_LIBS)
     add_definitions(-DPROTOBUF_USE_DLLS)
   endif()
   set(Protobuf_USE_STATIC_LIBS OFF)
-else() 
+else()
   set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
@@ -360,6 +360,7 @@ list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
 
 add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
+add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
@@ -702,6 +703,9 @@ endif()
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
+
+# Support older g++ to use PRId64
+add_definitions(-D__STDC_FORMAT_MACROS)
 
 include(cmake/summary.cmake)
 onnx_print_configuration_summary()

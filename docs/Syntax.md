@@ -64,7 +64,11 @@ The grammar below describes the syntax:
          |  id-list? '=' qualified-id '(' id-list? ')' attr-list
    node-list ::= '{' node* '}'
    graph ::= id value-info-list '=>' value-info-list node-list
-   model-data ::= id ':' value
-   model-data-list ::= '<' model-data (',' model-data)* '>'
-   model ::= model-data-list? graph
+   other-data ::= id ':' value
+   other-data-list ::= '<' other-data (',' other-data)* '>'
+   fun-attr-list ::= '<' id-list '>'
+   fun-input-list ::= '(' id-list ')'
+   fun-output-list ::= '(' id-list ')'
+   function ::= other-data-list? id fun-attr-list?  fun-input-list '=>' fun-output-list  node-list
+   model ::= other-data-list? graph function*
 ```
