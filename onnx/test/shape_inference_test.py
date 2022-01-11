@@ -47,8 +47,9 @@ class TestShapeInference(unittest.TestCase):
 
     def _inferred(self, graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         kwargs[str('producer_name')] = 'onnx-test'
+        data_prop = kwargs.pop('data_prop', False)
         orig_model = helper.make_model(graph, **kwargs)
-        inferred_model = onnx.shape_inference.infer_shapes(orig_model, strict_mode=True)
+        inferred_model = onnx.shape_inference.infer_shapes(orig_model, strict_mode=True, data_prop=data_prop)
         checker.check_model(inferred_model)
         return inferred_model
 
@@ -1329,6 +1330,20 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2)),
                                       make_tensor_value_info('z', TensorProto.FLOAT, (2, 2))])
+
+    def test_split_symbolic_input(self):  # type: () -> None
+        graph = self._make_graph(
+            [('a', TensorProto.FLOAT, (6, 4)),
+             ('b', TensorProto.FLOAT, (1, 2, 3))],
+            [make_node('Shape', ['b'], ['split']),
+             make_node('Split', ['a', 'split'], ['x', 'y', 'z'], axis=0)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('split', TensorProto.INT64, (3,)),
+             make_tensor_value_info('x', TensorProto.FLOAT, (1, 4)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (2, 4)),
+             make_tensor_value_info('z', TensorProto.FLOAT, (3, 4))], data_prop=True)
+
 
     def test_split_with_split_attribute(self):  # type: () -> None
         graph = self._make_graph(
