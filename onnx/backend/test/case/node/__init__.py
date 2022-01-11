@@ -36,7 +36,7 @@ def function_expand_helper(node: NodeProto,
         # Some nodes in the function body might contain subgraphs, and those could depend on the
         # function input names. By inserting an identity node we keep the edge names valid in any
         # subgraphs.
-        if idx in range(len(node.input)):
+        if idx in range(len(node.input)) and node.input[idx] != function_proto.input[idx]:
             node_list.append(onnx.helper.make_node(
                 'Identity', [node.input[idx]], [function_proto.input[idx]]))
 
