@@ -67,6 +67,12 @@ You'll need to regenerate test coverage too, by running this command from the ro
 python onnx\backend\test\stat_coverage.py
 ```
 
+## Cpp tests (googletest)
+
+Some functionalities are tested with googletest. Those tests are listed in `test/cpp`, and include tests for shape inference, data propagation, parser, and others.
+
+To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e .` and then run `.setuptools-cmake-build/onnx_gtests`.
+
 # Static typing (mypy)
 
 We use [mypy](http://mypy-lang.org/) to run static type checks on the onnx code base. To check that your code passes, you'll first need to install the mypy type checker. If you're using python 3, call from your onnx source folder:
