@@ -1344,7 +1344,6 @@ class TestShapeInference(unittest.TestCase):
              make_tensor_value_info('y', TensorProto.FLOAT, (2, 4)),
              make_tensor_value_info('z', TensorProto.FLOAT, (3, 4))], data_prop=True)
 
-
     def test_split_with_split_attribute(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 4)),
