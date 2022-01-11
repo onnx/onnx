@@ -47,8 +47,9 @@ class TestShapeInference(unittest.TestCase):
 
     def _inferred(self, graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         kwargs[str('producer_name')] = 'onnx-test'
+        data_prop = kwargs.pop('data_prop', False)
         orig_model = helper.make_model(graph, **kwargs)
-        inferred_model = onnx.shape_inference.infer_shapes(orig_model, strict_mode=True)
+        inferred_model = onnx.shape_inference.infer_shapes(orig_model, strict_mode=True, data_prop=data_prop)
         checker.check_model(inferred_model)
         return inferred_model
 
@@ -288,6 +289,38 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(graph, [
             make_tensor_value_info('shape', TensorProto.INT64, (2,)),
             make_tensor_value_info('y', TensorProto.UINT8, (3, 8))])
+
+    def test_reshape_dim_params_infer_value(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('a', 'b', 2, 3))],
+            [make_node('Shape', ['x'], ['xs'], start=0, end=2),
+             make_node('Concat', ['xs', 'is'], ['ys'], axis=0),
+             # ys: ['a', 'b', -1]
+             make_node('Reshape', ['x', 'ys'], ['y'])],
+            [],
+            initializer=[make_tensor('is', TensorProto.INT64, (1,), (-1,))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('xs', TensorProto.INT64, (2,)),
+             make_tensor_value_info('ys', TensorProto.INT64, (3,)),
+             make_tensor_value_info('y', TensorProto.FLOAT, ('a', 'b', 6))],
+            data_prop=True)
+
+    def test_reshape_dim_params_infer_param(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('a', 'b', 2, 3))],
+            [make_node('Shape', ['x'], ['xs'], start=0, end=1),
+             make_node('Concat', ['xs', 'is'], ['ys'], axis=0),
+             # ys: ['a', -1, 6]
+             make_node('Reshape', ['x', 'ys'], ['y'])],
+            [],
+            initializer=[make_tensor('is', TensorProto.INT64, (2,), (-1, 6))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('xs', TensorProto.INT64, (1,)),
+             make_tensor_value_info('ys', TensorProto.INT64, (3,)),
+             make_tensor_value_info('y', TensorProto.FLOAT, ('a', 'b', 6))],
+            data_prop=True)
 
     def test_upsample(self):  # type: () -> None
         graph = self._make_graph(
