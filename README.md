@@ -1,10 +1,10 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/master/docs/ONNX_logo_main.png" /></p>
+<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/ONNX_logo_main.png" /></p>
 
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=master)
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=master)
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/6?label=MacOS&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=master)
+[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=main)
+[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)
+[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/6?label=MacOS&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=main)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
@@ -28,6 +28,9 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Shape and Type Inference][shape_inference]
 * [Graph Optimization](https://github.com/onnx/optimizer)
 * [Opset Version Conversion][version_converter]
+
+# NOTICE: ONNX now uses main branch as default branch
+Here are the [steps](https://github.com/onnx/onnx/wiki/How-to-migrate-to-main-branch-in-local-repo) from ONNX wiki for migrating to main branch in local repo.
 
 # Contribute
 ONNX is a [community project][community]. We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [SIGs][sigs] and [Working Groups][wgs] to shape the future of ONNX.
@@ -273,7 +276,7 @@ pytest
 
 # Development
 
-Check out the [contributor guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) for instructions.
+Check out the [contributor guide](https://github.com/onnx/onnx/blob/main/docs/CONTRIBUTING.md) for instructions.
 
 # License
 
@@ -289,17 +292,17 @@ NOTE: these are absolute rather than repo-relative because we
 this document is rendered by PyPI which doesn't seem to handle
 relative links properly. See https://github.com/dhimmel/obonet/issues/12.
 -->
-[overview]: https://github.com/onnx/onnx/blob/master/docs/Overview.md
-[ir]: https://github.com/onnx/onnx/blob/master/docs/IR.md
-[versioning]: https://github.com/onnx/onnx/blob/master/docs/Versioning.md
-[operators]: https://github.com/onnx/onnx/blob/master/docs/Operators.md
-[python_api]: https://github.com/onnx/onnx/blob/master/docs/PythonAPIOverview.md
-[shape_inference]: https://github.com/onnx/onnx/blob/master/docs/ShapeInference.md
-[version_converter]: https://github.com/onnx/onnx/blob/master/docs/VersionConverter.md
-[new_op]: https://github.com/onnx/onnx/blob/master/docs/AddNewOp.md
-[community]: https://github.com/onnx/onnx/tree/master/community
-[sigs]: https://github.com/onnx/onnx/tree/master/community/sigs.md
-[wgs]: https://github.com/onnx/onnx/tree/master/community/working-groups.md
-[contributing]: https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md
-[CMakeLists]: https://github.com/onnx/onnx/blob/master/CMakeLists.txt
-[license]: https://github.com/onnx/onnx/blob/master/LICENSE
+[overview]: https://github.com/onnx/onnx/blob/main/docs/Overview.md
+[ir]: https://github.com/onnx/onnx/blob/main/docs/IR.md
+[versioning]: https://github.com/onnx/onnx/blob/main/docs/Versioning.md
+[operators]: https://github.com/onnx/onnx/blob/main/docs/Operators.md
+[python_api]: https://github.com/onnx/onnx/blob/main/docs/PythonAPIOverview.md
+[shape_inference]: https://github.com/onnx/onnx/blob/main/docs/ShapeInference.md
+[version_converter]: https://github.com/onnx/onnx/blob/main/docs/VersionConverter.md
+[new_op]: https://github.com/onnx/onnx/blob/main/docs/AddNewOp.md
+[community]: https://github.com/onnx/onnx/blob/main/community
+[sigs]: https://github.com/onnx/onnx/blob/main/community/sigs.md
+[wgs]: https://github.com/onnx/onnx/blob/main/community/working-groups.md
+[contributing]: https://github.com/onnx/onnx/blob/main/docs/CONTRIBUTING.md
+[CMakeLists]: https://github.com/onnx/onnx/blob/main/CMakeLists.txt
+[license]: https://github.com/onnx/onnx/blob/main/LICENSE

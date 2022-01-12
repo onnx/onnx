@@ -196,11 +196,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 		return false;
 	}
 	auto target_elt_type = target_type->tensor_type().elem_type();
-	std::vector<FunctionBodyHelper::NodeDef> body{
-		// nodes: {outputs, op, inputs, attributes}
-	  { {"output"}, "Cast", {"input"}, {MakeAttribute("to", (int64_t)(target_elt_type))} }
-	};
-	return FunctionBodyHelper::BuildFunctionProto(functionProto, schema, body, {});
+  FunctionBuilder builder(functionProto);
+  builder.Add("output = Cast (input)", "to", (int64_t)(target_elt_type));
+  schema.BuildFunction(functionProto);
+  return true;
 }));
 
 static const char* Reshape_ver14_doc = R"DOC(
