@@ -241,7 +241,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = *shapeInput;
               return;
             }
-            // This is the case when exact shape input is not available.
+            // This is the case when exact or symbolic shape is not available.
             // In this case, if the number of dimensions can be infered
             // from the input 'shape' tensor, then we add the same number
             // of dimensions (without any dim_value information) to the
