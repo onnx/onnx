@@ -99,7 +99,7 @@ class Backend(object):
             outputs_info: a list of tuples, which contains the element type and
             shape of each output. First element of the tuple is the dtype, and
             the second element is the shape. More use case can be found in
-            https://github.com/onnx/onnx/blob/master/onnx/backend/test/runner/__init__.py
+            https://github.com/onnx/onnx/blob/main/onnx/backend/test/runner/__init__.py
         '''
         # TODO Remove Optional from return type
         if 'opset_version' in kwargs:
