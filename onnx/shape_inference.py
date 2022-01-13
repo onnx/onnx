@@ -36,8 +36,8 @@ Return:
 
 
 def infer_shapes(model, check_type=False, strict_mode=False, data_prop=False):  # type: (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
-    if isinstance(model, (ModelProto, str)):
-        model_str = model if isinstance(model, str) else model.SerializeToString()
+    if isinstance(model, (ModelProto, bytes)):
+        model_str = model if isinstance(model, bytes) else model.SerializeToString()
         inferred_model_str = C.infer_shapes(model_str, check_type, strict_mode, data_prop)
         return onnx.load_from_string(inferred_model_str)
     elif isinstance(model, str):

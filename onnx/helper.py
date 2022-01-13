@@ -638,7 +638,7 @@ def make_value_info(
 def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
     if isinstance(s, str):
         sanitized = s
-    elif isinstance(s, str):
+    elif isinstance(s, bytes):
         sanitized = s.decode('utf-8', errors='ignore')
     else:
         sanitized = str(s)
