@@ -11,7 +11,7 @@ The `.proto` and `.proto3` files found under the [onnx folder](/onnx/) form the 
 
 __Notes on model validation__
 
-A [tool](../onnx/checker.py) is available to perform general validation of models against this specification. It is implemented in C++ with Python command-line wrapper.
+A [tool](../onnx/checker.py) is available to perform general validation of models against this specification. It is implemented in C++ with a Python command-line wrapper.
 
 __Notes on language in this and all related documents__:
 
@@ -101,7 +101,7 @@ Alternatively, you can use a tool like [Netron](https://github.com/lutzroeder/ne
 
 ### Model Semantics
 
-The semantics of an inference-model is a _stateless function_ (except possibly for the state used for random-number generation). Thus, whenever an inference-model (without random-generator operations) is used to perform inference on the same input, it is expeced to produce the same output.
+The semantics of an inference-model is a _stateless function_ (except possibly for the state used for random-number generation). Thus, whenever an inference-model (without random-generator operations) is used to perform inference on the same input, it is expected to produce the same output.
 
 The semantics of a training model is that of a _stateful object_, with the state consisting of the current values of trained-weights (and any other auxiliary state required, such as momentum, for example, used by the learning algorithm). Specifically, its semantics is captured via three methods: an initialization method (which is used to initialize or reset the values of state variables), a training step method (to train using a batch of input-output pairs), and an inference method to perform inference using the current values of the learned weights. The first two methods update the state of the object, while the third method is side-effect-free.
 
@@ -316,6 +316,28 @@ The following data types are supported by ONNX for inputs and outputs of graphs 
 
 Primitive numeric, string, and Boolean types MUST be used as elements of tensors.
 
+### Tensor Definition
+
+Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
+
+Mathematically, a tensor can be defined as a pair of sequences/lists (V, S) where S is the shape of the tensor (a list of non-negative integers) and V is a list of values with length equal to the product of the dimensions in S. Two tensors (V, S) and (V', S') are equal if and only if V = V' and S = S'. The length of S is referred to as the rank.
+
+ - If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
+ - S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
+ - If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
+ - A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
+
+A tensor's shape S is a list but can be represented as a tensor with values S and shape [R] where R is the rank of the tensor.
+
+ - For a tensor (V, S), the tensor representing its shape is (S, [R]).
+ - The shape of a scalar is []. Represented as a tensor, [] has shape [0].
+
+#### Representation
+
+It is common to represent a tensor as a nested list. This generally works fine, but is problematic when zero dimensions are involved. A tensor of shape (5, 0) can be represented as [[], [], [], [], []], but (0, 5) is represented as [] which loses the information that the second dimension is 5.
+
+ - A nested list is not a complete representation of a tensor with dimensions of value zero.
+
 ### Tensor Element Types
 
 |Group|Types|Description|
@@ -333,7 +355,7 @@ The following types are used to define the types of graph and node inputs and ou
 
 |Variant | Type | Description |
 |---|---|---|
-ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
+ONNX|dense tensors|Represents a Tensor. See definition above. 
 ONNX|sequence|Sequences are dense, ordered, collections of elements that are of homogeneous types.
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
 ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](ONNXTypes.md)

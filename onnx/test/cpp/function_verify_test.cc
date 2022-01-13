@@ -11,6 +11,7 @@
 #include "onnx/defs/parser.h"
 #include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
+#include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -237,20 +238,32 @@ TEST(FunctionVerification, VerifyModelLocalFunctions) {
   const char* code = R"ONNX(
 <
   ir_version: 8,
-  opset_import: [ "" : 13, "custom_domain" : 1],
+  opset_import: [ "" : 13, "custom_domain_1" : 1, "custom_domain_2" : 1],
   producer_name: "FunctionProtoTest",
   producer_version: "1.0",
   model_version: 1,
   doc_string: "A test model for model local functions."
 >
-agraph (float[N] x) => (float[N] w)
+agraph (float[N] x) => (uint8[N] out)
 {
-    y = custom_domain.foo(x)
-    w = Identity(y)
+    o1, o2 = custom_domain_1.bar(x)
+    o3 = Add(o1, o2)
+    o4 = custom_domain_2.foo(o3)
+    out = Identity(o4)
 }
 
 <
-  domain: "custom_domain",
+  domain: "custom_domain_1",
+  opset_import: [ "" : 13],
+  doc_string: "Test function proto"
+>
+bar (x) => (o1, o2) {
+      o1 = Identity (x)
+      o2 = Identity (o1)
+}
+
+<
+  domain: "custom_domain_2",
   opset_import: [ "" : 13],
   doc_string: "Test function proto"
 >
@@ -271,6 +284,75 @@ foo (x) => (y) {
   auto status = OnnxParser::Parse(model, code);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   check_model(model);
+
+  ShapeInferenceOptions options{true, 1, true};
+  ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
+}
+
+TEST(FunctionVerification, VerifyNestedModelLocalFunctions) {
+  const char* code = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 13, "custom_domain_1" : 1, "custom_domain_2" : 1],
+  producer_name: "FunctionProtoTest",
+  producer_version: "1.0",
+  model_version: 1,
+  doc_string: "A test model for model local functions."
+>
+agraph (float[N] x) => (uint8[N] out)
+{
+    o1, o2 = custom_domain_1.bar(x)
+    o3 = Add(o1, o2)
+    o4 = custom_domain_2.foo(o3)
+    out = Identity(o4)
+}
+
+<
+  domain: "custom_domain_1",
+  opset_import: [ "" : 13],
+  doc_string: "Test function proto"
+>
+bar (x) => (o1, o2) {
+      o1 = Identity (x)
+      o2 = Identity (o1)
+}
+
+<
+  domain: "custom_domain_2",
+  opset_import: [ "" : 13, "custom_domain_3" : 1],
+  doc_string: "Test function proto"
+>
+foo (x) => (o4) {
+      o1 = custom_domain_3.foo (x)
+      o4 = Identity (o1)
+}
+
+<
+  domain: "custom_domain_3",
+  opset_import: [ "" : 13],
+  doc_string: "Test function proto"
+>
+foo (x) => (y) {
+      Q_Min = Constant <value = float[1] {0.0}> ()
+      Q_Max = Constant <value = float[1] {255.0}> ()
+      X_Min = ReduceMin <keepdims = 0> (x)
+      X_Max = ReduceMax <keepdims = 0> (x)
+      X_Range = Sub (X_Max, X_Min)
+      Scale = Div (X_Range, Q_Max)
+      ZeroPoint_FP = Sub (Q_Min, Scale)
+      Zeropoint = Cast <to = 2> (ZeroPoint_FP)
+      y = QuantizeLinear (x, Scale, Zeropoint)
+}
+)ONNX";
+
+  ModelProto model;
+  auto status = OnnxParser::Parse(model, code);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  check_model(model);
+
+  ShapeInferenceOptions options{true, 1, true};
+  ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
 }
 
 } // namespace Test

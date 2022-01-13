@@ -62,6 +62,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#GlobalLpPool">GlobalLpPool</a>|<a href="Changelog.md#GlobalLpPool-2">2</a>, <a href="Changelog.md#GlobalLpPool-1">1</a>|
 |<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-1">1</a>|
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
+|<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-16">16</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
@@ -668,7 +669,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     keepdims=keepdims)
 
-# result: [[1], [1]]
+# result: [[1, 1]]
 result = argmax_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example')
 
@@ -826,7 +827,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[0, 1]]
+# result: [0, 1]
 result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example')
 
@@ -853,7 +854,7 @@ node = onnx.helper.make_node(
     axis=axis,
     keepdims=keepdims,
     select_last_index=True)
-# result: [[1, 1]]
+# result: [1, 1]
 result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example_select_last_index')
 
@@ -7609,6 +7610,413 @@ This version of the operator has been available since version 12 of the default 
 </dl>
 
 
+### <a name="GridSample"></a><a name="gridsample">**GridSample**</a>
+
+  Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
+  Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
+  the `output` will have shape (N, C, H_out, W_out).
+  For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
+  which are used to interpolate the output value `output[N, C, H_out, W_out]`.
+  
+  The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
+  See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>align_corners</tt> : int (default is 0)</dt>
+<dd>If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.</dd>
+<dt><tt>mode</tt> : string (default is bilinear)</dt>
+<dd>Three interpolation modes: bilinear (default), nearest and bicubic.</dd>
+<dt><tt>padding_mode</tt> : string (default is zeros)</dt>
+<dd>Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. zeros: use 0 for out-of-bound grid locations, border: use border values for out-of-bound grid locations, reflection: use values at locations reflected by the border for out-of-bound grid locations. If index 0 represents the margin pixel, the reflected value at index -1 will be the same as the value at index 1. For location far away from the border, it will keep being reflected until becoming in bound. If pixel location x = -3.5 reflects by border -1 and becomes x' = 1.5, then reflects by border 1 and becomes x'' = 0.5.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T1</dt>
+<dd>4-D tensor of shape (N, C, H, W), where N is the batch size, C is the numbers of channels, H and W are the height and width of the input data.</dd>
+<dt><tt>grid</tt> (non-differentiable) : T1</dt>
+<dd>Input offset, 4-D tensor of shape (N, H_out, W_out, 2), where H_out and W_out are the height and width of grid and output, Grid specifies the sampling pixel locations normalized by the input spatial dimensions. Therefore, it should have most values in the range of [-1, 1]. If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T2</dt>
+<dd>4-D tensor of shape (N, C, H_out, W_out).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input types to all tensor types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gridsample</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='bilinear',
+    padding_mode='zeros',
+    align_corners=0,
+)
+# X shape, [N, C, H, W] - [1, 1, 4, 4]
+X = np.array(
+    [
+        [
+            [
+                [0., 1., 2., 3.],
+                [4., 5., 6., 7.],
+                [8., 9., 10., 11.],
+                [12., 13., 14., 15.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Grid shape, [N, H_out, W_out, 2] - [1, 6, 6, 2]
+Grid = np.array(
+    [
+        [
+            [
+                [-1.0000, -1.0000],
+                [-0.6000, -1.0000],
+                [-0.2000, -1.0000],
+                [0.2000, -1.0000],
+                [0.6000, -1.0000],
+                [1.0000, -1.0000]
+            ],
+            [
+                [-1.0000, -0.6000],
+                [-0.6000, -0.6000],
+                [-0.2000, -0.6000],
+                [0.2000, -0.6000],
+                [0.6000, -0.6000],
+                [1.0000, -0.6000]
+            ],
+            [
+                [-1.0000, -0.2000],
+                [-0.6000, -0.2000],
+                [-0.2000, -0.2000],
+                [0.2000, -0.2000],
+                [0.6000, -0.2000],
+                [1.0000, -0.2000]
+            ],
+            [
+                [-1.0000, 0.2000],
+                [-0.6000, 0.2000],
+                [-0.2000, 0.2000],
+                [0.2000, 0.2000],
+                [0.6000, 0.2000],
+                [1.0000, 0.2000]
+            ],
+            [
+                [-1.0000, 0.6000],
+                [-0.6000, 0.6000],
+                [-0.2000, 0.6000],
+                [0.2000, 0.6000],
+                [0.6000, 0.6000],
+                [1.0000, 0.6000]
+            ],
+            [
+                [-1.0000, 1.0000],
+                [-0.6000, 1.0000],
+                [-0.2000, 1.0000],
+                [0.2000, 1.0000],
+                [0.6000, 1.0000],
+                [1.0000, 1.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 6, 6]
+Y = np.array(
+    [
+        [
+            [
+                [0.0000, 0.1500, 0.5500, 0.9500, 1.3500, 0.7500],
+                [0.6000, 1.5000, 2.3000, 3.1000, 3.9000, 2.1000],
+                [2.2000, 4.7000, 5.5000, 6.3000, 7.1000, 3.7000],
+                [3.8000, 7.9000, 8.7000, 9.5000, 10.3000, 5.3000],
+                [5.4000, 11.1000, 11.9000, 12.7000, 13.5000, 6.9000],
+                [3.0000, 6.1500, 6.5500, 6.9500, 7.3500, 3.7500]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+expect(node, inputs=[X, Grid], outputs=[Y],
+       name='test_gridsample')
+```
+
+</details>
+
+
+<details>
+<summary>gridsample_mode_aligncorners</summary>
+
+```python
+# X shape, [N, C, H, W] - [1, 1, 3, 2]
+X = np.array(
+    [
+        [
+            [
+                [0., 1.],
+                [2., 3.],
+                [4., 5.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Grid shape, [N, H_out, W_out, 2] - [1, 2, 4, 2]
+Grid = np.array(
+    [
+        [
+            [
+                [-1.0000, -1.0000],
+                [-0.5000, -0.5000],
+                [-0.2000, -0.2000],
+                [0.0000, 0.0000]
+            ],
+
+            [
+                [0.0000, 0.0000],
+                [-0.2000, -0.2000],
+                [0.5000, 0.5000],
+                [1.0000, 1.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+# setting mode = 'bilinear', default align_corners = 0
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='bilinear',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [0.0000, 0.5000, 1.7000, 2.5000],
+                [2.5000, 1.7000, 4.5000, 1.2500]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_bilinear],
+       name='test_gridsample_bilinear')
+
+# setting mode = 'bilinear', align_corners = 1
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='bilinear',
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_align_corners = np.array(
+    [
+        [
+            [
+                [0.0000, 1.2500, 2.0000, 2.5000],
+                [2.5000, 2.0000, 3.7500, 5.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_align_corners],
+       name='test_gridsample_aligncorners_true')
+
+# setting mode = 'nearest'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='nearest',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [0., 0., 2., 2.],
+                [2., 2., 5., 0.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_nearest],
+       name='test_gridsample_nearest')
+
+# setting mode = 'bicubic'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    mode='bicubic',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [-0.1406, 0.3828, 1.7556, 2.9688],
+                [2.9688, 1.7556, 5.1445, 1.3906]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_bicubic],
+       name='test_gridsample_bicubic')
+```
+
+</details>
+
+
+<details>
+<summary>gridsample_paddingmode</summary>
+
+```python
+# X shape, [N, C, H, W] - [1, 1, 3, 2]
+X = np.array(
+    [
+        [
+            [
+                [0., 1.],
+                [2., 3.],
+                [4., 5.]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+# Grid shape, [N, H_out, W_out, 2] - [1, 2, 4, 2]
+Grid = np.array(
+    [
+        [
+            [
+                [-10.0000, -10.0000],
+                [-5.0000, -5.0000],
+                [-0.2000, -0.2000],
+                [10.0000, 10.0000]
+            ],
+
+            [
+                [10.0000, 10.0000],
+                [-0.2000, -0.2000],
+                [5.0000, 5.0000],
+                [10.0000, 10.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+# setting padding_mode = 'zeros'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    padding_mode='zeros',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_zeros = np.array(
+    [
+        [
+            [
+                [0.0000, 0.0000, 1.7000, 0.0000],
+                [0.0000, 1.7000, 0.0000, 0.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_zeros],
+       name='test_gridsample_zeros_padding')
+
+# setting padding_mode = 'border'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    padding_mode='border',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_border = np.array(
+    [
+        [
+            [
+                [0.0000, 0.0000, 1.7000, 5.0000],
+                [5.0000, 1.7000, 5.0000, 5.0000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_border],
+       name='test_gridsample_border_padding')
+
+# setting padding_mode = 'reflection'
+node = onnx.helper.make_node(
+    'GridSample',
+    inputs=['X', 'Grid'],
+    outputs=['Y'],
+    padding_mode='reflection',
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_reflection = np.array(
+    [
+        [
+            [
+                [2.5000, 0.0000, 1.7000, 2.5000],
+                [2.5000, 1.7000, 5.0000, 2.5000]
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(node, inputs=[X, Grid], outputs=[Y_reflection],
+       name='test_gridsample_reflection_padding')
+```
+
+</details>
+
+
 ### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
 
   HardSigmoid takes one input data (Tensor<T>) and produces one output data
@@ -8115,17 +8523,16 @@ expect(if_node, inputs=[cond], outputs=[res], name='test_if',
 
 ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
-opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
 
 then_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 then_out_seq_tp = onnx.helper.make_sequence_type_proto(then_out_tensor_tp)
 then_out_opt_tp = onnx.helper.make_optional_type_proto(then_out_seq_tp)
-then_out = onnx.helper.make_value_info('then_out', then_out_opt_tp)
+then_out = onnx.helper.make_value_info('optional_empty', then_out_opt_tp)
 
 else_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
 else_out_seq_tp = onnx.helper.make_sequence_type_proto(else_out_tensor_tp)
 else_out_opt_tp = onnx.helper.make_optional_type_proto(else_out_seq_tp)
-else_out = onnx.helper.make_value_info('else_out', else_out_opt_tp)
+else_out = onnx.helper.make_value_info('else_opt', else_out_opt_tp)
 
 x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
 cond = np.array(0).astype(bool)
@@ -8135,7 +8542,7 @@ opt_empty_in = onnx.helper.make_node(
     'Optional',
     inputs=[],
     outputs=['optional_empty'],
-    type=opt_in_tp
+    type=seq_in_tp
 )
 
 then_body = onnx.helper.make_graph(
@@ -9789,19 +10196,20 @@ expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
 <summary>loop_16_none</summary>
 
 ```python
-# Given a tensor x of values [x1, ..., xN], and an initial optional sequence of tensors s1,
+# Given a tensor sequence of values [x1, ..., xN], and an initial optional sequence of tensors [x0],
 # Return a concatenated sequence of tensors of
-#   [s1, [x1], [x1, x2], ..., [x1, ..., xN]]
+#   [x0, [x1], [x1, x2], ..., [x1, ..., xN]]
 
-ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, None)
+ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, [])
 seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
 opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
 opt_in = onnx.helper.make_value_info('opt_seq_in', opt_in_tp)
-seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, [])
 cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
 cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
 iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
 
+x0 = np.array(0).astype(np.float32)
 x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
 
 optional_has_elem_node = onnx.helper.make_node(
@@ -9822,25 +10230,37 @@ optional_get_elem = onnx.helper.make_node(
     outputs=['seq_in']
 )
 
-seq_empty_in = onnx.helper.make_node(
-    'SequenceEmpty',
+constant_in = onnx.helper.make_node(
+    'Constant',
     inputs=[],
-    outputs=['seq_empty']
+    outputs=['constant_in'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=(),
+        vals=[0]
+    )
 )
 
-then_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+seq_const_in = onnx.helper.make_node(
+    'SequenceConstruct',
+    inputs=['constant_in'],
+    outputs=['init_seq_in']
+)
+
+then_seq_out = onnx.helper.make_tensor_sequence_value_info('init_seq_in', onnx.TensorProto.FLOAT, [])
 then_body = onnx.helper.make_graph(
-    [seq_empty_in],
+    [constant_in, seq_const_in],
     'then_body',
     [],
     [then_seq_out]
 )
 
-else_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+else_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, [])
 else_body = onnx.helper.make_graph(
     [optional_get_elem],
     'else_body',
-    [opt_in],
+    [],
     [else_seq_out]
 )
 
@@ -9947,9 +10367,9 @@ node = onnx.helper.make_node(
 
 trip_count = np.array(5).astype(np.int64)
 cond = np.array(1).astype(bool)
-seq_empty = []  # type: List[Any]
-seq_res = compute_loop_outputs(x, seq_empty, trip_count)
-expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
+seq_res = compute_loop_outputs(x, [x0], trip_count)
+opt_seq_in = [x0]  # type: List[Any]
+expect(node, inputs=[trip_count, cond, opt_seq_in], outputs=[seq_res],
        name='test_loop16_seq_none', opset_imports=[onnx.helper.make_opsetid("", 16)],
        input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, trip_count.shape),
                           onnx.helper.make_tensor_type_proto(onnx.TensorProto.BOOL, cond.shape),
@@ -12966,7 +13386,7 @@ node = onnx.helper.make_node(
 )
 indices = np.array([[1, 9],
                     [2, 4]], dtype=np.float32)
-depth = np.array([10], dtype=np.float32)
+depth = np.float32(10)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
@@ -12992,7 +13412,7 @@ node = onnx.helper.make_node(
 )
 indices = np.array([[1, 9],
                     [2, 4]], dtype=np.float32)
-depth = np.array([10], dtype=np.float32)
+depth = np.float32(10)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
@@ -13023,7 +13443,7 @@ indices = np.array([0, -7, -8], dtype=np.int64)
 #  [1. 1. 1. 3. 1. 1. 1. 1. 1. 1.]
 #  [1. 1. 3. 1. 1. 1. 1. 1. 1. 1.]]
 
-depth = np.array([10], dtype=np.float32)
+depth = np.float32(10)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
@@ -21395,6 +21815,68 @@ Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">1</a>
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>example</summary>
+
+```python
+node = onnx.helper.make_node(
+    'SpaceToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=2,
+)
+
+# (1, 1, 4, 6) input tensor
+x = np.array([[[[0, 6, 1, 7, 2, 8],
+                [12, 18, 13, 19, 14, 20],
+                [3, 9, 4, 10, 5, 11],
+                [15, 21, 16, 22, 17, 23]]]]).astype(np.float32)
+
+# (1, 4, 2, 3) output tensor
+y = np.array([[[[0, 1, 2],
+                [3, 4, 5]],
+               [[6, 7, 8],
+                [9, 10, 11]],
+               [[12, 13, 14],
+                [15, 16, 17]],
+               [[18, 19, 20],
+                [21, 22, 23]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_spacetodepth_example')
+```
+
+</details>
+
+
+<details>
+<summary>spacetodepth</summary>
+
+```python
+b, c, h, w = shape = (2, 2, 6, 6)
+blocksize = 2
+node = onnx.helper.make_node(
+    'SpaceToDepth',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=blocksize,
+)
+x = np.random.random_sample(shape).astype(np.float32)
+tmp = np.reshape(x, [b, c,
+                     h // blocksize, blocksize,
+                     w // blocksize, blocksize])
+tmp = np.transpose(tmp, [0, 3, 5, 1, 2, 4])
+y = np.reshape(tmp, [b, c * (blocksize**2),
+                     h // blocksize,
+                     w // blocksize])
+expect(node, inputs=[x], outputs=[y],
+       name='test_spacetodepth')
+```
+
+</details>
+
+
 ### <a name="Split"></a><a name="split">**Split**</a>
 
   Split a tensor into a list of tensors, along the specified
@@ -24024,10 +24506,12 @@ expect(node, inputs=[data, scales], outputs=[output],
 
 ### <a name="Where"></a><a name="where">**Where**</a>
 
-  Return elements, either from X or Y, depending on condition
-      (with Numpy-style broadcasting support).
-      Where behaves like numpy.where with three parameters:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+  Return elements, either from X or Y, depending on condition.
+  Where behaves like
+  [numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+  with three parameters.
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
   
   **History**
   - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).

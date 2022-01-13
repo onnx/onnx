@@ -24,7 +24,7 @@ VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, in
 VersionTableType = List[VersionRowType]
 AssignmentBindingType = List[Tuple[Text, Text]]
 
-# This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions
+# This is a copy of the documented version in https://github.com/onnx/onnx/blob/main/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
 VERSION_TABLE = [
     # Release-version, IR version, ai.onnx version, ai.onnx.ml version, (optional) ai.onnx.training version
@@ -41,7 +41,8 @@ VERSION_TABLE = [
     ('1.8.1', 7, 13, 2, 1),
     ('1.9.0', 7, 14, 2, 1),
     ('1.10.0', 8, 15, 2, 1),
-    ('1.10.1', 8, 15, 2, 1)
+    ('1.10.1', 8, 15, 2, 1),
+    ('1.10.2', 8, 15, 2, 1)
 ]  # type: VersionTableType
 
 VersionMapType = Dict[Tuple[Text, int], int]

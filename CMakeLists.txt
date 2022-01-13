@@ -704,5 +704,8 @@ if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
 
+# Support older g++ to use PRId64
+add_definitions(-D__STDC_FORMAT_MACROS)
+
 include(cmake/summary.cmake)
 onnx_print_configuration_summary()
