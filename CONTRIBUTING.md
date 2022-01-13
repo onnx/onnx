@@ -24,7 +24,7 @@ Attend ONNX Steering Committee meetings - they are open to all in the community.
 
 ## Contributing code
 
-You can submit a pull request (PR) with your code. The [SIG](https://github.com/onnx/onnx/blob/master/community/sigs.md) or [Working Group](https://github.com/onnx/onnx/blob/master/community/working-groups.md) that is responsible for the area of the project your PR touches will review it and merge once any comments are addressed.
+You can submit a pull request (PR) with your code. The [SIG](community/sigs.md) or [Working Group](community/working-groups.md) that is responsible for the area of the project your PR touches will review it and merge once any comments are addressed.
 
 ### DCO
 ONNX has adopted the [DCO](https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin). All code repositories under ONNX require a DCO. (ONNX previously used a CLA, which is being replaced with the DCO.)
@@ -38,7 +38,7 @@ NOTE: the sign-off is needed for each commit in the PR, not at the PR level.
 If you have old commits that are not signed, use the following commands to squash the old PR (original branch) into a single commit. This is an easier way to signoff old commits in old PR.
 
 ```bash
-git checkout master
+git checkout main
 git checkout -b temporary_patch              # create a new branch as temporary
 git merge --squash original_patch            # copy from old branch
 git branch -d original_patch                 # remove old branch

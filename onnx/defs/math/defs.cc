@@ -725,26 +725,16 @@ bool BuildContextDependentFunctionBodyCelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
-  std::vector<FunctionBodyHelper::NodeDef> body;
-  float alpha = ctx.getAttribute("alpha") != nullptr
-      ? ctx.getAttribute("alpha")->f()
-      : celu_default_alpha;
-  body.push_back(
-      {{"alpha"},
-       "Constant",
-       {},
-       {MakeAttribute("value", ToDimensionOneFloatTensor(alpha))}});
 
-  body.push_back({{"X_alpha"}, "Div", {"X", "alpha"}});
-  body.push_back({{"Elu_Result"}, "Elu", {"X_alpha"}, {{"alpha", 1.f}}});
-  body.push_back({{"Y"}, "Mul", {"alpha", "Elu_Result"}});
-
-  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-  for (const auto& node : func_nodes) {
-    auto new_node = functionProto.add_node();
-    new_node->CopyFrom(node);
-  }
-
+  float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : celu_default_alpha;
+  FunctionBuilder builder(functionProto);
+  builder
+    .Const("alpha", std::vector<float>{alpha})
+    .Add(R"(
+            X_alpha = Div (X, alpha)
+            Elu_Result = Elu <alpha = 1.0>(X_alpha)
+            Y = Mul (alpha, Elu_Result)
+        )");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -1117,13 +1107,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(FunctionBodyHelper::BuildNodes({
-            // nodes: {outputs, op, inputs, attributes}
-            {{"HS_X"},
-             "HardSigmoid",
-             {"X"},
-             {MakeAttribute("alpha", 1.0f/6.0f), MakeAttribute("beta", 0.5f)}},
-            {{"Y"}, "Mul", {"X", "HS_X"}}})));
+        .FunctionBody(R"ONNX(
+          {
+            HS_X = HardSigmoid<alpha = 0.16666667163372, beta = 0.5>(X) 
+            Y = Mul (X, HS_X)
+          }
+        )ONNX"));
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
@@ -1288,53 +1277,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
                FunctionProto& functionProto) -> bool {
-              const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
-              auto func_nodes = FunctionBodyHelper::BuildNodes({
-                  // clang-format off
-                {
-                    {"axes"},
-                    "Constant",
-                    {},
-                    {MakeAttribute("value", ToDimensionOneInt64Tensor(axis))}
-                },
-                {
-                    {"X_ReduceMax"},
-                    "ReduceMax",
-                    {"input"},
-                    {
-                        MakeAttribute("axes", std::vector<int64_t>({axis})),
-                        MakeAttribute("keepdims", (int64_t)1)
-                    }
-                },
-                {
-                    {"X_Sub"},
-                    "Sub",
-                    {"input", "X_ReduceMax"},
-                },
-                {
-                    {"X_Exp"},
-                    "Exp",
-                    {"X_Sub"},
-                },
-                {
-                    {"X_ReduceSum"},
-                    "ReduceSum",
-                    {"X_Exp", "axes"},
-                    {
-                        MakeAttribute("keepdims", (int64_t)1)
-                    }
-                },
-                {
-                    {"output"},
-                    "Div",
-                    {"X_Exp", "X_ReduceSum"},
-                },
-                  // clang-format on
-              });
-              for (const auto& node : func_nodes) {
-                auto new_node = functionProto.add_node();
-                new_node->CopyFrom(node);
-              }
+              int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              FunctionBuilder builder(functionProto);
+              builder.Const1D("axes", axis)
+                  .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input)", "axes", std::vector<int64_t>({axis}))
+                  .Add(R"(
+                    X_Sub = Sub (input, X_ReduceMax)
+                    X_Exp = Exp (X_Sub)
+                    X_ReduceSum = ReduceSum <keepdims = 1> (X_Exp, axes)
+                    output = Div (X_Exp, X_ReduceSum)
+                )");
 
               schema.BuildFunction(functionProto);
               return true;
@@ -1349,58 +1301,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx,
                const OpSchema& schema,
                FunctionProto& functionProto) -> bool {
-              const auto axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
-              auto func_nodes = FunctionBodyHelper::BuildNodes({
-                  // clang-format off
-                {
-                    {"axes"},
-                    "Constant",
-                    {},
-                    {MakeAttribute("value", ToDimensionOneInt64Tensor(axis))}
-                },
-                {
-                    {"X_ReduceMax"},
-                    "ReduceMax",
-                    {"input"},
-                    {
-                        MakeAttribute("axes", std::vector<int64_t>({axis})),
-                        MakeAttribute("keepdims", (int64_t)1)
-                    }
-                },
-                {
-                    {"X_Sub"},
-                    "Sub",
-                    {"input", "X_ReduceMax"},
-                },
-                {
-                    {"X_Exp"},
-                    "Exp",
-                    {"X_Sub"},
-                },
-                {
-                    {"X_ReduceSum"},
-                    "ReduceSum",
-                    {"X_Exp", "axes"},
-                    {
-                        MakeAttribute("keepdims", (int64_t)1)
-                    }
-                },
-                {
-                    {"X_Log"},
-                    "Log",
-                    {"X_ReduceSum"},
-                },
-                {
-                    {"output"},
-                    "Sub",
-                    {"X_Sub", "X_Log"},
-                },
-                  // clang-format on
-              });
-              for (const auto& node : func_nodes) {
-                auto new_node = functionProto.add_node();
-                new_node->CopyFrom(node);
-              }
+              const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              FunctionBuilder builder(functionProto);
+              builder.Const1D("axes", axis)
+                  .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input)", "axes", std::vector<int64_t>({axis}))
+                  .Add(R"(
+                    X_Sub = Sub (input, X_ReduceMax)
+                    X_Exp = Exp (X_Sub)
+                    X_ReduceSum = ReduceSum <keepdims = 1> (X_Exp, axes)
+                    X_Log = Log (X_ReduceSum)
+                    output = Sub (X_Sub, X_Log)
+                )");
 
               schema.BuildFunction(functionProto);
               return true;
@@ -2120,27 +2031,32 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
-          // For shape inference (and rank inference), we need both input shape
-          // and values in 'shape' tensor
+          // For shape inference, we need both input shape
           const auto* shape_initializer = ctx.getInputData(1);
-          if (hasNInputShapes(ctx, 2) && nullptr != shape_initializer) {
-            const auto& shape_initializer_shape =
+          if (hasNInputShapes(ctx, 2)) {
+            const auto& shape_input_shape =
                 ctx.getInputType(1)->tensor_type().shape();
-            if (shape_initializer_shape.dim_size() != 1 ||
-                shape_initializer->data_type() != TensorProto::INT64) {
-                    fail_shape_inference("'shape' input must be 1D tensor of type INT64");
+            if (shape_input_shape.dim_size() != 1) {
+                    fail_shape_inference("'shape' input must be 1D tensor");
                 }
 
             const auto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
-            const auto& shape_data = ParseData<int64_t>(shape_initializer);
-
             TensorShapeProto second_shape;
-            for (const auto& e : shape_data) {
-              auto* dim = second_shape.add_dim();
-              dim->set_dim_value(e);
-            }
+            if (nullptr != shape_initializer) {
+              const auto& shape_data = ParseData<int64_t>(shape_initializer);
 
+              for (const auto& e : shape_data) {
+                auto* dim = second_shape.add_dim();
+                dim->set_dim_value(e);
+              }
+            } else if (shape_input_shape.dim(0).has_dim_value()) {
+              // Attempt rank inference using shape of shape input
+              int64_t dim_value = shape_input_shape.dim(0).dim_value();
+              for (int64_t i = 0; i < dim_value; ++i) {
+                second_shape.add_dim();
+              }
+            }
             bidirectionalBroadcastShapeInference(
                 input_shape, second_shape, *getOutputShape(ctx, 0));
           }
@@ -2915,230 +2831,99 @@ bool BuildContextDependentFunctionBody(
   auto reduction_attr_proto = ctx.getAttribute("reduction");
   std::string reduction_attr =
       reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
-  std::vector<FunctionBodyHelper::NodeDef> body;
-  body.push_back(
-      {{"const_zero"},
-       "Constant",
-       {},
-       {MakeAttribute("value", ToDimensionOneTensor(0))}});
 
-  body.push_back(
-      {{"const_one"},
-       "Constant",
-       {},
-       {MakeAttribute("value", ToDimensionOneTensor(1))}});
-
-  body.push_back(
-      {{"axes"},
-       "Constant",
-       {},
-       {MakeAttribute("value", ToDimensionOneInt64Tensor(1))}});
-
-  body.push_back(
-      {{"expanded_target"},
-       "Unsqueeze",
-       {"target", "axes"}});
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("const_zero", int64_t(0))
+      .Const1D("const_one", int64_t(1))
+      .Const1D("axes", int64_t(1))
+      .Add("expanded_target = Unsqueeze (target, axes)");
 
   if (ctx.getAttribute("ignore_index") == nullptr) {
-    body.push_back(
-        {{"input_gather_element"},
-         "GatherElements",
-         {"input", "expanded_target"},
-         {MakeAttribute("axis", (int64_t)1)}});
-
-    body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element"}});
-
-    body.push_back(
-        {{"loss_N1dd"},
-         "Slice",
-         {"loss_NCdd", "const_zero", "const_one", "const_one"}});
+    builder.Add(R"(
+      input_gather_element = GatherElements <axis = 1> (input, expanded_target)
+      loss_NCdd = Neg (input_gather_element)
+      loss_N1dd = Slice (loss_NCdd, const_zero, const_one, const_one)
+    )");
 
     if (!ctx.hasInput(2)) {
       if (reduction_attr == "none") {
-        body.push_back(
-            {{"loss"},
-             "Squeeze",
-             {"loss_N1dd", "axes"}});
+        builder.Add("loss = Squeeze (loss_N1dd, axes)");
       } else {
-        body.push_back(
-            {{"loss_Ndd"},
-             "Squeeze",
-             {"loss_N1dd", "axes"}});
+        builder.Add("loss_Ndd = Squeeze (loss_N1dd, axes)");
         if (reduction_attr == "mean") {
-          body.push_back(
-              {{"loss"},
-               "ReduceMean",
-               {"loss_Ndd"},
-               {MakeAttribute("keepdims", (int64_t)0)}});
+          builder.Add("loss = ReduceMean <keepdims = 0> (loss_Ndd)");
         } else {
-          body.push_back(
-              {{"loss"},
-               "ReduceSum",
-               {"loss_Ndd"},
-               {MakeAttribute("keepdims", (int64_t)0)}});
+          builder.Add("loss = ReduceSum <keepdims = 0> (loss_Ndd)");
         }
       }
     } else {
-      body.push_back({{"weight_gather"}, "Gather", {"weight", "target"}});
-      body.push_back(
-          {{"loss_unweighted"},
-           "Squeeze",
-           {"loss_N1dd", "axes"}});
+      builder.Add("weight_gather = Gather (weight, target)");
+      builder.Add("loss_unweighted = Squeeze (loss_N1dd, axes)");
       if (reduction_attr == "none") {
-        body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+        builder.Add("loss = Mul (loss_unweighted, weight_gather)");
       } else {
-        body.push_back(
-            {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+        builder.Add("loss_Ndd = Mul (loss_unweighted, weight_gather)");
         if (reduction_attr == "mean") {
-          body.push_back(
-              {{"loss_sum"},
-               "ReduceSum",
-               {"loss_Ndd"},
-               {MakeAttribute("keepdims", (int64_t)0)}});
-          body.push_back(
-              {{"weight_gather_sum"},
-               "ReduceSum",
-               {"weight_gather"},
-               {MakeAttribute("keepdims", (int64_t)0)}});
-          body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+          builder.Add(R"(
+            loss_sum = ReduceSum <keepdims = 0> (loss_Ndd)
+            weight_gather_sum = ReduceSum <keepdims = 0> (weight_gather)
+            loss = Div (loss_sum, weight_gather_sum)
+          )");
         } else {
-          body.push_back(
-              {{"loss"},
-               "ReduceSum",
-               {"loss_Ndd"},
-               {MakeAttribute("keepdims", (int64_t)0)}});
+          builder.Add("loss = ReduceSum <keepdims = 0> (loss_Ndd)");
         }
       }
     }
   } else {
-    body.push_back(
-        {{"const_ignore_index"},
-         "Constant",
-         {},
-         {MakeAttribute(
-             "value",
-             ToDimensionOneInt64Tensor(
-                 ctx.getAttribute("ignore_index")->i()))}});
-
-    body.push_back(
-        {{"const_zero_target_typed"},
-         "Sub",
-         {"expanded_target", "expanded_target"}});
-    body.push_back(
-        {{"expanded_target_int64"},
-         "Cast",
-         {"expanded_target"},
-         {MakeAttribute(
-             "to",
-             (int64_t)TensorProto_DataType::TensorProto_DataType_INT64)}});
-
-    body.push_back(
-        {{"mask"}, "Equal", {"expanded_target_int64", "const_ignore_index"}});
-    body.push_back(
-        {{"transform_targets"},
-         "Where",
-         {"mask", "const_zero_target_typed", "expanded_target"}});
-    body.push_back(
-        {{"input_gather_element"},
-         "GatherElements",
-         {"input", "transform_targets"},
-         {MakeAttribute("axis", (int64_t)1)}});
-    body.push_back(
-        {{"const_zero_float"},
-         "Constant",
-         {},
-         {MakeAttribute("value", ToDimensionOneFloatTensor(0.0f))}});
+    builder.Const1D("const_ignore_index", ctx.getAttribute("ignore_index")->i());
+    builder.Add(R"(
+      const_zero_target_typed = Sub (expanded_target, expanded_target)
+      expanded_target_int64 = Cast <to = 7> (expanded_target)
+      mask = Equal (expanded_target_int64, const_ignore_index)
+      transform_targets = Where (mask, const_zero_target_typed, expanded_target)
+    )");
+    builder.Add("input_gather_element = GatherElements <axis = 1> (input, transform_targets)");
+    builder.Const1D("const_zero_float", 0.0f);
     if (!float_input) {
-      body.push_back(
-          {{"const_zero_casted"}, 
-          "Cast", 
-          {"const_zero_float"}, 
-          {MakeAttribute("to", static_cast<int64_t>(input_type))}});
-    }
-    body.push_back(
-        {{"input_gather_element_transform"},
-         "Where",
-         {"mask", float_input ? "const_zero_float" : "const_zero_casted", "input_gather_element"}});
-    body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element_transform"}});
-    body.push_back(
-        {{"loss_N1dd"},
-         "Slice",
-         {"loss_NCdd", "const_zero", "const_one", "const_one"}});
+      builder.Add("const_zero_casted = Cast (const_zero_float)", "to", static_cast<int64_t>(input_type))
+          .Add("input_gather_element_transform = Where (mask, const_zero_casted, input_gather_element)");
+    } else
+      builder.Add("input_gather_element_transform = Where (mask, const_zero_float, input_gather_element)");
+    builder.Add("loss_NCdd = Neg (input_gather_element_transform)");
+    builder.Add("loss_N1dd = Slice (loss_NCdd, const_zero, const_one, const_one)");
 
     if (!ctx.hasInput(2)) {
-      body.push_back(
-          {{"squeeze_mask"},
-           "Squeeze",
-           {"mask", "axes"}});
-
-      body.push_back(
-          {{"const_one_float"},
-           "Constant",
-           {},
-           {MakeAttribute("value", ToDimensionOneFloatTensor(1.0f))}});
+      builder.Add("squeeze_mask = Squeeze (mask, axes)");
+      builder.Const1D("const_one_float", 1.0f);
       if (!float_input) {
-        body.push_back(
-          {{"const_one_casted"}, 
-           "Cast", 
-           {"const_one_float"}, 
-           {MakeAttribute("to", static_cast<int64_t>(input_type))}});
-      }
-      body.push_back(
-          {{"weight_gather"},
-           "Where",
-           {"squeeze_mask", float_input ? "const_zero_float" : "const_zero_casted", 
-           float_input ? "const_one_float" :"const_one_casted"}});
+        builder.Add("const_one_casted = Cast (const_one_float)", "to", static_cast<int64_t>(input_type))
+            .Add("weight_gather = Where (squeeze_mask, const_zero_casted, const_one_casted)");
+      } else
+        builder.Add("weight_gather = Where (squeeze_mask, const_zero_float, const_one_float)");
 
     } else {
-      body.push_back(
-          {{"weight_gather_temp"}, "Gather", {"weight", "transform_targets"}});
-
-      body.push_back(
-          {{"weight_gather_temp_1"},
-           "Where",
-           {"mask", float_input ? "const_zero_float" : "const_zero_casted", "weight_gather_temp"}});
-
-      body.push_back(
-          {{"weight_gather"},
-           "Squeeze",
-           {"weight_gather_temp_1", "axes"}});
+      builder.Add("weight_gather_temp = Gather (weight, transform_targets)");
+      builder.Add(
+          float_input ? "weight_gather_temp_1 = Where (mask, const_zero_float, weight_gather_temp)"
+                      : "weight_gather_temp_1 = Where (mask, const_zero_casted, weight_gather_temp)");
+      builder.Add("weight_gather = Squeeze (weight_gather_temp_1, axes)");
     }
 
-    body.push_back(
-        {{"loss_unweighted"},
-         "Squeeze",
-         {"loss_N1dd", "axes"}});
+    builder.Add("loss_unweighted = Squeeze (loss_N1dd, axes)");
     if (reduction_attr == "none") {
-      body.push_back({{"loss"}, "Mul", {"loss_unweighted", "weight_gather"}});
+      builder.Add("loss = Mul (loss_unweighted, weight_gather)");
     } else {
-      body.push_back(
-          {{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
+      builder.Add("loss_Ndd = Mul (loss_unweighted, weight_gather)");
       if (reduction_attr == "mean") {
-        body.push_back(
-            {{"loss_sum"},
-             "ReduceSum",
-             {"loss_Ndd"},
-             {MakeAttribute("keepdims", (int64_t)0)}});
-        body.push_back(
-            {{"weight_gather_sum"},
-             "ReduceSum",
-             {"weight_gather"},
-             {MakeAttribute("keepdims", (int64_t)0)}});
-        body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
+        builder.Add(R"(
+            loss_sum = ReduceSum <keepdims = 0> (loss_Ndd)
+            weight_gather_sum = ReduceSum <keepdims = 0> (weight_gather)
+            loss = Div (loss_sum, weight_gather_sum)
+        )");
       } else {
-        body.push_back(
-            {{"loss"},
-             "ReduceSum",
-             {"loss_Ndd"},
-             {MakeAttribute("keepdims", (int64_t)0)}});
+        builder.Add("loss = ReduceSum <keepdims = 0> (loss_Ndd)");
       }
     }
-  }
-
-  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-  for (const auto& node : func_nodes) {
-    auto new_node = functionProto.add_node();
-    new_node->CopyFrom(node);
   }
 
   schema.BuildFunction(functionProto);
@@ -3488,40 +3273,18 @@ bool BuildContextDependentFunctionBodySCE(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
-  std::vector<FunctionBodyHelper::NodeDef> body;
+  FunctionBuilder builder(functionProto);
   // Using stable implementation of LogSoftmax
-  body.push_back(
-      {{"Shape3D"},
-        "Constant",
-        {},
-        {MakeAttribute("value", ToDimensionOneInt64Tensor({0,0,-1}))}});
-  body.push_back(
-      {{"X_NCD"},
-       "Reshape",
-       {"scores", "Shape3D"}});
-  body.push_back(
-      {{"X_NDC"},
-       "Transpose",
-       {"X_NCD"},
-       {MakeAttribute("perm", std::vector<int64_t>({0,2,1}))}});
-  body.push_back(
-      {{"X_LogSM"},
-       "LogSoftmax",
-       {"X_NDC"},
-       {MakeAttribute("axis", (int64_t)2)}});
-  body.push_back(
-      {{"X_LogSM_NCD"},
-       "Transpose",
-       {"X_LogSM"},
-       {MakeAttribute("perm", std::vector<int64_t>({0,2,1}))}});
-  body.push_back(
-      {{"X_shape"},
-       "Shape",
-       {"scores"}});
-  body.push_back(
-      {{"X_Log"},
-       "Reshape",
-       {"X_LogSM_NCD", "X_shape"}});
+  builder //
+      .Const("Shape3D", std::vector<int64_t>({0, 0, -1})) //
+      .Add(R"(
+        X_NCD = Reshape (scores, Shape3D)
+        X_NDC = Transpose <perm = [0, 2, 1]> (X_NCD)
+        X_LogSM = LogSoftmax <axis = 2> (X_NDC)
+        X_LogSM_NCD = Transpose <perm = [0, 2, 1]> (X_LogSM)
+        X_shape = Shape (scores)
+        X_Log = Reshape (X_LogSM_NCD, X_shape)
+      )");
 
   // Review(mzs): Ideally we want to reuse the output from Log for sub-graph
   // output as well but looking at the graph resolve code it does not include
@@ -3531,33 +3294,15 @@ bool BuildContextDependentFunctionBodySCE(
   // incorrect or there is a bug in function population code in ORTbut I will
   // dig further to be 100%. In the meantime we just replicate the log.
   if (ctx.hasOutput(1)) {
-    body.push_back({{"log_prob"}, "Identity", {"X_Log"}});
+    builder.Add("log_prob = Identity (X_Log)");
   }
 
-  std::vector<std::string> input_tensor_names{"X_Log", "labels"};
-  std::vector<FunctionBodyHelper::AttributeProtoWrapper> attributes{
-      MakeRefAttribute("reduction", AttributeProto::STRING)};
   // Add weights as input if needed.
-  if (ctx.hasInput(2)) {
-    input_tensor_names.push_back("weights");
-  }
-
-  // add ignore_index attributes if needed.
-  if (ctx.getAttribute("ignore_index") != nullptr) {
-    attributes.push_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
-  }
-
-  body.push_back(
-      {{"output"},
-       "NegativeLogLikelihoodLoss",
-       input_tensor_names,
-       attributes});
-
-  auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-  for (const auto& node : func_nodes) {
-    auto new_node = functionProto.add_node();
-    new_node->CopyFrom(node);
-  }
+  if (ctx.hasInput(2))
+    builder.Add(
+        ctx.hasInput(2)
+            ? "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels, weights)"
+            : "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels)");
 
   schema.BuildFunction(functionProto);
   return true;

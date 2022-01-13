@@ -174,10 +174,10 @@ onnxGetExtensionFunctionAddress(
     if (strcmp(name, extension_function_list[i]) == 0) {
       switch (i) {
         case 0:
-          *function = &onnxGetExtensionFunctionAddress;
+          *function = (void *)&onnxGetExtensionFunctionAddress;
           break;
         case 1:
-          *function = &onnxSetIOAndRunGraph;
+          *function = (void *)&onnxSetIOAndRunGraph;
           break;
       }
     }
