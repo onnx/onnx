@@ -10,7 +10,6 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import io
 import os
-import sys
 
 import numpy as np  # type: ignore
 
