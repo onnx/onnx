@@ -1202,7 +1202,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
           if (nullptr != nodes_hitrates && nullptr != nodes_hitrates_as_tensor) {
             fail_shape_inference(
-                "Only one of the attributes 'nodes_hitrates', 'nodes_hitrates' should be specified.");
+                "Only one of the attributes 'nodes_hitrates', 'nodes_hitrates_as_tensor' should be specified.");
           }
           if (nullptr != target_weights && nullptr != target_weights_as_tensor) {
             fail_shape_inference(
