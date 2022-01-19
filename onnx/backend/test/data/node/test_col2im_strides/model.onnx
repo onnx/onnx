@@ -1,0 +1,25 @@
+backend-test:Ï
+C
+input
+image_shape
+block_shapeoutput"Col2Im*
+strides@@ test_col2im_stridesZ
+input
+
+
+	
+Z
+image_shape
+
+
+Z
+block_shape
+
+
+b 
+output
+
+
+
+
+B

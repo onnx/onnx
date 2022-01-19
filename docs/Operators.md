@@ -28,6 +28,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|
+|<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-16">16</a>|
 |<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
@@ -3542,6 +3543,205 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.int8)
 y = np.array([-1, 0, 1]).astype(np.int8)
 expect(node, inputs=[x], outputs=[y], name="test_clip_default_int8_inbounds")
+```
+
+</details>
+
+
+### <a name="Col2Im"></a><a name="col2im">**Col2Im**</a>
+
+  The operator rearranges the a [H, W] or [N, H, W] input matrix columns into blocks.
+
+  Col2Im behaves like PyTorch's fold for two output spatial dimensions https://pytorch.org/docs/stable/generated/torch.nn.Fold.html
+
+  NOTE: Only 4-D output tensors (batched image-like tensors) are supported.
+
+  NOTE: Although specifying image_shape looks redundant because it could be calculated from
+        convolution formulas, it is required as input for more advanced scenarios as explained
+        at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
+
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>dilation value along each spatial axis of the image. If not present, the dilation defaults is 1 along each spatial axis of the image.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input data tensor to be rearranged from column blocks back into an image.`input` format should be either [H, W] or [N, H, W].</dd>
+<dt><tt>image_shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>The shape of the image after rearranging the column blocks.`image_shape` format should be a 2-tuple as follow [H, W].</dd>
+<dt><tt>block_shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>The shape of the block to apply on the input.`block_shape` format should be a 2-tuple as follow [H, W].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Output tensor produced by rearranging matrix into blocks.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all numeric tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>col2im</summary>
+
+```python
+input = np.array([[1., 6., 11., 16., 21.],  # (5, 5)
+                  [2., 7., 12., 17., 22.],
+                  [3., 8., 13., 18., 23.],
+                  [4., 9., 14., 19., 24.],
+                  [5., 0., 15., 20., 25.]]).astype(np.float32)
+image_shape = np.array([5, 5]).astype(np.int64)
+block_shape = np.array([1, 5]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"]
+)
+
+output = np.array([[[1., 2., 3., 4., 5.],  # (1, 5, 5)
+                    [6., 7., 8., 9., 0.],
+                    [11., 12., 13., 14., 15.],
+                    [16., 17., 18., 19., 20.],
+                    [21., 22., 23., 24., 25.]]]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name='test_col2im'
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_dilations</summary>
+
+```python
+input = np.array([[[1., 5., 9., 13., 17],  # (1, 4, 5)
+                   [2., 6., 10., 14., 18],
+                   [3., 7., 11., 15., 19],
+                   [4., 8., 12., 16., 20]]]).astype(np.float32)
+image_shape = np.array([6, 6]).astype(np.int64)
+block_shape = np.array([2, 2]).astype(np.int64)
+
+output = np.array([[[[1., 0., 0., 0., 0., 2.],  # (1, 1, 6, 6)
+                     [8., 0., 0., 0., 0., 10.],
+                     [16., 0., 0., 0., 0., 18.],
+                     [24., 0., 0., 0., 0., 26.],
+                     [32., 0., 0., 0., 0., 34.],
+                     [19., 0., 0., 0., 0., 20.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"],
+    dilations=[1, 5]
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name='test_col2im_dilations'
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_pads</summary>
+
+```python
+input = np.array([[[1., 6., 11., 16., 21., 26, 31, 36, 41, 46, 51, 56, 61, 66, 71],  # (1, 5, 15)
+                   [2., 7., 12., 17., 22., 27, 32, 37, 42, 47, 52, 57, 62, 67, 72],
+                   [3., 8., 13., 18., 23., 28, 33, 38, 43, 48, 53, 58, 63, 68, 73],
+                   [4., 9., 14., 19., 24., 29, 34, 39, 44, 49, 54, 59, 64, 69, 74],
+                   [5., 10., 15., 20., 25., 30, 35, 40, 45, 50, 55, 60, 65, 70, 75]]]).astype(np.float32)
+image_shape = np.array([5, 5]).astype(np.int64)
+block_shape = np.array([1, 5]).astype(np.int64)
+
+output = np.array([[[[8., 21., 24., 27., 14.],  # (1, 1, 5, 5)
+                     [38., 66., 69., 72., 54.],
+                     [68., 111., 114., 117., 84.],
+                     [98., 156., 159., 162., 114.],
+                     [128., 201., 204., 207., 144.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"],
+    pads=[0, 1, 0, 1]
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name='test_col2im_pads'
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_strides</summary>
+
+```python
+input = np.array([[[0., 0., 0., 0.],  # (1, 9, 4)
+                   [1., 1., 1., 1.],
+                   [1., 1., 1., 1.],
+                   [1., 1., 1., 1.],
+                   [0., 0., 0., 0.],
+                   [0., 0., 0., 0.],
+                   [0., 0., 0., 0.],
+                   [1., 1., 1., 1.],
+                   [0., 0., 0., 0.]]]).astype(np.float32)
+image_shape = np.array([5, 5]).astype(np.int64)
+block_shape = np.array([3, 3]).astype(np.int64)
+
+output = np.array([[[[0., 1., 1., 1., 1.],  # (1, 1, 5, 5)
+                     [1., 0., 1., 0., 0.],
+                     [0., 2., 1., 2., 1.],
+                     [1., 0., 1., 0., 0.],
+                     [0., 1., 0., 1., 0.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"],
+    strides=[2, 2]
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name='test_col2im_strides'
+)
 ```
 
 </details>

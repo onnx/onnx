@@ -2190,6 +2190,197 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
+void col2imShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // validating 'pads' attribute
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != 2 * 2) {
+      fail_shape_inference("Attribute pads has incorrect size");
+    }
+  }
+
+  std::vector<int64_t> dilations;
+  if (getRepeatedAttribute(ctx, "dilations", dilations)) {
+    if (dilations.size() != 2) {
+      return;
+    }
+  }
+
+  std::vector<int64_t> strides;
+  if (getRepeatedAttribute(ctx, "strides", strides)) {
+    if (strides.size() != 2) {
+      return;
+    }
+  }
+
+  // validating 'block_shape' input
+  std::vector<int64_t> block_shape;
+  const TensorProto* temp_block_shape = ctx.getInputData(2);
+  if (temp_block_shape) {
+    block_shape = ParseData<int64_t>(temp_block_shape);
+    if (block_shape.size() != 2) {
+      fail_shape_inference("block_shape tensor has wrong rank. It must have rank 2.");
+    }
+  } else {
+    if (ctx.getInputType(2)->tensor_type().shape().dim_size() != 1) {
+      fail_shape_inference("block_shape tensor has wrong rank. It must have rank 2.");
+    } else if (ctx.getInputType(2)->tensor_type().shape().dim(0).dim_value() != 2) {
+      fail_shape_inference("block_shape tensor has wrong rank. It must have rank 2.");
+    }
+  }
+
+
+  // we need at least two inputs to have a shape for this inference.
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+
+  // validating 'input' input
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if ((input_shape.dim_size() < 2) || (input_shape.dim_size() > 3)) {
+    fail_shape_inference("input tensor has wrong rank. It must have rank 2 or 3.");
+  }
+
+  // validating 'image_shape' input
+  std::vector<int64_t> image_shape;
+  const TensorProto* temp_image_shape = ctx.getInputData(1);
+  if (temp_image_shape) {
+    image_shape = ParseData<int64_t>(temp_image_shape);
+    if (image_shape.size() != 2) {
+      fail_shape_inference("image_shape tensor has wrong rank. It must have rank 2.");
+    }
+  } else {
+    if (ctx.getInputType(1)->tensor_type().shape().dim_size() != 1) {
+      fail_shape_inference("image_shape tensor has wrong rank. It must have rank 2.");
+    } else if (ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value() != 2) {
+      fail_shape_inference("image_shape tensor has wrong rank. It must have rank 2.");
+    }
+  }
+
+  // inferencing final shape
+  auto final_image_shape =
+      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+  auto size_of_output = static_cast<int>(image_shape.size());
+  // a new dim is always added to the output
+  final_image_shape->add_dim()->set_dim_value(1);
+  if (size_of_output > 0) { // try full shape inference
+
+    // input batch dim
+    if (static_cast<size_t>(input_shape.dim_size()) > 2) {
+      *final_image_shape->add_dim() = input_shape.dim(0);
+    }
+
+    // image_shape is appended to the end
+    for (int i = 0; i < size_of_output; ++i) {
+      final_image_shape->add_dim()->set_dim_value(image_shape[i]);
+    }
+  } else { // fallback to rank inference otherwise
+    // input batch dim
+    if (static_cast<size_t>(input_shape.dim_size()) > 2) {
+      final_image_shape->add_dim();
+    }
+
+    // image_shape is appended to the end
+    int n_image_shape = ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value();
+    for (int i=0; i < n_image_shape; ++i) {
+      final_image_shape->add_dim();
+    }
+  }
+
+  return;
+}
+
+static const char* Col2Im_ver16_doc = R"DOC(
+The operator rearranges the a [H, W] or [N, H, W] input matrix columns into blocks.
+
+Col2Im behaves like PyTorch's fold for two output spatial dimensions https://pytorch.org/docs/stable/generated/torch.nn.Fold.html
+
+NOTE: Only 4-D output tensors (batched image-like tensors) are supported.
+
+NOTE: Although specifying image_shape looks redundant because it could be calculated from
+      convolution formulas, it is required as input for more advanced scenarios as explained
+      at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Col2Im,
+    16,
+    OpSchema()
+    .Attr(
+        "dilations",
+        "dilation value along each spatial axis of the image. "
+        "If not present, the dilation defaults is 1 along each spatial axis of the image.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE)
+	  .Attr(
+        "pads",
+        "Padding for the beginning and ending along each spatial axis, it can take any value greater "
+        "than or equal to 0. The value represent the number of pixels added to the beginning "
+        "and end part of the corresponding axis. `pads` format should be as follow "
+        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+        "added at the beginning of axis `i` and xi_end, the number of pixels added at "
+        "the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE)
+    .Attr(
+        "strides",
+        "Stride along each spatial axis. "
+        "If not present, the stride defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE)
+    .SetDoc(Col2Im_ver16_doc)
+    .Input(
+        0,
+        "input",
+        "Input data tensor to be rearranged from column blocks back into an image."
+        "`input` format should be either [H, W] or [N, H, W].",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable)
+    .Input(
+        1,
+        "image_shape",
+        "The shape of the image after rearranging the column blocks."
+        "`image_shape` format should be a 2-tuple as follow [H, W].",
+        "tensor(int64)",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable)
+    .Input(
+        2,
+        "block_shape",
+        "The shape of the block to apply on the input."
+        "`block_shape` format should be a 2-tuple as follow [H, W].",
+        "tensor(int64)",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable)
+    .Output(
+        0,
+        "output",
+        "Output tensor produced by rearranging matrix into blocks.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable)
+    .TypeConstraint(
+        "T",
+        OpSchema::all_tensor_types_with_bfloat(),
+        "Constrain input and output types to all numeric tensor types.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        col2imShapeInference(ctx);
+    })
+);
+
 static const char* LayerNormalization_ver17_doc = R"DOC(
       This is layer normalization defined in ONNX as function.
       The overall computation can be split into two stages.
@@ -2391,5 +2582,4 @@ ONNX_OPERATOR_SET_SCHEMA(
           schema.BuildFunction(functionProto);
           return true;
         }));
-
 } // namespace ONNX_NAMESPACE

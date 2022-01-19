@@ -953,6 +953,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, LessOrEqual);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, GreaterOrEqual);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, LeakyRelu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, PRelu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Col2Im);
 
 // Iterate over schema from ai.onnx version 16
 class OpSet_Onnx_ver16 {
@@ -971,6 +972,11 @@ class OpSet_Onnx_ver16 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, GreaterOrEqual)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, LeakyRelu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, PRelu)>());
+<<<<<<< HEAD
+=======
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, SequenceMap)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Col2Im)>());
+>>>>>>> Add Col2Im op to ONNX spec
   }
 };
 

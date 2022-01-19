@@ -13395,7 +13395,7 @@ This version of the operator has been available since version 11 of the default 
   dimension. If the value passed to start or end is larger than the `n` (the
   number of elements in this dimension), it represents `n`. For slicing to the
   end of a dimension with unknown size, it is recommended to pass in `INT_MAX`
-  when sclicing forward and 'INT_MIN' when slicing backward.
+  when slicing forward and 'INT_MIN' when slicing backward.
   If a negative value is passed for step, it represents slicing backward.
   However step value cannot be 0.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
@@ -19893,6 +19893,59 @@ This version of the operator has been available since version 15 of the default 
 </dl>
 
 ## Version 16 of the default ONNX operator set
+### <a name="Col2Im-16"></a>**Col2Im-16**</a>
+
+  The operator rearranges the a [H, W] or [N, H, W] input matrix columns into blocks.
+
+  Col2Im behaves like PyTorch's fold for two output spatial dimensions https://pytorch.org/docs/stable/generated/torch.nn.Fold.html
+
+  NOTE: Only 4-D output tensors (batched image-like tensors) are supported.
+
+  NOTE: Although specifying image_shape looks redundant because it could be calculated from
+        convolution formulas, it is required as input for more advanced scenarios as explained
+        at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
+
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>dilation value along each spatial axis of the image. If not present, the dilation defaults is 1 along each spatial axis of the image.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input data tensor to be rearranged from column blocks back into an image.`input` format should be either [H, W] or [N, H, W].</dd>
+<dt><tt>image_shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>The shape of the image after rearranging the column blocks.`image_shape` format should be a 2-tuple as follow [H, W].</dd>
+<dt><tt>block_shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>The shape of the block to apply on the input.`block_shape` format should be a 2-tuple as follow [H, W].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Output tensor produced by rearranging matrix into blocks.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all numeric tensor types.</dd>
+</dl>
+
 ### <a name="GreaterOrEqual-16"></a>**GreaterOrEqual-16**</a>
 
   Returns the tensor resulted from performing the `greater_equal` logical operation
