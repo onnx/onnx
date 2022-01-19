@@ -5,7 +5,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from six import string_types
 from typing import Any, List, Text, Dict, Set
 from onnx import ModelProto, ValueInfoProto
 
@@ -64,7 +63,7 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
                     raise ValueError('Unable to generate unique dim_param for axis {} of {}. Please manually provide a dim_param value.'
                         .format(j, name))
                 dim_proto.dim_param = generated_dim_param
-        elif isinstance(dim, string_types):
+        elif isinstance(dim, str):
             dim_proto.dim_param = dim
         else:
             raise ValueError('Only int or str is accepted as dimension value, incorrect type: {}'.format(type(dim)))
