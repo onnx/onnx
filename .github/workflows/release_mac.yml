@@ -120,6 +120,13 @@ jobs:
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
 
+    - name: Verify ONNX with ort-nightly
+      if: matrix.python-version != '3.6' # Do not test ort-nightly for Python 3.6 due to missing (unsupported) package
+      run: |
+        python -m pip install -q flatbuffers
+        python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
+        python onnx/test/test_with_ort.py
+
     - name: Build and upload source distribution to TestPyPI weekly
       if: github.event_name == 'schedule' && matrix.python-version == '3.9' # Only triggered by weekly event on Python 3.9
       run: |
