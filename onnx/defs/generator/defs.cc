@@ -235,7 +235,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Shape inference based on input shape
           const TensorProto* targetShapeInitializer = ctx.getInputData(0);
           if (!targetShapeInitializer) {
-            // This is the case when exact shape input is not available.
+            // If symbolic input is available, do shape inference by data propagation.
+            const TensorShapeProto* shapeInput = ctx.getSymbolicInput(0);
+            if (shapeInput) {
+              *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = *shapeInput;
+              return;
+            }
+            // This is the case when exact or symbolic shape is not available.
             // In this case, if the number of dimensions can be infered
             // from the input 'shape' tensor, then we add the same number
             // of dimensions (without any dim_value information) to the
@@ -892,36 +898,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto dtype = ctx.getAttribute("dtype") != nullptr
                              ? static_cast<TensorProto_DataType>(ctx.getAttribute("dtype")->i())
                              : input_type;
-              auto seed_attr = ctx.getAttribute("seed");
-              std::vector<FunctionBodyHelper::NodeDef> body{
-                  // nodes: {outputs, op, inputs, attributes}
-                  // clang-format off
-                {
-                    {"X_greater"},
-                    "Greater",
-                    {"X_random", "input"}
-                },
-                {
-                    {"output"},
-                    "Cast",
-                    {"X_greater"},
-                    {MakeAttribute("to", (int64_t)(dtype))}
-                }
-                  // clang-format on
-              };
-
-              if (seed_attr != nullptr) {
-                float seed = seed_attr->f();
-                body.insert(body.begin(), {{"X_random"}, "RandomUniformLike", {"input"}, {MakeAttribute("high", 1.0f), MakeAttribute("low", 0.f), MakeAttribute("seed", (float)(seed)), MakeAttribute("dtype", (int64_t)(input_type))}});
-              } else {
-                body.insert(body.begin(), {{"X_random"}, "RandomUniformLike", {"input"}, {MakeAttribute("high", 1.0f), MakeAttribute("low", 0.f), MakeAttribute("dtype", (int64_t)(input_type))}});
-              }
-
-              auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-              for (const auto& node : func_nodes) {
-                auto new_node = functionProto.add_node();
-                new_node->CopyFrom(node);
-              }
+              FunctionBuilder builder(functionProto);
+              builder
+                .Add("X_random = RandomUniformLike <low = 0.0, high = 1.0, seed = @seed> (input)", "dtype", int64_t(input_type))
+                .Add("X_greater = Greater (X_random, input)")
+                .Add("output = Cast (X_greater)", "to", int64_t(dtype));
               schema.BuildFunction(functionProto);
               return true;
             }));

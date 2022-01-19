@@ -27,7 +27,6 @@ from contextlib import contextmanager
 
 try:
     import google.protobuf.descriptor_pb2 as d_typed
-    import six
     from google.protobuf.compiler import plugin_pb2 as plugin
 except ImportError as e:
     sys.stderr.write('Failed to generate mypy stubs: {}\n'.format(e))
@@ -279,7 +278,7 @@ class PkgWriter(object):
     def write(self):
         # type: () -> Text
         imports = []
-        for pkg, items in six.iteritems(self.imports):
+        for pkg, items in self.imports.items():
             imports.append(u"from {} import (".format(pkg))
             for item in sorted(items):
                 imports.append(u"    {},".format(item))
@@ -298,7 +297,7 @@ def is_scalar(fd):
 
 def generate_mypy_stubs(descriptors, response):
     # type: (Descriptors, plugin.CodeGeneratorResponse) -> None
-    for name, fd in six.iteritems(descriptors.to_generate):
+    for name, fd in descriptors.to_generate.items():
         pkg_writer = PkgWriter(fd, descriptors)
         pkg_writer.write_enums(fd.enum_type)
         pkg_writer.write_messages(fd.message_type, "")
@@ -346,10 +345,7 @@ class Descriptors(object):
 def main():
     # type: () -> None
     # Read request message from stdin
-    if six.PY3:
-        data = sys.stdin.buffer.read()
-    else:
-        data = sys.stdin.read()
+    data = sys.stdin.buffer.read()
 
     # Parse request
     request = plugin.CodeGeneratorRequest()
@@ -365,10 +361,7 @@ def main():
     output = response.SerializeToString()
 
     # Write to stdout
-    if six.PY3:
-        sys.stdout.buffer.write(output)
-    else:
-        sys.stdout.write(output)
+    sys.stdout.buffer.write(output)
 
 
 if __name__ == '__main__':
