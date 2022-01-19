@@ -235,7 +235,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Shape inference based on input shape
           const TensorProto* targetShapeInitializer = ctx.getInputData(0);
           if (!targetShapeInitializer) {
-            // This is the case when exact shape input is not available.
+            // If symbolic input is available, do shape inference by data propagation.
+            const TensorShapeProto* shapeInput = ctx.getSymbolicInput(0);
+            if (shapeInput) {
+              *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = *shapeInput;
+              return;
+            }
+            // This is the case when exact or symbolic shape is not available.
             // In this case, if the number of dimensions can be infered
             // from the input 'shape' tensor, then we add the same number
             // of dimensions (without any dim_value information) to the
