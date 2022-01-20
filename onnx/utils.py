@@ -12,7 +12,7 @@ import onnx.checker
 import onnx.helper
 import onnx.shape_inference
 
-from onnx import ModelProto, NodeProto, TensorProto, ValueInfoProto
+from onnx import ModelProto, NodeProto, TensorProto, ValueInfoProto, FunctionProto
 
 
 class Extractor:
@@ -79,6 +79,14 @@ class Extractor:
         nodes = [n for n in self.graph.node if n in reachable_nodes]
         return nodes
 
+    def _collect_referred_local_functions(
+            self,
+            nodes,  # type: List[NodeProto]
+    ):  # type: (...) -> List[FunctionProto]
+        node_op_types = {n.op_type for n in nodes}
+        local_functions = [f for f in self.model.functions if f.name in node_op_types]
+        return local_functions
+
     def _collect_reachable_tensors(
             self,
             nodes,  # type: List[NodeProto]
@@ -102,7 +110,8 @@ class Extractor:
             inputs,  # type: List[ValueInfoProto]
             outputs,  # type: List[ValueInfoProto]
             initializer,  # type: List[TensorProto]
-            value_info  # type: List[ValueInfoProto]
+            value_info,  # type: List[ValueInfoProto]
+            local_functions # type: List[FunctionProto]
     ):  # type: (...) -> ModelProto
         name = 'Extracted from {' + self.graph.name + '}'
         graph = onnx.helper.make_graph(nodes, name, inputs, outputs, initializer=initializer,
@@ -112,6 +121,7 @@ class Extractor:
             'ir_version': self.model.ir_version,
             'opset_imports': self.model.opset_import,
             'producer_name': 'onnx.utils.extract_model',
+            'functions': local_functions,
         }
         return onnx.helper.make_model(graph, **meta)
 
@@ -124,7 +134,8 @@ class Extractor:
         outputs = self._collect_new_outputs(output_names)
         nodes = self._collect_reachable_nodes(input_names, output_names)
         initializer, value_info = self._collect_reachable_tensors(nodes)
-        model = self._make_model(nodes, inputs, outputs, initializer, value_info)
+        local_functions = self._collect_referred_local_functions(nodes)
+        model = self._make_model(nodes, inputs, outputs, initializer, value_info, local_functions)
 
         return model
 

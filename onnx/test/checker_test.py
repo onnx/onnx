@@ -9,7 +9,7 @@ import unittest
 from typing import Sequence, Text
 import numpy as np  # type: ignore
 
-from onnx import checker, helper, numpy_helper, parser, shape_inference
+from onnx import checker, helper, numpy_helper, shape_inference
 from onnx import TensorProto, GraphProto, SparseTensorProto
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
@@ -135,37 +135,6 @@ class TestChecker(unittest.TestCase):
         sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], '')
         graph.sparse_initializer.extend([sparse])
         self.assertRaises(checker.ValidationError, checker.check_graph, graph)
-
-    def test_check_extract_model_3938(self):  # type: () -> None
-        m = parser.parse_model('''
-        <
-        ir_version: 8,
-        opset_import: [ "" : 14, "local" : 1],
-        producer_name: "test",
-        producer_version: "1.0",
-        model_version: 1,
-        doc_string: "Test"
-        >
-        agraph (uint8[H, W, C] x) => (uint8[H, W, C] y)
-        {
-            x1 = local.func(x)
-            y = Identity(x1)
-        }
-
-        <
-        opset_import: [ "" : 14 ],
-        domain: "local",
-        doc_string: "test"
-        >
-        func (a) => (b)
-        {
-            b = Identity(a)
-        }
-        ''')
-
-        checker.check_model(m)
-        onnx.save(m, 'extract_model_bug.onnx')
-        extracted = onnx.utils.Extractor(m).extract_model(['x1'], ['y'])
 
     def test_check_graph_duplicate_init_names(self):  # type: () -> None
         node = helper.make_node(
