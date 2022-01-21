@@ -540,6 +540,9 @@ static const char* LeakyRelu_ver16_doc = R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
 output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
+
+**History**
+- Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -955,6 +958,9 @@ static const char* PRelu_ver16_doc = R"DOC(
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+
+**History**
+- Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
