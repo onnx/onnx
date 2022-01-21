@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 
 import collections.abc  # type: ignore
 import numbers
-from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
@@ -24,7 +23,7 @@ VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, in
 VersionTableType = List[VersionRowType]
 AssignmentBindingType = List[Tuple[Text, Text]]
 
-# This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions
+# This is a copy of the documented version in https://github.com/onnx/onnx/blob/main/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
 VERSION_TABLE = [
     # Release-version, IR version, ai.onnx version, ai.onnx.ml version, (optional) ai.onnx.training version
@@ -505,14 +504,14 @@ def make_tensor_type_proto(
             dim = tensor_shape_proto.dim.add()
             if d is None:
                 pass
-            elif isinstance(d, integer_types):
+            elif isinstance(d, int):
                 dim.dim_value = d
-            elif isinstance(d, text_type):
+            elif isinstance(d, str):
                 dim.dim_param = d
             else:
                 raise ValueError(
                     'Invalid item in shape: {}. '
-                    'Needs to be of integer_types or text_type.'.format(d))
+                    'Needs to be of int or str.'.format(d))
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
@@ -570,14 +569,14 @@ def make_sparse_tensor_type_proto(
             dim = sparse_tensor_shape_proto.dim.add()
             if d is None:
                 pass
-            elif isinstance(d, integer_types):
+            elif isinstance(d, int):
                 dim.dim_value = d
-            elif isinstance(d, text_type):
+            elif isinstance(d, str):
                 dim.dim_param = d
             else:
                 raise ValueError(
                     'Invalid item in shape: {}. '
-                    'Needs to be of integer_types or text_type.'.format(d))
+                    'Needs to be of int or text.'.format(d))
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
@@ -637,9 +636,9 @@ def make_value_info(
 
 
 def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
-    if isinstance(s, text_type):
+    if isinstance(s, str):
         sanitized = s
-    elif isinstance(s, binary_type):
+    elif isinstance(s, bytes):
         sanitized = s.decode('utf-8', errors='ignore')
     else:
         sanitized = str(s)

@@ -8,7 +8,6 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from typing import Text, Sequence, Any, Type, Tuple, NewType, Optional, Dict
 
-import six
 import numpy  # type: ignore
 
 import onnx.checker
@@ -44,10 +43,10 @@ def namedtupledict(typename, field_names, *args, **kwargs):  # type: (Text, Sequ
     data = namedtuple(typename, field_names, *args, **kwargs)  # type: ignore
 
     def getitem(self, key):  # type: (Any, Any) -> Any
-        if isinstance(key, six.string_types):
+        if isinstance(key, str):
             key = field_names_map[key]
         return super(type(self), self).__getitem__(key)  # type: ignore
-    data.__getitem__ = getitem
+    setattr(data, "__getitem__", getitem)
     return data
 
 
@@ -100,7 +99,7 @@ class Backend(object):
             outputs_info: a list of tuples, which contains the element type and
             shape of each output. First element of the tuple is the dtype, and
             the second element is the shape. More use case can be found in
-            https://github.com/onnx/onnx/blob/master/onnx/backend/test/runner/__init__.py
+            https://github.com/onnx/onnx/blob/main/onnx/backend/test/runner/__init__.py
         '''
         # TODO Remove Optional from return type
         if 'opset_version' in kwargs:
