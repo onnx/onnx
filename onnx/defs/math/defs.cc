@@ -2051,6 +2051,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 dim->set_dim_value(e);
               }
             } else {
+                // When shape_initializer is not available, we see if symbolic shape input
+                // is available or not. If it is available, we do shape inference by data
+                // propagation. Otherwise, we fall back to rank inference.
                 const TensorShapeProto* symInput = ctx.getSymbolicInput(1);
                 if (symInput != nullptr) {
                     // Shape inference by data propagation
@@ -2065,8 +2068,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             bidirectionalBroadcastShapeInference(
                 input_shape, second_shape, *getOutputShape(ctx, 0));
-          } else {
-              // Use data propagation for shape inference when shape_initializer
           }
           return;
         }));
