@@ -171,6 +171,22 @@ def make_opsetid(domain, version):  # type: (Text, int) -> OperatorSetIdProto
     opsetid.version = version
     return opsetid
 
+def make_function(
+    domain,  # type: Text
+    fname,  # type: Text
+    inputs,  # type: List[Text]
+    outputs,  # type: List[Text]
+    nodes,  # type: List[NodeProto]
+    opset_imports,    # type: Sequence[OperatorSetIdProto]
+):  # type: (...) -> FunctionProto
+    f = FunctionProto()
+    f.domain = domain
+    f.name = fname
+    f.input.extend(inputs)
+    f.output.extend(outputs)
+    f.node.extend(nodes)
+    f.opset_import.extend(opset_imports)
+    return f
 
 def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
     model = ModelProto()
