@@ -92,7 +92,7 @@ def softmaxcrossentropy(x, target, weight=None, reduction='mean', ignore_index=N
 class SoftmaxCrossEntropyLoss(Base):
 
     @staticmethod
-    def export_softmaxcrossentropy_none():  # type: () -> None
+    def export_softmaxcrossentropy_none() -> None:
         # Define operator attributes.
         reduction = 'none'
 
@@ -114,7 +114,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_none')
 
     @staticmethod
-    def export_softmaxcrossentropy_none_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_none_log_prob() -> None:
         # Define operator attributes.
         reduction = 'none'
 
@@ -136,7 +136,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_none_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_none_weights():  # type: () -> None
+    def export_softmaxcrossentropy_none_weights() -> None:
         # Define operator attributes.
         reduction = 'none'
 
@@ -159,7 +159,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_none_weights')
 
     @staticmethod
-    def export_softmaxcrossentropy_none_weights_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_none_weights_log_prob() -> None:
         # Define operator attributes.
         reduction = 'none'
 
@@ -182,7 +182,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_none_weights_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_sum():  # type: () -> None
+    def export_softmaxcrossentropy_sum() -> None:
         # Define operator attributes.
         reduction = 'sum'
 
@@ -204,7 +204,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_sum')
 
     @staticmethod
-    def export_softmaxcrossentropy_sum_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_sum_log_prob() -> None:
         # Define operator attributes.
         reduction = 'sum'
 
@@ -226,7 +226,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_sum_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean():  # type: () -> None
+    def export_softmaxcrossentropy_mean() -> None:
         # Define operator attributes.
         reduction = 'mean'
 
@@ -248,7 +248,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_mean_log_prob() -> None:
         # Define operator attributes.
         reduction = 'mean'
 
@@ -270,7 +270,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_3d():  # type: () -> None
+    def export_softmaxcrossentropy_mean_3d() -> None:
         # Define operator attributes.
         reduction = 'mean'
 
@@ -292,7 +292,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, y], outputs=[sce], name='test_sce_mean_3d')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_3d_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_mean_3d_log_prob() -> None:
         # Define operator attributes.
         reduction = 'mean'
 
@@ -314,7 +314,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, y], outputs=[loss, log_prob], name='test_sce_mean_3d_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_weights():  # type: () -> None
+    def export_softmaxcrossentropy_mean_weights() -> None:
         # Define operator attributes.
         reduction = 'mean'
 
@@ -337,7 +337,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_weights_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_mean_weights_log_prob() -> None:
         # Define operator attributes.
         reduction = 'mean'
 
@@ -360,7 +360,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_weights_ii():  # type: () -> None
+    def export_softmaxcrossentropy_mean_weights_ii() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(0)
@@ -386,7 +386,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ii')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_weights_ii_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_mean_weights_ii_log_prob() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(0)
@@ -412,7 +412,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ii_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_no_weights_ii():  # type: () -> None
+    def export_softmaxcrossentropy_mean_no_weights_ii() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(2)
@@ -437,7 +437,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ii')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_no_weights_ii_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_mean_no_weights_ii_log_prob() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(2)
@@ -462,7 +462,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ii_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_weights_ii_3d():  # type: () -> None
+    def export_softmaxcrossentropy_mean_weights_ii_3d() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(1)
@@ -488,7 +488,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ii_3d')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_weights_ii_3d_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_mean_weights_ii_3d_log_prob() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(1)
@@ -514,7 +514,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ii_3d_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_no_weights_ii_3d():  # type: () -> None
+    def export_softmaxcrossentropy_mean_no_weights_ii_3d() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(2)
@@ -539,7 +539,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ii_3d')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_no_weights_ii_3d_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_mean_no_weights_ii_3d_log_prob() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(2)
@@ -564,7 +564,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ii_3d_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_weights_ii_4d():  # type: () -> None
+    def export_softmaxcrossentropy_mean_weights_ii_4d() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(2)
@@ -590,7 +590,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[sce], name='test_sce_mean_weight_ii_4d')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_weights_ii_4d_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_mean_weights_ii_4d_log_prob() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(2)
@@ -616,7 +616,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weights], outputs=[loss, log_prob], name='test_sce_mean_weight_ii_4d_log_prob')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_no_weights_ii_4d():  # type: () -> None
+    def export_softmaxcrossentropy_mean_no_weights_ii_4d() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(2)
@@ -641,7 +641,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_mean_no_weight_ii_4d')
 
     @staticmethod
-    def export_softmaxcrossentropy_mean_no_weights_ii_4d_log_prob():  # type: () -> None
+    def export_softmaxcrossentropy_mean_no_weights_ii_4d_log_prob() -> None:
         # Define operator attributes.
         reduction = 'mean'
         ignore_index = np.int64(2)
@@ -666,7 +666,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_mean_no_weight_ii_4d_log_prob')
 
     @staticmethod
-    def export_input_shape_is_NCd1d2d3d4d5_mean_weight():  # type: () -> None
+    def export_input_shape_is_NCd1d2d3d4d5_mean_weight() -> None:
         reduction = 'mean'
 
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
@@ -688,7 +688,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1d2d3d4d5_mean_weight')
 
     @staticmethod
-    def export_input_shape_is_NCd1d2d3d4d5_mean_weight_log_prob():  # type: () -> None
+    def export_input_shape_is_NCd1d2d3d4d5_mean_weight_log_prob() -> None:
         reduction = 'mean'
 
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
@@ -711,7 +711,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_sce_NCd1d2d3d4d5_mean_weight_log_prob')
 
     @staticmethod
-    def export_input_shape_is_NCd1d2d3d4d5_none_no_weight():  # type: () -> None
+    def export_input_shape_is_NCd1d2d3d4d5_none_no_weight() -> None:
         reduction = 'none'
 
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
@@ -731,7 +731,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_NCd1d2d3d4d5_none_no_weight')
 
     @staticmethod
-    def export_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob():  # type: () -> None
+    def export_input_shape_is_NCd1d2d3d4d5_none_no_weight_log_prob() -> None:
         reduction = 'none'
 
         node = onnx.helper.make_node('SoftmaxCrossEntropyLoss',
@@ -752,7 +752,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_NCd1d2d3d4d5_none_no_weight_log_prob')
 
     @staticmethod
-    def export_input_shape_is_NCd1_mean_weight_negative_ii():  # type: () -> None
+    def export_input_shape_is_NCd1_mean_weight_negative_ii() -> None:
         reduction = 'mean'
         ignore_index = np.int64(-1)
 
@@ -778,7 +778,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1_mean_weight_negative_ii')
 
     @staticmethod
-    def export_input_shape_is_NCd1_mean_weight_negative_ii_log_prob():  # type: () -> None
+    def export_input_shape_is_NCd1_mean_weight_negative_ii_log_prob() -> None:
         reduction = 'mean'
         ignore_index = np.int64(-1)
 
@@ -805,7 +805,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weight], outputs=[loss, log_prob], name='test_sce_NCd1_mean_weight_negative_ii_log_prob')
 
     @staticmethod
-    def export_input_shape_is_NCd1d2d3_none_no_weight_negative_ii():  # type: () -> None
+    def export_input_shape_is_NCd1d2d3_none_no_weight_negative_ii() -> None:
         reduction = 'none'
         ignore_index = np.int64(-5)
 
@@ -829,7 +829,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[sce], name='test_sce_NCd1d2d3_none_no_weight_negative_ii')
 
     @staticmethod
-    def export_input_shape_is_NCd1d2d3_none_no_weight_negative_ii_log_prob():  # type: () -> None
+    def export_input_shape_is_NCd1d2d3_none_no_weight_negative_ii_log_prob() -> None:
         reduction = 'none'
         ignore_index = np.int64(-5)
 
@@ -854,7 +854,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels], outputs=[loss, log_prob], name='test_sce_NCd1d2d3_none_no_weight_negative_ii_log_prob')
 
     @staticmethod
-    def export_input_shape_is_NCd1d2d3_sum_weight_high_ii():  # type: () -> None
+    def export_input_shape_is_NCd1d2d3_sum_weight_high_ii() -> None:
         reduction = 'sum'
         ignore_index = np.int64(10)
 
@@ -880,7 +880,7 @@ class SoftmaxCrossEntropyLoss(Base):
         expect(node, inputs=[x, labels, weight], outputs=[sce], name='test_sce_NCd1d2d3_sum_weight_high_ii')
 
     @staticmethod
-    def export_input_shape_is_NCd1d2d3_sum_weight_high_ii_log_prob():  # type: () -> None
+    def export_input_shape_is_NCd1d2d3_sum_weight_high_ii_log_prob() -> None:
         reduction = 'sum'
         ignore_index = np.int64(10)
 

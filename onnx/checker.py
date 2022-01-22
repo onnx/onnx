@@ -47,10 +47,10 @@ FuncType = TypeVar('FuncType', bound=Callable[..., Any])
 
 
 # TODO: This really doesn't seem worth the metaprogramming...
-def _create_checker(proto_type):  # type: (Type[Message]) -> Callable[[FuncType], FuncType]
-    def decorator(py_func):  # type: (FuncType) -> FuncType
+def _create_checker(proto_type: Type[Message]) -> Callable[[FuncType], FuncType]:
+    def decorator(py_func: FuncType) -> FuncType:
         @functools.wraps(py_func)
-        def checker(proto, ctx=DEFAULT_CONTEXT):  # type: (Message, C.CheckerContext) -> Any
+        def checker(proto: Message, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> Any:
             if not isinstance(proto, proto_type):
                 raise RuntimeError(
                     'You cannot pass an object that is not of type {}'.format(
@@ -62,35 +62,35 @@ def _create_checker(proto_type):  # type: (Type[Message]) -> Callable[[FuncType]
 
 
 @_create_checker(ValueInfoProto)
-def check_value_info(value_info, ctx=DEFAULT_CONTEXT):  # type: (ValueInfoProto, C.CheckerContext) -> None
+def check_value_info(value_info: ValueInfoProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
     pass
 
 
 @_create_checker(TensorProto)
-def check_tensor(tensor, ctx=DEFAULT_CONTEXT):  # type: (TensorProto, C.CheckerContext) -> None
+def check_tensor(tensor: TensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
     pass
 
 
 @_create_checker(AttributeProto)
-def check_attribute(attr, ctx=DEFAULT_CONTEXT):  # type: (AttributeProto, C.CheckerContext) -> None
+def check_attribute(attr: AttributeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
     pass
 
 
 @_create_checker(NodeProto)
-def check_node(node, ctx=DEFAULT_CONTEXT):  # type: (NodeProto, C.CheckerContext) -> None
+def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
     pass
 
 
 @_create_checker(GraphProto)
-def check_graph(graph, ctx=DEFAULT_CONTEXT):  # type: (GraphProto, C.CheckerContext) -> None
+def check_graph(graph: GraphProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
     pass
 
 
-def check_sparse_tensor(sparse, ctx=DEFAULT_CONTEXT):  # type: (SparseTensorProto, C.CheckerContext) -> None
+def check_sparse_tensor(sparse: SparseTensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
     C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
-def check_model(model, full_check=False):  # type: (Union[ModelProto, Text, bytes], bool) -> None
+def check_model(model: Union[ModelProto, Text, bytes], full_check: bool = False) -> None:
     # If model is a path instead of ModelProto
     if isinstance(model, str):
         C.check_model_path(model)

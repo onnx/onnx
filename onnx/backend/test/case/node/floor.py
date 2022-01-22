@@ -15,7 +15,7 @@ from . import expect
 class Floor(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Floor',
             inputs=['x'],

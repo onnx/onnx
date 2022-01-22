@@ -14,7 +14,7 @@ from . import expect
 
 
 class RNN_Helper():
-    def __init__(self, **params):  # type: (**Any) -> None
+    def __init__(self, **params: Any) -> None:
         # RNN Input Names
         X = str('X')
         W = str('W')
@@ -53,10 +53,10 @@ class RNN_Helper():
         else:
             raise NotImplementedError()
 
-    def f(self, x):  # type: (np.ndarray) -> np.ndarray
+    def f(self, x: np.ndarray) -> np.ndarray:
         return np.tanh(x)
 
-    def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
+    def step(self) -> Tuple[np.ndarray, np.ndarray]:
         seq_length = self.X.shape[0]
         hidden_size = self.H_0.shape[-1]
         batch_size = self.X.shape[1]
@@ -87,7 +87,7 @@ class RNN_Helper():
 class RNN(Base):
 
     @staticmethod
-    def export_defaults():  # type: () -> None
+    def export_defaults() -> None:
         input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
 
         input_size = 2
@@ -109,7 +109,7 @@ class RNN(Base):
         expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_simple_rnn_defaults')
 
     @staticmethod
-    def export_initial_bias():  # type: () -> None
+    def export_initial_bias() -> None:
         input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
 
         input_size = 3
@@ -138,7 +138,7 @@ class RNN(Base):
                name='test_simple_rnn_with_initial_bias')
 
     @staticmethod
-    def export_seq_length():  # type: () -> None
+    def export_seq_length() -> None:
         input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
                           [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
 
@@ -165,7 +165,7 @@ class RNN(Base):
         expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')
 
     @staticmethod
-    def export_batchwise():  # type: () -> None
+    def export_batchwise() -> None:
         input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
 
         input_size = 2

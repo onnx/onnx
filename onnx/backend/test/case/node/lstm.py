@@ -14,7 +14,7 @@ from . import expect
 
 
 class LSTM_Helper():
-    def __init__(self, **params):  # type: (*Any) -> None
+    def __init__(self, **params: Any) -> None:
         # LSTM Input Names
         X = str('X')
         W = str('W')
@@ -61,16 +61,16 @@ class LSTM_Helper():
         else:
             raise NotImplementedError()
 
-    def f(self, x):  # type: (np.ndarray) -> np.ndarray
+    def f(self, x: np.ndarray) -> np.ndarray:
         return 1 / (1 + np.exp(-x))
 
-    def g(self, x):  # type: (np.ndarray) -> np.ndarray
+    def g(self, x: np.ndarray) -> np.ndarray:
         return np.tanh(x)
 
-    def h(self, x):  # type: (np.ndarray) -> np.ndarray
+    def h(self, x: np.ndarray) -> np.ndarray:
         return np.tanh(x)
 
-    def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
+    def step(self) -> Tuple[np.ndarray, np.ndarray]:
         seq_length = self.X.shape[0]
         hidden_size = self.H_0.shape[-1]
         batch_size = self.X.shape[1]
@@ -111,7 +111,7 @@ class LSTM_Helper():
 class LSTM(Base):
 
     @staticmethod
-    def export_defaults():  # type: () -> None
+    def export_defaults() -> None:
         input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
 
         input_size = 2
@@ -134,7 +134,7 @@ class LSTM(Base):
         expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_lstm_defaults')
 
     @staticmethod
-    def export_initial_bias():  # type: () -> None
+    def export_initial_bias() -> None:
         input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
 
         input_size = 3
@@ -163,7 +163,7 @@ class LSTM(Base):
         expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_lstm_with_initial_bias')
 
     @staticmethod
-    def export_peepholes():  # type: () -> None
+    def export_peepholes() -> None:
         input = np.array([[[1., 2., 3., 4.], [5., 6., 7., 8.]]]).astype(np.float32)
 
         input_size = 4
@@ -194,7 +194,7 @@ class LSTM(Base):
                name='test_lstm_with_peepholes')
 
     @staticmethod
-    def export_batchwise():  # type: () -> None
+    def export_batchwise() -> None:
         input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
 
         input_size = 2

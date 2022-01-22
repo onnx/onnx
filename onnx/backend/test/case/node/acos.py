@@ -15,7 +15,7 @@ from . import expect
 class Acos(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Acos',
             inputs=['x'],
