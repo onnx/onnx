@@ -88,7 +88,7 @@ class Extractor:
         # we need to find functions referred by graph nodes and
         # by nodes used to define functions.
         def find_referred_funcs(nodes, referred_local_functions):  # type: ignore
-            new_nodes = []
+            new_nodes = []  # type: ignore
             for n in nodes:
                 # check if the node is a function op
                 match_function = next((
@@ -101,7 +101,7 @@ class Extractor:
 
             return new_nodes
 
-        referred_local_functions = []
+        referred_local_functions = []  # type: ignore
         new_nodes = find_referred_funcs(nodes, referred_local_functions)
         while new_nodes:
             new_nodes = find_referred_funcs(new_nodes, referred_local_functions)
