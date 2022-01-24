@@ -87,7 +87,7 @@ class Extractor:
         # a function contains nodes, some of which may in turn refer a function.
         # we need to find functions referred by graph nodes and
         # by nodes used to define functions.
-        def find_referred_funcs(nodes, referred_local_functions):
+        def find_referred_funcs(nodes, referred_local_functions):  # type: ignore
             new_nodes = []
             for n in nodes:
                 # check if the node is a function op
