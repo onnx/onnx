@@ -462,9 +462,9 @@ void InferShapes(
 
 void InferShapesAndDataPropagation(
     ModelProto& m,
-    std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
+    std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const ShapeInferenceOptions& options
+    const ShapeInferenceOptions& options = {}
     );
 
 ///
@@ -477,7 +477,7 @@ void InferShapeForFunctionNode(
     const ShapeInferenceOptions& options = {},
     const ModelLocalFunctionsMap& model_local_functions_map = {},
     SymbolTable* symbolTable = nullptr,
-    std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName = nullptr);
+    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr);
 
 ///
 /// ModelLocalFunctionsMap is a map of function id -> model local function proto
