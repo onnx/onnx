@@ -108,7 +108,7 @@ from onnx import AttributeProto, TensorProto, GraphProto
 
 
 # The protobuf definition can be found here:
-# https://github.com/onnx/onnx/blob/master/onnx/onnx.proto
+# https://github.com/onnx/onnx/blob/main/onnx/onnx.proto
 
 
 # Create one input (ValueInfoProto)
@@ -240,7 +240,7 @@ original_model = onnx.load(model_path)
 print('The model before conversion:\n{}'.format(original_model))
 
 # A full list of supported adapters can be found here:
-# https://github.com/onnx/onnx/blob/master/onnx/version_converter.py#L21
+# https://github.com/onnx/onnx/blob/main/onnx/version_converter.py#L21
 # Apply the version conversion on the original model
 converted_model = version_converter.convert_version(original_model, <int target_version>)
 
@@ -268,6 +268,100 @@ Note: For control-flow operators, e.g. If and Loop, the _boundary of sub-model_,
 which is defined by the input and output tensors, should not _cut through_ the
 subgraph that is connected to the _main graph_ as attributes of these operators.
 
+### ONNX Compose
+
+`onnx.compose` module provides tools to create combined models.
+
+`onnx.compose.merge_models` can be used to merge two models, by connecting some of the outputs
+from the first model with inputs from the second model. By default, inputs/outputs not present in the
+`io_map` argument will remain as inputs/outputs of the combined model.
+
+In this example we merge two models by connecting each output of the first model to an output in the second. The resulting model will have the same inputs as the first model and the same outputs as the second:
+```python
+import onnx
+
+model1 = onnx.load('path/to/model1.onnx')
+# agraph (float[N] A, float[N] B) => (float[N] C, float[N] D)
+#   {
+#      C = Add(A, B)
+#      D = Sub(A, B)
+#   }
+
+model2 = onnx.load('path/to/model2.onnx')
+#   agraph (float[N] X, float[N] Y) => (float[N] Z)
+#   {
+#      Z = Mul(X, Y)
+#   }
+
+combined_model = onnx.compose.merge_models(
+    model1, model2,
+    io_map=[('C', 'X'), ('D', 'Y')]
+)
+```
+
+Additionally, a user can specify a list of `inputs`/`outputs` to be included in the combined model,
+effectively dropping the part of the graph that doesn't contribute to the combined model outputs.
+In the following example, we are connecting only one of the two outputs in the first model
+to both inputs in the second. By specifying the outputs of the combined model explicitly, we are dropping the output not consumed from the first model, and the relevant part of the graph:
+```python
+import onnx
+
+# Default case. Include all outputs in the combined model
+combined_model = onnx.compose.merge_models(
+    model1, model2,
+    io_map=[('C', 'X'), ('C', 'Y')],
+)  # outputs: 'D', 'Z'
+
+# Explicit outputs. 'Y' output and the Sub node are not present in the combined model
+combined_model = onnx.compose.merge_models(
+    model1, model2,
+    io_map=[('C', 'X'), ('C', 'Y')],
+    outputs=['Z'],
+)  # outputs: 'Z'
+```
+
+`onnx.compose.add_prefix` allows you to add a prefix to names in the model, to avoid a name collision
+when merging them. By default, it renames all names in the graph: inputs, outputs, edges, nodes,
+initializers, sparse initializers and value infos.
+
+```python
+import onnx
+
+model = onnx.load('path/to/the/model.onnx')
+# model - outputs: ['out0', 'out1'], inputs: ['in0', 'in1']
+
+new_model = onnx.compose.add_prefix(model, prefix='m1/')
+# new_model - outputs: ['m1/out0', 'm1/out1'], inputs: ['m1/in0', 'm1/in1']
+
+# Can also be run in-place
+onnx.compose.add_prefix(model, prefix='m1/', inplace=True)
+```
+
+`onnx.compose.expand_out_dim` can be used to connect models that expect a different number
+ of dimensions by inserting dimensions with extent one. This can be useful, when combining a
+ model producing samples with a model that works with batches of samples.
+
+```python
+import onnx
+
+# outputs: 'out0', shape=[200, 200, 3]
+model1 = onnx.load('path/to/the/model1.onnx')
+
+# outputs: 'in0', shape=[N, 200, 200, 3]
+model2 = onnx.load('path/to/the/model2.onnx')
+
+# outputs: 'out0', shape=[1, 200, 200, 3]
+new_model1 = onnx.compose.expand_out_dims(model1, dim_idx=0)
+
+# Models can now be merged
+combined_model = onnx.compose.merge_models(
+    new_model1, model2, io_map=[('out0', 'in0')]
+)
+
+# Can also be run in-place
+onnx.compose.expand_out_dims(model1, dim_idx=0, inplace=True)
+```
+
 ## Tools
 ### Updating Model's Inputs Outputs Dimension Sizes with Variable Length
 Function `update_inputs_outputs_dims` updates the dimension of the inputs and outputs of the model,
@@ -292,7 +386,7 @@ about the language syntax.
 
 ```python
 input = '''
-   agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+   agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
    {
         T = MatMul(X, W)
         S = Add(T, B)
@@ -306,7 +400,7 @@ input = '''
      ir_version: 7,
      opset_import: ["" : 10]
    >
-   agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+   agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
    {
       T = MatMul(X, W)
       S = Add(T, B)
