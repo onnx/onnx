@@ -5,23 +5,23 @@ jobs:
 
 - job: 'Test'
   pool:
-    vmImage: 'windows-2019'
+    vmImage: 'vs2017-win2016'
   strategy:
     matrix:
       py37:
-        python.version: '3.7'
+        python.version: '3.9'
         onnx_ml: 0
         onnx_verify_proto: 0
       py36:
-        python.version: '3.6'
+        python.version: '3.8'
         onnx_ml: 0
         onnx_verify_proto: 0
       py37_onnx_ml:
-        python.version: '3.7'
+        python.version: '3.9'
         onnx_ml: 1
         onnx_verify_proto: 0
       py36_verify_proto:
-        python.version: '3.6'
+        python.version: '3.8'
         onnx_ml: 0
         onnx_verify_proto: 1
     maxParallel: 4
