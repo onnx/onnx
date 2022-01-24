@@ -12,7 +12,6 @@ from __future__ import unicode_literals
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C
 from onnx import ModelProto
-from six import string_types, binary_type
 from typing import Text, Union
 
 """Apply shape inference to the provided ModelProto.
@@ -37,11 +36,11 @@ Return:
 
 
 def infer_shapes(model, check_type=False, strict_mode=False, data_prop=False):  # type: (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
-    if isinstance(model, (ModelProto, binary_type)):
-        model_str = model if isinstance(model, binary_type) else model.SerializeToString()
+    if isinstance(model, (ModelProto, bytes)):
+        model_str = model if isinstance(model, bytes) else model.SerializeToString()
         inferred_model_str = C.infer_shapes(model_str, check_type, strict_mode, data_prop)
         return onnx.load_from_string(inferred_model_str)
-    elif isinstance(model, string_types):
+    elif isinstance(model, str):
         raise TypeError('infer_shapes only accepts ModelProto or bytes,'
                         'you can use infer_shapes_path for the model path (String).')
     else:
@@ -58,7 +57,7 @@ def infer_shapes_path(model_path, output_path='', check_type=False, strict_mode=
         raise TypeError('infer_shapes_path only accepts model Path (String),'
                         'you can use infer_shapes for the ModelProto.')
     # Directly output the inferred model into the specified path, return nothing
-    elif isinstance(model_path, string_types):
+    elif isinstance(model_path, str):
         # If output_path is not defined, default output_path would be the original model path
         if output_path == '':
             output_path = model_path

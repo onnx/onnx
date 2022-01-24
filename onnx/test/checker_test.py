@@ -106,6 +106,46 @@ class TestChecker(unittest.TestCase):
         graph.initializer[0].name = 'X'
         checker.check_graph(graph)
 
+    def test_check_graph_types(self):  # type: () -> None
+        # This is for https://github.com/onnx/onnx/issues/3849.
+        # It confirms that type checking is performed
+        # when checker.check_model is called with full_check=True
+
+        node_div = helper.make_node(
+            "Div", ["X", "Y"], ["Z"], name="test_div")
+        node_identity = helper.make_node(
+            "Identity", ["Z"], ["W"], name="test_identity")
+
+        graph = helper.make_graph(
+            [node_div, node_identity],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+                # intentionally use a BOOL type which is not supported by the Div op.
+                helper.make_tensor_value_info("Y", TensorProto.BOOL, [1, 2])],
+            [helper.make_tensor_value_info("W", TensorProto.FLOAT, [1, 2])])
+
+        model = helper.make_model(graph, producer_name='test')
+
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
+
+        checker.check_graph(graph)
+
+        graph = helper.make_graph(
+            [node_div, node_identity],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+                # intentionally use a Int32 type which is in conflict with Div's other input X.
+                helper.make_tensor_value_info("Y", TensorProto.INT32, [1, 2])],
+            [helper.make_tensor_value_info("W", TensorProto.FLOAT, [1, 2])])
+
+        model = helper.make_model(graph, producer_name='test')
+
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
+
+        checker.check_graph(graph)
+
     def test_check_graph_empty_initializer_name(self):  # type: () -> None
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
