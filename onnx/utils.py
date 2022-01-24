@@ -132,7 +132,7 @@ class Extractor:
             outputs,  # type: List[ValueInfoProto]
             initializer,  # type: List[TensorProto]
             value_info,  # type: List[ValueInfoProto]
-            local_functions # type: List[FunctionProto]
+            local_functions  # type: List[FunctionProto]
     ):  # type: (...) -> ModelProto
         name = 'Extracted from {' + self.graph.name + '}'
         graph = onnx.helper.make_graph(nodes, name, inputs, outputs, initializer=initializer,

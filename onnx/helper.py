@@ -171,6 +171,7 @@ def make_opsetid(domain, version):  # type: (Text, int) -> OperatorSetIdProto
     opsetid.version = version
     return opsetid
 
+
 def make_function(
     domain,  # type: Text
     fname,  # type: Text
@@ -187,6 +188,7 @@ def make_function(
     f.node.extend(nodes)
     f.opset_import.extend(opset_imports)
     return f
+
 
 def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
     model = ModelProto()

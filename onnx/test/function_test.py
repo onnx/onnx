@@ -13,8 +13,8 @@ class TestFunction(unittest.TestCase):
 
         # function common
         func_domain = 'local'
-        func_opset_imports=[onnx.helper.make_opsetid("", 14)]
-        func_nested_opset_imports=[
+        func_opset_imports = [onnx.helper.make_opsetid("", 14)]
+        func_nested_opset_imports = [
             onnx.helper.make_opsetid("", 14), onnx.helper.make_opsetid(func_domain, 1)]
 
         # add function
@@ -50,8 +50,7 @@ class TestFunction(unittest.TestCase):
         func_nested_identity_add_nodes = [
             onnx.helper.make_node('func_identity', ['a'], ['a1'], domain=func_domain),
             onnx.helper.make_node('func_identity', ['b'], ['b1'], domain=func_domain),
-            onnx.helper.make_node('func_add', ['a1', 'b1'], ['c'], domain=func_domain)
-            ]
+            onnx.helper.make_node('func_add', ['a1', 'b1'], ['c'], domain=func_domain)]
         func_nested_identity_add = onnx.helper.make_function(
             func_domain,
             func_nested_identity_add_name,
@@ -78,11 +77,10 @@ class TestFunction(unittest.TestCase):
             ['o_all_func1'],
             domain=func_domain)
 
-        model_name = 'model_with_imbedded_functions'
         graph_name = 'graph_with_imbedded_functions'
         ir_version = 8
         opset_imports = [onnx.helper.make_opsetid("", 14), onnx.helper.make_opsetid("local", 1)]
-        tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=2, shape=[5])        
+        tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=2, shape=[5])
 
         graph = onnx.helper.make_graph(
             [node_func_add, node_add0, node_add1, node_func_identity, node_identity,
@@ -105,7 +103,6 @@ class TestFunction(unittest.TestCase):
             'functions': [func_identity, func_add, func_nested_identity_add],
         }
         model = onnx.helper.make_model(graph, **meta)
-
 
         checker.check_model(model)
         extracted_with_no_funcion = utils.Extractor(model).extract_model(['i0', 'i1', 'i2'], ['o_no_func'])
