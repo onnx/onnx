@@ -559,7 +559,8 @@ void InferShapes(
 void InferShapesAndDataPropagation(
     ModelProto& m,
     std::unordered_map<std::string, TensorShapeProto>& generatedShapeDataByName,
-    const ISchemaRegistry* schema_registry) {
+    const ISchemaRegistry* schema_registry,
+    const ShapeInferenceOptions& options) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
@@ -567,7 +568,8 @@ void InferShapesAndDataPropagation(
   auto* g = m.mutable_graph();
   SymbolTableImpl symbolTable;
   traverseGraphsToAddExistingSymbols(*g, symbolTable);
-  ShapeInferenceOptions options{true, 1, true};
+  // Force data propagation
+  ShapeInferenceOptions optionsWithDataPropagation{options.check_type, options.error_mode, true};
 
   InferShapesImpl(
       g,
