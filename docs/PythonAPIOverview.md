@@ -386,7 +386,7 @@ about the language syntax.
 
 ```python
 input = '''
-   agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+   agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
    {
         T = MatMul(X, W)
         S = Add(T, B)
@@ -400,7 +400,7 @@ input = '''
      ir_version: 7,
      opset_import: ["" : 10]
    >
-   agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+   agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
    {
       T = MatMul(X, W)
       S = Add(T, B)
