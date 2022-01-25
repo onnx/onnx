@@ -120,7 +120,7 @@ class PkgWriter(object):
 
     @contextmanager  # type: ignore
     def _indent(self):
-        # type: () -> Generator
+        # type: () -> Generator[None, None, None]
         self.indent = self.indent + "    "
         yield
         self.indent = self.indent[:-4]
