@@ -180,7 +180,7 @@ def make_function(
     nodes,  # type: Sequence[NodeProto]
     opset_imports,  # type: Sequence[OperatorSetIdProto]
     attributes=[],  # type: Optional[Sequence[Text]]
-    doc_string=''  # type: Optional[Text]
+    doc_string=None  # type: Optional[Text]
 ):  # type: (...) -> FunctionProto
     f = FunctionProto()
     f.domain = domain
@@ -190,7 +190,8 @@ def make_function(
     f.node.extend(nodes)
     f.opset_import.extend(opset_imports)
     f.attribute.extend(attributes)
-    f.doc_string = doc_string
+    if doc_string:
+        f.doc_string = doc_string
     return f
 
 
