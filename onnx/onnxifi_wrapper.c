@@ -347,11 +347,12 @@ ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
     if (backend_ids == NULL) {
       status = ONNXIFI_STATUS_NO_SYSTEM_MEMORY;
       goto error;
+    } else {
+      /* Safety precaution to avoid dangling pointer bugs */
+      memset(backend_ids, 0, num_expected_ids * sizeof(onnxBackendID));
     }
   }
 
-  /* Safety precaution to avoid dangling pointer bugs */
-  memset(backend_ids, 0, num_expected_ids * sizeof(onnxBackendID));
   for (size_t l = 0; l < num_libraries; l++) {
     if (num_expected_ids > num_available_ids) {
       /* Query and wrap backend IDs from ONNXIFI library */
