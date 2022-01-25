@@ -9,7 +9,43 @@ from onnx import checker, parser, utils
 
 
 class TestFunction(unittest.TestCase):
+    def _verify_function_set(self, extracted_model, function_set, func_domain):  # type: ignore
+        checker.check_model(extracted_model)
+        self.assertEqual(len(extracted_model.functions), len(function_set))
+        for function in function_set:
+            self.assertIsNotNone(
+                next((f for f in extracted_model.functions
+                if f.name == function and f.domain == func_domain), None))
+
     def test_extract_model_with_local_function(self):  # type: () -> None
+        '''
+        #   1. build a model with graph below. extract models with output combinations
+        #   2. validate extracted models' local functions
+        #
+        # model graph:
+        #      i0                    i1                 i2
+        #      |   __________________|__________________/_________
+        #      |  |                  |             |   /          |
+        #      |  |                  |             |  /           |
+        #   func_add        func_identity          add         identity
+        #    |  ___\___________\____________________|_________    |
+        #    | |    \           \                   |  _______|___|
+        #    | |     \           \                  | |       |   |
+        #    add     function_nested_identity_add   add     function_nested_identity_add
+        #     |                 |                    |              |
+        #     |                 |                    |              |
+        #   o_func_add      o_all_func0           o_no_func     o_all_func1
+        #
+        # where function_nested_identity_add is a function that is defined with functions:
+        #       a               b
+        #       |               |
+        #   func_identity   func_identity
+        #             \       /
+        #             func_add
+        #                |
+        #                c
+        #
+        '''  # noqa: W605
 
         # function common
         func_domain = 'local'
@@ -106,53 +142,29 @@ class TestFunction(unittest.TestCase):
 
         checker.check_model(model)
         extracted_with_no_funcion = utils.Extractor(model).extract_model(['i0', 'i1', 'i2'], ['o_no_func'])
-        checker.check_model(extracted_with_no_funcion)
-        self.assertEqual(len(extracted_with_no_funcion.functions), 0)
+        self._verify_function_set(extracted_with_no_funcion, {}, func_domain)
 
         extracted_with_add_funcion = utils.Extractor(model).extract_model(['i0', 'i1', 'i2'], ['o_func_add'])
-        checker.check_model(extracted_with_add_funcion)
-        self.assertEqual(len(extracted_with_add_funcion.functions), 1)
-        self.assertTrue(extracted_with_add_funcion.functions[0].name == func_add_name)
+        self._verify_function_set(extracted_with_add_funcion, {func_add_name}, func_domain)
 
         extracted_with_o_all_funcion0 = utils.Extractor(model).extract_model(['i0', 'i1', 'i2'], ['o_all_func0'])
-        checker.check_model(extracted_with_o_all_funcion0)
-        self.assertEqual(len(extracted_with_o_all_funcion0.functions), 3)
-        self.assertIsNotNone(
-            next((f for f in extracted_with_o_all_funcion0.functions
-            if f.name == func_add_name and f.domain == func_domain), None))
-        self.assertIsNotNone(
-            next((f for f in extracted_with_o_all_funcion0.functions
-            if f.name == func_identity_name and f.domain == func_domain), None))
-        self.assertIsNotNone(
-            next((f for f in extracted_with_o_all_funcion0.functions
-            if f.name == func_nested_identity_add_name and f.domain == func_domain), None))
+        self._verify_function_set(
+            extracted_with_o_all_funcion0,
+            {func_add_name, func_identity_name, func_nested_identity_add_name},
+            func_domain)
 
         extracted_with_o_all_funcion1 = utils.Extractor(model).extract_model(['i0', 'i1', 'i2'], ['o_all_func1'])
-        checker.check_model(extracted_with_o_all_funcion1)
-        self.assertEqual(len(extracted_with_o_all_funcion1.functions), 3)
-        self.assertIsNotNone(
-            next((f for f in extracted_with_o_all_funcion1.functions
-            if f.name == func_add_name and f.domain == func_domain), None))
-        self.assertIsNotNone(
-            next((f for f in extracted_with_o_all_funcion1.functions
-            if f.name == func_identity_name and f.domain == func_domain), None))
-        self.assertIsNotNone(
-            next((f for f in extracted_with_o_all_funcion1.functions
-            if f.name == func_nested_identity_add_name and f.domain == func_domain), None))
+        self._verify_function_set(
+            extracted_with_o_all_funcion1,
+            {func_add_name, func_identity_name, func_nested_identity_add_name},
+            func_domain)
 
         extracted_with_o_all_funcion2 = utils.Extractor(model).extract_model(
-            ['i0', 'i1', 'i2'], ['o_no_func', 'o_func_add', 'o_all_func0, o_all_func1'])
-        checker.check_model(extracted_with_o_all_funcion2)
-        self.assertEqual(len(extracted_with_o_all_funcion2.functions), 3)
-        self.assertIsNotNone(
-            next((f for f in extracted_with_o_all_funcion2.functions
-            if f.name == func_add_name and f.domain == func_domain), None))
-        self.assertIsNotNone(
-            next((f for f in extracted_with_o_all_funcion2.functions
-            if f.name == func_identity_name and f.domain == func_domain), None))
-        self.assertIsNotNone(
-            next((f for f in extracted_with_o_all_funcion2.functions
-            if f.name == func_nested_identity_add_name and f.domain == func_domain), None))
+            ['i0', 'i1', 'i2'], ['o_no_func', 'o_func_add', 'o_all_func0', 'o_all_func1'])
+        self._verify_function_set(
+            extracted_with_o_all_funcion2,
+            {func_add_name, func_identity_name, func_nested_identity_add_name},
+            func_domain)
 
 
 if __name__ == '__main__':
