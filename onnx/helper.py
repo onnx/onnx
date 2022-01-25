@@ -175,10 +175,12 @@ def make_opsetid(domain, version):  # type: (Text, int) -> OperatorSetIdProto
 def make_function(
     domain,  # type: Text
     fname,  # type: Text
-    inputs,  # type: List[Text]
-    outputs,  # type: List[Text]
-    nodes,  # type: List[NodeProto]
-    opset_imports,    # type: Sequence[OperatorSetIdProto]
+    inputs,  # type: Sequence[Text]
+    outputs,  # type: Sequence[Text]
+    nodes,  # type: Sequence[NodeProto]
+    opset_imports,  # type: Sequence[OperatorSetIdProto]
+    attributes=[],  # type: Optional[Sequence[Text]]
+    doc_string=''  # type: Optional[Text]
 ):  # type: (...) -> FunctionProto
     f = FunctionProto()
     f.domain = domain
@@ -187,6 +189,8 @@ def make_function(
     f.output.extend(outputs)
     f.node.extend(nodes)
     f.opset_import.extend(opset_imports)
+    f.attribute.extend(attributes)
+    f.doc_string = doc_string
     return f
 
 
