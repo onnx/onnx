@@ -83,17 +83,17 @@ class Extractor:
             self,
             nodes,  # type: List[NodeProto]
     ):  # type: (...) -> List[FunctionProto]
-        # a node in the model graph may refer a function.
+        # a node in a model graph may refer a function.
         # a function contains nodes, some of which may in turn refer a function.
         # we need to find functions referred by graph nodes and
         # by nodes used to define functions.
         def find_referred_funcs(nodes, referred_local_functions):  # type: ignore
-            new_nodes = []  # type: ignore
-            for n in nodes:
+            new_nodes = []  # type: List[NodeProto]
+            for node in nodes:
                 # check if the node is a function op
                 match_function = next((
                     f for f in self.model.functions
-                    if f.name == n.op_type and f.domain == n.domain),
+                    if f.name == node.op_type and f.domain == node.domain),
                     None)
                 if match_function and match_function not in referred_local_functions:
                     referred_local_functions.append(match_function)
@@ -101,7 +101,7 @@ class Extractor:
 
             return new_nodes
 
-        referred_local_functions = []  # type: ignore
+        referred_local_functions = []  # type: List[FunctionProto]
         new_nodes = find_referred_funcs(nodes, referred_local_functions)
         while new_nodes:
             new_nodes = find_referred_funcs(new_nodes, referred_local_functions)

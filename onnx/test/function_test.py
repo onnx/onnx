@@ -140,6 +140,20 @@ class TestFunction(unittest.TestCase):
             next((f for f in extracted_with_o_all_funcion1.functions
             if f.name == func_nested_identity_add_name and f.domain == func_domain), None))
 
+        extracted_with_o_all_funcion2 = utils.Extractor(model).extract_model(
+            ['i0', 'i1', 'i2'], ['o_no_func', 'o_func_add', 'o_all_func0, o_all_func1'])
+        checker.check_model(extracted_with_o_all_funcion2)
+        self.assertEqual(len(extracted_with_o_all_funcion2.functions), 3)
+        self.assertIsNotNone(
+            next((f for f in extracted_with_o_all_funcion2.functions
+            if f.name == func_add_name and f.domain == func_domain), None))
+        self.assertIsNotNone(
+            next((f for f in extracted_with_o_all_funcion2.functions
+            if f.name == func_identity_name and f.domain == func_domain), None))
+        self.assertIsNotNone(
+            next((f for f in extracted_with_o_all_funcion2.functions
+            if f.name == func_nested_identity_add_name and f.domain == func_domain), None))
+
 
 if __name__ == '__main__':
     unittest.main()
