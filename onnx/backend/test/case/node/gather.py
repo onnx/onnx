@@ -15,7 +15,7 @@ from . import expect
 class Gather(Base):
 
     @staticmethod
-    def export_gather_0():  # type: () -> None
+    def export_gather_0() -> None:
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],
@@ -30,7 +30,7 @@ class Gather(Base):
                name='test_gather_0')
 
     @staticmethod
-    def export_gather_1():  # type: () -> None
+    def export_gather_1() -> None:
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],
@@ -45,7 +45,7 @@ class Gather(Base):
                name='test_gather_1')
 
     @staticmethod
-    def export_gather_2d_indices():  # type: () -> None
+    def export_gather_2d_indices() -> None:
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],
@@ -60,7 +60,7 @@ class Gather(Base):
                name='test_gather_2d_indices')
 
     @staticmethod
-    def export_gather_negative_indices():  # type: () -> None
+    def export_gather_negative_indices() -> None:
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],

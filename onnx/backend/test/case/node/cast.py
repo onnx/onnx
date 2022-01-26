@@ -21,7 +21,7 @@ import sys
 class Cast(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         shape = (3, 4)
         test_cases = [
             ('FLOAT', 'FLOAT16'),

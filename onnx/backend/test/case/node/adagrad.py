@@ -30,7 +30,7 @@ def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # ty
 class Adagrad(Base):
 
     @staticmethod
-    def export_adagrad():  # type: () -> None
+    def export_adagrad() -> None:
         # Define operator attributes.
         norm_coefficient = 0.001
         epsilon = 1e-5
@@ -63,7 +63,7 @@ class Adagrad(Base):
                opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 
     @staticmethod
-    def export_adagrad_multiple():  # type: () -> None
+    def export_adagrad_multiple() -> None:
         # Define operator attributes.
         norm_coefficient = 0.001
         epsilon = 1e-5

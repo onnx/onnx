@@ -15,7 +15,7 @@ from . import expect
 class Sign(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Sign',
             inputs=['x'],

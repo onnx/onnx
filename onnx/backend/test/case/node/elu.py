@@ -15,7 +15,7 @@ from . import expect
 class Elu(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Elu',
             inputs=['x'],
@@ -35,7 +35,7 @@ class Elu(Base):
                name='test_elu')
 
     @staticmethod
-    def export_elu_default():  # type: () -> None
+    def export_elu_default() -> None:
         default_alpha = 1.0
         node = onnx.helper.make_node(
             'Elu',
