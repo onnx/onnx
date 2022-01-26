@@ -885,7 +885,7 @@ private:
   std::vector<Tensor> initializers_;
   std::vector<std::string> initializer_names_;
   // Store a name to offset map for erasing initializer node
-  std::map<std::string, int> initializer_offset_;
+  std::map<std::string, int> initializer_to_offset_map_;
 
   bool has_name_;
   std::string name_;
@@ -955,22 +955,21 @@ public:
     if (initializer.name().empty()) {
       initializer.setName(ONNX_NAMESPACE::to_string(getNextUnique()));
     }
-    Tensor initializerCopy = initializer;
-    initializers_.push_back(std::move(initializerCopy));
-    initializer_names_.push_back(std::move(initializerCopy.name()));
+    initializers_.push_back(initializer);
+    initializer_names_.push_back(initializer.name());
   }
   
   // For IR >= 4, initializer is not required to exist in input
   // Add initializer into initializer node list and return its Value
   Value* addInitializerAndCreateValue(Tensor& initializer) {
     addInitializer(initializer);
-    Value* init_value = initializer_node_->addOutput();
+    auto* init_value = initializer_node_->addOutput();
     std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(),
                                     initializer.sizes().cend()};
     init_value->setUniqueName(initializer.name());
     init_value->setSizes(dim_sizes);
     init_value->setElemType(initializer.elem_type());
-    initializer_offset_[initializer.name()] = init_value->offset();
+    initializer_to_offset_map_[initializer.name()] = init_value->offset();
     return init_value;
   }
 
@@ -989,9 +988,9 @@ public:
             initializer_names_.end(),
             name),
         initializer_names_.end());
-    if (initializer_offset_.count(name) > 0) {
-      initializer_node_->eraseOutput(initializer_offset_[name]);
-      initializer_offset_.erase(name);
+    if (initializer_to_offset_map_.count(name) > 0) {
+      initializer_node_->eraseOutput(initializer_to_offset_map_[name]);
+      initializer_to_offset_map_.erase(name);
     }
   }
   void clearInitializers() {
@@ -1143,7 +1142,7 @@ public:
     new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializerCopy.elem_type());
-    addInitializer(initializerCopy);
+    addInitializer(std::move(initializerCopy));
     return new_init;
   }
 
