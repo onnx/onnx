@@ -1142,7 +1142,7 @@ public:
     new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializerCopy.elem_type());
-    addInitializer(std::move(initializerCopy));
+    addInitializer(initializerCopy);
     return new_init;
   }
 
