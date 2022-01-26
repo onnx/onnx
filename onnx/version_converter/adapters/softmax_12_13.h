@@ -19,7 +19,7 @@ class Softmax_12_13 final : public Adapter {
       int old_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 1;
       int input_rank = node->inputs()[0]->sizes().size();
 
-      if(old_axis < 0) old_axis = input_rank + old_axis + 1;
+      if(old_axis < 0) old_axis = input_rank + old_axis;
 
       if(old_axis == input_rank - 1)
         node->i_(kaxis, -1);
@@ -48,6 +48,10 @@ class Softmax_12_13 final : public Adapter {
 
         // Set shape input of Reshape
         const std::vector<Dimension>& target_shape = flatten->inputs()[0]->sizes();
+
+        ONNX_ASSERTM(target_shape.size() != 0, "Version conversion for Softmax failed because "
+          "input shape is unknown.");
+
         Tensor t;
         t.elem_type() = TensorProto_DataType_INT64;
         t.sizes() = std::vector<int64_t> {static_cast<int64_t>(target_shape.size())};

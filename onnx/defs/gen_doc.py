@@ -10,7 +10,6 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import io
 import os
-import sys
 
 import numpy as np  # type: ignore
 
@@ -146,7 +145,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
                         if (len(formatted) > 10):
                             formatted = str("({:e})".format(value))
                         return formatted
-                    elif isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
+                    elif isinstance(value, (bytes, bytearray)):
                         return str(value.decode('utf-8'))
                     return str(value)
 

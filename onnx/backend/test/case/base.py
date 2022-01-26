@@ -11,7 +11,6 @@ from textwrap import dedent
 from typing import Dict, Text, List, Tuple, Type, Sequence, Any
 
 import numpy as np  # type: ignore
-from six import add_metaclass
 
 
 def process_snippet(op_name, name, export):  # type: (Text, Text, Any) -> Tuple[Text, Text]
@@ -45,6 +44,5 @@ class _Exporter(type):
         super(_Exporter, cls).__init__(name, bases, dct)
 
 
-@add_metaclass(_Exporter)
-class Base(object):
+class Base(object, metaclass=_Exporter):
     pass

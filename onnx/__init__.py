@@ -19,11 +19,11 @@ import onnx.checker  # noqa
 import onnx.defs  # noqa
 import onnx.helper  # noqa
 import onnx.utils  # noqa
+import onnx.compose  # noqa
 
 import google.protobuf.message
 
 from typing import Union, Text, IO, Optional, cast, TypeVar, Any
-from six import string_types
 
 
 # f should be either readable or a file path
@@ -48,7 +48,7 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
 
 # f should be either a readable file or a file path
 def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[Text]
-    if isinstance(f, string_types):
+    if isinstance(f, str):
         return os.path.abspath(f)
     if hasattr(f, 'name'):
         return os.path.abspath(f.name)

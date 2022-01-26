@@ -94,7 +94,8 @@ First input is the data tensor, second input is a shape tensor which specifies t
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -243,7 +244,8 @@ First input is the data tensor, second input is a shape tensor which specifies t
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -981,7 +983,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               perm.push_back(i);
           } else if (!perm.empty()) {
             // check if every index is valid
-            for (int64_t fromDimIndex : perm)
+            std::vector<bool> seen(shape.dim_size(), false);
+            for (int64_t fromDimIndex : perm) {
               if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
@@ -997,7 +1000,14 @@ ONNX_OPERATOR_SET_SCHEMA(
                   oss << "}";
                 }
                 fail_type_inference(oss.str());
+              } else {
+                // check if any perm is repeated
+                if (seen[fromDimIndex]) {
+                  fail_type_inference("Attribute perm for Transpose has repeated value: ", fromDimIndex);
+                }
+                seen[fromDimIndex] = true;
               }
+            }
           }
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2867,7 +2877,8 @@ It takes a tensor as input and an argument `shape`. It outputs the reshaped tens
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -3184,8 +3195,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               starts.size() != ends.size()) {
             fail_shape_inference(
                 "Incorrect or missing attribute value for starts and ends");
-            ;
           }
+
           std::vector<int64_t> axes;
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
             for (int i = 0; (size_t)i < starts.size(); ++i) {
@@ -3193,9 +3204,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           } else if (axes.size() != starts.size()) {
             fail_shape_inference("Attribute axes has incorrect length");
-            ;
           } else if (!std::is_sorted(axes.begin(), axes.end())) {
             // TODO support shape inference for unsorted axes
+            return;
+          }
+
+          auto is_negative = [](int64_t index) {
+            return index < 0;
+          };
+          if (std::any_of(starts.begin(), starts.end(), is_negative) ||
+              std::any_of(ends.begin(), ends.end(), is_negative) ||
+              std::any_of(axes.begin(), axes.end(), is_negative)) {
+            // Negative axes were not explicitly discussed in the spec before opset-10.
+            // Hence, they are officially not part of the spec, but some models/runtimes may use them.
+            // So we perform simple rank inference in this case.
+            for (size_t i = 0; (int64_t)i <
+                ctx.getInputType(0)->tensor_type().shape().dim_size();
+                ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 
@@ -4418,17 +4445,18 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Where_ver9_doc = R"DOC(
-    Return elements, either from X or Y, depending on condition
-    (with Numpy-style broadcasting support).
-    Where behaves like numpy.where with three parameters:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+Return elements, either from X or Y, depending on condition.
+Where behaves like
+[numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+with three parameters.
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
     9,
     OpSchema()
-        .SetDoc(Where_ver9_doc)
+        .SetDoc(Where_ver9_doc + GenerateBroadcastingDocMul())
         .Input(
             0,
             "condition",

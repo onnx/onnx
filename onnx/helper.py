@@ -7,12 +7,12 @@ from __future__ import unicode_literals
 
 import collections.abc  # type: ignore
 import numbers
-from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
     TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
-    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto
+    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto, \
+    FunctionProto
 from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
@@ -24,7 +24,7 @@ VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, in
 VersionTableType = List[VersionRowType]
 AssignmentBindingType = List[Tuple[Text, Text]]
 
-# This is a copy of the documented version in https://github.com/onnx/onnx/blob/master/docs/Versioning.md#released-versions
+# This is a copy of the documented version in https://github.com/onnx/onnx/blob/main/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
 VERSION_TABLE = [
     # Release-version, IR version, ai.onnx version, ai.onnx.ml version, (optional) ai.onnx.training version
@@ -172,6 +172,29 @@ def make_opsetid(domain, version):  # type: (Text, int) -> OperatorSetIdProto
     return opsetid
 
 
+def make_function(
+    domain,  # type: Text
+    fname,  # type: Text
+    inputs,  # type: Sequence[Text]
+    outputs,  # type: Sequence[Text]
+    nodes,  # type: Sequence[NodeProto]
+    opset_imports,  # type: Sequence[OperatorSetIdProto]
+    attributes=[],  # type: Optional[Sequence[Text]]
+    doc_string=None  # type: Optional[Text]
+):  # type: (...) -> FunctionProto
+    f = FunctionProto()
+    f.domain = domain
+    f.name = fname
+    f.input.extend(inputs)
+    f.output.extend(outputs)
+    f.node.extend(nodes)
+    f.opset_import.extend(opset_imports)
+    f.attribute.extend(attributes)
+    if doc_string:
+        f.doc_string = doc_string
+    return f
+
+
 def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
@@ -187,6 +210,11 @@ def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         # Default import
         imp = model.opset_import.add()
         imp.version = defs.onnx_opset_version()
+
+    functions = None  # type: Optional[Sequence[FunctionProto]]
+    functions = kwargs.pop('functions', None)  # type: ignore
+    if functions is not None:
+        model.functions.extend(functions)
 
     for k, v in kwargs.items():
         # TODO: Does this work with repeated fields?
@@ -505,14 +533,14 @@ def make_tensor_type_proto(
             dim = tensor_shape_proto.dim.add()
             if d is None:
                 pass
-            elif isinstance(d, integer_types):
+            elif isinstance(d, int):
                 dim.dim_value = d
-            elif isinstance(d, text_type):
+            elif isinstance(d, str):
                 dim.dim_param = d
             else:
                 raise ValueError(
                     'Invalid item in shape: {}. '
-                    'Needs to be of integer_types or text_type.'.format(d))
+                    'Needs to be of int or str.'.format(d))
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
@@ -570,14 +598,14 @@ def make_sparse_tensor_type_proto(
             dim = sparse_tensor_shape_proto.dim.add()
             if d is None:
                 pass
-            elif isinstance(d, integer_types):
+            elif isinstance(d, int):
                 dim.dim_value = d
-            elif isinstance(d, text_type):
+            elif isinstance(d, str):
                 dim.dim_param = d
             else:
                 raise ValueError(
                     'Invalid item in shape: {}. '
-                    'Needs to be of integer_types or text_type.'.format(d))
+                    'Needs to be of int or text.'.format(d))
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
@@ -637,9 +665,9 @@ def make_value_info(
 
 
 def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
-    if isinstance(s, text_type):
+    if isinstance(s, str):
         sanitized = s
-    elif isinstance(s, binary_type):
+    elif isinstance(s, bytes):
         sanitized = s.decode('utf-8', errors='ignore')
     else:
         sanitized = str(s)
