@@ -12,7 +12,7 @@ import onnx.checker
 import onnx.helper
 import onnx.shape_inference
 
-from onnx import ModelProto, NodeProto, TensorProto, ValueInfoProto
+from onnx import ModelProto, NodeProto, TensorProto, ValueInfoProto, FunctionProto
 
 
 class Extractor:
@@ -79,6 +79,35 @@ class Extractor:
         nodes = [n for n in self.graph.node if n in reachable_nodes]
         return nodes
 
+    def _collect_referred_local_functions(
+            self,
+            nodes,  # type: List[NodeProto]
+    ):  # type: (...) -> List[FunctionProto]
+        # a node in a model graph may refer a function.
+        # a function contains nodes, some of which may in turn refer a function.
+        # we need to find functions referred by graph nodes and
+        # by nodes used to define functions.
+        def find_referred_funcs(nodes, referred_local_functions):  # type: ignore
+            new_nodes = []  # type: List[NodeProto]
+            for node in nodes:
+                # check if the node is a function op
+                match_function = next((
+                    f for f in self.model.functions
+                    if f.name == node.op_type and f.domain == node.domain),
+                    None)
+                if match_function and match_function not in referred_local_functions:
+                    referred_local_functions.append(match_function)
+                    new_nodes.extend(match_function.node)
+
+            return new_nodes
+
+        referred_local_functions = []  # type: List[FunctionProto]
+        new_nodes = find_referred_funcs(nodes, referred_local_functions)
+        while new_nodes:
+            new_nodes = find_referred_funcs(new_nodes, referred_local_functions)
+
+        return referred_local_functions
+
     def _collect_reachable_tensors(
             self,
             nodes,  # type: List[NodeProto]
@@ -102,7 +131,8 @@ class Extractor:
             inputs,  # type: List[ValueInfoProto]
             outputs,  # type: List[ValueInfoProto]
             initializer,  # type: List[TensorProto]
-            value_info  # type: List[ValueInfoProto]
+            value_info,  # type: List[ValueInfoProto]
+            local_functions  # type: List[FunctionProto]
     ):  # type: (...) -> ModelProto
         name = 'Extracted from {' + self.graph.name + '}'
         graph = onnx.helper.make_graph(nodes, name, inputs, outputs, initializer=initializer,
@@ -112,6 +142,7 @@ class Extractor:
             'ir_version': self.model.ir_version,
             'opset_imports': self.model.opset_import,
             'producer_name': 'onnx.utils.extract_model',
+            'functions': local_functions,
         }
         return onnx.helper.make_model(graph, **meta)
 
@@ -124,7 +155,8 @@ class Extractor:
         outputs = self._collect_new_outputs(output_names)
         nodes = self._collect_reachable_nodes(input_names, output_names)
         initializer, value_info = self._collect_reachable_tensors(nodes)
-        model = self._make_model(nodes, inputs, outputs, initializer, value_info)
+        local_functions = self._collect_referred_local_functions(nodes)
+        model = self._make_model(nodes, inputs, outputs, initializer, value_info, local_functions)
 
         return model
 
