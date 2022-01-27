@@ -52,6 +52,34 @@ GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is gener
 HEADER = "# {} by generate_proto_mypy_stubs.py.  Do not edit!\n".format(GENERATED)
 
 
+class Descriptors(object):
+
+    def __init__(self, request: plugin.CodeGeneratorRequest) -> None:
+        files = {f.name: f for f in request.proto_file}
+        to_generate = {n: files[n] for n in request.file_to_generate}
+        self.files: Dict[Text, d.FileDescriptorProto] = files
+        self.to_generate: Dict[Text, d.FileDescriptorProto] = to_generate
+        self.messages: Dict[Text, d.DescriptorProto] = {}
+        self.message_to_fd: Dict[Text, d.FileDescriptorProto] = {}
+
+        def _add_enums(enums: d.EnumDescriptorProto, prefix: Text, fd: d.FileDescriptorProto) -> None:
+            for enum in enums:
+                self.message_to_fd[prefix + enum.name] = fd
+
+        def _add_messages(messages: d.DescriptorProto, prefix: Text, fd: d.FileDescriptorProto) -> None:
+            for message in messages:
+                self.messages[prefix + message.name] = message
+                self.message_to_fd[prefix + message.name] = fd
+                sub_prefix = prefix + message.name + "."
+                _add_messages(message.nested_type, sub_prefix, fd)
+                _add_enums(message.enum_type, sub_prefix, fd)
+
+        for fd in request.proto_file:
+            start_prefix = "." + fd.package + "."
+            _add_messages(fd.message_type, start_prefix, fd)
+            _add_enums(fd.enum_type, start_prefix, fd)
+
+
 class PkgWriter(object):
     """Writes a single pyi file"""
 
@@ -290,33 +318,6 @@ def generate_mypy_stubs(descriptors: Descriptors, response: plugin.CodeGenerator
         output.content = HEADER + pkg_writer.write()
         print("Writing mypy to", output.name, file=sys.stderr)
 
-
-class Descriptors(object):
-
-    def __init__(self, request: plugin.CodeGeneratorRequest) -> None:
-        files = {f.name: f for f in request.proto_file}
-        to_generate = {n: files[n] for n in request.file_to_generate}
-        self.files: Dict[Text, d.FileDescriptorProto] = files
-        self.to_generate: Dict[Text, d.FileDescriptorProto] = to_generate
-        self.messages: Dict[Text, d.DescriptorProto] = {}
-        self.message_to_fd: Dict[Text, d.FileDescriptorProto] = {}
-
-        def _add_enums(enums: d.EnumDescriptorProto, prefix: Text, fd: d.FileDescriptorProto) -> None:
-            for enum in enums:
-                self.message_to_fd[prefix + enum.name] = fd
-
-        def _add_messages(messages: d.DescriptorProto, prefix: Text, fd: d.FileDescriptorProto) -> None:
-            for message in messages:
-                self.messages[prefix + message.name] = message
-                self.message_to_fd[prefix + message.name] = fd
-                sub_prefix = prefix + message.name + "."
-                _add_messages(message.nested_type, sub_prefix, fd)
-                _add_enums(message.enum_type, sub_prefix, fd)
-
-        for fd in request.proto_file:
-            start_prefix = "." + fd.package + "."
-            _add_messages(fd.message_type, start_prefix, fd)
-            _add_enums(fd.enum_type, start_prefix, fd)
 
 
 def main() -> None:
