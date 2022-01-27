@@ -324,7 +324,7 @@ class Runner(object):
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
 
-    def _load_proto(self, proto_filename: Text, target_list: List[Union[np.ndarray[Any], List[Any]]], model_type_proto: TypeProto) -> None:
+    def _load_proto(self, proto_filename: Text, target_list: List[Union[np.ndarray, List[Any]]], model_type_proto: TypeProto) -> None:
         with open(proto_filename, 'rb') as f:
             protobuf_content = f.read()
             if model_type_proto.HasField('sequence_type'):

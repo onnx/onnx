@@ -18,7 +18,7 @@ def combine_pairs_to_complex(fa: Sequence[int]) -> Sequence[np.complex64]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def to_array(tensor: TensorProto, base_dir: Text = "") -> np.ndarray[Any]:
+def to_array(tensor: TensorProto, base_dir: Text = "") -> np.ndarray:
     """Converts a tensor def object to a numpy array.
 
     Inputs:
@@ -81,7 +81,7 @@ def to_array(tensor: TensorProto, base_dir: Text = "") -> np.ndarray[Any]:
         )
 
 
-def from_array(arr: np.ndarray[Any], name: Optional[Text] = None) -> TensorProto:
+def from_array(arr: np.ndarray, name: Optional[Text] = None) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
     Inputs:
@@ -213,7 +213,7 @@ def from_list(lst: List[Any], name: Optional[Text] = None, dtype: Optional[int] 
     return sequence
 
 
-def to_dict(map: MapProto) -> np.ndarray[Any]:
+def to_dict(map: MapProto) -> np.ndarray:
     """Converts a map def to a Python dictionary.
 
     Inputs:

@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from onnx import checker, helper, numpy_helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
 from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
 from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
-from typing import Sequence, Union, Text, Tuple, List, Any, Optional
+from typing import Sequence, Union, Text, Tuple, Type, List, Any, Optional
 import onnx.shape_inference
 import unittest
 import os
@@ -17,7 +17,10 @@ import numpy as np  # type: ignore
 
 class TestShapeInference(unittest.TestCase):
     def _make_graph(self,
-                    seed_values: Sequence[Union[Text, Tuple[Text, TensorProto.DataType, Any]]],
+                    # TODO: Use proper type annotation rather than string
+                    # once we drop support for Python 3.6.
+                    # See https://www.python.org/dev/peps/pep-0563/
+                    seed_values: Sequence[Union[Text, Tuple[Text, 'TensorProto.DataType', Any]]],
                     nodes: List[NodeProto],
                     value_info: List[ValueInfoProto],
                     initializer: Optional[Sequence[TensorProto]] = None
