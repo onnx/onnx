@@ -14,6 +14,7 @@ import re
 import glob
 import subprocess
 from textwrap import dedent
+from typing import Iterable, Text
 
 autogen_header = """\
 //
@@ -35,11 +36,6 @@ DEFAULT_PACKAGE_NAME = "onnx"
 IF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#if\s+ONNX-ML\s*$')
 ENDIF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#endif\s*$')
 ELSE_ONNX_ML_REGEX = re.compile(r'\s*//\s*#else\s*$')
-
-
-MYPY = False
-if MYPY:
-    from typing import Iterable, Text
 
 
 def process_ifs(lines: Iterable[Text], onnx_ml: bool) -> Iterable[Text]:
