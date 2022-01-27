@@ -87,19 +87,22 @@ class Runner(object):
             test_case.__module__ = self._parent_module
         return test_case
 
-    def include(self, pattern: Text) -> Runner:
+    # TODO: Use proper type annotation rather than string
+    # once we drop Python 3.6 support. See
+    # https://www.python.org/dev/peps/pep-0563/.
+    def include(self, pattern: Text) -> 'Runner':
         self._include_patterns.add(re.compile(pattern))
         return self
 
-    def exclude(self, pattern: Text) -> Runner:
+    def exclude(self, pattern: Text) -> 'Runner':
         self._exclude_patterns.add(re.compile(pattern))
         return self
 
-    def xfail(self, pattern: Text) -> Runner:
+    def xfail(self, pattern: Text) -> 'Runner':
         self._xfail_patterns.add(re.compile(pattern))
         return self
 
-    def enable_report(self) -> Runner:
+    def enable_report(self) -> 'Runner':
         import pytest  # type: ignore
 
         for category, items_map in self._test_items.items():

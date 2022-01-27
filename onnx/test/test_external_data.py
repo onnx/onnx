@@ -115,7 +115,7 @@ class TestLoadExternalData(TestLoadExternalDataBase):
 
 class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
 
-    def create_external_data_tensors(self, tensors_data: List[Tuple[List[Any],Any]]) -> List[TensorProto]:
+    def create_external_data_tensors(self, tensors_data: List[Tuple[List[Any], Any]]) -> List[TensorProto]:
         tensor_filename = "tensors.bin"
         tensors = []
 
@@ -169,7 +169,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model = self.create_test_model_proto()
 
-    def create_data_tensors(self, tensors_data: List[Tuple[List[Any],Any]]) -> List[TensorProto]:
+    def create_data_tensors(self, tensors_data: List[Tuple[List[Any], Any]]) -> List[TensorProto]:
         tensors = []
         for (value, tensor_name) in tensors_data:
             tensor = from_array(np.array(value))

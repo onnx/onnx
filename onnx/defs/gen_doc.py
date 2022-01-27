@@ -17,7 +17,7 @@ from onnx import defs, FunctionProto, helper
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.sample.ops import collect_sample_implementations
-from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
+from typing import Any, Text, Sequence, Dict, List, NamedTuple, Set, Tuple
 
 
 SNIPPETS = collect_snippets()
@@ -221,7 +221,13 @@ def support_level_str(level: OpSchema.SupportType) -> Text:
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
-def main(args: Type[Args]) -> None:
+
+class Args(NamedTuple):
+    output: str
+    changelog: str
+
+
+def main(args: Args) -> None:
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('<!--- SPDX-License-Identifier: Apache-2.0 -->\n')
         fout.write('## Operator Changelog\n')
@@ -373,7 +379,5 @@ if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     docs_dir = os.path.join(base_dir, 'docs')
 
-    class Args(object):
-        output = os.path.join(docs_dir, 'Operators' + ext)
-        changelog = os.path.join(docs_dir, 'Changelog' + ext)
-    main(Args)
+    main(Args(os.path.join(docs_dir, 'Operators' + ext),
+              os.path.join(docs_dir, 'Changelog' + ext)))
