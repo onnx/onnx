@@ -221,7 +221,6 @@ def support_level_str(level: OpSchema.SupportType) -> Text:
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
-
 class Args(NamedTuple):
     output: str
     changelog: str
