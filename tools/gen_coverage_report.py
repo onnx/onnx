@@ -7,10 +7,7 @@ import argparse
 import os
 import subprocess
 import tempfile
-
-MYPY = False
-if MYPY:
-    from typing import Text
+from typing import Text
 
 
 def parse_args() -> argparse.Namespace:

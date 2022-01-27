@@ -24,6 +24,17 @@ from __future__ import (
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Set,
+    Text,
+    cast,
+    Optional
+)
 
 try:
     import google.protobuf.descriptor_pb2 as d_typed
@@ -32,25 +43,6 @@ except ImportError as e:
     sys.stderr.write('Failed to generate mypy stubs: {}\n'.format(e))
     sys.exit(0)
 
-MYPY = False
-if MYPY:
-    from typing import (
-        Any,
-        Callable,
-        Dict,
-        Generator,
-        List,
-        Set,
-        Text,
-        cast,
-        Optional
-    )
-else:
-    # Provide minimal mypy identifiers to make code run without typing module present
-    Text = None
-
-    def cast(type, value):
-        return value
 
 
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet
