@@ -11,7 +11,8 @@ import numbers
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
     TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
-    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto
+    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto, \
+    FunctionProto
 from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
@@ -171,6 +172,29 @@ def make_opsetid(domain, version):  # type: (Text, int) -> OperatorSetIdProto
     return opsetid
 
 
+def make_function(
+    domain,  # type: Text
+    fname,  # type: Text
+    inputs,  # type: Sequence[Text]
+    outputs,  # type: Sequence[Text]
+    nodes,  # type: Sequence[NodeProto]
+    opset_imports,  # type: Sequence[OperatorSetIdProto]
+    attributes=[],  # type: Optional[Sequence[Text]]
+    doc_string=None  # type: Optional[Text]
+):  # type: (...) -> FunctionProto
+    f = FunctionProto()
+    f.domain = domain
+    f.name = fname
+    f.input.extend(inputs)
+    f.output.extend(outputs)
+    f.node.extend(nodes)
+    f.opset_import.extend(opset_imports)
+    f.attribute.extend(attributes)
+    if doc_string:
+        f.doc_string = doc_string
+    return f
+
+
 def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
@@ -186,6 +210,11 @@ def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         # Default import
         imp = model.opset_import.add()
         imp.version = defs.onnx_opset_version()
+
+    functions = None  # type: Optional[Sequence[FunctionProto]]
+    functions = kwargs.pop('functions', None)  # type: ignore
+    if functions is not None:
+        model.functions.extend(functions)
 
     for k, v in kwargs.items():
         # TODO: Does this work with repeated fields?
