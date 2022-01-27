@@ -730,10 +730,20 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(15), OpSetID(16)));
       registerAdapter(make_unique<CompatibleAdapter>("Where",
         OpSetID(15), OpSetID(16)));
-      registerAdapter(make_unique<CompatibleAdapter>(
-        "DequantizeLinear", OpSetID(15), OpSetID(16)));
-      registerAdapter(make_unique<CompatibleAdapter>(
-        "QuantizeLinear", OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("DequantizeLinear",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("QuantizeLinear",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("Scan",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("LessOrEqual",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("GreaterOrEqual",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("LeakyRelu",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("PRelu",
+        OpSetID(15), OpSetID(16)));
     }
 
     ModelProto convert_version(

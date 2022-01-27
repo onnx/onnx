@@ -272,12 +272,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     LessOrEqual,
-    12,
+    16,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("less_equal"))
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
+            OpSchema::all_numeric_types_with_bfloat(),
             "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
@@ -294,22 +294,24 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     GreaterOrEqual,
-    12,
+    16,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("greater_equal"))
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
+            OpSchema::all_numeric_types_with_bfloat(),
             "Constrains input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
             "Constrains output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             {{"O1"}, "Greater", {"A", "B"}},
-             {{"O2"}, "Equal", {"A", "B"}},
-             {{"C"}, "Or", {"O1", "O2"}}})));
+        .FunctionBody(R"ONNX(
+        {
+            O1 = Greater (A, B)
+            O2 = Equal (A, B)
+            C = Or (O1, O2)
+        }
+        )ONNX"));
 
 } // namespace ONNX_NAMESPACE
