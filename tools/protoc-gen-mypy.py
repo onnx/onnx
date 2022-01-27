@@ -44,7 +44,6 @@ except ImportError as e:
     sys.exit(0)
 
 
-
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet
 d: Any = d_typed
 
@@ -136,7 +135,7 @@ class PkgWriter(object):
         raise AssertionError("Could not parse local name " + name)
 
     @contextmanager  # type: ignore
-    def _indent(self) -> Generator:
+    def _indent(self) -> Generator[None, None, None]:
         self.indent = self.indent + "    "
         yield
         self.indent = self.indent[:-4]
@@ -317,7 +316,6 @@ def generate_mypy_stubs(descriptors: Descriptors, response: plugin.CodeGenerator
         output.name = fd.name[:-6].replace('-', '_') + '_pb2.pyi'
         output.content = HEADER + pkg_writer.write()
         print("Writing mypy to", output.name, file=sys.stderr)
-
 
 
 def main() -> None:
