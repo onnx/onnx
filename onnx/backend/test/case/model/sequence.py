@@ -78,8 +78,11 @@ class Sequence(Base):
                 output_shapes: List[Optional[typing.Sequence[Union[Text, int]]]],
                 input_names: List[Text],
                 output_names: List[Text],
-                input_types: List[TensorProto.DataType],
-                output_types: List[TensorProto.DataType],
+                # TODO: Use proper type annotation rather than string
+                # once we drop support for Python 3.6.
+                # See https://www.python.org/dev/peps/pep-0563/
+                input_types: List['TensorProto.DataType'],
+                output_types: List['TensorProto.DataType'],
                 initializers: Optional[List[TensorProto]] = None
         ) -> onnx.helper.GraphProto:
             graph = onnx.helper.make_graph(
