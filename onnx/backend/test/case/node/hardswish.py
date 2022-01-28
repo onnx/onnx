@@ -12,7 +12,7 @@ from ..base import Base
 from . import expect
 
 
-def hardswish(x):  # type: (np.ndarray) -> np.ndarray
+def hardswish(x: np.ndarray) -> np.ndarray:
     alfa = float(1 / 6)
     beta = 0.5
     return x * np.maximum(0, np.minimum(1, alfa * x + beta))
@@ -21,7 +21,7 @@ def hardswish(x):  # type: (np.ndarray) -> np.ndarray
 class HardSwish(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'HardSwish',
             inputs=['x'],

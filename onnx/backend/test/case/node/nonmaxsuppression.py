@@ -15,7 +15,7 @@ from . import expect
 class NonMaxSuppression(Base):
 
     @staticmethod
-    def export_nonmaxsuppression_suppress_by_IOU():  # type: () -> None
+    def export_nonmaxsuppression_suppress_by_IOU() -> None:
         node = onnx.helper.make_node(
             'NonMaxSuppression',
             inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
@@ -38,7 +38,7 @@ class NonMaxSuppression(Base):
         expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU')
 
     @staticmethod
-    def export_nonmaxsuppression_suppress_by_IOU_and_scores():  # type: () -> None
+    def export_nonmaxsuppression_suppress_by_IOU_and_scores() -> None:
         node = onnx.helper.make_node(
             'NonMaxSuppression',
             inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
@@ -61,7 +61,7 @@ class NonMaxSuppression(Base):
         expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_suppress_by_IOU_and_scores')
 
     @staticmethod
-    def export_nonmaxsuppression_flipped_coordinates():  # type: () -> None
+    def export_nonmaxsuppression_flipped_coordinates() -> None:
         node = onnx.helper.make_node(
             'NonMaxSuppression',
             inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
@@ -84,7 +84,7 @@ class NonMaxSuppression(Base):
         expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_flipped_coordinates')
 
     @staticmethod
-    def export_nonmaxsuppression_limit_output_size():  # type: () -> None
+    def export_nonmaxsuppression_limit_output_size() -> None:
         node = onnx.helper.make_node(
             'NonMaxSuppression',
             inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
@@ -107,7 +107,7 @@ class NonMaxSuppression(Base):
         expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_limit_output_size')
 
     @staticmethod
-    def export_nonmaxsuppression_single_box():  # type: () -> None
+    def export_nonmaxsuppression_single_box() -> None:
         node = onnx.helper.make_node(
             'NonMaxSuppression',
             inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
@@ -125,7 +125,7 @@ class NonMaxSuppression(Base):
         expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_single_box')
 
     @staticmethod
-    def export_nonmaxsuppression_identical_boxes():  # type: () -> None
+    def export_nonmaxsuppression_identical_boxes() -> None:
         node = onnx.helper.make_node(
             'NonMaxSuppression',
             inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
@@ -153,7 +153,7 @@ class NonMaxSuppression(Base):
         expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_identical_boxes')
 
     @staticmethod
-    def export_nonmaxsuppression_center_point_box_format():  # type: () -> None
+    def export_nonmaxsuppression_center_point_box_format() -> None:
         node = onnx.helper.make_node(
             'NonMaxSuppression',
             inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
@@ -177,7 +177,7 @@ class NonMaxSuppression(Base):
         expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_center_point_box_format')
 
     @staticmethod
-    def export_nonmaxsuppression_two_classes():  # type: () -> None
+    def export_nonmaxsuppression_two_classes() -> None:
         node = onnx.helper.make_node(
             'NonMaxSuppression',
             inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],
@@ -201,7 +201,7 @@ class NonMaxSuppression(Base):
         expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, score_threshold], outputs=[selected_indices], name='test_nonmaxsuppression_two_classes')
 
     @staticmethod
-    def export_nonmaxsuppression_two_batches():  # type: () -> None
+    def export_nonmaxsuppression_two_batches() -> None:
         node = onnx.helper.make_node(
             'NonMaxSuppression',
             inputs=['boxes', 'scores', 'max_output_boxes_per_class', 'iou_threshold', 'score_threshold'],

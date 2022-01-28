@@ -22,7 +22,7 @@ class Pad_10_11 final : public Adapter {
         data_pads.emplace_back(shape);
       }
       t_pads.sizes() = std::vector<int64_t> {(int64_t)data_pads.size()};
-      Value* v_pads = graph->addInitializerAndInput(t_pads);
+      Value* v_pads = graph->addInitializerAndCreateValue(t_pads);
       node->addInput(v_pads);
       node->removeAttribute(kpads);
       // Turn value attribute into input

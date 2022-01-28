@@ -11,7 +11,8 @@ import numbers
 import google.protobuf.message
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
     TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
-    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto
+    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto, \
+    FunctionProto
 from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
@@ -25,7 +26,7 @@ AssignmentBindingType = List[Tuple[Text, Text]]
 
 # This is a copy of the documented version in https://github.com/onnx/onnx/blob/main/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
-VERSION_TABLE = [
+VERSION_TABLE: VersionTableType = [
     # Release-version, IR version, ai.onnx version, ai.onnx.ml version, (optional) ai.onnx.training version
     ('1.0', 3, 1, 1),
     ('1.1', 3, 5, 1),
@@ -42,16 +43,16 @@ VERSION_TABLE = [
     ('1.10.0', 8, 15, 2, 1),
     ('1.10.1', 8, 15, 2, 1),
     ('1.10.2', 8, 15, 2, 1)
-]  # type: VersionTableType
+]
 
 VersionMapType = Dict[Tuple[Text, int], int]
 
 
 # create a map from (opset-domain, opset-version) to ir-version from above table
-def create_op_set_id_version_map(table):  # type: (VersionTableType) -> VersionMapType
-    result = dict()  # type: VersionMapType
+def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
+    result: VersionMapType = dict()
 
-    def process(release_version, ir_version, *args):  # type: (Text, int, Any) -> None
+    def process(release_version: Text, ir_version: int, *args: Any) -> None:
         for pair in zip(['ai.onnx', 'ai.onnx.ml', 'ai.onnx.training'], args):
             if (pair not in result):
                 result[pair] = ir_version
@@ -64,10 +65,10 @@ OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
 
 
 # Given list of opset ids, determine minimum IR version required
-def find_min_ir_version_for(opsetidlist):  # type: (List[OperatorSetIdProto]) -> int
+def find_min_ir_version_for(opsetidlist: List[OperatorSetIdProto]) -> int:
     default_min_version = 3
 
-    def find_min(domain, version):  # type: (Union[Text, None], int) -> int
+    def find_min(domain: Union[Text, None], version: int) -> int:
         key = (domain if domain else 'ai.onnx', version)
         if (key in OP_SET_ID_VERSION_MAP):
             return OP_SET_ID_VERSION_MAP[key]
@@ -79,14 +80,14 @@ def find_min_ir_version_for(opsetidlist):  # type: (List[OperatorSetIdProto]) ->
 
 
 def make_node(
-        op_type,  # type: Text
-        inputs,  # type: Sequence[Text]
-        outputs,  # type: Sequence[Text]
-        name=None,  # type: Optional[Text]
-        doc_string=None,  # type: Optional[Text]
-        domain=None,  # type: Optional[Text]
-        **kwargs  # type: Any
-):  # type: (...) -> NodeProto
+        op_type: Text,
+        inputs: Sequence[Text],
+        outputs: Sequence[Text],
+        name: Optional[Text] = None,
+        doc_string: Optional[Text] = None,
+        domain: Optional[Text] = None,
+        **kwargs: Any
+) -> NodeProto:
     """Construct a NodeProto.
 
     Arguments:
@@ -120,9 +121,9 @@ def make_node(
 
 
 def make_operatorsetid(
-        domain,  # type: Text
-        version,  # type: int
-):  # type: (...) -> OperatorSetIdProto
+        domain: Text,
+        version: int,
+) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
     Arguments:
@@ -136,15 +137,15 @@ def make_operatorsetid(
 
 
 def make_graph(
-    nodes,  # type: Sequence[NodeProto]
-    name,  # type: Text
-    inputs,  # type: Sequence[ValueInfoProto]
-    outputs,  # type: Sequence[ValueInfoProto]
-    initializer=None,  # type: Optional[Sequence[TensorProto]]
-    doc_string=None,  # type: Optional[Text]
-    value_info=[],  # type: Sequence[ValueInfoProto]
-    sparse_initializer=None,  # type: Optional[Sequence[SparseTensorProto]]
-):  # type: (...) -> GraphProto
+    nodes: Sequence[NodeProto],
+    name: Text,
+    inputs: Sequence[ValueInfoProto],
+    outputs: Sequence[ValueInfoProto],
+    initializer: Optional[Sequence[TensorProto]] = None,
+    doc_string: Optional[Text] = None,
+    value_info: Sequence[ValueInfoProto] = [],
+    sparse_initializer: Optional[Sequence[SparseTensorProto]] = None,
+) -> GraphProto:
     if initializer is None:
         initializer = []
     if sparse_initializer is None:
@@ -164,21 +165,44 @@ def make_graph(
     return graph
 
 
-def make_opsetid(domain, version):  # type: (Text, int) -> OperatorSetIdProto
+def make_opsetid(domain: Text, version: int) -> OperatorSetIdProto:
     opsetid = OperatorSetIdProto()
     opsetid.domain = domain
     opsetid.version = version
     return opsetid
 
 
-def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
+def make_function(
+    domain: Text,
+    fname: Text,
+    inputs: Sequence[Text],
+    outputs: Sequence[Text],
+    nodes: Sequence[NodeProto],
+    opset_imports: Sequence[OperatorSetIdProto],
+    attributes: Optional[Sequence[Text]] = [],
+    doc_string: Optional[Text] = None
+) -> FunctionProto:
+    f = FunctionProto()
+    f.domain = domain
+    f.name = fname
+    f.input.extend(inputs)
+    f.output.extend(outputs)
+    f.node.extend(nodes)
+    f.opset_import.extend(opset_imports)
+    f.attribute.extend(attributes)
+    if doc_string:
+        f.doc_string = doc_string
+    return f
+
+
+def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
     model.ir_version = IR_VERSION
     model.graph.CopyFrom(graph)
 
-    opset_imports = None  # type: Optional[Sequence[OperatorSetIdProto]]
+    opset_imports: Optional[Sequence[OperatorSetIdProto]] = None
     opset_imports = kwargs.pop('opset_imports', None)  # type: ignore
     if opset_imports is not None:
         model.opset_import.extend(opset_imports)
@@ -186,6 +210,11 @@ def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
         # Default import
         imp = model.opset_import.add()
         imp.version = defs.onnx_opset_version()
+
+    functions: Optional[Sequence[FunctionProto]] = None
+    functions = kwargs.pop('functions', None)  # type: ignore
+    if functions is not None:
+        model.functions.extend(functions)
 
     for k, v in kwargs.items():
         # TODO: Does this work with repeated fields?
@@ -195,7 +224,7 @@ def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
 
 # An extension of make_model that infers an IR_VERSION for the model,
 # if not specified, using a best-effort-basis.
-def make_model_gen_version(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
+def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
     ir_version_field = str('ir_version')
     if (ir_version_field not in kwargs):
         opset_imports_field = str('opset_imports')
@@ -204,7 +233,7 @@ def make_model_gen_version(graph, **kwargs):  # type: (GraphProto, **Any) -> Mod
     return make_model(graph, **kwargs)
 
 
-def set_model_props(model, dict_value):  # type: (ModelProto, Dict[Text, Text]) -> None
+def set_model_props(model: ModelProto, dict_value: Dict[Text, Text]) -> None:
     del model.metadata_props[:]
     for (k, v) in dict_value.items():
         entry = model.metadata_props.add()
@@ -213,18 +242,18 @@ def set_model_props(model, dict_value):  # type: (ModelProto, Dict[Text, Text]) 
         # model.metadata_properties.append(entry)
 
 
-def split_complex_to_pairs(ca):  # type: (Sequence[np.complex64]) -> Sequence[int]
+def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
     return [(ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
             for i in range(len(ca) * 2)]
 
 
 def make_tensor(
-        name,  # type: Text
-        data_type,  # type: int
-        dims,  # type: Sequence[int]
-        vals,  # type: Any
-        raw=False  # type: bool
-):  # type: (...) -> TensorProto
+        name: Text,
+        data_type: int,
+        dims: Sequence[int],
+        vals: Any,
+        raw: bool = False
+) -> TensorProto:
     '''
     Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
@@ -269,10 +298,10 @@ def make_tensor(
 
 
 def make_sparse_tensor(
-    values,   # type: TensorProto
-    indices,   # type: TensorProto
-    dims   # type: Sequence[int]
-):  # type: (...) -> SparseTensorProto
+    values: TensorProto,
+    indices: TensorProto,
+    dims: Sequence[int]
+) -> SparseTensorProto:
     sparse = SparseTensorProto()
     sparse.values.CopyFrom(values)
     sparse.indices.CopyFrom(indices)
@@ -281,10 +310,10 @@ def make_sparse_tensor(
 
 
 def make_sequence(
-        name,   # type: Text
-        elem_type,   # type: SequenceProto.DataType
-        values,   # type: Sequence[Any]
-):  # type: (...) -> SequenceProto
+        name: Text,
+        elem_type: SequenceProto.DataType,
+        values: Sequence[Any],
+) -> SequenceProto:
     '''
     Make a Sequence with specified value arguments.
     '''
@@ -297,11 +326,11 @@ def make_sequence(
 
 
 def make_map(
-        name,   # type: Text
-        key_type,   # type: int
-        keys,   # type: List[Any]
-        values   # type: SequenceProto
-):  # type: (...) -> MapProto
+        name: Text,
+        key_type: int,
+        keys: List[Any],
+        values: SequenceProto
+) -> MapProto:
     '''
     Make a Map with specified key-value pair arguments.
 
@@ -325,10 +354,10 @@ def make_map(
 
 
 def make_optional(
-        name,   # type: Text
-        elem_type,   # type: OptionalProto.DataType
-        value,   # type: Optional[Any]
-):  # type: (...) -> OptionalProto
+        name: Text,
+        elem_type: OptionalProto.DataType,
+        value: Optional[Any],
+) -> OptionalProto:
     '''
     Make an Optional with specified value arguments.
     '''
@@ -341,7 +370,7 @@ def make_optional(
     return optional
 
 
-def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
+def _to_bytes_or_false(val: Union[Text, bytes]) -> Union[bytes, bool]:
     """An internal graph to convert the input to a bytes or to False.
 
     The criteria for conversion is as follows and should be python 2 and 3
@@ -359,10 +388,10 @@ def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
 
 
 def make_attribute(
-        key,  # type: Text
-        value,  # type: Any
-        doc_string=None  # type: Optional[Text]
-):  # type: (...) -> AttributeProto
+        key: Text,
+        value: Any,
+        doc_string: Optional[Text] = None
+) -> AttributeProto:
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
     attr.name = key
@@ -434,7 +463,7 @@ def make_attribute(
     return attr
 
 
-def get_attribute_value(attr):  # type: (AttributeProto) -> Any
+def get_attribute_value(attr: AttributeProto) -> Any:
     if attr.type == AttributeProto.FLOAT:
         return attr.f
     if attr.type == AttributeProto.INT:
@@ -466,17 +495,17 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
     raise ValueError("Unsupported ONNX attribute: {}".format(attr))
 
 
-def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
+def make_empty_tensor_value_info(name: Text) -> ValueInfoProto:
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
     return value_info_proto
 
 
 def make_tensor_type_proto(
-        elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
-        shape_denotation=None,  # type: Optional[List[Text]]
-):  # type: (...) -> TypeProto
+        elem_type: int,
+        shape: Optional[Sequence[Union[Text, int, None]]],
+        shape_denotation: Optional[List[Text]] = None,
+) -> TypeProto:
     """Makes a Tensor TypeProto based on the data type and shape."""
 
     type_proto = TypeProto()
@@ -520,12 +549,12 @@ def make_tensor_type_proto(
 
 
 def make_tensor_value_info(
-        name,  # type: Text
-        elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
-        doc_string="",  # type: Text
-        shape_denotation=None,  # type: Optional[List[Text]]
-):  # type: (...) -> ValueInfoProto
+        name: Text,
+        elem_type: int,
+        shape: Optional[Sequence[Union[Text, int, None]]],
+        doc_string: Text = "",
+        shape_denotation: Optional[List[Text]] = None,
+) -> ValueInfoProto:
     """Makes a ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
@@ -538,10 +567,10 @@ def make_tensor_value_info(
 
 
 def make_sparse_tensor_type_proto(
-        elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
-        shape_denotation=None,  # type: Optional[List[Text]]
-):  # type: (...) -> TypeProto
+        elem_type: int,
+        shape: Optional[Sequence[Union[Text, int, None]]],
+        shape_denotation: Optional[List[Text]] = None,
+) -> TypeProto:
     """Makes a SparseTensor TypeProto based on the data type and shape."""
 
     type_proto = TypeProto()
@@ -585,12 +614,12 @@ def make_sparse_tensor_type_proto(
 
 
 def make_sparse_tensor_value_info(
-        name,  # type: Text
-        elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
-        doc_string="",  # type: Text
-        shape_denotation=None,  # type: Optional[List[Text]]
-):  # type: (...) -> ValueInfoProto
+        name: Text,
+        elem_type: int,
+        shape: Optional[Sequence[Union[Text, int, None]]],
+        doc_string: Text = "",
+        shape_denotation: Optional[List[Text]] = None,
+) -> ValueInfoProto:
     """Makes a SparseTensor ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
@@ -603,8 +632,8 @@ def make_sparse_tensor_value_info(
 
 
 def make_sequence_type_proto(
-        inner_type_proto,  # type: TypeProto
-):  # type: (...) -> TypeProto
+        inner_type_proto: TypeProto,
+) -> TypeProto:
     """Makes a sequence TypeProto."""
     type_proto = TypeProto()
     type_proto.sequence_type.elem_type.CopyFrom(inner_type_proto)
@@ -612,8 +641,8 @@ def make_sequence_type_proto(
 
 
 def make_optional_type_proto(
-        inner_type_proto,  # type: TypeProto
-):  # type: (...) -> TypeProto
+        inner_type_proto: TypeProto,
+) -> TypeProto:
     """Makes an optional TypeProto."""
     type_proto = TypeProto()
     type_proto.optional_type.elem_type.CopyFrom(inner_type_proto)
@@ -621,10 +650,10 @@ def make_optional_type_proto(
 
 
 def make_value_info(
-        name,  # type: Text
-        type_proto,  # type: TypeProto
-        doc_string="",  # type: Text
-):  # type: (...) -> ValueInfoProto
+        name: Text,
+        type_proto: TypeProto,
+        doc_string: Text = "",
+) -> ValueInfoProto:
     """Makes a ValueInfoProto with the given type_proto."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
@@ -635,7 +664,7 @@ def make_value_info(
     return value_info_proto
 
 
-def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
+def _sanitize_str(s: Union[Text, bytes]) -> Text:
     if isinstance(s, str):
         sanitized = s
     elif isinstance(s, bytes):
@@ -648,12 +677,12 @@ def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
 
 
 def make_tensor_sequence_value_info(
-        name,  # type: Text
-        elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
-        doc_string="",  # type: Text
-        elem_shape_denotation=None,  # type: Optional[List[Text]]
-):  # type: (...) -> ValueInfoProto
+        name: Text,
+        elem_type: int,
+        shape: Optional[Sequence[Union[Text, int, None]]],
+        doc_string: Text = "",
+        elem_shape_denotation: Optional[List[Text]] = None,
+) -> ValueInfoProto:
     """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
@@ -667,28 +696,28 @@ def make_tensor_sequence_value_info(
     return value_info_proto
 
 
-def printable_attribute(attr, subgraphs=False):  # type: (AttributeProto, bool) -> Union[Text, Tuple[Text, List[GraphProto]]]
+def printable_attribute(attr: AttributeProto, subgraphs: bool = False) -> Union[Text, Tuple[Text, List[GraphProto]]]:
     content = []
     content.append(attr.name)
     content.append("=")
 
-    def str_float(f):  # type: (float) -> Text
+    def str_float(f: float) -> Text:
         # NB: Different Python versions print different numbers of trailing
         # decimals, specifying this explicitly keeps it consistent for all
         # versions
         return '{:.15g}'.format(f)
 
-    def str_int(i):  # type: (int) -> Text
+    def str_int(i: int) -> Text:
         # NB: In Python 2, longs will repr() as '2L', which is ugly and
         # unnecessary.  Explicitly format it to keep it consistent.
         return '{:d}'.format(i)
 
-    def str_str(s):  # type: (Text) -> Text
+    def str_str(s: Text) -> Text:
         return repr(s)
 
     _T = TypeVar('_T')  # noqa
 
-    def str_list(str_elem, xs):  # type: (Callable[[_T], Text], Sequence[_T]) -> Text
+    def str_list(str_elem: Callable[[_T], Text], xs: Sequence[_T]) -> Text:
         return '[' + ', '.join(map(str_elem, xs)) + ']'
 
     # for now, this logic should continue to work as long as we are running on a proto3
@@ -747,13 +776,13 @@ def printable_attribute(attr, subgraphs=False):  # type: (AttributeProto, bool) 
         return ' '.join(content)
 
 
-def printable_dim(dim):  # type: (TensorShapeProto.Dimension) -> Text
+def printable_dim(dim: TensorShapeProto.Dimension) -> Text:
     which = dim.WhichOneof('value')
     assert which is not None
     return str(getattr(dim, which))
 
 
-def printable_type(t):  # type: (TypeProto) -> Text
+def printable_type(t: TypeProto) -> Text:
     if t.WhichOneof('value') == "tensor_type":
         s = TensorProto.DataType.Name(t.tensor_type.elem_type)
         if t.tensor_type.HasField('shape'):
@@ -767,14 +796,14 @@ def printable_type(t):  # type: (TypeProto) -> Text
     return 'Unknown type {}'.format(t.WhichOneof('value'))
 
 
-def printable_value_info(v):  # type: (ValueInfoProto) -> Text
+def printable_value_info(v: ValueInfoProto) -> Text:
     s = '%{}'.format(v.name)
     if v.type:
         s = '{}[{}]'.format(s, printable_type(v.type))
     return s
 
 
-def printable_tensor_proto(t):  # type: (TensorProto) -> Text
+def printable_tensor_proto(t: TensorProto) -> Text:
     s = '%{}['.format(t.name)
     s += TensorProto.DataType.Name(t.data_type)
     if t.dims is not None:
@@ -786,14 +815,14 @@ def printable_tensor_proto(t):  # type: (TensorProto) -> Text
     return s
 
 
-def printable_node(node, prefix='', subgraphs=False):  # type: (NodeProto, Text, bool) -> Union[Text, Tuple[Text, List[GraphProto]]]
+def printable_node(node: NodeProto, prefix: Text = '', subgraphs: bool = False) -> Union[Text, Tuple[Text, List[GraphProto]]]:
     content = []
     if len(node.output):
         content.append(
             ', '.join(['%{}'.format(name) for name in node.output]))
         content.append('=')
     # To deal with nested graphs
-    graphs = []  # type: List[GraphProto]
+    graphs: List[GraphProto] = []
     printed_attrs = []
     for attr in node.attribute:
         if subgraphs:
@@ -817,7 +846,7 @@ def printable_node(node, prefix='', subgraphs=False):  # type: (NodeProto, Text,
         return prefix + ' '.join(content)
 
 
-def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
+def printable_graph(graph: GraphProto, prefix: Text = '') -> Text:
     content = []
     indent = prefix + '  '
     # header
@@ -862,7 +891,7 @@ def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
 
     header.append('{')
     content.append(prefix + ' '.join(header))
-    graphs = []  # type: List[GraphProto]
+    graphs: List[GraphProto] = []
     # body
     for node in graph.node:
         pn, gs = printable_node(node, indent, subgraphs=True)
@@ -882,7 +911,7 @@ def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
     return '\n'.join(content)
 
 
-def strip_doc_string(proto):  # type: (google.protobuf.message.Message) -> None
+def strip_doc_string(proto: google.protobuf.message.Message) -> None:
     """
     Empties `doc_string` field on any nested protobuf messages
     """
@@ -898,7 +927,7 @@ def strip_doc_string(proto):  # type: (google.protobuf.message.Message) -> None
                 strip_doc_string(getattr(proto, descriptor.name))
 
 
-def make_training_info(algorithm, algorithm_bindings, initialization, initialization_bindings):  # type: (GraphProto, AssignmentBindingType,  Optional[GraphProto], Optional[AssignmentBindingType]) -> TrainingInfoProto
+def make_training_info(algorithm: GraphProto, algorithm_bindings: AssignmentBindingType, initialization: Optional[GraphProto], initialization_bindings: Optional[AssignmentBindingType]) -> TrainingInfoProto:
     training_info = TrainingInfoProto()
     training_info.algorithm.CopyFrom(algorithm)
     for k, v in algorithm_bindings:
@@ -919,12 +948,12 @@ def make_training_info(algorithm, algorithm_bindings, initialization, initializa
 
 # For backwards compatibility
 def make_sequence_value_info(
-        name,  # type: Text
-        elem_type,  # type: int
-        shape,  # type: Optional[Sequence[Union[Text, int, None]]]
-        doc_string="",  # type: Text
-        elem_shape_denotation=None,  # type: Optional[List[Text]]
-):  # type: (...) -> ValueInfoProto
+        name: Text,
+        elem_type: int,
+        shape: Optional[Sequence[Union[Text, int, None]]],
+        doc_string: Text = "",
+        elem_shape_denotation: Optional[List[Text]] = None,
+) -> ValueInfoProto:
     """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
     warnings.warn(str("`onnx.helper.make_sequence_value_info` is a deprecated alias for `onnx.helper.make_tensor_sequence_value_info`. To silence this warning, please use `make_tensor_sequence_value_info` for `TensorProto` sequences. Deprecated in ONNX v1.10.0, `onnx.helper.make_sequence_value_info alias` will be removed in an upcoming release."), DeprecationWarning, stacklevel=2)
     return make_tensor_sequence_value_info(name, elem_type, shape, doc_string, elem_shape_denotation)

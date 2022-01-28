@@ -20,10 +20,10 @@ class TestVersionConverter(unittest.TestCase):
 
     def _converted(
             self,
-            graph,  # type: GraphProto
-            initial_version,  # type: OperatorSetIdProto
-            target_version  # type: int
-    ):  # type: (...) -> ModelProto
+            graph: GraphProto,
+            initial_version: OperatorSetIdProto,
+            target_version: int
+    ) -> ModelProto:
         orig_model = helper.make_model(graph, producer_name='onnx-test', opset_imports=[initial_version])
         # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
@@ -32,8 +32,8 @@ class TestVersionConverter(unittest.TestCase):
         return converted_model
 
     # Test 1: Backwards Incompatible Conversion: Reshape: 8 -> 2
-    def test_backwards_incompatible(self):  # type: () -> None
-        def test():  # type: () -> None
+    def test_backwards_incompatible(self) -> None:
+        def test() -> None:
             nodes = [helper.make_node('Add', ["W", "Z"], ["shape"]),
                         helper.make_node('Reshape', ["X", "shape"], ["A"]),
                         helper.make_node('Add', ["A", "W"], ["Y"])]
@@ -48,7 +48,7 @@ class TestVersionConverter(unittest.TestCase):
         self.assertRaises(RuntimeError, test)
 
     # Test 2: Backwards Compatible Conversion (No Adaptations): Add: 3 -> 2
-    def test_backwards_compatible(self):  # type: () -> None
+    def test_backwards_compatible(self) -> None:
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -63,8 +63,8 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 2
 
     # Test 3: Non-Existent Op Conversion: Cos: 8 -> 6
-    def test_non_existent_op(self):  # type: () -> None
-        def test():  # type: () -> None
+    def test_non_existent_op(self) -> None:
+        def test() -> None:
             nodes = [helper.make_node('Cos', ["X"], ["Y"])]
             graph = helper.make_graph(
                 nodes,
@@ -75,7 +75,7 @@ class TestVersionConverter(unittest.TestCase):
         self.assertRaises(RuntimeError, test)
 
     # Test Add Adapter: 8 -> 5
-    def test_add_8_5(self):  # type: () -> None
+    def test_add_8_5(self) -> None:
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -90,7 +90,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 5
 
     # Test Add Adapter: 5 -> 8
-    def test_add_5_8(self):  # type: () -> None
+    def test_add_5_8(self) -> None:
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -105,7 +105,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 8
 
     # Test Add Adapter: 5 -> 8, requiring insertion of an Unsqueeze node
-    def test_add_5_8_with_unsqueeze(self):  # type: () -> None
+    def test_add_5_8_with_unsqueeze(self) -> None:
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"], axis=0, broadcast=1)]
         graph = helper.make_graph(
             nodes,
@@ -121,7 +121,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 8
 
     # Test Mul Adapter: 8 -> 5
-    def test_mul_8_5(self):  # type: () -> None
+    def test_mul_8_5(self) -> None:
         nodes = [helper.make_node('Mul', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -136,7 +136,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 5
 
     # Test Mul Adapter: 5 -> 8
-    def test_mul_5_8(self):  # type: () -> None
+    def test_mul_5_8(self) -> None:
         nodes = [helper.make_node('Mul', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -151,7 +151,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 8
 
     # Test Gemm Adapter: 1 -> 8
-    def test_gemm_up(self):  # type: () -> None
+    def test_gemm_up(self) -> None:
         nodes = [helper.make_node('Gemm', ["A", "B", "C"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -167,7 +167,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 8
 
     # Test Gemm Adapter: 8 -> 1
-    def test_gemm_down(self):  # type: () -> None
+    def test_gemm_down(self) -> None:
         nodes = [helper.make_node('Gemm', ["A", "B", "C"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -183,7 +183,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 1
 
     # Test Relu Adapter: 5 -> 7
-    def test_relu_5_7(self):  # type: () -> None
+    def test_relu_5_7(self) -> None:
         nodes = [helper.make_node('Relu', ["X"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -197,7 +197,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 7
 
     # Test Relu Adapter: 7 -> 5
-    def test_relu_7_5(self):  # type: () -> None
+    def test_relu_7_5(self) -> None:
         nodes = [helper.make_node('Relu', ["X"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -211,7 +211,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 5
 
     # Test BatchNormalization Adapter: 8 -> 5
-    def test_batch_normalization_8_5(self):  # type: () -> None
+    def test_batch_normalization_8_5(self) -> None:
         nodes = [helper.make_node('BatchNormalization', ["X", "scale", "B",
             "mean", "var"], ["Y"])]
         graph = helper.make_graph(
@@ -230,7 +230,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 5
 
     # Test BatchNormalization Adapter: 5 -> 8
-    def test_batch_normalization_5_8(self):  # type: () -> None
+    def test_batch_normalization_5_8(self) -> None:
         nodes = [helper.make_node('BatchNormalization', ["X", "scale", "B",
             "mean", "var"], ["Y"])]
         graph = helper.make_graph(
@@ -249,7 +249,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 8
 
     # Test Concat Adapter: 3 -> 5
-    def test_concat_3_5(self):  # type: () -> None
+    def test_concat_3_5(self) -> None:
         nodes = [helper.make_node('Concat', ["X1", "X2", "X3",
             "X4", "X5"], ["Y"])]
         graph = helper.make_graph(
@@ -268,7 +268,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 5
 
     # Test Concat Adapter: 5 -> 3
-    def test_concat_5_3(self):  # type: () -> None
+    def test_concat_5_3(self) -> None:
         nodes = [helper.make_node('Concat', ["X1", "X2", "X3",
             "X4", "X5"], ["Y"], axis=0)]
         graph = helper.make_graph(
@@ -287,7 +287,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 3
 
     # Test Reshape Adapter: 6 -> 4
-    def test_reshape_6_4(self):  # type: () -> None
+    def test_reshape_6_4(self) -> None:
         nodes = [helper.make_node('Constant', [], ["shape"],
                     value=helper.make_tensor("", TensorProto.INT64, [1],
                         [5])),
@@ -304,7 +304,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 4
 
     # Test Reshape Adapter: 4 -> 6
-    def test_reshape_4_6(self):  # type: () -> None
+    def test_reshape_4_6(self) -> None:
         nodes = [helper.make_node('Reshape', ["X"], ["Y"], shape=[5])]
         graph = helper.make_graph(
             nodes,
@@ -319,7 +319,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 6
 
     # Test Sum Adapter: 7 -> 8
-    def test_sum_7_8(self):  # type: () -> None
+    def test_sum_7_8(self) -> None:
         nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
             "data_3", "data_4"], ["sum"])]
         graph = helper.make_graph(
@@ -338,7 +338,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 8
 
     # Test Sum Adapter: 5 -> 8
-    def test_sum_5_8(self):  # type: () -> None
+    def test_sum_5_8(self) -> None:
         nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
             "data_3", "data_4"], ["sum"])]
         graph = helper.make_graph(
@@ -357,7 +357,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 7
 
     # Test Sum Adapter: 8 -> 5
-    def test_sum_8_5(self):  # type: () -> None
+    def test_sum_8_5(self) -> None:
         nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
             "data_3", "data_4"], ["sum"])]
         graph = helper.make_graph(
@@ -376,7 +376,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 5
 
     # Test AveragePool Adapter: 1 -> 8
-    def test_averagepool_up(self):  # type: () -> None
+    def test_averagepool_up(self) -> None:
         nodes = [helper.make_node('AveragePool', ["X"], ["Y"], kernel_shape=[1, 1])]
         graph = helper.make_graph(
             nodes,
@@ -390,7 +390,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 8
 
     # Test AveragePool Adapter: 8 -> 1
-    def test_averagepool_down(self):  # type: () -> None
+    def test_averagepool_down(self) -> None:
         nodes = [helper.make_node('AveragePool', ["X"], ["Y"], kernel_shape=[1, 1])]
         graph = helper.make_graph(
             nodes,
@@ -404,7 +404,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 1
 
     # Test Dropout Adapter: 1 -> 8
-    def test_dropout_up(self):  # type: () -> None
+    def test_dropout_up(self) -> None:
         nodes = [helper.make_node('Dropout', ["data"], ["output"], is_test=1)]
         graph = helper.make_graph(
             nodes,
@@ -418,7 +418,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 8
 
     # Test Dropout Adapter: 8 -> 1
-    def test_dropout_down(self):  # type: () -> None
+    def test_dropout_down(self) -> None:
         nodes = [helper.make_node('Dropout', ["data"], ["output"])]
         graph = helper.make_graph(
             nodes,
@@ -432,7 +432,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 1
 
     # Test Max Adapter: 7 -> 8
-    def test_max_7_8(self):  # type: () -> None
+    def test_max_7_8(self) -> None:
         from_opset = 7
         to_opset = 8
         data_type = TensorProto.FLOAT
@@ -457,7 +457,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Min Adapter: 7 -> 8
-    def test_min_7_8(self):  # type: () -> None
+    def test_min_7_8(self) -> None:
         from_opset = 7
         to_opset = 8
         data_type = TensorProto.FLOAT
@@ -482,7 +482,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Mean Adapter: 7 -> 8
-    def test_mean_7_8(self):  # type: () -> None
+    def test_mean_7_8(self) -> None:
         from_opset = 7
         to_opset = 8
         data_type = TensorProto.FLOAT
@@ -507,7 +507,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test MaxPool Adapter: 1 -> 8
-    def test_maxpool_up(self):  # type: () -> None
+    def test_maxpool_up(self) -> None:
         nodes = [helper.make_node('MaxPool', ["X"], ["Y"], kernel_shape=[1, 1])]
         graph = helper.make_graph(
             nodes,
@@ -521,7 +521,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 8
 
     # Test Upsample Adapter: 6 -> 7
-    def test_upsample_6_7(self):    # type: () -> None
+    def test_upsample_6_7(self) -> None:
         from_opset = 6
         to_opset = 7
         data_type = TensorProto.FLOAT
@@ -553,7 +553,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test MaxPool Adapter: 8 -> 1
-    def test_maxpool_down(self):  # type: () -> None
+    def test_maxpool_down(self) -> None:
         nodes = [helper.make_node('MaxPool', ["X"], ["Y"], kernel_shape=[1, 1])]
         graph = helper.make_graph(
             nodes,
@@ -567,7 +567,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 1
 
     # Test BatchNormalization Adapter: 8 -> 9
-    def test_batch_normalization_8_9(self):  # type: () -> None
+    def test_batch_normalization_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -599,7 +599,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test BatchNormalization Adapter: 9 -> 8
-    def test_batchnormalization_9_8(self):  # type: () -> None
+    def test_batchnormalization_9_8(self) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
@@ -628,7 +628,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Constant Adapter: 8 -> 9
-    def test_constant_8_9(self):  # type: () -> None
+    def test_constant_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -655,7 +655,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Constant Adapter: 9 -> 8
-    def test_constant_9_8(self):  # type: () -> None
+    def test_constant_9_8(self) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.UINT64
@@ -682,7 +682,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Flatten Adapter: 8 -> 9
-    def test_flatten_8_9(self):  # type: () -> None
+    def test_flatten_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -707,7 +707,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Flatten Adapter: 9 -> 8
-    def test_flatten_9_8(self):  # type: () -> None
+    def test_flatten_9_8(self) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.UINT64
@@ -732,7 +732,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test PRelu Adapter: 8 -> 9
-    def test_prelu_8_9(self):  # type: () -> None
+    def test_prelu_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -758,7 +758,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test PRelu Adapter: 9 -> 8
-    def test_prelu_9_8(self):  # type: () -> None
+    def test_prelu_9_8(self) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.UINT64
@@ -784,7 +784,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Greater Adapter: 8 -> 9
-    def test_greater_8_9(self):  # type: () -> None
+    def test_greater_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -810,7 +810,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Greater Adapter: 9 -> 8
-    def test_greater_9_8(self):  # type: () -> None
+    def test_greater_9_8(self) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.UINT64
@@ -836,7 +836,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Less Adapter: 8 -> 9
-    def test_less_8_9(self):  # type: () -> None
+    def test_less_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -862,7 +862,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Less Adapter: 9 -> 8
-    def test_less_9_8(self):  # type: () -> None
+    def test_less_9_8(self) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.UINT64
@@ -888,7 +888,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test MatMul Adapter: 8 -> 9
-    def test_matmul_8_9(self):  # type: () -> None
+    def test_matmul_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -913,7 +913,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test MatMul Adapter: 9 -> 8
-    def test_matmul_9_8(self):  # type: () -> None
+    def test_matmul_9_8(self) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.UINT64
@@ -938,7 +938,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Gemm Adapter: 8 -> 9
-    def test_gemm_8_9(self):  # type: () -> None
+    def test_gemm_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -964,7 +964,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Gemm Adapter: 9 -> 8
-    def test_gemm_9_8(self):  # type: () -> None
+    def test_gemm_9_8(self) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.UINT64
@@ -990,7 +990,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Upsample Adapter: 8 -> 9
-    def test_upsample_8_9(self):  # type: () -> None
+    def test_upsample_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -1020,7 +1020,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Helper for Upsample Adapter: 9 -> 8
-    def helper_upsample_with_initializer(self, raw_scale=False):  # type: (bool) -> None
+    def helper_upsample_with_initializer(self, raw_scale: bool = False) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
@@ -1052,7 +1052,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Helper for Upsample Adapter: 9 -> 8
-    def helper_upsample_with_constant(self, raw_scale=False):  # type: (bool) -> None
+    def helper_upsample_with_constant(self, raw_scale: bool = False) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
@@ -1087,23 +1087,23 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Upsample Adapter: 9 -> 8
-    def test_upsample_with_constant_node_9_8(self):  # type: () -> None
+    def test_upsample_with_constant_node_9_8(self) -> None:
         self.helper_upsample_with_constant(raw_scale=False)
 
     # Test Upsample Adapter: 9 -> 8
-    def test_upsample_with_initializer_9_8(self):  # type: () -> None
+    def test_upsample_with_initializer_9_8(self) -> None:
         self.helper_upsample_with_initializer(raw_scale=False)
 
     # Test Upsample Adapter: 9 -> 8
-    def test_upsample_with_raw_initializer_9_8(self):  # type: () -> None
+    def test_upsample_with_raw_initializer_9_8(self) -> None:
         self.helper_upsample_with_constant(raw_scale=True)
 
     # Test Upsample Adapter: 9 -> 8
-    def test_upsample_with_raw_constant_node_9_8(self):  # type: () -> None
+    def test_upsample_with_raw_constant_node_9_8(self) -> None:
         self.helper_upsample_with_constant(raw_scale=True)
 
     # Test Scan Adapter: 8 -> 9
-    def test_scan_8_9(self):  # type: () -> None
+    def test_scan_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type = TensorProto.FLOAT
@@ -1143,7 +1143,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Cast Adapter: 8 -> 9
-    def test_cast_8_9(self):  # type: () -> None
+    def test_cast_8_9(self) -> None:
         from_opset = 8
         to_opset = 9
         data_type_from = TensorProto.FLOAT
@@ -1169,7 +1169,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
 
     #Test Split Adapter: 13 -> 12
-    def test_split_13_12(self):  # type: () -> None
+    def test_split_13_12(self) -> None:
         nodes = [helper.make_node('Constant', [], ["split"],
                                   value=helper.make_tensor("", TensorProto.INT64, [2],
                                                            [2, 3])),
@@ -1187,7 +1187,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 12
 
     # Test Split Adapter: 12 -> 13
-    def test_split_12_13(self):  # type: () -> None
+    def test_split_12_13(self) -> None:
         nodes = [helper.make_node('Split', ["X"], ["Y1", "Y2"], split=[2, 3])]
         graph = helper.make_graph(
             nodes,
@@ -1203,7 +1203,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 13
 
     # Test AxesInputToAttribute Adapter: 13 -> 12
-    def test_axes_input_to_attr_13_12(self):  # type: () -> None
+    def test_axes_input_to_attr_13_12(self) -> None:
         nodes = [helper.make_node('Constant', [], ["axes"],
                                   value=helper.make_tensor("", TensorProto.INT64, [1],
                                                            [0])),
@@ -1220,7 +1220,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 12
 
     # Test AxesAttributeToInput Adapter: 12 -> 13
-    def test_axes_attr_to_input_12_13(self):  # type: () -> None
+    def test_axes_attr_to_input_12_13(self) -> None:
         nodes = [helper.make_node('ReduceSum', ["X"], ["Y"], axes=[0])]
         graph = helper.make_graph(
             nodes,
@@ -1234,7 +1234,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 13
 
     # Test Slice Adapter: 9 -> 10
-    def test_slice_9_10(self):  # type: () -> None
+    def test_slice_9_10(self) -> None:
         nodes = [helper.make_node('Slice', ["X"], ["Y"],
                                   axes=[0, 1],
                                   starts=[0, 0],
@@ -1256,7 +1256,7 @@ class TestVersionConverter(unittest.TestCase):
         assert len(converted_model.graph.node[3].attribute) == 0
 
     # Test RNN Adapter: 13 -> 14
-    def test_rnn_13_14(self):  # type: () -> None
+    def test_rnn_13_14(self) -> None:
         from_opset = 13
         to_opset = 14
         data_type = TensorProto.FLOAT
@@ -1291,7 +1291,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[1].name == "layout"
 
     # Test GRU Adapter: 13 -> 14
-    def test_gru_13_14(self):  # type: () -> None
+    def test_gru_13_14(self) -> None:
         from_opset = 13
         to_opset = 14
         data_type = TensorProto.FLOAT
@@ -1326,7 +1326,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[1].name == "layout"
 
     # Test LSTM Adapter: 13 -> 14
-    def test_lstm_13_14(self):  # type: () -> None
+    def test_lstm_13_14(self) -> None:
         from_opset = 13
         to_opset = 14
         data_type = TensorProto.FLOAT
@@ -1361,7 +1361,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[1].name == "layout"
 
     # Test RNN Adapter: 14 -> 13
-    def test_rnn_14_13(self):  # type: () -> None
+    def test_rnn_14_13(self) -> None:
         from_opset = 14
         to_opset = 13
         data_type = TensorProto.FLOAT
@@ -1396,7 +1396,7 @@ class TestVersionConverter(unittest.TestCase):
         assert len(converted_model.graph.node[0].attribute) == 1
 
     # Test GRU Adapter: 14 -> 13
-    def test_gru_14_13(self):  # type: () -> None
+    def test_gru_14_13(self) -> None:
         from_opset = 14
         to_opset = 13
         data_type = TensorProto.FLOAT
@@ -1431,7 +1431,7 @@ class TestVersionConverter(unittest.TestCase):
         assert len(converted_model.graph.node[0].attribute) == 1
 
     # Test LSTM Adapter: 14 -> 13
-    def test_lstm_14_13(self):  # type: () -> None
+    def test_lstm_14_13(self) -> None:
         from_opset = 14
         to_opset = 13
         data_type = TensorProto.FLOAT
@@ -1466,7 +1466,7 @@ class TestVersionConverter(unittest.TestCase):
         assert len(converted_model.graph.node[0].attribute) == 1
 
     # Test that subgraphs are converted
-    def test_if_subgraph_10_11(self):  # type: () -> None
+    def test_if_subgraph_10_11(self) -> None:
         from_opset = 10
         to_opset = 11
         data_type = TensorProto.FLOAT
@@ -1526,6 +1526,34 @@ class TestVersionConverter(unittest.TestCase):
         assert len(converted.graph.node[0].attribute[0].g.node[2].attribute) == 0
         assert converted.graph.node[0].attribute[1].g.node[2].op_type == 'Clip'
         assert len(converted.graph.node[0].attribute[1].g.node[2].attribute) == 0
+
+    # Use initializer as node inputs (instead of graph input)
+    # to test whether IR (version_converter) can handle it
+    def test_initializer_not_in_input_above_ir4(self):  # type: () -> None
+        nodes = [helper.make_node('BatchNormalization', ["X", "scale", "B",
+            "mean", "var"], ["Y"])]
+
+        scale_value = [0.55, 0.72]
+        scale_tensor = onnx.helper.make_tensor("scale", onnx.TensorProto.FLOAT, [2], scale_value)
+        b_value = [0.60, 0.54]
+        b_tensor = onnx.helper.make_tensor("B", onnx.TensorProto.FLOAT, [2], b_value)
+        mean_value = [0.42, 0.65]
+        mean_tensor = onnx.helper.make_tensor("mean", onnx.TensorProto.FLOAT, [2], mean_value)
+        var_value = [0.44, 0.89]
+        var_tensor = onnx.helper.make_tensor("var", onnx.TensorProto.FLOAT, [2], var_value)
+
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 2, 3))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2, 2, 3))],
+            [scale_tensor, b_tensor, mean_tensor, var_tensor])
+
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 11), 12)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "BatchNormalization"
+        assert converted_model.opset_import[0].version == 12
 
 
 if __name__ == '__main__':

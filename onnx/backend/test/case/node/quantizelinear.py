@@ -14,7 +14,7 @@ from . import expect
 class QuantizeLinear(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node('QuantizeLinear',
                                      inputs=['x', 'y_scale', 'y_zero_point'],
                                      outputs=['y'],)
@@ -28,7 +28,7 @@ class QuantizeLinear(Base):
                name='test_quantizelinear')
 
     @staticmethod
-    def export_axis():  # type: () -> None
+    def export_axis() -> None:
         node = onnx.helper.make_node('QuantizeLinear',
                                      inputs=['x', 'y_scale', 'y_zero_point'],
                                      outputs=['y'],)

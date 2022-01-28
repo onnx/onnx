@@ -15,7 +15,7 @@ from . import expect
 class Unsqueeze(Base):
 
     @staticmethod
-    def export_unsqueeze_one_axis():  # type: () -> None
+    def export_unsqueeze_one_axis() -> None:
         x = np.random.randn(3, 4, 5).astype(np.float32)
 
         for i in range(x.ndim):
@@ -31,7 +31,7 @@ class Unsqueeze(Base):
                    name='test_unsqueeze_axis_' + str(i))
 
     @staticmethod
-    def export_unsqueeze_two_axes():  # type: () -> None
+    def export_unsqueeze_two_axes() -> None:
         x = np.random.randn(3, 4, 5).astype(np.float32)
         axes = np.array([1, 4]).astype(np.int64)
 
@@ -47,7 +47,7 @@ class Unsqueeze(Base):
                name='test_unsqueeze_two_axes')
 
     @staticmethod
-    def export_unsqueeze_three_axes():  # type: () -> None
+    def export_unsqueeze_three_axes() -> None:
         x = np.random.randn(3, 4, 5).astype(np.float32)
         axes = np.array([2, 4, 5]).astype(np.int64)
 
@@ -64,7 +64,7 @@ class Unsqueeze(Base):
                name='test_unsqueeze_three_axes')
 
     @staticmethod
-    def export_unsqueeze_unsorted_axes():  # type: () -> None
+    def export_unsqueeze_unsorted_axes() -> None:
         x = np.random.randn(3, 4, 5).astype(np.float32)
         axes = np.array([5, 4, 2]).astype(np.int64)
 
@@ -81,7 +81,7 @@ class Unsqueeze(Base):
                name='test_unsqueeze_unsorted_axes')
 
     @staticmethod
-    def export_unsqueeze_negative_axes():  # type: () -> None
+    def export_unsqueeze_negative_axes() -> None:
         node = onnx.helper.make_node(
             'Unsqueeze',
             inputs=['x', 'axes'],

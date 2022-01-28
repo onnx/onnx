@@ -7,7 +7,7 @@ import subprocess
 import os
 
 
-def main():  # type: () -> None
+def main() -> None:
     try:
         root_folder = os.path.realpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         os.chdir(root_folder)

@@ -12,7 +12,7 @@ from ..base import Base
 from . import expect
 
 
-def hardmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
+def hardmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     x_argmax = np.argmax(x, axis=axis)
     y = np.zeros_like(x)
     np.put_along_axis(y, np.expand_dims(x_argmax, axis=axis), 1, axis=axis)
@@ -21,7 +21,7 @@ def hardmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
 
 class Hardmax(Base):
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Hardmax',
             inputs=['x'],
@@ -48,7 +48,7 @@ class Hardmax(Base):
                name='test_hardmax_one_hot')
 
     @staticmethod
-    def export_hardmax_axis():  # type: () -> None
+    def export_hardmax_axis() -> None:
         x = np.random.randn(3, 4, 5).astype(np.float32)
         node = onnx.helper.make_node(
             'Hardmax',

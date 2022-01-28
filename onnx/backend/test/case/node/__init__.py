@@ -26,10 +26,10 @@ from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto
 
 
 # FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
-def function_expand_helper(node,  # type: NodeProto
-                           function_proto,  # type: FunctionProto
-                           op_prefix  # type:  Text
-                           ):  # type:  (...) -> List[NodeProto]
+def function_expand_helper(node: NodeProto,
+                           function_proto: FunctionProto,
+                           op_prefix: Text
+                           ) -> List[NodeProto]:
     node_list = []
     io_names_map = dict()
     attribute_map = dict((a.name, a) for a in node.attribute)
@@ -79,7 +79,7 @@ def function_expand_helper(node,  # type: NodeProto
     return node_list
 
 
-def function_testcase_helper(node, input_types, name):  # type: (NodeProto, List[TypeProto], Text) -> List[NodeProto]
+def function_testcase_helper(node: NodeProto, input_types: List[TypeProto], name: Text) -> List[NodeProto]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function"
     schema = onnx.defs.get_schema(test_op, node.domain)
@@ -104,7 +104,7 @@ def function_testcase_helper(node, input_types, name):  # type: (NodeProto, List
     return node_list
 
 
-def _extract_value_info(input, name, type_proto=None):  # type: (Union[List[Any], np.ndarray, None], Text, Optional[TypeProto]) -> onnx.ValueInfoProto
+def _extract_value_info(input: Union[List[Any], np.ndarray, None], name: Text, type_proto: Optional[TypeProto] = None) -> onnx.ValueInfoProto:
     if type_proto is None:
         if input is None:
             raise NotImplementedError("_extract_value_info: both input and type_proto arguments cannot be None.")
@@ -131,12 +131,12 @@ def _extract_value_info(input, name, type_proto=None):  # type: (Union[List[Any]
 # Thus it can make every model uses the same opset version after every opset change.
 # Besides, user can specify "use_max_opset_version" to generate models for
 # the latest opset vesion that supports before targeted opset version
-def expect(node,  # type: onnx.NodeProto
-           inputs,  # type: Sequence[np.ndarray]
-           outputs,  # type: Sequence[np.ndarray]
-           name,  # type: Text
-           **kwargs  # type: Any
-           ):  # type: (...) -> None
+def expect(node: onnx.NodeProto,
+           inputs: Sequence[np.ndarray],
+           outputs: Sequence[np.ndarray],
+           name: Text,
+           **kwargs: Any
+           ) -> None:
     # skip if the node's op_type is not same as the given one
     if _TargetOpType and node.op_type != _TargetOpType:
         return
@@ -194,7 +194,7 @@ def expect(node,  # type: onnx.NodeProto
 
     # Create list of types for node.input, filling a default TypeProto for missing inputs:
     # E.g. merge(["x", "", "y"], [x-value-info, y-value-info]) will return [x-type, default-type, y-type]
-    def merge(node_inputs, present_value_info):  # type: (List[Text], List[onnx.ValueInfoProto]) -> List[TypeProto]
+    def merge(node_inputs: List[Text], present_value_info: List[onnx.ValueInfoProto]) -> List[TypeProto]:
         if (node_inputs):
             if (node_inputs[0] != ''):
                 return [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
@@ -224,8 +224,7 @@ def expect(node,  # type: onnx.NodeProto
             atol=1e-7,
         ))
 
-
-def collect_testcases(op_type, opset_version):  # type: (Text, Text) -> List[TestCase]
+def collect_testcases(op_type: Text, opset_version: int) -> List[TestCase]:
     '''Collect node test cases
     '''
     # only keep those tests related to this operator
