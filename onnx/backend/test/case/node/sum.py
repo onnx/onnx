@@ -15,7 +15,7 @@ from . import expect
 class Sum(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         data_0 = np.array([3, 0, 2]).astype(np.float32)
         data_1 = np.array([1, 3, 4]).astype(np.float32)
         data_2 = np.array([2, 6, 6]).astype(np.float32)

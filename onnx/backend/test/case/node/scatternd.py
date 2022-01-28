@@ -34,7 +34,7 @@ def scatter_nd_impl(data, indices, updates, reduction='none'):  # type: ignore
 class ScatterND(Base):
 
     @staticmethod
-    def export_scatternd():  # type: () -> None
+    def export_scatternd() -> None:
         node = onnx.helper.make_node(
             'ScatterND',
             inputs=['data', 'indices', 'updates'],
@@ -59,7 +59,7 @@ class ScatterND(Base):
                name='test_scatternd')
 
     @staticmethod
-    def export_scatternd_add():  # type: () -> None
+    def export_scatternd_add() -> None:
         node = onnx.helper.make_node(
             'ScatterND',
             inputs=['data', 'indices', 'updates'],
@@ -85,7 +85,7 @@ class ScatterND(Base):
                name='test_scatternd_add')
 
     @staticmethod
-    def export_scatternd_multiply():  # type: () -> None
+    def export_scatternd_multiply() -> None:
         node = onnx.helper.make_node(
             'ScatterND',
             inputs=['data', 'indices', 'updates'],

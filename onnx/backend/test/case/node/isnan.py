@@ -15,7 +15,7 @@ from . import expect
 class IsNaN(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'IsNaN',
             inputs=['x'],

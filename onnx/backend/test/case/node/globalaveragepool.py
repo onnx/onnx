@@ -15,7 +15,7 @@ from . import expect
 class GlobalAveragePool(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'GlobalAveragePool',
             inputs=['x'],
@@ -26,7 +26,7 @@ class GlobalAveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
 
     @staticmethod
-    def export_globalaveragepool_precomputed():  # type: () -> None
+    def export_globalaveragepool_precomputed() -> None:
 
         node = onnx.helper.make_node(
             'GlobalAveragePool',

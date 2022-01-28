@@ -15,7 +15,7 @@ from . import expect
 class Celu(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         alpha = 2.0
         node = onnx.helper.make_node(
             'Celu',

@@ -15,7 +15,7 @@ from . import expect
 class Mul(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Mul',
             inputs=['x', 'y'],
@@ -41,7 +41,7 @@ class Mul(Base):
                name='test_mul_uint8')
 
     @staticmethod
-    def export_mul_broadcast():  # type: () -> None
+    def export_mul_broadcast() -> None:
         node = onnx.helper.make_node(
             'Mul',
             inputs=['x', 'y'],

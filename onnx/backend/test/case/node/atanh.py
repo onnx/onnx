@@ -15,7 +15,7 @@ from . import expect
 class Atanh(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Atanh',
             inputs=['x'],

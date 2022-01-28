@@ -44,7 +44,7 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0):  # type: ignore
 class Pad(Base):
 
     @staticmethod
-    def export_constant_pad():  # type: () -> None
+    def export_constant_pad() -> None:
         node = onnx.helper.make_node(
             'Pad',
             inputs=['x', 'pads', 'value'],
@@ -65,7 +65,7 @@ class Pad(Base):
                name='test_constant_pad')
 
     @staticmethod
-    def export_reflection_and_edge_pad():  # type: () -> None
+    def export_reflection_and_edge_pad() -> None:
         for mode in ['edge', 'reflect']:
             node = onnx.helper.make_node(
                 'Pad',

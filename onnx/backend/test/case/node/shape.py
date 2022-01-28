@@ -35,7 +35,7 @@ def test_shape(testname, xval, start=None, end=None):  # type: ignore
 class Shape(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         x = np.array([
             [1, 2, 3],
             [4, 5, 6],
