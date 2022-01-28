@@ -16,9 +16,9 @@ from typing import Sequence
 class ExpandDynamicShape(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
 
-        def make_graph(node, input_shape, shape_shape, output_shape):  # type: (onnx.helper.NodeProto, Sequence[int], Sequence[int], Sequence[int]) -> onnx.helper.GraphProto
+        def make_graph(node: onnx.helper.NodeProto, input_shape: Sequence[int], shape_shape: Sequence[int], output_shape: Sequence[int]) -> onnx.helper.GraphProto:
             graph = onnx.helper.make_graph(
                 nodes=[node],
                 name='Expand',

@@ -13,7 +13,7 @@ from typing import Dict, Text, List, Tuple, Type, Sequence, Any
 import numpy as np  # type: ignore
 
 
-def process_snippet(op_name, name, export):  # type: (Text, Text, Any) -> Tuple[Text, Text]
+def process_snippet(op_name: Text, name: Text, export: Any) -> Tuple[Text, Text]:
     snippet_name = name[len('export_'):] or op_name.lower()
     source_code = dedent(inspect.getsource(export))
     # remove the function signature line
@@ -23,13 +23,13 @@ def process_snippet(op_name, name, export):  # type: (Text, Text, Any) -> Tuple[
     return snippet_name, dedent("\n".join(lines[2:]))
 
 
-Snippets = defaultdict(list)  # type: Dict[Text, List[Tuple[Text, Text]]]
+Snippets: Dict[Text, List[Tuple[Text, Text]]] = defaultdict(list)
 
 
 class _Exporter(type):
-    exports = defaultdict(list)  # type: Dict[Text, List[Tuple[Text, Text]]]
+    exports: Dict[Text, List[Tuple[Text, Text]]] = defaultdict(list)
 
-    def __init__(cls, name, bases, dct):  # type: (str, Tuple[Type[Any], ...], Dict[str, Any]) -> None
+    def __init__(cls, name: str, bases: Tuple[Type[Any], ...], dct: Dict[str, Any]) -> None:
         for k, v in dct.items():
             if k.startswith('export'):
                 if not isinstance(v, staticmethod):

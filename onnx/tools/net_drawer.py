@@ -37,20 +37,20 @@ BLOB_STYLE = {'shape': 'octagon'}
 _NodeProducer = Callable[[NodeProto, int], pydot.Node]
 
 
-def _escape_label(name):  # type: (Text) -> Text
+def _escape_label(name: Text) -> Text:
     # json.dumps is poor man's escaping
     return json.dumps(name)
 
 
-def _form_and_sanitize_docstring(s):  # type: (Text) -> Text
+def _form_and_sanitize_docstring(s: Text) -> Text:
     url = 'javascript:alert('
     url += _escape_label(s).replace('"', '\'').replace('<', '').replace('>', '')
     url += ')'
     return url
 
 
-def GetOpNodeProducer(embed_docstring=False, **kwargs):  # type: (bool, **Any) -> _NodeProducer
-    def ReallyGetOpNode(op, op_id):  # type: (NodeProto, int) -> pydot.Node
+def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProducer:
+    def ReallyGetOpNode(op: NodeProto, op_id: int) -> pydot.Node:
         if op.name:
             node_name = '%s/%s (op#%d)' % (op.name, op.op_type, op_id)
         else:
@@ -68,17 +68,17 @@ def GetOpNodeProducer(embed_docstring=False, **kwargs):  # type: (bool, **Any) -
 
 
 def GetPydotGraph(
-    graph,  # type: GraphProto
-    name=None,  # type: Optional[Text]
-    rankdir='LR',  # type: Text
-    node_producer=None,  # type: Optional[_NodeProducer]
-    embed_docstring=False,  # type: bool
-):  # type: (...) -> pydot.Dot
+    graph: GraphProto,
+    name: Optional[Text] = None,
+    rankdir: Text = 'LR',
+    node_producer: Optional[_NodeProducer] = None,
+    embed_docstring: bool = False,
+) -> pydot.Dot:
     if node_producer is None:
         node_producer = GetOpNodeProducer(embed_docstring=embed_docstring, **OP_STYLE)
     pydot_graph = pydot.Dot(name, rankdir=rankdir)
-    pydot_nodes = {}  # type: Dict[Text, pydot.Node]
-    pydot_node_counts = defaultdict(int)  # type: Dict[Text, int]
+    pydot_nodes: Dict[Text, pydot.Node] = {}
+    pydot_node_counts: Dict[Text, int] = defaultdict(int)
     for op_id, op in enumerate(graph.node):
         op_node = node_producer(op, op_id)
         pydot_graph.add_node(op_node)
@@ -110,7 +110,7 @@ def GetPydotGraph(
     return pydot_graph
 
 
-def main():  # type: () -> None
+def main() -> None:
     parser = argparse.ArgumentParser(description="ONNX net drawer")
     parser.add_argument(
         "--input",

@@ -15,7 +15,7 @@ from . import expect
 class Less(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'LessOrEqual',
             inputs=['x', 'y'],
@@ -29,7 +29,7 @@ class Less(Base):
                name='test_less_equal')
 
     @staticmethod
-    def export_less_broadcast():  # type: () -> None
+    def export_less_broadcast() -> None:
         node = onnx.helper.make_node(
             'LessOrEqual',
             inputs=['x', 'y'],

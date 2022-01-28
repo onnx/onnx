@@ -19,7 +19,7 @@ def specify_int64(indices, inverse_indices, counts):  # type: ignore
 class Unique(Base):
 
     @staticmethod
-    def export_sorted_without_axis():  # type: () -> None
+    def export_sorted_without_axis() -> None:
         node_sorted = onnx.helper.make_node(
             'Unique',
             inputs=['X'],
@@ -32,7 +32,7 @@ class Unique(Base):
         expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_without_axis')
 
     @staticmethod
-    def export_not_sorted_without_axis():  # type: () -> None
+    def export_not_sorted_without_axis() -> None:
         node_not_sorted = onnx.helper.make_node(
             'Unique',
             inputs=['X'],
@@ -66,7 +66,7 @@ class Unique(Base):
         expect(node_not_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_not_sorted_without_axis')
 
     @staticmethod
-    def export_sorted_with_axis():  # type: () -> None
+    def export_sorted_with_axis() -> None:
         node_sorted = onnx.helper.make_node(
             'Unique',
             inputs=['X'],
@@ -91,7 +91,7 @@ class Unique(Base):
         expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis')
 
     @staticmethod
-    def export_sorted_with_axis_3d():  # type: () -> None
+    def export_sorted_with_axis_3d() -> None:
         node_sorted = onnx.helper.make_node(
             'Unique',
             inputs=['X'],
@@ -120,7 +120,7 @@ class Unique(Base):
         expect(node_sorted, inputs=[x], outputs=[y, indices, inverse_indices, counts], name='test_unique_sorted_with_axis_3d')
 
     @staticmethod
-    def export_sorted_with_negative_axis():  # type: () -> None
+    def export_sorted_with_negative_axis() -> None:
         node_sorted = onnx.helper.make_node(
             'Unique',
             inputs=['X'],

@@ -15,7 +15,7 @@ from . import expect
 
 
 class TfIdfVectorizerHelper():
-    def __init__(self, **params):    # type: (*Any) -> None
+    def __init__(self, **params: Any) -> None:
         # Attr names
         mode = str('mode')
         min_gram_length = str('min_gram_length')
@@ -39,7 +39,7 @@ class TfIdfVectorizerHelper():
         self.ngram_indexes = params[ngram_indexes]
         self.pool_int64s = params[pool_int64s]
 
-    def make_node_noweights(self):    # type: () -> NodeProto
+    def make_node_noweights(self) -> NodeProto:
         return onnx.helper.make_node(
             'TfIdfVectorizer',
             inputs=['X'],
@@ -57,7 +57,7 @@ class TfIdfVectorizerHelper():
 class TfIdfVectorizer(Base):
 
     @staticmethod
-    def export_tf_only_bigrams_skip0():    # type: () -> None
+    def export_tf_only_bigrams_skip0() -> None:
         input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
         output = np.array([0., 0., 0., 0., 1., 1., 1.]).astype(np.float32)
 
@@ -79,7 +79,7 @@ class TfIdfVectorizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_only_bigrams_skip0')
 
     @staticmethod
-    def export_tf_batch_onlybigrams_skip0():    # type: () -> None
+    def export_tf_batch_onlybigrams_skip0() -> None:
         input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
         output = np.array([[0., 0., 0., 0., 0., 0., 0.], [0., 0., 0., 0., 1., 0., 1.]]).astype(np.float32)
 
@@ -101,7 +101,7 @@ class TfIdfVectorizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip0')
 
     @staticmethod
-    def export_tf_onlybigrams_levelempty():    # type: () -> None
+    def export_tf_onlybigrams_levelempty() -> None:
         input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
         output = np.array([1., 1., 1.]).astype(np.float32)
 
@@ -123,7 +123,7 @@ class TfIdfVectorizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_levelempty')
 
     @staticmethod
-    def export_tf_onlybigrams_skip5():    # type: () -> None
+    def export_tf_onlybigrams_skip5() -> None:
         input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
         output = np.array([0., 0., 0., 0., 1., 3., 1.]).astype(np.float32)
 
@@ -145,7 +145,7 @@ class TfIdfVectorizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_skip5')
 
     @staticmethod
-    def export_tf_batch_onlybigrams_skip5():    # type: () -> None
+    def export_tf_batch_onlybigrams_skip5() -> None:
         input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
         output = np.array([[0., 0., 0., 0., 0., 0., 0.], [0., 0., 0., 0., 1., 1., 1.]]).astype(np.float32)
 
@@ -167,7 +167,7 @@ class TfIdfVectorizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip5')
 
     @staticmethod
-    def export_tf_uniandbigrams_skip5():    # type: () -> None
+    def export_tf_uniandbigrams_skip5() -> None:
         input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
         output = np.array([0., 3., 1., 0., 1., 3., 1.]).astype(np.float32)
 
@@ -189,7 +189,7 @@ class TfIdfVectorizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_uniandbigrams_skip5')
 
     @staticmethod
-    def export_tf_batch_uniandbigrams_skip5():    # type: () -> None
+    def export_tf_batch_uniandbigrams_skip5() -> None:
         input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
         output = np.array([[0., 3., 0., 0., 0., 0., 0.], [0., 0., 1., 0., 1., 1., 1.]]).astype(np.float32)
 

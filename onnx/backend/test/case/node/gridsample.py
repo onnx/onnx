@@ -15,7 +15,7 @@ from . import expect
 class GridSample(Base):
 
     @staticmethod
-    def export_gridsample():  # type: () -> None
+    def export_gridsample() -> None:
         node = onnx.helper.make_node(
             'GridSample',
             inputs=['X', 'Grid'],
@@ -114,7 +114,7 @@ class GridSample(Base):
                name='test_gridsample')
 
     @staticmethod
-    def export_gridsample_paddingmode():  # type: () -> None
+    def export_gridsample_paddingmode() -> None:
         # X shape, [N, C, H, W] - [1, 1, 3, 2]
         X = np.array(
             [
@@ -220,7 +220,7 @@ class GridSample(Base):
                name='test_gridsample_reflection_padding')
 
     @staticmethod
-    def export_gridsample_mode_aligncorners():  # type: () -> None
+    def export_gridsample_mode_aligncorners() -> None:
         # X shape, [N, C, H, W] - [1, 1, 3, 2]
         X = np.array(
             [

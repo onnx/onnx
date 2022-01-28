@@ -16,7 +16,7 @@ from . import expect
 class Gradient(Base):
 
     @staticmethod
-    def export_gradient_scalar_add():  # type: () -> None
+    def export_gradient_scalar_add() -> None:
         add_node = onnx.helper.make_node('Add',
                                          ['a', 'b'], ['c'], name='my_add')
         gradient_node = onnx.helper.make_node(
@@ -59,7 +59,7 @@ class Gradient(Base):
                name='test_gradient_of_add')
 
     @staticmethod
-    def export_gradient_scalar_add_and_mul():  # type: () -> None
+    def export_gradient_scalar_add_and_mul() -> None:
         add_node = onnx.helper.make_node('Add',
                                          ['a', 'b'], ['c'], name='my_add')
         mul_node = onnx.helper.make_node('Mul',

@@ -15,7 +15,7 @@ from . import expect
 class ShrinkTest(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
 
         node = onnx.helper.make_node(
             'Shrink', ['x'], ['y'], lambd=1.5, bias=1.5,)

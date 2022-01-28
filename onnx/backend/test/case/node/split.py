@@ -15,7 +15,7 @@ from . import expect
 class Split(Base):
 
     @staticmethod
-    def export_1d():  # type: () -> None
+    def export_1d() -> None:
         input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
 
         node = onnx.helper.make_node(
@@ -40,7 +40,7 @@ class Split(Base):
         expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
 
     @staticmethod
-    def export_2d():  # type: () -> None
+    def export_2d() -> None:
         input = np.array([[1., 2., 3., 4., 5., 6.],
                           [7., 8., 9., 10., 11., 12.]]).astype(np.float32)
 
@@ -70,7 +70,7 @@ class Split(Base):
         expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
 
     @staticmethod
-    def export_default_values():  # type: () -> None
+    def export_default_values() -> None:
         input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
 
         # If axis is not specified, split is applied on default axis 0
@@ -94,7 +94,7 @@ class Split(Base):
         expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_default_axis')
 
     @staticmethod
-    def export_zero_size_splits():  # type: () -> None
+    def export_zero_size_splits() -> None:
         input = np.array([]).astype(np.float32)
 
         # Split emtpy tensor to tensors of size zero
