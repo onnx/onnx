@@ -14,6 +14,7 @@ import re
 import glob
 import subprocess
 from textwrap import dedent
+from typing import Iterable, Text
 
 autogen_header = """\
 //
@@ -37,12 +38,7 @@ ENDIF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#endif\s*$')
 ELSE_ONNX_ML_REGEX = re.compile(r'\s*//\s*#else\s*$')
 
 
-MYPY = False
-if MYPY:
-    from typing import Iterable, Text
-
-
-def process_ifs(lines, onnx_ml):  # type: (Iterable[Text], bool) -> Iterable[Text]
+def process_ifs(lines: Iterable[Text], onnx_ml: bool) -> Iterable[Text]:
     in_if = 0
     for line in lines:
         if IF_ONNX_ML_REGEX.match(line):
@@ -68,7 +64,7 @@ PACKAGE_NAME_REGEX = re.compile(r'\{PACKAGE_NAME\}')
 ML_REGEX = re.compile(r'(.*)\-ml')
 
 
-def process_package_name(lines, package_name):  # type: (Iterable[Text], Text) -> Iterable[Text]
+def process_package_name(lines: Iterable[Text], package_name: Text) -> Iterable[Text]:
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
     for line in lines:
         m = IMPORT_REGEX.match(line) if need_rename else None
@@ -88,7 +84,7 @@ PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
 OPTIONAL_REGEX = re.compile(r'(\s*)optional\s(.*)$')
 
 
-def convert_to_proto3(lines):  # type: (Iterable[Text]) -> Iterable[Text]
+def convert_to_proto3(lines: Iterable[Text]) -> Iterable[Text]:
     for line in lines:
         # Set the syntax specifier
         m = PROTO_SYNTAX_REGEX.match(line)
@@ -111,15 +107,15 @@ def convert_to_proto3(lines):  # type: (Iterable[Text]) -> Iterable[Text]
         yield line
 
 
-def gen_proto3_code(protoc_path, proto3_path, include_path, cpp_out, python_out):  # type: (Text, Text, Text, Text, Text) -> None
+def gen_proto3_code(protoc_path: Text, proto3_path: Text, include_path: Text, cpp_out: Text, python_out: Text) -> None:
     print("Generate pb3 code using {}".format(protoc_path))
     build_args = [protoc_path, proto3_path, '-I', include_path]
     build_args.extend(['--cpp_out', cpp_out, '--python_out', python_out])
     subprocess.check_call(build_args)
 
 
-def translate(source, proto, onnx_ml, package_name):  # type: (Text, int, bool, Text) -> Text
-    lines = source.splitlines()  # type: Iterable[Text]
+def translate(source: Text, proto: int, onnx_ml: bool, package_name: Text) -> Text:
+    lines: Iterable[Text] = source.splitlines()
     lines = process_ifs(lines, onnx_ml=onnx_ml)
     lines = process_package_name(lines, package_name=package_name)
     if proto == 3:
@@ -129,11 +125,11 @@ def translate(source, proto, onnx_ml, package_name):  # type: (Text, int, bool, 
     return "\n".join(lines)  # TODO: not Windows friendly
 
 
-def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):  # type: (Text, Text) -> Text
+def qualify(f: Text, pardir: Text = os.path.realpath(os.path.dirname(__file__))) -> Text:
     return os.path.join(pardir, f)
 
 
-def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_path=''):  # type: (Text, Text, Text, bool, bool, Text) -> None
+def convert(stem: Text, package_name: Text, output: Text, do_onnx_ml: bool = False, lite: bool = False, protoc_path: Text = '') -> None:
     proto_in = qualify("{}.in.proto".format(stem))
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
     # Having a separate variable for import_ml ensures that the import statements for the generated
@@ -209,7 +205,7 @@ def convert(stem, package_name, output, do_onnx_ml=False, lite=False, protoc_pat
         '''.format(os.path.splitext(os.path.basename(pb2_py))[0]))))
 
 
-def main():  # type: () -> None
+def main() -> None:
     parser = argparse.ArgumentParser(
         description='Generates .proto file variations from .in.proto')
     parser.add_argument('-p', '--package', default='onnx',

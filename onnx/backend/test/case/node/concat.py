@@ -16,15 +16,15 @@ from typing import Dict, Sequence, Text, Any
 class Concat(Base):
 
     @staticmethod
-    def export():  # type: () -> None
-        test_cases = {
+    def export() -> None:
+        test_cases: Dict[Text, Sequence[Any]] = {
             '1d': ([1, 2],
                    [3, 4]),
             '2d': ([[1, 2], [3, 4]],
                    [[5, 6], [7, 8]]),
             '3d': ([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
                    [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
-        }  # type: Dict[Text, Sequence[Any]]
+        }
 
         for test_case, values_ in test_cases.items():
             values = [np.asarray(v, dtype=np.float32) for v in values_]

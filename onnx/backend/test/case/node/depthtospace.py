@@ -15,7 +15,7 @@ from . import expect
 class DepthToSpace(Base):
 
     @staticmethod
-    def export_default_mode_example():  # type: () -> None
+    def export_default_mode_example() -> None:
         node = onnx.helper.make_node(
             'DepthToSpace',
             inputs=['x'],
@@ -55,7 +55,7 @@ class DepthToSpace(Base):
                name='test_depthtospace_example')
 
     @staticmethod
-    def export_crd_mode_example():  # type: () -> None
+    def export_crd_mode_example() -> None:
         node = onnx.helper.make_node(
             'DepthToSpace',
             inputs=['x'],

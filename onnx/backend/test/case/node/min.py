@@ -16,7 +16,7 @@ from ..utils import all_numeric_dtypes
 class Min(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         data_0 = np.array([3, 2, 1]).astype(np.float32)
         data_1 = np.array([1, 4, 4]).astype(np.float32)
         data_2 = np.array([2, 5, 0]).astype(np.float32)
@@ -47,7 +47,7 @@ class Min(Base):
                name='test_min_two_inputs')
 
     @staticmethod
-    def export_min_all_numeric_types():  # type: () -> None
+    def export_min_all_numeric_types() -> None:
         for op_dtype in all_numeric_dtypes:
             data_0 = np.array([3, 2, 1]).astype(op_dtype)
             data_1 = np.array([1, 4, 4]).astype(op_dtype)

@@ -15,7 +15,7 @@ from . import expect
 class Scan(Base):
 
     @staticmethod
-    def export_scan_8():  # type: () -> None
+    def export_scan_8() -> None:
         # Given an input sequence [x1, ..., xN], sum up its elements using a scan
         # returning the final state (x1+x2+...+xN) as well the scan_output
         # [x1, x1+x2, ..., x1+x2+...+xN]
@@ -62,7 +62,7 @@ class Scan(Base):
                name='test_scan_sum', opset_imports=[onnx.helper.make_opsetid("", 8)])
 
     @staticmethod
-    def export_scan_9():  # type: () -> None
+    def export_scan_9() -> None:
         # Given an input sequence [x1, ..., xN], sum up its elements using a scan
         # returning the final state (x1+x2+...+xN) as well the scan_output
         # [x1, x1+x2, ..., x1+x2+...+xN]

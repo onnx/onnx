@@ -14,7 +14,7 @@ from . import expect
 class DequantizeLinear(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node('DequantizeLinear',
                                      inputs=['x', 'x_scale', 'x_zero_point'],
                                      outputs=['y'],)
@@ -29,7 +29,7 @@ class DequantizeLinear(Base):
                name='test_dequantizelinear')
 
     @staticmethod
-    def export_axis():  # type: () -> None
+    def export_axis() -> None:
         node = onnx.helper.make_node('DequantizeLinear',
                                      inputs=['x', 'x_scale', 'x_zero_point'],
                                      outputs=['y'],)

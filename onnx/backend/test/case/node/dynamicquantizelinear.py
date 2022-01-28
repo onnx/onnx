@@ -16,7 +16,7 @@ from . import expect
 class DynamicQuantizeLinear(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node('DynamicQuantizeLinear',
             inputs=['x'],
             outputs=['y', 'y_scale', 'y_zero_point'],
