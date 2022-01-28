@@ -12,7 +12,7 @@ from ..base import Base
 from . import expect
 
 
-def logsoftmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
+def logsoftmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     x_max = np.max(x, axis=axis, keepdims=True)
     tmp = np.exp(x - x_max)
     s = np.sum(tmp, axis=axis, keepdims=True)
@@ -22,7 +22,7 @@ def logsoftmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
 class LogSoftmax(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'LogSoftmax',
             inputs=['x'],
@@ -36,7 +36,7 @@ class LogSoftmax(Base):
                name='test_logsoftmax_example_1')
 
     @staticmethod
-    def export_logsoftmax_axis():  # type: () -> None
+    def export_logsoftmax_axis() -> None:
         x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]
                      ).astype(np.float32)
         # expected output

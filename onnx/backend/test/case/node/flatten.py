@@ -15,7 +15,7 @@ from . import expect
 class Flatten(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         shape = (2, 3, 4, 5)
         a = np.random.random_sample(shape).astype(np.float32)
 
@@ -33,7 +33,7 @@ class Flatten(Base):
                    name='test_flatten_axis' + str(i))
 
     @staticmethod
-    def export_flatten_with_default_axis():  # type: () -> None
+    def export_flatten_with_default_axis() -> None:
         node = onnx.helper.make_node(
             'Flatten',
             inputs=['a'],
@@ -48,7 +48,7 @@ class Flatten(Base):
                name='test_flatten_default_axis')
 
     @staticmethod
-    def export_flatten_negative_axis():  # type: () -> None
+    def export_flatten_negative_axis() -> None:
         shape = (2, 3, 4, 5)
         a = np.random.random_sample(shape).astype(np.float32)
 

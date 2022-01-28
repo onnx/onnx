@@ -13,7 +13,7 @@ from onnx import helper, numpy_helper, shape_inference, TensorProto
 
 
 class TestTrainingTool(unittest.TestCase):
-    def test_training_info_proto(self):  # type: () -> None
+    def test_training_info_proto(self) -> None:
         # Inference graph.
         A_shape = [2, 2]
         A_name = 'A'

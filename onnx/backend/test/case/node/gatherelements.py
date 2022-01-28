@@ -24,7 +24,7 @@ def gather_elements(data, indices, axis=0):  # type: ignore
 class GatherElements(Base):
 
     @staticmethod
-    def export_gather_elements_0():  # type: () -> None
+    def export_gather_elements_0() -> None:
         axis = 1
         node = onnx.helper.make_node(
             'GatherElements',
@@ -46,7 +46,7 @@ class GatherElements(Base):
                name='test_gather_elements_0')
 
     @staticmethod
-    def export_gather_elements_1():  # type: () -> None
+    def export_gather_elements_1() -> None:
         axis = 0
         node = onnx.helper.make_node(
             'GatherElements',
@@ -69,7 +69,7 @@ class GatherElements(Base):
                name='test_gather_elements_1')
 
     @staticmethod
-    def export_gather_elements_negative_indices():  # type: () -> None
+    def export_gather_elements_negative_indices() -> None:
         axis = 0
         node = onnx.helper.make_node(
             'GatherElements',

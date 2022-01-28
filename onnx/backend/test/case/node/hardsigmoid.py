@@ -15,7 +15,7 @@ from . import expect
 class HardSigmoid(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'HardSigmoid',
             inputs=['x'],
@@ -35,7 +35,7 @@ class HardSigmoid(Base):
                name='test_hardsigmoid')
 
     @staticmethod
-    def export_hardsigmoid_default():  # type: () -> None
+    def export_hardsigmoid_default() -> None:
         default_alpha = 0.2
         default_beta = 0.5
         node = onnx.helper.make_node(

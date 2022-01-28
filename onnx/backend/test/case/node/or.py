@@ -15,7 +15,7 @@ from . import expect
 class Or(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Or',
             inputs=['x', 'y'],
@@ -44,7 +44,7 @@ class Or(Base):
                name='test_or4d')
 
     @staticmethod
-    def export_or_broadcast():  # type: () -> None
+    def export_or_broadcast() -> None:
         node = onnx.helper.make_node(
             'Or',
             inputs=['x', 'y'],

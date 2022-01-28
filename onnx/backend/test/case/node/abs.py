@@ -17,7 +17,7 @@ from onnx.backend.sample.ops.abs import abs
 class Abs(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Abs',
             inputs=['x'],

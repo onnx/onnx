@@ -14,7 +14,7 @@ from . import expect
 class QLinearMatMul(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node('QLinearMatMul',
             inputs=['a', 'a_scale', 'a_zero_point', 'b', 'b_scale', 'b_zero_point', 'y_scale', 'y_zero_point'],
             outputs=['y'],)
