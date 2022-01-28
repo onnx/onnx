@@ -14,6 +14,6 @@ from onnx import NodeProto, ModelProto
 
 
 class TestItem(object):
-    def __init__(self, func, proto):  # type: (Callable[..., Any], List[Optional[Union[ModelProto, NodeProto]]]) -> None
+    def __init__(self, func: Callable[..., Any], proto: List[Optional[Union[ModelProto, NodeProto]]]) -> None:
         self.func = func
         self.proto = proto

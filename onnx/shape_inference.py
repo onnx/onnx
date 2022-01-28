@@ -35,7 +35,7 @@ Return:
 """
 
 
-def infer_shapes(model, check_type=False, strict_mode=False, data_prop=False):  # type: (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
+def infer_shapes(model: Union[ModelProto, bytes], check_type: bool = False, strict_mode: bool = False, data_prop: bool = False) -> ModelProto:
     if isinstance(model, (ModelProto, bytes)):
         model_str = model if isinstance(model, bytes) else model.SerializeToString()
         inferred_model_str = C.infer_shapes(model_str, check_type, strict_mode, data_prop)
@@ -48,7 +48,7 @@ def infer_shapes(model, check_type=False, strict_mode=False, data_prop=False):  
                          'incorrect type: {}'.format(type(model)))
 
 
-def infer_shapes_path(model_path, output_path='', check_type=False, strict_mode=False, data_prop=False):  # type: (Text, Text, bool, bool, bool) -> None
+def infer_shapes_path(model_path: Text, output_path: Text = '', check_type: bool = False, strict_mode: bool = False, data_prop: bool = False) -> None:
     """
     Take model path for shape_inference same as infer_shape; it support >2GB models
     Directly output the inferred model to the output_path; Default is the original model path

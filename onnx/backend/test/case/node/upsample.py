@@ -16,7 +16,7 @@ from onnx import helper
 class Upsample(Base):
 
     @staticmethod
-    def export_nearest():  # type: () -> None
+    def export_nearest() -> None:
         node = onnx.helper.make_node(
             'Upsample',
             inputs=['X', 'scales'],

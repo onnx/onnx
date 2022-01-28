@@ -14,7 +14,7 @@ from . import expect
 class QLinearConv(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node('QLinearConv',
             inputs=['x', 'x_scale', 'x_zero_point', 'w', 'w_scale', 'w_zero_point', 'y_scale', 'y_zero_point'],
             outputs=['y'],)

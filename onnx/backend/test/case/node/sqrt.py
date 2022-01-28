@@ -15,7 +15,7 @@ from . import expect
 class Sqrt(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Sqrt',
             inputs=['x'],

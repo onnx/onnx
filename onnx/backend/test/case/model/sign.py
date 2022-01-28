@@ -16,7 +16,7 @@ from typing import Sequence
 class SingleSign(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Sign', ['x'], ['y'], name='test')
 

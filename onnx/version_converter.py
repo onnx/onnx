@@ -165,7 +165,7 @@ Unsupported adapters:
 """
 
 
-def convert_version(model, target_version):  # type: (ModelProto, int) -> ModelProto
+def convert_version(model: ModelProto, target_version: int) -> ModelProto:
     if not isinstance(model, ModelProto):
         raise ValueError('VersionConverter only accepts ModelProto as model, incorrect type: {}'.format(type(model)))
     if not isinstance(target_version, int):

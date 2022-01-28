@@ -40,7 +40,7 @@ def apply_nesterov(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignor
 class Momentum(Base):
 
     @staticmethod
-    def export_momentum():  # type: () -> None
+    def export_momentum() -> None:
         # Define operator attributes.
         norm_coefficient = 0.001
         alpha = 0.95
@@ -74,7 +74,7 @@ class Momentum(Base):
                opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 
     @staticmethod
-    def export_nesterov_momentum():  # type: () -> None
+    def export_nesterov_momentum() -> None:
         # Define operator attributes.
         norm_coefficient = 0.01
         alpha = 0.95
@@ -108,7 +108,7 @@ class Momentum(Base):
                opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 
     @staticmethod
-    def export_momentum_multiple():  # type: () -> None
+    def export_momentum_multiple() -> None:
         # Define operator attributes.
         norm_coefficient = 0.001
         alpha = 0.95

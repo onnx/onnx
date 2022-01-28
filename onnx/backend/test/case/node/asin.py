@@ -15,7 +15,7 @@ from . import expect
 class Asin(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Asin',
             inputs=['x'],

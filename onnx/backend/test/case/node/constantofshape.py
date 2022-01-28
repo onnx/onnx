@@ -15,7 +15,7 @@ from . import expect
 class ConstantOfShape(Base):
 
     @staticmethod
-    def export_float_ones():  # type: () -> None
+    def export_float_ones() -> None:
         x = np.array([4, 3, 2]).astype(np.int64)
         tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
                                                [1], [1])
@@ -31,7 +31,7 @@ class ConstantOfShape(Base):
                name='test_constantofshape_float_ones')
 
     @staticmethod
-    def export_int32_zeros():  # type: () -> None
+    def export_int32_zeros() -> None:
         x = np.array([10, 6]).astype(np.int64)
         tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
                                                [1], [0])
@@ -46,7 +46,7 @@ class ConstantOfShape(Base):
                name='test_constantofshape_int_zeros')
 
     @staticmethod
-    def export_int32_shape_zero():  # type: () -> None
+    def export_int32_shape_zero() -> None:
         x = np.array([0, ]).astype(np.int64)
         tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
                                                [1], [0])
