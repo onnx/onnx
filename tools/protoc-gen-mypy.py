@@ -135,7 +135,6 @@ class PkgWriter(object):
         raise AssertionError("Could not parse local name " + name)
 
     @contextmanager  # type: ignore
-
     def _indent(self) -> Generator[None, None, None]:
         self.indent = self.indent + "    "
         yield
