@@ -224,6 +224,7 @@ def expect(node: onnx.NodeProto,
             atol=1e-7,
         ))
 
+
 def collect_testcases(op_type: Text, opset_version: int) -> List[TestCase]:
     '''Collect node test cases
     '''
