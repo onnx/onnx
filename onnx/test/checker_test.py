@@ -6,7 +6,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import unittest
 
-from typing import Sequence, Text
+from typing import List, Sequence, Text
 import numpy as np  # type: ignore
 
 from onnx import checker, helper, numpy_helper, shape_inference
@@ -665,7 +665,7 @@ class TestChecker(unittest.TestCase):
         )
         self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
-    def _contruct_loop_model(self, inputs_list, outputs_list) -> onnx.ModelProto:
+    def _contruct_loop_model(self, inputs_list: List[Text], outputs_list: List[Text]) -> onnx.ModelProto:
         y_in = onnx.helper.make_tensor_value_info('y_in', onnx.TensorProto.FLOAT, [1])
         y_out = onnx.helper.make_tensor_value_info('y_out', onnx.TensorProto.FLOAT, [1])
         scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [1])
