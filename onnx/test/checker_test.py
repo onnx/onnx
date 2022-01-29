@@ -776,11 +776,11 @@ class TestChecker(unittest.TestCase):
         return model
 
     def test_loop_with_empty_input(self) -> None:
-        model = self.contruct_loop_model(['trip_count', 'cond', ''], ['res_y', 'res_scan'])
+        model = self._contruct_loop_model(['trip_count', 'cond', ''], ['res_y', 'res_scan'])
         self.assertRaises(checker.ValidationError, checker.check_model, model)
 
     def test_loop_with_empty_output(self) -> None:
-        model = self.contruct_loop_model(['trip_count', 'cond', 'y'], ['', 'res_scan'])
+        model = self._contruct_loop_model(['trip_count', 'cond', 'y'], ['', 'res_scan'])
         self.assertRaises(checker.ValidationError, checker.check_model, model)
 
 
