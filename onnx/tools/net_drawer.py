@@ -12,10 +12,6 @@
 # with the graphviz `dot` utility, like so:
 #
 #   $ dot -Tsvg my_output.dot -o my_output.svg
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import argparse
 from collections import defaultdict
