@@ -15,42 +15,37 @@ from onnx import TensorProto
 from typing import List, Optional, Text, Union
 
 
-def SequenceEmptyImpl():  # type: () -> List[Optional[np.ndarray]]
+def SequenceEmptyImpl() -> List[Optional[np.ndarray]]:
     return []
 
 
-def SequenceConstructImpl(*tensors):  # type: (*np.ndarray) -> List[np.ndarray]
+def SequenceConstructImpl(*tensors: np.ndarray) -> List[np.ndarray]:
     return list(tensors)
 
 
-def SequenceInsertImpl(sequence, tensor, position=None):
-    # type: (List[np.ndarray], np.ndarray, Optional[int]) -> List[np.ndarray]
+def SequenceInsertImpl(sequence: List[np.ndarray], tensor: np.ndarray, position: Optional[int] = None) -> List[np.ndarray]:
     if position is None:
         position = len(sequence)
     sequence.insert(position, tensor)
     return sequence
 
 
-def SequenceAtImpl(sequence, position):
-    # type: (List[np.ndarray], int) -> np.ndarray
+def SequenceAtImpl(sequence: List[np.ndarray], position: int) -> np.ndarray:
     return sequence[position]
 
 
-def SequenceEraseImpl(sequence, position=None):
-    # type: (List[np.ndarray], Optional[int]) -> List[Optional[np.ndarray]]
+def SequenceEraseImpl(sequence: List[np.ndarray], position: Optional[int] = None) -> List[Optional[np.ndarray]]:
     if position is None:
         position = -1
     del sequence[position]
     return sequence
 
 
-def SequenceLengthImpl(sequence):
-    # type: (List[np.ndarray]) -> np.int64
+def SequenceLengthImpl(sequence: List[np.ndarray]) -> np.int64:
     return np.int64(len(sequence))
 
 
-def SplitToSequenceImpl(tensor, split=None, axis=0, keepdims=1):
-    # type: (np.ndarray, Optional[Union[int, List[int]]], int, int) -> List[np.ndarray]
+def SplitToSequenceImpl(tensor: np.ndarray, split: Optional[Union[int, List[int]]] = None, axis: int = 0, keepdims: int = 1) -> List[np.ndarray]:
     dim_size = tensor.shape[axis]
     if split is None:
         split = 1
@@ -65,8 +60,7 @@ def SplitToSequenceImpl(tensor, split=None, axis=0, keepdims=1):
     return np.array_split(tensor, split_indices, axis)  # type: ignore
 
 
-def ConcatFromSequenceImpl(sequence, axis, new_axis=0):
-    # type: (List[np.ndarray], int, Optional[int]) -> np.ndarray
+def ConcatFromSequenceImpl(sequence: List[np.ndarray], axis: int, new_axis: Optional[int] = 0) -> np.ndarray:
     if not new_axis:
         return np.concatenate(sequence, axis)
     else:
@@ -76,18 +70,21 @@ def ConcatFromSequenceImpl(sequence, axis, new_axis=0):
 class Sequence(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
 
         def make_graph(
-                nodes,  # type: List[onnx.helper.NodeProto]
-                input_shapes,  # type: List[Optional[typing.Sequence[Union[Text, int]]]]
-                output_shapes,  # type: List[Optional[typing.Sequence[Union[Text, int]]]]
-                input_names,  # type: List[Text]
-                output_names,  # type: List[Text]
-                input_types,  # type: List[TensorProto.DataType]
-                output_types,  # type: List[TensorProto.DataType]
-                initializers=None  # type: Optional[List[TensorProto]]
-        ):  # type: (...) -> onnx.helper.GraphProto
+                nodes: List[onnx.helper.NodeProto],
+                input_shapes: List[Optional[typing.Sequence[Union[Text, int]]]],
+                output_shapes: List[Optional[typing.Sequence[Union[Text, int]]]],
+                input_names: List[Text],
+                output_names: List[Text],
+                # TODO: Use proper type annotation rather than string
+                # once we drop support for Python 3.6.
+                # See https://www.python.org/dev/peps/pep-0563/
+                input_types: List['TensorProto.DataType'],
+                output_types: List['TensorProto.DataType'],
+                initializers: Optional[List[TensorProto]] = None
+        ) -> onnx.helper.GraphProto:
             graph = onnx.helper.make_graph(
                 nodes=nodes,
                 name='Sequence',

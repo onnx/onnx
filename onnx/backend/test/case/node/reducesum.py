@@ -15,7 +15,7 @@ from . import expect
 class ReduceSum(Base):
 
     @staticmethod
-    def export_do_not_keepdims():  # type: () -> None
+    def export_do_not_keepdims() -> None:
         shape = [3, 2, 2]
         axes = np.array([1], dtype=np.int64)
         keepdims = 0
@@ -42,7 +42,7 @@ class ReduceSum(Base):
         expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_random')
 
     @staticmethod
-    def export_keepdims():  # type: () -> None
+    def export_keepdims() -> None:
         shape = [3, 2, 2]
         axes = np.array([1], dtype=np.int64)
         keepdims = 1
@@ -69,7 +69,7 @@ class ReduceSum(Base):
         expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_keepdims_random')
 
     @staticmethod
-    def export_default_axes_keepdims():  # type: () -> None
+    def export_default_axes_keepdims() -> None:
         shape = [3, 2, 2]
         axes = np.array([], dtype=np.int64)
         keepdims = 1
@@ -94,7 +94,7 @@ class ReduceSum(Base):
         expect(node, inputs=[data, axes], outputs=[reduced], name='test_reduce_sum_default_axes_keepdims_random')
 
     @staticmethod
-    def export_negative_axes_keepdims():  # type: () -> None
+    def export_negative_axes_keepdims() -> None:
         shape = [3, 2, 2]
         axes = np.array([-2], dtype=np.int64)
         keepdims = 1
@@ -124,7 +124,7 @@ class ReduceSum(Base):
                name='test_reduce_sum_negative_axes_keepdims_random')
 
     @staticmethod
-    def export_empty_axes_input_noop():  # type: () -> None
+    def export_empty_axes_input_noop() -> None:
         shape = [3, 2, 2]
         keepdims = 1
 

@@ -12,10 +12,10 @@ from onnx import utils
 
 
 def check_overlapping_names(
-    g1,  # type: GraphProto
-    g2,  # type: GraphProto
-    io_map=None  # type: Optional[List[Tuple[Text, Text]]]
-):  # type: (...) -> List[Tuple[Text, List[Text]]]
+    g1: GraphProto,
+    g2: GraphProto,
+    io_map: Optional[List[Tuple[Text, Text]]] = None
+) -> List[Tuple[Text, List[Text]]]:
     """Checks whether there are name collisions between two graphs
 
     Returns a list of tuples where the first element represents the member containing overlapping names
@@ -30,10 +30,10 @@ def check_overlapping_names(
     if type(g2) is not GraphProto:
         raise ValueError("g2 argument is not an ONNX graph")
 
-    def _overlapping(c1, c2):  # type: (List[Text], List[Text]) -> List[Text]
+    def _overlapping(c1: List[Text], c2: List[Text]) -> List[Text]:
         return list(set(c1) & set(c2))
 
-    def _edge_names(graph, exclude=set()):  # type: (GraphProto, Set[Text]) -> List[Text]
+    def _edge_names(graph: GraphProto, exclude: Set[Text] = set()) -> List[Text]:
         edges = []
         for n in graph.node:
             for i in n.input:
@@ -76,16 +76,16 @@ def check_overlapping_names(
 
 
 def merge_graphs(
-        g1,  # type: GraphProto
-        g2,  # type: GraphProto
-        io_map,  # type: List[Tuple[Text, Text]]
-        inputs=None,  # type: Optional[List[Text]]
-        outputs=None,  # type: Optional[List[Text]]
-        prefix1=None,  # type: Optional[Text]
-        prefix2=None,  # type: Optional[Text]
-        name=None,  # type: Optional[Text]
-        doc_string=None,  # type: Optional[Text]
-):  # type: (...) -> GraphProto
+        g1: GraphProto,
+        g2: GraphProto,
+        io_map: List[Tuple[Text, Text]],
+        inputs: Optional[List[Text]] = None,
+        outputs: Optional[List[Text]] = None,
+        prefix1: Optional[Text] = None,
+        prefix2: Optional[Text] = None,
+        name: Optional[Text] = None,
+        doc_string: Optional[Text] = None,
+) -> GraphProto:
     """Combines two ONNX graphs into a single one.
 
     The combined graph is defined by connecting the specified set of outputs/inputs. Those inputs/outputs
@@ -233,20 +233,20 @@ def merge_graphs(
 
 
 def merge_models(
-        m1,  # type: ModelProto
-        m2,  # type: ModelProto
-        io_map,  # type: List[Tuple[Text, Text]]
-        inputs=None,  # type: Optional[List[Text]]
-        outputs=None,  # type: Optional[List[Text]]
-        prefix1=None,  # type: Optional[Text]
-        prefix2=None,  # type: Optional[Text]
-        name=None,  # type: Optional[Text]
-        doc_string=None,  # type: Optional[Text]
-        producer_name='onnx.compose.merge_models',  # type: Optional[Text]
-        producer_version="1.0",  # type: Optional[Text]
-        domain="",  # type: Optional[Text]
-        model_version=1  # type: Optional[int]
-):  # type: (...) -> ModelProto
+        m1: ModelProto,
+        m2: ModelProto,
+        io_map: List[Tuple[Text, Text]],
+        inputs: Optional[List[Text]] = None,
+        outputs: Optional[List[Text]] = None,
+        prefix1: Optional[Text] = None,
+        prefix2: Optional[Text] = None,
+        name: Optional[Text] = None,
+        doc_string: Optional[Text] = None,
+        producer_name: Optional[Text] = 'onnx.compose.merge_models',
+        producer_version: Optional[Text] = "1.0",
+        domain: Optional[Text] = "",
+        model_version: Optional[int] = 1
+) -> ModelProto:
     """Combines two ONNX models into a single one.
 
     The combined model is defined by connecting the specified set of outputs/inputs.
@@ -289,7 +289,7 @@ def merge_models(
             " Both models should have have the same IR version")
     ir_version = m1.ir_version
 
-    opset_import_map = {}  # type: MutableMapping[Text, int]
+    opset_import_map: MutableMapping[Text, int] = {}
     opset_imports = \
         [entry for entry in m1.opset_import] + \
         [entry for entry in m2.opset_import]
@@ -363,16 +363,16 @@ def merge_models(
 
 
 def add_prefix_graph(
-        graph,  # type: GraphProto
-        prefix,  # type: Text
-        rename_nodes=True,  # type: Optional[bool]
-        rename_edges=True,  # type: Optional[bool]
-        rename_inputs=True,  # type: Optional[bool]
-        rename_outputs=True,  # type: Optional[bool]
-        rename_initializers=True,  # type: Optional[bool]
-        rename_value_infos=True,  # type: Optional[bool]
-        inplace=False,  # type: Optional[bool]
-):  # type: (...) -> GraphProto
+        graph: GraphProto,
+        prefix: Text,
+        rename_nodes: Optional[bool] = True,
+        rename_edges: Optional[bool] = True,
+        rename_inputs: Optional[bool] = True,
+        rename_outputs: Optional[bool] = True,
+        rename_initializers: Optional[bool] = True,
+        rename_value_infos: Optional[bool] = True,
+        inplace: Optional[bool] = False,
+) -> GraphProto:
     """Adds a prefix to names of elements in a graph: nodes, edges, inputs, outputs,
     initializers, sparse initializer, value infos.
 
@@ -400,7 +400,7 @@ def add_prefix_graph(
     else:
         g = graph
 
-    def _prefixed(prefix, name):  # type: (Text, Text) -> Text
+    def _prefixed(prefix: Text, name: Text) -> Text:
         return prefix + name if len(name) > 0 else name
 
     name_map = {}
@@ -465,17 +465,17 @@ def add_prefix_graph(
 
 
 def add_prefix(
-        model,  # type: ModelProto
-        prefix,  # type: Text
-        rename_nodes=True,  # type: Optional[bool]
-        rename_edges=True,  # type: Optional[bool]
-        rename_inputs=True,  # type: Optional[bool]
-        rename_outputs=True,  # type: Optional[bool]
-        rename_initializers=True,  # type: Optional[bool]
-        rename_value_infos=True,  # type: Optional[bool]
-        rename_functions=True,  # type: Optional[bool]
-        inplace=False,  # type: Optional[bool]
-):  # type: (...) -> ModelProto
+        model: ModelProto,
+        prefix: Text,
+        rename_nodes: Optional[bool] = True,
+        rename_edges: Optional[bool] = True,
+        rename_inputs: Optional[bool] = True,
+        rename_outputs: Optional[bool] = True,
+        rename_initializers: Optional[bool] = True,
+        rename_value_infos: Optional[bool] = True,
+        rename_functions: Optional[bool] = True,
+        inplace: Optional[bool] = False,
+) -> ModelProto:
     """Adds a prefix to names of elements in a graph: nodes, edges, inputs, outputs,
     initializers, sparse initializer, value infos, and local functions.
 
@@ -535,10 +535,10 @@ def add_prefix(
 
 
 def expand_out_dim_graph(
-        graph,  # type: GraphProto
-        dim_idx,  # type: int
-        inplace=False,  # type: Optional[bool]
-):  # type: (...) -> GraphProto
+        graph: GraphProto,
+        dim_idx: int,
+        inplace: Optional[bool] = False,
+) -> GraphProto:
     """Inserts an extra dimension with extent 1 to each output in the graph.
 
     Inserts an Unsqueeze node for each output. It can be used as a utility before merging graphs,
@@ -593,10 +593,10 @@ def expand_out_dim_graph(
 
 
 def expand_out_dim(
-        model,  # type: ModelProto
-        dim_idx,  # type: int
-        inplace=False,  # type: Optional[bool]
-):  # type: (...) -> ModelProto
+        model: ModelProto,
+        dim_idx: int,
+        inplace: Optional[bool] = False,
+) -> ModelProto:
     """Inserts an extra dimension with extent 1 to each output in the graph.
 
     Inserts an Unsqueeze node for each output. It can be used as a utility before merging graphs,

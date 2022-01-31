@@ -22,7 +22,7 @@ def bernoulli_reference_implementation(x, dtype):  # type: ignore
 
 class Bernoulli(Base):
     @staticmethod
-    def export_bernoulli_without_dtype():  # type: () -> None
+    def export_bernoulli_without_dtype() -> None:
         node = onnx.helper.make_node(
             'Bernoulli',
             inputs=['x'],
@@ -34,7 +34,7 @@ class Bernoulli(Base):
         expect(node, inputs=[x], outputs=[y], name='test_bernoulli')
 
     @staticmethod
-    def export_bernoulli_with_dtype():  # type: () -> None
+    def export_bernoulli_with_dtype() -> None:
         node = onnx.helper.make_node(
             'Bernoulli',
             inputs=['x'],
@@ -47,7 +47,7 @@ class Bernoulli(Base):
         expect(node, inputs=[x], outputs=[y], name='test_bernoulli_double')
 
     @staticmethod
-    def export_bernoulli_with_seed():  # type: () -> None
+    def export_bernoulli_with_seed() -> None:
         seed = np.float(0)
         node = onnx.helper.make_node(
             'Bernoulli',

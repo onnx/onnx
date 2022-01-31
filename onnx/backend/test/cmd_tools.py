@@ -20,9 +20,9 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(TOP_DIR, 'data')
 
 
-def generate_data(args):  # type: (argparse.Namespace) -> None
+def generate_data(args: argparse.Namespace) -> None:
 
-    def prepare_dir(path):  # type: (Text) -> None
+    def prepare_dir(path: Text) -> None:
         if os.path.exists(path):
             shutil.rmtree(path)
         os.makedirs(path)
@@ -87,7 +87,7 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                                 output, case.model.graph.output[j].name).SerializeToString())
 
 
-def parse_args():  # type: () -> argparse.Namespace
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser('backend-test-tools')
     subparsers = parser.add_subparsers()
 
@@ -101,7 +101,7 @@ def parse_args():  # type: () -> argparse.Namespace
     return parser.parse_args()
 
 
-def main():  # type: () -> None
+def main() -> None:
     args = parse_args()
     args.func(args)
 

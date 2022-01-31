@@ -15,7 +15,7 @@ from onnx.backend.test.case.node import expect
 class Squeeze(Base):
 
     @staticmethod
-    def export_squeeze():  # type: () -> None
+    def export_squeeze() -> None:
         node = onnx.helper.make_node(
             'Squeeze',
             inputs=['x', 'axes'],
@@ -29,7 +29,7 @@ class Squeeze(Base):
                name='test_squeeze')
 
     @staticmethod
-    def export_squeeze_negative_axes():  # type: () -> None
+    def export_squeeze_negative_axes() -> None:
         node = onnx.helper.make_node(
             'Squeeze',
             inputs=['x', 'axes'],

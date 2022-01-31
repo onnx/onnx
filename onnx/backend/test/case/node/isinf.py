@@ -15,7 +15,7 @@ from . import expect
 class IsInf(Base):
 
     @staticmethod
-    def export_infinity():  # type: () -> None
+    def export_infinity() -> None:
         node = onnx.helper.make_node('IsInf',
                                      inputs=['x'],
                                      outputs=['y'],
@@ -27,7 +27,7 @@ class IsInf(Base):
         expect(node, inputs=[x], outputs=[y], name='test_isinf')
 
     @staticmethod
-    def export_positive_infinity_only():  # type: () -> None
+    def export_positive_infinity_only() -> None:
         node = onnx.helper.make_node('IsInf',
                                      inputs=['x'],
                                      outputs=['y'],
@@ -40,7 +40,7 @@ class IsInf(Base):
         expect(node, inputs=[x], outputs=[y], name='test_isinf_positive')
 
     @staticmethod
-    def export_negative_infinity_only():  # type: () -> None
+    def export_negative_infinity_only() -> None:
         node = onnx.helper.make_node('IsInf',
                                      inputs=['x'],
                                      outputs=['y'],

@@ -17,14 +17,14 @@ from onnx.backend.test.loader import load_model_tests
 from typing import Any, IO, Sequence, Text, Dict, List
 
 
-def is_ml(schemas):  # type: (Sequence[defs.OpSchema]) -> bool
+def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:
     for s in schemas:
         if s.domain == 'ai.onnx.ml':
             return True
     return False
 
 
-def gen_outlines(f, ml):  # type: (IO[Any], bool) -> None
+def gen_outlines(f: IO[Any], ml: bool) -> None:
     f.write('# Test Coverage Report')
     if ml:
         f.write(' (ONNX-ML Operators)\n')
@@ -36,12 +36,11 @@ def gen_outlines(f, ml):  # type: (IO[Any], bool) -> None
     f.write('* [Overall Test Coverage](#overall-test-coverage)\n')
 
 
-common_covered = []  # type: Sequence[Text]
-experimental_covered = []  # type: Sequence[Text]
+common_covered: Sequence[Text] = []
+experimental_covered: Sequence[Text] = []
 
 
-def gen_node_test_coverage(schemas, f, ml):
-    # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
+def gen_node_test_coverage(schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool) -> None:
     global common_covered
     global experimental_covered
     generators = set({
@@ -125,8 +124,7 @@ def gen_node_test_coverage(schemas, f, ml):
         f.write('<br/>\n\n')
 
 
-def gen_model_test_coverage(schemas, f, ml):
-    # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
+def gen_model_test_coverage(schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool) -> None:
     f.write('# Model Test Coverage\n')
     # Process schemas
     schema_dict = dict()
@@ -134,8 +132,8 @@ def gen_model_test_coverage(schemas, f, ml):
         schema_dict[schema.name] = schema
     # Load models from each model test using Runner.prepare_model_data
     # Need to grab associated nodes
-    attrs = dict()  # type: Dict[Text, Dict[Text, List[Any]]]
-    model_paths = []  # type: List[Any]
+    attrs: Dict[Text, Dict[Text, List[Any]]] = dict()
+    model_paths: List[Any] = []
     for rt in load_model_tests(kind='real'):
         model_dir = Runner.prepare_model_data(rt)
         model_paths.append(os.path.join(model_dir, 'model.onnx'))
@@ -218,19 +216,16 @@ def gen_model_test_coverage(schemas, f, ml):
         f.write('No model tests present for selected domain\n')
 
 
-def gen_overall_test_coverage(schemas, f, ml):
-    # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
+def gen_overall_test_coverage(schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool) -> None:
     f.write('# Overall Test Coverage\n')
     f.write('## To be filled.\n')
 
 
-def gen_spdx(f):
-    # type: (IO[Any]) -> None
+def gen_spdx(f: IO[Any]) -> None:
     f.write('<!--- SPDX-License-Identifier: Apache-2.0 -->\n')
 
 
-def main():
-    # type: () -> None
+def main() -> None:
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.realpath(__file__)))))
     docs_dir = os.path.join(base_dir, 'docs')

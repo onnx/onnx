@@ -15,7 +15,7 @@ from . import expect
 class Compress(Base):
 
     @staticmethod
-    def export_compress_0():  # type: () -> None
+    def export_compress_0() -> None:
         node = onnx.helper.make_node(
             'Compress',
             inputs=['input', 'condition'],
@@ -33,7 +33,7 @@ class Compress(Base):
                name='test_compress_0')
 
     @staticmethod
-    def export_compress_1():  # type: () -> None
+    def export_compress_1() -> None:
         node = onnx.helper.make_node(
             'Compress',
             inputs=['input', 'condition'],
@@ -52,7 +52,7 @@ class Compress(Base):
                name='test_compress_1')
 
     @staticmethod
-    def export_compress_default_axis():  # type: () -> None
+    def export_compress_default_axis() -> None:
         node = onnx.helper.make_node(
             'Compress',
             inputs=['input', 'condition'],
@@ -68,7 +68,7 @@ class Compress(Base):
                name='test_compress_default_axis')
 
     @staticmethod
-    def export_compress_negative_axis():  # type: () -> None
+    def export_compress_negative_axis() -> None:
         node = onnx.helper.make_node(
             'Compress',
             inputs=['input', 'condition'],

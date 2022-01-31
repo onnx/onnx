@@ -5,12 +5,12 @@ import itertools
 from typing import Text, Sequence
 
 
-def get_pad_shape(auto_pad,  # type: Text
-                  input_spatial_shape,  # type: Sequence[int]
-                  kernel_spatial_shape,  # type: Sequence[int]
-                  strides_spatial,  # type: Sequence[int]
-                  output_spatial_shape  # type: Sequence[int]
-                  ):  # type: (...) -> Sequence[int]
+def get_pad_shape(auto_pad: Text,
+                  input_spatial_shape: Sequence[int],
+                  kernel_spatial_shape: Sequence[int],
+                  strides_spatial: Sequence[int],
+                  output_spatial_shape: Sequence[int]
+                  ) -> Sequence[int]:
     pad_shape = [0] * len(input_spatial_shape)
     if auto_pad in ('SAME_UPPER', 'SAME_LOWER'):
         for i in range(len(input_spatial_shape)):
@@ -21,11 +21,11 @@ def get_pad_shape(auto_pad,  # type: Text
     return pad_shape
 
 
-def get_output_shape(auto_pad,  # type: Text
-                     input_spatial_shape,  # type: Sequence[int]
-                     kernel_spatial_shape,  # type: Sequence[int]
-                     strides_spatial  # type: Sequence[int]
-                     ):  # type: (...) -> Sequence[int]
+def get_output_shape(auto_pad: Text,
+                     input_spatial_shape: Sequence[int],
+                     kernel_spatial_shape: Sequence[int],
+                     strides_spatial: Sequence[int]
+                     ) -> Sequence[int]:
     out_shape = [0] * len(input_spatial_shape)
     if auto_pad in ('SAME_UPPER', 'SAME_LOWER'):
         for i in range(len(input_spatial_shape)):
@@ -41,15 +41,15 @@ def get_output_shape(auto_pad,  # type: Text
     return out_shape
 
 
-def pool(padded,  # type: np.ndarray
-         x_shape,  # type: Sequence[int]
-         kernel_shape,  # type: Sequence[int]
-         strides_shape,  # type: Sequence[int]
-         out_shape,  # type: Sequence[int]
-         pad_shape,  # type: Sequence[int]
-         pooling_type,  # type: Text
-         count_include_pad=0  # type: int
-         ):  # type: (...) -> np.ndarray
+def pool(padded: np.ndarray,
+         x_shape: Sequence[int],
+         kernel_shape: Sequence[int],
+         strides_shape: Sequence[int],
+         out_shape: Sequence[int],
+         pad_shape: Sequence[int],
+         pooling_type: Text,
+         count_include_pad: int = 0
+         ) -> np.ndarray:
     spatial_size = len(x_shape) - 2
     y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))
 
