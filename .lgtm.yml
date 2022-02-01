@@ -1,7 +1,7 @@
 extraction:
   cpp:
     before_index:
-        # always use Python 3
+      # always use Python 3
       - cp `which python3` $LGTM_WORKSPACE/python
       - PATH=$LGTM_WORKSPACE:$PATH
       # build protobuf from source with -fPIC
