@@ -42,7 +42,8 @@ VERSION_TABLE: VersionTableType = [
     ('1.9.0', 7, 14, 2, 1),
     ('1.10.0', 8, 15, 2, 1),
     ('1.10.1', 8, 15, 2, 1),
-    ('1.10.2', 8, 15, 2, 1)
+    ('1.10.2', 8, 15, 2, 1),
+    ('1.11.0', 8, 16, 3, 1)
 ]
 
 VersionMapType = Dict[Tuple[Text, int], int]
@@ -826,10 +827,10 @@ def printable_node(node: NodeProto, prefix: Text = '', subgraphs: bool = False) 
     printed_attrs = []
     for attr in node.attribute:
         if subgraphs:
-            printed_attr, gs = printable_attribute(attr, subgraphs)
-            assert isinstance(gs, list)
-            graphs.extend(gs)
-            printed_attrs.append(printed_attr)
+            printed_attr_subgraphs = printable_attribute(attr, subgraphs)
+            assert isinstance(printed_attr_subgraphs[1], list)
+            graphs.extend(printed_attr_subgraphs[1])
+            printed_attrs.append(printed_attr_subgraphs[0])
         else:
             printed = printable_attribute(attr)
             assert isinstance(printed, Text)
@@ -894,10 +895,10 @@ def printable_graph(graph: GraphProto, prefix: Text = '') -> Text:
     graphs: List[GraphProto] = []
     # body
     for node in graph.node:
-        pn, gs = printable_node(node, indent, subgraphs=True)
-        assert isinstance(gs, list)
-        content.append(pn)
-        graphs.extend(gs)
+        contents_subgraphs = printable_node(node, indent, subgraphs=True)
+        assert isinstance(contents_subgraphs[1], list)
+        content.append(contents_subgraphs[0])
+        graphs.extend(contents_subgraphs[1])
     # tail
     tail = ['return']
     if len(graph.output):

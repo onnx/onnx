@@ -327,7 +327,7 @@ tests_require.append('pytest')
 tests_require.append('nbval')
 tests_require.append('tabulate')
 
-extras_require['mypy'] = ['mypy==0.760', 'types-protobuf==3.18.4']
+extras_require['mypy'] = ['mypy==0.782', 'types-protobuf==3.18.4']
 
 ################################################################################
 # Final
