@@ -335,7 +335,9 @@ class TestHelperNodeFunctions(unittest.TestCase):
     def test_model_irversion(self) -> None:
         def mk_model(opset_versions: List[Tuple[Text, int]]) -> ModelProto:
             graph = helper.make_graph([], "my graph", [], [])
-            return helper.make_model_gen_version(graph, opset_imports=[helper.make_opsetid(*pair) for pair in opset_versions])
+            return helper.make_model_gen_version(
+                graph,
+                opset_imports=[helper.make_opsetid(*pair) for pair in opset_versions])
 
         def test(opset_versions: List[Tuple[Text, int]], ir_version: int) -> None:
             model = mk_model(opset_versions)
@@ -348,9 +350,11 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 13)], 7)
         test([("", 14)], 7)
         test([("", 15)], 8)
+        test([("", 16)], 8)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
+        test([("ai.onnx.ml", 3)], 8)
         test([("ai.onnx.training", 1)], 7)
         # helper should pick *max* IR version required from all opsets specified.
         test([("", 10), ("ai.onnx.ml", 2)], 6)
