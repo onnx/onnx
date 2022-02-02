@@ -6,13 +6,13 @@ from onnx import helper, parser, GraphProto
 
 
 class TestBasicFunctions(unittest.TestCase):
-    def check_graph(self, graph):  # type: (GraphProto) -> None
+    def check_graph(self, graph: GraphProto) -> None:
         self.assertTrue(len(graph.node) == 3)
         self.assertTrue(graph.node[0].op_type == "MatMul")
         self.assertTrue(graph.node[1].op_type == "Add")
         self.assertTrue(graph.node[2].op_type == "Softmax")
 
-    def test_parse_graph(self):  # type: () -> None
+    def test_parse_graph(self) -> None:
         input = '''
            agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
            {
@@ -24,7 +24,7 @@ class TestBasicFunctions(unittest.TestCase):
         graph = onnx.parser.parse_graph(input)
         self.check_graph(graph)
 
-    def test_parse_model(self):  # type: () -> None
+    def test_parse_model(self) -> None:
         input = '''
            <
              ir_version: 7,
@@ -42,7 +42,7 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertTrue(len(model.opset_import) == 2)
         self.check_graph(model.graph)
 
-    def test_parse_graph_error(self):  # type: () -> None
+    def test_parse_graph_error(self) -> None:
         input = '''
            agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
            {
@@ -53,7 +53,7 @@ class TestBasicFunctions(unittest.TestCase):
            '''
         self.assertRaises(onnx.parser.ParseError, lambda: onnx.parser.parse_graph(input))
 
-    def test_parse_model_error(self):  # type: () -> None
+    def test_parse_model_error(self) -> None:
         input = '''
            <
              ir_version: 7,

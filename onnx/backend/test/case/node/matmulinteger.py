@@ -14,7 +14,7 @@ from . import expect
 class MatMulInteger(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node('MatMulInteger',
             inputs=['A', 'B', 'a_zero_point', 'b_zero_point'],
             outputs=['Y'],)

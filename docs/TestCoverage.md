@@ -2096,14 +2096,14 @@ There are 1 test cases, listed as following:
 <summary>concat</summary>
 
 ```python
-test_cases = {
+test_cases: Dict[Text, Sequence[Any]] = {
     '1d': ([1, 2],
            [3, 4]),
     '2d': ([[1, 2], [3, 4]],
            [[5, 6], [7, 8]]),
     '3d': ([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
-}  # type: Dict[Text, Sequence[Any]]
+}
 
 for test_case, values_ in test_cases.items():
     values = [np.asarray(v, dtype=np.float32) for v in values_]
@@ -6272,7 +6272,7 @@ node = onnx.helper.make_node(
 )
 
 trip_count = np.array(5).astype(np.int64)
-seq_empty = []  # type: List[Any]
+seq_empty: List[Any] = []
 seq_res = [x[:int(i)] for i in x]
 cond = np.array(1).astype(bool)
 expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
@@ -6460,7 +6460,7 @@ node = onnx.helper.make_node(
 trip_count = np.array(5).astype(np.int64)
 cond = np.array(1).astype(bool)
 seq_res = compute_loop_outputs(x, [x0], trip_count)
-opt_seq_in = [x0]  # type: List[Any]
+opt_seq_in: List[Any] = [x0]
 expect(node, inputs=[trip_count, cond, opt_seq_in], outputs=[seq_res],
        name='test_loop16_seq_none', opset_imports=[onnx.helper.make_opsetid("", 16)],
        input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, trip_count.shape),

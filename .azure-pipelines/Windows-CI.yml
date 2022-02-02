@@ -8,6 +8,14 @@ jobs:
     vmImage: 'windows-2019'
   strategy:
     matrix:
+      py39:
+        python.version: '3.9'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+      py38:
+        python.version: '3.8'
+        onnx_ml: 0
+        onnx_verify_proto: 0
       py37:
         python.version: '3.7'
         onnx_ml: 0

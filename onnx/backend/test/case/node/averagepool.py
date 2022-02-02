@@ -16,7 +16,7 @@ from .pool_op_common import get_pad_shape, get_output_shape, pool
 class AveragePool(Base):
 
     @staticmethod
-    def export_averagepool_2d_precomputed_pads():  # type: () -> None
+    def export_averagepool_2d_precomputed_pads() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
@@ -46,7 +46,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads')
 
     @staticmethod
-    def export_averagepool_2d_precomputed_pads_count_include_pad():  # type: () -> None
+    def export_averagepool_2d_precomputed_pads_count_include_pad() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
@@ -76,7 +76,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads_count_include_pad')
 
     @staticmethod
-    def export_averagepool_2d_precomputed_strides():  # type: () -> None
+    def export_averagepool_2d_precomputed_strides() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 2, 2]
@@ -101,7 +101,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_strides')
 
     @staticmethod
-    def export_averagepool_2d_precomputed_same_upper():  # type: () -> None
+    def export_averagepool_2d_precomputed_same_upper() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 3, 3]
@@ -129,7 +129,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_same_upper')
 
     @staticmethod
-    def export_averagepool_1d_default():  # type: () -> None
+    def export_averagepool_1d_default() -> None:
         """
         input_shape: [1, 3, 32]
         output_shape: [1, 3, 31]
@@ -151,7 +151,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
 
     @staticmethod
-    def export_averagepool_2d_default():  # type: () -> None
+    def export_averagepool_2d_default() -> None:
         """
         input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 31, 31]
@@ -173,7 +173,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_default')
 
     @staticmethod
-    def export_averagepool_3d_default():  # type: () -> None
+    def export_averagepool_3d_default() -> None:
         """
         input_shape: [1, 3, 32, 32, 32]
         output_shape: [1, 3, 31, 31, 31]
@@ -195,7 +195,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
     @staticmethod
-    def export_averagepool_2d_same_upper():  # type: () -> None
+    def export_averagepool_2d_same_upper() -> None:
         """
         input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
@@ -225,7 +225,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_upper')
 
     @staticmethod
-    def export_averagepool_2d_same_lower():  # type: () -> None
+    def export_averagepool_2d_same_lower() -> None:
         """
         input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
@@ -255,7 +255,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_lower')
 
     @staticmethod
-    def export_averagepool_2d_pads():  # type: () -> None
+    def export_averagepool_2d_pads() -> None:
         """
         input_shape: [1, 3, 28, 28]
         output_shape: [1, 3, 30, 30]
@@ -285,7 +285,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads')
 
     @staticmethod
-    def export_averagepool_2d_pads_count_include_pad():  # type: () -> None
+    def export_averagepool_2d_pads_count_include_pad() -> None:
         """
         input_shape: [1, 3, 28, 28]
         output_shape: [1, 3, 30, 30]
@@ -316,7 +316,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads_count_include_pad')
 
     @staticmethod
-    def export_averagepool_2d_strides():  # type: () -> None
+    def export_averagepool_2d_strides() -> None:
         """
         input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 10, 10]
@@ -339,7 +339,7 @@ class AveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
 
     @staticmethod
-    def export_averagepool_2d_ceil():  # type: () -> None
+    def export_averagepool_2d_ceil() -> None:
         """
         input_shape: [1, 1, 4, 4]
         output_shape: [1, 1, 2, 2]

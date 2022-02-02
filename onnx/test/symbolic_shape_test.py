@@ -14,7 +14,7 @@ import unittest
 
 class TestSymbolicShape(unittest.TestCase):
 
-    def _assert_valueinfo_shape(self, onnx_model, value_infos):  # type: (ModelProto, List[ValueInfoProto]) -> None
+    def _assert_valueinfo_shape(self, onnx_model: ModelProto, value_infos: List[ValueInfoProto]) -> None:
         """
             Assert onnx_model.value_info should be the same as expected value_infos
             Instead of exact symbol, use -1 to represent symbolic shape in expected value_infos
@@ -37,7 +37,7 @@ class TestSymbolicShape(unittest.TestCase):
                 else:
                     assert dim.dim_value == expected_dim.dim_value, '{}'.format(onnx_model)
 
-    def _count_unique_dim_param_number(self, onnx_model):  # type: (ModelProto) -> int
+    def _count_unique_dim_param_number(self, onnx_model: ModelProto) -> int:
         """
            return the total number of unique symbolic shape
         """
@@ -51,7 +51,7 @@ class TestSymbolicShape(unittest.TestCase):
                     symbol_shape_set.add(dim.dim_param)
         return len(symbol_shape_set)
 
-    def _get_shape_from_name(self, onnx_model, name):  # type: (ModelProto, Text) -> Optional[TensorShapeProto]
+    def _get_shape_from_name(self, onnx_model: ModelProto, name: Text) -> Optional[TensorShapeProto]:
         """
             Get shape from tensor_type or sparse_tensor_type according to given name
         """
@@ -66,7 +66,7 @@ class TestSymbolicShape(unittest.TestCase):
                     return v.type.sparse_tensor_type.shape
         return None
 
-    def test_concat_enable_symbolic(self):  # type: () -> None
+    def test_concat_enable_symbolic(self) -> None:
         concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
             inputs=['C'],
@@ -85,7 +85,7 @@ class TestSymbolicShape(unittest.TestCase):
         # the symbolic shape of C and output should be the same
         assert self._get_shape_from_name(inferred_model, 'C') == self._get_shape_from_name(inferred_model, 'output')
 
-    def test_two_symbolic_concat(self):  # type: () -> None
+    def test_two_symbolic_concat(self) -> None:
         concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         concat2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
@@ -108,7 +108,7 @@ class TestSymbolicShape(unittest.TestCase):
         # the symbolic shape of E and output should be the same
         assert self._get_shape_from_name(inferred_model, 'E') == self._get_shape_from_name(inferred_model, 'output')
 
-    def test_duplicate_symbolic_shape(self):  # type: () -> None
+    def test_duplicate_symbolic_shape(self) -> None:
         concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         concat2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
@@ -133,7 +133,7 @@ class TestSymbolicShape(unittest.TestCase):
         # inferred: {'unk_0', 'unk__1', 'unk__2', 'unk__3'}
         assert inferred_count == original_count + 2, '%s%s' % (inferred_model, onnx_model)
 
-    def test_unknown_shape(self):  # type: () -> None
+    def test_unknown_shape(self) -> None:
         concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
             inputs=['C'],

@@ -15,7 +15,7 @@ from . import expect
 class InstanceNormalization(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         def _instancenorm_test_mode(x, s, bias, epsilon=1e-5):  # type: ignore
             dims_x = len(x.shape)
             axis = tuple(range(2, dims_x))

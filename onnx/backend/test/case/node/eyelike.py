@@ -15,7 +15,7 @@ from . import expect
 class EyeLike(Base):
 
     @staticmethod
-    def export_without_dtype():  # type: () -> None
+    def export_without_dtype() -> None:
         shape = (4, 4)
         node = onnx.helper.make_node(
             'EyeLike',
@@ -28,7 +28,7 @@ class EyeLike(Base):
         expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
 
     @staticmethod
-    def export_with_dtype():  # type: () -> None
+    def export_with_dtype() -> None:
         shape = (3, 4)
         node = onnx.helper.make_node(
             'EyeLike',
@@ -42,7 +42,7 @@ class EyeLike(Base):
         expect(node, inputs=[x], outputs=[y], name='test_eyelike_with_dtype')
 
     @staticmethod
-    def export_populate_off_main_diagonal():  # type: () -> None
+    def export_populate_off_main_diagonal() -> None:
         shape = (4, 5)
         off_diagonal_offset = 1
         node = onnx.helper.make_node(

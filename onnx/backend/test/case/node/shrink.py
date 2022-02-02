@@ -15,7 +15,7 @@ from . import expect
 class Shrink(Base):
 
     @staticmethod
-    def export_hard_shrink():  # type: () -> None
+    def export_hard_shrink() -> None:
         node = onnx.helper.make_node(
             'Shrink',
             inputs=['x'],
@@ -28,7 +28,7 @@ class Shrink(Base):
                name='test_shrink_hard')
 
     @staticmethod
-    def export_soft_shrink():  # type: () -> None
+    def export_soft_shrink() -> None:
         node = onnx.helper.make_node(
             'Shrink',
             inputs=['x'],
