@@ -45,16 +45,7 @@ jobs:
       python -m virtualenv py$(python.version)
       source py$(python.version)/bin/activate
 
-      git clone https://github.com/protocolbuffers/protobuf.git
-      cd protobuf
-      git checkout v3.16.0
-      git submodule update --init --recursive
-      mkdir build_source && cd build_source
-
-      cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-      make -j$(nproc)
-      sudo make install
-      cd ../..
+      source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
       python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt

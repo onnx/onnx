@@ -8,13 +8,4 @@ extraction:
       - cp `which python3` $LGTM_WORKSPACE/python
       - PATH=$LGTM_WORKSPACE:$PATH
       # Build protobuf from source with -fPIC
-      - git clone https://github.com/protocolbuffers/protobuf.git
-      - cd protobuf
-      - git checkout v3.16.0
-      - git submodule update --init --recursive
-      - mkdir build_source && cd build_source
-      # Cannot use sudo so install locally at $HOME/protobuffers
-      - cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$HOME/protobuffers -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-      - make -j$(nproc)
-      - make install
-      - PATH=$HOME/protobuffers/bin:$PATH
+      - source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)

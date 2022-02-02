@@ -19,19 +19,8 @@ if [ ! -z "$SYSTEM_PACKAGES" ]; then
     yum install -y ${SYSTEM_PACKAGES}  || { echo "Installing yum package(s) failed."; exit 1; }
 fi
 
-# Build protobuf
-ONNX_PATH=$(pwd)
-cd ..
-git clone https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git checkout v3.16.0
-git submodule update --init --recursive
-mkdir build_source && cd build_source
-
-cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-make install
-cd $ONNX_PATH
+# Build protobuf from source
+source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
 # Compile wheels
 # Need to be updated if there is a new Python Version
