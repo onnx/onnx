@@ -2032,42 +2032,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Shape inference
           // For shape inference, we need both input shape
-          const auto* shape_initializer = ctx.getInputData(1);
           if (hasNInputShapes(ctx, 2)) {
-            const auto& shape_input_shape =
-                ctx.getInputType(1)->tensor_type().shape();
-            if (shape_input_shape.dim_size() != 1) {
-                    fail_shape_inference("'shape' input must be 1D tensor");
-                }
-
             const auto& input_shape =
                 ctx.getInputType(0)->tensor_type().shape();
-            TensorShapeProto second_shape;
-            if (nullptr != shape_initializer) {
-              const auto& shape_data = ParseData<int64_t>(shape_initializer);
-
-              for (const auto& e : shape_data) {
-                auto* dim = second_shape.add_dim();
-                dim->set_dim_value(e);
-              }
-            } else {
-                // When shape_initializer is not available, we see if symbolic shape input
-                // is available or not. If it is available, we do shape inference by data
-                // propagation. Otherwise, we fall back to rank inference.
-                const TensorShapeProto* symInput = ctx.getSymbolicInput(1);
-                if (symInput != nullptr) {
-                    // Shape inference by data propagation
-                    second_shape.CopyFrom(*symInput);
-                }  else if (shape_input_shape.dim(0).has_dim_value()) {
-                    // Attempt rank inference using shape of shape input
-                    int64_t dim_value = shape_input_shape.dim(0).dim_value();
-                    for (int64_t i = 0; i < dim_value; ++i) {
-                        second_shape.add_dim();
-                    }
-                }
+            bool found = false;
+            TensorShapeProto second_shape = getShapeInput(ctx, 1, found);
+            if (found) {
+                bidirectionalBroadcastShapeInference(
+                    input_shape, second_shape, *getOutputShape(ctx, 0));
             }
-            bidirectionalBroadcastShapeInference(
-                input_shape, second_shape, *getOutputShape(ctx, 0));
           }
           return;
         }));

@@ -501,6 +501,12 @@ inline void updateOutputShape(
   }
 }
 
+// Get shape input by first checking initializer and then propagated symbolic data.
+// If neither is available, try rank inference.
+// When one of above succeeds, `true` is stored in `found`.
+// Otherwise, `false` is stored, which means that returned TensorShapeProto does not make sense.
+TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& found);
+
 // Infer shape of an output from the value of a specified attribute, which is
 // expected to be a list of integers specifying a valid shape.
 inline void propagateShapeFromAttributeToOutput(
