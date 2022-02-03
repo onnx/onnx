@@ -10,6 +10,10 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:
 
+concurrency: 
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
 env:
   MACOSX_DEPLOYMENT_TARGET: 10.12
@@ -38,11 +42,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
-    - name: Install protobuf 3.16.0 due to compatibility
-      run: |
-        export NUM_CORES=`sysctl -n hw.ncpu`
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $(NUM_CORES)
-
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
@@ -54,6 +53,10 @@ jobs:
         CXX: "clang++"
         ONNX_ML: 1
       run: |
+        # Install protobuf from source
+        export NUM_CORES=`sysctl -n hw.logicalcpu`
+        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
+
         # Currently GitHub Action agent is using 10.14 Python, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
         if [ '${{ github.event_name }}' == 'schedule' ]; then

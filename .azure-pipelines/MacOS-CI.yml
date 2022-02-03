@@ -31,8 +31,8 @@ jobs:
 
   - script: |
       # Install protobuf 3.16.0 from source
-      export NUM_CORES=`sysctl -n hw.ncpu`
-      source workflow_scripts/protobuf/build_protobuf_unix.sh $(NUM_CORES)
+      export NUM_CORES=`sysctl -n hw.logicalcpu`
+      source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
 
       git submodule update --init --recursive
       python -m pip install -q --upgrade pip
