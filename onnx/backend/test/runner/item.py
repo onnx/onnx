@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 from typing import Callable, Any, Union, List, Optional
 from onnx import NodeProto, ModelProto
 

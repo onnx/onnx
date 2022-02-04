@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 from onnx import AttributeProto, FunctionProto
 import onnx.onnx_cpp2py_export.defs as C
 

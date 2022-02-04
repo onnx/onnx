@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 from collections import defaultdict
 import functools
 import glob

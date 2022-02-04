@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 from distutils.spawn import find_executable
 from distutils import sysconfig, log
 import setuptools

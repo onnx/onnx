@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 import random
 
 import numpy as np  # type: ignore

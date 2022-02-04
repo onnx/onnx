@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 """onnx shape inference. Shape inference is not guaranteed to be
 complete.
 

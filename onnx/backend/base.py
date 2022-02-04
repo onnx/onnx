@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 from collections import namedtuple
 from typing import Text, Sequence, Any, Type, Tuple, NewType, Optional, Dict
 

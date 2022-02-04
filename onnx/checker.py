@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 """onnx checker
 
 This implements graphalities that allows us to check whether a serialized

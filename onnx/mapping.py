@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 from onnx import TensorProto, SequenceProto, OptionalProto
 import numpy as np  # type: ignore
 

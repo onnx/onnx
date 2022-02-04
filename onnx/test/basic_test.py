@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 from onnx import AttributeProto, NodeProto, GraphProto, ModelProto, TensorProto, IR_VERSION
 
 import io

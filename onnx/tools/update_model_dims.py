@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 from typing import Any, List, Text, Dict, Set
 from onnx import ModelProto, ValueInfoProto
 

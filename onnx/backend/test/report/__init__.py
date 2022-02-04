@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 import pytest  # type: ignore
 import _pytest  # type: ignore
 

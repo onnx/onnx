@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-
 import os
 
 from .onnx_cpp2py_export import ONNX_ML
