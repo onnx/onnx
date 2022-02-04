@@ -105,7 +105,7 @@ def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> Text:
     # doc
     if schema.doc:
         s += '\n'
-        s += '\n'.join('  ' + line
+        s += '\n'.join(('  ' + line).rstrip()
                        for line in schema.doc.lstrip().splitlines())
         s += '\n'
 
