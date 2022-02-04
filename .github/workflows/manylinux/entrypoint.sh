@@ -20,7 +20,7 @@ if [ ! -z "$SYSTEM_PACKAGES" ]; then
 fi
 
 # Build protobuf from source
-source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc) $(pwd)/protobuf_install
+source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc) $(pwd)/protobuf/protobuf_install
 
 # Compile wheels
 # Need to be updated if there is a new Python Version

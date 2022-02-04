@@ -6,10 +6,6 @@ on:
    pull_request:
     branches: [ main, rel-* ]
 
-concurrency: 
-  group: ${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   build:
     runs-on: windows-latest
@@ -40,23 +36,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
-    - name: Install Protobuf from source
-      shell: cmd
-      run: |
-        call .\onnx\workflow_scripts\protobuf\build_protobuf_win.bat ${{ matrix.architecture }}
-
     - name: Build and test ONNX binaries
       run: |
-        echo "Set paths from the previous script"
-        $protobuf_root_dir = Get-Location
-        $protoc_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\bin"
-        $protoc_lib_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\lib"
-        $protobuf_include_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\include"
-        $protoc_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\bin"
-        $protoc_lib_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\lib"
-        $protobuf_include_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\include"
-        $Env:PATH="$ENV:PATH;$protoc_path;$protoc_lib_path;$protobuf_include_path"
-        $($Env:PATH).Split(';')
+        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch ${{ matrix.architecture }}
 
         cd onnx
         echo "Build ONNX"

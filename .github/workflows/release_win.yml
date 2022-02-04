@@ -10,10 +10,6 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:
 
-concurrency: 
-  group: ${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
@@ -21,7 +17,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
-        architecture: ['x64']
+        architecture: ['x64', 'x86']
     steps:        
     - name: Checkout ONNX
       uses: actions/checkout@v2
@@ -53,8 +49,13 @@ jobs:
 
     - name: Build ONNX wheel
       run: |
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1
+        $arch = 'x64'
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          $arch = 'Win32'
+        }
+        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
+
         echo "Install ONNX"
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
