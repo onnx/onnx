@@ -11,8 +11,6 @@ fi
 
 if [[ -z "$INSTALL_PROTOBUF_PATH" ]]; then
    export INSTALL_PROTOBUF_PATH=/usr
-else
-    mkdir -p $INSTALL_PROTOBUF_PATH
 fi
 
 # Build protobuf from source with -fPIC on Unix-like system
