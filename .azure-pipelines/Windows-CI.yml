@@ -76,8 +76,6 @@ jobs:
       )
 
       rm -rf .setuptools-cmake-build
-      python -m pip install -q -e .[mypy]
-      python setup.py -q typecheck
 
 
     displayName: Install and test ONNX

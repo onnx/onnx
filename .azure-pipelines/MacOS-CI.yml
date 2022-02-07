@@ -66,11 +66,11 @@ jobs:
     displayName: 'Install dependencies and ONNX'
 
   - script: |
-      # lint python code
-      python -m pip install -q flake8
-      flake8
+      # style check (flake8, mypy, and clang-format)
+      pip install .[lint]
+      bash tools/format.sh
       if [ $? -ne 0 ]; then
-        echo "flake8 returned failures"
+        echo "style check failed"
         exit 1
       fi
 
