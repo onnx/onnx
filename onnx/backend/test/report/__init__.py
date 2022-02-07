@@ -6,7 +6,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import pytest  # type: ignore
-import _pytest
+import _pytest  # type: ignore
 
 from .coverage import Coverage
 from typing import Dict, Text, Sequence, Any, List
