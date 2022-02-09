@@ -39,8 +39,8 @@ if [ `uname -m` == 'aarch64' ]; then
  PIP_COMMAND="$PY_VERSION -m pip install --no-cache-dir -q"
  PYTHON_COMMAND="$PY_VERSION"
 else
- declare -A python_map=( ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
- declare -A python_include=( ["3.6"]="3.6m" ["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
+ declare -A python_map=(["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
+ declare -A python_include=(["3.7"]="3.7m" ["3.8"]="3.8" ["3.9"]="3.9")
  PY_VER=${python_map[$PY_VERSION]}
  PIP_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir -q"
  PYTHON_COMMAND="/opt/python/"${PY_VER}"/bin/python"
@@ -56,7 +56,7 @@ $PIP_COMMAND --upgrade pip
 # Install Python dependency
 if [ "$PLAT" == "manylinux2010_i686" ]; then
     # pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
-    $PIP_COMMAND numpy==1.16.6 protobuf==3.16.0 || { echo "Installing Python requirements failed."; exit 1; }
+    $PIP_COMMAND numpy==1.21.5 protobuf==3.16.0 || { echo "Installing Python requirements failed."; exit 1; }
 else
     $PIP_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 fi
