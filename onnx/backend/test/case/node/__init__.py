@@ -3,7 +3,7 @@
 import sys
 import re
 
-from typing import List, Text, Sequence, Any, Union, Optional
+from typing import Callable, List, Text, Sequence, Any, Union, Optional, Dict
 import numpy as np  # type: ignore
 
 import onnx
@@ -17,7 +17,53 @@ from ..test_case import TestCase
 _NodeTestCases = []
 _TargetOpType = ""
 
-from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto
+from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, GraphProto
+
+
+def _rename_edges_helper(internal_node : NodeProto,
+                         rename_helper : Callable[[Text], Text],
+                         attribute_map : Dict[Text, Text]) -> NodeProto:
+    new_node = NodeProto()
+    new_node.CopyFrom(internal_node)
+    new_node.ClearField("input")
+    new_node.ClearField("output")
+    new_node.ClearField("attribute")
+    for internal_name in internal_node.input:
+        new_node.input.append(rename_helper(internal_name))
+    for internal_name in internal_node.output:
+        new_node.output.append(rename_helper(internal_name))
+    for attr in internal_node.attribute:
+        if attr.HasField("ref_attr_name"):
+            if attr.ref_attr_name in attribute_map:
+                new_attr = AttributeProto()
+                new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                new_attr.name = attr.name
+                new_node.attribute.extend([new_attr])
+        else:
+            new_attr = AttributeProto()
+            new_attr.CopyFrom(attr)
+            if attr.type == AttributeProto.GRAPHS:
+                new_graph = GraphProto()
+                new_graph.CopyFrom(attr.graphs[0])
+                for in_desc in new_graph.input:
+                    in_desc.name = rename_helper(in_desc.name)
+                for out_desc in new_graph.output:
+                    out_desc.name = rename_helper(out_desc.name)
+                for init_desc in new_graph.initializer:
+                    init_desc.name = rename_helper(init_desc.name)
+                for sparse_init_desc in new_graph.sparse_initializer:
+                    sparse_init_desc.values.name = rename_helper(sparse_init_desc.values.name)
+                for sparse_init_desc in new_graph.sparse_initializer:
+                    sparse_init_desc.indices.name = rename_helper(sparse_init_desc.indices.name)
+                for val_info_desc in new_graph.value_info:
+                    val_info_desc.name = rename_helper(val_info_desc.name)
+                new_nodes = []
+                for node_desc in new_graph.node:
+                    new_nodes.append(
+                        _rename_edges_helper(node_desc, rename_helper, attribute_map))
+                new_graph.ClearField("node")
+                new_graph.extend(new_nodes)
+    return new_node
 
 
 # FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
@@ -25,20 +71,12 @@ def function_expand_helper(node: NodeProto,
                            function_proto: FunctionProto,
                            op_prefix: Text
                            ) -> List[NodeProto]:
-    node_list = []
     io_names_map = dict()
     attribute_map = dict((a.name, a) for a in node.attribute)
 
     for idx in range(len(function_proto.input)):
         io_names_map[function_proto.input[idx]] = node.input[idx] \
             if idx in range(len(node.input)) else ""
-
-        # Some nodes in the function body might contain subgraphs, and those could depend on the
-        # function input names. By inserting an identity node we keep the edge names valid in any
-        # subgraphs.
-        if idx in range(len(node.input)) and node.input[idx] != function_proto.input[idx]:
-            node_list.append(onnx.helper.make_node(
-                'Identity', [node.input[idx]], [function_proto.input[idx]]))
 
     for idx in range(len(function_proto.output)):
         # Even if the node has been created with optional outputs missing, we
@@ -50,35 +88,17 @@ def function_expand_helper(node: NodeProto,
         if idx in range(len(node.output)) and node.output[idx] != "":
             io_names_map[function_proto.output[idx]] = node.output[idx]
 
-    for internal_node in function_proto.node:
-        new_node = NodeProto()
-        new_node.CopyFrom(internal_node)
-        new_node.ClearField("input")
-        new_node.ClearField("output")
-        new_node.ClearField("attribute")
-        for internal_name in internal_node.input:
-            if internal_name in io_names_map:
-                new_node.input.append(io_names_map[internal_name])
-            else:
-                new_node.input.append(op_prefix + internal_name)
-        for internal_name in internal_node.output:
-            if internal_name in io_names_map:
-                new_node.output.append(io_names_map[internal_name])
-            else:
-                new_node.output.append(op_prefix + internal_name)
-        for attr in internal_node.attribute:
-            if attr.HasField("ref_attr_name"):
-                if attr.ref_attr_name in attribute_map:
-                    new_attr = AttributeProto()
-                    new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
-                    new_attr.name = attr.name
-                    new_node.attribute.extend([new_attr])
-            else:
-                new_attr = AttributeProto()
-                new_attr.CopyFrom(attr)
-                new_node.attribute.extend([new_attr])
-        node_list.append(new_node)
-    return node_list
+    def rename_helper(internal_name : Text) -> Any:
+        if internal_name in io_names_map:
+            return io_names_map[internal_name]
+        else:
+            return op_prefix + internal_name
+
+    new_node_list = [
+        _rename_edges_helper(internal_node, rename_helper, attribute_map)
+        for internal_node in function_proto.node
+    ]
+    return new_node_list
 
 
 def function_testcase_helper(node: NodeProto, input_types: List[TypeProto], name: Text) -> List[NodeProto]:

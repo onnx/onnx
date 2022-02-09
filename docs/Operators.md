@@ -19678,11 +19678,12 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="SequenceMap"></a><a name="sequencemap">**SequenceMap**</a>
 
   Applies a sub-graph to each sample in the input sequence(s).
-  
+
   Inputs can be either tensors or sequences, with the exception of the first input which must
   be a sequence. The length of the first input sequence will determine the number of samples in the
-  outputs. The number of inputs and outputs, should match the one of the subgraph.
-  
+  outputs. Any other sequence inputs should have the same number of samples. The number of inputs
+  and outputs, should match the one of the subgraph.
+
   For each element in the output, a sample will be extracted from the input sequence(s) and the sub-graph
   will be applied to it. The outputs will contain the outputs of the sub-graph for each sample.
 
@@ -19694,7 +19695,7 @@ This version of the operator has been available since version 16 of the default 
 
 <dl>
 <dt><tt>body</tt> : graph (required)</dt>
-<dd>The graph run for each sample in the sequence(s). It should have as many tensor inputs and tensor outputs as inputs and outputs to the SequenceMap function. The first input (input_sequence) must be a sequence, and its length will determine the number of elements in the output sequence. Additional inputs are allowed to be either sequence or tensor inputs. Sequence elements will be extracted from sequence inputs, before connecting to the ``body`` subgraph.</dd>
+<dd>The graph to be run for each sample in the sequence(s). It should have as many inputs and outputs as inputs and outputs to the SequenceMap function.</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)

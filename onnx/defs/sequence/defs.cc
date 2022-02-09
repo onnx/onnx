@@ -639,7 +639,8 @@ Applies a sub-graph to each sample in the input sequence(s).
 
 Inputs can be either tensors or sequences, with the exception of the first input which must
 be a sequence. The length of the first input sequence will determine the number of samples in the
-outputs. The number of inputs and outputs, should match the one of the subgraph.
+outputs. Any other sequence inputs should have the same number of samples. The number of inputs
+and outputs, should match the one of the subgraph.
 
 For each element in the output, a sample will be extracted from the input sequence(s) and the sub-graph
 will be applied to it. The outputs will contain the outputs of the sub-graph for each sample.)DOC";
@@ -671,26 +672,27 @@ void SequenceMapInferenceFunction(InferenceContext& ctx) {
   }
 
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
-  if (graphInferencer) {
-    std::vector<const TensorProto*> input_data(num_inputs, nullptr);
-    std::vector<const TypeProto*> subgraph_output_types =
-      graphInferencer->doInferencing(subgraph_input_types, input_data);
+  if (!graphInferencer)
+    fail_type_inference("Graph attribute inferencer for \"body\" not available");
 
-    // if empty(), assume inferencing was skipped
-    if (!subgraph_output_types.empty()) {
-      if (subgraph_output_types.size() != num_outputs) {
-        fail_type_inference(
-            "Graph attribute inferencing returned type information for ",
-            subgraph_output_types.size(), " outputs. Expected ", num_outputs);
-      }
+  std::vector<const TensorProto*> input_data(num_inputs, nullptr);
+  std::vector<const TypeProto*> subgraph_output_types =
+    graphInferencer->doInferencing(subgraph_input_types, input_data);
 
-      for (size_t outputIndex = 0; outputIndex < num_outputs; outputIndex++) {
-        auto* subgraph_output_type = subgraph_output_types[outputIndex];
-        ctx.getOutputType(outputIndex)
-            ->mutable_sequence_type()
-            ->mutable_elem_type()
-            ->CopyFrom(*subgraph_output_type);
-      }
+  // if empty(), assume inferencing was skipped
+  if (!subgraph_output_types.empty()) {
+    if (subgraph_output_types.size() != num_outputs) {
+      fail_type_inference(
+          "Graph attribute inferencing returned type information for ",
+          subgraph_output_types.size(), " outputs. Expected ", num_outputs);
+    }
+
+    for (size_t outputIndex = 0; outputIndex < num_outputs; outputIndex++) {
+      auto* subgraph_output_type = subgraph_output_types[outputIndex];
+      ctx.getOutputType(outputIndex)
+          ->mutable_sequence_type()
+          ->mutable_elem_type()
+          ->CopyFrom(*subgraph_output_type);
     }
   }
 }
@@ -706,26 +708,31 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
 
   auto body_attr = ctx.getAttribute("body");
   if (!body_attr || !body_attr->has_g())
-    throw std::invalid_argument("Invalid ``body`` argument. Expected a graph");
+    ONNX_THROW_EX(
+      std::invalid_argument("Invalid ``body`` argument. Expected a graph"));
   const GraphProto& body = body_attr->g();
 
   auto g_inputs = body.input();
   int ninputs = g_inputs.size();
   if (ninputs < 1)
-    throw std::invalid_argument("Expected 1 or more inputs.");
+    ONNX_THROW_EX(
+      std::invalid_argument("Expected 1 or more inputs."));
 
   auto g_outputs = body.output();
   int noutputs = g_outputs.size();
   if (noutputs < 1)
-    throw std::invalid_argument("Expected 1 or more outputs.");
+    ONNX_THROW_EX(
+      std::invalid_argument("Expected 1 or more outputs."));
 
   if (!ctx.hasInput(0))
-    throw std::invalid_argument(MakeString("Input 0 expected but not provided"));
+    ONNX_THROW_EX(
+      std::invalid_argument(MakeString("Input 0 expected but not provided")));
 
   const auto* first_input_type = ctx.getInputType(0);
   assert(first_input_type);
   if (!first_input_type->has_sequence_type())
-    throw std::invalid_argument("Expected a sequence type for input 0");
+    ONNX_THROW_EX(
+      std::invalid_argument("Expected a sequence type for input 0"));
 
   auto schema_inputs = schema.inputs();
   auto input_0_name = schema_inputs[0].GetName();
@@ -734,7 +741,8 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
   *functionProto.add_input() = input_0_name;
   for (int i = 1; i < ninputs; i++) {
     if (!ctx.hasInput(i))
-      throw std::invalid_argument(MakeString("Input ", i, " expected but not provided"));
+      ONNX_THROW_EX(
+        std::invalid_argument(MakeString("Input ", i, " expected but not provided")));
     *functionProto.add_input() = MakeString(input_1_name, "_", i);
   }
 
@@ -742,7 +750,8 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
   auto output_0_name = schema_outputs[0].GetName();
   for (int i = 0; i < noutputs; i++) {
     if (!ctx.hasOutput(i))
-      throw std::invalid_argument(MakeString("Output ", i, " expected but not provided"));
+      ONNX_THROW_EX(
+        std::invalid_argument(MakeString("Output ", i, " expected but not provided")));
     *functionProto.add_output() = MakeString(output_0_name, "_", i);
   }
 
@@ -895,14 +904,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(SequenceMap_ver16_doc)
         .Attr(
             "body",
-            "The graph run for each sample in the sequence(s). "
-            "It should have as many tensor inputs and tensor outputs as inputs and "
-            "outputs to the SequenceMap function. "
-            "The first input (input_sequence) must be a sequence, and its length will "
-            "determine the number of elements in the output sequence. "
-            "Additional inputs are allowed to be either sequence or tensor inputs. "
-            "Sequence elements will be extracted from sequence inputs, before connecting "
-            "to the ``body`` subgraph.",
+            "The graph to be run for each sample in the sequence(s). "
+            "It should have as many inputs and outputs as inputs and "
+            "outputs to the SequenceMap function.",
             AttributeProto::GRAPH)
         .Input(
             0,
