@@ -159,6 +159,7 @@ class Coverage(object):
         if os.path.isfile(nodes_path):
             with open(nodes_path, 'r') as nodes_file:
                 reader = csv.DictReader(nodes_file)
+                assert reader.fieldnames
                 frameworks = list(reader.fieldnames)
                 for row in reader:
                     op = row[str('Op')]
