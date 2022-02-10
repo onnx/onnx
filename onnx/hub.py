@@ -9,7 +9,7 @@ from urllib.request import urlopen
 from urllib.error import HTTPError
 import json
 import os
-import wget  # type: ignore
+import requests
 import hashlib
 from io import BytesIO
 from typing import List, Optional, Dict, Any, Tuple, cast, Set, IO
@@ -69,7 +69,7 @@ class ModelInfo(object):
 
 def set_dir(new_dir: str) -> None:
     """
-    Set the current ONNX hub cache location
+    Sets the current ONNX hub cache location
     @param new_dir: location of new model hub cache
     """
     global _ONNX_HUB_DIR
@@ -78,7 +78,7 @@ def set_dir(new_dir: str) -> None:
 
 def get_dir() -> str:
     """
-    Get the current ONNX hub cache location
+    Gets the current ONNX hub cache location
     @return: The location of the ONNX hub model cache
     """
     return _ONNX_HUB_DIR
@@ -93,24 +93,24 @@ def _parse_repo_info(repo: str) -> Tuple[str, str, str]:
     if ":" in repo:
         repo_ref = repo.split("/")[1].split(":")[1]
     else:
-        repo_ref = "master"
+        repo_ref = "main"
     return repo_owner, repo_name, repo_ref
 
 
 def _verify_repo_ref(repo: str) -> bool:
     """
     Verifies whether the given model repo can be trusted.
-    A model repo can be trusted if it matches onnx/models:master.
+    A model repo can be trusted if it matches onnx/models:main.
     """
     repo_owner, repo_name, repo_ref = _parse_repo_info(repo)
-    return (repo_owner == "onnx") and (repo_name == "models") and (repo_ref == "master")
+    return (repo_owner == "onnx") and (repo_name == "models") and (repo_ref == "main")
 
 
 def _get_base_url(repo: str, lfs: bool = False) -> str:
     """
     Gets the base github url from a repo specification string
     @param repo: The location of the model repo in format "user/repo[:branch]".
-        If no branch is found will default to "master"
+        If no branch is found will default to "main"
     @param lfs: whether the url is for downloading lfs models
     @return: the base github url for downloading
     """
@@ -121,15 +121,26 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
     else:
         return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_ref)
 
+def _download_file(url: str, filename: str):
+    """
+    Downloads the file with specifed filename from the url
+    @param url: a url of download link
+    @param filename: a specified file name for the downloaded file
+    """
+    with requests.get(url, stream=True) as response:
+        response.raise_for_status()
+        with open(filename, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192): 
+                f.write(chunk)
 
 def list_models(
-    repo: str = "onnx/models:master", model: Optional[str] = None, tags: Optional[List[str]] = None
+    repo: str = "onnx/models:main", model: Optional[str] = None, tags: Optional[List[str]] = None
 ) -> List[ModelInfo]:
     """
-    Get the list of model info consistent with a given name and tags
+    Gets the list of model info consistent with a given name and tags
 
     @param repo: The location of the model repo in format "user/repo[:branch]".
-        If no branch is found will default to "master"
+        If no branch is found will default to "main"
     @param model: The name of the model to search for. If `None`, will return all models with matching tags.
     @param tags: A list of tags to filter models by. If `None`, will return all models with matching name.
     """
@@ -157,13 +168,13 @@ def list_models(
         return matching_info_list
 
 
-def get_model_info(model: str, repo: str = "onnx/models:master", opset: Optional[int] = None) -> ModelInfo:
+def get_model_info(model: str, repo: str = "onnx/models:main", opset: Optional[int] = None) -> ModelInfo:
     """
-    Get the model info matching the given name and opset.
+    Gets the model info matching the given name and opset.
 
     @param model: The name of the onnx model in the manifest. This field is case-sensitive
     @param repo: The location of the model repo in format "user/repo[:branch]".
-        If no branch is found will default to "master"
+        If no branch is found will default to "main"
     @param opset: The opset of the model to get. The default of `None` will return the model with largest opset.
     """
     matching_models = list_models(repo, model)
@@ -182,17 +193,17 @@ def get_model_info(model: str, repo: str = "onnx/models:master", opset: Optional
 
 def load(
     model: str,
-    repo: str = "onnx/models:master",
+    repo: str = "onnx/models:main",
     opset: Optional[int] = None,
     force_reload: bool = False,
     silent: bool = False,
 ) -> Optional[onnx.ModelProto]:
     """
-    Download a model by name from the onnx model hub
+    Downloads a model by name from the onnx model hub
 
     @param model: The name of the onnx model in the manifest. This field is case-sensitive
     @param repo: The location of the model repo in format "user/repo[:branch]".
-        If no branch is found will default to "master"
+        If no branch is found will default to "main"
     @param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
     @param force_reload: Whether to force the model to re-download even if its already found in the cache
     @param silent: Whether to suppress the warning message if the repo is not trusted.
@@ -218,7 +229,7 @@ def load(
         os.makedirs(os.path.dirname(local_model_path), exist_ok=True)
         lfs_url = _get_base_url(repo, True)
         print("Downloading {} to local path {}".format(model, local_model_path))
-        wget.download(lfs_url + selected_model.model_path, local_model_path)
+        _download_file(lfs_url + selected_model.model_path, local_model_path)
     else:
         print("Using cached {} model from {}".format(model, local_model_path))
 
