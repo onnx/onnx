@@ -59,6 +59,7 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 numpy >= 1.16.6
 protobuf >= 3.12.2
 typing-extensions >= 3.6.2.1
+python >= 3.6
 ```
 
 ## Official Python packages
