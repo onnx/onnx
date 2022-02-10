@@ -121,7 +121,8 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
     else:
         return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_ref)
 
-def _download_file(url: str, filename: str):
+
+def _download_file(url: str, filename: str) -> None:
     """
     Downloads the file with specifed filename from the url
     @param url: a url of download link
@@ -130,8 +131,9 @@ def _download_file(url: str, filename: str):
     with requests.get(url, stream=True) as response:
         response.raise_for_status()
         with open(filename, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192): 
+            for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
+
 
 def list_models(
     repo: str = "onnx/models:main", model: Optional[str] = None, tags: Optional[List[str]] = None
