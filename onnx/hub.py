@@ -128,13 +128,13 @@ def _download_file(url: str, file_name: str) -> None:
     @param file_name: a specified file name for the downloaded file
     """
     chunk_size = 16384  # 1024 * 16
-    with urlopen(url) as response:
-        with open(file_name, 'wb') as f:
-            while True:
-                chunk = response.read(chunk_size)
-                if not chunk:
-                    break
-                f.write(chunk)
+    with urlopen(url) as response, open(file_name, 'wb') as f:
+        # Loads processively with chuck_size for huge models
+        while True:
+            chunk = response.read(chunk_size)
+            if not chunk:
+                break
+            f.write(chunk)
 
 
 def list_models(
