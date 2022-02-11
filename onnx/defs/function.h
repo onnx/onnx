@@ -146,7 +146,7 @@ class FunctionBuilder {
     return Add(node_txt, MakeAttribute(attr_name, attr_value));
   }
 
-  FunctionBuilder& Const(const std::string& name, TensorProto tensor) {
+  FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {
     std::string constant_op(name);
     constant_op += " = Constant()";
     return Add(constant_op.c_str(), MakeAttribute("value", tensor));
