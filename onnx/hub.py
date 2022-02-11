@@ -69,7 +69,7 @@ class ModelInfo(object):
 def set_dir(new_dir: str) -> None:
     """
     Sets the current ONNX hub cache location
-    @param new_dir: location of new model hub cache
+    :param new_dir: location of new model hub cache
     """
     global _ONNX_HUB_DIR
     _ONNX_HUB_DIR = new_dir
@@ -78,7 +78,7 @@ def set_dir(new_dir: str) -> None:
 def get_dir() -> str:
     """
     Gets the current ONNX hub cache location
-    @return: The location of the ONNX hub model cache
+    :return: The location of the ONNX hub model cache
     """
     return _ONNX_HUB_DIR
 
@@ -108,10 +108,10 @@ def _verify_repo_ref(repo: str) -> bool:
 def _get_base_url(repo: str, lfs: bool = False) -> str:
     """
     Gets the base github url from a repo specification string
-    @param repo: The location of the model repo in format "user/repo[:branch]".
+    :param repo: The location of the model repo in format "user/repo[:branch]".
         If no branch is found will default to "main"
-    @param lfs: whether the url is for downloading lfs models
-    @return: the base github url for downloading
+    :param lfs: whether the url is for downloading lfs models
+    :return: the base github url for downloading
     """
     repo_owner, repo_name, repo_ref = _parse_repo_info(repo)
 
@@ -124,8 +124,8 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
 def _download_file(url: str, file_name: str) -> None:
     """
     Downloads the file with specifed file_name from the url
-    @param url: a url of download link
-    @param file_name: a specified file name for the downloaded file
+    :param url: a url of download link
+    :param file_name: a specified file name for the downloaded file
     """
     chunk_size = 16384  # 1024 * 16
     with urlopen(url) as response, open(file_name, 'wb') as f:
@@ -143,10 +143,10 @@ def list_models(
     """
     Gets the list of model info consistent with a given name and tags
 
-    @param repo: The location of the model repo in format "user/repo[:branch]".
+    :param repo: The location of the model repo in format "user/repo[:branch]".
         If no branch is found will default to "main"
-    @param model: The name of the model to search for. If `None`, will return all models with matching tags.
-    @param tags: A list of tags to filter models by. If `None`, will return all models with matching name.
+    :param model: The name of the model to search for. If `None`, will return all models with matching tags.
+    :param tags: A list of tags to filter models by. If `None`, will return all models with matching name.
     """
     base_url = _get_base_url(repo)
     manifest_url = base_url + "ONNX_HUB_MANIFEST.json"
@@ -176,10 +176,10 @@ def get_model_info(model: str, repo: str = "onnx/models:main", opset: Optional[i
     """
     Gets the model info matching the given name and opset.
 
-    @param model: The name of the onnx model in the manifest. This field is case-sensitive
-    @param repo: The location of the model repo in format "user/repo[:branch]".
+    :param model: The name of the onnx model in the manifest. This field is case-sensitive
+    :param repo: The location of the model repo in format "user/repo[:branch]".
         If no branch is found will default to "main"
-    @param opset: The opset of the model to get. The default of `None` will return the model with largest opset.
+    :param opset: The opset of the model to get. The default of `None` will return the model with largest opset.
     """
     matching_models = list_models(repo, model)
     if not matching_models:
@@ -205,12 +205,12 @@ def load(
     """
     Downloads a model by name from the onnx model hub
 
-    @param model: The name of the onnx model in the manifest. This field is case-sensitive
-    @param repo: The location of the model repo in format "user/repo[:branch]".
+    :param model: The name of the onnx model in the manifest. This field is case-sensitive
+    :param repo: The location of the model repo in format "user/repo[:branch]".
         If no branch is found will default to "main"
-    @param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
-    @param force_reload: Whether to force the model to re-download even if its already found in the cache
-    @param silent: Whether to suppress the warning message if the repo is not trusted.
+    :param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
+    :param force_reload: Whether to force the model to re-download even if its already found in the cache
+    :param silent: Whether to suppress the warning message if the repo is not trusted.
     """
     selected_model = get_model_info(model, repo, opset)
     local_model_path_arr = selected_model.model_path.split("/")
