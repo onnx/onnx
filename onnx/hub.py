@@ -9,7 +9,6 @@ from urllib.request import urlopen
 from urllib.error import HTTPError
 import json
 import os
-import requests
 import hashlib
 from io import BytesIO
 from typing import List, Optional, Dict, Any, Tuple, cast, Set, IO
@@ -122,17 +121,20 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
         return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_ref)
 
 
-def _download_file(url: str, filename: str) -> None:
+def _download_file(url: str, file_name: str) -> None:
     """
-    Downloads the file with specifed filename from the url
+    Downloads the file with specifed file_name from the url
     @param url: a url of download link
-    @param filename: a specified file name for the downloaded file
+    @param file_name: a specified file name for the downloaded file
     """
-    with requests.get(url, stream=True) as response:
-        response.raise_for_status()
-        with open(filename, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+    response = urlopen(url)
+    chunk_size = 8192
+    with open(file_name, 'wb') as f:
+        while True:
+            chunk = response.read(chunk_size)
+            if not chunk:
+                break
+            f.write(chunk)
 
 
 def list_models(
