@@ -9,6 +9,10 @@ import pytest  # type: ignore
 import os
 
 
+@pytest.mark.skipif(
+    'TEST_HUB' not in os.environ or not os.environ['TEST_HUB'],
+    reason="Conserving Git LFS quota"
+)
 class TestModelHub(unittest.TestCase):
     def setUp(self) -> None:
         self.name = "MNIST"
