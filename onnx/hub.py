@@ -127,14 +127,14 @@ def _download_file(url: str, file_name: str) -> None:
     @param url: a url of download link
     @param file_name: a specified file name for the downloaded file
     """
-    response = urlopen(url)
-    chunk_size = 8192
-    with open(file_name, 'wb') as f:
-        while True:
-            chunk = response.read(chunk_size)
-            if not chunk:
-                break
-            f.write(chunk)
+    chunk_size = 16384  # 1024 * 16
+    with urlopen(url) as response:
+        with open(file_name, 'wb') as f:
+            while True:
+                chunk = response.read(chunk_size)
+                if not chunk:
+                    break
+                f.write(chunk)
 
 
 def list_models(
@@ -151,8 +151,8 @@ def list_models(
     base_url = _get_base_url(repo)
     manifest_url = base_url + "ONNX_HUB_MANIFEST.json"
     try:
-        with urlopen(manifest_url) as f:
-            manifest: List[ModelInfo] = [ModelInfo(info) for info in json.load(cast(IO[str], f))]
+        with urlopen(manifest_url) as response:
+            manifest: List[ModelInfo] = [ModelInfo(info) for info in json.load(cast(IO[str], response))]
     except HTTPError as e:
         raise AssertionError("Could not find manifest at {}".format(manifest_url), e)
 
