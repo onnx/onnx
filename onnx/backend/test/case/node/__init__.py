@@ -20,9 +20,9 @@ _TargetOpType = ""
 from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, GraphProto
 
 
-def _rename_edges_helper(internal_node : NodeProto,
-                         rename_helper : Callable[[Text], Text],
-                         attribute_map : Dict[Text, Text]) -> NodeProto:
+def _rename_edges_helper(internal_node: NodeProto,
+                         rename_helper: Callable[[Text], Text],
+                         attribute_map: Dict[Text, Text]) -> NodeProto:
     new_node = NodeProto()
     new_node.CopyFrom(internal_node)
     new_node.ClearField("input")
@@ -57,12 +57,12 @@ def _rename_edges_helper(internal_node : NodeProto,
                     sparse_init_desc.indices.name = rename_helper(sparse_init_desc.indices.name)
                 for val_info_desc in new_graph.value_info:
                     val_info_desc.name = rename_helper(val_info_desc.name)
-                new_nodes = []
-                for node_desc in new_graph.node:
-                    new_nodes.append(
-                        _rename_edges_helper(node_desc, rename_helper, attribute_map))
+                new_nodes = [
+                    _rename_edges_helper(node_desc, rename_helper, attribute_map)
+                    for node_desc in new_graph.node
+                ]
                 new_graph.ClearField("node")
-                new_graph.extend(new_nodes)
+                new_graph.node.extend(new_nodes)
     return new_node
 
 
@@ -88,7 +88,7 @@ def function_expand_helper(node: NodeProto,
         if idx in range(len(node.output)) and node.output[idx] != "":
             io_names_map[function_proto.output[idx]] = node.output[idx]
 
-    def rename_helper(internal_name : Text) -> Any:
+    def rename_helper(internal_name: Text) -> Any:
         if internal_name in io_names_map:
             return io_names_map[internal_name]
         else:
