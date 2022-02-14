@@ -36,7 +36,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}    
@@ -53,6 +53,7 @@ jobs:
         if ('${{ matrix.architecture }}' -eq 'x86') {
           $arch = 'Win32'
         }
+
         . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
 
