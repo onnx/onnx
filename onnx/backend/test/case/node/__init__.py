@@ -38,13 +38,11 @@ def _rename_edges_helper(internal_node: NodeProto,
                 new_attr = AttributeProto()
                 new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
                 new_attr.name = attr.name
-                new_node.attribute.extend([new_attr])
         else:
             new_attr = AttributeProto()
             new_attr.CopyFrom(attr)
-            if attr.type == AttributeProto.GRAPHS:
-                new_graph = GraphProto()
-                new_graph.CopyFrom(attr.graphs[0])
+            if attr.type == AttributeProto.GRAPH:
+                new_graph = new_attr.g
                 for in_desc in new_graph.input:
                     in_desc.name = rename_helper(in_desc.name)
                 for out_desc in new_graph.output:
@@ -63,6 +61,7 @@ def _rename_edges_helper(internal_node: NodeProto,
                 ]
                 new_graph.ClearField("node")
                 new_graph.node.extend(new_nodes)
+        new_node.attribute.extend([new_attr])
     return new_node
 
 
@@ -91,6 +90,8 @@ def function_expand_helper(node: NodeProto,
     def rename_helper(internal_name: Text) -> Any:
         if internal_name in io_names_map:
             return io_names_map[internal_name]
+        elif internal_name == '':
+            return ''
         else:
             return op_prefix + internal_name
 
