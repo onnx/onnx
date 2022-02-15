@@ -15,6 +15,10 @@ fi
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
+if [ "$PLAT" != "manylinux2014_aarch64" ]; then
+    # TODO: remove the line below after using manylinux2014; this was for solving SSL issue in old CentOS 6 (manylinux2010)
+    sed -i 's/https/http/g' /etc/yum.repos.d/epel.repo
+fi
 if [ ! -z "$SYSTEM_PACKAGES" ]; then
     yum install -y ${SYSTEM_PACKAGES}  || { echo "Installing yum package(s) failed."; exit 1; }
 fi

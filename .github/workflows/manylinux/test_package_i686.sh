@@ -9,6 +9,8 @@ PY_VERSION=$1
 declare -A python_map=( ["3.6"]="cp36-cp36m" ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
 PY_VER=${python_map[$PY_VERSION]}
 
+# TODO: remove the line below after using manylinux2014; this was for solving SSL issue in old CentOS 6 (manylinux2010)
+sed -i 's/https/http/g' /etc/yum.repos.d/epel.repo
 yum install -y protobuf-devel cmake3
 
 PYTHON_BIN="/opt/python/${PY_VER}/bin/"
