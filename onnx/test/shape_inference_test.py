@@ -72,6 +72,7 @@ class TestShapeInference(unittest.TestCase):
             assert inferred_vi_type.HasField('tensor_type')
             assert vi_type.tensor_type.HasField('elem_type')
             assert inferred_vi_type.tensor_type.HasField('elem_type')
+            assert vi_type.tensor_type.HasField('shape') == inferred_vi_type.tensor_type.HasField('shape')
             assert vi_type.tensor_type.elem_type == inferred_vi_type.tensor_type.elem_type
             for dim_i in range(len(vi_type.tensor_type.shape.dim)):
                 dim = vi_type.tensor_type.shape.dim[dim_i]
@@ -393,7 +394,7 @@ class TestShapeInference(unittest.TestCase):
         # if giving a symbolic shape, Expand should not infer any shape or rank inference
         self._assert_inferred(
             graph,
-            [make_tensor_value_info('y', TensorProto.INT32, ())])
+            [make_tensor_value_info('y', TensorProto.INT32, None)])
 
     def test_resize_size(self) -> None:
         graph = self._make_graph(
