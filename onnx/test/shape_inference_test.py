@@ -72,16 +72,17 @@ class TestShapeInference(unittest.TestCase):
             assert inferred_vi_type.HasField('tensor_type')
             assert vi_type.tensor_type.HasField('elem_type')
             assert inferred_vi_type.tensor_type.HasField('elem_type')
-            assert vi_type.tensor_type.HasField('shape') == inferred_vi_type.tensor_type.HasField('shape')
             assert vi_type.tensor_type.elem_type == inferred_vi_type.tensor_type.elem_type
-            for dim_i in range(len(vi_type.tensor_type.shape.dim)):
-                dim = vi_type.tensor_type.shape.dim[dim_i]
-                inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
-                # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
-                if dim.dim_param:
-                    assert dim.dim_param == inferred_dim.dim_param, '\n%s\n%s\n' % (vi_type, inferred_vi_type)
-                else:
-                    assert dim.dim_value == inferred_dim.dim_value, '\n%s\n%s\n' % (vi_type, inferred_vi_type)
+            assert vi_type.tensor_type.HasField('shape') == inferred_vi_type.tensor_type.HasField('shape')
+            if vi_type.tensor_type.HasField('shape'):
+                for dim_i in range(len(vi_type.tensor_type.shape.dim)):
+                    dim = vi_type.tensor_type.shape.dim[dim_i]
+                    inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
+                    # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
+                    if dim.dim_param:
+                        assert dim.dim_param == inferred_dim.dim_param, '\n%s\n%s\n' % (vi_type, inferred_vi_type)
+                    else:
+                        assert dim.dim_value == inferred_dim.dim_value, '\n%s\n%s\n' % (vi_type, inferred_vi_type)
         elif vi_type.HasField('sequence_type'):
             assert inferred_vi_type.HasField('sequence_type')
             vi = vi_type.sequence_type.elem_type
@@ -2124,7 +2125,7 @@ class TestShapeInference(unittest.TestCase):
             []
         )
 
-        output_tensor_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=None)
+        output_tensor_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=())
         output_optional_type_proto = helper.make_optional_type_proto(output_tensor_proto)
         output_optional_vi = helper.make_value_info('if_output', output_optional_type_proto)
         self._assert_inferred(graph, [output_optional_vi])  # type: ignore
@@ -3875,7 +3876,7 @@ class TestShapeInference(unittest.TestCase):
              make_node('OptionalHasElement', ['sequence'], ['output'])],
             [])
         self._assert_inferred(graph, [optional_val_info,
-                                      make_tensor_value_info('output', TensorProto.BOOL, None)])  # type: ignore
+                                      make_tensor_value_info('output', TensorProto.BOOL, ())])  # type: ignore
 
     def test_optional_sequence_has_element(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[0, 3, 4])
@@ -3894,7 +3895,7 @@ class TestShapeInference(unittest.TestCase):
              make_node('OptionalHasElement', ['optional'], ['output'])],
             [])
         self._assert_inferred(graph, [sequence_val_info, optional_val_info,
-                                      make_tensor_value_info('output', TensorProto.BOOL, None)])  # type: ignore
+                                      make_tensor_value_info('output', TensorProto.BOOL, ())])  # type: ignore
 
     def test_optional_tensor_get_element(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.DOUBLE, shape=[2, 1, 4])
