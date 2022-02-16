@@ -9,7 +9,7 @@ PY_VERSION=$1
 declare -A python_map=(["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
 PY_VER=${python_map[$PY_VERSION]}
 
-yum install -y protobuf-devel cmake3
+yum install -y protobuf-devel
 
 PYTHON_BIN="/opt/python/${PY_VER}/bin/"
 PIP_INSTALL_COMMAND="${PYTHON_BIN}pip install --no-cache-dir -q"
@@ -18,6 +18,7 @@ PYTHON_COMAND="${PYTHON_BIN}python"
 PYTEST_COMMAND="${PYTHON_BIN}pytest"
 
 $PIP_INSTALL_COMMAND --upgrade pip
+$PIP_INSTALL_COMMAND cmake
 
 # pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
 # Verify ONNX with the latest numpy
