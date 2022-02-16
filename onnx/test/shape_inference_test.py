@@ -2125,7 +2125,7 @@ class TestShapeInference(unittest.TestCase):
             []
         )
 
-        output_tensor_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=())
+        output_tensor_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=(None, ))
         output_optional_type_proto = helper.make_optional_type_proto(output_tensor_proto)
         output_optional_vi = helper.make_value_info('if_output', output_optional_type_proto)
         self._assert_inferred(graph, [output_optional_vi])  # type: ignore
