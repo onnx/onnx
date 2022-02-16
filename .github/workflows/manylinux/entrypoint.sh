@@ -54,7 +54,7 @@ export CMAKE_ARGS="-DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${py
 $PIP_COMMAND --upgrade pip
 
 # Install Python dependency
-if [ "$PLAT" == "manylinux2010_i686" ]; then
+if [ "$PLAT" == "manylinux2014_i686" ]; then
     # pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
     $PIP_COMMAND numpy==1.21.5 protobuf==3.16.0 || { echo "Installing Python requirements failed."; exit 1; }
 else

@@ -26,7 +26,7 @@ if [ "$PY_VERSION" == "3.8" ] || [ "$PY_VERSION" == "3.9" ]; then
 else
     $PIP_INSTALL_COMMAND numpy protobuf==3.16.0 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
 fi
-$PIP_INSTALL_COMMAND dist/*manylinux2010_i686.whl
+$PIP_INSTALL_COMMAND dist/*manylinux2014_i686.whl
 
 # pytest with the built wheel
 $PYTEST_COMMAND
@@ -44,17 +44,17 @@ if [ "$PY_VERSION" == "3.8" ] || [ "$PY_VERSION" == "3.9" ]; then
 else
     $PIP_UNINSTALL_COMMAND numpy onnx && $PIP_INSTALL_COMMAND numpy
 fi
-$PIP_INSTALL_COMMAND dist/*manylinux2010_i686.whl
+$PIP_INSTALL_COMMAND dist/*manylinux2014_i686.whl
 $PYTEST_COMMAND
 
 # Verify ONNX with the latest protobuf
 $PIP_UNINSTALL_COMMAND protobuf onnx && $PIP_INSTALL_COMMAND protobuf
-$PIP_INSTALL_COMMAND dist/*manylinux2010_i686.whl
+$PIP_INSTALL_COMMAND dist/*manylinux2014_i686.whl
 $PYTEST_COMMAND
 
 # Verify ONNX the minimum supported protobuf (from requirements.txt)
 $PIP_UNINSTALL_COMMAND protobuf onnx && $PIP_INSTALL_COMMAND protobuf==3.12.2
-$PIP_INSTALL_COMMAND dist/*manylinux2010_i686.whl
+$PIP_INSTALL_COMMAND dist/*manylinux2014_i686.whl
 $PYTEST_COMMAND
 
 echo "Succesfully test the wheel"
