@@ -22,7 +22,8 @@ from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, Gr
 
 def _rename_edges_helper(internal_node: NodeProto,
                          rename_helper: Callable[[Text], Text],
-                         attribute_map: Dict[Text, Text]) -> NodeProto:
+                         attribute_map: Dict[Text, Text],
+                         prefix: Text) -> NodeProto:
     new_node = NodeProto()
     new_node.CopyFrom(internal_node)
     new_node.ClearField("input")
@@ -43,20 +44,28 @@ def _rename_edges_helper(internal_node: NodeProto,
             new_attr.CopyFrom(attr)
             if attr.type == AttributeProto.GRAPH:
                 new_graph = new_attr.g
+                sg_rename = {}
                 for in_desc in new_graph.input:
-                    in_desc.name = rename_helper(in_desc.name)
+                    sg_rename[in_desc.name] = in_desc.name = prefix + in_desc.name
                 for out_desc in new_graph.output:
-                    out_desc.name = rename_helper(out_desc.name)
+                    sg_rename[out_desc.name] = out_desc.name = prefix + out_desc.name
                 for init_desc in new_graph.initializer:
-                    init_desc.name = rename_helper(init_desc.name)
+                    sg_rename[init_desc.name] = init_desc.name = prefix + init_desc.name
                 for sparse_init_desc in new_graph.sparse_initializer:
-                    sparse_init_desc.values.name = rename_helper(sparse_init_desc.values.name)
+                    sg_rename[sparse_init_desc.values.name] = sparse_init_desc.values.name = prefix + \
+                        sparse_init_desc.values.name
                 for sparse_init_desc in new_graph.sparse_initializer:
-                    sparse_init_desc.indices.name = rename_helper(sparse_init_desc.indices.name)
+                    sg_rename[sparse_init_desc.indices.name] = sparse_init_desc.indices.name = prefix + \
+                        sparse_init_desc.indices.name
                 for val_info_desc in new_graph.value_info:
-                    val_info_desc.name = rename_helper(val_info_desc.name)
+                    sg_rename[val_info_desc.name] = val_info_desc.name = prefix + val_info_desc.name
+                def subgraph_rename_helper(name):
+                    if name in sg_rename:
+                        return sg_rename[name]
+                    else:
+                        return rename_helper(name)
                 new_nodes = [
-                    _rename_edges_helper(node_desc, rename_helper, attribute_map)
+                    _rename_edges_helper(node_desc, subgraph_rename_helper, attribute_map, prefix)
                     for node_desc in new_graph.node
                 ]
                 new_graph.ClearField("node")
@@ -96,7 +105,7 @@ def function_expand_helper(node: NodeProto,
             return op_prefix + internal_name
 
     new_node_list = [
-        _rename_edges_helper(internal_node, rename_helper, attribute_map)
+        _rename_edges_helper(internal_node, rename_helper, attribute_map, op_prefix)
         for internal_node in function_proto.node
     ]
     return new_node_list
@@ -104,7 +113,7 @@ def function_expand_helper(node: NodeProto,
 
 def function_testcase_helper(node: NodeProto, input_types: List[TypeProto], name: Text) -> List[NodeProto]:
     test_op = node.op_type
-    op_prefix = test_op + "_" + name + "_expanded_function"
+    op_prefix = test_op + "_" + name + "_expanded_function_"
     schema = onnx.defs.get_schema(test_op, node.domain)
 
     if schema.has_function:    # type: ignore

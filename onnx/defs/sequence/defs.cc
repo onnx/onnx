@@ -860,7 +860,7 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
   std::string seqlen = MakeString(prefix, "_seqlen");
   nodes.push_back({{seqlen}, "SequenceLength", {first_input_name}});
 
-  std::string cond_bool = MakeString(prefix, "cond");
+  std::string cond_bool = MakeString(prefix, "_cond");
   nodes.push_back(FunctionBodyHelper::Const<bool>(cond_bool, true));
 
   std::vector<std::string> loop_node_inputs = {seqlen, cond_bool};
