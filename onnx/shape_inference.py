@@ -14,6 +14,7 @@ import onnx.onnx_cpp2py_export.shape_inference as C
 from onnx import ModelProto
 from typing import Text, Union
 
+
 def infer_shapes(model: Union[ModelProto, bytes], check_type: bool = False, strict_mode: bool = False, data_prop: bool = False) -> ModelProto:
     """Apply shape inference to the provided ModelProto.
 
