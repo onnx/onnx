@@ -213,7 +213,7 @@ def from_list(lst: List[Any], name: Optional[Text] = None, dtype: Optional[int] 
     return sequence
 
 
-def to_dict(map: MapProto) -> Dict:
+def to_dict(map: MapProto) -> Dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
     Inputs:
