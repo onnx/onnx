@@ -66,3 +66,4 @@ def infer_shapes_path(model_path: Text, output_path: Text = '', check_type: bool
 
 
 InferenceError = C.InferenceError
+
