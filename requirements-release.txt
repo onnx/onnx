@@ -6,4 +6,3 @@ ipython
 wheel
 setuptools
 twine
-wget
