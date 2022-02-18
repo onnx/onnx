@@ -224,6 +224,8 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
 
 void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
 
+void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
+
 inline void propagateElemTypeFromDtypeToOutput(
     InferenceContext& ctx,
     const int data_type,
