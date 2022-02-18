@@ -1,4 +1,4 @@
-numpy == 1.16.6
+numpy == 1.21.0
 protobuf == 3.16.0
 pytest
 nbval
