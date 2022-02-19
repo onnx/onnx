@@ -12,10 +12,7 @@ import numpy as np  # type: ignore
 
 class TestShapeInference(unittest.TestCase):
     def _make_graph(self,
-                    # TODO: Use proper type annotation rather than string
-                    # once we drop support for Python 3.6.
-                    # See https://www.python.org/dev/peps/pep-0563/
-                    seed_values: Sequence[Union[Text, Tuple[Text, 'TensorProto.DataType', Any]]],
+                    seed_values: Sequence[Union[Text, Tuple[Text, TensorProto.DataType, Any]]],
                     nodes: List[NodeProto],
                     value_info: List[ValueInfoProto],
                     initializer: Optional[Sequence[TensorProto]] = None
