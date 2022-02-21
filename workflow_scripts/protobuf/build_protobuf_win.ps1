@@ -6,10 +6,9 @@ param(
 )
 
 echo "Build protobuf from source on Windows."
-git clone https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git checkout v3.16.0
-git submodule update --init --recursive
+wget -Uri https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz -OutFile protobuf.tar.gz -Verbose
+tar -xvf protobuf.tar.gz
+cd protobuf-3.16.0
 $protobuf_root_dir = Get-Location
 mkdir protobuf_install
 cd cmake
