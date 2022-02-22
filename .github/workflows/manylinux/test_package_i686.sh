@@ -40,10 +40,10 @@ $PYTHON_COMAND onnx/backend/test/cmd_tools.py generate-data
 $PYTHON_COMAND workflow_scripts/test_generated_backend.py
 
 # Verify ONNX with the latest numpy
-if [ "$PY_VERSION" == "3.8" ] || [ "$PY_VERSION" == "3.9" ]; then
-    $PIP_UNINSTALL_COMMAND numpy onnx && $PIP_INSTALL_COMMAND numpy==1.21.5
-else
+if [ "$PY_VERSION" == "3.7" ] ; then
     $PIP_UNINSTALL_COMMAND numpy onnx && $PIP_INSTALL_COMMAND numpy
+else
+    $PIP_UNINSTALL_COMMAND numpy onnx && $PIP_INSTALL_COMMAND numpy==1.21.5
 fi
 $PIP_INSTALL_COMMAND dist/*manylinux2014_i686.whl
 $PYTEST_COMMAND
