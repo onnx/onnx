@@ -26,8 +26,8 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ai.onnx.ml.SVMClassifier">ai.onnx.ml.SVMClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.SVMClassifier-1">1</a>|
 |<a href="#ai.onnx.ml.SVMRegressor">ai.onnx.ml.SVMRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.SVMRegressor-1">1</a>|
 |<a href="#ai.onnx.ml.Scaler">ai.onnx.ml.Scaler</a>|<a href="Changelog-ml.md#ai.onnx.ml.Scaler-1">1</a>|
-|<a href="#ai.onnx.ml.TreeEnsembleClassifier">ai.onnx.ml.TreeEnsembleClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-1">1</a>|
-|<a href="#ai.onnx.ml.TreeEnsembleRegressor">ai.onnx.ml.TreeEnsembleRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-1">1</a>|
+|<a href="#ai.onnx.ml.TreeEnsembleClassifier">ai.onnx.ml.TreeEnsembleClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-3">3</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-1">1</a>|
+|<a href="#ai.onnx.ml.TreeEnsembleRegressor">ai.onnx.ml.TreeEnsembleRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-3">3</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-1">1</a>|
 |<a href="#ai.onnx.ml.ZipMap">ai.onnx.ml.ZipMap</a>|<a href="Changelog-ml.md#ai.onnx.ml.ZipMap-1">1</a>|
 
 
@@ -212,7 +212,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       Any keys not present in the input dictionary, will be zero in the output array.<br>
       For example: if the ``string_vocabulary`` parameter is set to ``["a", "c", "b", "z"]``,
       then an input of ``{"a": 4, "c": 8}`` will produce an output of ``[4, 8, 0, 0]``.
-      
+
 
 #### Version
 
@@ -760,7 +760,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 ### <a name="ai.onnx.ml.TreeEnsembleClassifier"></a><a name="ai.onnx.ml.treeensembleclassifier">**ai.onnx.ml.TreeEnsembleClassifier**</a>
 
-  Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
+  Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
       The attributes named 'nodes_X' form a sequence of tuples, associated by
       index into the sequences, which must all be of equal length. These tuples
       define the nodes.<br>
@@ -769,15 +769,21 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       the associated class_weights index.<br>
       One and only one of classlabels_strings or classlabels_int64s
       will be defined. The class_ids are indices into this list.
+      All fields ending with <i>_as_tensor</i> can be used instead of the
+      same parameter without the suffix if the element type is double and not float.
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+This version of the operator has been available since version 3 of the 'ai.onnx.ml' operator set.
+
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-1">1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>base_values</tt> : list of floats</dt>
+<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dt><tt>base_values_as_tensor</tt> : tensor</dt>
 <dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
 <dt><tt>class_ids</tt> : list of ints</dt>
 <dd>The index of the class list that each weight is for.</dd>
@@ -786,6 +792,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>class_treeids</tt> : list of ints</dt>
 <dd>The id of the tree that this node is in.</dd>
 <dt><tt>class_weights</tt> : list of floats</dt>
+<dd>The weight for the class in class_id.</dd>
+<dt><tt>class_weights_as_tensor</tt> : tensor</dt>
 <dd>The weight for the class in class_id.</dd>
 <dt><tt>classlabels_int64s</tt> : list of ints</dt>
 <dd>Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
@@ -796,6 +804,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>nodes_featureids</tt> : list of ints</dt>
 <dd>Feature id for each node.</dd>
 <dt><tt>nodes_hitrates</tt> : list of floats</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
 <dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.</dd>
@@ -808,6 +818,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>nodes_truenodeids</tt> : list of ints</dt>
 <dd>Child node if expression is true.</dd>
 <dt><tt>nodes_values</tt> : list of floats</dt>
+<dd>Thresholds to do the splitting on for each node.</dd>
+<dt><tt>nodes_values_as_tensor</tt> : tensor</dt>
 <dd>Thresholds to do the splitting on for each node.</dd>
 <dt><tt>post_transform</tt> : string (default is NONE)</dt>
 <dd>Indicates the transform to apply to the score. <br> One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'</dd>
@@ -849,12 +861,16 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       All fields prefixed with target_ are tuples of votes at the leaves.<br>
       A leaf may have multiple votes, where each vote is weighted by
       the associated target_weights index.<br>
+      All fields ending with <i>_as_tensor</i> can be used instead of the
+      same parameter without the suffix if the element type is double and not float.
       All trees must have their node ids start at 0 and increment by 1.<br>
       Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 
 #### Version
 
-This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
+This version of the operator has been available since version 3 of the 'ai.onnx.ml' operator set.
+
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-1">1</a>
 
 #### Attributes
 
@@ -863,6 +879,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE,' 'SUM,' 'MIN,' 'MAX.'</dd>
 <dt><tt>base_values</tt> : list of floats</dt>
 <dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dt><tt>base_values_as_tensor</tt> : tensor</dt>
+<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
 <dt><tt>n_targets</tt> : int</dt>
 <dd>The total number of targets.</dd>
 <dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
@@ -870,6 +888,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>nodes_featureids</tt> : list of ints</dt>
 <dd>Feature id for each node.</dd>
 <dt><tt>nodes_hitrates</tt> : list of floats</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
 <dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
@@ -883,6 +903,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Child node if expression is true</dd>
 <dt><tt>nodes_values</tt> : list of floats</dt>
 <dd>Thresholds to do the splitting on for each node.</dd>
+<dt><tt>nodes_values_as_tensor</tt> : tensor</dt>
+<dd>Thresholds to do the splitting on for each node.</dd>
 <dt><tt>post_transform</tt> : string (default is NONE)</dt>
 <dd>Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
 <dt><tt>target_ids</tt> : list of ints</dt>
@@ -892,6 +914,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>target_treeids</tt> : list of ints</dt>
 <dd>The id of the tree that each node is in.</dd>
 <dt><tt>target_weights</tt> : list of floats</dt>
+<dd>The weight for each target</dd>
+<dt><tt>target_weights_as_tensor</tt> : tensor</dt>
 <dd>The weight for each target</dd>
 </dl>
 

@@ -24,59 +24,75 @@ from __future__ import (
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Set,
+    Text,
+    cast,
+    Optional
+)
 
 try:
     import google.protobuf.descriptor_pb2 as d_typed
-    import six
     from google.protobuf.compiler import plugin_pb2 as plugin
 except ImportError as e:
     sys.stderr.write('Failed to generate mypy stubs: {}\n'.format(e))
     sys.exit(0)
 
-MYPY = False
-if MYPY:
-    from typing import (
-        Any,
-        Callable,
-        Dict,
-        Generator,
-        List,
-        Set,
-        Text,
-        cast,
-        Optional
-    )
-else:
-    # Provide minimal mypy identifiers to make code run without typing module present
-    Text = None
-
-    def cast(type, value):
-        return value
-
 
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet
-d = d_typed  # type: Any
+d: Any = d_typed
 
 GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is generated
 HEADER = "# {} by generate_proto_mypy_stubs.py.  Do not edit!\n".format(GENERATED)
 
 
+class Descriptors(object):
+
+    def __init__(self, request: plugin.CodeGeneratorRequest) -> None:
+        files = {f.name: f for f in request.proto_file}
+        to_generate = {n: files[n] for n in request.file_to_generate}
+        self.files: Dict[Text, d.FileDescriptorProto] = files
+        self.to_generate: Dict[Text, d.FileDescriptorProto] = to_generate
+        self.messages: Dict[Text, d.DescriptorProto] = {}
+        self.message_to_fd: Dict[Text, d.FileDescriptorProto] = {}
+
+        def _add_enums(enums: d.EnumDescriptorProto, prefix: Text, fd: d.FileDescriptorProto) -> None:
+            for enum in enums:
+                self.message_to_fd[prefix + enum.name] = fd
+
+        def _add_messages(messages: d.DescriptorProto, prefix: Text, fd: d.FileDescriptorProto) -> None:
+            for message in messages:
+                self.messages[prefix + message.name] = message
+                self.message_to_fd[prefix + message.name] = fd
+                sub_prefix = prefix + message.name + "."
+                _add_messages(message.nested_type, sub_prefix, fd)
+                _add_enums(message.enum_type, sub_prefix, fd)
+
+        for fd in request.proto_file:
+            start_prefix = "." + fd.package + "."
+            _add_messages(fd.message_type, start_prefix, fd)
+            _add_enums(fd.enum_type, start_prefix, fd)
+
+
 class PkgWriter(object):
     """Writes a single pyi file"""
 
-    def __init__(self, fd, descriptors):
-        # type: (d.FileDescriptorProto, Descriptors) -> None
+    def __init__(self, fd: d.FileDescriptorProto, descriptors: Descriptors) -> None:
         self.fd = fd
         self.descriptors = descriptors
-        self.lines = []  # type: List[Text]
+        self.lines: List[Text] = []
         self.indent = ""
 
         # dictionary of x->y for `from {x} import {y}`
-        self.imports = defaultdict(set)  # type: Dict[Text, Set[Text]]
-        self.locals = set()  # type: Set[Text]
+        self.imports: Dict[Text, Set[Text]] = defaultdict(set)
+        self.locals: Set[Text] = set()
 
-    def _import(self, path, name, import_as=None):
-        # type: (Text, Text, Optional[Text]) -> Text
+    def _import(self, path: Text, name: Text, import_as: Optional[Text] = None) -> Text:
         """Imports a stdlib path and returns a handle to it
         eg. self._import("typing", "Optional") -> "Optional"
         """
@@ -88,8 +104,7 @@ class PkgWriter(object):
             self.imports[imp].add(name)
             return name
 
-    def _import_message(self, type_name):
-        # type: (d.FieldDescriptorProto) -> Text
+    def _import_message(self, type_name: d.FieldDescriptorProto) -> Text:
         """Import a referenced message and return a handle"""
         name = cast(Text, type_name)
 
@@ -120,18 +135,15 @@ class PkgWriter(object):
         raise AssertionError("Could not parse local name " + name)
 
     @contextmanager  # type: ignore
-    def _indent(self):
-        # type: () -> Generator
+    def _indent(self) -> Generator[None, None, None]:
         self.indent = self.indent + "    "
         yield
         self.indent = self.indent[:-4]
 
-    def _write_line(self, line, *args):
-        # type: (Text, *Text) -> None
+    def _write_line(self, line: Text, *args: Text) -> None:
         self.lines.append(self.indent + line.format(*args))
 
-    def write_enums(self, enums):
-        # type: (List[d.EnumDescriptorProto]) -> None
+    def write_enums(self, enums: List[d.EnumDescriptorProto]) -> None:
         line = self._write_line
         for enum in enums:
             line("class {}(int):", enum.name)
@@ -155,8 +167,7 @@ class PkgWriter(object):
                 line("{} = {}({}, {})", val.name, self._import("typing", "cast"), enum.name, val.number)
             line("")
 
-    def write_messages(self, messages, prefix):
-        # type: (List[d.DescriptorProto], Text) -> None
+    def write_messages(self, messages: List[d.DescriptorProto], prefix: Text) -> None:
         line = self._write_line
         message_class = self._import("google.protobuf.message", "Message")
 
@@ -221,8 +232,7 @@ class PkgWriter(object):
                 line("def CopyFrom(self, other_msg: {}) -> None: ...", message_class)
             line("")
 
-    def write_services(self, services):
-        # type: (d.ServiceDescriptorProto) -> None
+    def write_services(self, services: d.ServiceDescriptorProto) -> None:
         line = self._write_line
 
         for service in services:
@@ -247,9 +257,8 @@ class PkgWriter(object):
                 line("def __init__(self, rpc_channel: {}) -> None: ...",
                   self._import("google.protobuf.service", "RpcChannel"))
 
-    def python_type(self, field):
-        # type: (d.FieldDescriptorProto) -> Text
-        mapping = {
+    def python_type(self, field: d.FieldDescriptorProto) -> Text:
+        mapping: Dict[int, Callable[[], Text]] = {
             d.FieldDescriptorProto.TYPE_DOUBLE: lambda: "float",
             d.FieldDescriptorProto.TYPE_FLOAT: lambda: "float",
 
@@ -271,15 +280,14 @@ class PkgWriter(object):
             d.FieldDescriptorProto.TYPE_ENUM: lambda: self._import_message(field.type_name),
             d.FieldDescriptorProto.TYPE_MESSAGE: lambda: self._import_message(field.type_name),
             d.FieldDescriptorProto.TYPE_GROUP: lambda: self._import_message(field.type_name),
-        }  # type: Dict[int, Callable[[], Text]]
+        }
 
         assert field.type in mapping, "Unrecognized type: " + field.type
         return mapping[field.type]()
 
-    def write(self):
-        # type: () -> Text
+    def write(self) -> Text:
         imports = []
-        for pkg, items in six.iteritems(self.imports):
+        for pkg, items in self.imports.items():
             imports.append(u"from {} import (".format(pkg))
             for item in sorted(items):
                 imports.append(u"    {},".format(item))
@@ -288,17 +296,15 @@ class PkgWriter(object):
         return "\n".join(imports + self.lines)
 
 
-def is_scalar(fd):
-    # type: (d.FileDescriptorProto) -> bool
+def is_scalar(fd: d.FileDescriptorProto) -> bool:
     return not (
         fd.type == d.FieldDescriptorProto.TYPE_MESSAGE
         or fd.type == d.FieldDescriptorProto.TYPE_GROUP
     )
 
 
-def generate_mypy_stubs(descriptors, response):
-    # type: (Descriptors, plugin.CodeGeneratorResponse) -> None
-    for name, fd in six.iteritems(descriptors.to_generate):
+def generate_mypy_stubs(descriptors: Descriptors, response: plugin.CodeGeneratorResponse) -> None:
+    for name, fd in descriptors.to_generate.items():
         pkg_writer = PkgWriter(fd, descriptors)
         pkg_writer.write_enums(fd.enum_type)
         pkg_writer.write_messages(fd.message_type, "")
@@ -312,44 +318,9 @@ def generate_mypy_stubs(descriptors, response):
         print("Writing mypy to", output.name, file=sys.stderr)
 
 
-class Descriptors(object):
-
-    def __init__(self, request):
-        # type: (plugin.CodeGeneratorRequest) -> None
-        files = {f.name: f for f in request.proto_file}
-        to_generate = {n: files[n] for n in request.file_to_generate}
-        self.files = files  # type: Dict[Text, d.FileDescriptorProto]
-        self.to_generate = to_generate  # type: Dict[Text, d.FileDescriptorProto]
-        self.messages = {}  # type: Dict[Text, d.DescriptorProto]
-        self.message_to_fd = {}  # type: Dict[Text, d.FileDescriptorProto]
-
-        def _add_enums(enums, prefix, fd):
-            # type: (d.EnumDescriptorProto, d.FileDescriptorProto) -> None
-            for enum in enums:
-                self.message_to_fd[prefix + enum.name] = fd
-
-        def _add_messages(messages, prefix, fd):
-            # type: (d.DescriptorProto, d.FileDescriptorProto) -> None
-            for message in messages:
-                self.messages[prefix + message.name] = message
-                self.message_to_fd[prefix + message.name] = fd
-                sub_prefix = prefix + message.name + "."
-                _add_messages(message.nested_type, sub_prefix, fd)
-                _add_enums(message.enum_type, sub_prefix, fd)
-
-        for fd in request.proto_file:
-            start_prefix = "." + fd.package + "."
-            _add_messages(fd.message_type, start_prefix, fd)
-            _add_enums(fd.enum_type, start_prefix, fd)
-
-
-def main():
-    # type: () -> None
+def main() -> None:
     # Read request message from stdin
-    if six.PY3:
-        data = sys.stdin.buffer.read()
-    else:
-        data = sys.stdin.read()
+    data = sys.stdin.buffer.read()
 
     # Parse request
     request = plugin.CodeGeneratorRequest()
@@ -365,10 +336,7 @@ def main():
     output = response.SerializeToString()
 
     # Write to stdout
-    if six.PY3:
-        sys.stdout.buffer.write(output)
-    else:
-        sys.stdout.write(output)
+    sys.stdout.buffer.write(output)
 
 
 if __name__ == '__main__':

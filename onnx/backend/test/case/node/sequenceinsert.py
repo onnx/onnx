@@ -13,7 +13,7 @@ from ..base import Base
 from . import expect
 
 
-def sequence_insert_reference_implementation(sequence, tensor, position=None):  # type: (List[Any], np.ndarray, np.ndarray) -> List[Any]
+def sequence_insert_reference_implementation(sequence: List[Any], tensor: np.ndarray, position: np.ndarray = None) -> List[Any]:
     # make a copy of input sequence
     seq = list(sequence)
     if position is not None:
@@ -30,7 +30,7 @@ def sequence_insert_reference_implementation(sequence, tensor, position=None):  
 class SequenceInsert(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         test_cases = {
             'at_back': [np.array([10, 11, 12]).astype(np.int64)],
             'at_front': [np.array([-2, -1, 0]), np.array([0]).astype(np.int64)]

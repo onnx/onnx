@@ -11,15 +11,14 @@ import numpy as np  # type: ignore
 from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
-from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List, Dict
 
 
-def combine_pairs_to_complex(fa):  # type: (Sequence[int]) -> Sequence[np.complex64]
+def combine_pairs_to_complex(fa: Sequence[int]) -> Sequence[np.complex64]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def to_array(tensor, base_dir=""):  # type: (TensorProto, Text) -> np.ndarray[Any]
+def to_array(tensor: TensorProto, base_dir: Text = "") -> np.ndarray:
     """Converts a tensor def object to a numpy array.
 
     Inputs:
@@ -82,7 +81,7 @@ def to_array(tensor, base_dir=""):  # type: (TensorProto, Text) -> np.ndarray[An
         )
 
 
-def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> TensorProto
+def from_array(arr: np.ndarray, name: Optional[Text] = None) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
     Inputs:
@@ -110,11 +109,11 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         # and then specify shape .reshape([x, y, z])
         flat_array = arr.flatten()
         for e in flat_array:
-            if isinstance(e, text_type):
+            if isinstance(e, str):
                 tensor.string_data.append(e.encode('utf-8'))
             elif isinstance(e, np.ndarray):
                 for s in e:
-                    if isinstance(s, text_type):
+                    if isinstance(s, str):
                         tensor.string_data.append(s.encode('utf-8'))
                     elif isinstance(s, bytes):
                         tensor.string_data.append(s)
@@ -140,7 +139,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     return tensor
 
 
-def to_list(sequence):  # type: (SequenceProto) -> List[Any]
+def to_list(sequence: SequenceProto) -> List[Any]:
     """Converts a sequence def to a Python list.
 
     Inputs:
@@ -148,7 +147,7 @@ def to_list(sequence):  # type: (SequenceProto) -> List[Any]
     Returns:
         lst: the converted list.
     """
-    lst = []  # type: List[Any]
+    lst: List[Any] = []
     elem_type = sequence.elem_type
     value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
     values = getattr(sequence, value_field)
@@ -164,7 +163,7 @@ def to_list(sequence):  # type: (SequenceProto) -> List[Any]
     return lst
 
 
-def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text], Optional[int]) -> SequenceProto
+def from_list(lst: List[Any], name: Optional[Text] = None, dtype: Optional[int] = None) -> SequenceProto:
     """Converts a list into a sequence def.
 
     Inputs:
@@ -214,7 +213,7 @@ def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text], 
     return sequence
 
 
-def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
+def to_dict(map: MapProto) -> np.ndarray:
     """Converts a map def to a Python dictionary.
 
     Inputs:
@@ -222,7 +221,7 @@ def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
     Returns:
         dict: the converted dictionary.
     """
-    key_list = []  # type: List[Any]
+    key_list: List[Any] = []
     if map.key_type == TensorProto.STRING:
         key_list = list(map.string_keys)
     else:
@@ -237,7 +236,7 @@ def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
     return dictionary
 
 
-def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> MapProto
+def from_dict(dict: Dict[Any, Any], name: Optional[Text] = None) -> MapProto:
     """Converts a Python dictionary into a map def.
 
     Inputs:
@@ -278,7 +277,7 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
     return map
 
 
-def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
+def to_optional(optional: OptionalProto) -> Optional[Any]:
     """Converts an optional def to a Python optional.
 
     Inputs:
@@ -286,7 +285,7 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
     Returns:
         opt: the converted optional.
     """
-    opt = None  # type: Optional[Any]
+    opt: Optional[Any] = None
     elem_type = optional.elem_type
     if elem_type == OptionalProto.UNDEFINED:
         return opt
@@ -307,10 +306,10 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
 
 
 def from_optional(
-        opt,  # type: Optional[Any]
-        name=None,  # type: Optional[Text]
-        dtype=None  # type: Optional[int]
-):  # type: (...) -> OptionalProto
+        opt: Optional[Any],
+        name: Optional[Text] = None,
+        dtype: Optional[int] = None
+) -> OptionalProto:
     """Converts an optional value into a Optional def.
 
     Inputs:
@@ -356,7 +355,7 @@ def from_optional(
     return optional
 
 
-def convert_endian(tensor):  # type: (TensorProto) -> None
+def convert_endian(tensor: TensorProto) -> None:
     """
     call to convert endianess of raw data in tensor.
     @params

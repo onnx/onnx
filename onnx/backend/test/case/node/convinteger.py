@@ -14,7 +14,7 @@ from . import expect
 class ConvInteger(Base):
 
     @staticmethod
-    def export_without_padding():  # type: () -> None
+    def export_without_padding() -> None:
 
         x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
         x_zero_point = np.uint8(1)
@@ -31,7 +31,7 @@ class ConvInteger(Base):
                name='test_convinteger_without_padding')
 
     @staticmethod
-    def export_with_padding():  # type: () -> None
+    def export_with_padding() -> None:
 
         x = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10]).astype(np.uint8).reshape((1, 1, 3, 3))
         x_zero_point = np.uint8(1)

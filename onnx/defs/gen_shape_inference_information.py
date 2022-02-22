@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from onnx import defs
 
 
-def main():  # type: () -> None
+def main() -> None:
     # domain -> support level -> name -> [schema]
     with_inference = []
     without_inference = []

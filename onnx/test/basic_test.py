@@ -18,13 +18,13 @@ from onnx import helper
 
 class TestBasicFunctions(unittest.TestCase):
 
-    def _simple_model(self):  # type: () -> ModelProto
+    def _simple_model(self) -> ModelProto:
         # Create a ModelProto.
         model = ModelProto()
         model.ir_version = IR_VERSION
         return model
 
-    def _simple_tensor(self):  # type: () -> TensorProto
+    def _simple_tensor(self) -> TensorProto:
         # Create a TensorProto.
         tensor = helper.make_tensor(
             name='test-tensor',
@@ -34,7 +34,7 @@ class TestBasicFunctions(unittest.TestCase):
         )
         return tensor
 
-    def test_save_and_load_model(self):  # type: () -> None
+    def test_save_and_load_model(self) -> None:
         proto = self._simple_model()
         cls = ModelProto
         proto_string = onnx._serialize(proto)
@@ -61,7 +61,7 @@ class TestBasicFunctions(unittest.TestCase):
         finally:
             os.remove(fi.name)
 
-    def test_save_and_load_tensor(self):  # type: () -> None
+    def test_save_and_load_tensor(self) -> None:
         proto = self._simple_tensor()
         cls = TensorProto
         proto_string = onnx._serialize(proto)
@@ -88,7 +88,7 @@ class TestBasicFunctions(unittest.TestCase):
         finally:
             os.remove(tfile.name)
 
-    def test_existence(self):  # type: () -> None
+    def test_existence(self) -> None:
         try:
             AttributeProto
             NodeProto
@@ -99,7 +99,7 @@ class TestBasicFunctions(unittest.TestCase):
                 'Did not find proper onnx protobufs. Error is: {}'
                 .format(e))
 
-    def test_version_exists(self):  # type: () -> None
+    def test_version_exists(self) -> None:
         model = ModelProto()
         # When we create it, graph should not have a version string.
         self.assertFalse(model.HasField('ir_version'))

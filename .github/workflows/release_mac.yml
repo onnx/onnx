@@ -5,9 +5,9 @@ on:
     # Run weekly on Monday 00:00
     - cron:  '00 00 * * MON'
   push:
-    branches: [master, rel-*]
+    branches: [main, rel-*]
   pull_request:
-    branches: [master, rel-*]
+    branches: [main, rel-*]
   workflow_dispatch:
 
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
@@ -20,7 +20,7 @@ jobs:
     runs-on: macos-10.15
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
         architecture: ['x64']
 
     steps:
@@ -120,6 +120,12 @@ jobs:
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
 
+    - name: Verify ONNX with ort-nightly
+      if: matrix.python-version != '3.10' # Do not test ort-nightly for Python 3.6 due to missing (unsupported) package
+      run: |
+        python -m pip install -q flatbuffers
+        python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
+        python onnx/test/test_with_ort.py
 
     - name: Build and upload source distribution to TestPyPI weekly
       if: github.event_name == 'schedule' && matrix.python-version == '3.9' # Only triggered by weekly event on Python 3.9

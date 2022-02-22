@@ -40,7 +40,7 @@ def apply_adam(r, t, x, g, v, h, norm_coefficient, norm_coefficient_post, alpha,
 class Adam(Base):
 
     @staticmethod
-    def export_adam():  # type: () -> None
+    def export_adam() -> None:
         # Define operator attributes.
         norm_coefficient = 0.001
         alpha = 0.95
@@ -77,7 +77,7 @@ class Adam(Base):
                opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
 
     @staticmethod
-    def export_adam_multiple():  # type: () -> None
+    def export_adam_multiple() -> None:
         # Define operator attributes.
         norm_coefficient = 0.001
         alpha = 0.95

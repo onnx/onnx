@@ -19,11 +19,11 @@ all_numeric_dtypes = [
 ]
 
 
-def import_recursive(package):  # type: (ModuleType) -> None
+def import_recursive(package: ModuleType) -> None:
     """
     Takes a package and imports all modules underneath it
     """
-    pkg_dir = None  # type: Optional[List[str]]
+    pkg_dir: Optional[List[str]] = None
     pkg_dir = package.__path__  # type: ignore
     module_location = package.__name__
     for (_module_loader, name, ispkg) in pkgutil.iter_modules(pkg_dir):

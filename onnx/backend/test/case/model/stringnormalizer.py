@@ -18,8 +18,8 @@ from typing import Sequence
 class NormalizeStrings(Base):
 
     @staticmethod
-    def export():  # type: () -> None
-        def make_graph(node, input_shape, output_shape):  # type: (onnx.helper.NodeProto, Sequence[int], Sequence[int]) -> onnx.helper.GraphProto
+    def export() -> None:
+        def make_graph(node: onnx.helper.NodeProto, input_shape: Sequence[int], output_shape: Sequence[int]) -> onnx.helper.GraphProto:
             graph = onnx.helper.make_graph(
                 nodes=[node],
                 name='StringNormalizer',

@@ -22,7 +22,7 @@ import numpy as np  # type: ignore
 import onnx
 from onnx import helper, numpy_helper, NodeProto, ModelProto, TypeProto
 from onnx.backend.base import Backend
-from six.moves.urllib.request import urlretrieve
+from urllib.request import urlretrieve
 from ..loader import load_model_tests
 from ..case.test_case import TestCase
 from .item import TestItem
@@ -33,12 +33,12 @@ class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
     pass
 
 
-def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callable[..., Any]]
+def retry_excute(times: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     assert times >= 1
 
-    def wrapper(func):  # type: (Callable[..., Any]) -> Callable[..., Any]
+    def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
-        def wrapped(*args, **kwargs):  # type: (*Any, **Any) -> Any
+        def wrapped(*args: Any, **kwargs: Any) -> Any:
             for i in range(1, times + 1):
                 try:
                     return func(*args, **kwargs)
@@ -53,18 +53,18 @@ def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callab
 
 class Runner(object):
 
-    def __init__(self, backend, parent_module=None):  # type: (Type[Backend], Optional[str]) -> None
+    def __init__(self, backend: Type[Backend], parent_module: Optional[str] = None) -> None:
         self.backend = backend
         self._parent_module = parent_module
-        self._include_patterns = set()  # type: Set[Pattern[Text]]
-        self._exclude_patterns = set()  # type: Set[Pattern[Text]]
-        self._xfail_patterns = set()    # type: Set[Pattern[Text]]
+        self._include_patterns: Set[Pattern[Text]] = set()
+        self._exclude_patterns: Set[Pattern[Text]] = set()
+        self._xfail_patterns: Set[Pattern[Text]] = set()
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
         # derived from it.
         # {category: {name: func}}
-        self._test_items = defaultdict(dict)  # type: Dict[Text, Dict[Text, TestItem]]
+        self._test_items: Dict[Text, Dict[Text, TestItem]] = defaultdict(dict)
 
         for rt in load_model_tests(kind='node'):
             self._add_model_test(rt, 'Node')
@@ -81,25 +81,28 @@ class Runner(object):
         for ot in load_model_tests(kind='pytorch-operator'):
             self._add_model_test(ot, 'PyTorchOperator')
 
-    def _get_test_case(self, name):  # type: (Text) -> Type[unittest.TestCase]
+    def _get_test_case(self, name: Text) -> Type[unittest.TestCase]:
         test_case = type(str(name), (unittest.TestCase,), {})
         if self._parent_module:
             test_case.__module__ = self._parent_module
         return test_case
 
-    def include(self, pattern):  # type: (Text) -> Runner
+    # TODO: Use proper type annotation rather than string
+    # once we drop Python 3.6 support. See
+    # https://www.python.org/dev/peps/pep-0563/.
+    def include(self, pattern: Text) -> 'Runner':
         self._include_patterns.add(re.compile(pattern))
         return self
 
-    def exclude(self, pattern):  # type: (Text) -> Runner
+    def exclude(self, pattern: Text) -> 'Runner':
         self._exclude_patterns.add(re.compile(pattern))
         return self
 
-    def xfail(self, pattern):  # type: (Text) -> Runner
+    def xfail(self, pattern: Text) -> 'Runner':
         self._xfail_patterns.add(re.compile(pattern))
         return self
 
-    def enable_report(self):  # type: () -> Runner
+    def enable_report(self) -> 'Runner':
         import pytest  # type: ignore
 
         for category, items_map in self._test_items.items():
@@ -108,8 +111,8 @@ class Runner(object):
         return self
 
     @property
-    def _filtered_test_items(self):  # type: () -> Dict[Text, Dict[Text, TestItem]]
-        filtered = {}  # type: Dict[Text, Dict[Text, TestItem]]
+    def _filtered_test_items(self) -> Dict[Text, Dict[Text, TestItem]]:
+        filtered: Dict[Text, Dict[Text, TestItem]] = {}
         for category, items_map in self._test_items.items():
             filtered[category] = {}
             for name, item in items_map.items():
@@ -132,7 +135,7 @@ class Runner(object):
         return filtered
 
     @property
-    def test_cases(self):  # type: () -> Dict[str, Type[unittest.TestCase]]
+    def test_cases(self) -> Dict[str, Type[unittest.TestCase]]:
         '''
         List of test cases to be applied on the parent scope
         Example usage:
@@ -148,7 +151,7 @@ class Runner(object):
         return test_cases
 
     @property
-    def test_suite(self):  # type: () -> unittest.TestSuite
+    def test_suite(self) -> unittest.TestSuite:
         '''
         TestSuite that can be run by TestRunner
         Example usage:
@@ -161,7 +164,7 @@ class Runner(object):
 
     # For backward compatibility (we used to expose `.tests`)
     @property
-    def tests(self):  # type: () -> Type[unittest.TestCase]
+    def tests(self) -> Type[unittest.TestCase]:
         '''
         One single unittest.TestCase that hosts all the test functions
         Example usage:
@@ -174,7 +177,7 @@ class Runner(object):
         return tests
 
     @classmethod
-    def assert_similar_outputs(cls, ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
+    def assert_similar_outputs(cls, ref_outputs: Sequence[Any], outputs: Sequence[Any], rtol: float, atol: float) -> None:
         np.testing.assert_equal(len(outputs), len(ref_outputs))
         for i in range(len(outputs)):
             if isinstance(outputs[i], (list, tuple)):
@@ -193,7 +196,7 @@ class Runner(object):
 
     @classmethod
     @retry_excute(3)
-    def download_model(cls, model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
+    def download_model(cls, model_test: TestCase, model_dir: Text, models_dir: Text) -> None:
         # On Windows, NamedTemporaryFile can not be opened for a
         # second time
         download_file = tempfile.NamedTemporaryFile(delete=False)
@@ -214,11 +217,11 @@ class Runner(object):
             os.remove(download_file.name)
 
     @classmethod
-    def prepare_model_data(cls, model_test):  # type: (TestCase) -> Text
+    def prepare_model_data(cls, model_test: TestCase) -> Text:
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
-        model_dir = os.path.join(models_dir, model_test.model_name)  # type: Text
+        model_dir: Text = os.path.join(models_dir, model_test.model_name)
         if not os.path.exists(os.path.join(model_dir, 'model.onnx')):
             if os.path.exists(model_dir):
                 bi = 0
@@ -235,18 +238,18 @@ class Runner(object):
         return model_dir
 
     def _add_test(self,
-                  category,  # type: Text
-                  test_name,  # type: Text
-                  test_func,  # type: Callable[..., Any]
-                  report_item,  # type: List[Optional[Union[ModelProto, NodeProto]]]
-                  devices=('CPU', 'CUDA'),  # type: Iterable[Text]
-                  ):  # type: (...) -> None
+                  category: Text,
+                  test_name: Text,
+                  test_func: Callable[..., Any],
+                  report_item: List[Optional[Union[ModelProto, NodeProto]]],
+                  devices: Iterable[Text] = ('CPU', 'CUDA'),
+                  ) -> None:
         # We don't prepend the 'test_' prefix to improve greppability
         if not test_name.startswith('test_'):
             raise ValueError(
                 'Test name must start with test_: {}'.format(test_name))
 
-        def add_device_test(device):  # type: (Text) -> None
+        def add_device_test(device: Text) -> None:
             device_test_name = '{}_{}'.format(test_name, device.lower())
             if device_test_name in self._test_items[category]:
                 raise ValueError(
@@ -257,7 +260,7 @@ class Runner(object):
                 not self.backend.supports_device(device),
                 "Backend doesn't support device {}".format(device))
             @functools.wraps(test_func)
-            def device_test_func(*args, **kwargs):  # type: (*Any, **Any) -> Any
+            def device_test_func(*args: Any, **kwargs: Any) -> Any:
                 try:
                     return test_func(*args, device=device, **kwargs)
                 except BackendIsNotSupposedToImplementIt as e:
@@ -272,12 +275,12 @@ class Runner(object):
         for device in devices:
             add_device_test(device)
 
-    def _add_model_test(self, model_test, kind):  # type: (TestCase, Text) -> None
+    def _add_model_test(self, model_test: TestCase, kind: Text) -> None:
         # model is loaded at runtime, note sometimes it could even
         # never loaded if the test skipped
-        model_marker = [None]  # type: List[Optional[Union[ModelProto, NodeProto]]]
+        model_marker: List[Optional[Union[ModelProto, NodeProto]]] = [None]
 
-        def run(test_self, device):  # type: (Any, Text) -> None
+        def run(test_self: Any, device: Text) -> None:
             if model_test.model_dir is None:
                 model_dir = self.prepare_model_data(model_test)
             else:
@@ -321,7 +324,7 @@ class Runner(object):
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
 
-    def _load_proto(self, proto_filename, target_list, model_type_proto):  # type: (Text, List[Union[np.ndarray[Any], List[Any]]], TypeProto) -> None
+    def _load_proto(self, proto_filename: Text, target_list: List[Union[np.ndarray, List[Any]]], model_type_proto: TypeProto) -> None:
         with open(proto_filename, 'rb') as f:
             protobuf_content = f.read()
             if model_type_proto.HasField('sequence_type'):

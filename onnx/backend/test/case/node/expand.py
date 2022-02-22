@@ -15,7 +15,7 @@ from . import expect
 class Expand(Base):
 
     @staticmethod
-    def export_dim_changed():  # type: () -> None
+    def export_dim_changed() -> None:
         node = onnx.helper.make_node(
             'Expand',
             inputs=['data', 'new_shape'],
@@ -40,7 +40,7 @@ class Expand(Base):
                name='test_expand_dim_changed')
 
     @staticmethod
-    def export_dim_unchanged():  # type: () -> None
+    def export_dim_unchanged() -> None:
         node = onnx.helper.make_node(
             'Expand',
             inputs=['data', 'new_shape'],

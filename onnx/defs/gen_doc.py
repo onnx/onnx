@@ -10,7 +10,6 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import io
 import os
-import sys
 
 import numpy as np  # type: ignore
 
@@ -18,7 +17,7 @@ from onnx import defs, FunctionProto, helper
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.sample.ops import collect_sample_implementations
-from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
+from typing import Any, Text, Sequence, Dict, List, NamedTuple, Set, Tuple
 
 
 SNIPPETS = collect_snippets()
@@ -29,13 +28,13 @@ ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 ext = '-ml.md' if ONNX_ML else '.md'
 
 
-def display_number(v):  # type: (int) -> Text
+def display_number(v: int) -> Text:
     if defs.OpSchema.is_infinite(v):
         return '&#8734;'
     return Text(v)
 
 
-def should_render_domain(domain):  # type: (Text) -> bool
+def should_render_domain(domain: Text) -> bool:
     if domain == ONNX_ML_DOMAIN and not ONNX_ML:
         return False
     if ONNX_ML and domain != ONNX_ML_DOMAIN:
@@ -43,18 +42,18 @@ def should_render_domain(domain):  # type: (Text) -> bool
     return True
 
 
-def format_name_with_domain(domain, schema_name):  # type: (Text, Text) -> Text
+def format_name_with_domain(domain: Text, schema_name: Text) -> Text:
     if domain:
         return '{}.{}'.format(domain, schema_name)
     return schema_name
 
 
-def format_versions(versions):  # type: (Sequence[OpSchema]) -> Text
+def format_versions(versions: Sequence[OpSchema]) -> Text:
     return '{}'.format(', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
                                                v.since_version) for v in versions[::-1]))
 
 
-def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
+def display_attr_type(v: OpSchema.AttrType) -> Text:
     assert isinstance(v, OpSchema.AttrType)
     s = Text(v)
     s = s[s.rfind('.') + 1:].lower()
@@ -63,26 +62,26 @@ def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
     return s
 
 
-def display_domain(domain):  # type: (Text) -> Text
+def display_domain(domain: Text) -> Text:
     if domain:
         return "the '{}' operator set".format(domain)
     return "the default ONNX operator set"
 
 
-def display_domain_short(domain):  # type: (Text) -> Text
+def display_domain_short(domain: Text) -> Text:
     if domain:
         return domain
     return 'ai.onnx (default)'
 
 
-def display_version_link(name, version):  # type: (Text, int) -> Text
+def display_version_link(name: Text, version: int) -> Text:
     changelog_md = 'Changelog' + ext
     name_with_ver = '{}-{}'.format(name, version)
     return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, version)
 
 
-def generate_formal_parameter_tags(formal_parameter):  # type: (OpSchema.FormalParameter) -> Text
-    tags = []  # type: List[Text]
+def generate_formal_parameter_tags(formal_parameter: OpSchema.FormalParameter) -> Text:
+    tags: List[Text] = []
     if OpSchema.FormalParameterOption.Optional == formal_parameter.option:
         tags = ["optional"]
     elif OpSchema.FormalParameterOption.Variadic == formal_parameter.option:
@@ -90,8 +89,8 @@ def generate_formal_parameter_tags(formal_parameter):  # type: (OpSchema.FormalP
             tags = ["variadic"]
         else:
             tags = ["variadic", "heterogeneous"]
-    differentiable = OpSchema.DifferentiationCategory.Differentiable  # type: OpSchema.DifferentiationCategory
-    non_differentiable = OpSchema.DifferentiationCategory.NonDifferentiable  # type: OpSchema.DifferentiationCategory
+    differentiable: OpSchema.DifferentiationCategory = OpSchema.DifferentiationCategory.Differentiable
+    non_differentiable: OpSchema.DifferentiationCategory = OpSchema.DifferentiationCategory.NonDifferentiable
     if differentiable == formal_parameter.differentiationCategory:
         tags.append('differentiable')
     elif non_differentiable == formal_parameter.differentiationCategory:
@@ -100,13 +99,13 @@ def generate_formal_parameter_tags(formal_parameter):  # type: (OpSchema.FormalP
     return '' if len(tags) == 0 else ' (' + ', '.join(tags) + ')'
 
 
-def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) -> Text
+def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> Text:
     s = ''
 
     # doc
     if schema.doc:
         s += '\n'
-        s += '\n'.join('  ' + line
+        s += '\n'.join(('  ' + line).rstrip()
                        for line in schema.doc.lstrip().splitlines())
         s += '\n'
 
@@ -139,14 +138,14 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             elif attr.default_value.name:
                 default_value = helper.get_attribute_value(attr.default_value)
 
-                def format_value(value):  # type: (Any) -> Text
+                def format_value(value: Any) -> Text:
                     if isinstance(value, float):
                         formatted = str(np.round(value, 5))
                         # use default formatting, unless too long.
                         if (len(formatted) > 10):
                             formatted = str("({:e})".format(value))
                         return formatted
-                    elif isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
+                    elif isinstance(value, (bytes, bytearray)):
                         return str(value.decode('utf-8'))
                     return str(value)
 
@@ -217,12 +216,17 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
     return s
 
 
-def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
+def support_level_str(level: OpSchema.SupportType) -> Text:
     return \
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
-def main(args):  # type: (Type[Args]) -> None
+class Args(NamedTuple):
+    output: str
+    changelog: str
+
+
+def main(args: Args) -> None:
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('<!--- SPDX-License-Identifier: Apache-2.0 -->\n')
         fout.write('## Operator Changelog\n')
@@ -236,7 +240,7 @@ def main(args):  # type: (Type[Args]) -> None
             "            is not specified, that variable has undefined differentiability.\n")
 
         # domain -> version -> [schema]
-        dv_index = defaultdict(lambda: defaultdict(list))  # type: Dict[Text, Dict[int, List[OpSchema]]]
+        dv_index: Dict[Text, Dict[int, List[OpSchema]]] = defaultdict(lambda: defaultdict(list))
         for schema in defs.get_all_schemas_with_history():
             dv_index[schema.domain][schema.since_version].append(schema)
 
@@ -272,7 +276,7 @@ def main(args):  # type: (Type[Args]) -> None
             "            is not specified, that variable has undefined differentiability.\n")
 
         # domain -> support level -> name -> [schema]
-        index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))  # type: Dict[Text, Dict[int, Dict[Text, List[OpSchema]]]]
+        index: Dict[Text, Dict[int, Dict[Text, List[OpSchema]]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         for schema in defs.get_all_schemas_with_history():
             index[schema.domain][int(schema.support_level)][schema.name].append(schema)
 
@@ -280,8 +284,8 @@ def main(args):  # type: (Type[Args]) -> None
 
         # Preprocess the Operator Schemas
         # [(domain, [(support_level, [(schema name, current schema, all versions schemas)])])]
-        operator_schemas = list()  # type: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]]
-        existing_ops = set()  # type: Set[Text]
+        operator_schemas: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]] = list()
+        existing_ops: Set[Text] = set()
         for domain, _supportmap in sorted(index.items()):
             if not should_render_domain(domain):
                 continue
@@ -374,7 +378,5 @@ if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     docs_dir = os.path.join(base_dir, 'docs')
 
-    class Args(object):
-        output = os.path.join(docs_dir, 'Operators' + ext)
-        changelog = os.path.join(docs_dir, 'Changelog' + ext)
-    main(Args)
+    main(Args(os.path.join(docs_dir, 'Operators' + ext),
+              os.path.join(docs_dir, 'Changelog' + ext)))

@@ -15,7 +15,7 @@ from . import expect
 class Greater(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Greater',
             inputs=['x', 'y'],
@@ -29,7 +29,7 @@ class Greater(Base):
                name='test_greater')
 
     @staticmethod
-    def export_greater_broadcast():  # type: () -> None
+    def export_greater_broadcast() -> None:
         node = onnx.helper.make_node(
             'Greater',
             inputs=['x', 'y'],

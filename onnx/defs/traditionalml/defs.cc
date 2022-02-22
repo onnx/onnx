@@ -871,8 +871,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             std::string("NONE"))
         .Attr("rho", "", AttributeProto::FLOATS, OPTIONAL_VALUE));
 
-static const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
-    Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
+static const char* TreeEnsembleClassifier_ver3_doc = R"DOC(
+    Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
     The attributes named 'nodes_X' form a sequence of tuples, associated by
     index into the sequences, which must all be of equal length. These tuples
     define the nodes.<br>
@@ -881,13 +881,15 @@ static const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
     the associated class_weights index.<br>
     One and only one of classlabels_strings or classlabels_int64s
     will be defined. The class_ids are indices into this list.
+    All fields ending with <i>_as_tensor</i> can be used instead of the
+    same parameter without the suffix if the element type is double and not float.
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleClassifier,
-    1,
+    3,
     OpSchema()
-        .SetDoc(TreeEnsembleClassifier_ver1_doc)
+        .SetDoc(TreeEnsembleClassifier_ver3_doc)
         .Input(0, "X", "Input of shape [N,F]", "T1")
         .Output(0, "Y", "N, Top class for each point", "T2")
         .Output(
@@ -927,9 +929,19 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr(
+            "nodes_values_as_tensor",
+            "Thresholds to do the splitting on for each node.",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
+        .Attr(
             "nodes_hitrates",
             "Popularity of each node, used for performance and may be omitted.",
             AttributeProto::FLOATS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "nodes_hitrates_as_tensor",
+            "Popularity of each node, used for performance and may be omitted.",
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .Attr(
             "nodes_modes",
@@ -972,6 +984,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr(
+            "class_weights_as_tensor",
+            "The weight for the class in class_id.",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
+        .Attr(
             "classlabels_strings",
             "Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be defined.",
             AttributeProto::STRINGS,
@@ -991,6 +1008,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
+        .Attr(
+            "base_values_as_tensor",
+            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           std::vector<std::string> label_strs;
           auto result =
@@ -1002,9 +1024,35 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           } else {
             output_elem_type->set_elem_type(TensorProto::INT64);
           }
+
+          auto* nodes_values = ctx.getAttribute("nodes_values");
+          auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
+          auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
+          auto* nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
+          auto* class_weights = ctx.getAttribute("class_weights");
+          auto* class_weights_as_tensor = ctx.getAttribute("class_weights_as_tensor");
+          auto* base_values = ctx.getAttribute("base_values");
+          auto* base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
+
+          if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
+            fail_shape_inference(
+                "Only one of the attributes 'nodes_values', 'nodes_values_as_tensor' should be specified.");
+          }
+          if (nullptr != nodes_hitrates && nullptr != nodes_hitrates_as_tensor) {
+            fail_shape_inference(
+                "Only one of the attributes 'nodes_hitrates', 'nodes_hitrates_as_tensor' should be specified.");
+          }
+          if (nullptr != class_weights && nullptr != class_weights_as_tensor) {
+            fail_shape_inference(
+                "Only one of the attributes 'class_weights', 'class_weights_as_tensor' should be specified.");
+          }
+          if (nullptr != base_values && nullptr != base_values_as_tensor) {
+            fail_shape_inference(
+                "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
+          }
         }));
 
-static const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
+static const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
     All args with nodes_ are fields of a tuple of tree nodes, and
     it is assumed they are the same length, and an index i will decode the
@@ -1013,15 +1061,17 @@ static const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
     All fields prefixed with target_ are tuples of votes at the leaves.<br>
     A leaf may have multiple votes, where each vote is weighted by
     the associated target_weights index.<br>
+    All fields ending with <i>_as_tensor</i> can be used instead of the
+    same parameter without the suffix if the element type is double and not float.
     All trees must have their node ids start at 0 and increment by 1.<br>
     Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleRegressor,
-    1,
+    3,
     OpSchema()
-        .SetDoc(TreeEnsembleRegressor_ver1_doc)
+        .SetDoc(TreeEnsembleRegressor_ver3_doc)
         .Input(0, "X", "Input of shape [N,F]", "T")
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
@@ -1052,9 +1102,19 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr(
+            "nodes_values_as_tensor",
+            "Thresholds to do the splitting on for each node.",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
+        .Attr(
             "nodes_hitrates",
             "Popularity of each node, used for performance and may be omitted.",
             AttributeProto::FLOATS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "nodes_hitrates_as_tensor",
+            "Popularity of each node, used for performance and may be omitted.",
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .Attr(
             "nodes_modes",
@@ -1097,6 +1157,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr(
+            "target_weights_as_tensor",
+            "The weight for each target",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
+        .Attr(
             "n_targets",
             "The total number of targets.",
             AttributeProto::INT,
@@ -1115,9 +1180,41 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "base_values",
             "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
             AttributeProto::FLOATS,
-            OPTIONAL_VALUE));
+            OPTIONAL_VALUE)
+        .Attr(
+            "base_values_as_tensor",
+            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          auto* nodes_values = ctx.getAttribute("nodes_values");
+          auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
+          auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
+          auto* nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
+          auto* target_weights = ctx.getAttribute("target_weights");
+          auto* target_weights_as_tensor = ctx.getAttribute("target_weights_as_tensor");
+          auto* base_values = ctx.getAttribute("base_values");
+          auto* base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
 
-static const char* ZipMap_ver1_doc = R"DOC(
+          if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
+            fail_shape_inference(
+                "Only one of the attributes 'nodes_values', 'nodes_values_as_tensor' should be specified.");
+          }
+          if (nullptr != nodes_hitrates && nullptr != nodes_hitrates_as_tensor) {
+            fail_shape_inference(
+                "Only one of the attributes 'nodes_hitrates', 'nodes_hitrates_as_tensor' should be specified.");
+          }
+          if (nullptr != target_weights && nullptr != target_weights_as_tensor) {
+            fail_shape_inference(
+                "Only one of the attributes 'target_weights', 'target_weights_as_tensor' should be specified.");
+          }
+          if (nullptr != base_values && nullptr != base_values_as_tensor) {
+            fail_shape_inference(
+                "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
+          }
+        }));
+
+    static const char* ZipMap_ver1_doc = R"DOC(
     Creates a map from the input and the attributes.<br>
     The values are provided by the input tensor, while the keys are specified by the attributes.
     Must provide keys in either classlabels_strings or classlabels_int64s (but not both).<br>

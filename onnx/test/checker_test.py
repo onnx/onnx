@@ -17,7 +17,7 @@ import onnx.defs
 
 class TestChecker(unittest.TestCase):
     @property
-    def _sample_float_tensor(self):  # type: () -> TensorProto
+    def _sample_float_tensor(self) -> TensorProto:
         np_array = np.random.randn(2, 3).astype(np.float32)
         return helper.make_tensor(
             name='test',
@@ -27,12 +27,12 @@ class TestChecker(unittest.TestCase):
         )
 
     def make_sparse(self,
-                    shape,  # type: Sequence[int]
-                    values,  # type: Sequence[int]
-                    indices_shape,  # type: Sequence[int]
-                    indices,  # type: Sequence[int]
-                    name='spval'  # type: Text
-                    ):  # type: (...) -> SparseTensorProto
+                    shape: Sequence[int],
+                    values: Sequence[int],
+                    indices_shape: Sequence[int],
+                    indices: Sequence[int],
+                    name: Text = 'spval'
+                    ) -> SparseTensorProto:
         sparse = SparseTensorProto()
         sparse.dims.extend(shape)
         nnz = len(values)
@@ -41,13 +41,13 @@ class TestChecker(unittest.TestCase):
         sparse.indices.CopyFrom(helper.make_tensor('spind', TensorProto.INT64, indices_shape, indices))
         return sparse
 
-    def test_check_node(self):  # type: () -> None
+    def test_check_node(self) -> None:
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
 
         checker.check_node(node)
 
-    def test_check_node_input_marked_optional(self):  # type: () -> None
+    def test_check_node_input_marked_optional(self) -> None:
         # GivenTensorFill's input is marked optional, hence it is used in this test.
         node = helper.make_node(
             "GivenTensorFill", [], ["Y"], name="test")
@@ -62,12 +62,12 @@ class TestChecker(unittest.TestCase):
             "Relu", [""], ["Y"], name="test")
         self.assertRaises(checker.ValidationError, checker.check_node, node)
 
-    def test_check_graph_ir_version_3(self):  # type: () -> None
+    def test_check_graph_ir_version_3(self) -> None:
         ctx = C.CheckerContext()
         ctx.ir_version = 3
         ctx.opset_imports = {'': onnx.defs.onnx_opset_version()}
 
-        def check_ir_version_3(g):   # type: (GraphProto) -> None
+        def check_ir_version_3(g: GraphProto) -> None:
             checker.check_graph(g, ctx)
 
         node = helper.make_node(
@@ -88,7 +88,7 @@ class TestChecker(unittest.TestCase):
         graph.initializer[0].name = 'X'
         check_ir_version_3(graph)
 
-    def test_check_graph(self):  # type: () -> None
+    def test_check_graph(self) -> None:
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
@@ -106,7 +106,47 @@ class TestChecker(unittest.TestCase):
         graph.initializer[0].name = 'X'
         checker.check_graph(graph)
 
-    def test_check_graph_empty_initializer_name(self):  # type: () -> None
+    def test_check_graph_types(self) -> None:
+        # This is for https://github.com/onnx/onnx/issues/3849.
+        # It confirms that type checking is performed
+        # when checker.check_model is called with full_check=True
+
+        node_div = helper.make_node(
+            "Div", ["X", "Y"], ["Z"], name="test_div")
+        node_identity = helper.make_node(
+            "Identity", ["Z"], ["W"], name="test_identity")
+
+        graph = helper.make_graph(
+            [node_div, node_identity],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+                # intentionally use a BOOL type which is not supported by the Div op.
+                helper.make_tensor_value_info("Y", TensorProto.BOOL, [1, 2])],
+            [helper.make_tensor_value_info("W", TensorProto.FLOAT, [1, 2])])
+
+        model = helper.make_model(graph, producer_name='test')
+
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
+
+        checker.check_graph(graph)
+
+        graph = helper.make_graph(
+            [node_div, node_identity],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+                # intentionally use a Int32 type which is in conflict with Div's other input X.
+                helper.make_tensor_value_info("Y", TensorProto.INT32, [1, 2])],
+            [helper.make_tensor_value_info("W", TensorProto.FLOAT, [1, 2])])
+
+        model = helper.make_model(graph, producer_name='test')
+
+        self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
+
+        checker.check_graph(graph)
+
+    def test_check_graph_empty_initializer_name(self) -> None:
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
@@ -121,7 +161,7 @@ class TestChecker(unittest.TestCase):
         graph.initializer[0].name = ''
         self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
-    def test_check_graph_empty_sparse_initializer_name(self):  # type: () -> None
+    def test_check_graph_empty_sparse_initializer_name(self) -> None:
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
@@ -136,7 +176,7 @@ class TestChecker(unittest.TestCase):
         graph.sparse_initializer.extend([sparse])
         self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
-    def test_check_graph_duplicate_init_names(self):  # type: () -> None
+    def test_check_graph_duplicate_init_names(self) -> None:
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
@@ -154,7 +194,7 @@ class TestChecker(unittest.TestCase):
         graph.sparse_initializer.extend([sparse])
         self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
-    def test_check_graph_optional_input(self):  # type: () -> None
+    def test_check_graph_optional_input(self) -> None:
         # GivenTensorFill's input is marked optional, hence it is used in this test.
         node = helper.make_node(
             "GivenTensorFill", [""], ["Y"], name="test")
@@ -165,7 +205,7 @@ class TestChecker(unittest.TestCase):
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
         checker.check_graph(graph)
 
-    def test_check_graph_ssa(self):  # type: () -> None
+    def test_check_graph_ssa(self) -> None:
         relu1 = helper.make_node(
             "Relu", ["X"], ["Z"], name="relu1")
         relu2 = helper.make_node(
@@ -184,7 +224,7 @@ class TestChecker(unittest.TestCase):
         )
         self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
-    def test_check_graph_topologically_sorted(self):  # type: () -> None
+    def test_check_graph_topologically_sorted(self) -> None:
         n1 = helper.make_node(
             "Scale", ["X"], ["Y"], scale=2., name="n1")
         n2 = helper.make_node(
@@ -202,7 +242,7 @@ class TestChecker(unittest.TestCase):
         )
         self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
-    def test_check_model(self):  # type: () -> None
+    def test_check_model(self) -> None:
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
@@ -214,7 +254,7 @@ class TestChecker(unittest.TestCase):
 
         checker.check_model(model)
 
-    def test_check_serialized_model(self):  # type: () -> None
+    def test_check_serialized_model(self) -> None:
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
@@ -226,7 +266,7 @@ class TestChecker(unittest.TestCase):
 
         checker.check_model(model.SerializeToString())
 
-    def test_check_old_model(self):  # type: () -> None
+    def test_check_old_model(self) -> None:
         node = helper.make_node(
             "Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))
         graph = helper.make_graph(
@@ -239,14 +279,14 @@ class TestChecker(unittest.TestCase):
 
         checker.check_model(model)
 
-    def test_check_tensor(self):  # type: () -> None
+    def test_check_tensor(self) -> None:
         tensor = self._sample_float_tensor
         checker.check_tensor(tensor)
 
         tensor.raw_data = np.random.randn(2, 3).astype(np.float32).tobytes()
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
-    def test_check_string_tensor(self):  # type: () -> None
+    def test_check_string_tensor(self) -> None:
         tensor = TensorProto()
         tensor.data_type = TensorProto.STRING
         tensor.dims.append(1)
@@ -258,12 +298,12 @@ class TestChecker(unittest.TestCase):
         # string data should not be stored in raw_data field
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
-    def test_check_tensor_mismatched_field(self):  # type: () -> None
+    def test_check_tensor_mismatched_field(self) -> None:
         tensor = self._sample_float_tensor
         tensor.data_type = TensorProto.INT32
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
-    def test_nested_graph(self):  # type: () -> None
+    def test_nested_graph(self) -> None:
         n1 = helper.make_node(
             "Scale", ["X"], ["Y"], scale=2., name="n1")
         n2 = helper.make_node(
@@ -293,7 +333,7 @@ class TestChecker(unittest.TestCase):
 
         checker.check_graph(graph)
 
-    def test_nested_graph_without_subgraph_input_shape(self):  # type: () -> None
+    def test_nested_graph_without_subgraph_input_shape(self) -> None:
         n1 = helper.make_node(
             "Scale", ["X"], ["Y"], scale=2., name="n1")
         n2 = helper.make_node(
@@ -326,7 +366,7 @@ class TestChecker(unittest.TestCase):
         checker.check_graph(graph)
 
     @property
-    def _sample_0_elem_tensor(self):  # type: () -> TensorProto
+    def _sample_0_elem_tensor(self) -> TensorProto:
         np_array = np.random.randn(0, 3).astype(np.float32)
         return helper.make_tensor(
             name='test',
@@ -335,16 +375,16 @@ class TestChecker(unittest.TestCase):
             vals=np_array.reshape(0).tolist()
         )
 
-    def test_check_tensor_zero_elem(self):  # type: () -> None
+    def test_check_tensor_zero_elem(self) -> None:
         tensor = self._sample_0_elem_tensor
         checker.check_tensor(tensor)
 
-    def test_check_removed_experimental_op(self):  # type: () -> None
+    def test_check_removed_experimental_op(self) -> None:
         node = helper.make_node(
             "ConstantFill", [], ["Y"], name="test", shape=[1, 2])
         checker.check_node(node)
 
-    def test_skip_schema_check_on_non_standard_domain(self):  # type: () -> None
+    def test_skip_schema_check_on_non_standard_domain(self) -> None:
         node = helper.make_node(
             "NonExistOp", ["X"], ["Y"], name="test", domain="test.domain")
         graph = helper.make_graph(
@@ -357,37 +397,37 @@ class TestChecker(unittest.TestCase):
                                   opset_imports=[onnx_id])
         checker.check_model(model)
 
-    def test_check_sparse_tensor(self):  # type: () -> None
+    def test_check_sparse_tensor(self) -> None:
         sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81])
         checker.check_sparse_tensor(sparse)
 
-    def test_check_sparse_tensor_invalid_index(self):  # type: () -> None
+    def test_check_sparse_tensor_invalid_index(self) -> None:
         # index value 181 is out-of-range
         sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 181])
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
-    def test_check_sparse_tensor_unordered(self):  # type: () -> None
+    def test_check_sparse_tensor_unordered(self) -> None:
         # index values are not in sorted order
         sparse = self.make_sparse([100], [13, 17, 19], [3], [27, 9, 81])
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
-    def test_check_sparse_tensor_coo_format(self):  # type: () -> None
+    def test_check_sparse_tensor_coo_format(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 2, 7, 8, 1])
         checker.check_sparse_tensor(sparse)
 
-    def test_check_sparse_tensor_coo_format_invalid_index(self):  # type: () -> None
+    def test_check_sparse_tensor_coo_format_invalid_index(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 0, 27, 8, 1])
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
-    def test_check_sparse_tensor_coo_format_invalid_shape(self):  # type: () -> None
+    def test_check_sparse_tensor_coo_format_invalid_shape(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [2, 3], [0, 9, 2, 7, 8, 1])
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
-    def test_check_sparse_tensor_coo_format_invalid_dim2(self):  # type: () -> None
+    def test_check_sparse_tensor_coo_format_invalid_dim2(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 1], [0, 1, 2])
         self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
 
-    def test_check_sparse_matmul(self):  # type: () -> None
+    def test_check_sparse_matmul(self) -> None:
         M = 5
         N = 10
         # Create ValueInfoProto for input X of shape [N]
@@ -404,7 +444,7 @@ class TestChecker(unittest.TestCase):
         # check graph
         checker.check_graph(graph)
 
-    def test_check_model_unsupported_input_type(self):  # type: () -> None
+    def test_check_model_unsupported_input_type(self) -> None:
         N = 10
         X = helper.make_tensor_value_info('X', TensorProto.BOOL, [N])
         Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [N])
@@ -415,7 +455,7 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
         self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
-    def test_check_model_inconsistent_type(self):  # type: () -> None
+    def test_check_model_inconsistent_type(self) -> None:
         N = 10
         X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [N])
         Y = helper.make_tensor_value_info('Y', TensorProto.INT32, [N])
@@ -426,7 +466,7 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
         self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
-    def test_check_model_unsupported_output_type(self):  # type: () -> None
+    def test_check_model_unsupported_output_type(self) -> None:
         N = 10
         X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [N])
         Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [N])
@@ -437,7 +477,7 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
         self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
-    def test_loop_with_same_initializer_input_below_ir4(self):  # type: () -> None
+    def test_loop_with_same_initializer_input_below_ir4(self) -> None:
         # This is for testing IR<4: tensors must exist both in initializer and input
         # shape_inference should allow different number of graph input and node input for Loop
         # Comes from a tf2onnx model
@@ -501,7 +541,7 @@ class TestChecker(unittest.TestCase):
         # Should not throw an error
         checker.check_model(model, full_check=True)
 
-    def test_loop_with_different_initializer_input_below_ir4(self):  # type: () -> None
+    def test_loop_with_different_initializer_input_below_ir4(self) -> None:
         # This is for testing IR<4: tensors must exist both in initializer and input
         # Testing an optional input which does not exist in initializers
         # Checker should throw an error said the missing input is not in initializers
@@ -563,7 +603,7 @@ class TestChecker(unittest.TestCase):
         )
         self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
-    def test_loop_with_same_initializer_input_above_ir4(self):  # type: () -> None
+    def test_loop_with_same_initializer_input_above_ir4(self) -> None:
         # This is for testing IR>=4:
         # Cannot use the same name as both a subgraph initializer and subgraph input
 

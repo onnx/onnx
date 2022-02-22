@@ -13,8 +13,7 @@ from ..base import Base
 from . import expect
 
 
-def optional_get_element_reference_implementation(optional):
-    # type: (Optional[Any]) -> Any
+def optional_get_element_reference_implementation(optional: Optional[Any]) -> Any:
     assert optional is not None
     return optional
 
@@ -22,7 +21,7 @@ def optional_get_element_reference_implementation(optional):
 class OptionalHasElement(Base):
 
     @staticmethod
-    def export_get_element_tensor():  # type: () -> None
+    def export_get_element_tensor() -> None:
         optional = np.array([1, 2, 3, 4]).astype(np.float32)
         tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
         input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
@@ -38,7 +37,7 @@ class OptionalHasElement(Base):
                name='test_optional_get_element')
 
     @staticmethod
-    def export_get_element_sequence():  # type: () -> None
+    def export_get_element_sequence() -> None:
         optional = [np.array([1, 2, 3, 4]).astype(np.int32)]
         tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.INT32, shape=[4, ])
         seq_type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)

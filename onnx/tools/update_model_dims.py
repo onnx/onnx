@@ -5,14 +5,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from six import string_types
 from typing import Any, List, Text, Dict, Set
 from onnx import ModelProto, ValueInfoProto
 
 import onnx.checker
 
 
-def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelProto, Dict[Text, List[Any]], Dict[Text, List[Any]]) -> ModelProto
+def update_inputs_outputs_dims(model: ModelProto, input_dims: Dict[Text, List[Any]], output_dims: Dict[Text, List[Any]]) -> ModelProto:
     """
         This function updates the dimension sizes of the model's inputs and outputs to the values
         provided in input_dims and output_dims. if the dim value provided is negative, a unique dim_param
@@ -37,9 +36,9 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
                 updated_model = update_inputs_outputs_dims(model, input_dims, output_dims)
                 onnx.save(updated_model, 'model.onnx')
     """
-    dim_param_set = set()  # type: Set[Text]
+    dim_param_set: Set[Text] = set()
 
-    def init_dim_param_set(dim_param_set, value_infos):  # type: (Set[Text], List[ValueInfoProto]) -> None
+    def init_dim_param_set(dim_param_set: Set[Text], value_infos: List[ValueInfoProto]) -> None:
         for info in value_infos:
             shape = info.type.tensor_type.shape
             for dim in shape.dim:
@@ -50,7 +49,7 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
     init_dim_param_set(dim_param_set, model.graph.output)  # type: ignore
     init_dim_param_set(dim_param_set, model.graph.value_info)  # type: ignore
 
-    def update_dim(tensor, dim, j, name):  # type: (ValueInfoProto, Any, int, Text) -> None
+    def update_dim(tensor: ValueInfoProto, dim: Any, j: int, name: Text) -> None:
         dim_proto = tensor.type.tensor_type.shape.dim[j]
         if isinstance(dim, int):
             if dim >= 0:
@@ -64,7 +63,7 @@ def update_inputs_outputs_dims(model, input_dims, output_dims):  # type: (ModelP
                     raise ValueError('Unable to generate unique dim_param for axis {} of {}. Please manually provide a dim_param value.'
                         .format(j, name))
                 dim_proto.dim_param = generated_dim_param
-        elif isinstance(dim, string_types):
+        elif isinstance(dim, str):
             dim_proto.dim_param = dim
         else:
             raise ValueError('Only int or str is accepted as dimension value, incorrect type: {}'.format(type(dim)))

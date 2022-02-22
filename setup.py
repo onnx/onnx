@@ -153,8 +153,7 @@ class cmake_build(setuptools.Command):
         self.jobs = None
 
     def finalize_options(self):
-        if sys.version_info[0] >= 3:
-            self.set_undefined_options('build', ('parallel', 'jobs'))
+        self.set_undefined_options('build', ('parallel', 'jobs'))
         if self.jobs is None and os.getenv("MAX_JOBS") is not None:
             self.jobs = os.getenv("MAX_JOBS")
         self.jobs = multiprocessing.cpu_count() if self.jobs is None else int(self.jobs)
@@ -328,9 +327,7 @@ tests_require.append('pytest')
 tests_require.append('nbval')
 tests_require.append('tabulate')
 
-if sys.version_info[0] == 3:
-    # Mypy doesn't work with Python 2
-    extras_require['mypy'] = ['mypy==0.600']
+extras_require['mypy'] = ['mypy==0.782', 'types-protobuf==3.18.4']
 
 ################################################################################
 # Final

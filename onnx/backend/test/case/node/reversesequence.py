@@ -15,7 +15,7 @@ from . import expect
 class ReverseSequence(Base):
 
     @staticmethod
-    def export_reversesequence_time():  # type: () -> None
+    def export_reversesequence_time() -> None:
         node = onnx.helper.make_node(
             'ReverseSequence',
             inputs=['x', 'sequence_lens'],
@@ -38,7 +38,7 @@ class ReverseSequence(Base):
                name='test_reversesequence_time')
 
     @staticmethod
-    def export_reversesequence_batch():  # type: () -> None
+    def export_reversesequence_batch() -> None:
         node = onnx.helper.make_node(
             'ReverseSequence',
             inputs=['x', 'sequence_lens'],

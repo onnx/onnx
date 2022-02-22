@@ -67,6 +67,12 @@ You'll need to regenerate test coverage too, by running this command from the ro
 python onnx\backend\test\stat_coverage.py
 ```
 
+## Cpp tests (googletest)
+
+Some functionalities are tested with googletest. Those tests are listed in `test/cpp`, and include tests for shape inference, data propagation, parser, and others.
+
+To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e .` and then run `.setuptools-cmake-build/onnx_gtests`.
+
 # Static typing (mypy)
 
 We use [mypy](http://mypy-lang.org/) to run static type checks on the onnx code base. To check that your code passes, you'll first need to install the mypy type checker. If you're using python 3, call from your onnx source folder:
@@ -75,12 +81,6 @@ We use [mypy](http://mypy-lang.org/) to run static type checks on the onnx code 
 pip install -e .[mypy]
 ```
 
-The type checker cannot run in a python 2 environment (but it will check python 2 code).
-If you're using python 2, you need to install mypy into your system packages instead:
-
-```
-pip3 install mypy==[version]
-```
 *Note: You'll find the version we're currently using in `setup.py`.*
 
 After having installed mypy, you can run the type checks:
@@ -99,7 +99,7 @@ Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipel
 
 # License
 
-[Apache License v2.0](https://github.com/onnx/onnx/blob/master/LICENSE)
+[Apache License v2.0](/LICENSE)
 
 # Code of Conduct
 

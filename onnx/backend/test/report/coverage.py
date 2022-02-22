@@ -20,11 +20,11 @@ _all_schemas = defs.get_all_schemas()
 
 
 class AttrCoverage(object):
-    def __init__(self):  # type: () -> None
-        self.name = None  # type: Optional[Text]
-        self.values = set()  # type: Set[Text]
+    def __init__(self) -> None:
+        self.name: Optional[Text] = None
+        self.values: Set[Text] = set()
 
-    def add(self, attr):  # type: (onnx.AttributeProto) -> None
+    def add(self, attr: onnx.AttributeProto) -> None:
         assert self.name in [None, attr.name]
         self.name = attr.name
         value = helper.get_attribute_value(attr)
@@ -37,11 +37,11 @@ class AttrCoverage(object):
 
 
 class NodeCoverage(object):
-    def __init__(self):  # type: () -> None
-        self.op_type = None  # type: Optional[Text]
-        self.attr_coverages = defaultdict(AttrCoverage)  # type: Dict[Text, AttrCoverage]
+    def __init__(self) -> None:
+        self.op_type: Optional[Text] = None
+        self.attr_coverages: Dict[Text, AttrCoverage] = defaultdict(AttrCoverage)
 
-    def add(self, node):  # type: (onnx.NodeProto) -> None
+    def add(self, node: onnx.NodeProto) -> None:
         assert self.op_type in [None, node.op_type]
 
         if self.op_type is None:
@@ -54,12 +54,12 @@ class NodeCoverage(object):
 
 
 class ModelCoverage(object):
-    def __init__(self):  # type: () -> None
-        self.name = None  # type: Optional[Text]
-        self.graph = None  # type: Optional[GraphProto]
-        self.node_coverages = defaultdict(NodeCoverage)  # type: Dict[Text, NodeCoverage]
+    def __init__(self) -> None:
+        self.name: Optional[Text] = None
+        self.graph: Optional[GraphProto] = None
+        self.node_coverages: Dict[Text, NodeCoverage] = defaultdict(NodeCoverage)
 
-    def add(self, model):  # type: (onnx.ModelProto) -> None
+    def add(self, model: onnx.ModelProto) -> None:
         assert self.name in [None, model.graph.name]
 
         if self.name is None:
@@ -72,34 +72,34 @@ class ModelCoverage(object):
 
 
 class Coverage(object):
-    def __init__(self):  # type: () -> None
-        self.buckets = {
+    def __init__(self) -> None:
+        self.buckets: Dict[Text, Dict[Text, NodeCoverage]] = {
             'loaded': defaultdict(NodeCoverage),
             'passed': defaultdict(NodeCoverage),
-        }  # type: Dict[Text, Dict[Text, NodeCoverage]]
-        self.models = {
+        }
+        self.models: Dict[Text, Dict[Text, ModelCoverage]] = {
             'loaded': defaultdict(ModelCoverage),
             'passed': defaultdict(ModelCoverage),
-        }  # type: Dict[Text, Dict[Text, ModelCoverage]]
+        }
 
-    def add_node(self, node, bucket):  # type: (onnx.NodeProto, Text) -> None
+    def add_node(self, node: onnx.NodeProto, bucket: Text) -> None:
         self.buckets[bucket][node.op_type].add(node)
 
-    def add_graph(self, graph, bucket):  # type: (onnx.GraphProto, Text) -> None
+    def add_graph(self, graph: onnx.GraphProto, bucket: Text) -> None:
         for node in graph.node:
             self.add_node(node, bucket)
 
-    def add_model(self, model, bucket, is_model):  # type: (onnx.ModelProto, Text, bool) -> None
+    def add_model(self, model: onnx.ModelProto, bucket: Text, is_model: bool) -> None:
         self.add_graph(model.graph, bucket)
         # Only add model if name does not start with test
         if is_model:
             self.models[bucket][model.graph.name].add(model)
 
-    def add_proto(self, proto, bucket, is_model):  # type: (onnx.ModelProto, Text, bool) -> None
+    def add_proto(self, proto: onnx.ModelProto, bucket: Text, is_model: bool) -> None:
         assert isinstance(proto, onnx.ModelProto)
         self.add_model(proto, bucket, is_model)
 
-    def report_text(self, writer):  # type: (IO[Text]) -> None
+    def report_text(self, writer: IO[Text]) -> None:
         writer.write('---------- onnx coverage: ----------\n')
         writer.write('Operators (passed/loaded/total): {}/{}/{}\n'.format(
             len(self.buckets['passed']),
@@ -109,8 +109,8 @@ class Coverage(object):
 
         rows = []
         passed = []
-        all_ops = []  # type: List[Text]
-        experimental = []  # type: List[Text]
+        all_ops: List[Text] = []
+        experimental: List[Text] = []
         for op_cov in self.buckets['passed'].values():
             covered_attrs = [
                 '{}: {}'.format(attr_cov.name, len(attr_cov.values))
@@ -142,7 +142,7 @@ class Coverage(object):
     # files is a column naming each op or model and columns for each
     # backend with indications of whether the tests passed or failed for
     # each row.
-    def report_csv(self, all_ops, passed, experimental):  # type: (List[Text], List[Optional[Text]], List[Text]) -> None
+    def report_csv(self, all_ops: List[Text], passed: List[Optional[Text]], experimental: List[Text]) -> None:
         for schema in _all_schemas:
             if schema.domain == '' or schema.domain == 'ai.onnx':
                 all_ops.append(schema.name)
@@ -153,12 +153,13 @@ class Coverage(object):
                 'nodes.csv')  # type: ignore
         models_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                 'models.csv')  # type: ignore
-        existing_nodes = OrderedDict()  # type: OrderedDict[Text, Dict[str, str]]
-        existing_models = OrderedDict()  # type: OrderedDict[Text, Dict[str, str]]
-        frameworks = []  # type: List[str]
+        existing_nodes: OrderedDict[Text, Dict[str, str]] = OrderedDict()
+        existing_models: OrderedDict[Text, Dict[str, str]] = OrderedDict()
+        frameworks: List[str] = []
         if os.path.isfile(nodes_path):
             with open(nodes_path, 'r') as nodes_file:
                 reader = csv.DictReader(nodes_file)
+                assert reader.fieldnames
                 frameworks = list(reader.fieldnames)
                 for row in reader:
                     op = row[str('Op')]
@@ -195,7 +196,7 @@ class Coverage(object):
                     existing_nodes[node_name][str(backend)] = str("Passed!")
                 else:
                     existing_nodes[node_name][str(backend)] = str("Failed!")
-            summaries = dict()  # type: Dict[Any, Any]
+            summaries: Dict[Any, Any] = dict()
             if "Summary" in existing_nodes:
                 summaries = existing_nodes["Summary"]
                 del existing_nodes["Summary"]

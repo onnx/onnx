@@ -196,11 +196,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 		return false;
 	}
 	auto target_elt_type = target_type->tensor_type().elem_type();
-	std::vector<FunctionBodyHelper::NodeDef> body{
-		// nodes: {outputs, op, inputs, attributes}
-	  { {"output"}, "Cast", {"input"}, {MakeAttribute("to", (int64_t)(target_elt_type))} }
-	};
-	return FunctionBodyHelper::BuildFunctionProto(functionProto, schema, body, {});
+  FunctionBuilder builder(functionProto);
+  builder.Add("output = Cast (input)", "to", (int64_t)(target_elt_type));
+  schema.BuildFunction(functionProto);
+  return true;
 }));
 
 static const char* Reshape_ver14_doc = R"DOC(
@@ -210,7 +209,9 @@ At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
 from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
-dimension will be set explicitly to zero (i.e. not taken from input tensor))DOC";
+dimension will be set explicitly to zero (i.e. not taken from input tensor).
+Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -589,7 +590,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
             if (shape.dim_size() != rank) {
-              fail_shape_inference("All inputs to Concat must have same rank");
+              fail_shape_inference("All inputs to Concat must have same rank. Input ", i , " has rank ", shape.dim_size(), " != ", rank);
             }
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
