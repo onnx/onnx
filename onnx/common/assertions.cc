@@ -7,7 +7,7 @@
 
 #include <cstdarg>
 #include <cstdio>
-
+#include "onnx/common/common.h"
 #include "onnx/common/assertions.h"
 
 namespace ONNX_NAMESPACE {
@@ -24,11 +24,11 @@ std::string barf(const char* fmt, ...) {
 }
 
 void throw_assert_error(std::string& msg) {
-  throw assert_error(msg);
+  ONNX_THROW_EX(assert_error(msg));
 }
 
 void throw_tensor_error(std::string& msg) {
-  throw tensor_error(msg);
+  ONNX_THROW_EX(tensor_error(msg));
 }
 
 } // namespace ONNX_NAMESPACE

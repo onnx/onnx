@@ -91,6 +91,12 @@ def check_sparse_tensor(sparse: SparseTensorProto, ctx: C.CheckerContext = DEFAU
 
 
 def check_model(model: Union[ModelProto, Text, bytes], full_check: bool = False) -> None:
+    """Check the consistency of a model. An exception is raised if the test fails.
+
+    Arguments:
+        model (ModelProto): model to check
+        full_check (bool): if True, the function checks shapes can be inferred
+    """
     # If model is a path instead of ModelProto
     if isinstance(model, str):
         C.check_model_path(model)
