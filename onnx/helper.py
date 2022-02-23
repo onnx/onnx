@@ -42,14 +42,15 @@ VERSION_TABLE: VersionTableType = [
     ('1.9.0', 7, 14, 2, 1),
     ('1.10.0', 8, 15, 2, 1),
     ('1.10.1', 8, 15, 2, 1),
-    ('1.10.2', 8, 15, 2, 1)
+    ('1.10.2', 8, 15, 2, 1),
+    ('1.11.0', 8, 16, 3, 1)
 ]
 
 VersionMapType = Dict[Tuple[Text, int], int]
 
 
-# create a map from (opset-domain, opset-version) to ir-version from above table
 def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
+    """create a map from (opset-domain, opset-version) to ir-version from above table"""
     result: VersionMapType = dict()
 
     def process(release_version: Text, ir_version: int, *args: Any) -> None:
@@ -64,8 +65,8 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
 OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
 
 
-# Given list of opset ids, determine minimum IR version required
 def find_min_ir_version_for(opsetidlist: List[OperatorSetIdProto]) -> int:
+    """Given list of opset ids, determine minimum IR version required"""
     default_min_version = 3
 
     def find_min(domain: Union[Text, None], version: int) -> int:
@@ -100,6 +101,8 @@ def make_node(
             If it's None, we will just use default domain (which is empty)
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
+    Returns:
+        NodeProto
     """
 
     node = NodeProto()
@@ -129,6 +132,8 @@ def make_operatorsetid(
     Arguments:
         domain (string): The domain of the operator set id
         version (integer): Version of operator set id
+    Returns:
+        OperatorSetIdProto
     """
     operatorsetid = OperatorSetIdProto()
     operatorsetid.domain = domain
@@ -146,6 +151,20 @@ def make_graph(
     value_info: Sequence[ValueInfoProto] = [],
     sparse_initializer: Optional[Sequence[SparseTensorProto]] = None,
 ) -> GraphProto:
+    """Construct a GraphProto
+
+    Arguments:
+        nodes: list of NodeProto
+        name (string): graph name
+        inputs: list of ValueInfoProto
+        outputs: list of ValueInfoProto
+        initializer: list of TensorProto
+        doc_string (string): graph documentation
+        value_info: list of ValueInfoProto
+        sparse_initializer: list of SparseTensorProto
+    Returns:
+        GraphProto
+    """
     if initializer is None:
         initializer = []
     if sparse_initializer is None:
@@ -166,6 +185,14 @@ def make_graph(
 
 
 def make_opsetid(domain: Text, version: int) -> OperatorSetIdProto:
+    """Construct an OperatorSetIdProto.
+
+    Arguments:
+        domain (string): The domain of the operator set id
+        version (integer): Version of operator set id
+    Returns:
+        OperatorSetIdProto
+    """
     opsetid = OperatorSetIdProto()
     opsetid.domain = domain
     opsetid.version = version
@@ -196,6 +223,14 @@ def make_function(
 
 
 def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
+    """Construct a ModelProto
+
+    Arguments:
+        graph (GraphProto): *make_graph* returns
+        **kwargs: any attribute to add to the returned instance
+    Returns:
+        ModelProto
+    """
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
@@ -260,6 +295,17 @@ def make_tensor(
     values based on data_type. If raw is True, use "raw_data" proto
     field to store the values, and values should be of type bytes in
     this case.
+
+    Arguments:
+        name (string): tensor name
+        data_type (int): a value such as onnx.TensorProto.FLOAT
+        dims (List[int]): shape
+        vals: values
+        raw (bool): if True, vals contains the seralized content of the tensor,
+            otherwise, vals should be a list of values of the type defined by *data_type*
+
+    Returns:
+        TensorProto
     '''
     tensor = TensorProto()
     tensor.data_type = data_type
@@ -302,6 +348,16 @@ def make_sparse_tensor(
     indices: TensorProto,
     dims: Sequence[int]
 ) -> SparseTensorProto:
+    """Construct a SparseTensorProto
+
+    Arguments:
+        values (TensorProto): the values
+        indices (TensorProto): the indices
+        dims: the shape
+
+    Returns:
+        SparseTensorProto
+    """
     sparse = SparseTensorProto()
     sparse.values.CopyFrom(values)
     sparse.indices.CopyFrom(indices)
@@ -826,10 +882,10 @@ def printable_node(node: NodeProto, prefix: Text = '', subgraphs: bool = False) 
     printed_attrs = []
     for attr in node.attribute:
         if subgraphs:
-            printed_attr, gs = printable_attribute(attr, subgraphs)
-            assert isinstance(gs, list)
-            graphs.extend(gs)
-            printed_attrs.append(printed_attr)
+            printed_attr_subgraphs = printable_attribute(attr, subgraphs)
+            assert isinstance(printed_attr_subgraphs[1], list)
+            graphs.extend(printed_attr_subgraphs[1])
+            printed_attrs.append(printed_attr_subgraphs[0])
         else:
             printed = printable_attribute(attr)
             assert isinstance(printed, Text)
@@ -847,6 +903,16 @@ def printable_node(node: NodeProto, prefix: Text = '', subgraphs: bool = False) 
 
 
 def printable_graph(graph: GraphProto, prefix: Text = '') -> Text:
+    """
+    Display a GraphProto as a string.
+
+    Arguments:
+        graph (GraphProto): the graph to display
+        prefix (string): prefix of every line
+
+    Returns:
+        string
+    """
     content = []
     indent = prefix + '  '
     # header
@@ -894,10 +960,10 @@ def printable_graph(graph: GraphProto, prefix: Text = '') -> Text:
     graphs: List[GraphProto] = []
     # body
     for node in graph.node:
-        pn, gs = printable_node(node, indent, subgraphs=True)
-        assert isinstance(gs, list)
-        content.append(pn)
-        graphs.extend(gs)
+        contents_subgraphs = printable_node(node, indent, subgraphs=True)
+        assert isinstance(contents_subgraphs[1], list)
+        content.append(contents_subgraphs[0])
+        graphs.extend(contents_subgraphs[1])
     # tail
     tail = ['return']
     if len(graph.output):
