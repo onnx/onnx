@@ -123,6 +123,10 @@ Name|Type|Description
 domain|string|The domain of the operator set being identified.
 version|int64|The version of the operator set being identified. Same as 'opset_version' in the operator set.
 
+The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published.
+
+Operator sets other than the default operator set MUST specify a domain and SHOULD use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
+
 ### Operator Sets
 
 Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators and their version. Each model defines the imported operator sets by their domains. All models implicitly import the default ONNX operator set.
