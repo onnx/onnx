@@ -114,6 +114,14 @@ Name|Type|Format|Description
 model_author|string|A comma-separated list of names.|The personal name of the author(s) of the model, and/or their organizations.
 model_license|string|Name or URL.|The well-known name or URL of the license under which the model is made available.
 
+### Operator Set Identifiers
+
+Each operator set is uniquely identified by a (domain, version) pair.
+
+Name|Type|Description
+|---|---|---|
+domain|string|The domain of the operator set being identified.
+version|int64|The version of the operator set being identified. Same as 'opset_version' in the operator set.
 
 ### Operator Sets
 
