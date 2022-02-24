@@ -19684,8 +19684,13 @@ This version of the operator has been available since version 11 of the default 
   outputs. Any other sequence inputs should have the same number of samples. The number of inputs
   and outputs, should match the one of the subgraph.
 
-  For each element in the output, a sample will be extracted from the input sequence(s) and the sub-graph
-  will be applied to it. The outputs will contain the outputs of the sub-graph for each sample.
+  For each i-th element in the output, a sample will be extracted from the input sequence(s) at
+  the i-th position and the sub-graph will be applied to it.
+  The outputs will contain the outputs of the sub-graph for each sample, in the same order as
+  appeared in the input.
+
+  This operator assumes that processing each sample is independent and could executed in parallel
+  or in any order. Users cannot expect any specific ordering in which each subgraph is computed.
 
 #### Version
 

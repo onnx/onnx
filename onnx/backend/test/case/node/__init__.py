@@ -59,7 +59,8 @@ def _rename_edges_helper(internal_node: NodeProto,
                         sparse_init_desc.indices.name
                 for val_info_desc in new_graph.value_info:
                     sg_rename[val_info_desc.name] = val_info_desc.name = prefix + val_info_desc.name
-                def subgraph_rename_helper(name):
+
+                def subgraph_rename_helper(name: Text) -> Any:
                     if name in sg_rename:
                         return sg_rename[name]
                     else:
