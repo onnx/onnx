@@ -1299,7 +1299,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axis. If omitted, 0 will be used as the scan axis for every scan_output.",
             AttributeProto::INTS,
             false)
-        .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset9));
 
@@ -2178,7 +2177,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "range is [-r, r-1].",
             AttributeProto::INTS,
             false)
-        .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
 
