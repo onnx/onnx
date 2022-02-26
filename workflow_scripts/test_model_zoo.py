@@ -9,6 +9,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+from onnx import version_converter
 
 cwd_path = Path.cwd()
 
@@ -74,6 +75,8 @@ def main():
             model = onnx.load(model_path)
             # stricter onnx.checker with onnx.shape_inference
             onnx.checker.check_model(model, True)
+            upgrade_version = model.opset_import[0].version + 1
+            converted = version_converter.convert_version(model, upgrade_version if upgrade_version <= 16 else 16)
             # remove the model to save space in CIs
             if os.path.exists(model_path):
                 os.remove(model_path)
