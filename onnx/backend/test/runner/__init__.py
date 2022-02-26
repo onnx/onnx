@@ -196,6 +196,7 @@ class Runner(object):
         download_file = tempfile.NamedTemporaryFile(delete=False)
         try:
             download_file.close()
+            assert model_test.url
             print('Start downloading model {} from {}'.format(
                 model_test.model_name,
                 model_test.url))
