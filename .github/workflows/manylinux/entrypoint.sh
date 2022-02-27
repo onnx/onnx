@@ -26,19 +26,9 @@ fi
 $PIP_COMMAND --upgrade pip
 $PIP_COMMAND cmake
 
-# Build protobuf
-ONNX_PATH=$(pwd)
-cd ..
-git clone https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git checkout v3.16.0
-git submodule update --init --recursive
-mkdir build_source && cd build_source
-
-cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-make install
-cd $ONNX_PATH
+# Build protobuf from source
+yum install -y wget
+source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc) $(pwd)/protobuf/protobuf_install
 
 # set ONNX build environments
 export ONNX_ML=1
