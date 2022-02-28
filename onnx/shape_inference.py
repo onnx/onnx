@@ -14,28 +14,26 @@ import onnx.onnx_cpp2py_export.shape_inference as C
 from onnx import ModelProto
 from typing import Text, Union
 
-"""Apply shape inference to the provided ModelProto.
-
-Inferred shapes are added to the value_info field of the graph.
-
-If the inferred values conflict with values already provided in the
-graph, that means that the provided values are invalid (or there is a
-bug in shape inference), and the result is unspecified.
-
-bool check_type: Checks the type-equality for input and output
-bool strict_mode: Stricter shape inference, it will throw errors if any;
-    Otherwise, simply stop if any error
-bool data_prop: Enables data propagation for limited operators to perform shape computation
-
-Arguments:
-    input (Union[ModelProto, Text, bytes], bool, bool, bool) -> ModelProto
-
-Return:
-    return (ModelProto) model with inferred shape information
-"""
-
 
 def infer_shapes(model: Union[ModelProto, bytes], check_type: bool = False, strict_mode: bool = False, data_prop: bool = False) -> ModelProto:
+    """Apply shape inference to the provided ModelProto.
+
+    Inferred shapes are added to the value_info field of the graph.
+
+    If the inferred values conflict with values already provided in the
+    graph, that means that the provided values are invalid (or there is a
+    bug in shape inference), and the result is unspecified.
+
+    Arguments:
+        model (Union[ModelProto, Text, bytes], bool, bool, bool) -> ModelProto
+        check_type (bool): Checks the type-equality for input and output
+        strict_mode (bool): Stricter shape inference, it will throw errors if any;
+            Otherwise, simply stop if any error
+        data_prop (bool): Enables data propagation for limited operators to perform shape computation
+
+    Returns:
+        (ModelProto) model with inferred shape information
+    """
     if isinstance(model, (ModelProto, bytes)):
         model_str = model if isinstance(model, bytes) else model.SerializeToString()
         inferred_model_str = C.infer_shapes(model_str, check_type, strict_mode, data_prop)
