@@ -1,13 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
-
 """onnx shape inference. Shape inference is not guaranteed to be
 complete.
 
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C

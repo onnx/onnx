@@ -1,19 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-
 """onnx version converter
 
 This enables users to convert their models between different opsets within the
 default domain ("" or "ai.onnx").
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
-import onnx
 import onnx.onnx_cpp2py_export.version_converter as C
-from onnx import ModelProto
-from typing import Text, Sequence
+from onnx import load_from_string, ModelProto
 
 
 def convert_version(model: ModelProto, target_version: int) -> ModelProto:
@@ -171,7 +164,7 @@ def convert_version(model: ModelProto, target_version: int) -> ModelProto:
         raise ValueError('VersionConverter only accepts int as target_version, incorrect type: {}'.format(type(target_version)))
     model_str = model.SerializeToString()
     converted_model_str = C.convert_version(model_str, target_version)
-    return onnx.load_from_string(converted_model_str)
+    return load_from_string(converted_model_str)
 
 
 ConvertError = C.ConvertError
