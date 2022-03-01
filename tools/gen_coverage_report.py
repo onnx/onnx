@@ -2,11 +2,9 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-
 import argparse
 import os
 import subprocess
-import tempfile
 from typing import Text
 
 

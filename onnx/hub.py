@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 """ONNX Model Hub
 
 This implements the python client for the ONNX model hub.

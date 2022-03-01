@@ -2,11 +2,6 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from collections import defaultdict
 import io
 import os
@@ -14,7 +9,7 @@ import os
 import numpy as np  # type: ignore
 
 from onnx import defs, FunctionProto, helper
-from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
+from onnx.defs import OpSchema, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.sample.ops import collect_sample_implementations
 from typing import Any, Text, Sequence, Dict, List, NamedTuple, Set, Tuple

@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import collections.abc  # type: ignore
 import numbers
 
@@ -764,12 +759,7 @@ def printable_attribute(attr: AttributeProto, subgraphs: bool = False) -> Union[
         return '{:.15g}'.format(f)
 
     def str_int(i: int) -> Text:
-        # NB: In Python 2, longs will repr() as '2L', which is ugly and
-        # unnecessary.  Explicitly format it to keep it consistent.
-        return '{:d}'.format(i)
-
-    def str_str(s: Text) -> Text:
-        return repr(s)
+        return str(i)
 
     _T = TypeVar('_T')  # noqa
 
