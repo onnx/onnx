@@ -277,17 +277,8 @@ void ClearShape(TypeProto& input_type) {
 
 void LoopInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
-  auto num_outputs = ctx.getNumOutputs();
   assert(num_inputs >= 2);
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
-
-  if (num_loop_state_vars > num_outputs) {
-    fail_type_inference(
-        "The number of loop state variables for input is larger than the number of outputs. ",
-        num_loop_state_vars,
-        " > ",
-        num_outputs);
-  }
 
   std::vector<const TypeProto*> subgraph_input_types;
   subgraph_input_types.reserve(num_inputs);
@@ -337,6 +328,8 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
   // if empty(), assume inferencing was skipped
   if (!subgraph_output_types.empty()) {
+    auto num_outputs = ctx.getNumOutputs();
+
     // subgraph outputs the condition value first but that is only used
     // internally and not returned by Loop.
     if (subgraph_output_types.size() != num_outputs + 1) {
