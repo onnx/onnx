@@ -6,7 +6,7 @@ set -e -x
 PY_VERSION=$1
 
 # Need to be updated if there is a new Python Version
-declare -A python_map=(["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310")
+declare -A python_map=(["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39")
 PY_VER=${python_map[$PY_VERSION]}
 
 yum install -y protobuf-devel
@@ -34,11 +34,8 @@ $PYTEST_COMMAND
 # onnx.checker all existing backend data
 $PYTHON_COMAND workflow_scripts/test_generated_backend.py
 # onnx.checker all generated backend data
-# FIXME: Python 3.10 wheel runs forever during generate-data; skip for now
-if [ "$PY_VERSION" != "3.10" ]; then
-    $PYTHON_COMAND onnx/backend/test/cmd_tools.py generate-data
-    $PYTHON_COMAND workflow_scripts/test_generated_backend.py
-fi
+$PYTHON_COMAND onnx/backend/test/cmd_tools.py generate-data
+$PYTHON_COMAND workflow_scripts/test_generated_backend.py
 
 # The last numpy support for i686 is 1.21.5; Since this version is same as the version for build, no need to test it
 
