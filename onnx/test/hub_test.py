@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 import unittest
 import onnx.hub as hub
 from onnx import ModelProto
@@ -16,7 +15,7 @@ import os
 class TestModelHub(unittest.TestCase):
     def setUp(self) -> None:
         self.name = "MNIST"
-        self.repo = "onnx/models:master"
+        self.repo = "onnx/models:main"
         self.opset = 7
 
     def test_force_reload(self) -> None:

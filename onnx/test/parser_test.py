@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 import onnx
 import unittest
 from onnx import helper, parser, GraphProto

@@ -256,11 +256,6 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 
@@ -18672,8 +18667,6 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>Int64 tensor</dd>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 </dl>

@@ -2063,11 +2063,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               for (int64_t i = 0; i < dim_value; ++i) {
                 second_shape.add_dim();
               }
+            } else {
+                return;
             }
             bidirectionalBroadcastShapeInference(
                 input_shape, second_shape, *getOutputShape(ctx, 0));
           }
-          return;
         }));
 
 static const char* Sinh_ver9_doc = R"DOC(
@@ -3304,12 +3305,10 @@ bool BuildContextDependentFunctionBodySCE(
     builder.Add("log_prob = Identity (X_Log)");
   }
 
-  // Add weights as input if needed.
-  if (ctx.hasInput(2))
-    builder.Add(
-        ctx.hasInput(2)
-            ? "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels, weights)"
-            : "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels)");
+  builder.Add(
+      ctx.hasInput(2)
+          ? "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels, weights)"
+          : "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels)");
 
   schema.BuildFunction(functionProto);
   return true;

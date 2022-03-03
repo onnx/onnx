@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, TensorShapeProto, ONNX_ML
 from onnx.helper import make_model, make_node, make_tensor, make_tensor_value_info
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional

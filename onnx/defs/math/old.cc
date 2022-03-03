@@ -1020,11 +1020,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               for (int64_t i = 0; i < dim_value; ++i) {
                 second_shape.add_dim();
               }
+            } else {
+                return;     
             }
             bidirectionalBroadcastShapeInference(
                 input_shape, second_shape, *getOutputShape(ctx, 0));
           }
-          return;
         }));
 
 static const char* Sign_ver9_doc = R"DOC(
