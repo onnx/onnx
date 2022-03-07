@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -22,7 +17,7 @@ def tril_reference_implementation(x, k=0):  # type: ignore
 
 class Trilu(Base):
     @staticmethod
-    def export_triu():  # type: () -> None
+    def export_triu() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x'],
@@ -44,7 +39,7 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_triu')
 
     @staticmethod
-    def export_triu_neg():  # type: () -> None
+    def export_triu_neg() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -67,7 +62,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_neg')
 
     @staticmethod
-    def export_triu_out_neg_out():  # type: () -> None
+    def export_triu_out_neg_out() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -90,7 +85,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_out_neg_out')
 
     @staticmethod
-    def export_triu_pos():  # type: () -> None
+    def export_triu_pos() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -113,7 +108,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_pos')
 
     @staticmethod
-    def export_triu_out_pos():  # type: () -> None
+    def export_triu_out_pos() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -136,7 +131,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_out_pos')
 
     @staticmethod
-    def export_triu_square():  # type: () -> None
+    def export_triu_square() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x'],
@@ -164,7 +159,7 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_triu_square')
 
     @staticmethod
-    def export_triu_square_neg():  # type: () -> None
+    def export_triu_square_neg() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -193,7 +188,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_square_neg')
 
     @staticmethod
-    def export_triu_one_row():  # type: () -> None
+    def export_triu_one_row() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -218,7 +213,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_one_row')
 
     @staticmethod
-    def export_triu_zero():  # type: () -> None
+    def export_triu_zero() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -235,7 +230,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_triu_zero')
 
     @staticmethod
-    def export_tril():  # type: () -> None
+    def export_tril() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x'],
@@ -258,7 +253,7 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_tril')
 
     @staticmethod
-    def export_tril_neg():  # type: () -> None
+    def export_tril_neg() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -282,7 +277,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_neg')
 
     @staticmethod
-    def export_tril_out_neg():  # type: () -> None
+    def export_tril_out_neg() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -306,7 +301,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_out_neg')
 
     @staticmethod
-    def export_tril_pos():  # type: () -> None
+    def export_tril_pos() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -330,7 +325,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_pos')
 
     @staticmethod
-    def export_tril_out_pos():  # type: () -> None
+    def export_tril_out_pos() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -353,7 +348,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_out_pos')
 
     @staticmethod
-    def export_tril_square():  # type: () -> None
+    def export_tril_square() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x'],
@@ -382,7 +377,7 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_tril_square')
 
     @staticmethod
-    def export_tril_square_neg():  # type: () -> None
+    def export_tril_square_neg() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],
@@ -412,7 +407,7 @@ class Trilu(Base):
         expect(node, inputs=[x, k], outputs=[y], name='test_tril_square_neg')
 
     @staticmethod
-    def export_tril_one_row():  # type: () -> None
+    def export_tril_one_row() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x'],
@@ -437,7 +432,7 @@ class Trilu(Base):
         expect(node, inputs=[x], outputs=[y], name='test_tril_one_row_neg')
 
     @staticmethod
-    def export_tril_zero():  # type: () -> None
+    def export_tril_zero() -> None:
         node = onnx.helper.make_node(
             'Trilu',
             inputs=['x', 'k'],

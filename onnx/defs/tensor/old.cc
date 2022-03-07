@@ -94,7 +94,8 @@ First input is the data tensor, second input is a shape tensor which specifies t
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -243,7 +244,8 @@ First input is the data tensor, second input is a shape tensor which specifies t
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -557,7 +559,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
             if (shape.dim_size() != rank) {
-              fail_shape_inference("All inputs to Concat must have same rank");
+              fail_shape_inference("All inputs to Concat must have same rank. Input ", i , " has rank ", shape.dim_size(), " != ", rank);
             }
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
@@ -2114,13 +2116,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
-            " be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
+            " be the same as the rank of input 'X'. If 'size' is needed, the user must set 'scales' to an empty tensor.",
             "tensor(float)")
         .Input(
             3,
             "sizes",
             "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
-            " rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.",
+            " rank of input 'X'. May only be set if 'scales' is set to an empty tensor.",
             "tensor(int64)",
             OpSchema::Optional)
         .Output(0, "Y", "N-D tensor after resizing", "T1")
@@ -2875,7 +2877,8 @@ It takes a tensor as input and an argument `shape`. It outputs the reshaped tens
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,

@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import math
 
 import numpy as np  # type: ignore
@@ -17,7 +12,7 @@ from . import expect
 class Det(Base):
 
     @staticmethod
-    def export_2d():  # type: () -> None
+    def export_2d() -> None:
         node = onnx.helper.make_node(
             'Det',
             inputs=['x'],
@@ -30,7 +25,7 @@ class Det(Base):
                name='test_det_2d')
 
     @staticmethod
-    def export_nd():  # type: () -> None
+    def export_nd() -> None:
         node = onnx.helper.make_node(
             'Det',
             inputs=['x'],

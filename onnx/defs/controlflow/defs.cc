@@ -9,6 +9,15 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
+static std::vector<std::string> control_flow_types() {
+  auto t = OpSchema::all_tensor_types_with_bfloat();
+  auto s = OpSchema::all_tensor_sequence_types_with_bfloat();
+  auto o = OpSchema::all_optional_types_with_bfloat();
+  t.insert(t.end(), s.begin(), s.end());
+  t.insert(t.end(), o.begin(), o.end());
+  return t;
+}
+
 int handle_negative_axis_validate(
     const std::string& attrib,
     int axis,
@@ -432,15 +441,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint(
             "V",
-            [](){
-              auto t = OpSchema::all_tensor_types();
-              auto s = OpSchema::all_tensor_sequence_types();
-              auto o = OpSchema::all_optional_types();
-              t.insert(t.end(), s.begin(), s.end());
-              t.insert(t.end(), o.begin(), o.end());
-              return t;
-            }(),
-            "All Tensor, Sequence, and optional types")
+            control_flow_types(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
@@ -629,15 +631,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint(
             "V",
-            [](){
-              auto t = OpSchema::all_tensor_types();
-              auto s = OpSchema::all_tensor_sequence_types();
-              auto o = OpSchema::all_optional_types();
-              t.insert(t.end(), s.begin(), s.end());
-              t.insert(t.end(), o.begin(), o.end());
-              return t;
-            }(),
-            "All Tensor and Sequence types")
+            control_flow_types(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types")
         .TypeConstraint(
             "I",
             {"tensor(int64)"},
@@ -648,7 +643,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* scan_11_doc = R"DOC(
+static const char* scan_16_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip and is intended to enable
@@ -774,9 +769,9 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
-    11,
+    16,
     OpSchema()
-        .SetDoc(scan_11_doc)
+        .SetDoc(scan_16_doc)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -841,8 +836,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "range is [-r, r-1].",
             AttributeProto::INTS,
             false)
-        .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+        .TypeConstraint("V", OpSchema::all_tensor_types_with_bfloat(), "All Tensor types")
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 } // namespace ONNX_NAMESPACE

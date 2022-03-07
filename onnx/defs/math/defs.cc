@@ -536,18 +536,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to signed numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* LeakyRelu_ver6_doc = R"DOC(
+static const char* LeakyRelu_ver16_doc = R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
 output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
+
+**History**
+- Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     LeakyRelu,
-    6,
+    16,
     OpSchema()
         .Attr("alpha", "Coefficient of leakage.", AttributeProto::FLOAT, 0.01f)
-        .SetDoc(LeakyRelu_ver6_doc)
+        .SetDoc(LeakyRelu_ver16_doc)
         .Input(0,
             "X",
             "Input tensor",
@@ -566,7 +569,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
@@ -951,18 +954,21 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-static const char* PRelu_ver9_doc = R"DOC(
+static const char* PRelu_ver16_doc = R"DOC(
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+
+**History**
+- Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
-    9,
+    16,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(PRelu_ver9_doc) +
+            std::string(PRelu_ver16_doc) +
             GenerateBroadcastingDocUni("tensor slope", "input tensor X")))
         .Input(0,
             "X",
@@ -992,7 +998,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            {"tensor(float16)",
+            {"tensor(bfloat16)",
+             "tensor(float16)",
              "tensor(float)",
              "tensor(double)",
              "tensor(uint32)",
@@ -2056,11 +2063,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               for (int64_t i = 0; i < dim_value; ++i) {
                 second_shape.add_dim();
               }
+            } else {
+                return;
             }
             bidirectionalBroadcastShapeInference(
                 input_shape, second_shape, *getOutputShape(ctx, 0));
           }
-          return;
         }));
 
 static const char* Sinh_ver9_doc = R"DOC(
@@ -3297,12 +3305,10 @@ bool BuildContextDependentFunctionBodySCE(
     builder.Add("log_prob = Identity (X_Log)");
   }
 
-  // Add weights as input if needed.
-  if (ctx.hasInput(2))
-    builder.Add(
-        ctx.hasInput(2)
-            ? "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels, weights)"
-            : "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels)");
+  builder.Add(
+      ctx.hasInput(2)
+          ? "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels, weights)"
+          : "output = NegativeLogLikelihoodLoss <reduction : string = @reduction, ignore_index : int = @ignore_index> (X_Log, labels)");
 
   schema.BuildFunction(functionProto);
   return true;

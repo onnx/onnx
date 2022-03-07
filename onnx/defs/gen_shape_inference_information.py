@@ -1,14 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from onnx import defs
 
 
-def main():  # type: () -> None
+def main() -> None:
     # domain -> support level -> name -> [schema]
     with_inference = []
     without_inference = []

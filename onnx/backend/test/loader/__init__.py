@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import json
 import os
 
@@ -17,9 +12,9 @@ DATA_DIR = os.path.join(
 
 
 def load_model_tests(
-    data_dir=DATA_DIR,  # type: Text
-    kind=None,  # type: Optional[Text]
-):  # type: (...) -> List[TestCase]
+    data_dir: Text = DATA_DIR,
+    kind: Optional[Text] = None,
+) -> List[TestCase]:
     '''Load model test cases from on-disk data files.
     '''
 
@@ -40,7 +35,7 @@ def load_model_tests(
         if os.path.exists(os.path.join(case_dir, 'model.onnx')):
             url = None
             model_name = test_name[len('test_')]
-            model_dir = case_dir  # type: Optional[Text]
+            model_dir: Optional[Text] = case_dir
         else:
             with open(os.path.join(case_dir, 'data.json')) as f:
                 data = json.load(f)

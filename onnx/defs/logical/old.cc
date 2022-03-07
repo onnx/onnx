@@ -285,4 +285,52 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains output to boolean tensor."));
 
+
+// Shares same doc generator as newer opset 16 version.
+extern std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name);
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LessOrEqual,
+    12,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator("less_equal"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input types to all numeric tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor.")
+        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .FunctionBody(R"ONNX(
+        {
+            O1 = Less (A, B)
+            O2 = Equal (A, B)
+            C = Or (O1, O2)
+        }
+        )ONNX"));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GreaterOrEqual,
+    12,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator("greater_equal"))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input types to all numeric tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor.")
+        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .FunctionBody(R"ONNX(
+        {
+            O1 = Greater (A, B)
+            O2 = Equal (A, B)
+            C = Or (O1, O2)
+        }
+        )ONNX"));
+
 } // namespace ONNX_NAMESPACE

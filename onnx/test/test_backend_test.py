@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import itertools
 import os
 import platform
@@ -35,10 +30,10 @@ import numpy  # type: ignore
 class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def prepare(cls,
-                model,  # type: ModelProto
-                device='CPU',  # type: Text
-                **kwargs  # type: Any
-                ):  # type: (...) -> Optional[onnx.backend.base.BackendRep]
+                model: ModelProto,
+                device: Text = 'CPU',
+                **kwargs: Any
+                ) -> Optional[onnx.backend.base.BackendRep]:
         super(DummyBackend, cls).prepare(model, device, **kwargs)
 
         # test shape inference
@@ -61,18 +56,18 @@ class DummyBackend(onnx.backend.base.Backend):
 
     @classmethod
     def run_node(cls,
-                 node,  # type: NodeProto
-                 inputs,  # type: Any
-                 device='CPU',  # type: Text
-                 outputs_info=None,  # type: Optional[Sequence[Tuple[numpy.dtype, Tuple[int, ...]]]]
-                 **kwargs  # type: Any
-                 ):  # type: (...) -> Optional[Tuple[Any, ...]]
+                 node: NodeProto,
+                 inputs: Any,
+                 device: Text = 'CPU',
+                 outputs_info: Optional[Sequence[Tuple[numpy.dtype, Tuple[int, ...]]]] = None,
+                 **kwargs: Any
+                 ) -> Optional[Tuple[Any, ...]]:
         super(DummyBackend, cls).run_node(node, inputs, device=device, outputs_info=outputs_info)
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker")
 
     @classmethod
-    def supports_device(cls, device):  # type: (Text) -> bool
+    def supports_device(cls, device: Text) -> bool:
         d = Device(device)
         if d.type == DeviceType.CPU:
             return True
@@ -84,7 +79,7 @@ test_coverage_safelist = set(
      'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'])
 
 
-def do_enforce_test_coverage_safelist(model):  # type: (ModelProto) -> bool
+def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
     if model.graph.name not in test_coverage_safelist:
         return False
     for node in model.graph.node:

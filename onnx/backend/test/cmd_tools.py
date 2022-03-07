@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import argparse
 import json
 import os
@@ -20,9 +15,9 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(TOP_DIR, 'data')
 
 
-def generate_data(args):  # type: (argparse.Namespace) -> None
+def generate_data(args: argparse.Namespace) -> None:
 
-    def prepare_dir(path):  # type: (Text) -> None
+    def prepare_dir(path: Text) -> None:
         if os.path.exists(path):
             shutil.rmtree(path)
         os.makedirs(path)
@@ -47,8 +42,10 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                     'atol': case.atol,
                 }, fi, sort_keys=True)
         else:
+            assert case.model
             with open(os.path.join(output_dir, 'model.onnx'), 'wb') as f:
                 f.write(case.model.SerializeToString())
+            assert case.data_sets
             for i, (inputs, outputs) in enumerate(case.data_sets):
                 data_set_dir = os.path.join(
                     output_dir, 'test_data_set_{}'.format(i))
@@ -87,7 +84,7 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                                 output, case.model.graph.output[j].name).SerializeToString())
 
 
-def parse_args():  # type: () -> argparse.Namespace
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser('backend-test-tools')
     subparsers = parser.add_subparsers()
 
@@ -101,7 +98,7 @@ def parse_args():  # type: () -> argparse.Namespace
     return parser.parse_args()
 
 
-def main():  # type: () -> None
+def main() -> None:
     args = parse_args()
     args.func(args)
 

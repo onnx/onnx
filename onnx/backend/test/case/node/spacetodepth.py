@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
 
@@ -13,7 +9,7 @@ from . import expect
 class SpaceToDepth(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         b, c, h, w = shape = (2, 2, 6, 6)
         blocksize = 2
         node = onnx.helper.make_node(
@@ -34,7 +30,7 @@ class SpaceToDepth(Base):
                name='test_spacetodepth')
 
     @staticmethod
-    def export_example():  # type: () -> None
+    def export_example() -> None:
         node = onnx.helper.make_node(
             'SpaceToDepth',
             inputs=['x'],

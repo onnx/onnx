@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class BitShift(Base):
 
     @staticmethod
-    def export_right_unit8():  # type: () -> None
+    def export_right_unit8() -> None:
         node = onnx.helper.make_node(
             'BitShift',
             inputs=['x', 'y'],
@@ -30,7 +25,7 @@ class BitShift(Base):
                name='test_bitshift_right_uint8')
 
     @staticmethod
-    def export_right_unit16():  # type: () -> None
+    def export_right_unit16() -> None:
         node = onnx.helper.make_node(
             'BitShift',
             inputs=['x', 'y'],
@@ -45,7 +40,7 @@ class BitShift(Base):
                name='test_bitshift_right_uint16')
 
     @staticmethod
-    def export_right_unit32():  # type: () -> None
+    def export_right_unit32() -> None:
         node = onnx.helper.make_node(
             'BitShift',
             inputs=['x', 'y'],
@@ -60,7 +55,7 @@ class BitShift(Base):
                name='test_bitshift_right_uint32')
 
     @staticmethod
-    def export_right_unit64():  # type: () -> None
+    def export_right_unit64() -> None:
         node = onnx.helper.make_node(
             'BitShift',
             inputs=['x', 'y'],
@@ -75,7 +70,7 @@ class BitShift(Base):
                name='test_bitshift_right_uint64')
 
     @staticmethod
-    def export_left_unit8():  # type: () -> None
+    def export_left_unit8() -> None:
         node = onnx.helper.make_node(
             'BitShift',
             inputs=['x', 'y'],
@@ -90,7 +85,7 @@ class BitShift(Base):
                name='test_bitshift_left_uint8')
 
     @staticmethod
-    def export_left_unit16():  # type: () -> None
+    def export_left_unit16() -> None:
         node = onnx.helper.make_node(
             'BitShift',
             inputs=['x', 'y'],
@@ -105,7 +100,7 @@ class BitShift(Base):
                name='test_bitshift_left_uint16')
 
     @staticmethod
-    def export_left_unit32():  # type: () -> None
+    def export_left_unit32() -> None:
         node = onnx.helper.make_node(
             'BitShift',
             inputs=['x', 'y'],
@@ -120,7 +115,7 @@ class BitShift(Base):
                name='test_bitshift_left_uint32')
 
     @staticmethod
-    def export_left_unit64():  # type: () -> None
+    def export_left_unit64() -> None:
         node = onnx.helper.make_node(
             'BitShift',
             inputs=['x', 'y'],

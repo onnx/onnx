@@ -1,41 +1,34 @@
 # SPDX-License-Identifier: Apache-2.0
-
 """onnx shape inference. Shape inference is not guaranteed to be
 complete.
 
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C
 from onnx import ModelProto
 from typing import Text, Union
 
-"""Apply shape inference to the provided ModelProto.
 
-Inferred shapes are added to the value_info field of the graph.
+def infer_shapes(model: Union[ModelProto, bytes], check_type: bool = False, strict_mode: bool = False, data_prop: bool = False) -> ModelProto:
+    """Apply shape inference to the provided ModelProto.
 
-If the inferred values conflict with values already provided in the
-graph, that means that the provided values are invalid (or there is a
-bug in shape inference), and the result is unspecified.
+    Inferred shapes are added to the value_info field of the graph.
 
-bool check_type: Checks the type-equality for input and output
-bool strict_mode: Stricter shape inference, it will throw errors if any;
-    Otherwise, simply stop if any error
-bool data_prop: Enables data propagation for limited operators to perform shape computation
+    If the inferred values conflict with values already provided in the
+    graph, that means that the provided values are invalid (or there is a
+    bug in shape inference), and the result is unspecified.
 
-Arguments:
-    input (Union[ModelProto, Text, bytes], bool, bool, bool) -> ModelProto
+    Arguments:
+        model (Union[ModelProto, Text, bytes], bool, bool, bool) -> ModelProto
+        check_type (bool): Checks the type-equality for input and output
+        strict_mode (bool): Stricter shape inference, it will throw errors if any;
+            Otherwise, simply stop if any error
+        data_prop (bool): Enables data propagation for limited operators to perform shape computation
 
-Return:
-    return (ModelProto) model with inferred shape information
-"""
-
-
-def infer_shapes(model, check_type=False, strict_mode=False, data_prop=False):  # type: (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
+    Returns:
+        (ModelProto) model with inferred shape information
+    """
     if isinstance(model, (ModelProto, bytes)):
         model_str = model if isinstance(model, bytes) else model.SerializeToString()
         inferred_model_str = C.infer_shapes(model_str, check_type, strict_mode, data_prop)
@@ -48,7 +41,7 @@ def infer_shapes(model, check_type=False, strict_mode=False, data_prop=False):  
                          'incorrect type: {}'.format(type(model)))
 
 
-def infer_shapes_path(model_path, output_path='', check_type=False, strict_mode=False, data_prop=False):  # type: (Text, Text, bool, bool, bool) -> None
+def infer_shapes_path(model_path: Text, output_path: Text = '', check_type: bool = False, strict_mode: bool = False, data_prop: bool = False) -> None:
     """
     Take model path for shape_inference same as infer_shape; it support >2GB models
     Directly output the inferred model to the output_path; Default is the original model path

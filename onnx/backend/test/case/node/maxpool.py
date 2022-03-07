@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -16,7 +11,7 @@ from .pool_op_common import get_output_shape, get_pad_shape, pool
 class MaxPool(Base):
 
     @staticmethod
-    def export_maxpool_2d_uint8():  # type: () -> None
+    def export_maxpool_2d_uint8() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
@@ -46,7 +41,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_uint8')
 
     @staticmethod
-    def export_maxpool_2d_precomputed_pads():  # type: () -> None
+    def export_maxpool_2d_precomputed_pads() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
@@ -77,7 +72,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_pads')
 
     @staticmethod
-    def export_maxpool_with_argmax_2d_precomputed_pads():  # type: () -> None
+    def export_maxpool_with_argmax_2d_precomputed_pads() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
@@ -113,7 +108,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_pads')
 
     @staticmethod
-    def export_maxpool_2d_precomputed_strides():  # type: () -> None
+    def export_maxpool_2d_precomputed_strides() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 2, 2]
@@ -138,7 +133,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_strides')
 
     @staticmethod
-    def export_maxpool_with_argmax_2d_precomputed_strides():  # type: () -> None
+    def export_maxpool_with_argmax_2d_precomputed_strides() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 2, 2]
@@ -166,7 +161,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_strides')
 
     @staticmethod
-    def export_maxpool_2d_precomputed_same_upper():  # type: () -> None
+    def export_maxpool_2d_precomputed_same_upper() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 3, 3]
@@ -194,7 +189,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_same_upper')
 
     @staticmethod
-    def export_maxpool_1d_default():  # type: () -> None
+    def export_maxpool_1d_default() -> None:
         """
         input_shape: [1, 3, 32]
         output_shape: [1, 3, 31]
@@ -216,7 +211,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_1d_default')
 
     @staticmethod
-    def export_maxpool_2d_default():  # type: () -> None
+    def export_maxpool_2d_default() -> None:
         """
         input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 31, 31]
@@ -238,7 +233,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_default')
 
     @staticmethod
-    def export_maxpool_3d_default():  # type: () -> None
+    def export_maxpool_3d_default() -> None:
         """
         input_shape: [1, 3, 32, 32, 32]
         output_shape: [1, 3, 31, 31, 31]
@@ -260,7 +255,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
 
     @staticmethod
-    def export_maxpool_2d_same_upper():  # type: () -> None
+    def export_maxpool_2d_same_upper() -> None:
         """
         input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
@@ -290,7 +285,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_upper')
 
     @staticmethod
-    def export_maxpool_2d_same_lower():  # type: () -> None
+    def export_maxpool_2d_same_lower() -> None:
         """
         input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
@@ -320,7 +315,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_lower')
 
     @staticmethod
-    def export_maxpool_2d_pads():  # type: () -> None
+    def export_maxpool_2d_pads() -> None:
         """
         input_shape: [1, 3, 28, 28]
         output_shape: [1, 3, 30, 30]
@@ -347,7 +342,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_pads')
 
     @staticmethod
-    def export_maxpool_2d_strides():  # type: () -> None
+    def export_maxpool_2d_strides() -> None:
         """
         input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 10, 10]
@@ -370,7 +365,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
 
     @staticmethod
-    def export_maxpool_2d_ceil():  # type: () -> None
+    def export_maxpool_2d_ceil() -> None:
         """
         input_shape: [1, 1, 4, 4]
         output_shape: [1, 1, 2, 2]
@@ -396,7 +391,7 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_ceil')
 
     @staticmethod
-    def export_maxpool_2d_dilations():  # type: () -> None
+    def export_maxpool_2d_dilations() -> None:
         """
         input_shape: [1, 1, 4, 4]
         output_shape: [1, 1, 2, 2]

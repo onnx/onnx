@@ -740,6 +740,27 @@ class OpSchema final {
     return all_tensor_sequence_types;
   }
 
+  static const std::vector<std::string>& all_tensor_sequence_types_with_bfloat() {
+    static const std::vector<std::string> all_tensor_sequence_types_with_bfloat = {
+        "seq(tensor(uint8))",
+        "seq(tensor(uint16))",
+        "seq(tensor(uint32))",
+        "seq(tensor(uint64))",
+        "seq(tensor(int8))",
+        "seq(tensor(int16))",
+        "seq(tensor(int32))",
+        "seq(tensor(int64))",
+        "seq(tensor(bfloat16))",
+        "seq(tensor(float16))",
+        "seq(tensor(float))",
+        "seq(tensor(double))",
+        "seq(tensor(string))",
+        "seq(tensor(bool))",
+        "seq(tensor(complex64))",
+        "seq(tensor(complex128))"};
+    return all_tensor_sequence_types_with_bfloat;
+  }
+
   static const std::vector<std::string>& all_optional_types() {
     static const std::vector<std::string> all_optional_types = {
         "optional(seq(tensor(uint8)))",
@@ -765,6 +786,43 @@ class OpSchema final {
         "optional(tensor(int16))",
         "optional(tensor(int32))",
         "optional(tensor(int64))",
+        "optional(tensor(float16))",
+        "optional(tensor(float))",
+        "optional(tensor(double))",
+        "optional(tensor(string))",
+        "optional(tensor(bool))",
+        "optional(tensor(complex64))",
+        "optional(tensor(complex128))"};
+    return all_optional_types;
+  }
+
+  static const std::vector<std::string>& all_optional_types_with_bfloat() {
+    static const std::vector<std::string> all_optional_types = {
+        "optional(seq(tensor(uint8)))",
+        "optional(seq(tensor(uint16)))",
+        "optional(seq(tensor(uint32)))",
+        "optional(seq(tensor(uint64)))",
+        "optional(seq(tensor(int8)))",
+        "optional(seq(tensor(int16)))",
+        "optional(seq(tensor(int32)))",
+        "optional(seq(tensor(int64)))",
+        "optional(seq(tensor(bfloat16)))",
+        "optional(seq(tensor(float16)))",
+        "optional(seq(tensor(float)))",
+        "optional(seq(tensor(double)))",
+        "optional(seq(tensor(string)))",
+        "optional(seq(tensor(bool)))",
+        "optional(seq(tensor(complex64)))",
+        "optional(seq(tensor(complex128)))",
+        "optional(tensor(uint8))",
+        "optional(tensor(uint16))",
+        "optional(tensor(uint32))",
+        "optional(tensor(uint64))",
+        "optional(tensor(int8))",
+        "optional(tensor(int16))",
+        "optional(tensor(int32))",
+        "optional(tensor(int64))",
+        "optional(tensor(bfloat16))",
         "optional(tensor(float16))",
         "optional(tensor(float))",
         "optional(tensor(double))",
@@ -946,7 +1004,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 15;
+      last_release_version_map_[ONNX_DOMAIN] = 16;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 3;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;

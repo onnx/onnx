@@ -81,12 +81,6 @@ We use [mypy](http://mypy-lang.org/) to run static type checks on the onnx code 
 pip install -e .[mypy]
 ```
 
-The type checker cannot run in a python 2 environment (but it will check python 2 code).
-If you're using python 2, you need to install mypy into your system packages instead:
-
-```
-pip3 install mypy==[version]
-```
 *Note: You'll find the version we're currently using in `setup.py`.*
 
 After having installed mypy, you can run the type checks:

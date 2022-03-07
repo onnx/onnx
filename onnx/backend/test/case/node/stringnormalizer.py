@@ -1,11 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
-
 # coding: utf-8
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
 
@@ -17,7 +12,7 @@ from . import expect
 class StringNormalizer(Base):
 
     @staticmethod
-    def export_nostopwords_nochangecase():    # type: () -> None
+    def export_nostopwords_nochangecase() -> None:
         input = np.array([u'monday', u'tuesday']).astype(object)
         output = input
 
@@ -31,7 +26,7 @@ class StringNormalizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_nostopwords_nochangecase')
 
     @staticmethod
-    def export_monday_casesensintive_nochangecase():    # type: () -> None
+    def export_monday_casesensintive_nochangecase() -> None:
         input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
         output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
         stopwords = [u'monday']
@@ -46,7 +41,7 @@ class StringNormalizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_nochangecase')
 
     @staticmethod
-    def export_monday_casesensintive_lower():    # type: () -> None
+    def export_monday_casesensintive_lower() -> None:
         input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
         output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
         stopwords = [u'monday']
@@ -62,7 +57,7 @@ class StringNormalizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_lower')
 
     @staticmethod
-    def export_monday_casesensintive_upper():    # type: () -> None
+    def export_monday_casesensintive_upper() -> None:
         input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
         output = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(object)
         stopwords = [u'monday']
@@ -78,7 +73,7 @@ class StringNormalizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_upper')
 
     @staticmethod
-    def export_monday_empty_output():    # type: () -> None
+    def export_monday_empty_output() -> None:
         input = np.array([u'monday', u'monday']).astype(object)
         output = np.array([u'']).astype(object)
         stopwords = [u'monday']
@@ -94,7 +89,7 @@ class StringNormalizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_empty_output')
 
     @staticmethod
-    def export_monday_insensintive_upper_twodim():    # type: () -> None
+    def export_monday_insensintive_upper_twodim() -> None:
         input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(object).reshape([1, 6])
 
         # It does upper case cecedille, accented E

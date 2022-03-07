@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
-
 # This file is for testing ONNX with ONNXRuntime during ONNX Release
 # Create a general scenario to use ONNXRuntime with ONNX
 
-def example_test_with_ort():  # type: () -> None
+def example_test_with_ort() -> None:
     import onnx
     import numpy  # type: ignore
     import onnxruntime as rt  # type: ignore

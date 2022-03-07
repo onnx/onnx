@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -21,7 +16,7 @@ def compute_if_outputs(x, cond):  # type: ignore
 
 class If(Base):
     @staticmethod
-    def export_if():  # type: () -> None
+    def export_if() -> None:
         # Given a bool scalar input cond.
         # return constant tensor x if cond is True, otherwise return constant tensor y.
 
@@ -73,7 +68,7 @@ class If(Base):
                opset_imports=[onnx.helper.make_opsetid("", 11)])
 
     @staticmethod
-    def export_if_seq():  # type: () -> None
+    def export_if_seq() -> None:
         # Given a bool scalar input cond.
         # return constant sequence x if cond is True, otherwise return constant sequence y.
 
@@ -137,7 +132,7 @@ class If(Base):
                opset_imports=[onnx.helper.make_opsetid("", 13)])
 
     @staticmethod
-    def export_if_optional():  # type: () -> None
+    def export_if_optional() -> None:
         # Given a bool scalar input cond, return an empty optional sequence of
         # tensor if True, return an optional sequence with value x
         # (the input optional sequence) otherwise.

@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class Where(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Where',
             inputs=['condition', 'x', 'y'],
@@ -30,7 +25,7 @@ class Where(Base):
                name='test_where_example')
 
     @staticmethod
-    def export_long():  # type: () -> None
+    def export_long() -> None:
         node = onnx.helper.make_node(
             'Where',
             inputs=['condition', 'x', 'y'],
