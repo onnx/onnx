@@ -609,8 +609,8 @@ expect(node, inputs=[x, y], outputs=[z],
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equals 0, then the resulting tensor have the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the max
   is selected if the max appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -628,7 +628,7 @@ Other versions of this operator: <a href="Changelog.md#ArgMax-1">1</a>, <a href=
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -870,8 +870,8 @@ expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_rand
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equals 0, then the resulting tensor have the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the min
   is selected if the min appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -889,7 +889,7 @@ Other versions of this operator: <a href="Changelog.md#ArgMin-1">1</a>, <a href=
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -10398,7 +10398,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>The axis on which to apply normalization, -1 mean last axis.</dd>
+<dd>The axis on which to apply normalization, -1 means last axis.</dd>
 <dt><tt>p</tt> : int (default is 2)</dt>
 <dd>The order of the normalization, only 1 or 2 are supported.</dd>
 </dl>
@@ -15200,7 +15200,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -15399,7 +15399,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -15611,7 +15611,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -15729,7 +15729,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -15940,7 +15940,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a hr
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -16120,7 +16120,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -16301,7 +16301,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -16480,7 +16480,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a h
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -16655,7 +16655,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 
 <dl>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
 <dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
@@ -16873,7 +16873,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
