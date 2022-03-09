@@ -22,7 +22,7 @@ from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, Gr
 
 def _rename_edges_helper(internal_node: NodeProto,
                          rename_helper: Callable[[Text], Text],
-                         attribute_map: Dict[Text, Text],
+                         attribute_map: Dict[Text, AttributeProto],
                          prefix: Text) -> NodeProto:
     new_node = NodeProto()
     new_node.CopyFrom(internal_node)
