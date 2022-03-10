@@ -41,7 +41,7 @@ extras_require = {}
 ################################################################################
 
 # Default value is set to TRUE\1 to keep the settings same as the current ones.
-# However going forward the recomemded way to is to set this to False\0
+# However going forward the recommended way to is to set this to False\0
 ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
 ONNX_VERIFY_PROTO3 = bool(os.getenv('ONNX_VERIFY_PROTO3') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
@@ -126,7 +126,7 @@ class create_version(ONNXCommand):
 
 class cmake_build(setuptools.Command):
     """
-    Compiles everything when `python setupmnm.py build` is run using cmake.
+    Compiles everything when `python setup.py build` is run using cmake.
 
     Custom args can be passed to cmake by specifying the `CMAKE_ARGS`
     environment variable.
