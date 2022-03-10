@@ -125,7 +125,7 @@ jobs:
           deactivate'
 
     - name: Verify ONNX with ort-nightly
-      if: matrix.python-version != 'cp310-cp310' # FIXME Do not test ort-nightly for Python 3.10 due to missing (unsupported) package
+      if: matrix.python-version != 'cp310-cp310' # TODO update once ort-nightly has supported Python 3.10
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
