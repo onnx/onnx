@@ -4135,6 +4135,37 @@ class TestShapeInference(unittest.TestCase):
                  'out_sequence2', TensorProto.FLOAT, (None, None, 3)),
              ])  # type: ignore
 
+    def test_sequence_map_different_tensor_type(self):  # type: () -> None
+        body_graph = helper.make_graph(
+            nodes=[make_node('Shape', ['x'], ['shape'])],
+            name='body_graph',
+            inputs=[
+                onnx.helper.make_tensor_value_info(
+                    'x', onnx.TensorProto.FLOAT, ('H', 'W', 'C'))
+            ],
+            outputs=[
+                onnx.helper.make_tensor_value_info(
+                    'shape', onnx.TensorProto.INT64, (3,))
+            ],
+        )  # type: ignore
+
+        graph = self._make_graph(
+            [('input1', TensorProto.FLOAT, (220, 310, 3)),
+             ('input2', TensorProto.FLOAT, (110, 210, 3)),
+             ('input3', TensorProto.FLOAT, (90, 110, 3)),
+             ],
+            [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['in_sequence']),
+             make_node('SequenceMap', ['in_sequence'], ['shapes'], body=body_graph)],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (None, None, None)),
+             make_tensor_sequence_value_info(
+                 'out_sequence1', TensorProto.FLOAT, (None, None, None)),
+             make_tensor_sequence_value_info(
+                 'shapes', TensorProto.INT64, (3,)),
+             ])  # type: ignore
+
 
 if __name__ == '__main__':
     unittest.main()

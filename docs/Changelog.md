@@ -20785,14 +20785,14 @@ This version of the operator has been available since version 16 of the default 
 <dl>
 <dt><tt>input_sequence</tt> : S</dt>
 <dd>Input sequence.</dd>
-<dt><tt>additional_inputs</tt> (variadic) : V</dt>
+<dt><tt>additional_inputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Additional inputs to the graph</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>out_sequence</tt> (variadic) : S</dt>
+<dt><tt>out_sequence</tt> (variadic, heterogeneous) : S</dt>
 <dd>Output sequence(s)</dd>
 </dl>
 

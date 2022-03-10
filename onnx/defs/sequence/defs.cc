@@ -924,14 +924,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Additional inputs to the graph",
             "V",
             OpSchema::Variadic,
-            true,
+            false,
             0)
         .Output(
             0,
             "out_sequence",
             "Output sequence(s)",
             "S",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .TypeConstraint(
             "S",
             OpSchema::all_tensor_sequence_types(),
