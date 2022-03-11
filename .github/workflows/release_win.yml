@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
         architecture: ['x64', 'x86']
     steps:        
     - name: Checkout ONNX
@@ -115,14 +115,11 @@ jobs:
         cd onnx
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest  
+        pytest
 
     - name: Verify ONNX with ort-nightly
-      if: ${{ always() }}
+      if: matrix.python-version != '3.10' && matrix.architecture != 'x86' # TODO update once ort-nightly has supported Python 3.10
       run: |
-        # ort-nightly does not support x86
-        if ('${{ matrix.architecture }}' -eq 'x64') {
-          python -m pip install -q flatbuffers
-          python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
-          python onnx\onnx\test\test_with_ort.py
-        }
+        python -m pip install -q flatbuffers
+        python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
+        python onnx\onnx\test\test_with_ort.py

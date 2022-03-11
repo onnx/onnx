@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         # the different python versions for building wheels
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39]
+        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
@@ -125,7 +125,7 @@ jobs:
           deactivate'
 
     - name: Verify ONNX with ort-nightly
-      if: ${{ always() }}
+      if: matrix.python-version != 'cp310-cp310' # TODO update once ort-nightly has supported Python 3.10
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
