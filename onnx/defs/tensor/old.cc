@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include "onnx/defs/data_propagators.h"
 #include "onnx/defs/tensor/utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -469,6 +470,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             output_length->set_dim_value(
                 ctx.getInputType(0)->tensor_type().shape().dim_size());
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          ShapeOp13DataPropagator(ctx);
         }));
 
 static const char* Size_ver1_doc = R"DOC(
@@ -1542,6 +1546,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                                             : // i - axis < q
                     data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          GatherOp13DataPropagator(ctx);
         }));
 
 static const char* GatherElements_ver11_doc = R"DOC(
@@ -3737,6 +3744,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                                             : // i - axis < q
                     data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          GatherOp13DataPropagator(ctx);
         }));
 
 static const char* Squeeze_ver1_doc = R"DOC(
