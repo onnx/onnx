@@ -799,7 +799,7 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
     *loopbody_graph.add_node() = cond_identity;
 
     for (int inputIndex = 0; inputIndex < ninputs; inputIndex++) {
-      const auto* input_type = ctx.getInputType(0);
+      const auto* input_type = ctx.getInputType(inputIndex);
       if (input_type && input_type->has_sequence_type()) {
         // If it's a sequence input, extract ``iter_count`` element
         NodeProto seq_at_node;
