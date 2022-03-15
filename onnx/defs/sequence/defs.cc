@@ -657,7 +657,7 @@ void SequenceMapInferenceFunction(InferenceContext& ctx) {
   auto num_outputs = ctx.getNumOutputs();
   assert(num_outputs > 0);
 
-  std::vector<TypeProto> tmp_type_protos;
+  std::vector<TypeProto> tmp_type_protos(num_inputs);
   std::vector<const TypeProto*> subgraph_input_types;
   subgraph_input_types.reserve(num_inputs);
   for (size_t inputIndex = 0; inputIndex < num_inputs; inputIndex++) {
@@ -666,9 +666,8 @@ void SequenceMapInferenceFunction(InferenceContext& ctx) {
       fail_type_inference("Input ", inputIndex, " expected to have type info");
     }
     if (input_type->value_case() == TypeProto::kSequenceType) {
-      tmp_type_protos.emplace_back();
-      tmp_type_protos.back().CopyFrom(input_type->sequence_type().elem_type());
-      subgraph_input_types.push_back(&tmp_type_protos.back());
+      tmp_type_protos[inputIndex].CopyFrom(input_type->sequence_type().elem_type());
+      subgraph_input_types.push_back(&tmp_type_protos[inputIndex]);
     } else {
       if (inputIndex == 0)
         fail_type_inference("Input ", inputIndex, " expected to be a sequence type");
