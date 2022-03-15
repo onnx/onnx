@@ -79,7 +79,7 @@ jobs:
   - script: |
       source py$(python.version)/bin/activate
 
-      # style check (flake8, mypy, and clang-format)
+      # style check (flake8 and mypy)
       pip install .[lint]
       bash tools/format.sh
       if [ $? -ne 0 ]; then

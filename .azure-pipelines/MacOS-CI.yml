@@ -66,14 +66,6 @@ jobs:
     displayName: 'Install dependencies and ONNX'
 
   - script: |
-      # style check (flake8, mypy, and clang-format)
-      pip install .[lint]
-      bash tools/format.sh
-      if [ $? -ne 0 ]; then
-        echo "style check failed"
-        exit 1
-      fi
-
       # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
