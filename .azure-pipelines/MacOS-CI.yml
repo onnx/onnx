@@ -7,18 +7,28 @@ jobs:
     vmImage: 'macOS-10.15'
   strategy:
     matrix:
-      py36:
-        python.version: '3.6'
+      py39:
+        python.version: '3.9'
+        onnx_ml: 0
+        onnx_debug: 0
+        onnx_lite: 0
+      py38:
+        python.version: '3.8'
         onnx_ml: 0
         onnx_debug: 0
         onnx_lite: 1
-      py36-ml:
-        python.version: '3.6'
+      py38-ml:
+        python.version: '3.8'
         onnx_ml: 1
         onnx_debug: 0
         onnx_lite: 1
-      py36-ml-debug:
-        python.version: '3.6'
+      py38-ml-debug:
+        python.version: '3.8'
+        onnx_ml: 1
+        onnx_debug: 1
+        onnx_lite: 0
+      py37-ml-debug:
+        python.version: '3.7'
         onnx_ml: 1
         onnx_debug: 1
         onnx_lite: 0
@@ -31,21 +41,8 @@ jobs:
 
   - script: |
       # Install protobuf 3.16.0 from source
-      export NUM_CORES=`sysctl -n hw.ncpu`
-      echo Using $NUM_CORES cores
-      brew update
-      brew install autoconf && brew install automake
-      export ONNX_PATH=$(pwd)
-      cd ..
-      wget https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz
-      tar -xvf protobuf-cpp-3.16.0.tar.gz
-      cd protobuf-3.16.0
-      mkdir build_source && cd build_source
-      cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-      make -j${NUM_CORES}
-      make install
-      export PATH=$(pwd)/bin:$PATH
-      cd $ONNX_PATH
+      export NUM_CORES=`sysctl -n hw.logicalcpu`
+      source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
 
       git submodule update --init --recursive
       python -m pip install -q --upgrade pip

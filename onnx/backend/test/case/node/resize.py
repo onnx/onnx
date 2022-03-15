@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -133,8 +128,10 @@ def interpolate_1d_with_x(data: np.ndarray,
             x_ori = -0.5
         else:
             x_ori = (x + 0.5) / scale_factor - 0.5
-    else:  # coordinate_transformation_mode == 'half_pixel'
+    elif coordinate_transformation_mode == 'half_pixel':
         x_ori = (x + 0.5) / scale_factor - 0.5
+    else:
+        raise ValueError(f'invalid coordinate_transformation_mode: {coordinate_transformation_mode}')
     x_ori_int = np.floor(x_ori).astype(int).item()
 
     # ratio must be in (0, 1] since we prefer the pixel on the left of `x_ori`

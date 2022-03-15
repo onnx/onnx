@@ -324,7 +324,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
       if (!value_by_name_of.count(input)) {
         std::ostringstream msg;
         msg << "Input " << input << " is undefined!";
-        throw std::out_of_range(msg.str());
+        ONNX_THROW_EX(std::out_of_range(msg.str()));
       }
       n->addInput(value_by_name_of.at(input));
     }

@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import sys
 
 import numpy as np  # type: ignore
@@ -88,7 +83,7 @@ def from_array(arr: np.ndarray, name: Optional[Text] = None) -> TensorProto:
         arr: a numpy array.
         name: (optional) the name of the tensor.
     Returns:
-        tensor_def: the converted tensor def.
+        TensorProto: the converted tensor def.
     """
     tensor = TensorProto()
     tensor.dims.extend(arr.shape)
@@ -145,7 +140,7 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     Inputs:
         sequence: a SequenceProto object.
     Returns:
-        lst: the converted list.
+        list: the converted list.
     """
     lst: List[Any] = []
     elem_type = sequence.elem_type
@@ -172,7 +167,7 @@ def from_list(lst: List[Any], name: Optional[Text] = None, dtype: Optional[int] 
         dtype: (optional) type of element in the input list, used for specifying
                           sequence values when converting an empty list.
     Returns:
-        sequence: the converted sequence def.
+        SequenceProto: the converted sequence def.
     """
     sequence = SequenceProto()
     if name:
@@ -213,7 +208,7 @@ def from_list(lst: List[Any], name: Optional[Text] = None, dtype: Optional[int] 
     return sequence
 
 
-def to_dict(map: MapProto) -> np.ndarray:
+def to_dict(map: MapProto) -> Dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
     Inputs:
@@ -243,7 +238,7 @@ def from_dict(dict: Dict[Any, Any], name: Optional[Text] = None) -> MapProto:
         dict: Python dictionary
         name: (optional) the name of the map.
     Returns:
-        map: the converted map def.
+        MapProto: the converted map def.
     """
     map = MapProto()
     if name:
@@ -357,9 +352,10 @@ def from_optional(
 
 def convert_endian(tensor: TensorProto) -> None:
     """
-    call to convert endianess of raw data in tensor.
-    @params
-    TensorProto: TensorProto to be converted.
+    Call to convert endianess of raw data in tensor.
+
+    Arguments:
+        tensor (TensorProto): TensorProto to be converted.
     """
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]

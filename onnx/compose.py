@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from typing import List, Set, Tuple, Text, Optional, MutableMapping
 from onnx import ModelProto, GraphProto, helper, checker
 from onnx import TensorProto as tp
@@ -109,6 +104,9 @@ def merge_graphs(
                        By default, the name is g1.name and g2.name concatenated with an undescore delimiter
         doc_string (string): Optional docstring for the combined graph
                              If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
+
+    Returns:
+        GraphProto
     """
     if type(g1) is not GraphProto:
         raise ValueError("g1 argument is not an ONNX graph")
@@ -277,6 +275,9 @@ def merge_models(
         producer_version (string): Optional producer version for the combined model. Default: "1.0"
         domain (string): Optional domain of the combined model. Default: ""
         model_version (int): Optional version of the graph encoded. Default: 1
+
+    Returns:
+        ModelProto
     """
     if type(m1) is not ModelProto:
         raise ValueError("m1 argument is not an ONNX model")
@@ -390,6 +391,9 @@ def add_prefix_graph(
         rename_value_infos (bool): Whether to prefix value info names
         inplace (bool): If True, mutates the graph directly.
                         Otherwise, a copy will be created
+
+    Returns:
+        GraphProto
     """
     if type(graph) is not GraphProto:
         raise ValueError("graph argument is not an ONNX graph")
@@ -494,6 +498,9 @@ def add_prefix(
         rename_functions (bool): Whether to prefix local function names
         inplace (bool): If True, mutates the model directly.
                         Otherwise, a copy will be created
+
+    Returns:
+        ModelProto
     """
     if type(model) is not ModelProto:
         raise ValueError("model argument is not an ONNX model")
@@ -550,6 +557,9 @@ def expand_out_dim_graph(
                        A negative value means counting dimensions from the back.
         inplace (bool): If True, mutates the model directly.
                         Otherwise, a copy will be created
+
+    Returns:
+        GraphProto
     """
     if type(graph) is not GraphProto:
         raise ValueError("graph argument is not an ONNX graph")
@@ -608,6 +618,9 @@ def expand_out_dim(
                        A negative value means counting dimensions from the back.
         inplace (bool): If True, mutates the model directly.
                         Otherwise, a copy will be created
+
+    Returns:
+        ModelProto
     """
     if type(model) is not ModelProto:
         raise ValueError("model argument is not an ONNX model")
