@@ -14,8 +14,11 @@ flake8 onnx
 echo -e "\n===> check mypy"
 mypy . --no-site-packages
 
-echo -e "\n===> run clang-format"
-git ls-files --exclude-standard -- '*/*.cc' '*/*.h' | \
-    xargs ${CLANG_FORMAT_BIN:-clang-format} -i
+# Currently, clang-format is not checked on CIs.
+if [ "${ENABLE_CLANG_FORMAT}" == "1" ]; then
+    echo -e "\n===> run clang-format"
+    git ls-files --exclude-standard -- '*/*.cc' '*/*.h' | \
+        xargs ${CLANG_FORMAT_BIN:-clang-format} -i
+fi
 
 git diff --exit-code
