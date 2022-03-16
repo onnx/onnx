@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-set -eu
+set -o errexit
+set -o nounset
 
 
 cd "$(git rev-parse --show-toplevel)"
