@@ -72,7 +72,7 @@ jobs:
 
       # style check (flake8 and mypy)
       pip install .[lint]
-      bash tools/format.sh
+      bash tools/style.sh
       if [ $? -ne 0 ]; then
         echo "style check failed"
         exit 1

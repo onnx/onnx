@@ -54,7 +54,7 @@ You can run these checks by:
 ```
 pip install -e .[lint]
 
-./tools/format.sh
+./tools/style.sh
 ```
 
 # Testing
