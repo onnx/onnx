@@ -1,8 +1,7 @@
 import unittest
 
 import onnx
-from onnx import checker, parser, utils
-
+from onnx import checker, parser, utils, function_inline
 
 class TestFunction(unittest.TestCase):
     def _verify_function_set(self, extracted_model, function_set, func_domain):  # type: ignore
@@ -162,6 +161,15 @@ class TestFunction(unittest.TestCase):
             {func_add_name, func_identity_name, func_nested_identity_add_name},
             func_domain)
 
+    def test_local_function_inline(self) -> None:
+        model_before = onnx.load("C:/Temp/FunctionVerification.TestModelLocalFunctions.before.onnx")
+        model_after = onnx.load("C:/Temp/FunctionVerification.TestModelLocalFunctions.after.onnx")
+
+        print(model_before)
+        model_after2 = function_inline.inline_model_function(model_before)
+        onnx.save(model_after2, "C:/Temp/FunctionVerification.TestModelLocalFunctions.after2.onnx")
+        print(model_after2)
+        print(model_after)
 
 if __name__ == '__main__':
     unittest.main()

@@ -23,4 +23,20 @@ void LoadProtoFromPath(const std::string proto_path, T& proto) {
     "Unable to parse proto from file: ", proto_path, ". Please check if it is a valid protobuf file of proto. ");
   }
 }
+
+template <typename Proto>
+void SaveProto(Proto* proto, const std::string& file_path) {
+  // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
+  std::fstream output(file_path, std::ios::out | std::ios::trunc | std::ios::binary);
+  std::string model_string;
+  ONNX_TRY {
+    proto->SerializeToString(&model_string);
+    output << model_string;
+  }
+  ONNX_CATCH(...) {
+    fail_check("Unable to save inferred model to the target path:", file_path);
+  }
+}
+
+
 } // namespace ONNX_NAMESPACE

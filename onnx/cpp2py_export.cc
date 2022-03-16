@@ -10,6 +10,7 @@
 #include <unordered_map>
 
 #include "onnx/checker.h"
+#include "onnx/function_inline.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
@@ -347,6 +348,25 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   parser.def("parse_model", Parse<ModelProto>);
   parser.def("parse_graph", Parse<GraphProto>);
+
+  // Submodule `function_inline`
+  auto function_inline = onnx_cpp2py_export.def_submodule("function_inline");
+  function_inline.doc() = "Function inline";
+
+  function_inline.def("inline_model_function", [](const py::bytes& bytes){
+    ModelProto proto{};
+    ParseProtoFromPyBytes(&proto, bytes);
+    function_inline::inline_model_function(proto);
+    std::string out;
+    proto.SerializeToString(&out);
+    return py::bytes(out);
+  });
+
+  function_inline.def(
+      "inline_model_function_path",
+      [](const std::string& model_path, const std::string& output_path) -> void {
+        function_inline::inline_model_function_path(model_path, output_path);
+      });
 }
 
 } // namespace ONNX_NAMESPACE
