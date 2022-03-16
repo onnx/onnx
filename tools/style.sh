@@ -10,7 +10,7 @@ set -o nounset
 cd "$(git rev-parse --show-toplevel)"
 
 echo -e "===> check flake8"
-flake8 onnx
+flake8 --exclude third_party,build,'*_pb2.py'
 
 echo -e "\n===> check mypy"
 mypy . --no-site-packages
