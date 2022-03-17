@@ -236,10 +236,10 @@ std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const
   return domain + ":" + func_name;
 }
 
-// Q: Why should undefined_value_types_by_name be separate?
+// For graph-output types that are undefined, update them post-inference.
 // Q: Why exception is not saved as error if experimental op?
 // Document (in IR.md): domain for model-local functions
-// sparsetensor.shape check?
+// What is sparsetensortype.shape supposed to be?
 
 class ShapeInferenceImplBase {
  public:
@@ -413,28 +413,21 @@ class ShapeInferenceImplBase {
 
   // TypeProto_Tensor or TypeProto_SparseTensor
   template <typename T>
-  void processInitializer(const T& tensorType) {
-    save_data_by_name(tensorType);
-    TypeProto initializer_type;
-    TypeProto_Tensor* initializer_tensor_type = initializer_type.mutable_tensor_type();
-    initializer_tensor_type->set_elem_type(tensor_type(tensorType).data_type());
-    // set the shape according to the initializer shape info
-    auto* shape = initializer_tensor_type->mutable_shape();
-    for (int i = 0; i < tensorType.dims_size(); ++i) {
-      shape->add_dim()->set_dim_value(tensorType.dims(i));
-    }
-    auto iter = value_types_by_name.find(tensor_type(tensorType).name());
+  void processInitializer(const std::string& name, const T& tensorValue, TypeProto& initializer_type, std::unordered_map<std::string, const T*> & map) {
+    map[name] = &tensorValue;
+    auto iter = value_types_by_name.find(name);
     // If it already exists in input, check input and initializer is sync
     // use shape info from input (input has priority over initializer)
     if (iter != value_types_by_name.end()) {
-      CheckTensorShapesAndTypes(*initializer_tensor_type, *iter->second->mutable_tensor_type());
+      checkShapesAndTypes (initializer_type, *iter->second);
+      // CheckTensorShapesAndTypes(*initializer_tensor_type, *iter->second->mutable_tensor_type());
     }
     // Support IR>=4: some tensors can only exist in initializer and not in input
     // So shape_inference should make use of initializer shapes
     // Store initializer shape info in value_info as well
     else if (ir_version >= 4) {
       initializer_type_list.push_back(std::move(initializer_type));
-      value_types_by_name[tensor_type(tensorType).name()] = &initializer_type_list.back();
+      value_types_by_name[name] = &initializer_type_list.back();
     }
   }
 
@@ -451,10 +444,26 @@ class ShapeInferenceImplBase {
       updateType(vi);
     }
     for (const auto& tp : graph.initializer()) {
-      processInitializer(tp);
+      TypeProto initializer_type;
+      TypeProto_Tensor* initializer_tensor_type = initializer_type.mutable_tensor_type();
+      initializer_tensor_type->set_elem_type(tp.data_type());
+      // set the shape according to the initializer shape info
+      auto* shape = initializer_tensor_type->mutable_shape();
+      for (int i = 0; i < tp.dims_size(); ++i) {
+        shape->add_dim()->set_dim_value(tp.dims(i));
+      }
+      processInitializer(tp.name(), tp, initializer_type, input_data_by_name);
     }
     for (const auto& tp : graph.sparse_initializer()) {
-      processInitializer(tp);
+      TypeProto initializer_type;
+      auto* initializer_sparse_tensor_type = initializer_type.mutable_sparse_tensor_type();
+      initializer_sparse_tensor_type->set_elem_type(tp.values().data_type());
+      // set the shape according to the initializer shape info
+      auto* shape = initializer_sparse_tensor_type->mutable_shape();
+      for (int i = 0; i < tp.dims_size(); ++i) {
+        shape->add_dim()->set_dim_value(tp.dims(i));
+      }
+      processInitializer(tp.values().name(), tp, initializer_type, input_sparse_data_by_name);
     }
     // Collect data from constant nodes and check if any experimental ops exist
     for (auto& n : *graph.mutable_node()) {
