@@ -476,8 +476,6 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void process(FunctionProto& function) {}
-
  public:
   ShapeInferenceImplBase(
       GraphProto* gp,
@@ -506,24 +504,28 @@ class ShapeInferenceImplBase {
             model_local_functions_map} {}
 
  private:
-  const ShapeInferenceOptions& options;
-  const ModelLocalFunctionsMap& model_local_functions_map;
-  SymbolTable* symbol_table;
+  GraphProto& g;
   std::unordered_map<std::string, TypeProto*> value_types_by_name;
+  const std::unordered_map<std::string, int>& opset_imports;
+
+  const ShapeInferenceOptions& options;
+  SymbolTable* symbol_table;
+  const ModelLocalFunctionsMap& model_local_functions_map;
+  const ISchemaRegistry* schema_registry;
+  int ir_version;
+  GraphInferenceContext graph_inference_context;
+
   std::unordered_map<std::string, TypeProto*> undefined_value_types_by_name;
   std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
   std::unordered_map<std::string, const TensorProto*> input_data_by_name;
   std::unordered_map<std::string, const SparseTensorProto*> input_sparse_data_by_name;
-  const std::unordered_map<std::string, int>& opset_imports;
-  const ISchemaRegistry* schema_registry;
 
   bool has_experimental_op = false;
   bool has_unsupported_op = false;
-  GraphProto& g;
+
   std::vector<std::string> inference_errors;
-  int ir_version;
+
   std::list<TypeProto> initializer_type_list;
-  GraphInferenceContext graph_inference_context;
 };
 
 static void InferShapesImpl(
