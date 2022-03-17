@@ -476,6 +476,10 @@ class ShapeInferenceImplBase {
     }
   }
 
+  void process(FunctionProto& fun) {
+    
+  }
+
  public:
   ShapeInferenceImplBase(
       GraphProto* gp,
