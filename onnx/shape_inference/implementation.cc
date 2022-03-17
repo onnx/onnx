@@ -463,6 +463,17 @@ class ShapeInferenceImplBase {
     for (auto& n : *graph.mutable_node()) {
       process(n);
     }
+    // Throw shape inference error if any. Error mode right now only supports 0 and 1.
+    // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
+    // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
+    // TODO: Add a more granular way for exception handling.
+    if (options.error_mode > 0 && !inference_errors.empty()) {
+      std::string full_errors = "Shape inference error(s): ";
+      for (const std::string& error : inference_errors) {
+        full_errors += error + "\n";
+      }
+      fail_shape_inference(full_errors);
+    }
   }
 
   void process(FunctionProto& function) {}
@@ -501,13 +512,13 @@ class ShapeInferenceImplBase {
   const std::unordered_map<std::string, int>& opset_imports;
   const ISchemaRegistry* schema_registry;
 
-  bool has_experimental_op;
-  bool has_unsupported_op;
+  bool has_experimental_op = false;
+  bool has_unsupported_op = false;
   GraphProto& g;
   std::vector<std::string> inference_errors;
   int ir_version;
   std::list<TypeProto> initializer_type_list;
-    GraphInferenceContext graph_inference_context;
+  GraphInferenceContext graph_inference_context;
 };
 
 static void InferShapesImpl(
