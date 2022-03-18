@@ -398,6 +398,24 @@ class ShapeInferenceImplBase {
     }
   }
 
+  void process(NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+    NodeProto copy_n(n);
+    // Add attribute information into the temporary node
+    copy_n.clear_attribute();
+    for (const auto& attr : n.attribute()) {
+      if (attr.has_ref_attr_name()) {
+        if (attr_map.count(attr.ref_attr_name())) {
+          auto copy_attr = *attr_map[attr.ref_attr_name()];
+          copy_attr.set_name(attr.name());
+          copy_n.add_attribute()->CopyFrom(copy_attr);
+        }
+      } else {
+        copy_n.add_attribute()->CopyFrom(attr);
+      }
+    }
+    process(copy_n);
+  }
+
   // TypeProto_Tensor or TypeProto_SparseTensor
   template <typename T>
   void processInitializer(
