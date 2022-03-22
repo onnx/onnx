@@ -78,7 +78,7 @@ with open(os.path.join(TOP_DIR, "VERSION_NUMBER")) as version_file:
 # Pre Check
 ################################################################################
 
-assert CMAKE, "Could not find "cmake" executable!"
+assert CMAKE, "Could not find cmake executable!"
 
 ################################################################################
 # Utilities
