@@ -16,24 +16,9 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
         architecture: ['x64', 'x86']
-    steps:         
-    - name: Checkout Protobuf 
-      uses: actions/checkout@master
-      with:
-        repository: protocolbuffers/protobuf
-        ref: refs/tags/v3.16.0
-        path: ./protobuf_root/protobuf
-  
-    - name: Checkout Protobuf submodules
-      shell: bash
-      run: |
-         cd ./protobuf_root/protobuf
-         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-         git submodule sync --recursive
-         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
-        
+    steps:        
     - name: Checkout ONNX
       uses: actions/checkout@v2
       with:
@@ -51,44 +36,27 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}    
           
-    - name: Install python dependencies
+    - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
         cd onnx
         python -m pip install -q -r requirements-release.txt
 
     - name: Build ONNX wheel
-      run: |        
+      run: |
         $arch = 'x64'
         if ('${{ matrix.architecture }}' -eq 'x86') {
           $arch = 'Win32'
         }
-        echo "Install protobuf"
-        cd ./protobuf_root
-        $protobuf_root_dir = Get-Location
-        mkdir protobuf_install
-        cd ./protobuf/cmake
 
-        cmake -G "Visual Studio 16 2019" -A $arch -DCMAKE_INSTALL_PREFIX="../../protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
-        msbuild protobuf.sln /m /p:Configuration=Release
-        msbuild INSTALL.vcxproj /p:Configuration=Release
-        echo "Protobuf installation complete."
+        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        cd onnx
 
-        echo "Set paths"
-        $protoc_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\bin"
-        $protoc_lib_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\lib"
-        $protobuf_include_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\include"
-        $Env:PATH="$ENV:PATH;$protoc_path;$protoc_lib_path;$protobuf_include_path"
-        $($Env:PATH).Split(';')
-        protoc
-
-        cd ../../../onnx
-        dir
         echo "Install ONNX"
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
@@ -147,14 +115,11 @@ jobs:
         cd onnx
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest  
+        pytest
 
     - name: Verify ONNX with ort-nightly
-      if: ${{ always() }}
+      if: matrix.python-version != '3.10' && matrix.architecture != 'x86' # TODO update once ort-nightly has supported Python 3.10
       run: |
-        # ort-nightly does not support x86
-        if ('${{ matrix.architecture }}' -eq 'x64') {
-          python -m pip install -q flatbuffers
-          python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
-          python onnx\onnx\test\test_with_ort.py
-        }
+        python -m pip install -q flatbuffers
+        python -m pip install -q -i https://test.pypi.org/simple/ ort-nightly
+        python onnx\onnx\test\test_with_ort.py

@@ -1,11 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import pytest  # type: ignore
+import _pytest  # type: ignore
 
 from .coverage import Coverage
 from typing import Dict, Text, Sequence, Any, List
@@ -23,7 +19,7 @@ def _add_mark(mark: Any, bucket: Text) -> None:
         _coverage.add_proto(proto, bucket, mark.args[1] == 'RealModel')
 
 
-def pytest_runtest_call(item: pytest.nodes.Item) -> None:
+def pytest_runtest_call(item: _pytest.nodes.Item) -> None:
     mark = item.get_closest_marker('onnx_coverage')
     if mark:
         assert item.nodeid not in _marks
@@ -39,7 +35,7 @@ def pytest_runtest_logreport(report: Any) -> None:
 
 
 @pytest.hookimpl(trylast=True)  # type: ignore
-def pytest_terminal_summary(terminalreporter: pytest.terminal.TerminalReporter, exitstatus: int) -> None:
+def pytest_terminal_summary(terminalreporter: _pytest.terminal.TerminalReporter, exitstatus: int) -> None:
     for mark in _marks.values():
         _add_mark(mark, 'loaded')
     _coverage.report_text(terminalreporter)

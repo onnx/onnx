@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 # This file is for testing ONNX with ONNXRuntime during ONNX Release
 # Create a general scenario to use ONNXRuntime with ONNX
 
