@@ -5808,6 +5808,91 @@ expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.
 </details>
 
 
+### LayerNormalization
+There are 3 test cases, listed as following:
+<details>
+<summary>d</summary>
+
+```python
+X = np.random.randn(3, 4).astype(np.float32)
+
+def case(axis):
+    normalized_shape = X.shape[axis:]
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    B = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis=axis)
+
+    node = onnx.helper.make_node(
+        'LayerNormalization',
+        inputs=['X', 'W', 'B'],
+        outputs=['Y', 'Mean', 'InvStdDev'],
+        axis=axis,
+    )
+
+    expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+           name=f'test_layer_normalization_2d_axis{axis}')
+
+for i in range(len(X.shape)):
+    case(i)
+```
+
+</details>
+<details>
+<summary>d_epsilon</summary>
+
+```python
+X = np.random.randn(2, 3, 5).astype(np.float32)
+
+def case(axis):
+    normalized_shape = X.shape[axis:]
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    B = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
+    node = onnx.helper.make_node(
+        'LayerNormalization',
+        inputs=['X', 'W', 'B'],
+        outputs=['Y', 'Mean', 'InvStdDev'],
+        axis=axis,
+        epsilon=1e-1
+    )
+
+    expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+           name=f'test_layer_normalization_3d_axis{axis}_epsilon')
+
+for i in range(len(X.shape)):
+    case(i)
+```
+
+</details>
+<details>
+<summary>layernormalization</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+def case(axis):
+    normalized_shape = X.shape[axis:]
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    B = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
+
+    node = onnx.helper.make_node(
+        'LayerNormalization',
+        inputs=['X', 'W', 'B'],
+        outputs=['Y', 'Mean', 'InvStdDev'],
+        axis=axis,
+    )
+
+    expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+           name=f'test_layer_normalization_4d_axis{axis}')
+
+for i in range(len(X.shape)):
+    case(i)
+```
+
+</details>
+
+
 ### LeakyRelu
 There are 2 test cases, listed as following:
 <details>
