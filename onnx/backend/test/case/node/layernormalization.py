@@ -8,7 +8,7 @@ from . import expect
 
 
 # Layer normalization's reference implementation
-def _layer_normalization(X, W, B, axis, epsilon=1e-5):
+def _layer_normalization(X, W, B, axis, epsilon=1e-5):  # type: ignore
     X_shape = X.shape
     unsqueezed_rank = len(X_shape) - axis
     reduction_shape = X_shape[0:axis] + (1,) * unsqueezed_rank
@@ -56,7 +56,7 @@ class LayerNormalization(Base):
     def export() -> None:
         X = np.random.randn(2, 3, 4, 5).astype(np.float32)
 
-        def case(axis):
+        def case(axis: int) -> None:
             normalized_shape = X.shape[axis:]
             W = np.random.randn(*normalized_shape).astype(np.float32)
             B = np.random.randn(*normalized_shape).astype(np.float32)
@@ -79,7 +79,7 @@ class LayerNormalization(Base):
     def export2d() -> None:
         X = np.random.randn(3, 4).astype(np.float32)
 
-        def case(axis):
+        def case(axis: int) -> None:
             normalized_shape = X.shape[axis:]
             W = np.random.randn(*normalized_shape).astype(np.float32)
             B = np.random.randn(*normalized_shape).astype(np.float32)
@@ -102,7 +102,7 @@ class LayerNormalization(Base):
     def export3d_epsilon() -> None:
         X = np.random.randn(2, 3, 5).astype(np.float32)
 
-        def case(axis):
+        def case(axis: int) -> None:
             normalized_shape = X.shape[axis:]
             W = np.random.randn(*normalized_shape).astype(np.float32)
             B = np.random.randn(*normalized_shape).astype(np.float32)

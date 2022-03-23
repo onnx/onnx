@@ -5816,7 +5816,7 @@ There are 3 test cases, listed as following:
 ```python
 X = np.random.randn(3, 4).astype(np.float32)
 
-def case(axis):
+def case(axis: int) -> None:
     normalized_shape = X.shape[axis:]
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
@@ -5843,7 +5843,7 @@ for i in range(len(X.shape)):
 ```python
 X = np.random.randn(2, 3, 5).astype(np.float32)
 
-def case(axis):
+def case(axis: int) -> None:
     normalized_shape = X.shape[axis:]
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
@@ -5870,7 +5870,7 @@ for i in range(len(X.shape)):
 ```python
 X = np.random.randn(2, 3, 4, 5).astype(np.float32)
 
-def case(axis):
+def case(axis: int) -> None:
     normalized_shape = X.shape[axis:]
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)

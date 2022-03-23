@@ -16592,7 +16592,7 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="MeanVarianceNormalization-13"></a>**MeanVarianceNormalization-13**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: ``` (X-EX)/sqrt(E(X-EX)^2) ```
+        on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 
 #### Version
 

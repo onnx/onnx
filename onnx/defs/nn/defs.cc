@@ -2427,7 +2427,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* mvn_ver13_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
-      on the input tensor X using formula: ``` (X-EX)/sqrt(E(X-EX)^2) ```
+      on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 )DOC";
 
 static std::vector<int64_t> mvn_default_axes = {0, 2, 3};

@@ -9418,7 +9418,7 @@ This version of the operator has been available since version 16 of the default 
 ```python
 X = np.random.randn(3, 4).astype(np.float32)
 
-def case(axis):
+def case(axis: int) -> None:
     normalized_shape = X.shape[axis:]
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
@@ -9447,7 +9447,7 @@ for i in range(len(X.shape)):
 ```python
 X = np.random.randn(2, 3, 5).astype(np.float32)
 
-def case(axis):
+def case(axis: int) -> None:
     normalized_shape = X.shape[axis:]
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
@@ -9476,7 +9476,7 @@ for i in range(len(X.shape)):
 ```python
 X = np.random.randn(2, 3, 4, 5).astype(np.float32)
 
-def case(axis):
+def case(axis: int) -> None:
     normalized_shape = X.shape[axis:]
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
@@ -11710,7 +11710,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: ``` (X-EX)/sqrt(E(X-EX)^2) ```
+        on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 
 #### Version
 
