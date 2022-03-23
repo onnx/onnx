@@ -318,7 +318,12 @@ tests_require.append('pytest')
 tests_require.append('nbval')
 tests_require.append('tabulate')
 
-extras_require['mypy'] = ['mypy==0.782', 'types-protobuf==3.18.4']
+extras_require['lint'] = [
+    'clang-format==13.0.0',
+    'flake8',
+    'mypy==0.782',
+    'types-protobuf==3.18.4',
+]
 
 ################################################################################
 # Final

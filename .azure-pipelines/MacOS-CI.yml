@@ -63,14 +63,6 @@ jobs:
     displayName: 'Install dependencies and ONNX'
 
   - script: |
-      # lint python code
-      python -m pip install -q flake8
-      flake8
-      if [ $? -ne 0 ]; then
-        echo "flake8 returned failures"
-        exit 1
-      fi
-
       # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l

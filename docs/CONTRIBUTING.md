@@ -45,6 +45,18 @@ ONNX is an open standard, and we encourage developers to contribute high
 quality operators to ONNX specification.
 Before proposing a new operator, please read [the tutorial](AddNewOp.md).
 
+# Code style
+
+We use flake8, mypy, and clang-format for checking code format.
+*Note: You'll find the versions of these tools in `setup.py`.*
+You can run these checks by:
+
+```
+pip install -e .[lint]
+
+./tools/style.sh
+```
+
 # Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
@@ -78,7 +90,7 @@ To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1
 We use [mypy](http://mypy-lang.org/) to run static type checks on the onnx code base. To check that your code passes, you'll first need to install the mypy type checker. If you're using python 3, call from your onnx source folder:
 
 ```
-pip install -e .[mypy]
+pip install -e .[lint]
 ```
 
 *Note: You'll find the version we're currently using in `setup.py`.*
