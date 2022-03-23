@@ -3,6 +3,7 @@
  */
 
 #include "shape_inference.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -421,6 +422,50 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
   } else {
     fail_type_inference("Input was expected to have either tensor, sequence, optional or map type. Got ", input_value_case);
   }
+}
+
+TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& found) {
+  TensorShapeProto shape_input;
+
+  // First, check initializer.
+  const TensorProto* shape_initializer = ctx.getInputData(input_index);
+  if (shape_initializer) {
+    const std::vector<int64_t>& shape_data = ParseData<int64_t>(shape_initializer);
+    for (const int64_t& e : shape_data) {
+      shape_input.add_dim()->set_dim_value(e);
+    }
+    found = true;
+    return shape_input;
+  }
+
+  // Then, check symbolic input.
+  const TensorShapeProto* symbolic_input = ctx.getSymbolicInput(input_index);
+  if (symbolic_input) {
+    shape_input.CopyFrom(*symbolic_input);
+    found = true;
+    return shape_input;
+  }
+
+  // Try rank inference.
+  if (hasInputShape(ctx, input_index)) {
+    const TensorShapeProto& shape_input_shape = getInputShape(ctx, input_index);
+    if (shape_input_shape.dim_size() != 1) {
+      fail_shape_inference("shape input must be 1D tensor");
+    }
+    if (shape_input_shape.dim(0).has_dim_value()) {
+      // Attempt rank inference using shape of shape input
+      int64_t dim_value = shape_input_shape.dim(0).dim_value();
+      for (int64_t i = 0; i < dim_value; ++i) {
+          shape_input.add_dim();
+      }
+      found = true;
+      return shape_input;
+    }
+  }
+
+  // Shape input was not found.
+  found = false;
+  return shape_input;
 }
 
 } // namespace ONNX_NAMESPACE
