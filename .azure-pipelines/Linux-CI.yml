@@ -70,11 +70,11 @@ jobs:
   - script: |
       source py$(python.version)/bin/activate
 
-      # lint python code
-      python -m pip install -q flake8
-      flake8 onnx
+      # style check (flake8 and mypy)
+      pip install .[lint]
+      bash tools/style.sh
       if [ $? -ne 0 ]; then
-        echo "flake8 returned failures"
+        echo "style check failed"
         exit 1
       fi
 
@@ -123,13 +123,6 @@ jobs:
       fi
 
       # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
-      python -m pip uninstall -y onnx
-      python -m pip install -q --no-use-pep517 -e .[mypy]
-      python setup.py --quiet typecheck
-      if [ $? -ne 0 ]; then
-        echo "type check failed"
-        exit 1
-      fi
       python -m pip uninstall -y onnx
       rm -rf .setuptools-cmake-build
       python -m pip install -q .
