@@ -23,25 +23,25 @@
 namespace ONNX_NAMESPACE {
 namespace checker {
 
-#define enforce_has_field(proto, field)                                            \
-  do {                                                                             \
-    if (!proto.has_##field()) {                                                    \
-      fail_check("Field '", #field, "' of ", #proto, " is required but missing."); \
-    }                                                                              \
+#define enforce_has_field(proto, field)                                              \
+  do {                                                                               \
+    if (!proto.has_##field()) {                                                      \
+      fail_check("Field '", #field, "' of '", #proto, "' is required but missing."); \
+    }                                                                                \
   } while (0)
 
-#define enforce_has_repeated_field(proto, field)                            \
-  do {                                                                      \
-    if (!proto.field##_size()) {                                            \
-      fail_check("Repeated Field '", #field, "' is required but missing."); \
-    }                                                                       \
+#define enforce_has_repeated_field(proto, field)                                              \
+  do {                                                                                        \
+    if (!proto.field##_size()) {                                                              \
+      fail_check("Repeated Field '", #field, "' of '", #proto, "' is required but missing."); \
+    }                                                                                         \
   } while (0)
 
-#define enforce_non_empty_field(proto, field)                                          \
-  do {                                                                                 \
-    if (proto.field().empty()) {                                                       \
-      fail_check("Field '", #field, "' of ", #proto, " is required to be non-empty."); \
-    }                                                                                  \
+#define enforce_non_empty_field(proto, field)                                            \
+  do {                                                                                   \
+    if (proto.field().empty()) {                                                         \
+      fail_check("Field '", #field, "' of '", #proto, "' is required to be non-empty."); \
+    }                                                                                    \
   } while (0)
 
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
