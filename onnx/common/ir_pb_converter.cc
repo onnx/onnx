@@ -355,8 +355,8 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
   for (int i = 0; i < gp.value_info_size(); i++) {
     const auto& tensor_type = gp.value_info(i).type().tensor_type();
     if (!value_by_name_of.count(gp.value_info(i).name())) {
-      // Ideally the model should not have a value_info whose name does not exist in the graph
-      createDummyValue(g, gp.value_info(i).name(), value_by_name_of);
+      // Ideally the model should not have a value_info whose name does not exist in the graph (unused); simply skip it
+      continue;
     }
     if (tensor_type.has_elem_type()) {
       value_by_name_of[gp.value_info(i).name()]->setElemType(tensor_type.elem_type());
