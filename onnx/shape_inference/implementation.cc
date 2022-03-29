@@ -235,11 +235,6 @@ std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const
   return domain + ":" + func_name;
 }
 
-// For graph-output types that are undefined, update them post-inference.
-// Q: Why exception is not saved as error if experimental op?
-// Document (in IR.md): domain for model-local functions
-// What is sparsetensortype.shape supposed to be?
-
 class ShapeInferenceImplBase {
  public:
   void updateType(const std::string& name, TypeProto* inferred_type) {
