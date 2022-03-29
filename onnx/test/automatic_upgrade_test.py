@@ -256,8 +256,11 @@ class TestAutomaticUpgrade(unittest.TestCase):
             "Clip", 1, attrs={"consumed_inputs": [0], "min": -1.4, "max": 2.6}
         )
 
-    def test_Col2Im(self) -> None:
+    def test_Col2Im_3D(self) -> None:
         self._test_op_upgrade('Col2Im', 16, [[5, 5], [2], [2]], [[1, 5, 5]])
+
+    def test_Col2Im_4D(self) -> None:
+        self._test_op_upgrade('Col2Im', 16, [[3, 5, 5], [2], [2]], [[1, 3, 5, 5]])
 
     def test_Compress(self) -> None:
         self._test_op_upgrade(

@@ -295,14 +295,14 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_col2im(self) -> None:
         graph = self._make_graph(
-            [('input', TensorProto.FLOAT, (5, 5)),
+            [('input', TensorProto.FLOAT, (1, 5, 5)),
              ('output_shape', TensorProto.INT64, (2,)),
              ('kernel_shape', TensorProto.INT64, (2,))],
             [make_node("Col2Im", ['input', 'output_shape', 'kernel_shape'], ['output'])],
             [],
             initializer=[make_tensor('output_shape', TensorProto.INT64, (2,), (5, 5)),
                          make_tensor('kernel_shape', TensorProto.INT64, (2,), (1, 5))])
-        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (1, 5, 5))])
+        self._assert_inferred(graph, [make_tensor_value_info('output', TensorProto.FLOAT, (1, 1, 5, 5))])
 
     def test_col2im_strides(self) -> None:
         graph = self._make_graph(
@@ -328,7 +328,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_col2im_dilations(self) -> None:
         graph = self._make_graph(
-            [('input', TensorProto.FLOAT, (1, 6, 6)),
+            [('input', TensorProto.FLOAT, (1, 4, 5)),
              ('output_shape', TensorProto.INT64, (2,)),
              ('kernel_shape', TensorProto.INT64, (2,))],
             [make_node("Col2Im", ['input', 'output_shape', 'kernel_shape'], ['output'], dilations=[1, 5])],

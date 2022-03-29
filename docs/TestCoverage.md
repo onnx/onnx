@@ -2489,11 +2489,11 @@ There are 4 test cases, listed as following:
 <summary>col2im</summary>
 
 ```python
-input = np.array([[1., 6., 11., 16., 21.],  # (5, 5)
-                  [2., 7., 12., 17., 22.],
-                  [3., 8., 13., 18., 23.],
-                  [4., 9., 14., 19., 24.],
-                  [5., 0., 15., 20., 25.]]).astype(np.float32)
+input = np.array([[[1., 6., 11., 16., 21.],  # (1, 5, 5)
+                   [2., 7., 12., 17., 22.],
+                   [3., 8., 13., 18., 23.],
+                   [4., 9., 14., 19., 24.],
+                   [5., 0., 15., 20., 25.]]]).astype(np.float32)
 image_shape = np.array([5, 5]).astype(np.int64)
 block_shape = np.array([1, 5]).astype(np.int64)
 node = onnx.helper.make_node(
@@ -2502,11 +2502,11 @@ node = onnx.helper.make_node(
     ["output"]
 )
 
-output = np.array([[[1., 2., 3., 4., 5.],  # (1, 5, 5)
-                    [6., 7., 8., 9., 0.],
-                    [11., 12., 13., 14., 15.],
-                    [16., 17., 18., 19., 20.],
-                    [21., 22., 23., 24., 25.]]]).astype(np.float32)
+output = np.array([[[[1., 2., 3., 4., 5.],  # (1, 1, 5, 5)
+                     [6., 7., 8., 9., 0.],
+                     [11., 12., 13., 14., 15.],
+                     [16., 17., 18., 19., 20.],
+                     [21., 22., 23., 24., 25.]]]]).astype(np.float32)
 
 expect(
     node,
