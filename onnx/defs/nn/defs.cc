@@ -2221,7 +2221,7 @@ void col2imShapeInference(InferenceContext& ctx) {
 
   // Validating inputs - all inputs are required
   if (!hasNInputShapes(ctx, 3)) {
-    fail_shape_inference("Missing input");
+    return;
   }
 
   // validating 'block_shape' input
