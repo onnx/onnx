@@ -47,11 +47,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
-            "Constrains input types to all numeric tensors.")
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Less,
@@ -61,11 +61,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
-            "Constrains input types to all numeric tensors.")
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,
@@ -86,11 +86,11 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float16)",
              "tensor(float)",
              "tensor(double)"},
-            "Constrains input types to all numeric tensors.")
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 inline void logicalOpInference_opset1(InferenceContext& ctx) {
   updateOutputElemType(ctx, 0, TensorProto::BOOL);
@@ -167,11 +167,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
-            "Constrains input to boolean tensor.")
+            "Constrain input to boolean tensor.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Or,
@@ -181,11 +181,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
-            "Constrains input to boolean tensor.")
+            "Constrain input to boolean tensor.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Xor,
@@ -195,11 +195,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
-            "Constrains input to boolean tensor.")
+            "Constrain input to boolean tensor.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Greater,
@@ -209,11 +209,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrains input to float tensors.")
+            "Constrain input to float tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Less,
@@ -223,11 +223,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrains input to float tensors.")
+            "Constrain input to float tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,
@@ -237,11 +237,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(bool)", "tensor(int32)", "tensor(int64)"},
-            "Constrains input to integral tensors.")
+            "Constrain input to integral tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,
@@ -251,11 +251,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(bool)", "tensor(int32)", "tensor(int64)"},
-            "Constrains input to integral tensors.")
+            "Constrain input to integral tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Greater,
@@ -265,11 +265,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrains input to float tensors.")
+            "Constrain input to float tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Less,
@@ -279,11 +279,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrains input to float tensors.")
+            "Constrain input to float tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 
 // Shares same doc generator as newer opset 16 version.
@@ -297,11 +297,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
-            "Constrains input types to all numeric tensors.")
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor.")
+            "Constrain output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
         .FunctionBody(R"ONNX(
         {
@@ -319,11 +319,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
-            "Constrains input types to all numeric tensors.")
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor.")
+            "Constrain output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
         .FunctionBody(R"ONNX(
         {

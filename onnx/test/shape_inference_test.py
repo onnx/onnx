@@ -368,6 +368,18 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (3, 4))])
 
+    def test_expand_symbolic_input(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (3, 1, 2)),
+             ('y', TensorProto.INT32, (1, 4, 2))],
+            [make_node("Shape", ['y'], ['shape']),
+             make_node("Expand", ['x', 'shape'], ['z'])],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('shape', TensorProto.INT64, (3,)),
+            make_tensor_value_info('z', TensorProto.INT32, (3, 4, 2))],
+            data_prop=True)
+
     def test_expand_dynamic_shape(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.INT32, (1, 2, None)),

@@ -204,6 +204,13 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
   return dims;
 }
 
+void createDummyValue(std::unique_ptr<Graph>& g, const std::string& name, std::unordered_map<std::string, Value*>& value_by_name_of) {
+  auto* undef = g->create(kCaptured, 1);
+  g->appendNode(undef);
+  undef->outputs()[0]->setUniqueName(name);
+  value_by_name_of[name] = undef->outputs()[0];
+}
+
 std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
   bool nested, const int ir_version) {
   std::unique_ptr<Graph> g(new Graph());
@@ -315,10 +322,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
       if (!value_by_name_of.count(input) && nested) {
         // Undefined reference to an input in a nested block. This may be a
         // captured value. Create a dummy node that we ignore later.
-        auto* undef = g->create(kCaptured, 1);
-        g->appendNode(undef);
-        undef->outputs()[0]->setUniqueName(input);
-        value_by_name_of[input] = undef->outputs()[0];
+        createDummyValue(g, input, value_by_name_of);
       }
 
       if (!value_by_name_of.count(input)) {
@@ -336,10 +340,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
       // graph to be "inputs" of a dummy "output" node. The same lexical
       // scoping rules are valid here, thus we need to add a dummy node
       // in the case of an undefined reference
-      auto* undef = g->create(kCaptured, 1);
-      g->appendNode(undef);
-      undef->outputs()[0]->setUniqueName(gp.output(i).name());
-      value_by_name_of[gp.output(i).name()] = undef->outputs()[0];
+      createDummyValue(g, gp.output(i).name(), value_by_name_of);
     }
     const auto& output_tensor_type = gp.output(i).type().tensor_type();
     if (output_tensor_type.has_elem_type()) {
@@ -353,6 +354,10 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
 
   for (int i = 0; i < gp.value_info_size(); i++) {
     const auto& tensor_type = gp.value_info(i).type().tensor_type();
+    if (!value_by_name_of.count(gp.value_info(i).name())) {
+      // Ideally the model should not have a value_info whose name does not exist in the graph (unused); simply skip it
+      continue;
+    }
     if (tensor_type.has_elem_type()) {
       value_by_name_of[gp.value_info(i).name()]->setElemType(tensor_type.elem_type());
     }
