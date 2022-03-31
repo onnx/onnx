@@ -20,13 +20,11 @@ PYTEST_COMMAND="${PYTHON_BIN}pytest"
 $PIP_INSTALL_COMMAND --upgrade pip
 $PIP_INSTALL_COMMAND cmake
 
-# pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
-# Verify ONNX with the latest numpy
-if [ "$PY_VERSION" == "3.8" ] || [ "$PY_VERSION" == "3.9" ]; then
-    $PIP_INSTALL_COMMAND numpy==1.21.5 protobuf==3.16.0 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
-else
-    $PIP_INSTALL_COMMAND numpy protobuf==3.16.0 pytest==5.4.3 nbval ipython==7.16.1 || { echo "Installing Python requirements failed."; exit 1; }
-fi
+# Simply pip install -r requirements-release will bump into issue in i686 due to pip install cryptography failure
+# cryptography 2.6.1 is the last version support i686
+$PIP_INSTALL_COMMAND cryptography==2.6.1
+$PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
+
 $PIP_INSTALL_COMMAND dist/*manylinux2014_i686.whl
 
 # pytest with the built wheel
@@ -39,14 +37,7 @@ $PYTHON_COMAND workflow_scripts/test_generated_backend.py
 $PYTHON_COMAND onnx/backend/test/cmd_tools.py generate-data
 $PYTHON_COMAND workflow_scripts/test_generated_backend.py
 
-# Verify ONNX with the latest numpy
-if [ "$PY_VERSION" == "3.8" ] || [ "$PY_VERSION" == "3.9" ]; then
-    $PIP_UNINSTALL_COMMAND numpy onnx && $PIP_INSTALL_COMMAND numpy==1.21.5
-else
-    $PIP_UNINSTALL_COMMAND numpy onnx && $PIP_INSTALL_COMMAND numpy
-fi
-$PIP_INSTALL_COMMAND dist/*manylinux2014_i686.whl
-$PYTEST_COMMAND
+# The last numpy support for i686 is 1.21.5; Since this version is same as the version for build, no need to test it
 
 # Verify ONNX with the latest protobuf
 $PIP_UNINSTALL_COMMAND protobuf onnx && $PIP_INSTALL_COMMAND protobuf

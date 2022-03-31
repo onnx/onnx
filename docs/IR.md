@@ -114,6 +114,18 @@ Name|Type|Format|Description
 model_author|string|A comma-separated list of names.|The personal name of the author(s) of the model, and/or their organizations.
 model_license|string|Name or URL.|The well-known name or URL of the license under which the model is made available.
 
+### Operator Set Identifiers
+
+Each operator set is uniquely identified by a (domain, version) pair.
+
+Name|Type|Description
+|---|---|---|
+domain|string|The domain of the operator set being identified.
+version|int64|The version of the operator set being identified. Same as 'opset_version' in the operator set.
+
+The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published.
+
+Operator sets other than the default operator set MUST specify a domain and SHOULD use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
 ### Operator Sets
 
@@ -148,7 +160,7 @@ The properties of an operator definition are:
 
 Name|Type|Description
 |---|---|---|
-op_type|string|The name of the operator, as used in graph nodes. MUST be unique within the operator set’s domain.
+op_type|string|The name of the operator (case sensitive), as used in graph nodes. MUST be unique within the operator set’s domain.
 since_version|int64|The version of the operator set when this operator was introduced.
 status|OperatorStatus|One of ‘EXPERIMENTAL’ or ‘STABLE.’
 doc_string|string|A human-readable documentation string for this operator. Markdown is allowed.

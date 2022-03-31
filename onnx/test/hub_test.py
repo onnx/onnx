@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 import unittest
 import onnx.hub as hub
 from onnx import ModelProto

@@ -1,9 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from onnx import checker, helper, numpy_helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
 from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
@@ -17,10 +14,7 @@ import numpy as np  # type: ignore
 
 class TestShapeInference(unittest.TestCase):
     def _make_graph(self,
-                    # TODO: Use proper type annotation rather than string
-                    # once we drop support for Python 3.6.
-                    # See https://www.python.org/dev/peps/pep-0563/
-                    seed_values: Sequence[Union[Text, Tuple[Text, 'TensorProto.DataType', Any]]],
+                    seed_values: Sequence[Union[Text, Tuple[Text, TensorProto.DataType, Any]]],
                     nodes: List[NodeProto],
                     value_info: List[ValueInfoProto],
                     initializer: Optional[Sequence[TensorProto]] = None
@@ -373,6 +367,18 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (3, 4))])
+
+    def test_expand_symbolic_input(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (3, 1, 2)),
+             ('y', TensorProto.INT32, (1, 4, 2))],
+            [make_node("Shape", ['y'], ['shape']),
+             make_node("Expand", ['x', 'shape'], ['z'])],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('shape', TensorProto.INT64, (3,)),
+            make_tensor_value_info('z', TensorProto.INT32, (3, 4, 2))],
+            data_prop=True)
 
     def test_expand_dynamic_shape(self) -> None:
         graph = self._make_graph(

@@ -2,7 +2,6 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy
 # (Apache 2.0 License)
 # with own fixes to
