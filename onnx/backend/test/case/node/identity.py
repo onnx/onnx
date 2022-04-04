@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class Identity(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Identity',
             inputs=['x'],
@@ -31,7 +26,7 @@ class Identity(Base):
                name='test_identity')
 
     @staticmethod
-    def export_sequence():  # type: () -> None
+    def export_sequence() -> None:
         node = onnx.helper.make_node(
             'Identity',
             inputs=['x'],
@@ -51,7 +46,7 @@ class Identity(Base):
         expect(node, inputs=[data], outputs=[data], name='test_identity_sequence')
 
     @staticmethod
-    def export_identity_opt():  # type: () -> None
+    def export_identity_opt() -> None:
         ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
         seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
         opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)

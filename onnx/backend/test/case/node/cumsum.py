@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class CumSum(Base):
 
     @staticmethod
-    def export_cumsum_1d():  # type: () -> None
+    def export_cumsum_1d() -> None:
         node = onnx.helper.make_node(
             'CumSum',
             inputs=['x', 'axis'],
@@ -28,7 +23,7 @@ class CumSum(Base):
                name='test_cumsum_1d')
 
     @staticmethod
-    def export_cumsum_1d_exclusive():  # type: () -> None
+    def export_cumsum_1d_exclusive() -> None:
         node = onnx.helper.make_node(
             'CumSum',
             inputs=['x', 'axis'],
@@ -42,7 +37,7 @@ class CumSum(Base):
                name='test_cumsum_1d_exclusive')
 
     @staticmethod
-    def export_cumsum_1d_reverse():  # type: () -> None
+    def export_cumsum_1d_reverse() -> None:
         node = onnx.helper.make_node(
             'CumSum',
             inputs=['x', 'axis'],
@@ -56,7 +51,7 @@ class CumSum(Base):
                name='test_cumsum_1d_reverse')
 
     @staticmethod
-    def export_cumsum_1d_reverse_exclusive():  # type: () -> None
+    def export_cumsum_1d_reverse_exclusive() -> None:
         node = onnx.helper.make_node(
             'CumSum',
             inputs=['x', 'axis'],
@@ -71,7 +66,7 @@ class CumSum(Base):
                name='test_cumsum_1d_reverse_exclusive')
 
     @staticmethod
-    def export_cumsum_2d_axis_0():  # type: () -> None
+    def export_cumsum_2d_axis_0() -> None:
         node = onnx.helper.make_node(
             'CumSum',
             inputs=['x', 'axis'],
@@ -84,7 +79,7 @@ class CumSum(Base):
                name='test_cumsum_2d_axis_0')
 
     @staticmethod
-    def export_cumsum_2d_axis_1():  # type: () -> None
+    def export_cumsum_2d_axis_1() -> None:
         node = onnx.helper.make_node(
             'CumSum',
             inputs=['x', 'axis'],
@@ -97,7 +92,7 @@ class CumSum(Base):
                name='test_cumsum_2d_axis_1')
 
     @staticmethod
-    def export_cumsum_2d_negative_axis():  # type: () -> None
+    def export_cumsum_2d_negative_axis() -> None:
         node = onnx.helper.make_node(
             'CumSum',
             inputs=['x', 'axis'],

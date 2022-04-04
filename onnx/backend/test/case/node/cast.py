@@ -1,11 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
-
 # coding: utf-8
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
 
@@ -21,7 +16,7 @@ import sys
 class Cast(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         shape = (3, 4)
         test_cases = [
             ('FLOAT', 'FLOAT16'),

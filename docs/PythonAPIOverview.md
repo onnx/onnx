@@ -276,7 +276,7 @@ subgraph that is connected to the _main graph_ as attributes of these operators.
 from the first model with inputs from the second model. By default, inputs/outputs not present in the
 `io_map` argument will remain as inputs/outputs of the combined model.
 
-In this example we merge two models by connecting each output of the first model to an output in the second. The resulting model will have the same inputs as the first model and the same outputs as the second:
+In this example we merge two models by connecting each output of the first model to an input in the second. The resulting model will have the same inputs as the first model and the same outputs as the second:
 ```python
 import onnx
 

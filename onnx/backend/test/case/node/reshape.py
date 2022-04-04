@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -12,7 +7,7 @@ from ..base import Base
 from . import expect
 
 
-def reshape_reference_implementation(data, shape, allowzero=0):  # type: (np.ndarray, np.ndarray, int) -> np.ndarray
+def reshape_reference_implementation(data: np.ndarray, shape: np.ndarray, allowzero: int = 0) -> np.ndarray:
     # replace zeros with corresponding dim size
     # we need to do this because np.reshape doesn't support 0 by default unless 'allowzero' is set
     new_shape = np.copy(shape)
@@ -26,7 +21,7 @@ def reshape_reference_implementation(data, shape, allowzero=0):  # type: (np.nda
 class Reshape(Base):
 
     @staticmethod
-    def export_reshape():  # type: () -> None
+    def export_reshape() -> None:
         original_shape = [2, 3, 4]
         test_cases = {
             'reordered_all_dims': np.array([4, 2, 3], dtype=np.int64),
@@ -54,7 +49,7 @@ class Reshape(Base):
                    name='test_reshape_' + test_name)
 
     @staticmethod
-    def export_allowzero():  # type: () -> None
+    def export_allowzero() -> None:
         original_shape = [0, 3, 4]
         test_cases = {
             'allowzero_reordered': np.array([3, 4, 0], dtype=np.int64),

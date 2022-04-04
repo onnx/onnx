@@ -2074,7 +2074,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
-            "Constrains input to only numeric types.")
+            "Constrain input to only numeric types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Flatten_ver13_doc = R"DOC(

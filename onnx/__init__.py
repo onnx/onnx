@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
 
 from .onnx_cpp2py_export import ONNX_ML
@@ -27,7 +22,7 @@ from typing import Union, Text, IO, Optional, cast, TypeVar, Any
 
 
 # f should be either readable or a file path
-def _load_bytes(f):  # type: (Union[IO[bytes], Text]) -> bytes
+def _load_bytes(f: Union[IO[bytes], Text]) -> bytes:
     if hasattr(f, 'read') and callable(cast(IO[bytes], f).read):
         s = cast(IO[bytes], f).read()
     else:
@@ -38,7 +33,7 @@ def _load_bytes(f):  # type: (Union[IO[bytes], Text]) -> bytes
 
 # str should be bytes,
 # f should be either writable or a file path
-def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
+def _save_bytes(str: bytes, f: Union[IO[bytes], Text]) -> None:
     if hasattr(f, 'write') and callable(cast(IO[bytes], f).write):
         cast(IO[bytes], f).write(str)
     else:
@@ -47,7 +42,7 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
 
 
 # f should be either a readable file or a file path
-def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[Text]
+def _get_file_path(f: Union[IO[bytes], Text]) -> Optional[Text]:
     if isinstance(f, str):
         return os.path.abspath(f)
     if hasattr(f, 'name'):
@@ -55,15 +50,15 @@ def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[Text]
     return None
 
 
-def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) -> bytes
+def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
     '''
     Serialize a in-memory proto to bytes
 
-    @params
-    proto is a in-memory proto, such as a ModelProto, TensorProto, etc
+    Arguments:
+        proto: a in-memory proto, such as a ModelProto, TensorProto, etc
 
-    @return
-    Serialized proto in bytes
+    Returns:
+        Serialized proto in bytes
     '''
     if isinstance(proto, bytes):
         return proto
@@ -78,16 +73,16 @@ def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) 
 _Proto = TypeVar('_Proto', bound=google.protobuf.message.Message)
 
 
-def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
+def _deserialize(s: bytes, proto: _Proto) -> _Proto:
     '''
     Parse bytes into a in-memory proto
 
-    @params
-    s is bytes containing serialized proto
-    proto is a in-memory proto object
+    Arguments:
+        s: bytes containing serialized proto
+        proto: a in-memory proto object
 
-    @return
-    The proto instance filled in by s
+    Returns:
+        The proto instance filled in by s
     '''
     if not isinstance(s, bytes):
         raise ValueError('Parameter s must be bytes, but got type: {}'.format(type(s)))
@@ -104,18 +99,18 @@ def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
     return proto
 
 
-def load_model(f, format=None, load_external_data=True):  # type: (Union[IO[bytes], Text], Optional[Any], bool) -> ModelProto
+def load_model(f: Union[IO[bytes], Text], format: Optional[Any] = None, load_external_data: bool = True) -> ModelProto:
     '''
     Loads a serialized ModelProto into memory
     load_external_data is true if the external data under the same directory of the model and load the external data
     If not, users need to call load_external_data_for_model with directory to load
 
-    @params
-    f can be a file-like object (has "read" function) or a string containing a file name
-    format is for future use
+    Arguments:
+        f: can be a file-like object (has "read" function) or a string containing a file name
+        format: for future use
 
-    @return
-    Loaded in-memory ModelProto
+    Returns:
+        Loaded in-memory ModelProto
     '''
     s = _load_bytes(f)
     model = load_model_from_string(s, format=format)
@@ -129,65 +124,64 @@ def load_model(f, format=None, load_external_data=True):  # type: (Union[IO[byte
     return model
 
 
-def load_tensor(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any]) -> TensorProto
+def load_tensor(f: Union[IO[bytes], Text], format: Optional[Any] = None) -> TensorProto:
     '''
     Loads a serialized TensorProto into memory
 
-    @params
-    f can be a file-like object (has "read" function) or a string containing a file name
-    format is for future use
+    Arguments:
+        f: can be a file-like object (has "read" function) or a string containing a file name
+        format: for future use
 
-    @return
-    Loaded in-memory TensorProto
+    Returns:
+        Loaded in-memory TensorProto
     '''
     s = _load_bytes(f)
     return load_tensor_from_string(s, format=format)
 
 
-def load_model_from_string(s, format=None):  # type: (bytes, Optional[Any]) -> ModelProto
+def load_model_from_string(s: bytes, format: Optional[Any] = None) -> ModelProto:
     '''
     Loads a binary string (bytes) that contains serialized ModelProto
 
-    @params
-    s is a string, which contains serialized ModelProto
-    format is for future use
+    Arguments:
+        s: a string, which contains serialized ModelProto
+        format: for future use
 
-    @return
-    Loaded in-memory ModelProto
+    Returns:
+        Loaded in-memory ModelProto
     '''
     return _deserialize(s, ModelProto())
 
 
-def load_tensor_from_string(s, format=None):  # type: (bytes, Optional[Any]) -> TensorProto
+def load_tensor_from_string(s: bytes, format: Optional[Any] = None) -> TensorProto:
     '''
     Loads a binary string (bytes) that contains serialized TensorProto
 
-    @params
-    s is a string, which contains serialized TensorProto
-    format is for future use
+    Arguments:
+        s: a string, which contains serialized TensorProto
+        format: for future use
 
-    @return
-    Loaded in-memory TensorProto
+    Returns:
+        Loaded in-memory TensorProto
     '''
     return _deserialize(s, TensorProto())
 
 
-def save_model(proto, f, format=None, save_as_external_data=False, all_tensors_to_one_file=True, location=None, size_threshold=1024, convert_attribute=False):
-    # type: (Union[ModelProto, bytes], Union[IO[bytes], Text], Optional[Any], bool, bool, Optional[Text], int, bool) -> None
+def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], Text], format: Optional[Any] = None, save_as_external_data: bool = False, all_tensors_to_one_file: bool = True, location: Optional[Text] = None, size_threshold: int = 1024, convert_attribute: bool = False) -> None:
     '''
     Saves the ModelProto to the specified path and optionally, serialize tensors with raw data as external data before saving.
 
-    @params
-    proto: should be a in-memory ModelProto
-    f: can be a file-like object (has "write" function) or a string containing a file name format for future use
-    all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
-                             If false, save each tensor to a file named with the tensor name.
-    location: specify the external file that all tensors to save to.
-              If not specified, will use the model name.
-    size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold it will be converted
-                    to external data. To convert every tensor with raw data to external data set size_threshold=0.
-    convert_attribute: If true, convert all tensors to external data
-                       If false, convert only non-attribute tensors to external data
+    Arguments:
+        proto: should be a in-memory ModelProto
+        f: can be a file-like object (has "write" function) or a string containing a file name format for future use
+        all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
+            If false, save each tensor to a file named with the tensor name.
+        location: specify the external file that all tensors to save to.
+            If not specified, will use the model name.
+        size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold it will be converted
+            to external data. To convert every tensor with raw data to external data set size_threshold=0.
+        convert_attribute: If true, convert all tensors to external data
+            If false, convert only non-attribute tensors to external data
     '''
     if isinstance(proto, bytes):
         proto = _deserialize(proto, ModelProto())
@@ -204,14 +198,14 @@ def save_model(proto, f, format=None, save_as_external_data=False, all_tensors_t
     _save_bytes(s, f)
 
 
-def save_tensor(proto, f):  # type: (TensorProto, Union[IO[bytes], Text]) -> None
+def save_tensor(proto: TensorProto, f: Union[IO[bytes], Text]) -> None:
     '''
     Saves the TensorProto to the specified path.
 
-    @params
-    proto should be a in-memory TensorProto
-    f can be a file-like object (has "write" function) or a string containing a file name
-    format is for future use
+    Arguments:
+        proto: should be a in-memory TensorProto
+        f: can be a file-like object (has "write" function) or a string containing a file name
+        format: for future use
     '''
     s = _serialize(proto)
     _save_bytes(s, f)

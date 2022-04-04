@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 from typing import List, Any
 
@@ -24,7 +19,7 @@ def compute_loop_outputs(x, seq, trip_count):  # type: ignore
 class Loop(Base):
 
     @staticmethod
-    def export_loop_11():  # type: () -> None
+    def export_loop_11() -> None:
         # Given a tensor x of values [x1, ..., xN], and initial tensor y
         # sum up its elements using a scan
         # returning the final state (y+x1+x2+...+xN) as well the scan_output
@@ -132,7 +127,7 @@ class Loop(Base):
                name='test_loop11', opset_imports=[onnx.helper.make_opsetid("", 11)])
 
     @staticmethod
-    def export_loop_13():  # type: () -> None
+    def export_loop_13() -> None:
         # Given a tensor x of values [x1, ..., xN],
         # Return a sequence of tensors of
         #   [[x1], [x1, x2], ..., [x1, ..., xN]]
@@ -239,7 +234,7 @@ class Loop(Base):
         )
 
         trip_count = np.array(5).astype(np.int64)
-        seq_empty = []  # type: List[Any]
+        seq_empty: List[Any] = []
         seq_res = [x[:int(i)] for i in x]
         cond = np.array(1).astype(bool)
         expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
@@ -250,7 +245,7 @@ class Loop(Base):
                                       onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, []))])
 
     @staticmethod
-    def export_loop_16_none():  # type: () -> None
+    def export_loop_16_none() -> None:
         # Given a tensor sequence of values [x1, ..., xN], and an initial optional sequence of tensors [x0],
         # Return a concatenated sequence of tensors of
         #   [x0, [x1], [x1, x2], ..., [x1, ..., xN]]
@@ -423,7 +418,7 @@ class Loop(Base):
         trip_count = np.array(5).astype(np.int64)
         cond = np.array(1).astype(bool)
         seq_res = compute_loop_outputs(x, [x0], trip_count)
-        opt_seq_in = [x0]  # type: List[Any]
+        opt_seq_in: List[Any] = [x0]
         expect(node, inputs=[trip_count, cond, opt_seq_in], outputs=[seq_res],
                name='test_loop16_seq_none', opset_imports=[onnx.helper.make_opsetid("", 16)],
                input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, trip_count.shape),
