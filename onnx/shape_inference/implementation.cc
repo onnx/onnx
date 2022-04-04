@@ -479,6 +479,7 @@ class ShapeInferenceImplBase {
       const ShapeInferenceOptions& options_in,
       SymbolTable* symbol_table_in,
       const ModelLocalFunctionsMap& model_local_functions_map_in,
+      std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       const int ir_version_in = IR_VERSION // default the latest one
       )
@@ -488,6 +489,7 @@ class ShapeInferenceImplBase {
         options(options_in),
         symbol_table(symbol_table_in),
         model_local_functions_map(model_local_functions_map_in),
+        generated_shape_data_by_name(generated_shape_data_by_name_in),
         schema_registry(schema_registry_in),
         ir_version(ir_version_in),
         graph_inference_context{
@@ -530,6 +532,7 @@ static void InferShapesImpl(
     const ShapeInferenceOptions& options,
     SymbolTable* symbol_table,
     const ModelLocalFunctionsMap& model_local_functions_map,
+    std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
 ) {
@@ -540,6 +543,7 @@ static void InferShapesImpl(
       options,
       symbol_table,
       model_local_functions_map,
+      generated_shape_data_by_name,
       schema_registry,
       ir_version);
   base.process(*g);
