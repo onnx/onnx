@@ -31,7 +31,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
   * Use GitHub Action (`.github/workflows/release_win.yml`) under onnx repo to produce wheels for Windows.
 
 * Linux
-  * Use GitHub Action (`.github/workflows/release_linux_x86_64.yml`) and (`.github/workflows/release_linux_i686.yml`) under onnx repo to produce x64/i686 wheels for Linux.
+  * Use GitHub Action (`.github/workflows/release_linux_x86_64.yml`) and (`.github/workflows/release_linux_aarch64.yml`) under onnx repo to produce x64/aarch64 wheels for Linux.
 
 * Mac
   * Use GitHub Action (`.github/workflows/release_mac.yml`) under onnx repo to produce wheels for Mac.
