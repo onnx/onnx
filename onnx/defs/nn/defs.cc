@@ -2265,43 +2265,32 @@ void col2imShapeInference(InferenceContext& ctx) {
   }
 
   // inferencing final shape
-  auto final_image_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
   int block_shape_size = 0;
   if (static_cast<int>(block_shape.size()) > 0) {
     block_shape_size = block_shape[0] * block_shape[1];
   }
   auto size_of_output = static_cast<int>(image_shape.size());
-    if ((size_of_output > 0) && (block_shape_size > 0)) { // try full shape inference
-
-    if (static_cast<size_t>(input_shape.dim_size()) > 2) {
-      // input batch and channel dims
-      *final_image_shape->add_dim() = input_shape.dim(0);
-      *final_image_shape->add_dim() = input_shape.dim(1) / block_shape_size;
-    } else {
-      // input channel dim
-      *final_image_shape->add_dim() = input_shape.dim(0) / block_shape_size;
+  if (static_cast<size_t>(input_shape.dim_size()) == 3) {
+    // Input and Output have extra batch-dimension N:
+    Dim N, C, H, W;
+    N = input_shape.dim(0);
+    if (block_shape_size > 0)
+      C = input_shape.dim(1) / block_shape_size; // Otherwise, C is unknown.
+    if (size_of_output > 0) {
+      H.set_dim_value(image_shape[0]);
+      W.set_dim_value(image_shape[1]);
     }
-
-    // image_shape is appended to the end
-    for (int i = 0; i < size_of_output; ++i) {
-      final_image_shape->add_dim()->set_dim_value(image_shape[i]);
+    updateOutputShape(ctx, 0, {N, C, H, W});
+  } else {
+    // Input and Output have no batch-dimension N:
+    Dim C, H, W;
+    if (block_shape_size > 0)
+      C = input_shape.dim(0) / block_shape_size; // Otherwise, C is unknown.
+    if (size_of_output > 0) {
+      H.set_dim_value(image_shape[0]);
+      W.set_dim_value(image_shape[1]);
     }
-  } else { // fallback to rank inference otherwise
-
-    // input batch dim
-    if (static_cast<size_t>(input_shape.dim_size()) > 2) {
-      final_image_shape->add_dim();
-    }
-
-    // input channel dim
-    final_image_shape->add_dim();
-
-    // image_shape is appended to the end
-    int n_image_shape = ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value();
-    for (int i = 0; i < n_image_shape; ++i) {
-      final_image_shape->add_dim();
-    }
+    updateOutputShape(ctx, 0, {C, H, W});
   }
 
   return;
