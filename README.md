@@ -41,7 +41,7 @@ If you think some operator should be added to ONNX specification, please read
 [this document](docs/AddNewOp.md).
 
 # Discuss
-We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://slack.lfai.foundation/) for more real-time discussion
+We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-o65errpw-gMTbwNr7FnNbVXNVFkmyNA) to join the group) for more real-time discussion.
 
 # Follow Us
 Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
