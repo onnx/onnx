@@ -389,22 +389,22 @@ value of r, and specifying any start value < -r is equivalent to specifying a st
 value of 0.
 
 For example:
-Input tensor with shape: [2, 3, 4] 
+Input tensor with shape: [2, 3, 4]
 No attributes specified.
-Output: [2, 3, 4] 
+Output: [2, 3, 4]
 
-Input tensor with shape: [2, 3, 4] 
+Input tensor with shape: [2, 3, 4]
 start: -1
-Output: [4] 
+Output: [4]
 
-Input tensor with shape: [2, 3, 4] 
+Input tensor with shape: [2, 3, 4]
 end: -1
 Output: [2, 3]
 
-Input tensor with shape: [2, 3, 4] 
+Input tensor with shape: [2, 3, 4]
 start: 1
 end: 2
-Output: [3] 
+Output: [3]
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1368,7 +1368,7 @@ This ensures that the output value does not depend on the iteration order.
 
 `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
 tensor into `output` at the specified `indices`.
-In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2, 
+In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
 then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
 When `reduction` is set to "add", `output` is calculated as follows:
 
@@ -1486,8 +1486,8 @@ index of the entry itself.
 
 `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
 tensor into `output` at the specified `indices`.
-In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2, 
-then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update 
+In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
+then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
 corresponding to the [i][j] entry is performed as below:
 ```
   output[indices[i][j]][j] = updates[i][j] if axis = 0,
@@ -1947,7 +1947,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // axes not specified
               axes_not_specified = true;
           }
-  
+
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           std::transform(
@@ -1960,7 +1960,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (int i = 0; i < input_ndim; ++i) {
             if(!input_shape.dim(i).has_dim_value() && axes_not_specified) {
-                // if dim has a symbolic value and the axes spec want to act on all dims, 
+                // if dim has a symbolic value and the axes spec want to act on all dims,
                 // return early because we can't infer the shape
                 return;
             }
@@ -1973,9 +1973,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 // if axes not specified, do not keep shape if the dimension is equal to one
                 continue;
             } else if (!axes_not_specified && std::find(axes.begin(), axes.end(), i) != axes.end()) {
-              // if axes wants to explictly act on this dim, fail explicitly only if the 
-              // dim is numerical and != 1. If the dim is 1 or symbolic, remove it. If 
-              // the dim is symbolic, runtime engines should check that the dimension is 
+              // if axes wants to explictly act on this dim, fail explicitly only if the
+              // dim is numerical and != 1. If the dim is 1 or symbolic, remove it. If
+              // the dim is symbolic, runtime engines should check that the dimension is
               // actually 1 when the op is evaluated
               if (input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
@@ -2422,7 +2422,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           resizeShapeInference_opset7_to_10(ctx);
         }));
 
-static const char* Resize_ver13_doc = R"DOC(
+static const char* Resize_ver16_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * (roi_end - roi_start) * scale) if input \"sizes\" is not specified.
@@ -2451,7 +2451,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 
 ONNX_OPERATOR_SET_SCHEMA(
     Resize,
-    13,
+    16,
     OpSchema()
         .Attr(
             "mode",
@@ -2488,6 +2488,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "When coordinate_transformation_mode is \"tf_crop_and_resize\" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.",
             AttributeProto::FLOAT,
             static_cast<float>(0))
+        .Attr(
+            "antialias",
+            "If set to 1, \"linear\" and \"cubic\" interpolation modes will use an antialiasing filter when downscaling. "
+            "Antialiasing is achieved by stretching the resampling filter by a factor max(1, 1 / scale), which means that when downsampling, more input pixels contribute to an output pixel.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(
             0,
             "X",
@@ -2544,7 +2550,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
-        .SetDoc(Resize_ver13_doc)
+        .SetDoc(Resize_ver16_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           resizeShapeInference(ctx, true);
         }));
