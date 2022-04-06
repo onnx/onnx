@@ -1970,7 +1970,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "output",
-            "Output tensor of the same dimension and type as tensor input. "
+            "Output tensor of the same dimensions and type as tensor input. "
             "output_dim[i] = input_dim[i] * repeats[i]",
             "T")
         .TypeConstraint(
@@ -2517,7 +2517,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
-            "Constrains input and output to only numeric types.")
+            "Constrain input and output to only numeric types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -3935,11 +3935,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             OpSchema::all_numeric_types(),
-            "Constrains input to only numeric types.")
+            "Constrain input to only numeric types.")
         .TypeConstraint(
             "T2",
             OpSchema::all_numeric_types(),
-            "Constrains input to only numeric types.")
+            "Constrain input to only numeric types.")
         .TypeConstraint(
             "T3",
             OpSchema::all_tensor_types(),
@@ -4059,7 +4059,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains to boolean tensors."));
+            "Constrain to boolean tensors."));
 
 static const char* Split_ver2_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified

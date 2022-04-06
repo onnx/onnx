@@ -32,7 +32,7 @@ ModelProto ConvertVersion(
 ```
 
 which accepts an input `ModelProto`, the initial opset version of the model,
-and the target opset verison, and which returns a new `ModelProto` which
+and the target opset version, and which returns a new `ModelProto` which
 is the result of apply all relevant adapters between initial_version and
 target_version. For a list of available passes, see
 [convert.h](/onnx/version_converter/convert.h).

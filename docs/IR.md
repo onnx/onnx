@@ -160,7 +160,7 @@ The properties of an operator definition are:
 
 Name|Type|Description
 |---|---|---|
-op_type|string|The name of the operator, as used in graph nodes. MUST be unique within the operator set’s domain.
+op_type|string|The name of the operator (case sensitive), as used in graph nodes. MUST be unique within the operator set’s domain.
 since_version|int64|The version of the operator set when this operator was introduced.
 status|OperatorStatus|One of ‘EXPERIMENTAL’ or ‘STABLE.’
 doc_string|string|A human-readable documentation string for this operator. Markdown is allowed.
