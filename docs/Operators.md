@@ -20177,7 +20177,8 @@ expect(node, inputs=[x], outputs=[y],
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
   where `dims` are the dimensions of `input`. Then `start[axes[i]]` is the adjusted
-  `starts[i]` clamped into range of valid indices, i.e. `[0, dims[axes[i]]-1]`.
+  `starts[i]` is clamped into range of `[0, dims[axes[i]]]` for positive stepping
+  and `[0, dims[axes[i]]-1]` for negative stepping.
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
