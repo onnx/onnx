@@ -151,15 +151,15 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="ArgMax-1"></a>**ArgMax-1**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
   The type of the output tensor is integer.
 
@@ -173,7 +173,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -200,7 +200,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="ArgMin-1"></a>**ArgMin-1**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
   The type of the output tensor is integer.
 
@@ -214,7 +214,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -904,9 +904,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
-<dd>Constrains input to integral tensors.</dd>
+<dd>Constrain input to integral tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Exp-1"></a>**Exp-1**</a>
@@ -1434,9 +1434,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrain input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="HardSigmoid-1"></a>**HardSigmoid-1**</a>
@@ -1929,9 +1929,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrain input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Log-1"></a>**Log-1**</a>
@@ -2634,7 +2634,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input/output to boolean tensors.</dd>
+<dd>Constrain input/output to boolean tensors.</dd>
 </dl>
 
 ### <a name="Or-1"></a>**Or-1**</a>
@@ -2679,9 +2679,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="PRelu-1"></a>**PRelu-1**</a>
@@ -3193,11 +3193,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceL1-1"></a>**ReduceL1-1**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the L1 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3210,7 +3210,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3236,11 +3236,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceL2-1"></a>**ReduceL2-1**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the L2 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3253,7 +3253,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3279,11 +3279,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceLogSum-1"></a>**ReduceLogSum-1**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the log sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3296,7 +3296,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3322,11 +3322,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceLogSumExp-1"></a>**ReduceLogSumExp-1**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3339,7 +3339,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3365,11 +3365,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceMax-1"></a>**ReduceMax-1**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the max of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3382,7 +3382,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3408,11 +3408,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceMean-1"></a>**ReduceMean-1**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the mean of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3425,7 +3425,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3451,11 +3451,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceMin-1"></a>**ReduceMin-1**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the min of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3468,7 +3468,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3494,11 +3494,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceProd-1"></a>**ReduceProd-1**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the product of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3511,7 +3511,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3537,11 +3537,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceSum-1"></a>**ReduceSum-1**</a>
 
-  Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3554,7 +3554,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3580,11 +3580,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceSumSquare-1"></a>**ReduceSumSquare-1**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the sum square of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3597,7 +3597,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -4581,9 +4581,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ## Version 2 of the default ONNX operator set
@@ -6175,7 +6175,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
+<dd>Output tensor of the same dimensions and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
 </dl>
 
 #### Type Constraints
@@ -6281,9 +6281,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Asin-7"></a>**Asin-7**</a>
@@ -6607,9 +6607,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
-<dd>Constrains input to integral tensors.</dd>
+<dd>Constrain input to integral tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="GRU-7"></a>**GRU-7**</a>
@@ -6834,9 +6834,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrain input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="LSTM-7"></a>**LSTM-7**</a>
@@ -7018,9 +7018,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrain input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Mul-7"></a>**Mul-7**</a>
@@ -7130,9 +7130,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="PRelu-7"></a>**PRelu-7**</a>
@@ -7485,9 +7485,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ## Version 8 of the default ONNX operator set
@@ -7496,7 +7496,7 @@ This version of the operator has been available since version 7 of the default O
   Broadcast the input tensor following the given shape and the broadcast rule.
   The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
   Dimensions are right alignment;
-  Two corresponding dimension must have the same value, or one of them is equal to 1.
+  Two corresponding dimensions must have the same value, or one of them is equal to 1.
   Also, this operator is similar to numpy.broadcast_to(input, shape),
   but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
   It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
@@ -7695,7 +7695,7 @@ This version of the operator has been available since version 8 of the default O
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-  functional programming constructs such as scan, fold, map, and zip and is intended to enable
+  functional programming constructs such as scan, fold, map, and zip, and is intended to enable
   generalizations of RNN-like constructs for sequence-to-sequence processing.
   Other tensors (referred to as state_variables here) can be used to carry a state
   when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -8137,7 +8137,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains to boolean tensors.</dd>
+<dd>Constrain to boolean tensors.</dd>
 </dl>
 
 ### <a name="Constant-9"></a>**Constant-9**</a>
@@ -8440,9 +8440,9 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="IsNaN-9"></a>**IsNaN-9**</a>
@@ -8507,9 +8507,9 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="MatMul-9"></a>**MatMul-9**</a>
@@ -8723,9 +8723,9 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 <dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type.</dd>
 </dl>
@@ -8768,7 +8768,7 @@ This version of the operator has been available since version 9 of the default O
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-  functional programming constructs such as scan, fold, map, and zip and is intended to enable
+  functional programming constructs such as scan, fold, map, and zip, and is intended to enable
   generalizations of RNN-like constructs for sequence-to-sequence processing.
   Other tensors (referred to as state_variables here) can be used to carry a state
   when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -9040,7 +9040,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 </dl>
 
 ### <a name="Sign-9"></a>**Sign-9**</a>
@@ -10292,8 +10292,8 @@ This version of the operator has been deprecated since version 10 of the default
 ### <a name="ArgMax-11"></a>**ArgMax-11**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
   The type of the output tensor is integer.
 
 #### Version
@@ -10306,7 +10306,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -10333,8 +10333,8 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="ArgMin-11"></a>**ArgMin-11**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
   The type of the output tensor is integer.
 
 #### Version
@@ -10347,7 +10347,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -10569,7 +10569,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains to boolean tensors.</dd>
+<dd>Constrain to boolean tensors.</dd>
 </dl>
 
 ### <a name="Concat-11"></a>**Concat-11**</a>
@@ -11049,9 +11049,9 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Flatten-11"></a>**Flatten-11**</a>
@@ -12041,9 +12041,9 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 <dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type.</dd>
 </dl>
@@ -12159,7 +12159,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input and output to only numeric types.</dd>
+<dd>Constrain input and output to only numeric types.</dd>
 </dl>
 
 ### <a name="Range-11"></a>**Range-11**</a>
@@ -12221,11 +12221,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceL1-11"></a>**ReduceL1-11**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the L1 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12238,7 +12238,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12264,11 +12264,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceL2-11"></a>**ReduceL2-11**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the L2 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12281,7 +12281,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12307,11 +12307,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceLogSum-11"></a>**ReduceLogSum-11**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the log sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12324,7 +12324,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12350,11 +12350,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceLogSumExp-11"></a>**ReduceLogSumExp-11**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12367,7 +12367,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12393,11 +12393,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceMax-11"></a>**ReduceMax-11**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the max of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12410,7 +12410,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12436,11 +12436,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceMean-11"></a>**ReduceMean-11**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the mean of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12453,7 +12453,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12479,11 +12479,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceMin-11"></a>**ReduceMin-11**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the min of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12496,7 +12496,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12522,11 +12522,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceProd-11"></a>**ReduceProd-11**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the product of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12539,7 +12539,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12565,11 +12565,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceSum-11"></a>**ReduceSum-11**</a>
 
-  Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12582,7 +12582,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12608,11 +12608,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceSumSquare-11"></a>**ReduceSumSquare-11**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the sum square of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12625,7 +12625,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12772,7 +12772,7 @@ This version of the operator has been available since version 11 of the default 
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-  functional programming constructs such as scan, fold, map, and zip and is intended to enable
+  functional programming constructs such as scan, fold, map, and zip, and is intended to enable
   generalizations of RNN-like constructs for sequence-to-sequence processing.
   Other tensors (referred to as state_variables here) can be used to carry a state
   when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -13866,8 +13866,8 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="ArgMax-12"></a>**ArgMax-12**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the max
   is selected if the max appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -13883,7 +13883,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -13912,8 +13912,8 @@ This version of the operator has been available since version 12 of the default 
 ### <a name="ArgMin-12"></a>**ArgMin-12**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the min
   is selected if the min appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -13929,7 +13929,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -14353,9 +14353,9 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="LessOrEqual-12"></a>**LessOrEqual-12**</a>
@@ -14389,9 +14389,9 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Max-12"></a>**Max-12**</a>
@@ -14683,11 +14683,11 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="ReduceMax-12"></a>**ReduceMax-12**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the max of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -14700,7 +14700,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -14726,11 +14726,11 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="ReduceMin-12"></a>**ReduceMin-12**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the min of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -14743,7 +14743,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -14911,8 +14911,8 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="ArgMax-13"></a>**ArgMax-13**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equals 0, then the resulting tensor has the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the max
   is selected if the max appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -14928,7 +14928,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -14957,8 +14957,8 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="ArgMin-13"></a>**ArgMin-13**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equals 0, then the resulting tensor has the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the min
   is selected if the min appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -14974,7 +14974,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -15434,9 +15434,9 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Erf-13"></a>**Erf-13**</a>
@@ -15502,7 +15502,7 @@ This version of the operator has been available since version 13 of the default 
   Broadcast the input tensor following the given shape and the broadcast rule.
   The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
   Dimensions are right alignment;
-  Two corresponding dimension must have the same value, or one of them is equal to 1.
+  Two corresponding dimensions must have the same value, or one of them is equal to 1.
   Also, this operator is similar to numpy.broadcast_to(input, shape),
   but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
   It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
@@ -16005,9 +16005,9 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Hardmax-13"></a>**Hardmax-13**</a>
@@ -16238,9 +16238,9 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Log-13"></a>**Log-13**</a>
@@ -17161,11 +17161,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL1-13"></a>**ReduceL1-13**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the L1 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17178,7 +17178,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17204,11 +17204,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL2-13"></a>**ReduceL2-13**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the L2 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17221,7 +17221,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17247,11 +17247,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSum-13"></a>**ReduceLogSum-13**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the log sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17264,7 +17264,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17290,11 +17290,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSumExp-13"></a>**ReduceLogSumExp-13**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17307,7 +17307,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17333,11 +17333,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMax-13"></a>**ReduceMax-13**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the max of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17350,7 +17350,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17376,11 +17376,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMean-13"></a>**ReduceMean-13**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the mean of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17393,7 +17393,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17419,11 +17419,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMin-13"></a>**ReduceMin-13**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the min of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17436,7 +17436,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17462,11 +17462,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceProd-13"></a>**ReduceProd-13**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the product of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17479,7 +17479,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17505,11 +17505,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSum-13"></a>**ReduceSum-13**</a>
 
-  Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17520,7 +17520,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
 <dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
@@ -17550,11 +17550,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSumSquare-13"></a>**ReduceSumSquare-13**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  Computes the sum square of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
 
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17567,7 +17567,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -18040,19 +18040,37 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Slice-13"></a>**Slice-13**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
-  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
-  dimension and step for each axis in the list of axes, it uses this information to
-  slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represents number of elements before the end of that
-  dimension. If the value passed to start or end is larger than the `n` (the
-  number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`
-  when sclicing forward and 'INT_MIN' when slicing backward.
-  If a negative value is passed for step, it represents slicing backward.
-  However step value cannot be 0.
-  If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+  https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-and-striding
+
+  Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
+  of its input `data` tensor.
+
+  An effective `start[i]`, `end[i]`, and `step[i]` must be computed for each `i`
+  in `[0, ... r-1]` where `r = rank(input)` as follows:
+
+  If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
+
+  The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
+  `dims` are the dimensions of `input` and `step[i] = `1.
+
+  All negative elements of `axes` are made non-negatve by adding `r` to them, where
+  `r =rank(input)`.
+
+  All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
+  where `dims` are the dimensions of `input`. Then `start[axes[i]]` is the adjusted
+  `starts[i]` clamped into range of valid indices, i.e. `[0, dims[axes[i]]-1]`.
+
+  The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
+  accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
+  `end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
+  is clamped to `[-1, ends[i]-1]`.
+
+  Finally, `step[axes[i]] = steps[i]`.
+
+  For slicing to the end of a dimension with unknown size, it is recommended to pass
+  in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
+
   Example 1:
     data = [
         [1, 2, 3, 4],
@@ -18090,9 +18108,9 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>ends</tt> (non-differentiable) : Tind</dt>
 <dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
-<dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
 <dt><tt>steps</tt> (optional, non-differentiable) : Tind</dt>
-<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1.</dd>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1s.</dd>
 </dl>
 
 #### Outputs
@@ -18492,7 +18510,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
+<dd>Output tensor of the same dimensions and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
 </dl>
 
 #### Type Constraints
@@ -19683,9 +19701,9 @@ This version of the operator has been available since version 15 of the default 
 
 <dl>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
-<dd>Constrains input type to all tensor and sequence types.</dd>
+<dd>Constrain input type to all tensor and sequence types.</dd>
 <dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
-<dd>Constrains output type to all optional tensor or optional sequence types.</dd>
+<dd>Constrain output type to all optional tensor or optional sequence types.</dd>
 </dl>
 
 ### <a name="OptionalGetElement-15"></a>**OptionalGetElement-15**</a>
@@ -19715,7 +19733,7 @@ This version of the operator has been available since version 15 of the default 
 
 <dl>
 <dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
-<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dd>Constrain input type to optional tensor and optional sequence types.</dd>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain output type to all tensor or sequence types.</dd>
 </dl>
@@ -19746,9 +19764,9 @@ This version of the operator has been available since version 15 of the default 
 
 <dl>
 <dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
-<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dd>Constrain input type to optional tensor and optional sequence types.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Constrains output to a boolean tensor.</dd>
+<dd>Constrain output to a boolean tensor.</dd>
 </dl>
 
 ### <a name="Pow-15"></a>**Pow-15**</a>
@@ -19795,7 +19813,7 @@ This version of the operator has been available since version 15 of the default 
   The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
   If the end axis is omitted, the axes upto the last one will be included.
   Negative axes indicate counting back from the last axis.
-  Note that axes will be clipped to the range [0, r-1], where r is the
+  Note that axes will be clamped to the range [0, r-1], where r is the
   rank of the input tensor if they are out-of-range (after adding r in the case of
   negative axis). Thus, specifying any end value > r is equivalent to specifying an end
   value of r, and specifying any start value < -r is equivalent to specifying a start
@@ -19887,9 +19905,9 @@ This version of the operator has been available since version 16 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="GridSample-16"></a>**GridSample-16**</a>
@@ -20084,9 +20102,9 @@ This version of the operator has been available since version 16 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Loop-16"></a>**Loop-16**</a>
@@ -20370,7 +20388,7 @@ This version of the operator has been available since version 16 of the default 
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-  functional programming constructs such as scan, fold, map, and zip and is intended to enable
+  functional programming constructs such as scan, fold, map, and zip, and is intended to enable
   generalizations of RNN-like constructs for sequence-to-sequence processing.
   Other tensors (referred to as state_variables here) can be used to carry a state
   when iterating from one element to another (similar to hidden-state in RNNs, also referred
