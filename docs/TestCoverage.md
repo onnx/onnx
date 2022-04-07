@@ -12217,8 +12217,7 @@ y0 = [x0[i] + x1 for i in range(3)]
 input_type_protos = [
     onnx.helper.make_sequence_type_proto(
         onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
-    onnx.helper.make_sequence_type_proto(
-        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+    onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N']),
 ]
 output_type_protos = [
     onnx.helper.make_sequence_type_proto(
@@ -12256,7 +12255,7 @@ x0 = [np.random.uniform(0.0, 1.0, N[k]).astype(np.float32)
       for k in range(3)]
 x1 = [np.random.uniform(0.0, 1.0, N[k]).astype(np.float32)
       for k in range(3)]
-y0 = x0 + x1
+y0 = [x0[k] + x1[k] for k in range(3)]
 input_type_protos = [
     onnx.helper.make_sequence_type_proto(
         onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
@@ -12323,7 +12322,7 @@ body = onnx.helper.make_graph(
     [onnx.helper.make_tensor_value_info(
         'in0', onnx.TensorProto.FLOAT, ['N'])],
     [onnx.helper.make_tensor_value_info(
-        'out0', onnx.TensorProto.FLOAT, ['N'])]
+        'out0', onnx.TensorProto.FLOAT, ['M'])]
 )
 
 node = onnx.helper.make_node(
@@ -12360,11 +12359,11 @@ body = onnx.helper.make_graph(
      onnx.helper.make_node('Identity', ['in1'], ['out1'])],
     'seq_map_body',
     [onnx.helper.make_tensor_value_info('in0', onnx.TensorProto.FLOAT, ['N']),
-     onnx.helper.make_tensor_value_info('in1', onnx.TensorProto.FLOAT, ['N'])],
+     onnx.helper.make_tensor_value_info('in1', onnx.TensorProto.FLOAT, ['M'])],
     [onnx.helper.make_tensor_value_info(
         'out0', onnx.TensorProto.FLOAT, ['N']),
      onnx.helper.make_tensor_value_info(
-        'out1', onnx.TensorProto.FLOAT, ['N'])]
+        'out1', onnx.TensorProto.FLOAT, ['M'])]
 )
 
 node = onnx.helper.make_node(
@@ -12383,14 +12382,13 @@ y1 = [x1 for _ in range(3)]
 input_type_protos = [
     onnx.helper.make_sequence_type_proto(
         onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
-    onnx.helper.make_sequence_type_proto(
-        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+    onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['M']),
 ]
 output_type_protos = [
     onnx.helper.make_sequence_type_proto(
         onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
     onnx.helper.make_sequence_type_proto(
-        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['M'])),
 ]
 expect(node, inputs=[x0, x1], outputs=[y0, y1],
        input_type_protos=input_type_protos,
@@ -12408,9 +12406,9 @@ body = onnx.helper.make_graph(
      onnx.helper.make_node('Identity', ['in1'], ['out1'])],
     'seq_map_body',
     [onnx.helper.make_tensor_value_info('in0', onnx.TensorProto.FLOAT, ['N']),
-     onnx.helper.make_tensor_value_info('in1', onnx.TensorProto.FLOAT, ['N'])],
+     onnx.helper.make_tensor_value_info('in1', onnx.TensorProto.FLOAT, ['M'])],
     [onnx.helper.make_tensor_value_info('out0', onnx.TensorProto.FLOAT, ['N']),
-     onnx.helper.make_tensor_value_info('out1', onnx.TensorProto.FLOAT, ['N'])]
+     onnx.helper.make_tensor_value_info('out1', onnx.TensorProto.FLOAT, ['M'])]
 )
 
 node = onnx.helper.make_node(
@@ -12430,13 +12428,13 @@ input_type_protos = [
     onnx.helper.make_sequence_type_proto(
         onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
     onnx.helper.make_sequence_type_proto(
-        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['M'])),
 ]
 output_type_protos = [
     onnx.helper.make_sequence_type_proto(
         onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
     onnx.helper.make_sequence_type_proto(
-        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['M'])),
 ]
 expect(node, inputs=[x0, x1], outputs=[y0, y1],
        input_type_protos=input_type_protos,

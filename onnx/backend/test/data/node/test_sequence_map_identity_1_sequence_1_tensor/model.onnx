@@ -1,4 +1,4 @@
-backend-test:É
+backend-test:Å
 º
 x0
 x1y0y1"SequenceMap*š
@@ -12,21 +12,20 @@
 NZ
 in1
 	
-Nb
+Mb
 out0
 	
 Nb
 out1
 	
-N .test_sequence_map_identity_1_sequence_1_tensorZ
+M .test_sequence_map_identity_1_sequence_1_tensorZ
 x0"
 
 	
-NZ
-x1"
-
+NZ
+x1
 	
-Nb
+Mb
 y0"
 
 	
@@ -34,4 +33,4 @@
 y1"
 
 	
-NB
+MB
