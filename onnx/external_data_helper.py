@@ -185,10 +185,22 @@ def _get_all_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
                  _get_attribute_tensors(onnx_model_proto))
 
 
+def _get_initializer_tensors_from_graph(onnx_model_proto_graph) -> Iterable[TensorProto]:
+    """Create an iterator of initializer tensors from ONNX model graph."""
+    for initializer in onnx_model_proto_graph.initializer:
+        yield initializer
+    for node in onnx_model_proto_graph.node:
+        for attr in node.attribute:
+            if attr.type == AttributeProto.AttributeType.GRAPH:
+                yield from _get_initializer_tensors_from_graph(attr.g)
+            if attr.type == AttributeProto.AttributeType.GRAPHS:
+                for g in attr.graphs:
+                    yield from _get_initializer_tensors_from_graph(g)
+
+
 def _get_initializer_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
     """Create an iterator of initializer tensors from ONNX model."""
-    for initializer in onnx_model_proto.graph.initializer:
-        yield initializer
+    yield from _get_initializer_tensors_from_graph(onnx_model_proto.graph)
 
 
 def _get_attribute_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
