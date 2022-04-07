@@ -6,7 +6,7 @@ import sys
 from itertools import chain
 from typing import Iterable, Text, Optional
 
-from .onnx_pb import TensorProto, ModelProto
+from .onnx_pb import TensorProto, ModelProto, AttributeProto, GraphProto
 
 
 class ExternalDataInfo(object):
@@ -185,7 +185,7 @@ def _get_all_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
                  _get_attribute_tensors(onnx_model_proto))
 
 
-def _get_initializer_tensors_from_graph(onnx_model_proto_graph) -> Iterable[TensorProto]:
+def _get_initializer_tensors_from_graph(onnx_model_proto_graph: GraphProto) -> Iterable[TensorProto]:
     """Create an iterator of initializer tensors from ONNX model graph."""
     for initializer in onnx_model_proto_graph.initializer:
         yield initializer
