@@ -17,13 +17,12 @@ class Pad_10_11 final : public Adapter {
       // Turn pads attribute into input
       Tensor t_pads;
       t_pads.elem_type() = TensorProto_DataType_INT64;
-      int input_rank = node->inputs()[0]->sizes().size();
-      t_pads.sizes() = std::vector<int64_t> {2 * input_rank};
       auto& data_pads = t_pads.int64s();
       for (int64_t shape : node->is(kpads)) {
         data_pads.emplace_back(shape);
       }
-      Value* v_pads = graph->addInitializerAndInput(t_pads);
+      t_pads.sizes() = std::vector<int64_t> {(int64_t)data_pads.size()};
+      Value* v_pads = graph->addInitializerAndCreateValue(t_pads);
       node->addInput(v_pads);
       node->removeAttribute(kpads);
       // Turn value attribute into input

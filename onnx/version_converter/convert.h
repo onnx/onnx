@@ -8,32 +8,23 @@
 #pragma once
 
 #include "onnx/version_converter/BaseConverter.h"
-#include "onnx/version_converter/adapters/argmax_argmin_12_11.h"
-#include "onnx/version_converter/adapters/averagepool_7_6.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
-#include "onnx/version_converter/adapters/batch_normalization_6_5.h"
-#include "onnx/version_converter/adapters/batch_normalization_6_7.h"
-#include "onnx/version_converter/adapters/batch_normalization_8_9.h"
 #include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
 #include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/clip_10_11.h"
 #include "onnx/version_converter/adapters/compatible.h"
-#include "onnx/version_converter/adapters/concat_3_4.h"
 #include "onnx/version_converter/adapters/dropout_11_12.h"
-#include "onnx/version_converter/adapters/dropout_6_7.h"
 #include "onnx/version_converter/adapters/extend_supported_types.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
-#include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
-#include "onnx/version_converter/adapters/set_is_test.h"
 #include "onnx/version_converter/adapters/split_12_13.h"
 #include "onnx/version_converter/adapters/split_13_12.h"
 #include "onnx/version_converter/adapters/sum_8_7.h"
@@ -42,8 +33,6 @@
 #include "onnx/version_converter/adapters/upsample_6_7.h"
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
-#include "onnx/version_converter/adapters/add_layout.h"
-#include "onnx/version_converter/adapters/remove_layout.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
 #include "onnx/version_converter/adapters/topk_9_10.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -51,7 +40,8 @@
 #include "onnx/version_converter/adapters/softmax_12_13.h"
 #include "onnx/version_converter/adapters/batch_normalization_13_14.h"
 #include "onnx/version_converter/adapters/upsample_9_10.h"
-#include "onnx/version_converter/adapters/roialign_15_16.h"
+
+#include "onnx/version_converter/adapters/transformers.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -135,7 +125,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       // Missing in this group: GRU
 
       /******** 3 -> 4 ********/
-      registerAdapter(make_unique<Concat_3_4>());
+      registerAdapter("Concat", 3, 4, SetAttributeIfAbsent(kaxis, 1));
 
       /******** 4 -> 3 ********/
       std::vector<TensorProto_DataType> concat_unallowed_types = {
@@ -155,64 +145,36 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
       /******** 5 -> 6 ********/
       // Missing in this group: Cast, Tile
-      registerAdapter(make_unique<RemoveConsumedInputs>("Add",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Relu",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Sum",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Dropout",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Abs",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Ceil",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Clip",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Div",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Elu",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Exp",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Floor",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("HardSigmoid",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("InstanceNormalization",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("LeakyRelu",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Log",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Max",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Mean",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Min",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Neg",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("PRelu",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Reciprocal",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Selu",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Sigmoid",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Sqrt",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Sub",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Tanh",
-        OpSetID(5), OpSetID(6)));
+      auto removeConsumedInputs = RemoveAttribute(kconsumed_inputs);
+      registerAdapter("Add", 5, 6, removeConsumedInputs);
+      registerAdapter("Mul", 5, 6, removeConsumedInputs);
+      registerAdapter(make_unique<CompatibleAdapter>("Gemm", OpSetID(5), OpSetID(6)));
+      registerAdapter("Relu", 5, 6, removeConsumedInputs);
+      registerAdapter("BatchNormalization", 5, 6, removeConsumedInputs);
+      registerAdapter("Sum", 5, 6, removeConsumedInputs);
+      registerAdapter("Dropout", 5, 6, removeConsumedInputs);
+      registerAdapter("Abs", 5, 6, removeConsumedInputs);
+      registerAdapter("Ceil", 5, 6, removeConsumedInputs);
+      registerAdapter("Clip", 5, 6, removeConsumedInputs);
+      registerAdapter("Div", 5, 6, removeConsumedInputs);
+      registerAdapter("Elu", 5, 6, removeConsumedInputs);
+      registerAdapter("Exp", 5, 6, removeConsumedInputs);
+      registerAdapter("Floor", 5, 6, removeConsumedInputs);
+      registerAdapter("HardSigmoid", 5, 6, removeConsumedInputs);
+      registerAdapter("InstanceNormalization", 5, 6, removeConsumedInputs);
+      registerAdapter("LeakyRelu", 5, 6, removeConsumedInputs);
+      registerAdapter("Log", 5, 6, removeConsumedInputs);
+      registerAdapter("Max", 5, 6, removeConsumedInputs);
+      registerAdapter("Mean", 5, 6, removeConsumedInputs);
+      registerAdapter("Min", 5, 6, removeConsumedInputs);
+      registerAdapter("Neg", 5, 6, removeConsumedInputs);
+      registerAdapter("PRelu", 5, 6, removeConsumedInputs);
+      registerAdapter("Reciprocal", 5, 6, removeConsumedInputs);
+      registerAdapter("Selu", 5, 6, removeConsumedInputs);
+      registerAdapter("Sigmoid", 5, 6, removeConsumedInputs);
+      registerAdapter("Sqrt", 5, 6, removeConsumedInputs);
+      registerAdapter("Sub", 5, 6, removeConsumedInputs);
+      registerAdapter("Tanh", 5, 6, removeConsumedInputs);
 
       /******** 6 -> 5 ********/
       std::vector<TensorProto_DataType> broadcast_unallowed_types = {
@@ -238,7 +200,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(6), OpSetID(5), int_unallowed_types));
       registerAdapter(make_unique<TypeRestriction>("Neg",
         OpSetID(6), OpSetID(5), neg_unallowed_types));
-      registerAdapter(make_unique<BatchNormalization_6_5>());
+      registerAdapter("BatchNormalization", 6, 5, SetAttribute(kconsumed_inputs, std::vector<int64_t>({0, 0})));
       registerAdapter(make_unique<CompatibleAdapter>("Gemm",
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<CompatibleAdapter>("Relu",
@@ -265,8 +227,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Sub",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<Gemm_6_7>());
-      registerAdapter(make_unique<BatchNormalization_6_7>());
-      registerAdapter(make_unique<Dropout_6_7>());
+      registerAdapter("BatchNormalization", 6, 7, RemoveAttributeNotEq(kis_test, 0));
+      registerAdapter("Dropout", 6, 7, RemoveAttributeNotEq(kis_test, 0));
       registerAdapter(make_unique<Upsample_6_7>());
 
       /******** 7 -> 6 ********/
@@ -282,12 +244,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Sub",
         OpSetID(7), OpSetID(6)));
-      registerAdapter(make_unique<SetIsTest>("BatchNormalization",
-        OpSetID(7), OpSetID(6)));
-      registerAdapter(make_unique<SetIsTest>("Dropout",
-        OpSetID(7), OpSetID(6)));
+      registerAdapter("BatchNormalization", 7, 6, SetAttribute(kis_test, 1));
+      registerAdapter("Dropout", 7, 6, SetAttribute(kis_test, 1));
       registerAdapter(make_unique<Gemm_7_6>());
-      registerAdapter(make_unique<AveragePool_7_6>());
+      registerAdapter("AveragePool", 7, 6, RemoveAttribute(kcount_include_pad, 0));
 
       /******** 7 -> 8 ********/
       registerAdapter(make_unique<CompatibleAdapter>("Max",
@@ -328,7 +288,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(8), OpSetID(9)));
       registerAdapter(make_unique<CompatibleAdapter>("Cast",
         OpSetID(8), OpSetID(9)));
-      registerAdapter(make_unique<BatchNormalization_8_9>());
+      registerAdapter("BatchNormalization", 8, 9, RemoveAttribute(kspatial, 1));
       registerAdapter(make_unique<Scan_8_9>());
       registerAdapter(make_unique<Upsample_8_9>());
 
@@ -536,8 +496,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       /******** 12 -> 11 ********/
       std::vector<TensorProto_DataType> maxpool_unallowed_types = {
         TensorProto_DataType_UINT8, TensorProto_DataType_INT8};
-      registerAdapter(make_unique<ArgMaxArgMin_12_11>("ArgMax"));
-      registerAdapter(make_unique<ArgMaxArgMin_12_11>("ArgMin"));
+      registerAdapter("ArgMax", 12, 11, RemoveAttribute(kselect_last_index, 0));
+      registerAdapter("ArgMin", 12, 11, RemoveAttribute(kselect_last_index, 0));
       registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
         OpSetID(12), OpSetID(11)));
       registerAdapter(make_unique<TypeRestriction>("Clip",
@@ -738,15 +698,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
           "Reshape", OpSetID(13), OpSetID(14)));
       registerAdapter(make_unique<CompatibleAdapter>(
           "Sub", OpSetID(13), OpSetID(14)));
-      registerAdapter(make_unique<AddLayout>("GRU"));
-      registerAdapter(make_unique<AddLayout>("LSTM"));
-      registerAdapter(make_unique<AddLayout>("RNN"));
+      registerAdapter("GRU", 13, 14, SetAttribute(klayout, 0));
+      registerAdapter("LSTM", 13, 14, SetAttribute(klayout, 0));
+      registerAdapter("RNN", 13, 14, SetAttribute(klayout, 0));
       registerAdapter(make_unique<BatchNormalization_13_14>());
 
       /******** 14 -> 13 ********/
-      registerAdapter(make_unique<RemoveLayout>("GRU"));
-      registerAdapter(make_unique<RemoveLayout>("LSTM"));
-      registerAdapter(make_unique<RemoveLayout>("RNN"));
+    registerAdapter("GRU", 14, 13, RemoveAttribute(klayout, 0));
+    registerAdapter("LSTM", 14, 13, RemoveAttribute(klayout, 0));
+    registerAdapter("RNN", 14, 13, RemoveAttribute(klayout, 0));
 
       /******** 14 -> 15 ********/
       registerAdapter(make_unique<CompatibleAdapter>(
@@ -757,7 +717,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
           "Shape", OpSetID(14), OpSetID(15)));
 
       /******** 15 -> 16 ********/
-      registerAdapter(make_unique<RoiAlign_15_16>());
+      registerAdapter("RoiAlign", 15, 16, SetAttribute(kcoordinate_transformation_mode, "output_half_pixel"));
       registerAdapter(make_unique<CompatibleAdapter>(
           "ScatterElements", OpSetID(15), OpSetID(16)));
       registerAdapter(make_unique<CompatibleAdapter>(
@@ -769,6 +729,16 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>("If",
         OpSetID(15), OpSetID(16)));
       registerAdapter(make_unique<CompatibleAdapter>("Where",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("Scan",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("LessOrEqual",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("GreaterOrEqual",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("LeakyRelu",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("PRelu",
         OpSetID(15), OpSetID(16)));
     }
 

@@ -14,6 +14,7 @@
 #include "onnx/common/status.h"
 #include "onnx/defs/schema.h"
 #include "tensor_proto_util.h"
+#include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {
 // Helper function to expand a function node given the function proto
@@ -104,6 +105,91 @@ class FunctionBodyHelper {
   static NodeDef Const(const std::string& name, const std::vector<T>& values) {
     return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(values)}}};
   }
+};
+
+class FunctionBuilder {
+ public:
+  FunctionBuilder(FunctionProto& funProto_) : funProto(funProto_) {}
+
+  FunctionBuilder& Add(const char* nodes_txt) {
+    OnnxParser parser(nodes_txt);
+    auto& nodes = *funProto.mutable_node();
+
+    while (!parser.EndOfInput()) {
+      auto status = parser.Parse(*nodes.Add());
+      if (!status.IsOK())
+        ONNX_THROW_EX(std::logic_error("Error parsing node:" + status.ErrorMessage()));
+    }
+
+    return *this;
+  }
+
+  FunctionBuilder& Add(const char* node_txt, const AttributeProto& attr) {
+    OnnxParser parser(node_txt);
+    auto& node = *funProto.add_node();
+    auto status = parser.Parse(node);
+    if (!status.IsOK()) {
+      ONNX_THROW_EX(std::logic_error("Error parsing node:" + status.ErrorMessage()));
+    }
+
+    if (!parser.EndOfInput()) {
+      ONNX_THROW_EX(std::logic_error("Error unexpected extra input in node:" + status.ErrorMessage()));
+    }
+
+    *node.add_attribute() = attr;
+
+    return *this;
+  }
+
+  template <typename T>
+  FunctionBuilder& Add(const char* node_txt, const std::string& attr_name, T attr_value) {
+    return Add(node_txt, MakeAttribute(attr_name, attr_value));
+  }
+
+  FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {
+    std::string constant_op(name);
+    constant_op += " = Constant()";
+    return Add(constant_op.c_str(), MakeAttribute("value", tensor));
+  }
+
+  // Creates a scalar constant (a tensor of rank zero).
+  template <typename T>
+  FunctionBuilder& Const(const std::string& name, T const_value) {
+    std::string constant_op(name);
+    constant_op += " = Constant()";
+    return Add (constant_op.c_str(), MakeAttribute("value", ToTensor(const_value)));
+  }
+
+  // Creates a 1D tensor constant consisting of a single value.
+  template <typename T>
+  FunctionBuilder& Const1D(const std::string& name, T const_value) {
+    std::string constant_op(name);
+    constant_op += " = Constant()";
+    auto tensor = ToTensor(const_value);
+    tensor.add_dims(1);
+    return Add (constant_op.c_str(), MakeAttribute("value", tensor));
+  }
+
+  // Creates a 1D tensor constant consisting of zero or more values.
+  template <typename T>
+  FunctionBuilder& Const(const std::string& name, const std::vector<T>& values) {
+    std::string constant_op(name);
+    constant_op += " = Constant()";
+    auto tensor = ToTensor(values);
+    tensor.add_dims(values.size());  // Treat as 1D tensor.
+
+    return Add (constant_op.c_str(), MakeAttribute("value", tensor));
+  }
+
+  FunctionBuilder& AddOpset(const char* domain, int version) {
+    auto* opset = funProto.add_opset_import();
+    opset->set_domain(domain);
+    opset->set_version(version);
+    return *this;
+  }
+
+ private:
+  FunctionProto& funProto;
 };
 
 } // namespace ONNX_NAMESPACE

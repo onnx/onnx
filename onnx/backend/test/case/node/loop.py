@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 from typing import List, Any
 
@@ -24,7 +19,7 @@ def compute_loop_outputs(x, seq, trip_count):  # type: ignore
 class Loop(Base):
 
     @staticmethod
-    def export_loop_11():  # type: () -> None
+    def export_loop_11() -> None:
         # Given a tensor x of values [x1, ..., xN], and initial tensor y
         # sum up its elements using a scan
         # returning the final state (y+x1+x2+...+xN) as well the scan_output
@@ -132,7 +127,7 @@ class Loop(Base):
                name='test_loop11', opset_imports=[onnx.helper.make_opsetid("", 11)])
 
     @staticmethod
-    def export_loop_13():  # type: () -> None
+    def export_loop_13() -> None:
         # Given a tensor x of values [x1, ..., xN],
         # Return a sequence of tensors of
         #   [[x1], [x1, x2], ..., [x1, ..., xN]]
@@ -239,7 +234,7 @@ class Loop(Base):
         )
 
         trip_count = np.array(5).astype(np.int64)
-        seq_empty = []  # type: List[Any]
+        seq_empty: List[Any] = []
         seq_res = [x[:int(i)] for i in x]
         cond = np.array(1).astype(bool)
         expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
@@ -250,20 +245,21 @@ class Loop(Base):
                                       onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, []))])
 
     @staticmethod
-    def export_loop_16_none():  # type: () -> None
-        # Given a tensor x of values [x1, ..., xN], and an initial optional sequence of tensors s1,
+    def export_loop_16_none() -> None:
+        # Given a tensor sequence of values [x1, ..., xN], and an initial optional sequence of tensors [x0],
         # Return a concatenated sequence of tensors of
-        #   [s1, [x1], [x1, x2], ..., [x1, ..., xN]]
+        #   [x0, [x1], [x1, x2], ..., [x1, ..., xN]]
 
-        ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, None)
+        ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, [])
         seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
         opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
         opt_in = onnx.helper.make_value_info('opt_seq_in', opt_in_tp)
-        seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+        seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, [])
         cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
         cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
         iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
 
+        x0 = np.array(0).astype(np.float32)
         x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
 
         optional_has_elem_node = onnx.helper.make_node(
@@ -284,25 +280,37 @@ class Loop(Base):
             outputs=['seq_in']
         )
 
-        seq_empty_in = onnx.helper.make_node(
-            'SequenceEmpty',
+        constant_in = onnx.helper.make_node(
+            'Constant',
             inputs=[],
-            outputs=['seq_empty']
+            outputs=['constant_in'],
+            value=onnx.helper.make_tensor(
+                name='const_tensor',
+                data_type=onnx.TensorProto.FLOAT,
+                dims=(),
+                vals=[0]
+            )
         )
 
-        then_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+        seq_const_in = onnx.helper.make_node(
+            'SequenceConstruct',
+            inputs=['constant_in'],
+            outputs=['init_seq_in']
+        )
+
+        then_seq_out = onnx.helper.make_tensor_sequence_value_info('init_seq_in', onnx.TensorProto.FLOAT, [])
         then_body = onnx.helper.make_graph(
-            [seq_empty_in],
+            [constant_in, seq_const_in],
             'then_body',
             [],
             [then_seq_out]
         )
 
-        else_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_out', onnx.TensorProto.FLOAT, None)
+        else_seq_out = onnx.helper.make_tensor_sequence_value_info('seq_in', onnx.TensorProto.FLOAT, [])
         else_body = onnx.helper.make_graph(
             [optional_get_elem],
             'else_body',
-            [opt_in],
+            [],
             [else_seq_out]
         )
 
@@ -409,9 +417,9 @@ class Loop(Base):
 
         trip_count = np.array(5).astype(np.int64)
         cond = np.array(1).astype(bool)
-        seq_empty = []  # type: List[Any]
-        seq_res = compute_loop_outputs(x, seq_empty, trip_count)
-        expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
+        seq_res = compute_loop_outputs(x, [x0], trip_count)
+        opt_seq_in: List[Any] = [x0]
+        expect(node, inputs=[trip_count, cond, opt_seq_in], outputs=[seq_res],
                name='test_loop16_seq_none', opset_imports=[onnx.helper.make_opsetid("", 16)],
                input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, trip_count.shape),
                                   onnx.helper.make_tensor_type_proto(onnx.TensorProto.BOOL, cond.shape),

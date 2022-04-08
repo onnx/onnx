@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -21,7 +16,7 @@ def compute_if_outputs(x, cond):  # type: ignore
 
 class If(Base):
     @staticmethod
-    def export_if():  # type: () -> None
+    def export_if() -> None:
         # Given a bool scalar input cond.
         # return constant tensor x if cond is True, otherwise return constant tensor y.
 
@@ -73,7 +68,7 @@ class If(Base):
                opset_imports=[onnx.helper.make_opsetid("", 11)])
 
     @staticmethod
-    def export_if_seq():  # type: () -> None
+    def export_if_seq() -> None:
         # Given a bool scalar input cond.
         # return constant sequence x if cond is True, otherwise return constant sequence y.
 
@@ -137,24 +132,23 @@ class If(Base):
                opset_imports=[onnx.helper.make_opsetid("", 13)])
 
     @staticmethod
-    def export_if_optional():  # type: () -> None
+    def export_if_optional() -> None:
         # Given a bool scalar input cond, return an empty optional sequence of
         # tensor if True, return an optional sequence with value x
         # (the input optional sequence) otherwise.
 
         ten_in_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
         seq_in_tp = onnx.helper.make_sequence_type_proto(ten_in_tp)
-        opt_in_tp = onnx.helper.make_optional_type_proto(seq_in_tp)
 
         then_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
         then_out_seq_tp = onnx.helper.make_sequence_type_proto(then_out_tensor_tp)
         then_out_opt_tp = onnx.helper.make_optional_type_proto(then_out_seq_tp)
-        then_out = onnx.helper.make_value_info('then_out', then_out_opt_tp)
+        then_out = onnx.helper.make_value_info('optional_empty', then_out_opt_tp)
 
         else_out_tensor_tp = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
         else_out_seq_tp = onnx.helper.make_sequence_type_proto(else_out_tensor_tp)
         else_out_opt_tp = onnx.helper.make_optional_type_proto(else_out_seq_tp)
-        else_out = onnx.helper.make_value_info('else_out', else_out_opt_tp)
+        else_out = onnx.helper.make_value_info('else_opt', else_out_opt_tp)
 
         x = [np.array([1, 2, 3, 4, 5]).astype(np.float32)]
         cond = np.array(0).astype(bool)
@@ -164,7 +158,7 @@ class If(Base):
             'Optional',
             inputs=[],
             outputs=['optional_empty'],
-            type=opt_in_tp
+            type=seq_in_tp
         )
 
         then_body = onnx.helper.make_graph(

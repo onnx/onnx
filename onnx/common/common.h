@@ -7,6 +7,7 @@
 #define ONNX_UNUSED_PARAMETER(x) (void)(x)
 
 #ifdef ONNX_NO_EXCEPTIONS
+#include <iostream>
 #define ONNX_THROW(...)                                   \
   do {                                                    \
     std::cerr << ONNX_NAMESPACE::MakeString(__VA_ARGS__); \

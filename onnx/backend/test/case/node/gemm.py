@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 from typing import Optional
 
@@ -13,8 +8,8 @@ from ..base import Base
 from . import expect
 
 
-def gemm_reference_implementation(A, B, C=None, alpha=1., beta=1., transA=0,
-                                  transB=0):  # type: (np.ndarray, np.ndarray, Optional[np.ndarray], float, float, int, int) -> np.ndarray
+def gemm_reference_implementation(A: np.ndarray, B: np.ndarray, C: Optional[np.ndarray] = None, alpha: float = 1., beta: float = 1., transA: int = 0,
+                                  transB: int = 0) -> np.ndarray:
     A = A if transA == 0 else A.T
     B = B if transB == 0 else B.T
     C = C if C is not None else np.array(0)
@@ -27,7 +22,7 @@ def gemm_reference_implementation(A, B, C=None, alpha=1., beta=1., transA=0,
 class Gemm(Base):
 
     @staticmethod
-    def export_default_zero_bias():  # type: () -> None
+    def export_default_zero_bias() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -41,7 +36,7 @@ class Gemm(Base):
                name='test_gemm_default_zero_bias')
 
     @staticmethod
-    def export_default_no_bias():  # type: () -> None
+    def export_default_no_bias() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b'],
@@ -54,7 +49,7 @@ class Gemm(Base):
                name='test_gemm_default_no_bias')
 
     @staticmethod
-    def export_default_scalar_bias():  # type: () -> None
+    def export_default_scalar_bias() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -68,7 +63,7 @@ class Gemm(Base):
                name='test_gemm_default_scalar_bias')
 
     @staticmethod
-    def export_default_single_elem_vector_bias():  # type: () -> None
+    def export_default_single_elem_vector_bias() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -82,7 +77,7 @@ class Gemm(Base):
                name='test_gemm_default_single_elem_vector_bias')
 
     @staticmethod
-    def export_default_vector_bias():  # type: () -> None
+    def export_default_vector_bias() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -96,7 +91,7 @@ class Gemm(Base):
                name='test_gemm_default_vector_bias')
 
     @staticmethod
-    def export_default_matrix_bias():  # type: () -> None
+    def export_default_matrix_bias() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -110,7 +105,7 @@ class Gemm(Base):
                name='test_gemm_default_matrix_bias')
 
     @staticmethod
-    def export_transposeA():  # type: () -> None
+    def export_transposeA() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -125,7 +120,7 @@ class Gemm(Base):
                name='test_gemm_transposeA')
 
     @staticmethod
-    def export_transposeB():  # type: () -> None
+    def export_transposeB() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -140,7 +135,7 @@ class Gemm(Base):
                name='test_gemm_transposeB')
 
     @staticmethod
-    def export_alpha():  # type: () -> None
+    def export_alpha() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -155,7 +150,7 @@ class Gemm(Base):
                name='test_gemm_alpha')
 
     @staticmethod
-    def export_beta():  # type: () -> None
+    def export_beta() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -170,7 +165,7 @@ class Gemm(Base):
                name='test_gemm_beta')
 
     @staticmethod
-    def export_all_attributes():  # type: () -> None
+    def export_all_attributes() -> None:
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],

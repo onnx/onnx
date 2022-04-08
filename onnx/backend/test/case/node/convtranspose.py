@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class ConvTranspose(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
                         [3., 4., 5.],
                         [6., 7., 8.]]]]).astype(np.float32)
@@ -44,7 +39,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose')
 
     @staticmethod
-    def export_convtranspose_1d():  # type: () -> None
+    def export_convtranspose_1d() -> None:
         x = np.array([[[0., 1., 2.]]]).astype(np.float32)  # (1, 1, 3)
 
         W = np.array([[[1., 1., 1.],  # (1, 2, 3)
@@ -58,7 +53,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_1d')
 
     @staticmethod
-    def export_convtranspose_3d():  # type: () -> None
+    def export_convtranspose_3d() -> None:
         x = np.array([[[[[0., 1., 2., 3., 4.],  # (1, 1, 3, 4, 5)
                          [5., 6., 7., 8., 9.],
                          [10., 11., 12., 13., 14.],
@@ -166,7 +161,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_3d')
 
     @staticmethod
-    def export_convtranspose_attributes():  # type: () -> None
+    def export_convtranspose_attributes() -> None:
         x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
                         [3., 4., 5.],
                         [6., 7., 8.]]]]).astype(np.float32)
@@ -222,7 +217,7 @@ class ConvTranspose(Base):
                name='test_convtranspose_kernel_shape')
 
     @staticmethod
-    def export_convtranspose_pads():  # type: () -> None
+    def export_convtranspose_pads() -> None:
         x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
                         [3., 4., 5.],
                         [6., 7., 8.]]]]).astype(np.float32)
@@ -257,7 +252,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pads')
 
     @staticmethod
-    def export_convtranspose_dilations():  # type: () -> None
+    def export_convtranspose_dilations() -> None:
         x = np.array([[[[3., 8., 1.],  # (1, 1, 3, 3)
                         [9., 5., 7.],
                         [3., 2., 6.]]]]).astype(np.float32)
@@ -275,7 +270,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_dilations')
 
     @staticmethod
-    def export_convtranspose_autopad_same():  # type: () -> None
+    def export_convtranspose_autopad_same() -> None:
         x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
                         [3., 4., 5.],
                         [6., 7., 8.]]]]).astype(np.float32)

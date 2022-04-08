@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class ReduceMin(Base):
 
     @staticmethod
-    def export_do_not_keepdims():  # type: () -> None
+    def export_do_not_keepdims() -> None:
         shape = [3, 2, 2]
         axes = [1]
         keepdims = 0
@@ -43,7 +38,7 @@ class ReduceMin(Base):
         expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_do_not_keepdims_random')
 
     @staticmethod
-    def export_keepdims():  # type: () -> None
+    def export_keepdims() -> None:
         shape = [3, 2, 2]
         axes = [1]
         keepdims = 1
@@ -70,7 +65,7 @@ class ReduceMin(Base):
         expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_keepdims_random')
 
     @staticmethod
-    def export_default_axes_keepdims():  # type: () -> None
+    def export_default_axes_keepdims() -> None:
         shape = [3, 2, 2]
         axes = None
         keepdims = 1
@@ -95,7 +90,7 @@ class ReduceMin(Base):
         expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_default_axes_keepdims_random')
 
     @staticmethod
-    def export_negative_axes_keepdims():  # type: () -> None
+    def export_negative_axes_keepdims() -> None:
         shape = [3, 2, 2]
         axes = [-2]
         keepdims = 1

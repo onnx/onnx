@@ -6,7 +6,7 @@
 // Adventurous users should note that the APIs will probably change.
 
 #pragma once
-
+#include "onnx/common/common.h"
 #include "onnx/common/ir.h"
 #include "onnx/onnx_pb.h"
 
@@ -35,7 +35,7 @@ class ConvertError final : public std::runtime_error {
 };
 
 #define fail_convert(...) \
-  throw ConvertError(MakeString(__VA_ARGS__));
+  ONNX_THROW_EX(ConvertError(MakeString(__VA_ARGS__)));
 
 void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g);
 

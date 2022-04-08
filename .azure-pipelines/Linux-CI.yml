@@ -1,5 +1,5 @@
 trigger:
-- master
+- main
 
 jobs:
 - job: 'Test'
@@ -7,13 +7,18 @@ jobs:
     vmImage: 'Ubuntu-18.04'
   strategy:
     matrix:
-      py36:
-        python.version: '3.6'
+      py39-ml-debug:
+        python.version: '3.9'
+        onnx_ml: 1
+        onnx_debug: 1
+        onnx_lite: 0
+      py38:
+        python.version: '3.8'
         onnx_ml: 0
         onnx_debug: 0
         onnx_lite: 1
-      py36-ml:
-        python.version: '3.6'
+      py38-ml:
+        python.version: '3.8'
         onnx_ml: 1
         onnx_debug: 0
         onnx_lite: 1
@@ -27,11 +32,6 @@ jobs:
         onnx_ml: 1
         onnx_debug: 0
         onnx_lite: 1
-      py37-ml-debug:
-        python.version: '3.7'
-        onnx_ml: 1
-        onnx_debug: 1
-        onnx_lite: 0
     maxParallel: 6
 
   steps:
@@ -45,16 +45,7 @@ jobs:
       python -m virtualenv py$(python.version)
       source py$(python.version)/bin/activate
 
-      git clone https://github.com/protocolbuffers/protobuf.git
-      cd protobuf
-      git checkout v3.16.0
-      git submodule update --init --recursive
-      mkdir build_source && cd build_source
-
-      cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-      make -j$(nproc)
-      sudo make install
-      cd ../..
+      source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
       python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt
@@ -79,11 +70,11 @@ jobs:
   - script: |
       source py$(python.version)/bin/activate
 
-      # lint python code
-      python -m pip install -q flake8
-      flake8 onnx
+      # style check (flake8 and mypy)
+      pip install .[lint]
+      bash tools/style.sh
       if [ $? -ne 0 ]; then
-        echo "flake8 returned failures"
+        echo "style check failed"
         exit 1
       fi
 
@@ -133,14 +124,17 @@ jobs:
 
       # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
       python -m pip uninstall -y onnx
-      python -m pip install -q --no-use-pep517 -e .[mypy]
-      python setup.py --quiet typecheck
-      if [ $? -ne 0 ]; then
-        echo "type check failed"
-        exit 1
-      fi
-      python -m pip uninstall -y onnx
       rm -rf .setuptools-cmake-build
       python -m pip install -q .
 
     displayName: 'Run ONNX tests'
+
+  - script: |
+      source py$(python.version)/bin/activate
+      # onnx.checker all existing backend data
+      python workflow_scripts/test_generated_backend.py
+      # onnx.checker all generated backend data
+      python onnx/backend/test/cmd_tools.py generate-data
+      python workflow_scripts/test_generated_backend.py
+
+    displayName: Test backend test data

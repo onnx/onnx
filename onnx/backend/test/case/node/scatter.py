@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -51,7 +46,7 @@ def scatter(data, indices, updates, axis=0):  # type: ignore
 class Scatter(Base):
 
     @staticmethod
-    def export_scatter_without_axis():  # type: () -> None
+    def export_scatter_without_axis() -> None:
         node = onnx.helper.make_node(
             'Scatter',
             inputs=['data', 'indices', 'updates'],
@@ -71,7 +66,7 @@ class Scatter(Base):
                name='test_scatter_without_axis', opset_imports=[helper.make_opsetid("", 10)])
 
     @staticmethod
-    def export_scatter_with_axis():  # type: () -> None
+    def export_scatter_with_axis() -> None:
         axis = 1
         node = onnx.helper.make_node(
             'Scatter',
