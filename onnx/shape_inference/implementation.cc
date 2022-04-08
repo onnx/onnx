@@ -235,11 +235,6 @@ std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const
   return domain + ":" + func_name;
 }
 
-// For graph-output types that are undefined, update them post-inference.
-// Q: Why exception is not saved as error if experimental op?
-// Document (in IR.md): domain for model-local functions
-// What is sparsetensortype.shape supposed to be?
-
 class ShapeInferenceImplBase {
  public:
   void updateType(const std::string& name, TypeProto* inferred_type) {
@@ -385,7 +380,7 @@ class ShapeInferenceImplBase {
         if (!n.output(i).empty())
           updateType(n.output(i), ctx.getOutputType(i));
       }
-
+        
       // If data propagation is enabled, propagate shape data if it exists.
       if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
         DataPropagationContextImpl data_propagation_ctx(
@@ -598,13 +593,12 @@ class ShapeInferenceImplBase {
   const ShapeInferenceOptions& options;
   SymbolTable* symbol_table;
   const ModelLocalFunctionsMap& model_local_functions_map;
-  std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
   const ISchemaRegistry* schema_registry;
   int ir_version;
   GraphInferenceContext graph_inference_context;
 
   std::unordered_map<std::string, TypeProto*> undefined_value_types_by_name;
-
+  std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
   std::unordered_map<std::string, const TensorProto*> input_data_by_name;
   std::unordered_map<std::string, const SparseTensorProto*> input_sparse_data_by_name;
 
@@ -722,6 +716,11 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
     SymbolTable* symbol_table,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
+  if (options.enable_data_propagation && generated_shape_data_by_name == nullptr) {
+    fail_shape_inference(
+        "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
+  }
+
   GraphProto g;
   // generated_shape_data_by_name is missing
   ShapeInferenceImplBase base(
