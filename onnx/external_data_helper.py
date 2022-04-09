@@ -185,7 +185,7 @@ def _get_all_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
                  _get_attribute_tensors(onnx_model_proto))
 
 
-def _recursive_attribute_processor(attribute: AttributeProto, func: Callable[GraphProto, Iterable[TensorProto]]) -> Iterable[TensorProto]:
+def _recursive_attribute_processor(attribute: AttributeProto, func: Callable[[GraphProto], Iterable[TensorProto]]) -> Iterable[TensorProto]:
     """Create an iterator through processing ONNX model attributes with functor."""
     if attribute.type == AttributeProto.GRAPH:
         yield from func(attribute.g)
