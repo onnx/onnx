@@ -4171,11 +4171,8 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(
             graph,
-            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (None, None, None)),
-             make_tensor_sequence_value_info(
-                 'out_sequence1', TensorProto.FLOAT, (None, None, None)),
-             make_tensor_sequence_value_info(
-                 'shapes', TensorProto.INT64, (3,)),
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (None, None, 3)),
+             make_tensor_sequence_value_info('shapes', TensorProto.INT64, (3,)),
              ])  # type: ignore
 
 
