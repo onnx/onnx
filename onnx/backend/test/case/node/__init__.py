@@ -39,6 +39,7 @@ def _rename_edges_helper(internal_node: NodeProto,
                 new_attr = AttributeProto()
                 new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
                 new_attr.name = attr.name
+                new_node.attribute.extend([new_attr])
         else:
             new_attr = AttributeProto()
             new_attr.CopyFrom(attr)
@@ -69,7 +70,7 @@ def _rename_edges_helper(internal_node: NodeProto,
                 ]
                 new_graph.ClearField("node")
                 new_graph.node.extend(new_nodes)
-        new_node.attribute.extend([new_attr])
+            new_node.attribute.extend([new_attr])
     return new_node
 
 
