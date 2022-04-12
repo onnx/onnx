@@ -19285,7 +19285,7 @@ updates = np.array(
 # Expecting output as np.array(
 #    [[[7, 8, 9, 10], [13, 14, 15, 16], [18, 17, 16, 15], [16, 15, 14, 13]],
 #     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
 #     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
 output = scatter_nd_impl(data, indices, updates, reduction='add')
 expect(node, inputs=[data, indices, updates], outputs=[output],
@@ -19317,7 +19317,7 @@ updates = np.array(
 # Expecting output as np.array(
 #    [[[5, 10, 15, 20], [60, 72, 84, 96], [168, 147, 126, 105], [128, 96, 64, 32]],
 #     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
 #     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
 output = scatter_nd_impl(data, indices, updates, reduction='mul')
 expect(node, inputs=[data, indices, updates], outputs=[output],
