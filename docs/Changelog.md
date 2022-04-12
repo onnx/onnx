@@ -18059,12 +18059,13 @@ This version of the operator has been available since version 13 of the default 
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
   where `dims` are the dimensions of `input`. Then `start[axes[i]]` is the adjusted
-  `starts[i]` clamped into range of valid indices, i.e. `[0, dims[axes[i]]-1]`.
+  `starts[i]` is clamped into the range `[0, dims[axes[i]]]` for positive stepping
+  and `[0, dims[axes[i]]-1]` for negative stepping.
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
   `end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
-  is clamped to `[-1, ends[i]-1]`.
+  is clamped to `[-1, dims[axes[i]]-1]`.
 
   Finally, `step[axes[i]] = steps[i]`.
 
