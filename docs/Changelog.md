@@ -20035,9 +20035,9 @@ This version of the operator has been available since version 16 of the default 
 
   This is layer normalization defined in ONNX as function.
         The overall computation can be split into two stages.
-        The first stage is standardlization, which makes the
-        normalized elements having zero mean and unit variances.
-        The computation required by standardlization can be
+        The first stage is standardization, which makes the
+        normalized elements have zero mean and unit variances.
+        The computation required by standardization can be
         described by the following equations.
         ```
         Mean = ReduceMean<axes=normalized_axes>(X)
@@ -20056,7 +20056,7 @@ This version of the operator has been available since version 16 of the default 
         Depending on `stash_type` attribute, the actual computation may
         happen in different floating-point precision.
         For example, if `stash_type` is 1, this operator may cast
-        all input variables to 32-bit float, does the computation, and
+        all input variables to 32-bit float, perform the computation, and
         finally cast `Normalized` back to the original type of `X`.
         The second stage then scales and shifts the outcome of
         stage one using

@@ -38,7 +38,7 @@ def _layer_normalization(X, W, B, axis, epsilon=1e-5):  # type: ignore
     variance_eps = variance + epsilon
     std_dev = np.sqrt(variance_eps)
     inv_std_dev = np.reciprocal(std_dev)
-    # Standardlization step. y_mat is zero-mean and unit-variance.
+    # Standardization step. y_mat is zero-mean and unit-variance.
     y_mat = x_diff * inv_std_dev
     # Apply affine transform on normalization outcome.
     # W is linear coefficient while B is bias.

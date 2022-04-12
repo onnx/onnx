@@ -2490,9 +2490,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* LayerNormalization_ver16_doc = R"DOC(
       This is layer normalization defined in ONNX as function.
       The overall computation can be split into two stages.
-      The first stage is standardlization, which makes the
-      normalized elements having zero mean and unit variances.
-      The computation required by standardlization can be
+      The first stage is standardization, which makes the
+      normalized elements have zero mean and unit variances.
+      The computation required by standardization can be
       described by the following equations.
       ```
       Mean = ReduceMean<axes=normalized_axes>(X)
@@ -2511,7 +2511,7 @@ static const char* LayerNormalization_ver16_doc = R"DOC(
       Depending on `stash_type` attribute, the actual computation may
       happen in different floating-point precision.
       For example, if `stash_type` is 1, this operator may cast
-      all input variables to 32-bit float, does the computation, and
+      all input variables to 32-bit float, perform the computation, and
       finally cast `Normalized` back to the original type of `X`.
       The second stage then scales and shifts the outcome of
       stage one using
@@ -2649,8 +2649,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("Axis1D = Constant()", "value", mktensor(axis))                          // [axis] : 1D tensor
                   .Add("PrefixShape = Slice (XShape, Zero1D, Axis1D)")                          // [d[0], ..., d[axis-1]]
                   .Add(axis > 0                                                                 // number of axes that are reduced =
-                          ? "NumReducedAxes = Sub (Rank, Axis1D)"                              // [rank - axis]: 1D tensor
-                          : "NumReducedAxes = Neg (Axis1D)")                                   // [-axis] : 1D tensor
+                          ? "NumReducedAxes = Sub (Rank, Axis1D)"                               // [rank - axis]: 1D tensor
+                          : "NumReducedAxes = Neg (Axis1D)")                                    // [-axis] : 1D tensor
                   .Add("SuffixShape = ConstantOfShape (NumReducedAxes)", "value", mktensor(1))  // [1, ..., 1] for reduced axes
                   .Add("ReducedShape = Concat <axis = 0> (PrefixShape, SuffixShape)")           // [d[0], ..., d[axis-1], 1, ..., 1]
                   .Add("X2D = Flatten (X)", "axis", axis)
