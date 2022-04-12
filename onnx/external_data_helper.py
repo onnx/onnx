@@ -4,9 +4,9 @@ import os
 import re
 import sys
 from itertools import chain
-from typing import Iterable, Text, Optional
+from typing import Callable, Iterable, Text, Optional
 
-from .onnx_pb import TensorProto, ModelProto
+from .onnx_pb import TensorProto, ModelProto, AttributeProto, GraphProto
 
 
 class ExternalDataInfo(object):
@@ -185,20 +185,43 @@ def _get_all_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
                  _get_attribute_tensors(onnx_model_proto))
 
 
+def _recursive_attribute_processor(attribute: AttributeProto, func: Callable[[GraphProto], Iterable[TensorProto]]) -> Iterable[TensorProto]:
+    """Create an iterator through processing ONNX model attributes with functor."""
+    if attribute.type == AttributeProto.GRAPH:
+        yield from func(attribute.g)
+    if attribute.type == AttributeProto.GRAPHS:
+        for graph in attribute.graphs:
+            yield from func(graph)
+
+
+def _get_initializer_tensors_from_graph(onnx_model_proto_graph: GraphProto) -> Iterable[TensorProto]:
+    """Create an iterator of initializer tensors from ONNX model graph."""
+    for initializer in onnx_model_proto_graph.initializer:
+        yield initializer
+    for node in onnx_model_proto_graph.node:
+        for attribute in node.attribute:
+            yield from _recursive_attribute_processor(attribute, _get_initializer_tensors_from_graph)
+
+
 def _get_initializer_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
     """Create an iterator of initializer tensors from ONNX model."""
-    for initializer in onnx_model_proto.graph.initializer:
-        yield initializer
+    yield from _get_initializer_tensors_from_graph(onnx_model_proto.graph)
 
 
-def _get_attribute_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
-    """Create an iterator of tensors from node attributes of an ONNX model."""
-    for node in onnx_model_proto.graph.node:
+def _get_attribute_tensors_from_graph(onnx_model_proto_graph: GraphProto) -> Iterable[TensorProto]:
+    """Create an iterator of tensors from node attributes of an ONNX model graph."""
+    for node in onnx_model_proto_graph.node:
         for attribute in node.attribute:
             if attribute.HasField("t"):
                 yield attribute.t
             for tensor in attribute.tensors:
                 yield tensor
+            yield from _recursive_attribute_processor(attribute, _get_attribute_tensors_from_graph)
+
+
+def _get_attribute_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
+    """Create an iterator of tensors from node attributes of an ONNX model."""
+    yield from _get_attribute_tensors_from_graph(onnx_model_proto.graph)
 
 
 def _sanitize_path(path: Text) -> Text:
