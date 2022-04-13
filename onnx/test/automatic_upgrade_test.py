@@ -1072,6 +1072,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             'SequenceErase',
             'SequenceInsert',
             'SequenceLength',
+            'SequenceMap',
             'SplitToSequence',
             'Optional',
             'OptionalGetElement',
