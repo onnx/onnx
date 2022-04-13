@@ -380,7 +380,7 @@ class ShapeInferenceImplBase {
         if (!n.output(i).empty())
           updateType(n.output(i), ctx.getOutputType(i));
       }
-        
+
       // If data propagation is enabled, propagate shape data if it exists.
       if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
         DataPropagationContextImpl data_propagation_ctx(
@@ -507,13 +507,6 @@ class ShapeInferenceImplBase {
   }
 
   void process(const FunctionProto& func_proto, InferenceContext& ctx) {
-    /*
-    Q: Do we really need this?
-    if (options.enable_data_propagation && generated_shape_data_by_name == nullptr) {
-      fail_shape_inference(
-          "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
-    }*/
-
     // Get a temporary tensor-shape map
     const auto num_func_inputs = func_proto.input_size();
     std::vector<TypeProto> types_cache(num_func_inputs);
@@ -722,7 +715,7 @@ void InferShapeForFunctionNode(
   }
 
   GraphProto g;
-  // generated_shape_data_by_name is missing
+
   ShapeInferenceImplBase base(
       &g,
       {}, //outer_scope_value_types_by_name,
@@ -730,9 +723,8 @@ void InferShapeForFunctionNode(
       options,
       symbol_table,
       model_local_functions_map,
-      *generated_shape_data_by_name, // We need to add generated_shape_data_by_name into base
+      *generated_shape_data_by_name,
       schema_registry);
-      // ir_version); Q: Whether IR_VERSION effects functionProto? If so, shall we make it consider ir_version?
   base.process(func_proto, ctx);
 }
 
