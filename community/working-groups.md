@@ -2,7 +2,7 @@
 
 # Working Groups
 
-As described in the ONNX [governance](https://github.com/onnx/onnx/tree/master/community#wg---working-groups), Working Groups (WGs) are temporary groups formed to address issues that cross SIG boundaries. Working Groups have a have a clear goal measured through specific deliverables and disband after the goal is achieved. Working groups do not own artifacts long term; they create specifications, recommendations, and/or code implementations for submission to the relevant SIGs for approval and acceptance.
+As described in the ONNX [governance](/community/readme.md#wg---working-groups), Working Groups (WGs) are temporary groups formed to address issues that cross SIG boundaries. Working Groups have a have a clear goal measured through specific deliverables and disband after the goal is achieved. Working groups do not own artifacts long term; they create specifications, recommendations, and/or code implementations for submission to the relevant SIGs for approval and acceptance.
 
 ## Proposing a new working group
 New Working Groups are created when there is sufficient interest in a topic area and someone volunteers to be the chair for the group and submits a proposal to the steering committee. The chair facilitates the discussion and helps synthesize proposals and decisions.
@@ -18,6 +18,7 @@ You can find the schedule of meetings on the [LF AI wiki](https://wiki.lfai.foun
 | ------------------ | ------------- |
 | [Release](https://lfaifoundation.slack.com/archives/C018VGGJUGK) | Improve the release process for ONNX |
 | [Training](https://lfaifoundation.slack.com/archives/C018K560U14) | Expand ONNX to support training as well as inference |
+| [Preprocessing](https://lfaifoundation.slack.com/archives/C02AANGFBJB) | Make data preprocessing part of ONNX |
 
 ## Completed working groups
 

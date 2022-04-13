@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class ThresholdedRelu(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         alpha = 2.0
         node = onnx.helper.make_node(
             'ThresholdedRelu',
@@ -39,7 +34,7 @@ class ThresholdedRelu(Base):
                name='test_thresholdedrelu')
 
     @staticmethod
-    def export_default():  # type: () -> None
+    def export_default() -> None:
         default_alpha = 1.0
         node = onnx.helper.make_node(
             'ThresholdedRelu',

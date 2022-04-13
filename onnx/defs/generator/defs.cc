@@ -235,7 +235,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Shape inference based on input shape
           const TensorProto* targetShapeInitializer = ctx.getInputData(0);
           if (!targetShapeInitializer) {
-            // This is the case when exact shape input is not available.
+            // If symbolic input is available, do shape inference by data propagation.
+            const TensorShapeProto* shapeInput = ctx.getSymbolicInput(0);
+            if (shapeInput) {
+              *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = *shapeInput;
+              return;
+            }
+            // This is the case when exact or symbolic shape is not available.
             // In this case, if the number of dimensions can be infered
             // from the input 'shape' tensor, then we add the same number
             // of dimensions (without any dim_value information) to the
@@ -715,97 +721,6 @@ inline int64_t compute_output_dim_for_range(
   return n;
 }
 
-const std::vector<NodeProto> build_nodes_range_op() {
-  // body for 'Loop node'
-  GraphProto loop_sub_graph;
-  loop_sub_graph.set_name("loop_body_attribute");
-
-  // 'Loop' node 'body' attribute's graph inputs
-  // input 0 - number of iteration
-  auto* input_value_info_proto_0 = loop_sub_graph.add_input();
-  input_value_info_proto_0->set_name("i");
-  // add an empty shape
-  auto* input_0_type_proto_tensor =
-      input_value_info_proto_0->mutable_type()->mutable_tensor_type();
-  input_0_type_proto_tensor->mutable_shape()->Clear();
-  // always INT64 type
-  input_0_type_proto_tensor->set_elem_type(TensorProto_DataType_INT64);
-
-  // input 1 - condition
-  auto* input_value_info_proto_1 = loop_sub_graph.add_input();
-  input_value_info_proto_1->set_name("cond");
-  // add an empty shape
-  auto* input_1_type_proto_tensor =
-      input_value_info_proto_1->mutable_type()->mutable_tensor_type();
-  input_1_type_proto_tensor->mutable_shape()->Clear();
-  // always BOOL type
-  input_1_type_proto_tensor->set_elem_type(TensorProto_DataType_BOOL);
-
-  // input 2 - loop carried dependency
-  auto* input_value_info_proto_2 = loop_sub_graph.add_input();
-  input_value_info_proto_2->set_name("prev");
-
-  // 'Loop' node 'body' attribute's graph nodes
-  auto* node_proto_0 = loop_sub_graph.add_node();
-  node_proto_0->set_op_type("Identity");
-  node_proto_0->add_input();
-  node_proto_0->set_input(0, "cond");
-  node_proto_0->add_output();
-  node_proto_0->set_output(0, "cond_out");
-
-  auto* node_proto_1 = loop_sub_graph.add_node();
-  node_proto_1->set_op_type("Add");
-  node_proto_1->add_input();
-  node_proto_1->set_input(0, "prev");
-  node_proto_1->add_input();
-  node_proto_1->set_input(1, "delta");
-  node_proto_1->add_output();
-  node_proto_1->set_output(0, "current");
-
-  auto* node_proto_2 = loop_sub_graph.add_node();
-  node_proto_2->set_op_type("Identity");
-  node_proto_2->add_input();
-  node_proto_2->set_input(0, "prev");
-  node_proto_2->add_output();
-  node_proto_2->set_output(0, "range");
-
-  // 'Loop' node 'body' attribute's graph inputs
-  auto* output_value_info_proto_0 = loop_sub_graph.add_output();
-  output_value_info_proto_0->set_name("cond_out");
-
-  auto* output_value_info_proto_1 = loop_sub_graph.add_output();
-  output_value_info_proto_1->set_name("current");
-
-  auto* output_value_info_proto_2 = loop_sub_graph.add_output();
-  output_value_info_proto_2->set_name("range");
-
-  return FunctionBodyHelper::BuildNodes(
-      {// nodes: {outputs, op, inputs, attributes}
-       {{"sub_result"}, "Sub", {"limit", "start"}},
-       {{"sub_result_casted"},
-        "Cast",
-        {"sub_result"},
-        {{"to", static_cast<int64_t>(1)}}},
-       {{"delta_casted"}, "Cast", {"delta"}, {{"to", static_cast<int64_t>(1)}}},
-       {{"div_result"}, "Div", {"sub_result_casted", "delta_casted"}},
-       {{"ceil_result"}, "Ceil", {"div_result"}},
-       // we want max(0, ceil_cast_int) as negative values would evaluate to
-       // bool true in next step
-       {{"ceil_result_relu"}, "Relu", {"ceil_result"}},
-       {{"ceil_result_relu_int"},
-        "Cast",
-        {"ceil_result_relu"},
-        {{"to", static_cast<int64_t>(7)}}},
-       {{"ceil_result_relu_bool"},
-        "Cast",
-        {"ceil_result_relu"},
-        {{"to", static_cast<int64_t>(9)}}},
-       {{"variadic_output", "output"},
-        "Loop",
-        {"ceil_result_relu_int", "ceil_result_relu_bool", "start"},
-        {MakeAttribute("body", loop_sub_graph)}}});
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Range,
     11,
@@ -835,7 +750,24 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int32)",
              "tensor(int64)"},
             "Constrain input types to common numeric type tensors.")
-        .FunctionBody(build_nodes_range_op())
+        .FunctionBody(R"ONNX(
+          {
+            sub_result = Sub (limit, start)
+            sub_result_casted = Cast <to = 1> (sub_result)
+            delta_casted = Cast <to = 1> (delta)
+            div_result = Div (sub_result_casted, delta_casted)
+            ceil_result = Ceil (div_result)
+            ceil_result_relu = Relu (ceil_result)
+            ceil_result_relu_int = Cast <to = 7> (ceil_result_relu)
+            ceil_result_relu_bool = Cast <to = 9> (ceil_result_relu)
+            variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
+              <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
+                cond_out = Identity (cond)
+                current = Add (prev, delta)
+                range = Identity (prev)
+              }>
+          }
+        )ONNX")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -966,36 +898,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto dtype = ctx.getAttribute("dtype") != nullptr
                              ? static_cast<TensorProto_DataType>(ctx.getAttribute("dtype")->i())
                              : input_type;
-              auto seed_attr = ctx.getAttribute("seed");
-              std::vector<FunctionBodyHelper::NodeDef> body{
-                  // nodes: {outputs, op, inputs, attributes}
-                  // clang-format off
-                {
-                    {"X_greater"},
-                    "Greater",
-                    {"X_random", "input"}
-                },
-                {
-                    {"output"},
-                    "Cast",
-                    {"X_greater"},
-                    {MakeAttribute("to", (int64_t)(dtype))}
-                }
-                  // clang-format on
-              };
-
-              if (seed_attr != nullptr) {
-                float seed = seed_attr->f();
-                body.insert(body.begin(), {{"X_random"}, "RandomUniformLike", {"input"}, {MakeAttribute("high", 1.0f), MakeAttribute("low", 0.f), MakeAttribute("seed", (float)(seed)), MakeAttribute("dtype", (int64_t)(input_type))}});
-              } else {
-                body.insert(body.begin(), {{"X_random"}, "RandomUniformLike", {"input"}, {MakeAttribute("high", 1.0f), MakeAttribute("low", 0.f), MakeAttribute("dtype", (int64_t)(input_type))}});
-              }
-
-              auto func_nodes = FunctionBodyHelper::BuildNodes(body);
-              for (const auto& node : func_nodes) {
-                auto new_node = functionProto.add_node();
-                new_node->CopyFrom(node);
-              }
+              FunctionBuilder builder(functionProto);
+              builder
+                .Add("X_random = RandomUniformLike <low = 0.0, high = 1.0, seed = @seed> (input)", "dtype", int64_t(input_type))
+                .Add("X_greater = Greater (X_random, input)")
+                .Add("output = Cast (X_greater)", "to", int64_t(dtype));
               schema.BuildFunction(functionProto);
               return true;
             }));

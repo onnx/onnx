@@ -15,7 +15,7 @@
 #include "onnx/defs/parser.h"
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
-#define PARSE(x) CHECK_PARSER_STATUS(Parse(x))
+#define PARSE(...) CHECK_PARSER_STATUS(Parse(__VA_ARGS__))
 #define MATCH(...) CHECK_PARSER_STATUS(Match(__VA_ARGS__))
 
 namespace ONNX_NAMESPACE {
@@ -30,6 +30,15 @@ Status OnnxParser::Parse(IdList& idlist) {
   while (Matches(',')) {
     ParseOptionalIdentifier(id);
     *idlist.Add() = id;
+  }
+  return Status::OK();
+}
+
+Status OnnxParser::Parse(char open, IdList& idlist, char close) {
+  idlist.Clear();
+  if (Matches(open)) {
+    PARSE(idlist);
+    MATCH(close);
   }
   return Status::OK();
 }
@@ -83,7 +92,8 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
 }
 
 Status OnnxParser::Parse(ValueInfoProto& valueinfo) {
-  PARSE(*valueinfo.mutable_type());
+  if (NextIsType())
+    PARSE(*valueinfo.mutable_type());
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
   valueinfo.set_name(name);
@@ -230,19 +240,27 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   return Status::OK();
 }
 
+bool OnnxParser::NextIsType() {
+  std::string id("");
+  (void)PeekIdentifier(id);
+  return (PrimitiveTypeNameMap::IsTypeName(id));
+}
+
 Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
   // Parse a single-value
   auto next = NextChar();
   if (isalpha(next) || next == '_') {
-    std::string id("");
-    (void)PeekIdentifier(id);
-    if (PrimitiveTypeNameMap::IsTypeName(id)) {
+    if (NextIsType()) {
       attr.set_type(AttributeProto_AttributeType_TENSOR);
       Parse(*attr.mutable_t());
     } else {
       attr.set_type(AttributeProto_AttributeType_GRAPH);
       Parse(*attr.mutable_g());
     }
+  } else if (Matches('@')) {
+    std::string name;
+    CHECK_PARSER_STATUS(ParseIdentifier(name));
+    attr.set_ref_attr_name(name);
   } else {
     Literal literal;
     PARSE_TOKEN(literal);
@@ -270,6 +288,15 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
   attr.set_name(name);
+  if (Matches(':')) {
+    CHECK_PARSER_STATUS(ParseIdentifier(name));
+    int attrtype = AttributeTypeNameMap::Lookup(name);
+    if (attrtype != 0) {
+      attr.set_type(static_cast<AttributeProto_AttributeType>(attrtype));
+    } else {
+      return ParseError("Unexpected attribute type.");
+    }
+  }
   MATCH('=');
   if (NextChar() == '[') {
     // Parse a list of values. For now, empty list is not allowed, as we need to
@@ -326,7 +353,7 @@ Status OnnxParser::Parse(NodeProto& node) {
     domain += id;
     ParseIdentifier(id);
   }
-  node.set_domain(domain); // TODO
+  node.set_domain(domain);
   node.set_op_type(id);
   PARSE(*node.mutable_attribute());
   MATCH('(');
@@ -365,7 +392,64 @@ Status OnnxParser::Parse(std::string name, GraphProto& graph) {
   return Parse(*graph.mutable_node());
 }
 
+Status OnnxParser::Parse(FunctionProto& fn) {
+  fn.Clear();
+  std::string strval;
+  if (Matches('<')) {
+    do {
+      KeyWordMap::KeyWord keyword = KeyWordMap::KeyWord::NONE;
+      PARSE_TOKEN(keyword);
+      MATCH(':');
+      switch (keyword) {
+        case KeyWordMap::KeyWord::OPSET_IMPORT:
+          PARSE(*fn.mutable_opset_import());
+          break;
+        case KeyWordMap::KeyWord::DOC_STRING:
+          PARSE_TOKEN(strval);
+          fn.set_doc_string(strval);
+          break;
+        case KeyWordMap::KeyWord::DOMAIN_KW:
+          PARSE_TOKEN(strval);
+          fn.set_domain(strval);
+          break;
+        default:
+          return ParseError("Unhandled keyword.");
+      }
+    } while (Matches(','));
+    MATCH('>');
+  }
+  std::string id;
+  ParseIdentifier(id);
+  fn.set_name(id);
+
+  PARSE('<', *fn.mutable_attribute(), '>');
+  PARSE('(', *fn.mutable_input(), ')');
+  MATCH('=');
+  MATCH('>', false);
+  PARSE('(', *fn.mutable_output(), ')');
+  return Parse(*fn.mutable_node());
+}
+
+Status OnnxParser::Parse(OpsetIdList& opsets) {
+  std::string strval;
+  int64_t intval = 0;
+  MATCH('[');
+  if (!Matches(']')) {
+    do {
+      auto* import = opsets.Add();
+      PARSE_TOKEN(strval);
+      import->set_domain(strval);
+      MATCH(':');
+      PARSE_TOKEN(intval);
+      import->set_version(intval);
+    } while (Matches(','));
+    MATCH(']');
+  }
+  return Status::OK();
+}
+
 Status OnnxParser::Parse(ModelProto& model) {
+  model.Clear();
   std::string strval;
   int64_t intval;
   if (Matches('<')) {
@@ -378,22 +462,9 @@ Status OnnxParser::Parse(ModelProto& model) {
           PARSE_TOKEN(intval);
           model.set_ir_version(intval);
           break;
-        case KeyWordMap::KeyWord::OPSET_IMPORT: {
-          auto& imports = *model.mutable_opset_import();
-          MATCH('[');
-          if (!Matches(']')) {
-            do {
-              auto* import = imports.Add();
-              PARSE_TOKEN(strval);
-              import->set_domain(strval);
-              MATCH(':');
-              PARSE_TOKEN(intval);
-              import->set_version(intval);
-            } while (Matches(','));
-            MATCH(']');
-          }
+        case KeyWordMap::KeyWord::OPSET_IMPORT:
+          PARSE(*model.mutable_opset_import());
           break;
-        }
         case KeyWordMap::KeyWord::PRODUCER_NAME:
           PARSE_TOKEN(strval);
           model.set_producer_name(strval);
@@ -436,7 +507,13 @@ Status OnnxParser::Parse(ModelProto& model) {
     } while (Matches(','));
     MATCH('>');
   }
-  return Parse(*model.mutable_graph());
+  PARSE(*model.mutable_graph());
+
+  auto* functions = model.mutable_functions();
+  while (!EndOfInput()) {
+    PARSE(*functions->Add());
+  }
+  return Status::OK();
 }
 
 } // namespace ONNX_NAMESPACE

@@ -1,29 +1,33 @@
 trigger:
-- master
+- main
 
 jobs:
 
 - job: 'Test'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-2019'
   strategy:
     matrix:
-      py37:
-        python.version: '3.7'
+      py39:
+        python.version: '3.9'
         onnx_ml: 0
         onnx_verify_proto: 0
-      py36:
-        python.version: '3.6'
+      py39_verify_proto:
+        python.version: '3.9'
+        onnx_ml: 0
+        onnx_verify_proto: 1
+      py38:
+        python.version: '3.8'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+      py37:
+        python.version: '3.7'
         onnx_ml: 0
         onnx_verify_proto: 0
       py37_onnx_ml:
         python.version: '3.7'
         onnx_ml: 1
         onnx_verify_proto: 0
-      py36_verify_proto:
-        python.version: '3.6'
-        onnx_ml: 0
-        onnx_verify_proto: 1
     maxParallel: 4
 
   steps:
@@ -48,8 +52,6 @@ jobs:
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1
       set ONNX_ML=$(onnx_ml)
-      set ONNX_VERIFY_PROTO_3=$(onnx_verify_proto)
-      set USE_MSVC_STATIC_RUNTIME=0
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
 
       python setup.py -q install
@@ -70,8 +72,6 @@ jobs:
       )
 
       rm -rf .setuptools-cmake-build
-      python -m pip install -q -e .[mypy]
-      python setup.py -q typecheck
 
 
     displayName: Install and test ONNX

@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -12,7 +7,7 @@ from ..base import Base
 from . import expect
 
 
-def softmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
+def softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     x_max = np.max(x, axis=axis, keepdims=True)
     tmp = np.exp(x - x_max)
     s = np.sum(tmp, axis=axis, keepdims=True)
@@ -21,7 +16,7 @@ def softmax(x, axis=-1):  # type: (np.ndarray, int) -> np.ndarray
 
 class Softmax(Base):
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         node = onnx.helper.make_node(
             'Softmax',
             inputs=['x'],
@@ -34,7 +29,7 @@ class Softmax(Base):
                name='test_softmax_example')
 
     @staticmethod
-    def export_softmax_axis():  # type: () -> None
+    def export_softmax_axis() -> None:
         x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]
                      ).astype(np.float32)
         # expected output

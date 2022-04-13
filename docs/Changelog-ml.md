@@ -186,7 +186,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       Any keys not present in the input dictionary, will be zero in the output array.<br>
       For example: if the ``string_vocabulary`` parameter is set to ``["a", "c", "b", "z"]``,
       then an input of ``{"a": 4, "c": 8}`` will produce an output of ``[4, 8, 0, 0]``.
-      
+
 
 #### Version
 
@@ -967,5 +967,183 @@ This version of the operator has been available since version 2 of the 'ai.onnx.
 <dd>The input type is a tensor of any shape.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float)</dt>
 <dd>Output type is determined by the specified 'values_*' attribute.</dd>
+</dl>
+
+## Version 3 of the 'ai.onnx.ml' operator set
+### <a name="ai.onnx.ml.TreeEnsembleClassifier-3"></a>**ai.onnx.ml.TreeEnsembleClassifier-3**</a>
+
+  Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
+      The attributes named 'nodes_X' form a sequence of tuples, associated by
+      index into the sequences, which must all be of equal length. These tuples
+      define the nodes.<br>
+      Similarly, all fields prefixed with 'class_' are tuples of votes at the leaves.
+      A leaf may have multiple votes, where each vote is weighted by
+      the associated class_weights index.<br>
+      One and only one of classlabels_strings or classlabels_int64s
+      will be defined. The class_ids are indices into this list.
+      All fields ending with <i>_as_tensor</i> can be used instead of the
+      same parameter without the suffix if the element type is double and not float.
+
+#### Version
+
+This version of the operator has been available since version 3 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>base_values</tt> : list of floats</dt>
+<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dt><tt>base_values_as_tensor</tt> : tensor</dt>
+<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dt><tt>class_ids</tt> : list of ints</dt>
+<dd>The index of the class list that each weight is for.</dd>
+<dt><tt>class_nodeids</tt> : list of ints</dt>
+<dd>node id that this weight is for.</dd>
+<dt><tt>class_treeids</tt> : list of ints</dt>
+<dd>The id of the tree that this node is in.</dd>
+<dt><tt>class_weights</tt> : list of floats</dt>
+<dd>The weight for the class in class_id.</dd>
+<dt><tt>class_weights_as_tensor</tt> : tensor</dt>
+<dd>The weight for the class in class_id.</dd>
+<dt><tt>classlabels_int64s</tt> : list of ints</dt>
+<dd>Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
+<dt><tt>classlabels_strings</tt> : list of strings</dt>
+<dd>Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
+<dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
+<dd>Child node if expression is false.</dd>
+<dt><tt>nodes_featureids</tt> : list of ints</dt>
+<dd>Feature id for each node.</dd>
+<dt><tt>nodes_hitrates</tt> : list of floats</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
+<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.</dd>
+<dt><tt>nodes_modes</tt> : list of strings</dt>
+<dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
+<dt><tt>nodes_nodeids</tt> : list of ints</dt>
+<dd>Node id for each node. Ids may restart at zero for each tree, but it not required to.</dd>
+<dt><tt>nodes_treeids</tt> : list of ints</dt>
+<dd>Tree id for each node.</dd>
+<dt><tt>nodes_truenodeids</tt> : list of ints</dt>
+<dd>Child node if expression is true.</dd>
+<dt><tt>nodes_values</tt> : list of floats</dt>
+<dd>Thresholds to do the splitting on for each node.</dd>
+<dt><tt>nodes_values_as_tensor</tt> : tensor</dt>
+<dd>Thresholds to do the splitting on for each node.</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
+<dd>Indicates the transform to apply to the score. <br> One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input of shape [N,F]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>N, Top class for each point</dd>
+<dt><tt>Z</tt> : tensor(float)</dt>
+<dd>The class score for each class, for each point, a tensor of shape [N,E].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input type must be a tensor of a numeric type.</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dd>The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.TreeEnsembleRegressor-3"></a>**ai.onnx.ml.TreeEnsembleRegressor-3**</a>
+
+  Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
+      All args with nodes_ are fields of a tuple of tree nodes, and
+      it is assumed they are the same length, and an index i will decode the
+      tuple across these inputs.  Each node id can appear only once
+      for each tree id.<br>
+      All fields prefixed with target_ are tuples of votes at the leaves.<br>
+      A leaf may have multiple votes, where each vote is weighted by
+      the associated target_weights index.<br>
+      All fields ending with <i>_as_tensor</i> can be used instead of the
+      same parameter without the suffix if the element type is double and not float.
+      All trees must have their node ids start at 0 and increment by 1.<br>
+      Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
+
+#### Version
+
+This version of the operator has been available since version 3 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>aggregate_function</tt> : string (default is SUM)</dt>
+<dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE,' 'SUM,' 'MIN,' 'MAX.'</dd>
+<dt><tt>base_values</tt> : list of floats</dt>
+<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dt><tt>base_values_as_tensor</tt> : tensor</dt>
+<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dt><tt>n_targets</tt> : int</dt>
+<dd>The total number of targets.</dd>
+<dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
+<dd>Child node if expression is false</dd>
+<dt><tt>nodes_featureids</tt> : list of ints</dt>
+<dd>Feature id for each node.</dd>
+<dt><tt>nodes_hitrates</tt> : list of floats</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
+<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
+<dt><tt>nodes_modes</tt> : list of strings</dt>
+<dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
+<dt><tt>nodes_nodeids</tt> : list of ints</dt>
+<dd>Node id for each node. Node ids must restart at zero for each tree and increase sequentially.</dd>
+<dt><tt>nodes_treeids</tt> : list of ints</dt>
+<dd>Tree id for each node.</dd>
+<dt><tt>nodes_truenodeids</tt> : list of ints</dt>
+<dd>Child node if expression is true</dd>
+<dt><tt>nodes_values</tt> : list of floats</dt>
+<dd>Thresholds to do the splitting on for each node.</dd>
+<dt><tt>nodes_values_as_tensor</tt> : tensor</dt>
+<dd>Thresholds to do the splitting on for each node.</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
+<dd>Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
+<dt><tt>target_ids</tt> : list of ints</dt>
+<dd>The index of the target that each weight is for</dd>
+<dt><tt>target_nodeids</tt> : list of ints</dt>
+<dd>The node id of each weight</dd>
+<dt><tt>target_treeids</tt> : list of ints</dt>
+<dd>The id of the tree that each node is in.</dd>
+<dt><tt>target_weights</tt> : list of floats</dt>
+<dd>The weight for each target</dd>
+<dt><tt>target_weights_as_tensor</tt> : tensor</dt>
+<dd>The weight for each target</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input of shape [N,F]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(float)</dt>
+<dd>N classes</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
 

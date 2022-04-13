@@ -54,7 +54,7 @@ if(ONNX_USE_PROTOBUF_SHARED_LIBS)
     add_definitions(-DPROTOBUF_USE_DLLS)
   endif()
   set(Protobuf_USE_STATIC_LIBS OFF)
-else() 
+else()
   set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
@@ -364,6 +364,7 @@ list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
 
 add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
+add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
@@ -447,22 +448,21 @@ if(BUILD_ONNX_PYTHON)
   target_include_directories(onnx_cpp2py_export PRIVATE
                              $<BUILD_INTERFACE:${ONNX_ROOT}>
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                             $<INSTALL_INTERFACE:include>
-                             ${PYTHON_INCLUDE_DIR})
+                             $<INSTALL_INTERFACE:include>)
 
   # pybind11 is a header only lib
-  find_package(pybind11 2.2)
-  if(pybind11_FOUND)
-    target_include_directories(onnx_cpp2py_export PUBLIC
-      ${pybind11_INCLUDE_DIRS})
-  else()
-    if(EXISTS ${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h)
-      target_include_directories(onnx_cpp2py_export PUBLIC
-        ${ONNX_ROOT}/third_party/pybind11/include)
+  find_package(pybind11 2.2 CONFIG)
+  if(NOT pybind11_FOUND)
+    if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
+      add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
     else()
       message(FATAL_ERROR "cannot find pybind")
     endif()
   endif()
+
+  target_include_directories(onnx_cpp2py_export PUBLIC
+    "${pybind11_INCLUDE_DIRS}"
+    "${PYTHON_INCLUDE_DIRS}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
@@ -706,6 +706,9 @@ endif()
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
+
+# Support older g++ to use PRId64
+add_definitions(-D__STDC_FORMAT_MACROS)
 
 include(cmake/summary.cmake)
 onnx_print_configuration_summary()

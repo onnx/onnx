@@ -51,7 +51,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="Add-1"></a>**Add-1**</a>
 
   Performs element-wise binary addition (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of element size 1 (including a scalar tensor and any
@@ -59,16 +59,16 @@ This version of the operator has been available since version 1 of the default O
   shape as a contiguous subset of the first tensor's shape. The starting of the
   mutually equal shape is specified by the argument "axis", and if it is not set,
   suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Version
@@ -113,7 +113,7 @@ This version of the operator has been available since version 1 of the default O
 
   Returns the tensor resulted from performing the `and` logical operation
   elementwise on the input tensors `A` and `B`.
-  
+
   If broadcasting is enabled, the right-hand-side argument will be broadcasted
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
@@ -151,15 +151,15 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="ArgMax-1"></a>**ArgMax-1**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
   The type of the output tensor is integer.
 
@@ -173,7 +173,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -200,7 +200,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="ArgMin-1"></a>**ArgMin-1**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
   The type of the output tensor is integer.
 
@@ -214,7 +214,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -247,10 +247,10 @@ This version of the operator has been available since version 1 of the default O
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-  
+
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -261,7 +261,7 @@ This version of the operator has been available since version 1 of the default O
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
    The output of each pooling window is divided by the number of elements exclude pad.
-   
+
 
 #### Version
 
@@ -306,10 +306,10 @@ This version of the operator has been available since version 1 of the default O
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
   there are multiple cases for the number of outputs, which we list below:
-  
+
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
-      
+
 
 #### Version
 
@@ -612,18 +612,18 @@ This version of the operator has been available since version 1 of the default O
 
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output.
-  
+
   If the pads parameter is provided the shape of the output is calculated via the following equation:
-  
+
     output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - pads[start_i] - pads[end_i]
-  
+
   output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
-  
+
     total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
-  
-      
+
+
 
 #### Version
 
@@ -717,7 +717,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="Div-1"></a>**Div-1**</a>
 
   Performs element-wise binary division (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of element size 1 (including a scalar tensor and any
@@ -725,16 +725,16 @@ This version of the operator has been available since version 1 of the default O
   shape as a contiguous subset of the first tensor's shape. The starting of the
   mutually equal shape is specified by the argument "axis", and if it is not set,
   suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Version
@@ -826,7 +826,7 @@ This version of the operator has been available since version 1 of the default O
   Elu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
-  
+
 
 #### Version
 
@@ -866,7 +866,7 @@ This version of the operator has been available since version 1 of the default O
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B`.
-  
+
   If broadcasting is enabled, the right-hand-side argument will be broadcasted
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
@@ -904,9 +904,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
-<dd>Constrains input to integral tensors.</dd>
+<dd>Constrain input to integral tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Exp-1"></a>**Exp-1**</a>
@@ -1025,75 +1025,75 @@ This version of the operator has been available since version 1 of the default O
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `z` - update gate
-  
+
   `r` - reset gate
-  
+
   `h` - hidden gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-  
+
   `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-  
+
   `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-  
+
   `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-  
+
   `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-  
+
   `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-  
+
   `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-  
+
   `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Sigmoid, g=Tanh):
-  
+
     - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
-  
+
     - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
-  
+
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
 #### Version
@@ -1396,7 +1396,7 @@ This version of the operator has been available since version 1 of the default O
 
   Returns the tensor resulted from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B`.
-  
+
   If broadcasting is enabled, the right-hand-side argument will be broadcasted
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
@@ -1434,9 +1434,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrain input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="HardSigmoid-1"></a>**HardSigmoid-1**</a>
@@ -1487,7 +1487,7 @@ This version of the operator has been available since version 1 of the default O
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the hardmax values of the corresponding input.
-  
+
   Input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
@@ -1604,10 +1604,10 @@ This version of the operator has been available since version 1 of the default O
 
   Carries out instance normalization as described in the paper
   https://arxiv.org/abs/1607.08022.
-  
+
   y = scale * (x - mean) / sqrt(variance + epsilon) + B,
   where mean and variance are computed per instance per channel.
-  
+
 
 #### Version
 
@@ -1654,10 +1654,10 @@ This version of the operator has been available since version 1 of the default O
   The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
   of shape (N x C x D1 x D2, ..., Dk), its region is
   {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
-  
+
   square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
   where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
-  
+
   Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 
 #### Version
@@ -1702,83 +1702,83 @@ This version of the operator has been available since version 1 of the default O
 
   Computes an one-layer LSTM. This operator is usually supported via some
   custom implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `i` - input gate
-  
+
   `o` - output gate
-  
+
   `f` - forget gate
-  
+
   `c` - cell gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
-  
+
   `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
-  
+
   `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
-  
+
   `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-  
+
   `P[iof]`  - P peephole weight vector for input, output, and forget gates
-  
+
   `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
-  
+
   `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
-  
+
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
-  
+
   `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-  
+
   `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
-  
+
     - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
-  
+
     - ft = f(Xt*(Wf^T) + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
-  
+
     - ct = g(Xt*(Wc^T) + Ht-1*Rc + Wbc + Rbc)
-  
+
     - Ct = ft (.) Ct-1 + it (.) ct
-  
+
     - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
-  
+
     - Ht = ot (.) h(Ct)
 
 #### Version
@@ -1891,7 +1891,7 @@ This version of the operator has been available since version 1 of the default O
 
   Returns the tensor resulted from performing the `less` logical operation
   elementwise on the input tensors `A` and `B`.
-  
+
   If broadcasting is enabled, the right-hand-side argument will be broadcasted
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
@@ -1929,9 +1929,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrain input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Log-1"></a>**Log-1**</a>
@@ -1976,7 +1976,7 @@ This version of the operator has been available since version 1 of the default O
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the logsoftmax values of the corresponding input.
-  
+
   Input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
@@ -2023,7 +2023,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="Loop-1"></a>**Loop-1**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
-  
+
   1) Trip count. Iteration count specified at runtime. Set by
      specifying the input M. Optional. Set to empty string to omit.
      Note that a static trip count (specified at graph construction time) can be
@@ -2032,45 +2032,45 @@ This version of the operator has been available since version 1 of the default O
      whether to run the first iteration and also a loop-carried dependency for
      the body graph. The body graph must yield a value for the condition variable,
      whether this input is provided or not.
-  
+
   This table summarizes the operating modes of this operator with equivalent
   C-style code:
-  
+
       Operator inputs defined as (max_trip_count, condition_var).
-  
+
       input ("", ""):
           for (int i=0; ; ++i) {
             cond = ... // Note this value is ignored, but is required in the body
           }
-  
+
       input ("", cond) // Note this is analogous to a while loop
           bool cond = ...;
           for (int i=0; cond; ++i) {
             cond = ...;
           }
-  
+
       input ("", 1) // Note this is analogous to a do-while loop
           bool cond = true
           for (int i=0; cond; ++i) {
             cond = ...;
           }
-  
+
       input (trip_count, "") // Note this is analogous to a for loop
           int trip_count = ...
           for (int i=0; i < trip_count; ++i) {
             cond = ...; // ignored
           }
-  
+
       input (trip_count, cond)
           int trip_count = ...;
           bool cond = ...;
           for (int i=0; i < trip_count && cond; ++i) {
             cond = ...;
           }
-  
-  
+
+
   *Sample usage - cond as well as trip count*
-  
+
       graph predict-net {
         %a = Constant[value = <Scalar Tensor [3]>]()
         %b = Constant[value = <Scalar Tensor [6]>]()
@@ -2079,7 +2079,7 @@ This version of the operator has been available since version 1 of the default O
         %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
         return
       }
-  
+
       graph body-net (
         %i[INT32, scalar]
         %keepgoing[BOOL, scalar]
@@ -2091,15 +2091,15 @@ This version of the operator has been available since version 1 of the default O
         %user_defined_vals = Add(%b, %b)
         return %keepgoing_out, %b_out, %user_defined_vals
       }
-  
+
   *Sample equivalent C code*
-  
+
       {
         /* User-defined code (enclosing scope) */
         int a = 3, b = 6;
         bool keepgoing = true; // Analogous to input cond
         /* End user-defined code */
-  
+
         /* Implicitly-defined code */
         const int max_trip_count = 10; // Analogous to input M
         int user_defined_vals[]; // Imagine this is resizable
@@ -2113,13 +2113,13 @@ This version of the operator has been available since version 1 of the default O
           /* End user-defined code */
         }
         // my_local = 123; // Can't do this. my_local was defined in the the body
-  
+
         // These below values are live-out from the loop and therefore accessible
         b_out; user_defined_vals; keepgoing_out;
       }
-  
+
   There are several things of note in this code snippet:
-  
+
   1) Values from the enclosing scope (i.e. variable a here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any variables which you wish to make available in the enclosing scope (i.e.
@@ -2127,7 +2127,7 @@ This version of the operator has been available since version 1 of the default O
      dependencies (both at the op inputs and output and at the body net input and
      output) or scan_outputs.
   3) Values created in the body cannot be accessed in the enclosing scope.
-  
+
   Note that the semantics of this op support "diagonal" or "wavefront" execution.
   (See Step 3 here for an example:
   https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
@@ -2339,10 +2339,10 @@ This version of the operator has been available since version 1 of the default O
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-  
+
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -2353,7 +2353,7 @@ This version of the operator has been available since version 1 of the default O
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
    The output of each pooling window is maximum number of elements exclude pad.
-   
+
 
 #### Version
 
@@ -2512,7 +2512,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="Mul-1"></a>**Mul-1**</a>
 
   Performs element-wise binary multiplication (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of element size 1 (including a scalar tensor and any
@@ -2520,16 +2520,16 @@ This version of the operator has been available since version 1 of the default O
   shape as a contiguous subset of the first tensor's shape. The starting of the
   mutually equal shape is specified by the argument "axis", and if it is not set,
   suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Version
@@ -2634,14 +2634,14 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input/output to boolean tensors.</dd>
+<dd>Constrain input/output to boolean tensors.</dd>
 </dl>
 
 ### <a name="Or-1"></a>**Or-1**</a>
 
   Returns the tensor resulted from performing the `or` logical operation
   elementwise on the input tensors `A` and `B`.
-  
+
   If broadcasting is enabled, the right-hand-side argument will be broadcasted
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
@@ -2679,9 +2679,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="PRelu-1"></a>**PRelu-1**</a>
@@ -2689,7 +2689,7 @@ This version of the operator has been available since version 1 of the default O
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-  
+
 
 #### Version
 
@@ -2785,7 +2785,7 @@ This version of the operator has been available since version 1 of the default O
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of element size 1 (including a scalar tensor and any
@@ -2793,16 +2793,16 @@ This version of the operator has been available since version 1 of the default O
   shape as a contiguous subset of the first tensor's shape. The starting of the
   mutually equal shape is specified by the argument "axis", and if it is not set,
   suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Version
@@ -2845,63 +2845,63 @@ This version of the operator has been available since version 1 of the default O
 
   Computes an one-layer simple RNN. This operator is usually supported
   via some custom implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `i` - input gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `Wi` - W parameter weight matrix for input gate
-  
+
   `Ri` - R recurrence weight matrix for input gate
-  
+
   `Wbi` - W parameter bias vector for input gate
-  
+
   `Rbi` - R parameter bias vector for input gate
-  
+
   `WBi` - W parameter weight matrix for backward input gate
-  
+
   `RBi` - R recurrence weight matrix for backward input gate
-  
+
   `WBbi` - WR bias vectors for backward input gate
-  
+
   `RBbi` - RR bias vectors for backward input gate
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Tanh):
-  
+
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
 #### Version
@@ -2967,7 +2967,7 @@ This version of the operator has been available since version 1 of the default O
   Generate a tensor with random values drawn from a normal distribution. The shape
   of the tensor is specified by the `shape` argument and the parameter of the normal distribution
   specified by `mean` and `scale`.
-  
+
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -3013,7 +3013,7 @@ This version of the operator has been available since version 1 of the default O
   Generate a tensor with random values drawn from a normal distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the normal distribution are specified by `mean` and `scale`.
-  
+
   The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message, and be valid as an output type.
@@ -3062,7 +3062,7 @@ This version of the operator has been available since version 1 of the default O
 
   Generate a tensor with random values drawn from a uniform distribution. The shape
   of the tensor is specified by the `shape` argument and the range by `low` and `high`.
-  
+
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -3108,7 +3108,7 @@ This version of the operator has been available since version 1 of the default O
   Generate a tensor with random values drawn from a uniform distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the uniform distribution are specified by `low` and `high`.
-  
+
   The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message and be valid as an output type.
@@ -3193,11 +3193,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceL1-1"></a>**ReduceL1-1**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the L1 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3210,7 +3210,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3236,11 +3236,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceL2-1"></a>**ReduceL2-1**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the L2 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3253,7 +3253,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3279,11 +3279,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceLogSum-1"></a>**ReduceLogSum-1**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the log sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3296,7 +3296,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3322,11 +3322,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceLogSumExp-1"></a>**ReduceLogSumExp-1**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3339,7 +3339,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3365,11 +3365,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceMax-1"></a>**ReduceMax-1**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the max of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3382,7 +3382,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3408,11 +3408,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceMean-1"></a>**ReduceMean-1**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the mean of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3425,7 +3425,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3451,11 +3451,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceMin-1"></a>**ReduceMin-1**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the min of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3468,7 +3468,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3494,11 +3494,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceProd-1"></a>**ReduceProd-1**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the product of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3511,7 +3511,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3537,11 +3537,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceSum-1"></a>**ReduceSum-1**</a>
 
-  Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3554,7 +3554,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3580,11 +3580,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="ReduceSumSquare-1"></a>**ReduceSumSquare-1**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the sum square of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -3597,7 +3597,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -3666,7 +3666,8 @@ This version of the operator has been available since version 1 of the default O
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-  from the input tensor).
+  from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
 #### Version
 
@@ -3921,7 +3922,7 @@ This version of the operator has been available since version 1 of the default O
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the softmax values of the corresponding input.
-  
+
   Input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
@@ -4186,7 +4187,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="Sub-1"></a>**Sub-1**</a>
 
   Performs element-wise binary subtraction (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of element size 1 (including a scalar tensor and any
@@ -4194,16 +4195,16 @@ This version of the operator has been available since version 1 of the default O
   shape as a contiguous subset of the first tensor's shape. The starting of the
   mutually equal shape is specified by the argument "axis", and if it is not set,
   suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Version
@@ -4542,7 +4543,7 @@ No versioning maintained for experimental ops.
 
   Returns the tensor resulted from performing the `xor` logical operation
   elementwise on the input tensors `A` and `B`.
-  
+
   If broadcasting is enabled, the right-hand-side argument will be broadcasted
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
@@ -4580,9 +4581,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ## Version 2 of the default ONNX operator set
@@ -4772,75 +4773,75 @@ This version of the operator has been available since version 2 of the default O
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `z` - update gate
-  
+
   `r` - reset gate
-  
+
   `h` - hidden gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-  
+
   `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-  
+
   `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-  
+
   `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-  
+
   `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-  
+
   `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-  
+
   `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-  
+
   `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Sigmoid, g=Tanh):
-  
+
     - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
-  
+
     - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
-  
+
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
 #### Version
@@ -4948,7 +4949,8 @@ This version of the operator has been available since version 4 of the default O
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-  from the input tensor).
+  from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
 #### Version
 
@@ -5012,7 +5014,7 @@ This version of the operator has been available since version 6 of the default O
 ### <a name="Add-6"></a>**Add-6**</a>
 
   Performs element-wise binary addition (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of element size 1 (including a scalar tensor and any
@@ -5020,16 +5022,16 @@ This version of the operator has been available since version 6 of the default O
   shape as a contiguous subset of the first tensor's shape. The starting of the
   mutually equal shape is specified by the argument "axis", and if it is not set,
   suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Version
@@ -5073,7 +5075,7 @@ This version of the operator has been available since version 6 of the default O
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
   there are multiple cases for the number of outputs, which we list below:
-  
+
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
 
@@ -5247,7 +5249,7 @@ This version of the operator has been available since version 6 of the default O
 ### <a name="Div-6"></a>**Div-6**</a>
 
   Performs element-wise binary division (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of element size 1 (including a scalar tensor and any
@@ -5255,16 +5257,16 @@ This version of the operator has been available since version 6 of the default O
   shape as a contiguous subset of the first tensor's shape. The starting of the
   mutually equal shape is specified by the argument "axis", and if it is not set,
   suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Version
@@ -5352,7 +5354,7 @@ This version of the operator has been available since version 6 of the default O
   Elu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
-  
+
 
 #### Version
 
@@ -5545,10 +5547,10 @@ This version of the operator has been available since version 6 of the default O
 
   Carries out instance normalization as described in the paper
   https://arxiv.org/abs/1607.08022.
-  
+
   y = scale * (x - mean) / sqrt(variance + epsilon) + B,
   where mean and variance are computed per instance per channel.
-  
+
 
 #### Version
 
@@ -5746,7 +5748,7 @@ This version of the operator has been available since version 6 of the default O
 ### <a name="Mul-6"></a>**Mul-6**</a>
 
   Performs element-wise binary multiplication (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of element size 1 (including a scalar tensor and any
@@ -5754,16 +5756,16 @@ This version of the operator has been available since version 6 of the default O
   shape as a contiguous subset of the first tensor's shape. The starting of the
   mutually equal shape is specified by the argument "axis", and if it is not set,
   suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Version
@@ -5838,7 +5840,7 @@ This version of the operator has been available since version 6 of the default O
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-  
+
 
 #### Version
 
@@ -6035,7 +6037,7 @@ This version of the operator has been available since version 6 of the default O
 ### <a name="Sub-6"></a>**Sub-6**</a>
 
   Performs element-wise binary subtraction (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of element size 1 (including a scalar tensor and any
@@ -6043,16 +6045,16 @@ This version of the operator has been available since version 6 of the default O
   shape as a contiguous subset of the first tensor's shape. The starting of the
   mutually equal shape is specified by the argument "axis", and if it is not set,
   suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Version
@@ -6173,7 +6175,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
+<dd>Output tensor of the same dimensions and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
 </dl>
 
 #### Type Constraints
@@ -6218,7 +6220,7 @@ This version of the operator has been available since version 7 of the default O
 ### <a name="Add-7"></a>**Add-7**</a>
 
   Performs element-wise binary addition (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -6252,7 +6254,7 @@ This version of the operator has been available since version 7 of the default O
 
   Returns the tensor resulted from performing the `and` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -6279,9 +6281,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Asin-7"></a>**Asin-7**</a>
@@ -6351,10 +6353,10 @@ This version of the operator has been available since version 7 of the default O
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-  
+
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -6365,7 +6367,7 @@ This version of the operator has been available since version 7 of the default O
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
    The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
-   
+
 
 #### Version
 
@@ -6412,7 +6414,7 @@ This version of the operator has been available since version 7 of the default O
   Carries out batch normalization as described in the paper
       https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
       there are multiple cases for the number of outputs, which we list below:
-  
+
       Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
       Output case #2: Y (test mode)
           This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -6501,7 +6503,7 @@ This version of the operator has been available since version 7 of the default O
 ### <a name="Div-7"></a>**Div-7**</a>
 
   Performs element-wise binary division (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -6578,7 +6580,7 @@ This version of the operator has been available since version 7 of the default O
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -6605,84 +6607,84 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
-<dd>Constrains input to integral tensors.</dd>
+<dd>Constrain input to integral tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="GRU-7"></a>**GRU-7**</a>
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `z` - update gate
-  
+
   `r` - reset gate
-  
+
   `h` - hidden gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-  
+
   `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-  
+
   `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-  
+
   `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-  
+
   `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-  
+
   `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-  
+
   `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-  
+
   `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Sigmoid, g=Tanh):
-  
+
     - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
-  
+
     - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
-  
+
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
@@ -6748,11 +6750,11 @@ This version of the operator has been available since version 7 of the default O
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-  
+
   A' = transpose(A) if transA else A
-  
+
   B' = transpose(B) if transB else B
-  
+
   Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
   input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
   and output tensor Y has shape (M, N). A will be transposed before doing the
@@ -6805,7 +6807,7 @@ This version of the operator has been available since version 7 of the default O
 
   Returns the tensor resulted from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -6832,92 +6834,92 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrain input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="LSTM-7"></a>**LSTM-7**</a>
 
   Computes an one-layer LSTM. This operator is usually supported via some
   custom implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `i` - input gate
-  
+
   `o` - output gate
-  
+
   `f` - forget gate
-  
+
   `c` - cell gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
-  
+
   `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
-  
+
   `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
-  
+
   `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-  
+
   `P[iof]`  - P peephole weight vector for input, output, and forget gates
-  
+
   `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
-  
+
   `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
-  
+
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
-  
+
   `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-  
+
   `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
-  
+
     - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
-  
+
     - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
-  
+
     - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
-  
+
     - Ct = ft (.) Ct-1 + it (.) ct
-  
+
     - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
-  
+
     - Ht = ot (.) h(Ct)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
@@ -6989,7 +6991,7 @@ This version of the operator has been available since version 7 of the default O
 
   Returns the tensor resulted from performing the `less` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -7016,15 +7018,15 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dd>Constrain input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Mul-7"></a>**Mul-7**</a>
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -7101,7 +7103,7 @@ This version of the operator has been available since version 7 of the default O
 
   Returns the tensor resulted from performing the `or` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -7128,9 +7130,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="PRelu-7"></a>**PRelu-7**</a>
@@ -7205,63 +7207,63 @@ This version of the operator has been available since version 7 of the default O
 
   Computes an one-layer simple RNN. This operator is usually supported
   via some custom implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `i` - input gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `Wi` - W parameter weight matrix for input gate
-  
+
   `Ri` - R recurrence weight matrix for input gate
-  
+
   `Wbi` - W parameter bias vector for input gate
-  
+
   `Rbi` - R parameter bias vector for input gate
-  
+
   `WBi` - W parameter weight matrix for backward input gate
-  
+
   `RBi` - R recurrence weight matrix for backward input gate
-  
+
   `WBbi` - WR bias vectors for backward input gate
-  
+
   `RBbi` - RR bias vectors for backward input gate
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Tanh):
-  
+
     - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
@@ -7353,7 +7355,7 @@ This version of the operator has been available since version 7 of the default O
 ### <a name="Sub-7"></a>**Sub-7**</a>
 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -7456,7 +7458,7 @@ This version of the operator has been available since version 7 of the default O
 
   Returns the tensor resulted from performing the `xor` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -7483,9 +7485,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
-<dd>Constrains input to boolean tensor.</dd>
+<dd>Constrain input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ## Version 8 of the default ONNX operator set
@@ -7494,7 +7496,7 @@ This version of the operator has been available since version 7 of the default O
   Broadcast the input tensor following the given shape and the broadcast rule.
   The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
   Dimensions are right alignment;
-  Two corresponding dimension must have the same value, or one of them is equal to 1.
+  Two corresponding dimensions must have the same value, or one of them is equal to 1.
   Also, this operator is similar to numpy.broadcast_to(input, shape),
   but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
   It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
@@ -7567,10 +7569,10 @@ This version of the operator has been available since version 8 of the default O
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-  
+
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -7581,7 +7583,7 @@ This version of the operator has been available since version 8 of the default O
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
    The output of each pooling window is maximum number of elements exclude pad.
-   
+
 
 #### Version
 
@@ -7693,7 +7695,7 @@ This version of the operator has been available since version 8 of the default O
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-  functional programming constructs such as scan, fold, map, and zip and is intended to enable
+  functional programming constructs such as scan, fold, map, and zip, and is intended to enable
   generalizations of RNN-like constructs for sequence-to-sequence processing.
   Other tensors (referred to as state_variables here) can be used to carry a state
   when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -7702,7 +7704,7 @@ This version of the operator has been available since version 8 of the default O
   memory allocation). Many common usages involve a single scan_input tensor (where functionality
   similar to scan, fold and map can be obtained). When more than one scan_input is used,
   a behavior similar to zip is obtained.
-  
+
   The attribute body must be a graph, specifying the computation to be performed in
   every iteration. It takes as input the current values of the state_variables and
   the current iterated element of the scan_inputs. It must return the (updated) values
@@ -7710,49 +7712,49 @@ This version of the operator has been available since version 8 of the default O
   scan_output_element tensors are concatenated over all the iterations to produce the
   scan_output values of the scan construct (similar to the concatenated intermediate
   hidden-state values of RNN-like constructs).
-  
+
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
-  
+
   The operation supports batching, and the batch-axis is required to be 0.
   When multiple scan_input tensors are used, they must all have the same batch-size,
   and they must all have the same maximum-sequence-length (the dimensionality of the
   sequence axis or scan axis). The sequence axis or scan axis is required to be 1.
-  
+
   The operation has an optional sequence_lens input (of shape [BATCH_SIZE]) to
   allow variable length sequences of length <= the maximum-sequence-length. If this
   input is not specified, all sequences are assumed to be of length equal to
   maximum-sequence-length. For variable length input sequences, the scan_outputs
   will consist of a sequence of same length as the input, padded to the
   maximum-sequence-length.
-  
+
   The optional attribute directions can be used to scan a sequence in the reverse direction.
   If this attribute is omitted, all sequences are scanned in the forward direction.
   A bidirectional scan be performed by specifying the same tensor input twice in the
   scan_inputs, once with a forward direction, and once with a backward direction.
-  
+
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
   Similarly, the final-states and scan-outputs are listed together as one output parameter.
   The attribute num_scan_inputs indicates the number M of scan-inputs.
-  
+
   The behavior of
-  
+
       Scan <
           num_scan_inputs = m,
           body = loop-body
       > (sequence_lengths, init_1, ..., init_n, scan_1, ..., scan_m)
-  
+
   is equivalent to the following pseudo-code:
-  
+
       // T.shape[0] denotes the batch-size of T
       // The batch-size of scan_1, ..., scan_m are all required to be equal
       batch_size = scan_1.shape[0];
-  
+
       // scan_i.shape[1] denotes the (max) sequence-length of scan_i
       // scan_i.shape[1] is required to be equal to scan_j.shape[1] for all i,j.
       max_sequence_length = scan_1.shape[1];
-  
+
       for (int batch = 0; batch < batch_size; ++batch) {
           // initialize state-variables
           st_1 = init_1; ... st_n = init_n;
@@ -7760,7 +7762,7 @@ This version of the operator has been available since version 8 of the default O
           scan_out_1 = []; ...; scan_out_k = [];
           // identify number of iterations:
           N = (sequence_lengths specified) ? sequence_lengths[batch] : max_sequence_length;
-  
+
           // execute loop
           for (int t = 0; t < N; ++t) {
               // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
@@ -7780,24 +7782,24 @@ This version of the operator has been available since version 8 of the default O
           b_scan_out_1[batch] = scan_out_1; ...; b_scan_out_k[batch] = scan_out_k;
       }
       return bst_1, ..., bst_n, b_scan_out_1, ..., b_scan_out_k;
-  
-  
-  
+
+
+
   *Sample usage: Encoding RNN using a Scan*
-  
+
   The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
   recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
   be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
   %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
   values are computed in the outer graph, they need to be passed in as extra state_variables.
-  
+
       graph rnn-encoding {
         %H_0 = ...
         %X = ...
         %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1]("", %H_0, %X)
         return %Y, %Y_h
       }
-  
+
       graph rnn-cell-1 (
         %H_tminus1[FLOAT, tensor]
         %X_t[FLOAT, tensor]
@@ -7815,7 +7817,7 @@ This version of the operator has been available since version 8 of the default O
         %Accumulate = Identity(%Ht)
         return %Ht, %Accumulate
       }
-  
+
 
 #### Version
 
@@ -7981,10 +7983,10 @@ This version of the operator has been available since version 9 of the default O
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
   there are multiple cases for the number of outputs, which we list below:
-  
+
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
-  
+
   For previous (depreciated) non-spatial cases, implementors are suggested
   to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -8045,7 +8047,7 @@ This version of the operator has been available since version 9 of the default O
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
-  
+
   Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
   (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
   result 100. There are some string literals reserved for special floating-point values;
@@ -8055,7 +8057,7 @@ This version of the operator has been available since version 9 of the default O
   to string tensors, plain floating-point representation (such as "314.15926") would be used.
   Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
   of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
-  
+
   Conversion from a numerical type to any numerical type is always allowed.
   User must be aware of precision loss and value change caused by range difference between two types.
   For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
@@ -8100,7 +8102,7 @@ This version of the operator has been available since version 9 of the default O
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
       In case axis is not provided, input is flattened before elements are selected.
       Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
-      
+
 
 #### Version
 
@@ -8135,7 +8137,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains to boolean tensors.</dd>
+<dd>Constrain to boolean tensors.</dd>
 </dl>
 
 ### <a name="Constant-9"></a>**Constant-9**</a>
@@ -8354,11 +8356,11 @@ This version of the operator has been available since version 9 of the default O
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-  
+
   A' = transpose(A) if transA else A
-  
+
   B' = transpose(B) if transB else B
-  
+
   Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
   input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
   and output tensor Y has shape (M, N). A will be transposed before doing the
@@ -8411,7 +8413,7 @@ This version of the operator has been available since version 9 of the default O
 
   Returns the tensor resulted from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -8438,9 +8440,9 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="IsNaN-9"></a>**IsNaN-9**</a>
@@ -8478,7 +8480,7 @@ This version of the operator has been available since version 9 of the default O
 
   Returns the tensor resulted from performing the `less` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -8505,9 +8507,9 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="MatMul-9"></a>**MatMul-9**</a>
@@ -8549,15 +8551,15 @@ This version of the operator has been available since version 9 of the default O
    from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
    The third (optional) input is a tensor that specifies the output size of the unpooling operation.
-  
+
   MaxUnpool is intended to do 'partial' inverse of the MaxPool op. 'Partial' because all the non-maximal
    values from the original input to MaxPool are set to zero in the output of the MaxUnpool op. Pooling
    the result of an unpooling operation should give back the original input to the unpooling op.
-  
+
   MaxUnpool can produce the same output size for several input sizes, which makes unpooling op ambiguous.
    The third input argument, output_size, is meant to disambiguate the op and produce output tensor of
    known/predictable size.
-  
+
   In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
    which define the exact unpooling op. The attributes typically have the same values as the corrsponding
    pooling op that the unpooling op is trying to invert.
@@ -8721,9 +8723,9 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 <dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type.</dd>
 </dl>
@@ -8766,7 +8768,7 @@ This version of the operator has been available since version 9 of the default O
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-  functional programming constructs such as scan, fold, map, and zip and is intended to enable
+  functional programming constructs such as scan, fold, map, and zip, and is intended to enable
   generalizations of RNN-like constructs for sequence-to-sequence processing.
   Other tensors (referred to as state_variables here) can be used to carry a state
   when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -8774,7 +8776,7 @@ This version of the operator has been available since version 9 of the default O
   Many common usages involve a single scan_input tensor (where functionality
   similar to scan, fold and map can be obtained). When more than one scan_input is used,
   a behavior similar to zip is obtained.
-  
+
   The attribute body must be a graph, specifying the computation to be performed in
   every iteration. It takes as input the current values of the state_variables and
   the current iterated element of the scan_inputs. It must return the (updated) values
@@ -8784,59 +8786,59 @@ This version of the operator has been available since version 9 of the default O
   hidden-state values of RNN-like constructs). All the output tensors (state_variables as
   well as scan_output_element tensors) are required to have the same shape in each iteration
   of the loop (a restriction imposed to enable efficient memory allocation).
-  
+
   Note that the iterated element passed to the body subgraph does not have a sequence
   axis. It will have a rank one less than the rank of the corresponding scan_input.
-  
+
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
-  
+
   The optional attribute scan_input_directions specifies the direction (forward or backward)
   for each scan input. If this attribute is omitted, all sequences are scanned in the forward
   direction. A bidirectional scan may be performed by specifying the same tensor input twice
   in the scan_inputs, once with a forward direction, and once with a backward direction.
-  
+
   The scan_output of the operation is produced by concatenating the scan_output_element
   values produced by the body in each iteration.  The optional attribute scan_output_directions
   specifies the direction in which scan_output is constructed (by appending or prepending the
   scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
   is omitted, the scan_output_element is appended to the scan_output in each iteration.
-  
+
   The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
   If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
   batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
   Note that scanning a non-zero axis may be less efficient than scanning axis zero.
-  
+
   The optional attribute scan_output_axes specifies the axis along which the scan_outputs
   are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
   scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
   value of 1.
-  
+
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
   Similarly, the final-states and scan-outputs are listed together as one output parameter.
   The attribute num_scan_inputs indicates the number M of scan-inputs.
-  
+
   The behavior of
-  
+
       Scan <
           num_scan_inputs = m,
           body = loop-body,
           scan_input_axes = [axis_1, ..., axis_m]
       > (init_1, ..., init_n, scan_1, ..., scan_m)
-  
+
   is equivalent to the following pseudo-code:
-  
+
       // scan_i.shape[axis_i] denotes the (max) sequence-length of scan_i
       // scan_i.shape[axis_i] is required to be equal to scan_j.shape[axis_j] for all i,j.
       sequence_length = scan_1.shape[axis_1];
-  
+
       // initialize state-variables
       st_1 = init_1; ... st_n = init_n;
       // initialize scan-output variables: [] denotes an empty tensor
       scan_out_1 = []; ...; scan_out_k = [];
       // identify number of iterations:
-  
+
       // execute loop
       for (int t = 0; t < sequence_length; ++t) {
           // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
@@ -8849,24 +8851,24 @@ This version of the operator has been available since version 9 of the default O
           // accumulate the scan-output elements
           scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
       }
-  
+
       return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
-  
+
   *Sample usage: Encoding RNN using a Scan*
-  
+
   The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
   recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
   be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
   %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
   values are computed in the outer graph, they need to be passed in as extra state_variables.
-  
+
       graph rnn-encoding {
         %H_0 = ...
         %X = ...
         %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
         return %Y, %Y_h
       }
-  
+
       graph rnn-cell-1 (
         %H_tminus1[FLOAT, tensor]
         %X_t[FLOAT, tensor]
@@ -8884,7 +8886,7 @@ This version of the operator has been available since version 9 of the default O
         %Accumulate = Identity(%Ht)
         return %Ht, %Accumulate
       }
-  
+
 
 #### Version
 
@@ -8924,8 +8926,6 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>Int64 tensor</dd>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 </dl>
@@ -9040,7 +9040,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 </dl>
 
 ### <a name="Sign-9"></a>**Sign-9**</a>
@@ -9109,7 +9109,7 @@ This version of the operator has been available since version 9 of the default O
   For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
   More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1].
   If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor.
-  
+
   In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original
   sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.
   If the number of skips is 2, we should skip two tokens when scanning through the original sequence.
@@ -9117,18 +9117,18 @@ This version of the operator has been available since version 9 of the default O
   The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4].
   If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28]
   indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
-  
+
   The output vector (denoted by Y) stores the count of each n-gram;
   Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping
   between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
   ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
   respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output.
   Note that we may consider all skips up to S when generating the n-grams.
-  
+
   The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and
   the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF",
   this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute.
-  
+
   Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor.
   If pool_strings is set, the input must be a string tensor.
 
@@ -9224,10 +9224,12 @@ This version of the operator has been available since version 9 of the default O
 
 ### <a name="Where-9"></a>**Where-9**</a>
 
-  Return elements, either from X or Y, depending on condition
-      (with Numpy-style broadcasting support).
-      Where behaves like numpy.where with three parameters:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+  Return elements, either from X or Y, depending on condition.
+  Where behaves like
+  [numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+  with three parameters.
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -9276,11 +9278,11 @@ This version of the operator has been available since version 9 of the default O
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
-  
+
    ```
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -9291,7 +9293,7 @@ This version of the operator has been available since version 9 of the default O
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
    The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
-   
+
 
 #### Version
 
@@ -9395,7 +9397,7 @@ This version of the operator has been available since version 10 of the default 
 ### <a name="DequantizeLinear-10"></a>**DequantizeLinear-10**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
-  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape.
+  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' are both scalars.
   'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
   there's no zero point (zero point is supposed to be 0).
 
@@ -9568,11 +9570,11 @@ This version of the operator has been available since version 10 of the default 
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
-  
+
    ```
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
@@ -9583,7 +9585,7 @@ This version of the operator has been available since version 10 of the default 
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
    The output of each pooling window is maximum number of elements exclude pad.
-   
+
 
 #### Version
 
@@ -9637,16 +9639,16 @@ This version of the operator has been available since version 10 of the default 
 
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
       The sign of the remainder is the same as that of the Divisor.
-  
+
       Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
       (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
       This attribute is set to 0 by default causing the behavior to be like integer mod.
       Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
-  
+
       If the input type is floating point, then `fmod` attribute must be set to 1.
-  
+
       In case of dividend being zero, the results will be platform dependent.
-  
+
     This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -9806,14 +9808,14 @@ This version of the operator has been available since version 10 of the default 
 ### <a name="QLinearMatMul-10"></a>**QLinearMatMul-10**</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
-  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, 
-  and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point). 
-  For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 
-  Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor 
-  (per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row 
-  or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be 
-  an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K] 
-  for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may 
+  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
+  and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
+  For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+  Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor
+  (per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row
+  or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be
+  an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K]
+  for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may
   have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
   Production must never overflow, and accumulation may overflow if and only if in 32 bits.
 
@@ -9940,11 +9942,11 @@ This version of the operator has been available since version 10 of the default 
 ### <a name="ReverseSequence-10"></a>**ReverseSequence-10**</a>
 
   Reverse batch of sequences having different lengths specified by `sequence_lens`.
-  
+
   For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
   and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
   sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
-  
+
   Example 1:
     input = [[0.0, 4.0, 8.0,  12.0],
              [1.0, 5.0, 9.0,  13.0],
@@ -9953,12 +9955,12 @@ This version of the operator has been available since version 10 of the default 
     sequence_lens = [4, 3, 2, 1]
     time_axis = 0
     batch_axis = 1
-  
+
     output = [[3.0, 6.0, 9.0,  12.0],
               [2.0, 5.0, 8.0,  13.0],
               [1.0, 4.0, 10.0, 14.0],
               [0.0, 7.0, 11.0, 15.0]]
-  
+
   Example 2:
     input = [[0.0,  1.0,  2.0,  3.0 ],
              [4.0,  5.0,  6.0,  7.0 ],
@@ -9967,7 +9969,7 @@ This version of the operator has been available since version 10 of the default 
     sequence_lens = [1, 2, 3, 4]
     time_axis = 1
     batch_axis = 0
-  
+
     output = [[0.0,  1.0,  2.0,  3.0 ],
               [5.0,  4.0,  6.0,  7.0 ],
               [10.0, 9.0,  8.0,  11.0],
@@ -10016,7 +10018,7 @@ This version of the operator has been available since version 10 of the default 
   RoiAlign consumes an input tensor X and region of interests (rois)
   to apply pooling across each RoI; it produces a 4-D tensor of shape
   (num_rois, C, output_height, output_width).
-  
+
   RoiAlign is proposed to avoid the misalignment by removing
   quantizations while converting from original image into feature
   map and from feature map into RoI feature; in each ROI bin,
@@ -10234,7 +10236,7 @@ This version of the operator has been available since version 10 of the default 
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-  
+
   Given two equivalent values, this operator uses the indices along the axis  as
    a tiebreaker. That is, the element with the lower index will appear first.
 
@@ -10290,8 +10292,8 @@ This version of the operator has been deprecated since version 10 of the default
 ### <a name="ArgMax-11"></a>**ArgMax-11**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
   The type of the output tensor is integer.
 
 #### Version
@@ -10304,7 +10306,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -10331,8 +10333,8 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="ArgMin-11"></a>**ArgMin-11**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
   The type of the output tensor is integer.
 
 #### Version
@@ -10345,7 +10347,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -10384,11 +10386,11 @@ This version of the operator has been available since version 11 of the default 
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
-  
+
    ```
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -10399,7 +10401,7 @@ This version of the operator has been available since version 11 of the default 
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
    The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
-   
+
 
 #### Version
 
@@ -10453,7 +10455,7 @@ This version of the operator has been available since version 11 of the default 
    Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
    and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
    X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
-  
+
    Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
    not necessarily identical.
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
@@ -10532,7 +10534,7 @@ This version of the operator has been available since version 11 of the default 
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
       In case axis is not provided, input is flattened before elements are selected.
       Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
-      
+
 
 #### Version
 
@@ -10567,7 +10569,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains to boolean tensors.</dd>
+<dd>Constrain to boolean tensors.</dd>
 </dl>
 
 ### <a name="Concat-11"></a>**Concat-11**</a>
@@ -10716,7 +10718,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 <dt><tt>W</tt> (differentiable) : T</dt>
-<dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. X.shape[1] == (W.shape[1] * group) == C (assuming zero based indices for the shape array). Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. </dd>
+<dd>The weight tensor that will be used in the convolutions; has size (M x C/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C/group x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_OUT_CHANNEL, FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. Assuming zero based indices for the shape array, X.shape[1] == (W.shape[1] * group) == C and W.shape[0] mod G == 0. Or in other words FILTER_IN_CHANNEL multiplied by the number of groups should be equal to DATA_CHANNEL and the number of feature maps M should be a multiple of the number of groups G.</dd>
 <dt><tt>B</tt> (optional, differentiable) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
@@ -10739,18 +10741,18 @@ This version of the operator has been available since version 11 of the default 
 
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output.
-  
+
   If the pads parameter is provided the shape of the output is calculated via the following equation:
-  
+
     output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - pads[start_i] - pads[end_i]
-  
+
   output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
-  
+
     total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
     If (auto_pads == SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
-  
-      
+
+
 
 #### Version
 
@@ -10808,7 +10810,7 @@ This version of the operator has been available since version 11 of the default 
   By default, it will do the sum inclusively meaning the first element is copied as is.
   Through an `exclusive` attribute, this behavior can change to exclude the first element.
   It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
-  
+
   Example:
   ```
   input_x = [1, 2, 3]
@@ -10823,7 +10825,7 @@ This version of the operator has been available since version 11 of the default 
   reverse=1
   output = [5, 3, 0]
   ```
-   
+
 
 #### Version
 
@@ -10871,27 +10873,27 @@ This version of the operator has been available since version 11 of the default 
   and width dimensions. By default, `mode` = `DCR`.
   In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: depth, column, and then row. The output y is computed from the input x as below:
-  
+
   b, c, h, w = x.shape
-  
+
   tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-  
+
   tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-  
+
   y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-  
-  
+
+
   In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: column, row, and the depth. The output y is computed from the input x as below:
-  
+
   b, c, h, w = x.shape
-  
+
   tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-  
+
   tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-  
+
   y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-  
+
 
 #### Version
 
@@ -11020,7 +11022,7 @@ This version of the operator has been available since version 11 of the default 
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -11047,9 +11049,9 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Flatten-11"></a>**Flatten-11**</a>
@@ -11095,14 +11097,14 @@ This version of the operator has been available since version 11 of the default 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
-  
+
   axis = 0 :
-  
+
   Let
   k = indices[i_{0}, ..., i_{q-1}]
   Then
   output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
-  
+
   ```
     data = [
         [1.0, 1.2],
@@ -11125,12 +11127,12 @@ This version of the operator has been available since version 11 of the default 
     ]
   ```
   axis = 1 :
-  
+
   Let
   k = indices[i_{0}, ..., i_{q-1}]
   Then
   output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
-  
+
   ```
     data = [
         [1.0, 1.2, 1.9],
@@ -11195,7 +11197,7 @@ This version of the operator has been available since version 11 of the default 
   positions determined by elements of the `indices` tensor.
   Its output shape is the same as the shape of `indices` and consists of one value
   (gathered from the `data`) for each element in `indices`.
-  
+
   For instance, in the 3-D case (r = 3), the output produced is determined
   by the following equations:
   ```
@@ -11203,9 +11205,9 @@ This version of the operator has been available since version 11 of the default 
     out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
     out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
   ```
-  
+
   This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
-  
+
   Example 1:
   ```
     data = [
@@ -11284,69 +11286,69 @@ This version of the operator has been available since version 11 of the default 
 
   Given `data` tensor of rank `r` >= 1, and `indices` tensor of rank `q` >= 1, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1`.
-  
+
   `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
   where each element defines a slice of `data`
-  
+
   Some salient points about the inputs' rank and shape:
-  
+
   1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
-  
+
   2) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r` (inclusive)
-  
+
   3) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
      It is an error if any of the index values are out of bounds.
-  
+
   The output is computed as follows:
-  
+
   The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
-  
+
   1) If `indices_shape[-1] > r` => error condition
-  
+
   2) If `indices_shape[-1] == r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
      containing 1-D tensors of dimension `r`. Let us think of each such `r` ranked tensor as `indices_slice`.
      Each *scalar value* corresponding to `data[indices_slice]` is filled into the corresponding location of the `(q-1)`-dimensional tensor
      to form the `output` tensor (Example 1 below)
-  
+
   3) If `indices_shape[-1] < r`, since the rank of `indices` is `q`, `indices` can be thought of as a `(q-1)`-dimensional tensor
      containing 1-D tensors of dimension `< r`. Let us think of each such tensors as `indices_slice`.
      Each *tensor slice* corresponding to `data[indices_slice , :]` is filled into the corresponding location of the `(q-1)`-dimensional tensor
      to form the `output` tensor (Examples 2, 3, and 4 below)
-  
+
   This operator is the inverse of `ScatterND`.
-  
+
   `Example 1`
-  
+
     data    = [[0,1],[2,3]]   # data_shape = [2, 2]
-  
+
     indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
-  
+
     output  = [0,3]           # output_shape = [2]
-  
+
   `Example 2`
-  
+
     data    = [[0,1],[2,3]]  # data_shape = [2, 2]
-  
+
     indices = [[1],[0]]      # indices_shape = [2, 1]
-  
+
     output  = [[2,3],[0,1]]  # output_shape = [2, 2]
-  
+
   `Example 3`
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-  
+
     output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
-  
+
   `Example 4`
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-  
+
     output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
-  
+
 
 #### Version
 
@@ -11379,11 +11381,11 @@ This version of the operator has been available since version 11 of the default 
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-  
+
   A' = transpose(A) if transA else A
-  
+
   B' = transpose(B) if transB else B
-  
+
   Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
   input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
   and output tensor Y has shape (M, N). A will be transposed before doing the
@@ -11437,7 +11439,7 @@ This version of the operator has been available since version 11 of the default 
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
    of the given input.
-  
+
   The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
@@ -11526,7 +11528,7 @@ This version of the operator has been available since version 11 of the default 
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
    of the given input.
-  
+
   The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
@@ -11574,7 +11576,7 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="Loop-11"></a>**Loop-11**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
-  
+
   1) Trip count. Iteration count specified at runtime. Set by
      specifying the input M. Optional. Set to empty string to omit.
      Note that a static trip count (specified at graph construction time) can be
@@ -11583,45 +11585,45 @@ This version of the operator has been available since version 11 of the default 
      whether to run the first iteration and also a loop-carried dependency for
      the body graph. The body graph must yield a value for the condition variable,
      whether this input is provided or not.
-  
+
   This table summarizes the operating modes of this operator with equivalent
   C-style code:
-  
+
       Operator inputs defined as (max_trip_count, condition_var).
-  
+
       input ("", ""):
           for (int i=0; ; ++i) {
             cond = ... // Note this value is ignored, but is required in the body
           }
-  
+
       input ("", cond) // Note this is analogous to a while loop
           bool cond = ...;
           for (int i=0; cond; ++i) {
             cond = ...;
           }
-  
+
       input ("", 1) // Note this is analogous to a do-while loop
           bool cond = true
           for (int i=0; cond; ++i) {
             cond = ...;
           }
-  
+
       input (trip_count, "") // Note this is analogous to a for loop
           int trip_count = ...
           for (int i=0; i < trip_count; ++i) {
             cond = ...; // ignored
           }
-  
+
       input (trip_count, cond)
           int trip_count = ...;
           bool cond = ...;
           for (int i=0; i < trip_count && cond; ++i) {
             cond = ...;
           }
-  
-  
+
+
   *Sample usage - cond as well as trip count*
-  
+
       graph predict-net {
         %a = Constant[value = <Scalar Tensor [3]>]()
         %b = Constant[value = <Scalar Tensor [6]>]()
@@ -11630,7 +11632,7 @@ This version of the operator has been available since version 11 of the default 
         %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
         return
       }
-  
+
       graph body-net (
         %i[INT32, scalar]           // iteration number
         %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
@@ -11642,15 +11644,15 @@ This version of the operator has been available since version 11 of the default 
         %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
         return %keepgoing_out, %b_out, %user_defined_val
       }
-  
+
   *Sample equivalent C code*
-  
+
       {
         /* User-defined code (enclosing scope) */
         int a = 3, b = 6;
         bool keepgoing = true; // Analogous to input cond
         /* End user-defined code */
-  
+
         /* Implicitly-defined code */
         const int max_trip_count = 10; // Analogous to input M
         int user_defined_vals[]; // Imagine this is resizable
@@ -11658,31 +11660,31 @@ This version of the operator has been available since version 11 of the default 
         /* initialize loop-carried variables and scan-output variables */
         bool keepgoing_out = keepgoing
         int b_out = b
-  
+
         for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
           /* Implicitly-defined code: bind actual parameter values
              to formal parameter variables of loop-body */
           bool keepgoing_in = keepgoing_out;
           bool b_in = b_out;
-  
+
           /* User-defined code (loop body) */
           int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
           b_out = a - b_in;
           keepgoing_out = my_local > b_out;
           user_defined_val = b_in + b_in; // b_in and b_out are different variables
           /* End user-defined code */
-  
+
           /* Implicitly defined-code */
           user_defined_vals[i] = user_defined_val // accumulate scan-output values
         }
         // int t = my_local; // Can't do this. my_local is not accessible here.
-  
+
         // The values below are bound to the output variables of the loop and therefore accessible
         // b_out; user_defined_vals; keepgoing_out;
       }
-  
+
   There are several things of note in this code snippet:
-  
+
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
@@ -11698,7 +11700,7 @@ This version of the operator has been available since version 11 of the default 
      after the loop.
   4) Values created in the body cannot be accessed in the enclosing scope,
      except using the mechanism described above.
-  
+
   Note that the semantics of this op support "diagonal" or "wavefront" execution.
   (See Step 3 here for an example:
   https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
@@ -11810,11 +11812,11 @@ This version of the operator has been available since version 11 of the default 
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
-  
+
    ```
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
@@ -11825,7 +11827,7 @@ This version of the operator has been available since version 11 of the default 
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
    The output of each pooling window is maximum number of elements exclude pad.
-   
+
 
 #### Version
 
@@ -11883,15 +11885,15 @@ This version of the operator has been available since version 11 of the default 
    from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
    The third (optional) input is a tensor that specifies the output size of the unpooling operation.
-  
+
   MaxUnpool is intended to do 'partial' inverse of the MaxPool op. 'Partial' because all the non-maximal
    values from the original input to MaxPool are set to zero in the output of the MaxUnpool op. Pooling
    the result of an unpooling operation should give back the original input to the unpooling op.
-  
+
   MaxUnpool can produce the same output size for several input sizes, which makes unpooling op ambiguous.
    The third input argument, output_size, is meant to disambiguate the op and produce output tensor of
    known/predictable size.
-  
+
   In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
    which define the exact unpooling op. The attributes typically have the same values as the corrsponding
    pooling op that the unpooling op is trying to invert.
@@ -11998,13 +12000,13 @@ This version of the operator has been available since version 11 of the default 
       as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
       the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
       output tensor.
-  
+
       when axis = 0:
       output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
-  
+
       when axis = -1:
       output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
-  
+
 
 #### Version
 
@@ -12039,9 +12041,9 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to only numeric types.</dd>
+<dd>Constrain input to only numeric types.</dd>
 <dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type.</dd>
 </dl>
@@ -12050,40 +12052,40 @@ This version of the operator has been available since version 11 of the default 
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
-  
+
   The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
-  
+
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0)
-  
+
   2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
-  
+
   3) `edge` - pads with the edge values of array
-  
-  
+
+
   Example 1 (`constant` mode):
     Insert 0 pads to the beginning of the second dimension.
-  
+
     data =
     [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-  
+
     pads = [0, 2, 0, 0]
-  
+
     mode = 'constant'
-  
+
     constant_value = 0.0
-  
+
     output =
     [
         [0.0, 0.0, 1.0, 1.2],
         [0.0, 0.0, 2.3, 3.4],
         [0.0, 0.0, 4.5, 5.7],
     ]
-  
-  
+
+
   Example 2 (`reflect` mode):
     data =
     [
@@ -12091,19 +12093,19 @@ This version of the operator has been available since version 11 of the default 
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-  
+
     pads = [0, 2, 0, 0]
-  
+
     mode = 'reflect'
-  
+
     output =
     [
         [1.0, 1.2, 1.0, 1.2],
         [2.3, 3.4, 2.3, 3.4],
         [4.5, 5.7, 4.5, 5.7],
     ]
-  
-  
+
+
   Example 3 (`edge` mode):
     data =
     [
@@ -12111,18 +12113,18 @@ This version of the operator has been available since version 11 of the default 
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-  
+
     pads = [0, 2, 0, 0]
-  
+
     mode = 'edge'
-  
+
     output =
     [
         [1.0, 1.0, 1.0, 1.2],
         [2.3, 2.3, 2.3, 3.4],
         [4.5, 4.5, 4.5, 5.7],
     ]
-  
+
 
 #### Version
 
@@ -12157,36 +12159,36 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input and output to only numeric types.</dd>
+<dd>Constrain input and output to only numeric types.</dd>
 </dl>
 
 ### <a name="Range-11"></a>**Range-11**</a>
 
   Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
   up to `limit` (exclusive).
-  
+
   The number of elements in the output of range is computed as below-
-  
+
   `number_of_elements = max( ceil( (limit - start) / delta ) , 0 )`
-  
+
   The pseudocode determining the contents of the output is shown below-
-  
+
   `for(int i=0; i<number_of_elements; ++i)`
-  
+
   `{`
-  
+
   `    output[i] =  start + (i * delta);  `
-  
+
   `}`
-  
+
   `Example 1`
   Inputs: start = 3, limit = 9, delta = 3
   Output: [3, 6]
-  
+
   `Example 2`
   Inputs: start = 10, limit = 4, delta = -2
   Output: [10, 8, 6]
-  
+
 
 #### Version
 
@@ -12219,11 +12221,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceL1-11"></a>**ReduceL1-11**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the L1 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12236,7 +12238,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12262,11 +12264,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceL2-11"></a>**ReduceL2-11**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the L2 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12279,7 +12281,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12305,11 +12307,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceLogSum-11"></a>**ReduceLogSum-11**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the log sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12322,7 +12324,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12348,11 +12350,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceLogSumExp-11"></a>**ReduceLogSumExp-11**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12365,7 +12367,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12391,11 +12393,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceMax-11"></a>**ReduceMax-11**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the max of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12408,7 +12410,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12434,11 +12436,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceMean-11"></a>**ReduceMean-11**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the mean of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12451,7 +12453,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12477,11 +12479,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceMin-11"></a>**ReduceMin-11**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the min of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12494,7 +12496,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12520,11 +12522,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceProd-11"></a>**ReduceProd-11**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the product of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12537,7 +12539,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12563,11 +12565,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceSum-11"></a>**ReduceSum-11**</a>
 
-  Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12580,7 +12582,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12606,11 +12608,11 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="ReduceSumSquare-11"></a>**ReduceSumSquare-11**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the sum square of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -12623,7 +12625,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -12704,9 +12706,9 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 <dt><tt>roi</tt> : T2</dt>
 <dd>1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is "tf_crop_and_resize"</dd>
 <dt><tt>scales</tt> : tensor(float)</dt>
-<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.</dd>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. If 'size' is needed, the user must set 'scales' to an empty tensor.</dd>
 <dt><tt>sizes</tt> (optional) : tensor(int64)</dt>
-<dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.</dd>
+<dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. May only be set if 'scales' is set to an empty tensor.</dd>
 </dl>
 
 #### Outputs
@@ -12731,7 +12733,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
   it finds the nearest integer for each value.
   In case of halfs, the rule is to round them to the nearest even integer.
   The output tensor has the same shape and type as the input.
-  
+
   Examples:
   ```
   round([0.9]) = [1.0]
@@ -12770,7 +12772,7 @@ This version of the operator has been available since version 11 of the default 
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-  functional programming constructs such as scan, fold, map, and zip and is intended to enable
+  functional programming constructs such as scan, fold, map, and zip, and is intended to enable
   generalizations of RNN-like constructs for sequence-to-sequence processing.
   Other tensors (referred to as state_variables here) can be used to carry a state
   when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -12778,7 +12780,7 @@ This version of the operator has been available since version 11 of the default 
   Many common usages involve a single scan_input tensor (where functionality
   similar to scan, fold and map can be obtained). When more than one scan_input is used,
   a behavior similar to zip is obtained.
-  
+
   The attribute body must be a graph, specifying the computation to be performed in
   every iteration. It takes as input the current values of the state_variables and
   the current iterated element of the scan_inputs. It must return the (updated) values
@@ -12788,59 +12790,59 @@ This version of the operator has been available since version 11 of the default 
   hidden-state values of RNN-like constructs). All the output tensors (state_variables as
   well as scan_output_element tensors) are required to have the same shape in each iteration
   of the loop (a restriction imposed to enable efficient memory allocation).
-  
+
   Note that the iterated element passed to the body subgraph does not have a sequence
   axis. It will have a rank one less than the rank of the corresponding scan_input.
-  
+
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
-  
+
   The optional attribute scan_input_directions specifies the direction (forward or backward)
   for each scan input. If this attribute is omitted, all sequences are scanned in the forward
   direction. A bidirectional scan may be performed by specifying the same tensor input twice
   in the scan_inputs, once with a forward direction, and once with a backward direction.
-  
+
   The scan_output of the operation is produced by concatenating the scan_output_element
   values produced by the body in each iteration.  The optional attribute scan_output_directions
   specifies the direction in which scan_output is constructed (by appending or prepending the
   scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
   is omitted, the scan_output_element is appended to the scan_output in each iteration.
-  
+
   The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
   If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
   batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
   Note that scanning a non-zero axis may be less efficient than scanning axis zero.
-  
+
   The optional attribute scan_output_axes specifies the axis along which the scan_outputs
   are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
   scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
   value of 1.
-  
+
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
   Similarly, the final-states and scan-outputs are listed together as one output parameter.
   The attribute num_scan_inputs indicates the number M of scan-inputs.
-  
+
   The behavior of
-  
+
       Scan <
           num_scan_inputs = m,
           body = loop-body,
           scan_input_axes = [axis_1, ..., axis_m]
       > (init_1, ..., init_n, scan_1, ..., scan_m)
-  
+
   is equivalent to the following pseudo-code:
-  
+
       // scan_i.shape[axis_i] denotes the (max) sequence-length of scan_i
       // scan_i.shape[axis_i] is required to be equal to scan_j.shape[axis_j] for all i,j.
       sequence_length = scan_1.shape[axis_1];
-  
+
       // initialize state-variables
       st_1 = init_1; ... st_n = init_n;
       // initialize scan-output variables: [] denotes an empty tensor
       scan_out_1 = []; ...; scan_out_k = [];
       // identify number of iterations:
-  
+
       // execute loop
       for (int t = 0; t < sequence_length; ++t) {
           // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
@@ -12853,24 +12855,24 @@ This version of the operator has been available since version 11 of the default 
           // accumulate the scan-output elements
           scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
       }
-  
+
       return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
-  
+
   *Sample usage: Encoding RNN using a Scan*
-  
+
   The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
   recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
   be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
   %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
   values are computed in the outer graph, they need to be passed in as extra state_variables.
-  
+
       graph rnn-encoding {
         %H_0 = ...
         %X = ...
         %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
         return %Y, %Y_h
       }
-  
+
       graph rnn-cell-1 (
         %H_tminus1[FLOAT, tensor]
         %X_t[FLOAT, tensor]
@@ -12888,7 +12890,7 @@ This version of the operator has been available since version 11 of the default 
         %Accumulate = Identity(%Ht)
         return %Ht, %Accumulate
       }
-  
+
 
 #### Version
 
@@ -12928,8 +12930,6 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>Int64 tensor</dd>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 </dl>
@@ -12937,29 +12937,29 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="Scatter-11"></a>**Scatter-11** (deprecated)</a>
 
   This operator is deprecated. Please use ScatterElements, which provides the same functionality.
-  
+
   Scatter takes three inputs `data`, `updates`, and `indices` of the same
   rank r >= 1 and an optional attribute axis that identifies an axis of `data`
   (by default, the outer-most axis, that is axis 0). The output of the operation
   is produced by creating a copy of the input `data`, and then updating its value
   to values specified by `updates` at specific index positions specified by
   `indices`. Its output shape is the same as the shape of `data`.
-  
+
   For each entry in `updates`, the target index in `data` is obtained by combining
   the corresponding entry in `indices` with the index of the entry itself: the
   index-value for dimension = axis is obtained from the value of the corresponding
   entry in `indices` and the index-value for dimension != axis is obtained from the
   index of the entry itself.
-  
+
   For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
   is performed as below:
   ```
     output[indices[i][j]][j] = updates[i][j] if axis = 0,
     output[i][indices[i][j]] = updates[i][j] if axis = 1,
   ```
-  
+
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
-  
+
   Example 1:
   ```
     data = [
@@ -13002,22 +13002,22 @@ This version of the operator has been deprecated since version 11 of the default
   is produced by creating a copy of the input `data`, and then updating its value
   to values specified by `updates` at specific index positions specified by
   `indices`. Its output shape is the same as the shape of `data`.
-  
+
   For each entry in `updates`, the target index in `data` is obtained by combining
   the corresponding entry in `indices` with the index of the entry itself: the
   index-value for dimension = axis is obtained from the value of the corresponding
   entry in `indices` and the index-value for dimension != axis is obtained from the
   index of the entry itself.
-  
+
   For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
   is performed as below:
   ```
     output[indices[i][j]][j] = updates[i][j] if axis = 0,
     output[i][indices[i][j]] = updates[i][j] if axis = 1,
   ```
-  
+
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
-  
+
   Example 1:
   ```
     data = [
@@ -13094,13 +13094,13 @@ This version of the operator has been available since version 11 of the default 
   specified by `updates` at specific index positions specified by `indices`. Its output shape
   is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
   That is, two or more `updates` for the same index-location is not supported.
-  
+
   `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
    `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
   update to a slice of the tensor.
-  
+
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
   The remaining dimensions of `updates` correspond to the dimensions of the
@@ -13108,20 +13108,20 @@ This version of the operator has been available since version 11 of the default 
   corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
   must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
   of shapes.
-  
+
   The `output` is calculated via the following equation:
-  
+
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
           output[indices[idx]] = updates[idx]
-  
+
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
   This ensures that the output value does not depend on the iteration order.
-  
+
   This operator is the inverse of GatherND.
-  
+
   Example 1:
   ```
     data    = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -13129,7 +13129,7 @@ This version of the operator has been available since version 11 of the default 
     updates = [9, 10, 11, 12]
     output  = [1, 11, 3, 10, 9, 6, 7, 12]
   ```
-  
+
   Example 2:
   ```
     data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
@@ -13461,7 +13461,7 @@ This version of the operator has been available since version 11 of the default 
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
    of the given input.
-  
+
   The input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
@@ -13647,11 +13647,11 @@ This version of the operator has been available since version 11 of the default 
     -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
      contains the indices of the top k elements (original indices from the input
      tensor).
-  
+
   If "largest" is 1 (the default value) then the k largest elements are returned.
   If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
   If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
-  
+
   Given two equivalent values, this operator uses the indices along the axis as
    a tiebreaker. That is, the element with the lower index will appear first.
 
@@ -13701,17 +13701,17 @@ This version of the operator has been available since version 11 of the default 
 
   Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
   Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
-  
+
   This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
   The first output tensor 'Y' contains all unique values or subtensors of the input.
   The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'..
   The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
   The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
-  
+
   Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
-  
+
   https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
-  
+
   Example 1:
     input_X = [2, 1, 1, 3, 4, 3]
     attribute_sorted = 0
@@ -13720,7 +13720,7 @@ This version of the operator has been available since version 11 of the default 
     output_indices = [0, 1, 3, 4]
     output_inverse_indices = [0, 1, 1, 2, 3, 2]
     output_counts = [1, 2, 2, 1]
-  
+
   Example 2:
     input_X = [[1, 3], [2, 3]]
     attribute_sorted = 1
@@ -13729,7 +13729,7 @@ This version of the operator has been available since version 11 of the default 
     output_indices = [0, 2, 1]
     output_inverse_indices = [0, 2, 1, 2]
     output_counts = [1, 1, 2]
-  
+
   Example 3:
     input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
     attribute_sorted = 1
@@ -13738,41 +13738,41 @@ This version of the operator has been available since version 11 of the default 
     output_indices = [0, 2]
     output_inverse_indices = [0, 0, 1]
     output_counts = [2, 1]
-  
+
   Example 4:
     input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
                [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
     attribute_sorted = 1
     attribute_axis = 1
-  
+
     intermediate data are presented below for better understanding:
-  
+
     there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
     A: [[1, 1], [1, 1]],
        [[0, 1], [0, 1]],
        [[2, 1], [2, 1]],
        [[0, 1], [0, 1]].
-  
+
     there are 3 unique subtensors:
     [[1, 1], [1, 1]],
     [[0, 1], [0, 1]],
     [[2, 1], [2, 1]].
-  
+
     sorted unique subtensors:
     B: [[0, 1], [0, 1]],
        [[1, 1], [1, 1]],
        [[2, 1], [2, 1]].
-  
+
     output_Y is constructed from B:
     [[[0. 1.], [1. 1.], [2. 1.]],
      [[0. 1.], [1. 1.], [2. 1.]]]
-  
+
     output_indices is to map from B to A:
     [1, 0, 2]
-  
+
     output_inverse_indices is to map from A to B:
     [1, 0, 2, 0]
-  
+
     output_counts = [2 1 1]
 
 #### Version
@@ -13819,16 +13819,16 @@ This version of the operator has been available since version 11 of the default 
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
-  
+
   For example:
     Given an input tensor (`data`) of shape [3, 4, 5], then
     Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
-  
+
   The attribute `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
   Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
   The order of values in `axes` does not matter and can come in any order.
-  
+
 
 #### Version
 
@@ -13866,8 +13866,8 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="ArgMax-12"></a>**ArgMax-12**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the max
   is selected if the max appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -13883,7 +13883,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -13912,8 +13912,8 @@ This version of the operator has been available since version 12 of the default 
 ### <a name="ArgMin-12"></a>**ArgMin-12**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the min
   is selected if the min appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -13929,7 +13929,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -13960,7 +13960,7 @@ This version of the operator has been available since version 12 of the default 
   Continuously Differentiable Exponential Linear Units:
   Perform the linear unit element-wise on the input tensor X
   using formula:
-  
+
   ```
   max(0,x) + min(0,alpha*(exp(x/alpha)-1))
   ```
@@ -14139,24 +14139,24 @@ This version of the operator has been available since version 12 of the default 
 ### <a name="Einsum-12"></a>**Einsum-12**</a>
 
   An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
-  
+
   ```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
-  
+
   where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
   that do not occur in the output-term.
-  
+
   The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
   convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
   an operand tensor, and the characters within the terms correspond to operands dimensions.
-  
+
   This sequence may be followed by "->" to separate the left and right hand side of the equation.
   If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
   summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
   output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
   equation.
-  
+
   When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
-  
+
   The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
   Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
   The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
@@ -14198,95 +14198,95 @@ This version of the operator has been available since version 12 of the default 
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
-  
+
   `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
   where each element defines a slice of `data`
-  
+
   `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
   `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
-  
+
   Some salient points about the inputs' rank and shape:
-  
+
   1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
-  
+
   2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
-  
+
   3) b < min(q, r) is to be honored.
-  
+
   4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
-  
+
   5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
      It is an error if any of the index values are out of bounds.
-  
+
   The output is computed as follows:
-  
+
   The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
-  
+
   1) If `indices_shape[-1] > r-b` => error condition
-  
+
   2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
      containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions
      of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]`
      is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
-  
+
   3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
      containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding
      to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor
      to form the `output` tensor (Examples 2, 3, 4 and 5 below)
-  
+
   This operator is the inverse of `ScatterND`.
-  
+
   `Example 1`
-  
+
     batch_dims = 0
-  
+
     data    = [[0,1],[2,3]]   # data_shape = [2, 2]
-  
+
     indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
-  
+
     output  = [0,3]           # output_shape = [2]
-  
+
   `Example 2`
-  
+
     batch_dims = 0
-  
+
     data    = [[0,1],[2,3]]  # data_shape = [2, 2]
-  
+
     indices = [[1],[0]]      # indices_shape = [2, 1]
-  
+
     output  = [[2,3],[0,1]]  # output_shape = [2, 2]
-  
+
   `Example 3`
-  
+
     batch_dims = 0
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-  
+
     output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
-  
+
   `Example 4`
-  
+
     batch_dims = 0
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-  
+
     output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
-  
+
   `Example 5`
-  
+
     batch_dims = 1
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[1],[0]]             # indices_shape = [2, 1]
-  
+
     output  = [[2,3],[4,5]]             # output_shape = [2, 2]
-  
-  
+
+
 
 #### Version
 
@@ -14326,7 +14326,7 @@ This version of the operator has been available since version 12 of the default 
 
   Returns the tensor resulted from performing the `greater_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -14353,16 +14353,16 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="LessOrEqual-12"></a>**LessOrEqual-12**</a>
 
   Returns the tensor resulted from performing the `less_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -14389,9 +14389,9 @@ This version of the operator has been available since version 12 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Max-12"></a>**Max-12**</a>
@@ -14440,11 +14440,11 @@ This version of the operator has been available since version 12 of the default 
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
-  
+
    ```
    * pad_shape[i] is sum of pads along axis i
    ```
-  
+
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
@@ -14454,8 +14454,8 @@ This version of the operator has been available since version 12 of the default 
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
-   The output of each pooling window is maximum number of elements exclude pad. 
-   
+   The output of each pooling window is maximum number of elements exclude pad.
+
 
 #### Version
 
@@ -14548,7 +14548,7 @@ This version of the operator has been available since version 12 of the default 
   When an optional "weight" is provided, the sample loss is calculated as:
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
   loss is zero for the case when target-value equals ignore_index.
-  
+
       loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
@@ -14683,11 +14683,11 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="ReduceMax-12"></a>**ReduceMax-12**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the max of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -14700,7 +14700,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -14726,11 +14726,11 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="ReduceMin-12"></a>**ReduceMin-12**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
+  Computes the min of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -14743,7 +14743,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -14776,25 +14776,25 @@ This version of the operator has been available since version 12 of the default 
   If the input is N-D tensor with shape (N, C, D1, D2, ..., Dk),
   the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
   After L is available, this operator can optionally do a reduction operator.
-  
+
   shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
           with K >= 1 in case of K-dimensional loss.
   shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
           with K >= 1 in case of K-dimensional loss.
-  
+
   The loss for one sample, l_i, can caculated as follows:
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   or
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
-  
+
   loss is zero for the case when label-value equals ignore_index.
       l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
-  
+
   where:
       p = Softmax(scores)
       y = Log(p)
       c = labels[i][d1][d2]...[dk]
-  
+
   Finally, L is optionally reduced:
   If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
   If reduction = 'sum', the output is scalar: Sum(L).
@@ -14878,7 +14878,7 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Add-13"></a>**Add-13**</a>
 
   Performs element-wise binary addition (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -14911,8 +14911,8 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="ArgMax-13"></a>**ArgMax-13**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equals 0, then the resulting tensor has the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the max
   is selected if the max appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -14928,7 +14928,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -14957,8 +14957,8 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="ArgMin-13"></a>**ArgMin-13**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
-  provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-  If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+  provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+  If keepdims equals 0, then the resulting tensor has the reduced dimension pruned.
   If select_last_index is True (default False), the index of the last occurrence of the min
   is selected if the min appears more than once in the input. Otherwise the index of the
   first occurrence is selected.
@@ -14974,7 +14974,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>select_last_index</tt> : int (default is 0)</dt>
 <dd>Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).</dd>
 </dl>
@@ -15006,7 +15006,7 @@ This version of the operator has been available since version 13 of the default 
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
-  
+
   Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
   (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
   result 100. There are some string literals reserved for special floating-point values;
@@ -15016,7 +15016,7 @@ This version of the operator has been available since version 13 of the default 
   to string tensors, plain floating-point representation (such as "314.15926") would be used.
   Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
   of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
-  
+
   Conversion from a numerical type to any numerical type is always allowed.
   User must be aware of precision loss and value change caused by range difference between two types.
   For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
@@ -15213,27 +15213,27 @@ This version of the operator has been available since version 13 of the default 
   and width dimensions. By default, `mode` = `DCR`.
   In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: depth, column, and then row. The output y is computed from the input x as below:
-  
+
   b, c, h, w = x.shape
-  
+
   tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-  
+
   tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-  
+
   y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-  
-  
+
+
   In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: column, row, and the depth. The output y is computed from the input x as below:
-  
+
   b, c, h, w = x.shape
-  
+
   tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-  
+
   tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-  
+
   y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-  
+
 
 #### Version
 
@@ -15273,7 +15273,7 @@ This version of the operator has been available since version 13 of the default 
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
   The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape, and can be either a scalar
-  for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantizations.
+  for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
   'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
   there's no zero point (zero point is supposed to be 0).
 
@@ -15285,7 +15285,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -15296,7 +15296,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>x_scale</tt> : tensor(float)</dt>
 <dd>Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization.</dd>
 <dt><tt>x_zero_point</tt> (optional) : T</dt>
-<dd>Zero point for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization. It's optional. 0 is the default value when it's not specified.</dd>
+<dd>Zero point for input 'x'. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
 </dl>
 
 #### Outputs
@@ -15316,7 +15316,7 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Div-13"></a>**Div-13**</a>
 
   Performs element-wise binary division (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -15407,7 +15407,7 @@ This version of the operator has been available since version 13 of the default 
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -15434,9 +15434,9 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Erf-13"></a>**Erf-13**</a>
@@ -15502,7 +15502,7 @@ This version of the operator has been available since version 13 of the default 
   Broadcast the input tensor following the given shape and the broadcast rule.
   The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
   Dimensions are right alignment;
-  Two corresponding dimension must have the same value, or one of them is equal to 1.
+  Two corresponding dimensions must have the same value, or one of them is equal to 1.
   Also, this operator is similar to numpy.broadcast_to(input, shape),
   but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
   It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
@@ -15609,14 +15609,14 @@ This version of the operator has been available since version 13 of the default 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
-  
+
   axis = 0 :
-  
+
   Let
   k = indices[i_{0}, ..., i_{q-1}]
   Then
   output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
-  
+
   ```
     data = [
         [1.0, 1.2],
@@ -15639,12 +15639,12 @@ This version of the operator has been available since version 13 of the default 
     ]
   ```
   axis = 1 :
-  
+
   Let
   k = indices[i_{0}, ..., i_{q-1}]
   Then
-  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
-  
+  output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
+
   ```
     data = [
         [1.0, 1.2, 1.9],
@@ -15707,7 +15707,7 @@ This version of the operator has been available since version 13 of the default 
   positions determined by elements of the `indices` tensor.
   Its output shape is the same as the shape of `indices` and consists of one value
   (gathered from the `data`) for each element in `indices`.
-  
+
   For instance, in the 3-D case (r = 3), the output produced is determined
   by the following equations:
   ```
@@ -15715,9 +15715,9 @@ This version of the operator has been available since version 13 of the default 
     out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
     out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
   ```
-  
+
   This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
-  
+
   Example 1:
   ```
     data = [
@@ -15792,95 +15792,95 @@ This version of the operator has been available since version 13 of the default 
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
-  
+
   `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
   where each element defines a slice of `data`
-  
+
   `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
   `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
-  
+
   Some salient points about the inputs' rank and shape:
-  
+
   1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
-  
+
   2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
-  
+
   3) b < min(q, r) is to be honored.
-  
+
   4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
-  
+
   5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
      It is an error if any of the index values are out of bounds.
-  
+
   The output is computed as follows:
-  
+
   The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
-  
+
   1) If `indices_shape[-1] > r-b` => error condition
-  
+
   2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
      containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions
      of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]`
      is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
-  
+
   3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
      containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding
      to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor
      to form the `output` tensor (Examples 2, 3, 4 and 5 below)
-  
+
   This operator is the inverse of `ScatterND`.
-  
+
   `Example 1`
-  
+
     batch_dims = 0
-  
+
     data    = [[0,1],[2,3]]   # data_shape = [2, 2]
-  
+
     indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
-  
+
     output  = [0,3]           # output_shape = [2]
-  
+
   `Example 2`
-  
+
     batch_dims = 0
-  
+
     data    = [[0,1],[2,3]]  # data_shape = [2, 2]
-  
+
     indices = [[1],[0]]      # indices_shape = [2, 1]
-  
+
     output  = [[2,3],[0,1]]  # output_shape = [2, 2]
-  
+
   `Example 3`
-  
+
     batch_dims = 0
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-  
+
     output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
-  
+
   `Example 4`
-  
+
     batch_dims = 0
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-  
+
     output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
-  
+
   `Example 5`
-  
+
     batch_dims = 1
-  
+
     data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-  
+
     indices = [[1],[0]]             # indices_shape = [2, 1]
-  
+
     output  = [[2,3],[4,5]]             # output_shape = [2, 2]
-  
-  
+
+
 
 #### Version
 
@@ -15920,11 +15920,11 @@ This version of the operator has been available since version 13 of the default 
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-  
+
   A' = transpose(A) if transA else A
-  
+
   B' = transpose(B) if transB else B
-  
+
   Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
   input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
   and output tensor Y has shape (M, N). A will be transposed before doing the
@@ -15978,7 +15978,7 @@ This version of the operator has been available since version 13 of the default 
 
   Returns the tensor resulted from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -16005,17 +16005,17 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Hardmax-13"></a>**Hardmax-13**</a>
 
   The operator computes the hardmax values for the given input:
-  
+
    Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise
-  
+
   The "axis" attribute indicates the dimension along which Hardmax
   will be performed. The output tensor has the same shape
   and contains the Hardmax values of the corresponding input.
@@ -16163,10 +16163,10 @@ This version of the operator has been available since version 13 of the default 
   The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
   of shape (N x C x D1 x D2, ..., Dk), its region is
   {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
-  
+
   square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
   where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
-  
+
   Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 
 #### Version
@@ -16211,7 +16211,7 @@ This version of the operator has been available since version 13 of the default 
 
   Returns the tensor resulted from performing the `less` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -16238,9 +16238,9 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrains input types to all numeric tensors.</dd>
+<dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains output to boolean tensor.</dd>
+<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 ### <a name="Log-13"></a>**Log-13**</a>
@@ -16275,9 +16275,9 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="LogSoftmax-13"></a>**LogSoftmax-13**</a>
 
   The operator computes the log of softmax values for the given input:
-  
+
    LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
-  
+
   The "axis" attribute indicates the dimension along which LogSoftmax
   will be performed. The output tensor has the same shape
   and contains the LogSoftmax values of the corresponding input.
@@ -16321,7 +16321,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 ### <a name="Loop-13"></a>**Loop-13**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
-  
+
   1) Trip count. Iteration count specified at runtime. Set by
      specifying the input M. Optional. Set to empty string to omit.
      Note that a static trip count (specified at graph construction time) can be
@@ -16330,45 +16330,45 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
      whether to run the first iteration and also a loop-carried dependency for
      the body graph. The body graph must yield a value for the condition variable,
      whether this input is provided or not.
-  
+
   This table summarizes the operating modes of this operator with equivalent
   C-style code:
-  
+
       Operator inputs defined as (max_trip_count, condition_var).
-  
+
       input ("", ""):
           for (int i=0; ; ++i) {
             cond = ... // Note this value is ignored, but is required in the body
           }
-  
+
       input ("", cond) // Note this is analogous to a while loop
           bool cond = ...;
           for (int i=0; cond; ++i) {
             cond = ...;
           }
-  
+
       input ("", 1) // Note this is analogous to a do-while loop
           bool cond = true
           for (int i=0; cond; ++i) {
             cond = ...;
           }
-  
+
       input (trip_count, "") // Note this is analogous to a for loop
           int trip_count = ...
           for (int i=0; i < trip_count; ++i) {
             cond = ...; // ignored
           }
-  
+
       input (trip_count, cond)
           int trip_count = ...;
           bool cond = ...;
           for (int i=0; i < trip_count && cond; ++i) {
             cond = ...;
           }
-  
-  
+
+
   *Sample usage - cond as well as trip count*
-  
+
       graph predict-net {
         %a = Constant[value = <Scalar Tensor [3]>]()
         %b = Constant[value = <Scalar Tensor [6]>]()
@@ -16377,7 +16377,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
         %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
         return
       }
-  
+
       graph body-net (
         %i[INT32, scalar]           // iteration number
         %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
@@ -16389,15 +16389,15 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
         %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
         return %keepgoing_out, %b_out, %user_defined_val
       }
-  
+
   *Sample equivalent C code*
-  
+
       {
         /* User-defined code (enclosing scope) */
         int a = 3, b = 6;
         bool keepgoing = true; // Analogous to input cond
         /* End user-defined code */
-  
+
         /* Implicitly-defined code */
         const int max_trip_count = 10; // Analogous to input M
         int user_defined_vals[]; // Imagine this is resizable
@@ -16405,31 +16405,31 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
         /* initialize loop-carried variables and scan-output variables */
         bool keepgoing_out = keepgoing
         int b_out = b
-  
+
         for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
           /* Implicitly-defined code: bind actual parameter values
              to formal parameter variables of loop-body */
           bool keepgoing_in = keepgoing_out;
           bool b_in = b_out;
-  
+
           /* User-defined code (loop body) */
           int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
           b_out = a - b_in;
           keepgoing_out = my_local > b_out;
           user_defined_val = b_in + b_in; // b_in and b_out are different variables
           /* End user-defined code */
-  
+
           /* Implicitly defined-code */
           user_defined_vals[i] = user_defined_val // accumulate scan-output values
         }
         // int t = my_local; // Can't do this. my_local is not accessible here.
-  
+
         // The values below are bound to the output variables of the loop and therefore accessible
         // b_out; user_defined_vals; keepgoing_out;
       }
-  
+
   There are several things of note in this code snippet:
-  
+
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
@@ -16445,7 +16445,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
      after the loop.
   4) Values created in the body cannot be accessed in the enclosing scope,
      except using the mechanism described above.
-  
+
   Note that the semantics of this op support "diagonal" or "wavefront" execution.
   (See Step 3 here for an example:
   https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
@@ -16453,7 +16453,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
   time being the inner looping dimension), with each successive layer consuming
   the scan_outputs from the previous layer, possibly going through several
   point-wise operators (e.g. dropout, residual connections, linear layer).
-  
+
   The input/output of subgraph (produced by loop node) matching is based on order instead of name. The implementation will figure out the names based on this order.
 
 #### Version
@@ -16661,16 +16661,16 @@ This version of the operator has been available since version 13 of the default 
 
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
       The sign of the remainder is the same as that of the Divisor.
-  
+
       Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
       (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
       This attribute is set to 0 by default causing the behavior to be like integer mod.
       Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
-  
+
       If the input type is floating point, then `fmod` attribute must be set to 1.
-  
+
       In case of dividend being zero, the results will be platform dependent.
-  
+
     This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -16710,7 +16710,7 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Mul-13"></a>**Mul-13**</a>
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -16779,51 +16779,51 @@ This version of the operator has been available since version 13 of the default 
   The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes)
   or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
   The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
-  
+
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
-  
+
   When an optional "weight" is provided, the sample loss is calculated as:
-  
+
       loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
-  
+
   loss is zero for the case when target-value equals ignore_index.
-  
+
       loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
-  
+
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
-  
+
       mean(loss), if "weight" is not provided,
-  
+
   or if weight is provided,
-  
+
       sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
-  
+
   If "reduction" attribute is set to "sum", the output is a scalar:
       sum(loss).
-  
+
   See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
-  
+
   Example 1:
-  
+
       // negative log likelihood loss, "none" reduction
       N, C, d1 = 2, 3, 2
       input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
                [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
       target = [[2, 1], [0, 2]]
-  
+
       loss = np.zeros((N, d1))
       for n in range(N):
           for d_1 in range(d1):
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1]
-  
+
       // print(loss)
       // [[-3. -2.]
       //  [-0. -2.]]
-  
+
   Example 2:
-  
+
       // weighted negative log likelihood loss, sum reduction
       N, C, d1 = 2, 3, 2
       input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
@@ -16835,13 +16835,13 @@ This version of the operator has been available since version 13 of the default 
           for d_1 in range(d1):
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1] * weight[c]
-  
+
       loss = np.sum(loss)
       // print(loss)
       // -1.1
-  
+
   Example 3:
-  
+
       // weighted negative log likelihood loss, mean reduction
       N, C, d1 = 2, 3, 2
       input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
@@ -16855,7 +16855,7 @@ This version of the operator has been available since version 13 of the default 
               c = target[n][d_1]
               loss[n][d_1] = -input[n][c][d_1] * weight[c]
               weight_total = weight_total + weight[c]
-  
+
       loss = np.sum(loss) / weight_total
       // print(loss)
       // -1.57
@@ -16936,40 +16936,40 @@ This version of the operator has been available since version 13 of the default 
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
-  
+
   The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
-  
+
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
-  
+
   2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
-  
+
   3) `edge` - pads with the edge values of array
-  
-  
+
+
   Example 1 (`constant` mode):
     Insert 0 pads to the beginning of the second dimension.
-  
+
     data =
     [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-  
+
     pads = [0, 2, 0, 0]
-  
+
     mode = 'constant'
-  
+
     constant_value = 0.0
-  
+
     output =
     [
         [0.0, 0.0, 1.0, 1.2],
         [0.0, 0.0, 2.3, 3.4],
         [0.0, 0.0, 4.5, 5.7],
     ]
-  
-  
+
+
   Example 2 (`reflect` mode):
     data =
     [
@@ -16977,19 +16977,19 @@ This version of the operator has been available since version 13 of the default 
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-  
+
     pads = [0, 2, 0, 0]
-  
+
     mode = 'reflect'
-  
+
     output =
     [
         [1.0, 1.2, 1.0, 1.2],
         [2.3, 3.4, 2.3, 3.4],
         [4.5, 5.7, 4.5, 5.7],
     ]
-  
-  
+
+
   Example 3 (`edge` mode):
     data =
     [
@@ -16997,18 +16997,18 @@ This version of the operator has been available since version 13 of the default 
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-  
+
     pads = [0, 2, 0, 0]
-  
+
     mode = 'edge'
-  
+
     output =
     [
         [1.0, 1.0, 1.0, 1.2],
         [2.3, 2.3, 2.3, 3.4],
         [4.5, 4.5, 4.5, 5.7],
     ]
-  
+
 
 #### Version
 
@@ -17084,8 +17084,9 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="QuantizeLinear-13"></a>**QuantizeLinear-13**</a>
 
-  The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor. The scale factor can be a scalar
-  (per-tensor/layer quantization), or a 1-D tensor for per-axis quantization. The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
+  The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
+  The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
+  The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
   For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
   For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
 
@@ -17097,7 +17098,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the quantization dimension of the input tensor. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input)</dd>
+<dd>(Optional) The axis of the quantization dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -17108,7 +17109,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>y_scale</tt> : tensor(float)</dt>
 <dd>Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, or a 1-D Tensor for per-axis quantization.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
-<dd>Zero point for doing quantization to get 'y'. It can be a scalar, which means a per-tensor/layer quantization, or a 1-D tensor for per-axis quantization. Default value is uint8 typed 0 if it's not specified.</dd>
+<dd>Zero point for doing quantization to get 'y'. Shape must match y_scale. Default is uint8 with zero point of 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
@@ -17160,11 +17161,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL1-13"></a>**ReduceL1-13**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the L1 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17177,7 +17178,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17203,11 +17204,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL2-13"></a>**ReduceL2-13**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the L2 norm of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17220,7 +17221,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17246,11 +17247,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSum-13"></a>**ReduceLogSum-13**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the log sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17263,7 +17264,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17289,11 +17290,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSumExp-13"></a>**ReduceLogSumExp-13**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17306,7 +17307,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17332,11 +17333,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMax-13"></a>**ReduceMax-13**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the max of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17349,7 +17350,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17375,11 +17376,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMean-13"></a>**ReduceMean-13**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the mean of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17392,7 +17393,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17418,11 +17419,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMin-13"></a>**ReduceMin-13**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the min of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17435,7 +17436,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17461,11 +17462,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceProd-13"></a>**ReduceProd-13**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the product of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17478,7 +17479,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17504,11 +17505,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSum-13"></a>**ReduceSum-13**</a>
 
-  Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the sum of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17519,7 +17520,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
 <dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
@@ -17549,11 +17550,11 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSumSquare-13"></a>**ReduceSumSquare-13**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
-  
-  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  Computes the sum square of the input tensor's element along the provided axes. The resulting
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  the resulting tensor has the reduced dimension pruned.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
 
 #### Version
@@ -17566,7 +17567,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 </dl>
 
 #### Inputs
@@ -17628,7 +17629,8 @@ This version of the operator has been available since version 13 of the default 
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-  from the input tensor).
+  from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
 #### Version
 
@@ -17740,22 +17742,22 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
   is produced by creating a copy of the input `data`, and then updating its value
   to values specified by `updates` at specific index positions specified by
   `indices`. Its output shape is the same as the shape of `data`.
-  
+
   For each entry in `updates`, the target index in `data` is obtained by combining
   the corresponding entry in `indices` with the index of the entry itself: the
   index-value for dimension = axis is obtained from the value of the corresponding
   entry in `indices` and the index-value for dimension != axis is obtained from the
   index of the entry itself.
-  
+
   For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
   is performed as below:
   ```
     output[indices[i][j]][j] = updates[i][j] if axis = 0,
     output[i][indices[i][j]] = updates[i][j] if axis = 1,
   ```
-  
+
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
-  
+
   Example 1:
   ```
     data = [
@@ -17832,13 +17834,13 @@ This version of the operator has been available since version 13 of the default 
   specified by `updates` at specific index positions specified by `indices`. Its output shape
   is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
   That is, two or more `updates` for the same index-location is not supported.
-  
+
   `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
    `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
   update to a slice of the tensor.
-  
+
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
   The remaining dimensions of `updates` correspond to the dimensions of the
@@ -17846,20 +17848,20 @@ This version of the operator has been available since version 13 of the default 
   corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
   must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
   of shapes.
-  
+
   The `output` is calculated via the following equation:
-  
+
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
           output[indices[idx]] = updates[idx]
-  
+
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
   This ensures that the output value does not depend on the iteration order.
-  
+
   This operator is the inverse of GatherND.
-  
+
   Example 1:
   ```
     data    = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -17867,7 +17869,7 @@ This version of the operator has been available since version 13 of the default 
     updates = [9, 10, 11, 12]
     output  = [1, 11, 3, 10, 9, 6, 7, 12]
   ```
-  
+
   Example 2:
   ```
     data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
@@ -18038,19 +18040,38 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Slice-13"></a>**Slice-13**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
-  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
-  dimension and step for each axis in the list of axes, it uses this information to
-  slice the input `data` tensor. If a negative value is passed for any of the
-  start or end indices, it represents number of elements before the end of that
-  dimension. If the value passed to start or end is larger than the `n` (the
-  number of elements in this dimension), it represents `n`. For slicing to the
-  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`
-  when sclicing forward and 'INT_MIN' when slicing backward.
-  If a negative value is passed for step, it represents slicing backward.
-  However step value cannot be 0.
-  If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+  https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-and-striding
+
+  Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
+  of its input `data` tensor.
+
+  An effective `start[i]`, `end[i]`, and `step[i]` must be computed for each `i`
+  in `[0, ... r-1]` where `r = rank(input)` as follows:
+
+  If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
+
+  The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
+  `dims` are the dimensions of `input` and `step[i] = `1.
+
+  All negative elements of `axes` are made non-negatve by adding `r` to them, where
+  `r =rank(input)`.
+
+  All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
+  where `dims` are the dimensions of `input`. Then `start[axes[i]]` is the adjusted
+  `starts[i]` is clamped into the range `[0, dims[axes[i]]]` for positive stepping
+  and `[0, dims[axes[i]]-1]` for negative stepping.
+
+  The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
+  accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
+  `end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
+  is clamped to `[-1, dims[axes[i]]-1]`.
+
+  Finally, `step[axes[i]] = steps[i]`.
+
+  For slicing to the end of a dimension with unknown size, it is recommended to pass
+  in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
+
   Example 1:
     data = [
         [1, 2, 3, 4],
@@ -18088,9 +18109,9 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>ends</tt> (non-differentiable) : Tind</dt>
 <dd>1-D tensor of ending indices (exclusive) of corresponding axis in `axes`</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
-<dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>1-D tensor of axes that `starts` and `ends` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
 <dt><tt>steps</tt> (optional, non-differentiable) : Tind</dt>
-<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1.</dd>
+<dd>1-D tensor of slice step of corresponding axis in `axes`. Negative value means slicing backward. 'steps' cannot be 0. Defaults to 1s.</dd>
 </dl>
 
 #### Outputs
@@ -18112,9 +18133,9 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Softmax-13"></a>**Softmax-13**</a>
 
   The operator computes the normalized exponential values for the given input:
-  
-   Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) 
-  
+
+   Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1)
+
   The "axis" attribute indicates the dimension along which Softmax
   will be performed. The output tensor has the same shape
   and contains the Softmax values of the corresponding input.
@@ -18164,25 +18185,25 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
   If the input is N-D tensor with shape (N, C, D1, D2, ..., Dk),
   the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
   After L is available, this operator can optionally do a reduction operator.
-  
+
   shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
           with K >= 1 in case of K-dimensional loss.
   shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
           with K >= 1 in case of K-dimensional loss.
-  
+
   The loss for one sample, l_i, can caculated as follows:
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   or
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
-  
+
   loss is zero for the case when label-value equals ignore_index.
       l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
-  
+
   where:
       p = Softmax(scores)
       y = Log(p)
       c = labels[i][d1][d2]...[dk]
-  
+
   Finally, L is optionally reduced:
   If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
   If reduction = 'sum', the output is scalar: Sum(L).
@@ -18377,7 +18398,7 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Sub-13"></a>**Sub-13**</a>
 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -18490,7 +18511,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
+<dd>Output tensor of the same dimensions and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
 </dl>
 
 #### Type Constraints
@@ -18544,16 +18565,16 @@ This version of the operator has been available since version 13 of the default 
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
-  
+
   For example:
     Given an input tensor (`data`) of shape [3, 4, 5], then
     Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
-  
+
   The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
   Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
   The order of values in `axes` does not matter and can come in any order.
-  
+
 
 #### Version
 
@@ -18586,9 +18607,9 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Add-14"></a>**Add-14**</a>
 
   Performs element-wise binary addition (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-  
+
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -18628,34 +18649,34 @@ This version of the operator has been available since version 14 of the default 
   statistics in inference mode (training_mode=False, default),
   and the running statistics in training mode (training_mode=True).
   There are multiple cases for the number of outputs, which we list below:
-  
+
   Output case #1: Y, running_mean, running_var (training_mode=True)
   Output case #2: Y (training_mode=False)
-  
+
   When training_mode=False, extra outputs are invalid.
   The outputs are updated as follows when training_mode=True:
   ```
   running_mean = input_mean * momentum + current_mean * (1 - momentum)
   running_var = input_var * momentum + current_var * (1 - momentum)
-  
+
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-  
+
   where:
-  
+
   current_mean = ReduceMean(X, axis=all_except_channel_index)
   current_var =  ReduceVar(X, axis=all_except_channel_index)
-  
+
   Notice that ReduceVar refers to the population variance, and it equals to
   sum(sqrd(x_i - x_avg)) / N
   where N is the population size (this formula does not use sample size N - 1).
-  
+
   ```
-  
+
   When training_mode=False:
   ```
   Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
   ```
-  
+
   For previous (depreciated) non-spatial cases, implementors are suggested
   to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -18716,7 +18737,7 @@ This version of the operator has been available since version 14 of the default 
   By default, it will do the sum inclusively meaning the first element is copied as is.
   Through an `exclusive` attribute, this behavior can change to exclude the first element.
   It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
-  
+
   Example:
   ```
   input_x = [1, 2, 3]
@@ -18731,7 +18752,7 @@ This version of the operator has been available since version 14 of the default 
   reverse=1
   output = [5, 3, 0]
   ```
-   
+
 
 #### Version
 
@@ -18774,9 +18795,9 @@ This version of the operator has been available since version 14 of the default 
 ### <a name="Div-14"></a>**Div-14**</a>
 
   Performs element-wise binary division (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-  
+
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -18810,75 +18831,75 @@ This version of the operator has been available since version 14 of the default 
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `z` - update gate
-  
+
   `r` - reset gate
-  
+
   `h` - hidden gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-  
+
   `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-  
+
   `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-  
+
   `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-  
+
   `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-  
+
   `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-  
+
   `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-  
+
   `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Sigmoid, g=Tanh):
-  
+
     - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
-  
+
     - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
-  
+
     - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
-  
+
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
@@ -19006,83 +19027,83 @@ This version of the operator has been available since version 14 of the default 
 
   Computes an one-layer LSTM. This operator is usually supported via some
   custom implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `i` - input gate
-  
+
   `o` - output gate
-  
+
   `f` - forget gate
-  
+
   `c` - cell gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
-  
+
   `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
-  
+
   `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
-  
+
   `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-  
+
   `P[iof]`  - P peephole weight vector for input, output, and forget gates
-  
+
   `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
-  
+
   `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
-  
+
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
-  
+
   `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-  
+
   `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
-  
+
     - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
-  
+
     - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
-  
+
     - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
-  
+
     - Ct = ft (.) Ct-1 + it (.) ct
-  
+
     - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
-  
+
     - Ht = ot (.) h(Ct)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
@@ -19108,7 +19129,7 @@ This version of the operator has been available since version 14 of the default 
 <dt><tt>input_forget</tt> : int (default is 0)</dt>
 <dd>Couple the input and forget gates if 1.</dd>
 <dt><tt>layout</tt> : int (default is 0)</dt>
-<dd>The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. If 0, the following shapes are expected: X.shape = [seq_length, batch_size, input_size], Y.shape = [seq_length, num_directions, batch_size, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [num_directions, batch_size, hidden_size]. If 1, the following shapes are expected: X.shape = [batch_size, seq_length, input_size], Y.shape = [batch_size, seq_length, num_directions, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [num_directions, batch_size, hidden_size].</dd>
+<dd>The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. If 0, the following shapes are expected: X.shape = [seq_length, batch_size, input_size], Y.shape = [seq_length, num_directions, batch_size, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [num_directions, batch_size, hidden_size]. If 1, the following shapes are expected: X.shape = [batch_size, seq_length, input_size], Y.shape = [batch_size, seq_length, num_directions, hidden_size], initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = [batch_size, num_directions, hidden_size].</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -19155,9 +19176,9 @@ This version of the operator has been available since version 14 of the default 
 ### <a name="Mul-14"></a>**Mul-14**</a>
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-  
+
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -19191,63 +19212,63 @@ This version of the operator has been available since version 14 of the default 
 
   Computes an one-layer simple RNN. This operator is usually supported
   via some custom implementation such as CuDNN.
-  
+
   Notations:
-  
+
   `X` - input tensor
-  
+
   `i` - input gate
-  
+
   `t` - time step (t-1 means previous time step)
-  
+
   `Wi` - W parameter weight matrix for input gate
-  
+
   `Ri` - R recurrence weight matrix for input gate
-  
+
   `Wbi` - W parameter bias vector for input gate
-  
+
   `Rbi` - R parameter bias vector for input gate
-  
+
   `WBi` - W parameter weight matrix for backward input gate
-  
+
   `RBi` - R recurrence weight matrix for backward input gate
-  
+
   `WBbi` - WR bias vectors for backward input gate
-  
+
   `RBbi` - RR bias vectors for backward input gate
-  
+
   `H` - Hidden state
-  
+
   `num_directions` - 2 if direction == bidirectional else 1
-  
+
   Activation functions:
-  
+
     Relu(x)                - max(0, x)
-  
+
     Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-  
+
     Sigmoid(x)             - 1/(1 + e^{-x})
-  
+
     (NOTE: Below are optional)
-  
+
     Affine(x)              - alpha*x + beta
-  
+
     LeakyRelu(x)           - x if x >= 0 else alpha * x
-  
+
     ThresholdedRelu(x)     - x if x >= alpha else 0
-  
+
     ScaledTanh(x)          - alpha*Tanh(beta*x)
-  
+
     HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-  
+
     Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-  
+
     Softsign(x)            - x/(1 + |x|)
-  
+
     Softplus(x)            - log(1 + e^x)
-  
+
   Equations (Default: f=Tanh):
-  
+
     - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
@@ -19348,7 +19369,9 @@ This version of the operator has been available since version 14 of the default 
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
   from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
-  dimension will be set explicitly to zero (i.e. not taken from input tensor)
+  dimension will be set explicitly to zero (i.e. not taken from input tensor).
+  Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
 #### Version
 
@@ -19387,9 +19410,9 @@ This version of the operator has been available since version 14 of the default 
 ### <a name="Sub-14"></a>**Sub-14**</a>
 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
-  
+
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-  
+
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -19479,36 +19502,36 @@ This version of the operator has been available since version 14 of the default 
   statistics in inference mode (training_mode=False, default),
   and the running statistics in training mode (training_mode=True).
   There are multiple cases for the number of outputs, which we list below:
-  
+
   Output case #1: Y, running_mean, running_var (training_mode=True)
   Output case #2: Y (training_mode=False)
-  
+
   When training_mode=False, extra outputs are invalid.
   The outputs are updated as follows when training_mode=True:
   ```
   running_mean = input_mean * momentum + current_mean * (1 - momentum)
   running_var = input_var * momentum + current_var * (1 - momentum)
-  
+
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-  
+
   where:
-  
+
   current_mean = ReduceMean(X, axis=all_except_channel_index)
   current_var =  ReduceVar(X, axis=all_except_channel_index)
-  
+
   Notice that ReduceVar refers to the population variance, and it equals to
   sum(sqrd(x_i - x_avg)) / N
   where N is the population size (this formula does not use sample size N - 1).
-  
+
   ```
-  
+
   The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
-  
+
   When training_mode=False:
   ```
   Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
   ```
-  
+
   For previous (depreciated) non-spatial cases, implementors are suggested
   to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -19570,7 +19593,7 @@ This version of the operator has been available since version 15 of the default 
   Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
   containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
   where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
-  
+
   This operator is non-deterministic and may not produce the same values in different
   implementations (even if a seed is specified).
 
@@ -19679,9 +19702,9 @@ This version of the operator has been available since version 15 of the default 
 
 <dl>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
-<dd>Constrains input type to all tensor and sequence types.</dd>
+<dd>Constrain input type to all tensor and sequence types.</dd>
 <dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
-<dd>Constrains output type to all optional tensor or optional sequence types.</dd>
+<dd>Constrain output type to all optional tensor or optional sequence types.</dd>
 </dl>
 
 ### <a name="OptionalGetElement-15"></a>**OptionalGetElement-15**</a>
@@ -19711,7 +19734,7 @@ This version of the operator has been available since version 15 of the default 
 
 <dl>
 <dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
-<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dd>Constrain input type to optional tensor and optional sequence types.</dd>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain output type to all tensor or sequence types.</dd>
 </dl>
@@ -19742,9 +19765,9 @@ This version of the operator has been available since version 15 of the default 
 
 <dl>
 <dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
-<dd>Constrains input type to optional tensor and optional sequence types.</dd>
+<dd>Constrain input type to optional tensor and optional sequence types.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Constrains output to a boolean tensor.</dd>
+<dd>Constrain output to a boolean tensor.</dd>
 </dl>
 
 ### <a name="Pow-15"></a>**Pow-15**</a>
@@ -19791,29 +19814,29 @@ This version of the operator has been available since version 15 of the default 
   The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
   If the end axis is omitted, the axes upto the last one will be included.
   Negative axes indicate counting back from the last axis.
-  Note that axes will be clipped to the range [0, r-1], where r is the
+  Note that axes will be clamped to the range [0, r-1], where r is the
   rank of the input tensor if they are out-of-range (after adding r in the case of
   negative axis). Thus, specifying any end value > r is equivalent to specifying an end
   value of r, and specifying any start value < -r is equivalent to specifying a start
   value of 0.
-  
+
   For example:
-  Input tensor with shape: [2, 3, 4] 
+  Input tensor with shape: [2, 3, 4]
   No attributes specified.
-  Output: [2, 3, 4] 
-  
-  Input tensor with shape: [2, 3, 4] 
+  Output: [2, 3, 4]
+
+  Input tensor with shape: [2, 3, 4]
   start: -1
-  Output: [4] 
-  
-  Input tensor with shape: [2, 3, 4] 
+  Output: [4]
+
+  Input tensor with shape: [2, 3, 4]
   end: -1
   Output: [2, 3]
-  
-  Input tensor with shape: [2, 3, 4] 
+
+  Input tensor with shape: [2, 3, 4]
   start: 1
   end: 2
-  Output: [3] 
+  Output: [3]
 
 #### Version
 
@@ -19852,6 +19875,454 @@ This version of the operator has been available since version 15 of the default 
 </dl>
 
 ## Version 16 of the default ONNX operator set
+### <a name="GreaterOrEqual-16"></a>**GreaterOrEqual-16**</a>
+
+  Returns the tensor resulted from performing the `greater_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output to boolean tensor.</dd>
+</dl>
+
+### <a name="GridSample-16"></a>**GridSample-16**</a>
+
+  Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
+  Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
+  the `output` will have shape (N, C, H_out, W_out).
+  For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
+  which are used to interpolate the output value `output[N, C, H_out, W_out]`.
+
+  The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
+  See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>align_corners</tt> : int (default is 0)</dt>
+<dd>If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.</dd>
+<dt><tt>mode</tt> : string (default is bilinear)</dt>
+<dd>Three interpolation modes: bilinear (default), nearest and bicubic.</dd>
+<dt><tt>padding_mode</tt> : string (default is zeros)</dt>
+<dd>Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. zeros: use 0 for out-of-bound grid locations, border: use border values for out-of-bound grid locations, reflection: use values at locations reflected by the border for out-of-bound grid locations. If index 0 represents the margin pixel, the reflected value at index -1 will be the same as the value at index 1. For location far away from the border, it will keep being reflected until becoming in bound. If pixel location x = -3.5 reflects by border -1 and becomes x' = 1.5, then reflects by border 1 and becomes x'' = 0.5.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T1</dt>
+<dd>4-D tensor of shape (N, C, H, W), where N is the batch size, C is the numbers of channels, H and W are the height and width of the input data.</dd>
+<dt><tt>grid</tt> (non-differentiable) : T1</dt>
+<dd>Input offset, 4-D tensor of shape (N, H_out, W_out, 2), where H_out and W_out are the height and width of grid and output, Grid specifies the sampling pixel locations normalized by the input spatial dimensions. Therefore, it should have most values in the range of [-1, 1]. If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T2</dt>
+<dd>4-D tensor of shape (N, C, H_out, W_out).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input types to all tensor types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
+</dl>
+
+### <a name="Identity-16"></a>**Identity-16**</a>
+
+  Identity operator
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : V</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : V</dt>
+<dd>Tensor to copy input into.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
+</dl>
+
+### <a name="If-16"></a>**If-16**</a>
+
+  If conditional
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>else_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is false. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the then_branch.</dd>
+<dt><tt>then_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is true. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the else_branch.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>cond</tt> : B</dt>
+<dd>Condition for the if</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Only bool</dd>
+</dl>
+
+### <a name="LeakyRelu-16"></a>**LeakyRelu-16**</a>
+
+  LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
+  output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
+  `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
+
+  **History**
+  - Version 16 adds bfloat16 to the types allowed.
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 0.01)</dt>
+<dd>Coefficient of leakage.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="LessOrEqual-16"></a>**LessOrEqual-16**</a>
+
+  Returns the tensor resulted from performing the `less_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output to boolean tensor.</dd>
+</dl>
+
+### <a name="Loop-16"></a>**Loop-16**</a>
+
+  Generic Looping construct. This loop has multiple termination conditions:
+
+  1) Trip count. Iteration count specified at runtime. Set by
+     specifying the input M. Optional. Set to empty string to omit.
+     Note that a static trip count (specified at graph construction time) can be
+     specified by passing in a constant node for input M.
+  2) Loop termination condition. This is an input to the op that determines
+     whether to run the first iteration and also a loop-carried dependency for
+     the body graph. The body graph must yield a value for the condition variable,
+     whether this input is provided or not.
+
+  This table summarizes the operating modes of this operator with equivalent
+  C-style code:
+
+      Operator inputs defined as (max_trip_count, condition_var).
+
+      input ("", ""):
+          for (int i=0; ; ++i) {
+            cond = ... // Note this value is ignored, but is required in the body
+          }
+
+      input ("", cond) // Note this is analogous to a while loop
+          bool cond = ...;
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+
+      input ("", 1) // Note this is analogous to a do-while loop
+          bool cond = true
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+
+      input (trip_count, "") // Note this is analogous to a for loop
+          int trip_count = ...
+          for (int i=0; i < trip_count; ++i) {
+            cond = ...; // ignored
+          }
+
+      input (trip_count, cond)
+          int trip_count = ...;
+          bool cond = ...;
+          for (int i=0; i < trip_count && cond; ++i) {
+            cond = ...;
+          }
+
+
+  *Sample usage - cond as well as trip count*
+
+      graph predict-net {
+        %a = Constant[value = <Scalar Tensor [3]>]()
+        %b = Constant[value = <Scalar Tensor [6]>]()
+        %keepgoing = Constant[value = <Scalar Tensor [1]>]()
+        %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
+        %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
+        return
+      }
+
+      graph body-net (
+        %i[INT32, scalar]           // iteration number
+        %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+        %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
+      ) {
+        %my_local = Add(%a, %b_in)
+        %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+        %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+        %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
+        return %keepgoing_out, %b_out, %user_defined_val
+      }
+
+  *Sample equivalent C code*
+
+      {
+        /* User-defined code (enclosing scope) */
+        int a = 3, b = 6;
+        bool keepgoing = true; // Analogous to input cond
+        /* End user-defined code */
+
+        /* Implicitly-defined code */
+        const int max_trip_count = 10; // Analogous to input M
+        int user_defined_vals[]; // Imagine this is resizable
+        /* End implicitly-defined code */
+        /* initialize loop-carried variables and scan-output variables */
+        bool keepgoing_out = keepgoing
+        int b_out = b
+
+        for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+          /* Implicitly-defined code: bind actual parameter values
+             to formal parameter variables of loop-body */
+          bool keepgoing_in = keepgoing_out;
+          bool b_in = b_out;
+
+          /* User-defined code (loop body) */
+          int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+          b_out = a - b_in;
+          keepgoing_out = my_local > b_out;
+          user_defined_val = b_in + b_in; // b_in and b_out are different variables
+          /* End user-defined code */
+
+          /* Implicitly defined-code */
+          user_defined_vals[i] = user_defined_val // accumulate scan-output values
+        }
+        // int t = my_local; // Can't do this. my_local is not accessible here.
+
+        // The values below are bound to the output variables of the loop and therefore accessible
+        // b_out; user_defined_vals; keepgoing_out;
+      }
+
+  There are several things of note in this code snippet:
+
+  1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
+     be referenced in the inputs of the loop.
+  2) Any values computed in the loop body that needs to be used in a subsequent
+     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+     These are referred to as loop-carried dependences. The loop operation node
+     supplies the input value of the input variable for the first iteration, and
+     returns the output value of the output variable produced by the final
+     iteration.
+  3) Scan_output variables are used to implicitly concatenate values computed across
+     all the iterations. In the above example, the value of user_defined_val computed
+     over all iterations are concatenated and returned as the value of user_defined_vals
+     after the loop.
+  4) Values created in the body cannot be accessed in the enclosing scope,
+     except using the mechanism described above.
+
+  Note that the semantics of this op support "diagonal" or "wavefront" execution.
+  (See Step 3 here for an example:
+  https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
+  Frontends should emit multi-layer RNNs as a series of While operators (with
+  time being the inner looping dimension), with each successive layer consuming
+  the scan_outputs from the previous layer, possibly going through several
+  point-wise operators (e.g. dropout, residual connections, linear layer).
+
+  The input/output of subgraph (produced by loop node) matching is based on order instead of name. The implementation will figure out the names based on this order.
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions or data type of these scan_outputs change across loop iterations.</dd>
+</dl>
+
+#### Inputs (2 - &#8734;)
+
+<dl>
+<dt><tt>M</tt> (optional) : I</dt>
+<dd>A maximum trip-count for the loop specified at runtime. Optional. Pass empty string to skip.</dd>
+<dt><tt>cond</tt> (optional) : B</dt>
+<dd>A boolean termination condition. Optional. Pass empty string to skip.</dd>
+<dt><tt>v_initial</tt> (variadic, heterogeneous) : V</dt>
+<dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>v_final_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Final N loop carried dependency values then K scan_outputs. Scan outputs must be Tensors.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>tensor of int64, which should be a scalar.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>tensor of bool, which should be a scalar.</dd>
+</dl>
+
+### <a name="PRelu-16"></a>**PRelu-16**</a>
+
+  PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
+  output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
+  `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+
+  **History**
+  - Version 16 adds bfloat16 to the types allowed.
+  This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+<dt><tt>slope</tt> (differentiable) : T</dt>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor (same size as X)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to float/int tensors.</dd>
+</dl>
+
 ### <a name="RoiAlign-16"></a>**RoiAlign-16**</a>
 
   Region of Interest (RoI) align operation described in the
@@ -19859,7 +20330,7 @@ This version of the operator has been available since version 15 of the default 
   RoiAlign consumes an input tensor X and region of interests (rois)
   to apply pooling across each RoI; it produces a 4-D tensor of shape
   (num_rois, C, output_height, output_width).
-  
+
   RoiAlign is proposed to avoid the misalignment by removing
   quantizations while converting from original image into feature
   map and from feature map into RoI feature; in each ROI bin,
@@ -19914,22 +20385,504 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain types to int tensors.</dd>
 </dl>
 
+### <a name="Scan-16"></a>**Scan-16**</a>
+
+  Scan can be used to iterate over one or more scan_input tensors,
+  constructing zero or more scan_output tensors. It combines ideas from general recurrences,
+  functional programming constructs such as scan, fold, map, and zip, and is intended to enable
+  generalizations of RNN-like constructs for sequence-to-sequence processing.
+  Other tensors (referred to as state_variables here) can be used to carry a state
+  when iterating from one element to another (similar to hidden-state in RNNs, also referred
+  to as loop-carried dependences in the context of loops).
+  Many common usages involve a single scan_input tensor (where functionality
+  similar to scan, fold and map can be obtained). When more than one scan_input is used,
+  a behavior similar to zip is obtained.
+
+  The attribute body must be a graph, specifying the computation to be performed in
+  every iteration. It takes as input the current values of the state_variables and
+  the current iterated element of the scan_inputs. It must return the (updated) values
+  of the state_variables and zero or more scan_output_element tensors. The values of the
+  scan_output_element tensors are concatenated over all the iterations to produce the
+  scan_output values of the scan construct (similar to the concatenated intermediate
+  hidden-state values of RNN-like constructs). All the output tensors (state_variables as
+  well as scan_output_element tensors) are required to have the same shape in each iteration
+  of the loop (a restriction imposed to enable efficient memory allocation).
+
+  Note that the iterated element passed to the body subgraph does not have a sequence
+  axis. It will have a rank one less than the rank of the corresponding scan_input.
+
+  The scan operation returns the final values of the state_variables as well as the
+  scan_outputs.
+
+  The optional attribute scan_input_directions specifies the direction (forward or backward)
+  for each scan input. If this attribute is omitted, all sequences are scanned in the forward
+  direction. A bidirectional scan may be performed by specifying the same tensor input twice
+  in the scan_inputs, once with a forward direction, and once with a backward direction.
+
+  The scan_output of the operation is produced by concatenating the scan_output_element
+  values produced by the body in each iteration.  The optional attribute scan_output_directions
+  specifies the direction in which scan_output is constructed (by appending or prepending the
+  scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
+  is omitted, the scan_output_element is appended to the scan_output in each iteration.
+
+  The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
+  If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
+  batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
+  Note that scanning a non-zero axis may be less efficient than scanning axis zero.
+
+  The optional attribute scan_output_axes specifies the axis along which the scan_outputs
+  are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
+  scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
+  value of 1.
+
+  Note that because of the ONNX restriction that only the last parameter of an operator can
+  be variadic, the initial-states and scan-inputs are listed together as one input parameter.
+  Similarly, the final-states and scan-outputs are listed together as one output parameter.
+  The attribute num_scan_inputs indicates the number M of scan-inputs.
+
+  The behavior of
+
+      Scan <
+          num_scan_inputs = m,
+          body = loop-body,
+          scan_input_axes = [axis_1, ..., axis_m]
+      > (init_1, ..., init_n, scan_1, ..., scan_m)
+
+  is equivalent to the following pseudo-code:
+
+      // scan_i.shape[axis_i] denotes the (max) sequence-length of scan_i
+      // scan_i.shape[axis_i] is required to be equal to scan_j.shape[axis_j] for all i,j.
+      sequence_length = scan_1.shape[axis_1];
+
+      // initialize state-variables
+      st_1 = init_1; ... st_n = init_n;
+      // initialize scan-output variables: [] denotes an empty tensor
+      scan_out_1 = []; ...; scan_out_k = [];
+      // identify number of iterations:
+
+      // execute loop
+      for (int t = 0; t < sequence_length; ++t) {
+          // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
+          // of rank one less than T obtained by indexing T at position t along axis k.
+          si_1 = scan_1<axis=axis_1>[t];
+          ... ;
+          si_m = scan_m<axis=axis_m>[t];
+          // execute loop-body
+          st_1, ..., st_n, so_1, ..., so_k = loop-body(st_1, ..., st_n, si_1, ..., si_m)
+          // accumulate the scan-output elements
+          scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
+      }
+
+      return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
+
+  *Sample usage: Encoding RNN using a Scan*
+
+  The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
+  recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
+  be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
+  %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
+  values are computed in the outer graph, they need to be passed in as extra state_variables.
+
+      graph rnn-encoding {
+        %H_0 = ...
+        %X = ...
+        %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
+        return %Y, %Y_h
+      }
+
+      graph rnn-cell-1 (
+        %H_tminus1[FLOAT, tensor]
+        %X_t[FLOAT, tensor]
+      ) {
+        %Wi = ...
+        %Ri = ...
+        %Wbi = ...
+        %Rbi = ...
+        %t1 = X_t * (Wi^T)
+        %t2 = H_tminus1*(Ri^T)
+        %t3 = Add(%t1, %t2)
+        %t4 = Add(%t3, %Wbi)
+        %t5 = Add(%t4, %Rbi)
+        %Ht = Tanh(%t5)
+        %Accumulate = Identity(%Ht)
+        return %Ht, %Accumulate
+      }
+
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
+<dt><tt>num_scan_inputs</tt> : int (required)</dt>
+<dd>An attribute specifying the number of scan_inputs M. </dd>
+<dt><tt>scan_input_axes</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input. Negative value for an axis means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>scan_input_directions</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>scan_output_axes</tt> : list of ints</dt>
+<dd>An optional list of K flags. The i-th element of the list specifies the axis for the i-th scan_output. The scan outputs are accumulated along the specified axis. If omitted, 0 will be used as the scan axis for every scan_output. Negative value for an axis means counting dimensions from the back. Accepted range is [-r, r-1].</dd>
+<dt><tt>scan_output_directions</tt> : list of ints</dt>
+<dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Initial values of the loop's N state variables followed by M scan_inputs</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Final values of the loop's N state variables followed by K scan_outputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>All Tensor types</dd>
+</dl>
+
+### <a name="ScatterElements-16"></a>**ScatterElements-16**</a>
+
+  ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
+  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
+  (by default, the outer-most axis, that is axis 0). The output of the operation
+  is produced by creating a copy of the input `data`, and then updating its value
+  to values specified by `updates` at specific index positions specified by
+  `indices`. Its output shape is the same as the shape of `data`.
+
+  For each entry in `updates`, the target index in `data` is obtained by combining
+  the corresponding entry in `indices` with the index of the entry itself: the
+  index-value for dimension = axis is obtained from the value of the corresponding
+  entry in `indices` and the index-value for dimension != axis is obtained from the
+  index of the entry itself.
+
+  `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
+  tensor into `output` at the specified `indices`.
+  In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
+  then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
+  corresponding to the [i][j] entry is performed as below:
+  ```
+    output[indices[i][j]][j] = updates[i][j] if axis = 0,
+    output[i][indices[i][j]] = updates[i][j] if axis = 1,
+  ```
+  When `reduction` is set to "add", the update corresponding to the [i][j] entry is performed as below:
+  ```
+    output[indices[i][j]][j] += updates[i][j] if axis = 0,
+    output[i][indices[i][j]] += updates[i][j] if axis = 1,
+  ```
+  When `reduction` is set to "mul", the update corresponding to the [i][j] entry is performed as below:
+  ```
+    output[indices[i][j]][j] *= updates[i][j] if axis = 0,
+    output[i][indices[i][j]] *= updates[i][j] if axis = 1,
+  ```
+
+  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+
+  Example 1:
+  ```
+    data = [
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+    ]
+    indices = [
+        [1, 0, 2],
+        [0, 2, 1],
+    ]
+    updates = [
+        [1.0, 1.1, 1.2],
+        [2.0, 2.1, 2.2],
+    ]
+    output = [
+        [2.0, 1.1, 0.0]
+        [1.0, 0.0, 2.2]
+        [0.0, 2.1, 1.2]
+    ]
+  ```
+  Example 2:
+  ```
+    data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+    indices = [[1, 3]]
+    updates = [[1.1, 2.1]]
+    axis = 1
+    output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>reduction</tt> : string (default is none)</dt>
+<dd>Type of reduction to apply: none (default), add, mul. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
+<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dt><tt>updates</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1 (same rank as input).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+### <a name="ScatterND-16"></a>**ScatterND-16**</a>
+
+  ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
+  and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
+  is produced by creating a copy of the input `data`, and then updating its value to values
+  specified by `updates` at specific index positions specified by `indices`. Its output shape
+  is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
+  That is, two or more `updates` for the same index-location is not supported.
+
+  `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
+   `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
+  Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
+  update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
+  update to a slice of the tensor.
+
+  `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
+  first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
+  The remaining dimensions of `updates` correspond to the dimensions of the
+  replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
+  corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
+  must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+  of shapes.
+
+  The `output` is calculated via the following equation:
+
+      output = np.copy(data)
+      update_indices = indices.shape[:-1]
+      for idx in np.ndindex(update_indices):
+          output[indices[idx]] = updates[idx]
+
+  The order of iteration in the above loop is not specified.
+  In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
+  This ensures that the output value does not depend on the iteration order.
+
+  `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
+  tensor into `output` at the specified `indices`.
+  In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
+  then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
+  When `reduction` is set to "add", `output` is calculated as follows:
+
+      output = np.copy(data)
+      update_indices = indices.shape[:-1]
+      for idx in np.ndindex(update_indices):
+          output[indices[idx]] += updates[idx]
+
+  When `reduction` is set to "mul", `output` is calculated as follows:
+
+      output = np.copy(data)
+      update_indices = indices.shape[:-1]
+      for idx in np.ndindex(update_indices):
+          output[indices[idx]] *= updates[idx]
+
+  This operator is the inverse of GatherND.
+
+  Example 1:
+  ```
+    data    = [1, 2, 3, 4, 5, 6, 7, 8]
+    indices = [[4], [3], [1], [7]]
+    updates = [9, 10, 11, 12]
+    output  = [1, 11, 3, 10, 9, 6, 7, 12]
+  ```
+
+  Example 2:
+  ```
+    data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+               [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+    indices = [[0], [2]]
+    updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+               [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
+    output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+               [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+               [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>reduction</tt> : string (default is none)</dt>
+<dd>Type of reduction to apply: none (default), add, mul. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>Tensor of rank q >= 1.</dd>
+<dt><tt>updates</tt> (differentiable) : T</dt>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
+### <a name="SequenceMap-16"></a>**SequenceMap-16**</a>
+
+  Applies a sub-graph to each sample in the input sequence(s).
+
+  Inputs can be either tensors or sequences, with the exception of the first input which must
+  be a sequence. The length of the first input sequence will determine the number of samples in the
+  outputs. Any other sequence inputs should have the same number of samples. The number of inputs
+  and outputs, should match the one of the subgraph.
+
+  For each i-th element in the output, a sample will be extracted from the input sequence(s) at
+  the i-th position and the sub-graph will be applied to it.
+  The outputs will contain the outputs of the sub-graph for each sample, in the same order as in
+  the input.
+
+  This operator assumes that processing each sample is independent and could executed in parallel
+  or in any order. Users cannot expect any specific ordering in which each subgraph is computed.
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph to be run for each sample in the sequence(s). It should have as many inputs and outputs as inputs and outputs to the SequenceMap function.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+<dt><tt>additional_inputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Additional inputs to the graph</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>out_sequence</tt> (variadic, heterogeneous) : S</dt>
+<dd>Output sequence(s)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain input types to any sequence type.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor or sequence type.</dd>
+</dl>
+
+### <a name="Where-16"></a>**Where-16**</a>
+
+  Return elements, either from X or Y, depending on condition.
+  Where behaves like
+  [numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+  with three parameters.
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+  **History**
+  - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>condition</tt> (non-differentiable) : B</dt>
+<dd>When True (nonzero), yield X, otherwise yield Y</dd>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>values selected at indices where condition is True</dd>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>values selected at indices where condition is False</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor of shape equal to the broadcasted shape of condition, X, and Y.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrain to boolean tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types (including bfloat).</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
-  
+
       Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
       some parameters:
-  
+
        - The initial learning-rate "R".
        - The update count "T". That is, the number of training iterations conducted.
        - A L2-norm regularization coefficient "norm_coefficient".
        - A learning-rate decay factor "decay_factor".
        - A small constant "epsilon" to avoid dividing-by-zero.
-  
+
       At each ADAGRAD iteration, the optimized tensors are moved along a direction
       computed based on their estimated gradient and accumulated squared gradient. Assume
       that only a single tensor "X" is updated by this operator. We need the value of "X",
@@ -19939,32 +20892,32 @@ This version of the operator has been available since version 16 of the default 
       corresponding output tensors are the new value of "X" (called "X_new"), and then
       the new accumulated squared gradient (called "H_new"). Those outputs are computed
       from the given inputs following the pseudo code below.
-  
+
       Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
       numpy-style broadcasting support. The pseudo code to compute those outputs is:
-  
+
         // Compute a scalar learning-rate factor. At the first update of X, T is generally
         // 0 (0-based update index) or 1 (1-based update index).
         r = R / (1 + T * decay_factor);
-  
+
         // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
         G_regularized = norm_coefficient * X + G;
-  
+
         // Compute new accumulated squared gradient.
         H_new = H + G_regularized * G_regularized;
-  
+
         // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
         // computes element-wise square-root.
         H_adaptive = Sqrt(H_new) + epsilon
-  
+
         // Compute the new value of "X".
         X_new = X - r * G_regularized / H_adaptive;
-  
+
       If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2", the same
       pseudo code may be extended to handle all tensors jointly. More specifically, we can view "X" as a
       concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
       be concatenated too) and then just reuse the entire pseudo code.
-  
+
       Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
       In that reference paper, this operator is a special case of the Figure 1's composite mirror
       descent update.
@@ -20017,63 +20970,63 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
   Compute one iteration of Adam, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
-  
+
       Let's define the behavior of this operator. First of all, Adam requires
       some parameters:
-  
+
        - The learning-rate "R".
        - The update count "T". That is, the number of training iterations conducted.
        - A L2-norm regularization coefficient "norm_coefficient".
        - A small constant "epsilon" to avoid dividing-by-zero.
        - Two coefficients, "alpha" and "beta".
-  
+
       At each Adam iteration, the optimized tensors are moved along a direction
       computed based on their exponentially-averaged historical gradient and
       exponentially-averaged historical squared gradient. Assume that only a tensor
       "X" is being optimized. The rest of required information is
-  
+
        - the value of "X",
        - "X"'s gradient (denoted by "G"),
        - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
        - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
-  
+
       Some of those parameters are passed into this operator as input tensors and others
       are stored as this operator's attributes. Specifically, this operator's input tensor
       list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
       the second input, and so on. Other parameters are given as attributes because they
       are constants. Moreover, the corresponding output tensors are
-  
+
        - the new value of "X" (called "X_new"),
        - the new exponentially-averaged historical gradient (denoted by "V_new"), and
        - the new exponentially-averaged historical squared gradient (denoted by "H_new").
-  
+
       Those outputs are computed following the pseudo code below.
-  
+
       Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
       numpy-style broadcasting support. The pseudo code to compute those outputs is:
-  
+
         // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
         G_regularized = norm_coefficient * X + G
-  
+
         // Update exponentially-averaged historical gradient.
         V_new = alpha * V + (1 - alpha) * G_regularized
-  
+
         // Update exponentially-averaged historical squared gradient.
         H_new = beta * H + (1 - beta) * G_regularized * G_regularized
-  
+
         // Compute the element-wise square-root of H_new. V_new will be element-wisely
         // divided by H_sqrt for a better update direction.
         H_sqrt = Sqrt(H_new) + epsilon
-  
+
         // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
         R_adjusted = T > 0 ? R * Sqrt(1 - beta**T) / (1 - alpha**T) : R
-  
+
         // Compute new value of "X".
         X_new = X - R_adjusted * V_new / H_sqrt
-  
+
         // Post-update regularization.
         X_final = (1 - norm_coefficient_post) * X_new
-  
+
       If there are multiple inputs to be optimized, the pseudo code will be applied
       independently to each of them.
 
@@ -20130,7 +21083,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   Gradient operator computes the partial derivatives of a specific tensor w.r.t.
   some other tensors. This operator is widely used in gradient-based training
   algorithms. To illustrate its use, let's consider a computation graph,
-  
+
   ```
   X -----.
          |
@@ -20140,12 +21093,12 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
                         |
                         Z
   ```
-  
+
   , where W and Z are trainable tensors. Note that operators' attributes are
   omitted for the sake of simplicity. Let dY/dW (dY/dZ) be the gradient of
   Y with respect to W (Z). The user can compute gradient by inserting Gradient
   operator to form another graph shown below.
-  
+
   ```
   W --> Conv --> H --> Gemm --> Y
   |      ^              ^
@@ -20162,21 +21115,21 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
          |
          '---------------------------------------> dY/dZ (2nd output of Gradient)
   ```
-  
+
   By definition, the tensor "y" is a function of independent variables in "xs"
   and "zs". Since we only compute the gradient of "y" w.r.t. the differentiable
   variables in "xs", this Gradient only outputs dY/dW and dY/dZ. Note that "H"
   cannot appear in "xs" and "zs". The reason is that "H" can be determined by
   tensors "W" and "X" and therefore "H" is not an independent variable.
-  
+
   All outputs are optional. If needed, for example, user can assign an empty
   string to the 1st output name of that Gradient to skip the generation of dY/dW.
   Note that the concept of optional outputs can also be found in ONNX's RNN, GRU,
   and LSTM.
-  
+
   Gradient operator can compute derivative against intermediate tensors. For
   example, the gradient of Y with respect to H can be done via
-  
+
   ```
   W --> Conv --> H --> Gemm --> Y
          ^       |      ^
@@ -20192,20 +21145,20 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
          |
          '---------------------------------------> dY/dZ (2nd output of Gradient)
   ```
-  
+
   It is possible to represent high-order differentiation using Gradient operators.
   For example, given the following linear model:
-  
+
   ```
   W --> Gemm --> Y --> Loss --> O
          ^              ^
          |              |
          X              L
   ```
-  
+
   To compute the 2nd order derivative of O with respect to W (denoted by
   d^2O/dW^2), one can do
-  
+
   ```
   W --> Gemm --> Y --> Loss --> O
   |      ^              ^
@@ -20223,20 +21176,20 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
          |
          '---> d^2O/dW^2 (2nd output of Gradient)
   ```
-  
+
   The tensors named in attributes "xs", "zs", and "y" define the differentiated
   computation graph, and the inputs to Gradient node define the values at
   which the gradient is computed. We can feed different tensors to the identified
   graph. For example, one can compute the gradient of Y with respect to H at
   a specific value of H, H_1, by providing that value as an input to the Gradient
   node.
-  
+
   ```
   W --> Conv --> H --> Gemm --> Y
          ^              ^
          |              |
          X              Z
-  
+
             Z_1 (2nd input of Gradient)
              |
              v
@@ -20244,12 +21197,12 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
              |
              '------------------------------> dY/dZ (2nd output of Gradient)
   ```
-  
+
   When the inputs of Gradient are the tensors named in "xs" and "zs", the
   computation can be optimized. More specifically, intermediate variables in
   forward pass can be reused if the gradient is computed via reverse-mode
   auto-differentiation.
-  
+
 
 #### Version
 
@@ -20293,10 +21246,10 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
   Compute one iteration of stochastic gradient update with momentum.
       This operator can conduct the optimization of multiple tensor variables.
-  
+
       Let's define the behavior of this operator. As you can imagine, SG with momentum requires
       several parameters:
-  
+
        - The learning-rate "R".
        - The update count "T". That is, the number of conducted training iterations. It should
          be zero in the first training iteration.
@@ -20305,48 +21258,48 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
        - The scaling coefficient of current gradient "beta".
        - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
          be used.
-  
+
       For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
       Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
       Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
       momentum (called "V_new").
-  
+
       This operator supports two different momentum algorithms. Set the attribute "mode" to
       "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
       "standard" to use standard momentum. Computation details are described subsequently.
-  
+
       Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
-  
+
       Pseudo code for SG with standard momentum:
-  
+
         // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
         // values of all elements in X.
         G_regularized = norm_coefficient * X + G
-  
+
         // In the first training iteration, beta should always be 1.
         beta_adjusted = T > 0 ? beta : 1
-  
+
         // Compute the current momentum based on previous momentum and the current gradient.
         V_new = alpha * V + beta_adjusted * G_regularized
-  
+
         // Update X.
         X_new = X - R * V_new
-  
+
       Pseudo code for SG with Nesterov's momentum:
-  
+
         // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
         // values of all elements in X.
         G_regularized = norm_coefficient * X + G;
-  
+
         // In the first training iteration, beta should always be 1.
         beta_adjusted = T > 0 ? beta : 1
-  
+
         // Compute the current momentum based on previous momentum and the current gradient.
         V_new = alpha * V + beta_adjusted * G_regularized;
-  
+
         // Compute final update direction and then update X.
         X_new = X - R * (G_regularized + alpha * V_new)
-  
+
       If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
       pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
       concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should

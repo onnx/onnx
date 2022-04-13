@@ -3,6 +3,7 @@
  */
 
 #include "onnx/checker.h"
+#include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
@@ -22,25 +23,25 @@
 namespace ONNX_NAMESPACE {
 namespace checker {
 
-#define enforce_has_field(proto, field)                                            \
-  do {                                                                             \
-    if (!proto.has_##field()) {                                                    \
-      fail_check("Field '", #field, "' of ", #proto, " is required but missing."); \
-    }                                                                              \
+#define enforce_has_field(proto, field)                                              \
+  do {                                                                               \
+    if (!proto.has_##field()) {                                                      \
+      fail_check("Field '", #field, "' of '", #proto, "' is required but missing."); \
+    }                                                                                \
   } while (0)
 
-#define enforce_has_repeated_field(proto, field)                            \
-  do {                                                                      \
-    if (!proto.field##_size()) {                                            \
-      fail_check("Repeated Field '", #field, "' is required but missing."); \
-    }                                                                       \
+#define enforce_has_repeated_field(proto, field)                                              \
+  do {                                                                                        \
+    if (!proto.field##_size()) {                                                              \
+      fail_check("Repeated Field '", #field, "' of '", #proto, "' is required but missing."); \
+    }                                                                                         \
   } while (0)
 
-#define enforce_non_empty_field(proto, field)                                          \
-  do {                                                                                 \
-    if (proto.field().empty()) {                                                       \
-      fail_check("Field '", #field, "' of ", #proto, " is required to be non-empty."); \
-    }                                                                                  \
+#define enforce_non_empty_field(proto, field)                                            \
+  do {                                                                                   \
+    if (proto.field().empty()) {                                                         \
+      fail_check("Field '", #field, "' of '", #proto, "' is required to be non-empty."); \
+    }                                                                                    \
   } while (0)
 
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
@@ -244,7 +245,9 @@ void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
 
 void check_optional(const OptionalProto& optional, const CheckerContext& ctx) {
   enforce_has_field(optional, elem_type);
-  if (optional.elem_type() == OptionalProto::TENSOR) {
+  if (optional.elem_type() == OptionalProto::UNDEFINED) {
+    return;
+  } else if (optional.elem_type() == OptionalProto::TENSOR) {
     if (optional.has_tensor_value())
       check_tensor(optional.tensor_value(), ctx);
   } else if (optional.elem_type() == OptionalProto::SPARSE_TENSOR) {
@@ -755,7 +758,7 @@ void check_model_local_functions(
     const ModelProto& model,
     const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
-    // make a copy of model opset imports to maintain a master copy of opset imports across the model and 
+    // make a copy of model opset imports to maintain a main copy of opset imports across the model and 
     // all model local functions to verify opset compatibility
     std::unordered_map<std::string, int> model_opset_imports(ctx.get_opset_imports());
 
@@ -911,15 +914,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
 
 void check_model(const std::string& model_path) {
   ModelProto model;
-  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if (!model_stream.good()) {
-    fail_check("Unable to open model file:", model_path, ". Please check if it is a valid file.");
-  }
-  std::string data{std::istreambuf_iterator<char>{model_stream}, std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
-    fail_check(
-        "Unable to parse model from file:", model_path, ". Please check if it is a valid protobuf file of model.");
-  }
+  LoadProtoFromPath(model_path, model);
 
   CheckerContext ctx;
   std::string model_dir;

@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class Gather(Base):
 
     @staticmethod
-    def export_gather_0():  # type: () -> None
+    def export_gather_0() -> None:
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],
@@ -30,7 +25,7 @@ class Gather(Base):
                name='test_gather_0')
 
     @staticmethod
-    def export_gather_1():  # type: () -> None
+    def export_gather_1() -> None:
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],
@@ -45,7 +40,7 @@ class Gather(Base):
                name='test_gather_1')
 
     @staticmethod
-    def export_gather_2d_indices():  # type: () -> None
+    def export_gather_2d_indices() -> None:
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],
@@ -60,7 +55,7 @@ class Gather(Base):
                name='test_gather_2d_indices')
 
     @staticmethod
-    def export_gather_negative_indices():  # type: () -> None
+    def export_gather_negative_indices() -> None:
         node = onnx.helper.make_node(
             'Gather',
             inputs=['data', 'indices'],
@@ -71,8 +66,8 @@ class Gather(Base):
         indices = np.array([0, -9, -10])
         y = np.take(data, indices, axis=0)
 
-        expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
-               name='test_gather_negative_indices')
-
         # print(y)
         # [0. 1. 0.]
+
+        expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
+               name='test_gather_negative_indices')

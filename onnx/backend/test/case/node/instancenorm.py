@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class InstanceNormalization(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         def _instancenorm_test_mode(x, s, bias, epsilon=1e-5):  # type: ignore
             dims_x = len(x.shape)
             axis = tuple(range(2, dims_x))
