@@ -511,6 +511,9 @@ class ShapeInferenceImplBase {
     const auto num_func_inputs = func_proto.input_size();
     std::vector<TypeProto> types_cache(num_func_inputs);
     for (int i = 0; i < num_func_inputs; ++i) {
+      if (ctx.getInputType(i) == nullptr) {
+        fail_type_inference("Input ", i, " type is missing.");
+      }
       types_cache[i] = *ctx.getInputType(i); // TODO: investigate whether we can remove cache
       value_types_by_name[func_proto.input().Get(i)] = &types_cache[i];
     }
