@@ -122,7 +122,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|
 |<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
-|<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-16">16</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
+|<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-17">17</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
@@ -17205,7 +17205,7 @@ for test_name, shape in test_cases.items():
 
 #### Version
 
-This version of the operator has been available since version 16 of the default ONNX operator set.
+This version of the operator has been available since version 17 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Resize-10">10</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-13">13</a>
 

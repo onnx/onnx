@@ -1006,7 +1006,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, GreaterOrEqual);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, LeakyRelu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, PRelu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, SequenceMap);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Resize);
 
 // Iterate over schema from ai.onnx version 16
 class OpSet_Onnx_ver16 {
@@ -1026,9 +1025,19 @@ class OpSet_Onnx_ver16 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, LeakyRelu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, PRelu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, SequenceMap)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, Resize)>());
   }
 };
+
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, Resize);
+
+// Iterate over schema from ai.onnx version 16
+class OpSet_Onnx_ver17 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, Resize)>());
+  }
+};
+
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -1046,6 +1055,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver14>();
   RegisterOpSetSchema<OpSet_Onnx_ver15>();
   RegisterOpSetSchema<OpSet_Onnx_ver16>();
+  RegisterOpSetSchema<OpSet_Onnx_ver17>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }

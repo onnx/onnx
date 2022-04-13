@@ -2422,7 +2422,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           resizeShapeInference_opset7_to_10(ctx);
         }));
 
-static const char* Resize_ver16_doc = R"DOC(
+static const char* Resize_ver17_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * (roi_end - roi_start) * scale) if input \"sizes\" is not specified.
@@ -2451,7 +2451,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 
 ONNX_OPERATOR_SET_SCHEMA(
     Resize,
-    16,
+    17,
     OpSchema()
         .Attr(
             "mode",
@@ -2550,7 +2550,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
-        .SetDoc(Resize_ver16_doc)
+        .SetDoc(Resize_ver17_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           resizeShapeInference(ctx, true);
         }));
