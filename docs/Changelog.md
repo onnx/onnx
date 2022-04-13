@@ -20771,59 +20771,6 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
-### <a name="SequenceMap-16"></a>**SequenceMap-16**</a>
-
-  Applies a sub-graph to each sample in the input sequence(s).
-
-  Inputs can be either tensors or sequences, with the exception of the first input which must
-  be a sequence. The length of the first input sequence will determine the number of samples in the
-  outputs. Any other sequence inputs should have the same number of samples. The number of inputs
-  and outputs, should match the one of the subgraph.
-
-  For each i-th element in the output, a sample will be extracted from the input sequence(s) at
-  the i-th position and the sub-graph will be applied to it.
-  The outputs will contain the outputs of the sub-graph for each sample, in the same order as in
-  the input.
-
-  This operator assumes that processing each sample is independent and could executed in parallel
-  or in any order. Users cannot expect any specific ordering in which each subgraph is computed.
-
-#### Version
-
-This version of the operator has been available since version 16 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>body</tt> : graph (required)</dt>
-<dd>The graph to be run for each sample in the sequence(s). It should have as many inputs and outputs as inputs and outputs to the SequenceMap function.</dd>
-</dl>
-
-#### Inputs (1 - &#8734;)
-
-<dl>
-<dt><tt>input_sequence</tt> : S</dt>
-<dd>Input sequence.</dd>
-<dt><tt>additional_inputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Additional inputs to the graph</dd>
-</dl>
-
-#### Outputs (1 - &#8734;)
-
-<dl>
-<dt><tt>out_sequence</tt> (variadic, heterogeneous) : S</dt>
-<dd>Output sequence(s)</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
-<dd>Constrain input types to any sequence type.</dd>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
-<dd>Constrain to any tensor or sequence type.</dd>
-</dl>
-
 ### <a name="Where-16"></a>**Where-16**</a>
 
   Return elements, either from X or Y, depending on condition.
@@ -20865,6 +20812,60 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain to boolean tensors.</dd>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types (including bfloat).</dd>
+</dl>
+
+## Version 17 of the default ONNX operator set
+### <a name="SequenceMap-17"></a>**SequenceMap-17**</a>
+
+  Applies a sub-graph to each sample in the input sequence(s).
+
+  Inputs can be either tensors or sequences, with the exception of the first input which must
+  be a sequence. The length of the first input sequence will determine the number of samples in the
+  outputs. Any other sequence inputs should have the same number of samples. The number of inputs
+  and outputs, should match the one of the subgraph.
+
+  For each i-th element in the output, a sample will be extracted from the input sequence(s) at
+  the i-th position and the sub-graph will be applied to it.
+  The outputs will contain the outputs of the sub-graph for each sample, in the same order as in
+  the input.
+
+  This operator assumes that processing each sample is independent and could executed in parallel
+  or in any order. Users cannot expect any specific ordering in which each subgraph is computed.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph to be run for each sample in the sequence(s). It should have as many inputs and outputs as inputs and outputs to the SequenceMap function.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>input_sequence</tt> : S</dt>
+<dd>Input sequence.</dd>
+<dt><tt>additional_inputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Additional inputs to the graph</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>out_sequence</tt> (variadic, heterogeneous) : S</dt>
+<dd>Output sequence(s)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain input types to any sequence type.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain to any tensor or sequence type.</dd>
 </dl>
 
 # ai.onnx.preview.training
