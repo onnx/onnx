@@ -49,12 +49,13 @@ The grammar below describes the syntax:
    tensor-dim ::= '?' | id | int-constant
    tensor-dims ::= tensor-dim (',' tensor-dim)*
    tensor-type ::= prim-type | prim-type '[' ']' | prim-type '[' tensor-dims ']'
-   type ::= tensor-type
+   type ::= tensor-type | 'seq' '(' type ')' | 'map' '(' prim-type ',' type ')'
+            | 'optional' '(' type ')' | 'sparse_tensor' '(' tensor-type ')'
    value-info ::= type id
    value-infos ::= value-info (',' value-info)*
    value-info-list ::= '(' value-infos? ')'
    prim-constants ::= prim-constant (',' prim-constant)*
-   tensor-constant ::= tensor-type '{' prim-constants '}'
+   tensor-constant ::= tensor-type (id)? ('=')? '{' prim-constants '}'
    single-attr-value ::= tensor-constant | graph | prim-constant
    attr-value-list ::= '[' single-attr-value (',' single-attr-value)* ']'
    attr-value ::= single-attr-value | attr-value-list
