@@ -19,7 +19,6 @@ option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag and Protobuf_USE_STATIC_LIBS. " OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
-option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
@@ -271,25 +270,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     if(BUILD_ONNX_PYTHON)
       list(APPEND PROTOC_ARGS --python_out
                   ${CMAKE_CURRENT_BINARY_DIR})
-      if(ONNX_GEN_PB_TYPE_STUBS)
-        # Haven't figured out how to generate mypy stubs on Windows yet
-        if(NOT WIN32)
-          # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
-          configure_file(
-            ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
-            ${ROOT_DIR}/tools/protoc-gen-mypy.sh
-            @ONLY)
-          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
-        else()
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
-        endif()
-        list(APPEND PROTOC_ARGS
-                    --plugin
-                    protoc-gen-mypy=${PROTOC_MYPY_PLUGIN_FILE}
-                    --mypy_out
-                    ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
-      endif()
     endif()
     if(NOT ONNX_PROTOC_EXECUTABLE)
       message(FATAL_ERROR "Protobuf compiler not found")
