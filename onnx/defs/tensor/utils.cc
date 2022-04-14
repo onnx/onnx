@@ -25,7 +25,7 @@ void resizeShapeInferenceHelper(
     TensorShapeProto* output_shape) {
   for (int i = 0; i < input_shape.dim_size(); ++i) {
     auto* dim = output_shape->mutable_dim(i);
-    // If input_shape has dim_value, we caculate the scaled result
+    // If input_shape has dim_value, we calculate the scaled result
     // If input_shape doesn's have one, we leave it here
     if (input_shape.dim(i).has_dim_value()) {
       int64_t dim_value = static_cast<int64_t>(std::floor(
