@@ -1026,6 +1026,7 @@ class OpSet_Onnx_ver16 {
   }
 };
 
+// Forward declarations for ai.onnx version 17
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, SequenceMap);
 
 // Iterate over schema from ai.onnx version 17
