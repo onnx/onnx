@@ -48,14 +48,14 @@ void resizeShapeInferenceHelper(
   }
 }
 
-void resizeShapeInference(InferenceContext& ctx, bool is_resize_op) {
+void resizeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
     return;
   }
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
-  const auto* scales = ctx.getInputData(is_resize_op ? 2 : 1);
+  const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
 
   if (output_shape->dim_size() > 0) {
     if (output_shape->dim_size() != input_shape.dim_size()) {
