@@ -72,7 +72,7 @@ void resizeShapeInference(InferenceContext& ctx) {
     }
   }
 
-  if (is_resize_op && ctx.getNumInputs() == 4) {
+  if (ctx.getNumInputs() == 4) {
     const auto* sizes = ctx.getInputData(3);
     if (nullptr != sizes) {
       if (sizes->data_type() == TensorProto::INT64) {
