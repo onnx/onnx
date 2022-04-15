@@ -441,9 +441,18 @@ TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& 
   // Then, check symbolic input.
   const TensorShapeProto* symbolic_input = ctx.getSymbolicInput(input_index);
   if (symbolic_input) {
-    shape_input.CopyFrom(*symbolic_input);
-    found = true;
-    return shape_input;
+    bool valid = true;
+    for (int i = 0; i < symbolic_input->dim_size(); i++) {
+      if (!symbolic_input->dim(i).has_dim_param() && !symbolic_input->dim(i).has_dim_value()) {
+        valid = false;
+        break;
+      }
+    }
+    if (valid) {
+      shape_input.CopyFrom(*symbolic_input);
+      found = true;
+      return shape_input;
+    }
   }
 
   // Try rank inference.
