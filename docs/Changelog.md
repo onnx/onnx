@@ -20043,7 +20043,7 @@ This version of the operator has been available since version 16 of the default 
         Mean = ReduceMean<axes=normalized_axes>(X)
         D = Sub(X, Mean)
         DD = Mul(Diff, Diff)
-        Var = ReduceMean<axes=axes>(DD)
+        Var = ReduceMean<axes=normalized_axes>(DD)
         VarEps = Add(Var, epsilon)
         StdDev = Sqrt(VarEps)
         InvStdDev = Reciprocal(StdDev)
@@ -20053,17 +20053,18 @@ This version of the operator has been available since version 16 of the default 
         The variables `Var` and `StdDev` stand for variance and
         standard deviation, respectively. The second output is
         `Mean` and the last one is `InvStdDev`.
-        Depending on `stash_type` attribute, the actual computation may
-        happen in different floating-point precision.
-        For example, if `stash_type` is 1, this operator may cast
+        Depending on `stash_type` attribute, the actual computation
+        must happen in different floating-point precision.
+        For example, if `stash_type` is 1, this operator casts
         all input variables to 32-bit float, perform the computation, and
         finally cast `Normalized` back to the original type of `X`.
-        The second stage then scales and shifts the outcome of
-        stage one using
+        The second stage then scales and shifts the outcome of the
+        first stage using
         ```
         NormalizedScaled = Mul(Normalized, Scale)
         Y = Add(NormalizedScaled, B)
         ```
+        The second stage doesn't depends on `stash_type`.
         All equations are in [this syntax](https://github.com/onnx/onnx/blob/main/docs/Syntax.md).
         The same variable (i.e., input, output, and attribute) uses
         the same name in the equations above and this operator's definition.

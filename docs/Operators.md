@@ -9334,7 +9334,7 @@ expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.
         Mean = ReduceMean<axes=normalized_axes>(X)
         D = Sub(X, Mean)
         DD = Mul(Diff, Diff)
-        Var = ReduceMean<axes=axes>(DD)
+        Var = ReduceMean<axes=normalized_axes>(DD)
         VarEps = Add(Var, epsilon)
         StdDev = Sqrt(VarEps)
         InvStdDev = Reciprocal(StdDev)
@@ -9344,17 +9344,18 @@ expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.
         The variables `Var` and `StdDev` stand for variance and
         standard deviation, respectively. The second output is
         `Mean` and the last one is `InvStdDev`.
-        Depending on `stash_type` attribute, the actual computation may
-        happen in different floating-point precision.
-        For example, if `stash_type` is 1, this operator may cast
+        Depending on `stash_type` attribute, the actual computation
+        must happen in different floating-point precision.
+        For example, if `stash_type` is 1, this operator casts
         all input variables to 32-bit float, perform the computation, and
         finally cast `Normalized` back to the original type of `X`.
-        The second stage then scales and shifts the outcome of
-        stage one using
+        The second stage then scales and shifts the outcome of the
+        first stage using
         ```
         NormalizedScaled = Mul(Normalized, Scale)
         Y = Add(NormalizedScaled, B)
         ```
+        The second stage doesn't depends on `stash_type`.
         All equations are in [this syntax](https://github.com/onnx/onnx/blob/main/docs/Syntax.md).
         The same variable (i.e., input, output, and attribute) uses
         the same name in the equations above and this operator's definition.
@@ -9419,7 +9420,7 @@ This version of the operator has been available since version 16 of the default 
 X = np.random.randn(3, 4).astype(np.float32)
 
 def case(axis: int) -> None:
-    normalized_shape = X.shape[axis:]
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
     Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis=axis)
@@ -9431,11 +9432,17 @@ def case(axis: int) -> None:
         axis=axis,
     )
 
+    if axis < 0:
+      name=f'test_layer_normalization_2d_axis_negative_{-axis}'
+    else:
+      name=f'test_layer_normalization_2d_axis{axis}'
+
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-           name=f'test_layer_normalization_2d_axis{axis}')
+           name=name)
 
 for i in range(len(X.shape)):
     case(i)
+    case(i - len(X.shape))
 ```
 
 </details>
@@ -9448,7 +9455,7 @@ for i in range(len(X.shape)):
 X = np.random.randn(2, 3, 5).astype(np.float32)
 
 def case(axis: int) -> None:
-    normalized_shape = X.shape[axis:]
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
     Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
@@ -9460,11 +9467,17 @@ def case(axis: int) -> None:
         epsilon=1e-1
     )
 
+    if axis < 0:
+      name=f'test_layer_normalization_3d_axis_negative_{-axis}_epsilon'
+    else:
+      name=f'test_layer_normalization_3d_axis{axis}_epsilon'
+
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-           name=f'test_layer_normalization_3d_axis{axis}_epsilon')
+           name=name)
 
 for i in range(len(X.shape)):
     case(i)
+    case(i - len(X.shape))
 ```
 
 </details>
@@ -9477,7 +9490,7 @@ for i in range(len(X.shape)):
 X = np.random.randn(2, 3, 4, 5).astype(np.float32)
 
 def case(axis: int) -> None:
-    normalized_shape = X.shape[axis:]
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
     Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
@@ -9489,11 +9502,17 @@ def case(axis: int) -> None:
         axis=axis,
     )
 
+    if axis < 0:
+      name=f'test_layer_normalization_4d_axis_negative_{-axis}'
+    else:
+      name=f'test_layer_normalization_4d_axis{axis}'
+
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-           name=f'test_layer_normalization_4d_axis{axis}')
+           name=name)
 
 for i in range(len(X.shape)):
     case(i)
+    case(i - len(X.shape))
 ```
 
 </details>

@@ -2498,7 +2498,7 @@ static const char* LayerNormalization_ver16_doc = R"DOC(
       Mean = ReduceMean<axes=normalized_axes>(X)
       D = Sub(X, Mean)
       DD = Mul(Diff, Diff)
-      Var = ReduceMean<axes=axes>(DD)
+      Var = ReduceMean<axes=normalized_axes>(DD)
       VarEps = Add(Var, epsilon)
       StdDev = Sqrt(VarEps)
       InvStdDev = Reciprocal(StdDev)
@@ -2508,17 +2508,18 @@ static const char* LayerNormalization_ver16_doc = R"DOC(
       The variables `Var` and `StdDev` stand for variance and
       standard deviation, respectively. The second output is
       `Mean` and the last one is `InvStdDev`.
-      Depending on `stash_type` attribute, the actual computation may
-      happen in different floating-point precision.
-      For example, if `stash_type` is 1, this operator may cast
+      Depending on `stash_type` attribute, the actual computation
+      must happen in different floating-point precision.
+      For example, if `stash_type` is 1, this operator casts
       all input variables to 32-bit float, perform the computation, and
       finally cast `Normalized` back to the original type of `X`.
-      The second stage then scales and shifts the outcome of
-      stage one using
+      The second stage then scales and shifts the outcome of the
+      first stage using
       ```
       NormalizedScaled = Mul(Normalized, Scale)
       Y = Add(NormalizedScaled, B)
       ```
+      The second stage doesn't depends on `stash_type`.
       All equations are in [this syntax](https://github.com/onnx/onnx/blob/main/docs/Syntax.md).
       The same variable (i.e., input, output, and attribute) uses
       the same name in the equations above and this operator's definition.
@@ -2563,7 +2564,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Type of Mean and InvStdDev tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto stash_type = static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
           auto stash_type_proto = ctx.getAttribute("stash_type");
           if (stash_type_proto) {
@@ -2594,23 +2594,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           if (ctx.getNumOutputs() > 1) {
-            auto saved_mean_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
-            saved_mean_shape->CopyFrom(input_shape);
+            auto mean_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+            mean_shape->CopyFrom(input_shape);
             for (int d = static_cast<int>(axis); d < input_ndim; ++d)
-              saved_mean_shape->mutable_dim(d)->set_dim_value(1);
+              mean_shape->mutable_dim(d)->set_dim_value(1);
           }
 
           if (ctx.getNumOutputs() > 2) {
-            auto saved_inv_std_dev_shape = ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();
-            saved_inv_std_dev_shape->CopyFrom(input_shape);
+            auto inv_std_dev_shape = ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();
+            inv_std_dev_shape->CopyFrom(input_shape);
             for (int d = static_cast<int>(axis); d < input_ndim; ++d)
-              saved_inv_std_dev_shape->mutable_dim(d)->set_dim_value(1);
+              inv_std_dev_shape->mutable_dim(d)->set_dim_value(1);
           }
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // LayerNormalization <axis, epsilon, stash_type> (X, Scale, B) => (Y, Mean?, InvStdDev?)
-
               auto* tp = ctx.getInputType(0);
               if ((tp == nullptr) || (!tp->has_tensor_type()))
                 return false;

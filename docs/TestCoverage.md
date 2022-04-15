@@ -5817,7 +5817,7 @@ There are 3 test cases, listed as following:
 X = np.random.randn(3, 4).astype(np.float32)
 
 def case(axis: int) -> None:
-    normalized_shape = X.shape[axis:]
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
     Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis=axis)
@@ -5829,11 +5829,17 @@ def case(axis: int) -> None:
         axis=axis,
     )
 
+    if axis < 0:
+      name=f'test_layer_normalization_2d_axis_negative_{-axis}'
+    else:
+      name=f'test_layer_normalization_2d_axis{axis}'
+
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-           name=f'test_layer_normalization_2d_axis{axis}')
+           name=name)
 
 for i in range(len(X.shape)):
     case(i)
+    case(i - len(X.shape))
 ```
 
 </details>
@@ -5844,7 +5850,7 @@ for i in range(len(X.shape)):
 X = np.random.randn(2, 3, 5).astype(np.float32)
 
 def case(axis: int) -> None:
-    normalized_shape = X.shape[axis:]
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
     Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
@@ -5856,11 +5862,17 @@ def case(axis: int) -> None:
         epsilon=1e-1
     )
 
+    if axis < 0:
+      name=f'test_layer_normalization_3d_axis_negative_{-axis}_epsilon'
+    else:
+      name=f'test_layer_normalization_3d_axis{axis}_epsilon'
+
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-           name=f'test_layer_normalization_3d_axis{axis}_epsilon')
+           name=name)
 
 for i in range(len(X.shape)):
     case(i)
+    case(i - len(X.shape))
 ```
 
 </details>
@@ -5871,7 +5883,7 @@ for i in range(len(X.shape)):
 X = np.random.randn(2, 3, 4, 5).astype(np.float32)
 
 def case(axis: int) -> None:
-    normalized_shape = X.shape[axis:]
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
     Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
@@ -5883,11 +5895,17 @@ def case(axis: int) -> None:
         axis=axis,
     )
 
+    if axis < 0:
+      name=f'test_layer_normalization_4d_axis_negative_{-axis}'
+    else:
+      name=f'test_layer_normalization_4d_axis{axis}'
+
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-           name=f'test_layer_normalization_4d_axis{axis}')
+           name=name)
 
 for i in range(len(X.shape)):
     case(i)
+    case(i - len(X.shape))
 ```
 
 </details>
