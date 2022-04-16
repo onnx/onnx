@@ -184,7 +184,7 @@ def expect(node: onnx.NodeProto,
         kwargs[str('opset_imports')] = max_inclusive_versions
         if onnx_opset_version is not None:
             kwargs[str('ir_version')] = _OpsetVersionToIRVersionMap[onnx_opset_version]
-    
+
     model = onnx.helper.make_model(graph, **kwargs)
 
     _NodeTestCases.append(TestCase(
