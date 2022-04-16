@@ -171,7 +171,7 @@ def expect(node: onnx.NodeProto,
         else:
             produce_opset_version = onnx.defs.get_schema(node.op_type, int(_TargetOpsetVersion), node.domain).since_version
         kwargs[str('opset_imports')] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
-        kwargs[str('ir_version ')] = _OpsetVersionToIRVersionMap[produce_opset_version]
+        kwargs[str('ir_version')] = _OpsetVersionToIRVersionMap[produce_opset_version]
     else:
         # Also, for the same reason above, convert given opset.version (from opset_imports) to max_inclusive_version
         max_inclusive_versions = []
@@ -180,10 +180,10 @@ def expect(node: onnx.NodeProto,
             produce_opset_version = onnx.defs.get_schema(node.op_type, opset.version, opset.domain).since_version
             max_inclusive_versions.append(onnx.helper.make_operatorsetid(opset.domain, produce_opset_version))
             if opset.domain == '' or opset.domain == 'ai.onnx':
-                onnx_opset_version = produce_opset_versio
+                onnx_opset_version = produce_opset_version
         kwargs[str('opset_imports')] = max_inclusive_versions
         if onnx_opset_version is not None:
-            kwargs[str('ir_version ')] = _OpsetVersionToIRVersionMap[onnx_opset_version]
+            kwargs[str('ir_version')] = _OpsetVersionToIRVersionMap[onnx_opset_version]
     
     model = onnx.helper.make_model(graph, **kwargs)
 
