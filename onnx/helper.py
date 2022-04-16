@@ -229,7 +229,8 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
-    model.ir_version = IR_VERSION
+    ir_version = kwargs.pop('ir_version', None)  # type: ignore
+    model.ir_version = IR_VERSION if ir_version is None else ir_version
     model.graph.CopyFrom(graph)
 
     opset_imports: Optional[Sequence[OperatorSetIdProto]] = None

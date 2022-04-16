@@ -16,6 +16,11 @@ from ..test_case import TestCase
 _NodeTestCases = []
 _TargetOpType = None
 _TargetOpsetVersion = None
+_OpsetVersionToIRVersionMap = {}
+for versions in onnx.helper.VERSION_TABLE:
+    ir_version, opset_version = versions[1], versions[2]
+    _OpsetVersionToIRVersionMap[opset_version] = ir_version
+
 
 from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto
 
@@ -166,13 +171,20 @@ def expect(node: onnx.NodeProto,
         else:
             produce_opset_version = onnx.defs.get_schema(node.op_type, int(_TargetOpsetVersion), node.domain).since_version
         kwargs[str('opset_imports')] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
+        kwargs[str('ir_version ')] = _OpsetVersionToIRVersionMap[produce_opset_version]
     else:
         # Also, for the same reason above, convert given opset.version (from opset_imports) to max_inclusive_version
         max_inclusive_versions = []
+        onnx_opset_version = None
         for opset in kwargs[str('opset_imports')]:
             produce_opset_version = onnx.defs.get_schema(node.op_type, opset.version, opset.domain).since_version
             max_inclusive_versions.append(onnx.helper.make_operatorsetid(opset.domain, produce_opset_version))
+            if opset.domain == '' or opset.domain == 'ai.onnx':
+                onnx_opset_version = produce_opset_versio
         kwargs[str('opset_imports')] = max_inclusive_versions
+        if onnx_opset_version is not None:
+            kwargs[str('ir_version ')] = _OpsetVersionToIRVersionMap[onnx_opset_version]
+    
     model = onnx.helper.make_model(graph, **kwargs)
 
     _NodeTestCases.append(TestCase(
