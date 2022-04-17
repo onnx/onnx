@@ -175,7 +175,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
-|<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-16">16</a>|
+|<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
@@ -9366,7 +9366,7 @@ expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.
 
 #### Version
 
-This version of the operator has been available since version 16 of the default ONNX operator set.
+This version of the operator has been available since version 17 of the default ONNX operator set.
 
 #### Attributes
 
@@ -9433,9 +9433,9 @@ def case(axis: int) -> None:
     )
 
     if axis < 0:
-      name=f'test_layer_normalization_2d_axis_negative_{-axis}'
+        name = f'test_layer_normalization_2d_axis_negative_{-axis}'
     else:
-      name=f'test_layer_normalization_2d_axis{axis}'
+        name = f'test_layer_normalization_2d_axis{axis}'
 
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
            name=name)
@@ -9468,9 +9468,9 @@ def case(axis: int) -> None:
     )
 
     if axis < 0:
-      name=f'test_layer_normalization_3d_axis_negative_{-axis}_epsilon'
+        name = f'test_layer_normalization_3d_axis_negative_{-axis}_epsilon'
     else:
-      name=f'test_layer_normalization_3d_axis{axis}_epsilon'
+        name = f'test_layer_normalization_3d_axis{axis}_epsilon'
 
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
            name=name)
@@ -9503,9 +9503,9 @@ def case(axis: int) -> None:
     )
 
     if axis < 0:
-      name=f'test_layer_normalization_4d_axis_negative_{-axis}'
+        name = f'test_layer_normalization_4d_axis_negative_{-axis}'
     else:
-      name=f'test_layer_normalization_4d_axis{axis}'
+        name = f'test_layer_normalization_4d_axis{axis}'
 
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
            name=name)

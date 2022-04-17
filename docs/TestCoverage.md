@@ -5830,9 +5830,9 @@ def case(axis: int) -> None:
     )
 
     if axis < 0:
-      name=f'test_layer_normalization_2d_axis_negative_{-axis}'
+        name = f'test_layer_normalization_2d_axis_negative_{-axis}'
     else:
-      name=f'test_layer_normalization_2d_axis{axis}'
+        name = f'test_layer_normalization_2d_axis{axis}'
 
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
            name=name)
@@ -5863,9 +5863,9 @@ def case(axis: int) -> None:
     )
 
     if axis < 0:
-      name=f'test_layer_normalization_3d_axis_negative_{-axis}_epsilon'
+        name = f'test_layer_normalization_3d_axis_negative_{-axis}_epsilon'
     else:
-      name=f'test_layer_normalization_3d_axis{axis}_epsilon'
+        name = f'test_layer_normalization_3d_axis{axis}_epsilon'
 
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
            name=name)
@@ -5896,9 +5896,9 @@ def case(axis: int) -> None:
     )
 
     if axis < 0:
-      name=f'test_layer_normalization_4d_axis_negative_{-axis}'
+        name = f'test_layer_normalization_4d_axis_negative_{-axis}'
     else:
-      name=f'test_layer_normalization_4d_axis{axis}'
+        name = f'test_layer_normalization_4d_axis{axis}'
 
     expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
            name=name)

@@ -2487,7 +2487,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX"
         ));
 
-static const char* LayerNormalization_ver16_doc = R"DOC(
+static const char* LayerNormalization_ver17_doc = R"DOC(
       This is layer normalization defined in ONNX as function.
       The overall computation can be split into two stages.
       The first stage is standardization, which makes the
@@ -2531,9 +2531,9 @@ static const char* LayerNormalization_ver16_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     LayerNormalization,
-    16,
+    17,
     OpSchema()
-        .SetDoc(LayerNormalization_ver16_doc)
+        .SetDoc(LayerNormalization_ver17_doc)
         .Attr("axis",
               "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r]. "
               "Negative value means counting dimensions from the back.",

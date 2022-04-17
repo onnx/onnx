@@ -1060,7 +1060,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             output_types=[TensorProto.FLOAT16])
 
     def test_LayerNormalization(self) -> None:
-        self._test_op_upgrade('LayerNormalization', 16,
+        self._test_op_upgrade('LayerNormalization', 17,
                               [[2, 3, 4, 5], [4, 5], [4, 5]],
                               [[2, 3, 4, 5]],
                               input_types=[TensorProto.FLOAT,
