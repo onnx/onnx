@@ -5,7 +5,7 @@ from typing import List, Sequence, Text
 import numpy as np  # type: ignore
 
 from onnx import checker, helper, numpy_helper, shape_inference
-from onnx import TensorProto, GraphProto, SparseTensorProto
+from onnx import TensorProto, GraphProto, SparseTensorProto, SequenceProto
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
 
@@ -187,6 +187,35 @@ class TestChecker(unittest.TestCase):
         # Add sparse initializer with the same name as above
         sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], 'X')
         graph.sparse_initializer.extend([sparse])
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+
+    def test_check_graph_Sequence_initializer(self) -> None:
+        seq_at_node = onnx.helper.make_node('SequenceAt', ['seq', 'pos_at'], ['out'])
+        graph = helper.make_graph(
+            [seq_at_node],
+            "test",
+            [
+                helper.make_tensor_sequence_value_info('seq', TensorProto.FLOAT, None),
+                helper.make_tensor_value_info('pos_at', TensorProto.INT32, None)],
+            [helper.make_tensor_sequence_value_info('output', TensorProto.FLOAT, None)])
+
+        # prepare a sequence initializer
+        values = [1.1, 2.2, 3.3, 4.4, 5.5]
+        values_tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(5,),
+            vals=values
+        )
+
+        values_sequence = helper.make_sequence(
+            name='seq',
+            elem_type=SequenceProto.TENSOR,
+            values=[values_tensor, values_tensor]
+        )
+
+        graph.sequence_initializer.extend([values_sequence])
+        graph.sequence_initializer[0].name = 'seq'
         self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
     def test_check_graph_optional_input(self) -> None:
