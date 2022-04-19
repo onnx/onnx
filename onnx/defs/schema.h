@@ -896,7 +896,7 @@ class OpSchema final {
 
   bool has_data_propagation_function() const {
     return data_propagation_function_ ? true : false;
-  }  
+  }
 
   bool HasFunction() const {
     return function_body_.node_size() > 0;
@@ -994,7 +994,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 16);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 17);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 3);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so

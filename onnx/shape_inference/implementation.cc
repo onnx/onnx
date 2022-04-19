@@ -639,6 +639,9 @@ void InferShapeForFunctionNode(
   std::unordered_map<std::string, TypeProto*> value_types_by_name;
   std::vector<TypeProto> types_cache(func_proto.input_size());
   for (int i = 0; i < num_func_inputs; ++i) {
+    if (ctx.getInputType(i) == nullptr) {
+      fail_type_inference("Input ", i, " type is missing.");
+    }
     types_cache[i] = *ctx.getInputType(i);
     value_types_by_name[func_proto.input().Get(i)] = &types_cache[i];
   }
