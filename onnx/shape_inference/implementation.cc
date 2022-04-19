@@ -393,24 +393,6 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void process(NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
-    NodeProto copy_n(n);
-    // Add attribute information into the temporary node
-    copy_n.clear_attribute();
-    for (const auto& attr : n.attribute()) {
-      if (attr.has_ref_attr_name()) {
-        if (attr_map.count(attr.ref_attr_name())) {
-          auto copy_attr = *attr_map[attr.ref_attr_name()];
-          copy_attr.set_name(attr.name());
-          copy_n.add_attribute()->CopyFrom(copy_attr);
-        }
-      } else {
-        copy_n.add_attribute()->CopyFrom(attr);
-      }
-    }
-    process(copy_n);
-  }
-
   // TypeProto_Tensor or TypeProto_SparseTensor
   template <typename T>
   void processInitializer(
@@ -554,7 +536,7 @@ class ShapeInferenceImplBase {
 
  public:
   ShapeInferenceImplBase(
-      GraphProto* gp,
+      GraphProto* g_in,
       const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int>& opset_imports_in,
       const ShapeInferenceOptions& options_in,
@@ -564,7 +546,7 @@ class ShapeInferenceImplBase {
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       const int ir_version_in = IR_VERSION // default the latest one
       )
-      : g(*gp),
+      : g(*g_in),
         value_types_by_name(outer_scope_value_types_by_name_in),
         opset_imports(opset_imports_in),
         options(options_in),
