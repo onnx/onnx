@@ -5809,7 +5809,7 @@ expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.
 
 
 ### LayerNormalization
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>d</summary>
 
@@ -5873,6 +5873,31 @@ def case(axis: int) -> None:
 for i in range(len(X.shape)):
     case(i)
     case(i - len(X.shape))
+```
+
+</details>
+<details>
+<summary>default_axis</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+# Default axis in LayerNormalization is -1.
+normalized_shape = calculate_normalized_shape(X.shape, -1)
+W = np.random.randn(*normalized_shape).astype(np.float32)
+B = np.random.randn(*normalized_shape).astype(np.float32)
+# Axis is default to -1 in the reference implementation.
+Y, mean, inv_std_dev = _layer_normalization(X, W, B)
+
+# Not specifying axis attribute means -1.
+node = onnx.helper.make_node(
+    'LayerNormalization',
+    inputs=['X', 'W', 'B'],
+    outputs=['Y', 'Mean', 'InvStdDev']
+)
+
+expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+        name='test_layer_normalization_default_axis')
 ```
 
 </details>

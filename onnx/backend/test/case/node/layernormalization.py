@@ -8,7 +8,7 @@ from . import expect
 
 
 # Layer normalization's reference implementation
-def _layer_normalization(X, W, B, axis, epsilon=1e-5):  # type: ignore
+def _layer_normalization(X, W, B, axis=-1, epsilon=1e-5):  # type: ignore
     X_shape = X.shape
     X_rank = len(X_shape)
     if axis < 0:
@@ -92,6 +92,27 @@ class LayerNormalization(Base):
         for i in range(len(X.shape)):
             case(i)
             case(i - len(X.shape))
+
+    @staticmethod
+    def export_default_axis() -> None:
+        X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+        # Default axis in LayerNormalization is -1.
+        normalized_shape = calculate_normalized_shape(X.shape, -1)
+        W = np.random.randn(*normalized_shape).astype(np.float32)
+        B = np.random.randn(*normalized_shape).astype(np.float32)
+        # Axis is default to -1 in the reference implementation.
+        Y, mean, inv_std_dev = _layer_normalization(X, W, B)
+
+        # Not specifying axis attribute means -1.
+        node = onnx.helper.make_node(
+            'LayerNormalization',
+            inputs=['X', 'W', 'B'],
+            outputs=['Y', 'Mean', 'InvStdDev']
+        )
+
+        expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+                name='test_layer_normalization_default_axis')
 
     @staticmethod
     def export2d() -> None:
