@@ -948,4 +948,7 @@ message FunctionProto {
   // The domain which this function belongs to. Combined with FunctionProto.name, this forms the unique identity of
   // the FunctionProto.
   optional string domain = 10;
+
+  // Additional named attributes.
+  // repeated AttributeProto attribute_proto = 11;
 }

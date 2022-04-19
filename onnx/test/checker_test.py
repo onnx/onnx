@@ -195,9 +195,9 @@ class TestChecker(unittest.TestCase):
             [seq_at_node],
             "test",
             [
-                helper.make_tensor_sequence_value_info('seq', TensorProto.FLOAT, None),
-                helper.make_tensor_value_info('pos_at', TensorProto.INT32, None)],
-            [helper.make_tensor_sequence_value_info('output', TensorProto.FLOAT, None)])
+                helper.make_tensor_sequence_value_info('seq', TensorProto.FLOAT, shape=[2]),
+                helper.make_tensor_value_info('pos_at', TensorProto.INT32, shape=[1])],
+            [helper.make_tensor_value_info('output', TensorProto.FLOAT, shape=[5])])
 
         # prepare a sequence initializer
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
@@ -216,7 +216,7 @@ class TestChecker(unittest.TestCase):
 
         graph.sequence_initializer.extend([values_sequence])
         graph.sequence_initializer[0].name = 'seq'
-        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+        checker.check_graph(graph)
 
     def test_check_graph_optional_input(self) -> None:
         # GivenTensorFill's input is marked optional, hence it is used in this test.
@@ -274,6 +274,9 @@ class TestChecker(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+
+        checker.check_graph(graph)            
+        
         model = helper.make_model(graph, producer_name='test')
 
         checker.check_model(model)
