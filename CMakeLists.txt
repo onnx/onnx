@@ -203,8 +203,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     set(ABS_FILE ${ROOT_DIR}/${INFILE})
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
-    # "onnx-data" check is because we do not want to create/compile an "onnx-data-ml.proto" file
-    if(ONNX_ML AND NOT(FILE_WE STREQUAL "onnx-data"))
+    if(ONNX_ML)
       if(ONNX_NAMESPACE STREQUAL "onnx")
         set(GENERATED_FILE_WE "${FILE_WE}-ml")
       else()
@@ -345,12 +344,6 @@ relative_protobuf_generate_cpp(gen_onnx_operators_proto
 list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
 list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
 
-relative_protobuf_generate_cpp(gen_onnx_data_proto
-                               __tmp_srcs
-                               __tmp_hdrs
-                               ${ONNX_ROOT}
-                               gen_onnx_proto
-                               onnx/onnx-data.in.proto)
 list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
 list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
 
@@ -364,7 +357,7 @@ list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
 
 add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
-add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
+add_dependencies(onnx_proto gen_onnx_operators_proto)
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>

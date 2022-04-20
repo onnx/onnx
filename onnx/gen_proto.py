@@ -130,10 +130,6 @@ def convert(stem: Text, package_name: Text, output: Text, do_onnx_ml: bool = Fal
     # Having a separate variable for import_ml ensures that the import statements for the generated
     # proto files can be set separately from the ONNX_ML environment variable setting.
     import_ml = do_onnx_ml
-    # We do not want to generate the onnx-data-ml.proto files for onnx-data.in.proto,
-    # as there is no change between onnx-data.proto and the ML version.
-    if 'onnx-data' in proto_in:
-        do_onnx_ml = False
     if do_onnx_ml:
         proto_base = "{}_{}-ml".format(stem, package_name) if need_rename else "{}-ml".format(stem)
     else:
@@ -211,7 +207,7 @@ def main() -> None:
     parser.add_argument('--protoc_path',
                         default='',
                         help='path to protoc for proto3 file validation')
-    parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators', 'onnx-data'],
+    parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators'],
                         help='list of .in.proto file stems '
                         '(default: %(default)s)')
     args = parser.parse_args()
