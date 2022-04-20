@@ -800,8 +800,15 @@ message FunctionProto {
   repeated string input = 4;
   repeated string output = 5;
 
-  // The attributes of the function.
+  // The attribute identifiers of the function.
+  // It is for function attributes without default values.
   repeated string attribute = 6;
+
+  // The attribute protos of the function.
+  // It is for function attributes with default values.
+  // A function attribute shall be represented either as
+  // a string attribute or an AttributeProto, not both.
+  repeated AttributeProto attribute_proto = 11;
 
   // The nodes in the function.
   repeated NodeProto node = 7;

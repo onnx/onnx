@@ -385,6 +385,14 @@ class ParserBase {
     return Status::OK();
   }
 
+  bool PeekIsIdentifierAssignment(std::string& id) {
+    SavePos();
+    ParseOptionalIdentifier(id);
+    bool is_assignment = Matches(':') || Matches('=');
+    RestorePos();
+    return is_assignment;
+  }
+
   Status Parse(KeyWordMap::KeyWord& keyword) {
     std::string id;
     CHECK_PARSER_STATUS(ParseIdentifier(id));
@@ -435,6 +443,10 @@ class OnnxParser : public ParserBase {
   Status Parse(IdList& idlist);
 
   Status Parse(char open, IdList& idlist, char close);
+
+  Status Parse(IdList& idlist, AttrList& attrlist);
+
+  Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
 
   Status ParseSingleAttributeValue(AttributeProto& attr);
 

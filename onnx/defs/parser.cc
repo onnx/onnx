@@ -43,6 +43,35 @@ Status OnnxParser::Parse(char open, IdList& idlist, char close) {
   return Status::OK();
 }
 
+Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
+  idlist.Clear();
+  attrlist.Clear();
+  do {
+    std::string id;
+    bool is_assignment = PeekIsIdentifierAssignment(id);
+    if (id.empty())
+      return Status::OK(); // Treat as empty list of identifiers
+    if (is_assignment) {
+      PARSE(*attrlist.Add());
+    }
+    else {
+      ParseOptionalIdentifier(id);
+      *idlist.Add() = id;
+    }
+  } while (Matches(','));
+  return Status::OK();
+}
+
+Status OnnxParser::Parse(char open, IdList& idlist, AttrList& attrlist, char close) {
+  idlist.Clear();
+  attrlist.Clear();
+  if (Matches(open)) {
+    PARSE(idlist, attrlist);
+    MATCH(close);
+  }
+  return Status::OK();
+}
+
 Status OnnxParser::Parse(TensorShapeProto& shape) {
   shape.clear_dim();
   do {
@@ -422,7 +451,7 @@ Status OnnxParser::Parse(FunctionProto& fn) {
   ParseIdentifier(id);
   fn.set_name(id);
 
-  PARSE('<', *fn.mutable_attribute(), '>');
+  PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>');
   PARSE('(', *fn.mutable_input(), ')');
   MATCH('=');
   MATCH('>', false);
