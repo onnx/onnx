@@ -25,7 +25,7 @@
   * (2) Minimum supported versions are listed [here](/requirements.txt).  
   * (3) [Test](/onnx/test/test_with_ort.py) ONNX Python wheel with `onnxruntime.InferenceSession` from latest ONNXRuntime. Please note that ort-nightly does not support Linux-i686 and Windows-x86 thus their verification are skipped.  
   * (4) TEST_HUB=1 will test [onnx.hub](/onnx/test/hub_test.py) by using this API to download an ONNX model from onnx/models. This test is restricted to only 1 pipeline for saving quota usage.
-  * (5) Although the build envioronment is macos-10.15, use MACOSX_DEPLOYMENT_TARGET=10.12 and -p [macosx_10_12_x86_64](https://github.com/onnx/onnx/blob/2e048660ffa8243596aaf3338e60c7c0575458f2/.github/workflows/release_mac.yml#L74) to force the wheel to support 10.12+.  
+  * (5) Although the build environment is macos-10.15, use MACOSX_DEPLOYMENT_TARGET=10.12 and -p [macosx_10_12_x86_64](https://github.com/onnx/onnx/blob/2e048660ffa8243596aaf3338e60c7c0575458f2/.github/workflows/release_mac.yml#L74) to force the wheel to support 10.12+.  
   
   * (6):
     * The ONNX Model Zoo test will run weekly (Sunday midnight)
