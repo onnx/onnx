@@ -634,7 +634,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* SequenceMap_ver16_doc = R"DOC(
+static const char* SequenceMap_ver17_doc = R"DOC(
 Applies a sub-graph to each sample in the input sequence(s).
 
 Inputs can be either tensors or sequences, with the exception of the first input which must
@@ -903,9 +903,9 @@ bool BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx,
 
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceMap,
-    16,
+    17,
     OpSchema()
-        .SetDoc(SequenceMap_ver16_doc)
+        .SetDoc(SequenceMap_ver17_doc)
         .Attr(
             "body",
             "The graph to be run for each sample in the sequence(s). "
