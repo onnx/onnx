@@ -4,7 +4,7 @@
 
 ## Introduction
 
-To encourage community participation and wider adoption in the industry, ONNX has introduced [open governance](https://github.com/onnx/onnx/wiki/Expanded-ONNX-Steering-Committee-Announced!) in March 2018. The governance has three defined structures to propel the development of ONNX project forward: [Steering Committee](/community/readme.md#steering-committee), [Special Interest Groups (SIGs)](/community/readme.md#sig---special-interest-groups), and [Working Groups (WGs)](/community/readme.md#wg---working-groups). While SIGs and WGs primarily focus on the techincal roadmap of ONNX, the Steering Committee is responsible for setting the vision and governance process of the ONNX community.
+To encourage community participation and wider adoption in the industry, ONNX has introduced [open governance](https://github.com/onnx/onnx/wiki/Expanded-ONNX-Steering-Committee-Announced!) in March 2018. The governance has three defined structures to propel the development of ONNX project forward: [Steering Committee](/community/readme.md#steering-committee), [Special Interest Groups (SIGs)](/community/readme.md#sig---special-interest-groups), and [Working Groups (WGs)](/community/readme.md#wg---working-groups). While SIGs and WGs primarily focus on the technical roadmap of ONNX, the Steering Committee is responsible for setting the vision and governance process of the ONNX community.
 
 For the first year of its ONNX open governance, representatives from Facebook, Microsoft, AWS, Intel and Nvidia are chosen to serve as the ONNX Steering Committee to help guide the project. The Steering Committee will be elected by the [Contributors](/community/readme.md#community-roles) in its second year and will be re-elected every year.
 
