@@ -71,7 +71,11 @@ def find_min_ir_version_for(opsetidlist: List[OperatorSetIdProto]) -> int:
         if (key in OP_SET_ID_VERSION_MAP):
             return OP_SET_ID_VERSION_MAP[key]
         else:
-            raise ValueError("Unsupported opset-version.")
+            warnings.warn(str(f"Cannot find corresponding ir version for opset version {key[1]} under domain {key[0]}. "
+                          f"Usually it happens with newer opset version before defining it in version map. "
+                          f"Therefore use the latest ir version for this case. "),
+                          UserWarning, stacklevel=2)
+            return IR_VERSION
     if (opsetidlist):
         return max([find_min(x.domain, x.version) for x in opsetidlist])
     return default_min_version  # if no opsets specified
