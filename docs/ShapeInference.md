@@ -109,8 +109,29 @@ inference for `RoiAlign` as an example.)
 
 * `unifyInputDim` and `unifyDim` and `updateOutputShape` can be used
 when multiple input dims are expected to be the same, and when input
-dimensions are propagated to specific output dimensions.(See the inference
+dimensions are propagated to specific output dimensions. (See the inference
 for `RoiAlign` for an example.)
 
-* Overloaded operators `*` and `/` can be used on symbolic dimensions when output dimensions are computed from input dimensions using arithmetic. (See the inference for `SpaceToDepth` for an example.)
+* Overloaded operators `*` and `/` can be used on symbolic dimensions when output
+dimensions are computed from input dimensions using arithmetic. (See the inference
+for `SpaceToDepth` for an example.)
+
+These utilities handle missing shapes and dimensions safely.
+
+_Example_: Consider a simple matrix-multiplication op that expects inputs of shape
+`[M,K]` and `[K,N]` and returns an output of shape `[M,N]`. This can be coded
+up as below:
+```cpp
+   // Check that input 0 has rank 2 (if its rank is known).
+   checkInputRank(ctx, 0, 2);
+   // Check that input 1 has rank 2 (if its rank is known).
+   checkInputRank(ctx, 1, 2);
+   Dim M, K, N;
+   // Check various dimensions, handling missing dimensions/shapes safely.
+   unifyInputDim(ctx, 0, 0, M);
+   unifyInputDim(ctx, 0, 1, K);
+   unifyInputDim(ctx, 1, 0, K);
+   unifyInputDim(ctx, 1, 1, N);
+   updateOutputShape(ctx, 0, {M. N});
+```
 
