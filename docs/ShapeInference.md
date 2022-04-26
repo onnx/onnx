@@ -1,20 +1,5 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-# Background
-
-Please see this [section](IR.md#static-tensor-shapes) for a review of static tensor shapes.
-In particular, a static tensor shape (represented by a `TensorShapeProto`) is distinct from
-a runtime tensor shape. This feature is commonly used when the exact runtime tensor shape is
-not known statically (that is, at compile time).
-
-* A `Tensor` with an undefined `shape` field is used to represent a tensor of unknown rank.
-* A `Tensor` with a defined `shape` represents a tensor of known rank.
-* Each `Dimension` of a `TensorShapeProto` can have a known integer value
-(represented by the `dim_value` field) or it can have an unknown value
-represented by a symbolic identified (the `dim_param` field) or it
-may have neither field defined (in which case it represents an anonymous
-unknown value).
-
 # ONNX Shape Inference
 
 ONNX provides an optional implementation of shape inference on ONNX
@@ -28,6 +13,21 @@ member of the OpSchema objects.
 In ONNX 1.10 release, symbol generation and propagation along with shape 
 data propagation was added to ONNX graph level shape inference. 
 Detailed proposal is [here](proposals/SymbolicShapeInfProposal.md)
+
+## Background
+
+Please see this [section](IR.md#static-tensor-shapes) of IR.md for a review of static tensor shapes.
+In particular, a static tensor shape (represented by a `TensorShapeProto`) is distinct from
+a runtime tensor shape. This feature is commonly used when the exact runtime tensor shape is
+not known statically (that is, at compile time).
+
+* A `Tensor` with an undefined `shape` field is used to represent a tensor of unknown rank.
+* A `Tensor` with a defined `shape` represents a tensor of known rank.
+* Each `Dimension` of a `TensorShapeProto` can have a known integer value
+(represented by the `dim_value` field) or it can have an unknown value
+represented by a symbolic identified (the `dim_param` field) or it
+may have neither field defined (in which case it represents an anonymous
+unknown value).
 
 ## Invoking Shape Inference
 
