@@ -56,10 +56,12 @@ The grammar below describes the syntax:
    value-info-list ::= '(' value-infos? ')'
    prim-constants ::= prim-constant (',' prim-constant)*
    tensor-constant ::= tensor-type (id)? ('=')? '{' prim-constants '}'
-   single-attr-value ::= tensor-constant | graph | prim-constant
+   attr-ref ::= '@' id
+   single-attr-value ::= tensor-constant | graph | prim-constant | attr-ref
    attr-value-list ::= '[' single-attr-value (',' single-attr-value)* ']'
    attr-value ::= single-attr-value | attr-value-list
-   attr ::= id '=' attr-value
+   attr-type ::= ':' id
+   attr ::= id attr-type? '=' attr-value
    attr-list ::= '<' attr (',' attr)* '>'
    node ::= id-list? '=' qualified-id attr-list? '(' id-list? ')'
          |  id-list? '=' qualified-id '(' id-list? ')' attr-list
