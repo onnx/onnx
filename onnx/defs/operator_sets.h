@@ -1027,12 +1027,14 @@ class OpSet_Onnx_ver16 {
 };
 
 // Forward declarations for ai.onnx version 17
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, LayerNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, SequenceMap);
 
 // Iterate over schema from ai.onnx version 17
 class OpSet_Onnx_ver17 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, LayerNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, SequenceMap)>());
   }
 };
