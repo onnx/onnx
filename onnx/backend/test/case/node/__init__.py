@@ -8,7 +8,6 @@ import numpy as np  # type: ignore
 
 import onnx
 import onnx.mapping
-from onnx import ModelProto, GraphProto
 
 from ..utils import import_recursive
 from ..test_case import TestCase
@@ -19,7 +18,7 @@ _TargetOpType = None
 _TargetOpsetVersion = None
 
 
-from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, GraphProto
+from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, GraphProto, ModelProto
 
 
 def _rename_edges_helper(internal_node: NodeProto,
@@ -158,13 +157,13 @@ def _extract_value_info(input: Union[List[Any], np.ndarray, None], name: Text, t
 def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
     latest_onnx_version, latest_ml_version, latest_training_version = onnx.helper.VERSION_TABLE[-1][2:5]
     if "opset_imports" in kwargs:
-        for domain, opset_version in kwargs["opset_imports"]:
+        for opset in kwargs["opset_imports"]:
             # If the test model uses an unreleased opset version (latest_version+1),
             # directly use make_model to create a model with the latest ir version
             if (
-                ((domain == "" or domain == "ai.onnx") and opset_version == latest_onnx_version + 1)
-                or (domain == "ai.onnx.ml" and opset_version == latest_ml_version + 1)
-                or ((domain == "ai.onnx.training version" or domain == "ai.onnx.preview.training") and opset_version == latest_training_version + 1)
+                ((opset.domain == "" or opset.domain == "ai.onnx") and opset.version == latest_onnx_version + 1)
+                or (opset.domain == "ai.onnx.ml" and opset.version == latest_ml_version + 1)
+                or ((opset.domain == "ai.onnx.training version" or opset.domain == "ai.onnx.preview.training") and opset.version == latest_training_version + 1)
             ):
                 return onnx.helper.make_model(graph, **kwargs)
     # Otherwise, find and use the corresponding ir version according to given opset version
