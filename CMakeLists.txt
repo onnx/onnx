@@ -277,10 +277,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
           # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
           configure_file(
             ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
-            ${ROOT_DIR}/tools/protoc-gen-mypy.sh
+            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh
             @ONLY)
-          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
+          execute_process(COMMAND chmod +x ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
+          configure_file(
+            ${ROOT_DIR}/tools/protoc-gen-mypy.py
+            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.py
+            COPYONLY)
+          set(PROTOC_MYPY_PLUGIN_FILE ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
         else()
           set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
         endif()
@@ -444,22 +448,21 @@ if(BUILD_ONNX_PYTHON)
   target_include_directories(onnx_cpp2py_export PRIVATE
                              $<BUILD_INTERFACE:${ONNX_ROOT}>
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                             $<INSTALL_INTERFACE:include>
-                             ${PYTHON_INCLUDE_DIR})
+                             $<INSTALL_INTERFACE:include>)
 
   # pybind11 is a header only lib
-  find_package(pybind11 2.2)
-  if(pybind11_FOUND)
-    target_include_directories(onnx_cpp2py_export PUBLIC
-      ${pybind11_INCLUDE_DIRS})
-  else()
-    if(EXISTS ${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h)
-      target_include_directories(onnx_cpp2py_export PUBLIC
-        ${ONNX_ROOT}/third_party/pybind11/include)
+  find_package(pybind11 2.2 CONFIG)
+  if(NOT pybind11_FOUND)
+    if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
+      add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
     else()
       message(FATAL_ERROR "cannot find pybind")
     endif()
   endif()
+
+  target_include_directories(onnx_cpp2py_export PUBLIC
+    "${pybind11_INCLUDE_DIRS}"
+    "${PYTHON_INCLUDE_DIRS}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
