@@ -3104,18 +3104,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* NonZero_ver13_doc = R"DOC(
-    Returns the indices of the elements that are non-zero
-    (in row-major order - by dimension).
-    NonZero behaves similar to numpy.nonzero:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     NonZero,
     13,
     OpSchema()
-        .SetDoc(NonZero_ver13_doc)
+        .SetDoc(NonZero_ver9_doc)
         .Input(
             0,
             "X",

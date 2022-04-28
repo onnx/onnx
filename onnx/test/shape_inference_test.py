@@ -3831,7 +3831,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, ())],
             [make_node('NonZero', ['x'], ['out'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (1, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (0, None))])  # type: ignore
 
     def test_optional_construct_empty_tensor(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[1, 2, 3])
