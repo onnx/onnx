@@ -69,6 +69,7 @@ class TestShapeInference(unittest.TestCase):
             assert vi_type.tensor_type.elem_type == inferred_vi_type.tensor_type.elem_type
             assert vi_type.tensor_type.HasField('shape') == inferred_vi_type.tensor_type.HasField('shape')
             if vi_type.tensor_type.HasField('shape'):
+                assert len(vi_type.tensor_type.shape.dim) == len(inferred_vi_type.tensor_type.shape.dim)
                 for dim_i in range(len(vi_type.tensor_type.shape.dim)):
                     dim = vi_type.tensor_type.shape.dim[dim_i]
                     inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
@@ -631,6 +632,15 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('axes', TensorProto.INT64, (2,), (0, -1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 3, 4, 5, 1))])
+
+    def test_unsqueeze_scalar(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ()),
+            ('axes', TensorProto.INT64, ())],
+            [make_node('Unsqueeze', ['x', 'axes'], 'y')],
+            [],
+            initializer=[make_tensor('axes', TensorProto.INT64, (), (-1,))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1,))])
 
     def test_slice_without_input_shape(self) -> None:
         graph = self._make_graph(
@@ -3815,6 +3825,13 @@ class TestShapeInference(unittest.TestCase):
             [make_node('NonZero', ['x'], ['y'])],
             [make_tensor_value_info('y', TensorProto.INT64, (None, 'NZ'))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1, 'NZ'))])  # type: ignore
+
+    def test_nonzero_scalar(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ())],
+            [make_node('NonZero', ['x'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (1, None))])  # type: ignore
 
     def test_optional_construct_empty_tensor(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[1, 2, 3])

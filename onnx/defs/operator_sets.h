@@ -760,7 +760,6 @@ class OpSet_Onnx_ver12 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Pow)>());
   }
 };
-
 // Forward declarations for ai.onnx version 13
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Constant);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Greater);
@@ -965,6 +964,7 @@ class OpSet_Onnx_ver14 {
   }
 };
 
+
 // Forward declarations for ai.onnx version 15
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, BatchNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Bernoulli);
@@ -989,6 +989,7 @@ class OpSet_Onnx_ver15 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Shape)>());
   }
 };
+
 
 // Forward declarations for ai.onnx version 16
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, RoiAlign);
@@ -1024,18 +1025,6 @@ class OpSet_Onnx_ver16 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, PRelu)>());
   }
 };
-
-// Forward declarations for ai.onnx version 17
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, NonZero);
-
-// Iterate over schema from ai.onnx version 17
-class OpSet_Onnx_ver17 {
- public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, NonZero)>());
-  }
-};
-
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -1053,7 +1042,6 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver14>();
   RegisterOpSetSchema<OpSet_Onnx_ver15>();
   RegisterOpSetSchema<OpSet_Onnx_ver16>();
-  RegisterOpSetSchema<OpSet_Onnx_ver17>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
@@ -1061,7 +1049,6 @@ inline void RegisterOnnxOperatorSetSchema() {
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
   // Update here if opset_version bumps 
   // These calls for schema registration here are required to be in descending order for this to work correctly
-  RegisterOpSetSchema<OpSet_Onnx_ver17>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver16>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver15>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver14>(target_version);

@@ -20813,43 +20813,6 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain input and output types to all tensor types (including bfloat).</dd>
 </dl>
 
-## Version 17 of the default ONNX operator set
-### <a name="NonZero-17"></a>**NonZero-17**</a>
-
-  Returns the indices of the elements that are non-zero
-      (in row-major order - by dimension).
-      NonZero behaves similar to numpy.nonzero:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
-
-
-  **History**
-  - Version 17 corrects shape inference for scalar input: Similar to NumPy 1.22, for scalar input, NonZero should infer shape as (1, N).
-
-#### Version
-
-This version of the operator has been available since version 17 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (non-differentiable) : T</dt>
-<dd>input</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>output</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain to all tensor types.</dd>
-</dl>
-
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
