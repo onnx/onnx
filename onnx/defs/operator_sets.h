@@ -1005,7 +1005,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, LessOrEqual);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, GreaterOrEqual);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, LeakyRelu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, PRelu);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, SequenceMap);
 
 // Iterate over schema from ai.onnx version 16
 class OpSet_Onnx_ver16 {
@@ -1024,16 +1023,19 @@ class OpSet_Onnx_ver16 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, GreaterOrEqual)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, LeakyRelu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, PRelu)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, SequenceMap)>());
   }
 };
 
+
+// Forward declarations for ai.onnx version 17
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, SequenceMap);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, Resize);
 
-// Iterate over schema from ai.onnx version 16
+// Iterate over schema from ai.onnx version 17
 class OpSet_Onnx_ver17 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, SequenceMap)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, Resize)>());
   }
 };

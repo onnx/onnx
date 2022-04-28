@@ -59,7 +59,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
   * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
   * Utilize the following matrix to check:
 
-    |   | 3.5 | 3.6 | 3.7 | 3.8 |
+    |   | 3.7 | 3.8 | 3.9 | 3.10 |
     -- | -- | -- | -- | -- |
     Linux |   |   |   |   |
     Windows |   |   |   |   |
@@ -118,3 +118,6 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 **Remove old onnx-weekly packages on TestPyPI**
 * Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://test.pypi.org/project/onnx-weekly/#history) on TestPyPI to save space.
 * Steps: Login and go [here](https://test.pypi.org/manage/project/onnx-weekly/releases/) -> Choose target package -> Options -> Delete.
+
+**Bump opset version for ai.onnx**
+* Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes. For example, this [demo PR](https://github.com/onnx/onnx/pull/4134/files).
