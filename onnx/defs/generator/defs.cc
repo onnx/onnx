@@ -232,60 +232,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             propagateElemTypeFromDtypeToOutput(ctx, TensorProto::FLOAT, 0);
           }
 
-          // Shape inference based on input shape
-          const TensorProto* targetShapeInitializer = ctx.getInputData(0);
-          if (!targetShapeInitializer) {
-            // If symbolic input is available, do shape inference by data propagation.
-            const TensorShapeProto* shapeInput = ctx.getSymbolicInput(0);
-            if (shapeInput) {
-              *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = *shapeInput;
-              return;
-            }
-            // This is the case when exact or symbolic shape is not available.
-            // In this case, if the number of dimensions can be infered
-            // from the input 'shape' tensor, then we add the same number
-            // of dimensions (without any dim_value information) to the
-            // output.
-            if (hasInputShape(ctx, 0)) {
-              auto& input_shape = getInputShape(ctx, 0);
-              auto input_shape_dim_size = input_shape.dim_size();
-              if (input_shape_dim_size > 1) {
-                fail_shape_inference(
-                    "Shape input must be a one-dimensional tensor.");
-              }
-              if (input_shape.dim(0).has_dim_value()) {
-                const auto& input_shape_dim_value =
-                    input_shape.dim(0).dim_value();
-                auto final_output_shape = ctx.getOutputType(0)
-                                              ->mutable_tensor_type()
-                                              ->mutable_shape();
-                for (int i = 0; i < input_shape_dim_value; ++i) {
-                  auto newdim = final_output_shape->add_dim();
-                  (void)(newdim); // To eliminate "unused variable" compiler
-                                  // warning.
-                }
-              }
-            }
-            return;
-          }
-
-          // This is the second case when exact shape data is available.
-          // In this case, we extract the shape values from input tensor
-          // and create output tensor of that shape.
-          // First, extract target shape value.
-          std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer);
-
-          // Next, set output shape to the target shape.
-          auto final_output_shape =
-              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          for (const int64_t& targetShapeElem : targetShape) {
-            if (targetShapeElem >= 0) {
-              auto* new_dim = final_output_shape->add_dim();
-              new_dim->set_dim_value(targetShapeElem);
-            } else {
-              // Check if value is less than -1; fail if so
-              fail_shape_inference("Invalid shape value: ", targetShapeElem);
-            }
+          bool found = false;
+          TensorShapeProto output_shape = getShapeInput(ctx, 0, found);
+          if (found) {
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = output_shape;
           }
         }));
 
