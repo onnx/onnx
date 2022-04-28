@@ -8,6 +8,7 @@ import numpy as np  # type: ignore
 
 import onnx
 import onnx.mapping
+from onnx import ModelProto, GraphProto
 
 from ..utils import import_recursive
 from ..test_case import TestCase
@@ -117,6 +118,22 @@ def _extract_value_info(input: Union[List[Any], np.ndarray, None], name: Text, t
     return onnx.helper.make_value_info(name, type_proto)
 
 
+def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
+    latest_onnx_version, latest_ml_version, latest_training_version = onnx.helper.VERSION_TABLE[-1][2:5]
+    if "opset_imports" in kwargs:
+        for domain, opset_version in kwargs["opset_imports"]:
+            # If the test model uses an unreleased opset version (latest_version+1),
+            # directly use make_model to create a model with the latest ir version
+            if (
+                ((domain == "" or domain == "ai.onnx") and opset_version == latest_onnx_version + 1)
+                or (domain == "ai.onnx.ml" and opset_version == latest_ml_version + 1)
+                or ((domain == "ai.onnx.training version" or domain == "ai.onnx.preview.training") and opset_version == latest_training_version + 1)
+            ):
+                return onnx.helper.make_model(graph, **kwargs)
+    # Otherwise, find and use the corresponding ir version according to given opset version
+    return onnx.helper.make_model_gen_version(graph, **kwargs)
+
+
 # In the case of ops with optional inputs and outputs, node.input and node.output indicate
 # which inputs/outputs are present and which are omitted. However, the parameter inputs
 # and outputs of this function include values only for inputs/outputs that are present.
@@ -136,16 +153,16 @@ def expect(node: onnx.NodeProto,
     # skip if the node's op_type is not same as the given one
     if _TargetOpType and node.op_type != _TargetOpType:
         return
-    present_inputs = [x for x in node.input if (x != '')]
-    present_outputs = [x for x in node.output if (x != '')]
+    present_inputs = [x for x in node.input if (x != "")]
+    present_outputs = [x for x in node.output if (x != "")]
     input_type_protos = [None] * len(inputs)
-    if 'input_type_protos' in kwargs:
-        input_type_protos = kwargs[str('input_type_protos')]
-        del kwargs[str('input_type_protos')]
+    if "input_type_protos" in kwargs:
+        input_type_protos = kwargs[str("input_type_protos")]
+        del kwargs[str("input_type_protos")]
     output_type_protos = [None] * len(outputs)
-    if 'output_type_protos' in kwargs:
-        output_type_protos = kwargs[str('output_type_protos')]
-        del kwargs[str('output_type_protos')]
+    if "output_type_protos" in kwargs:
+        output_type_protos = kwargs[str("output_type_protos")]
+        del kwargs[str("output_type_protos")]
     inputs_vi = [_extract_value_info(arr, arr_name, input_type)
                  for arr, arr_name, input_type in zip(inputs, present_inputs, input_type_protos)]
     outputs_vi = [_extract_value_info(arr, arr_name, output_type)
@@ -155,9 +172,9 @@ def expect(node: onnx.NodeProto,
         name=name,
         inputs=inputs_vi,
         outputs=outputs_vi)
-    kwargs[str('producer_name')] = 'backend-test'
+    kwargs[str("producer_name")] = "backend-test"
 
-    if 'opset_imports' not in kwargs:
+    if "opset_imports" not in kwargs:
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
         if _TargetOpsetVersion is None:
@@ -166,16 +183,16 @@ def expect(node: onnx.NodeProto,
         # it will generate test data for the latest opset vesion that supports before targeted opset version
         else:
             produce_opset_version = onnx.defs.get_schema(node.op_type, int(_TargetOpsetVersion), node.domain).since_version
-        kwargs[str('opset_imports')] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
+        kwargs[str("opset_imports")] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
     else:
         # Also, for the same reason above, convert given opset.version (from opset_imports) to max_inclusive_version
         max_inclusive_versions = []
-        for opset in kwargs[str('opset_imports')]:
+        for opset in kwargs[str("opset_imports")]:
             produce_opset_version = onnx.defs.get_schema(node.op_type, opset.version, opset.domain).since_version
             max_inclusive_versions.append(onnx.helper.make_operatorsetid(opset.domain, produce_opset_version))
-        kwargs[str('opset_imports')] = max_inclusive_versions
+        kwargs[str("opset_imports")] = max_inclusive_versions
 
-    model = onnx.helper.make_model_gen_version(graph, **kwargs)
+    model = _make_test_model_gen_version(graph, **kwargs)
 
     _NodeTestCases.append(TestCase(
         name=name,
@@ -184,7 +201,7 @@ def expect(node: onnx.NodeProto,
         model_dir=None,
         model=model,
         data_sets=[(inputs, outputs)],
-        kind='node',
+        kind="node",
         rtol=1e-3,
         atol=1e-7,
     ))
@@ -193,7 +210,7 @@ def expect(node: onnx.NodeProto,
     # E.g. merge(["x", "", "y"], [x-value-info, y-value-info]) will return [x-type, default-type, y-type]
     def merge(node_inputs: List[Text], present_value_info: List[onnx.ValueInfoProto]) -> List[TypeProto]:
         if (node_inputs):
-            if (node_inputs[0] != ''):
+            if (node_inputs[0] != ""):
                 return [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
             else:
                 return [TypeProto()] + merge(node_inputs[1:], present_value_info)
@@ -201,14 +218,14 @@ def expect(node: onnx.NodeProto,
     merged_types = merge(list(node.input), inputs_vi)
     expanded_function_nodes = function_testcase_helper(node, merged_types, name)
     if expanded_function_nodes:
-        function_test_name = name + '_expanded'
+        function_test_name = name + "_expanded"
         graph = onnx.helper.make_graph(
             nodes=expanded_function_nodes,
             name=function_test_name,
             inputs=inputs_vi,
             outputs=outputs_vi)
-        kwargs[str('producer_name')] = 'backend-test'
-        model = onnx.helper.make_model_gen_version(graph, **kwargs)
+        kwargs[str("producer_name")] = "backend-test"
+        model = _make_test_model_gen_version(graph, **kwargs)
         _NodeTestCases.append(TestCase(
             name=function_test_name,
             model_name=function_test_name,
@@ -216,7 +233,7 @@ def expect(node: onnx.NodeProto,
             model_dir=None,
             model=model,
             data_sets=[(inputs, outputs)],
-            kind='node',
+            kind="node",
             rtol=1e-3,
             atol=1e-7,
         ))
