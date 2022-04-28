@@ -91,7 +91,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Multinomial">Multinomial</a>|<a href="Changelog.md#Multinomial-7">7</a>|
 |<a href="#Neg">Neg</a>|<a href="Changelog.md#Neg-13">13</a>, <a href="Changelog.md#Neg-6">6</a>, <a href="Changelog.md#Neg-1">1</a>|
 |<a href="#NonMaxSuppression">NonMaxSuppression</a>|<a href="Changelog.md#NonMaxSuppression-11">11</a>, <a href="Changelog.md#NonMaxSuppression-10">10</a>|
-|<a href="#NonZero">NonZero</a>|<a href="Changelog.md#NonZero-13">13</a>, <a href="Changelog.md#NonZero-9">9</a>|
+|<a href="#NonZero">NonZero</a>|<a href="Changelog.md#NonZero-17">17</a>, <a href="Changelog.md#NonZero-13">13</a>, <a href="Changelog.md#NonZero-9">9</a>|
 |<a href="#Not">Not</a>|<a href="Changelog.md#Not-1">1</a>|
 |<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
 |<a href="#Optional">Optional</a>|<a href="Changelog.md#Optional-15">15</a>|
@@ -13195,11 +13195,15 @@ expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, s
       NonZero behaves similar to numpy.nonzero:
       https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
 
+
+  **History**
+  - Version 17 corrects shape inference for scalar input: Similar to NumPy 1.22, for scalar input, NonZero should infer shape as (1, N).
+
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 17 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#NonZero-9">9</a>
+Other versions of this operator: <a href="Changelog.md#NonZero-9">9</a>, <a href="Changelog.md#NonZero-13">13</a>
 
 #### Inputs
 

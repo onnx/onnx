@@ -3104,18 +3104,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* NonZero_ver13_doc = R"DOC(
-    Returns the indices of the elements that are non-zero
-    (in row-major order - by dimension).
-    NonZero behaves similar to numpy.nonzero:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+static const char* NonZero_ver17_history = R"DOC(
+
+**History**
+- Version 17 corrects shape inference for scalar input: Similar to NumPy 1.22, for scalar input, NonZero should infer shape as (1, N). 
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     NonZero,
-    13,
+    17,
     OpSchema()
-        .SetDoc(NonZero_ver13_doc)
+        .SetDoc(GET_OP_DOC_STR(
+          std::string(NonZero_ver9_doc) +
+          std::string(NonZero_ver17_history)))
         .Input(
             0,
             "X",
@@ -3144,7 +3145,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* dim = output_shape.add_dim();
           if (hasInputShape(ctx, 0)) {
             const TensorShapeProto& input_shape = getInputShape(ctx, 0);
-            dim->set_dim_value(input_shape.dim_size());
+            dim->set_dim_value(input_shape.dim_size() == 0? 1 : input_shape.dim_size());
           }
           output_shape.add_dim();
           updateOutputShape(ctx, 0, output_shape);

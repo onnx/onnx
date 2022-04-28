@@ -679,8 +679,11 @@ class TestAutomaticUpgrade(unittest.TestCase):
             output_types=[TensorProto.INT64]
         )
 
-    def test_NonZero(self) -> None:
+    def test_NonZero_1(self) -> None:
         self._test_op_upgrade('NonZero', 9, [[3, 3]], [[2, 4]], output_types=[TensorProto.INT64])
+
+    def test_NonZero_2(self) -> None:
+        self._test_op_upgrade('NonZero', 16, [[3, 3]], [[2, 4]], output_types=[TensorProto.INT64])
 
     def test_Not(self) -> None:
         self._test_op_upgrade('Not', 1, [[2, 3]], [[2, 3]], [TensorProto.BOOL], [TensorProto.BOOL])

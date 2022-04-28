@@ -2203,13 +2203,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* NonZero_ver9_doc = R"DOC(
-    Returns the indices of the elements that are non-zero
-    (in row-major order - by dimension).
-    NonZero behaves similar to numpy.nonzero:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     NonZero,
     9,
@@ -2220,6 +2213,45 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
+            "Constrain to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::INT64);
+          TensorShapeProto output_shape;
+          auto* dim = output_shape.add_dim();
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& input_shape = getInputShape(ctx, 0);
+            dim->set_dim_value(input_shape.dim_size() == 0 ? 1 : input_shape.dim_size());
+          }
+          output_shape.add_dim();
+          updateOutputShape(ctx, 0, output_shape);
+        }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NonZero,
+    13,
+    OpSchema()
+        .SetDoc(NonZero_ver9_doc)
+        .Input(
+            0,
+            "X",
+            "input",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "output",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
             "Constrain to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::INT64);
