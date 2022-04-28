@@ -25,7 +25,7 @@ void resizeShapeInferenceHelper(
     TensorShapeProto* output_shape) {
   for (int i = 0; i < input_shape.dim_size(); ++i) {
     auto* dim = output_shape->mutable_dim(i);
-    // If input_shape has dim_value, we caculate the scaled result
+    // If input_shape has dim_value, we calculate the scaled result
     // If input_shape doesn's have one, we leave it here
     if (input_shape.dim(i).has_dim_value()) {
       int64_t dim_value = static_cast<int64_t>(std::floor(
@@ -48,14 +48,14 @@ void resizeShapeInferenceHelper(
   }
 }
 
-void resizeShapeInference(InferenceContext& ctx, bool is_resize_op) {
+void resizeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
     return;
   }
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
-  const auto* scales = ctx.getInputData(is_resize_op ? 2 : 1);
+  const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
 
   if (output_shape->dim_size() > 0) {
     if (output_shape->dim_size() != input_shape.dim_size()) {
@@ -72,7 +72,7 @@ void resizeShapeInference(InferenceContext& ctx, bool is_resize_op) {
     }
   }
 
-  if (is_resize_op && ctx.getNumInputs() == 4) {
+  if (ctx.getNumInputs() == 4) {
     const auto* sizes = ctx.getInputData(3);
     if (nullptr != sizes) {
       if (sizes->data_type() == TensorProto::INT64) {
