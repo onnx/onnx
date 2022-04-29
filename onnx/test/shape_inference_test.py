@@ -299,7 +299,7 @@ class TestShapeInference(unittest.TestCase):
             make_tensor_value_info('shape', TensorProto.INT64, (2,)),
             make_tensor_value_info('y', TensorProto.UINT8, (3, 8))])
 
-    def test_reshape_dim_params_infer_value(self): -> None
+    def test_reshape_dim_params_infer_value(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, ('a', 'b', 2, 3))],
             [make_node('Shape', ['x'], ['xs'], start=0, end=2),
@@ -315,7 +315,7 @@ class TestShapeInference(unittest.TestCase):
              make_tensor_value_info('y', TensorProto.FLOAT, ('a', 'b', 6))],
             data_prop=True)
 
-    def test_reshape_dim_params_infer_param(self): -> None
+    def test_reshape_dim_params_infer_param(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, ('a', 'b', 2, 3))],
             [make_node('Shape', ['x'], ['xs'], start=0, end=1),
