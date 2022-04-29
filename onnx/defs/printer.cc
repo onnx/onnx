@@ -39,7 +39,7 @@ std::ostream& operator<<(std::ostream& os, const TypeProto_Tensor& tensortype) {
     if (tensortype.shape().dim_size() > 0)
       os << tensortype.shape();
   } else
-    os << "[...]";
+    os << "[]";
 
   return os;
 }
@@ -62,7 +62,7 @@ std::ostream& operator<<(std::ostream& os, const TypeProto_SparseTensor sparseTy
     if (sparseType.shape().dim_size() > 0)
       os << sparseType.shape();
   } else
-    os << "[...]";
+    os << "[]";
 
   return os << ")";
 }
@@ -154,6 +154,12 @@ std::ostream& operator<<(std::ostream& os, const ValueInfoList& vilist) {
 }
 
 std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
+  // Special case of attr-ref:
+  if (attr.has_ref_attr_name()) {
+    os << attr.name() << " : " << AttributeTypeNameMap::ToString(attr.type()) << " = " << attr.ref_attr_name();
+    return os;
+  }
+  // General case:
   os << attr.name() << " = ";
   switch (attr.type()) {
     case AttributeProto_AttributeType_INT:
