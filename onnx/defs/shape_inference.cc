@@ -450,7 +450,7 @@ TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& 
   if (hasInputShape(ctx, input_index)) {
     const TensorShapeProto& shape_input_shape = getInputShape(ctx, input_index);
     if (shape_input_shape.dim_size() != 1) {
-      fail_shape_inference("shape input must be 1D tensor");
+      fail_shape_inference("shape input must be 1D tensor, but has dim: ", shape_input_shape.dim_size());
     }
     if (shape_input_shape.dim(0).has_dim_value()) {
       // Attempt rank inference using shape of shape input
