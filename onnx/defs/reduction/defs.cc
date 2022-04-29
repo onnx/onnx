@@ -30,17 +30,17 @@ std::function<void(OpSchema&)> ReduceDocGenerator(
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
-Computes the {name} of the input tensor's element along the provided axes. The resulted
-tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-the resulted tensor have the reduced dimension pruned.
+Computes the {name} of the input tensor's element along the provided axes. The resulting
+tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+the resulting tensor has the reduced dimension pruned.
 
-The above behavior is similar to numpy, with the exception that numpy default keepdims to
+The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
 False instead of True.)DOC";
                         ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "keepdims",
-        "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
+        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Input(
@@ -218,8 +218,8 @@ std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the
-provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+If keepdims equals 0, then the resulting tensor has the reduced dimension pruned.
 If select_last_index is True (default False), the index of the last occurrence of the {name}
 is selected if the {name} appears more than once in the input. Otherwise the index of the
 first occurrence is selected.
@@ -233,7 +233,7 @@ The type of the output tensor is integer.)DOC";
         static_cast<int64_t>(0));
     schema.Attr(
         "keepdims",
-        "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
+        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Attr(

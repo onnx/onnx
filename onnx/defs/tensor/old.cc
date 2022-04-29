@@ -94,7 +94,8 @@ First input is the data tensor, second input is a shape tensor which specifies t
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -139,18 +140,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           // Make targetShape (0 -> same as originalShape, -1 -> inferred).
           // The targetShape vector represents the specified shape for output.
-          std::vector<int64_t> targetShape;
-          if (targetShapeInitializer->has_raw_data()) {
-            const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
-          } else {
-            const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.begin(), data.end());
-          }
-
+          std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer);
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targertShape dimension is -1, we do not set the
           // dimension value in this iteration, but we record the Dimension. If
@@ -254,7 +244,8 @@ First input is the data tensor, second input is a shape tensor which specifies t
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -278,17 +269,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           // Make targetShape (0 -> same as originalShape, -1 -> inferred).
           // The targetShape vector represents the specified shape for output.
-          std::vector<int64_t> targetShape;
-          if (targetShapeInitializer->has_raw_data()) {
-            const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(
-                targetShape.end(),
-                reinterpret_cast<const int64_t*>(bytes.c_str()),
-                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
-          } else {
-            const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.begin(), data.end());
-          }
+          std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer);
 
           // Iterate through targetShape, adding dimensions in the outputShape
           // TensorProto. If the targertShape dimension is -1, we do not set the
@@ -578,7 +559,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
             if (shape.dim_size() != rank) {
-              fail_shape_inference("All inputs to Concat must have same rank");
+              fail_shape_inference("All inputs to Concat must have same rank. Input ", i , " has rank ", shape.dim_size(), " != ", rank);
             }
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
@@ -1002,7 +983,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               perm.push_back(i);
           } else if (!perm.empty()) {
             // check if every index is valid
-            for (int64_t fromDimIndex : perm)
+            std::vector<bool> seen(shape.dim_size(), false);
+            for (int64_t fromDimIndex : perm) {
               if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
@@ -1018,13 +1000,131 @@ ONNX_OPERATOR_SET_SCHEMA(
                   oss << "}";
                 }
                 fail_type_inference(oss.str());
+              } else {
+                // check if any perm is repeated
+                if (seen[fromDimIndex]) {
+                  fail_type_inference("Attribute perm for Transpose has repeated value: ", fromDimIndex);
+                }
+                seen[fromDimIndex] = true;
               }
+            }
           }
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           for (size_t i = 0; i < perm.size(); ++i) {
             appendSingleDimCopiedFromInputTypeToOutputType(
                 ctx, 0, 0, static_cast<size_t>(perm[i]));
+          }
+        }));
+
+static const char* ScatterND_ver13_doc = R"DOC(
+ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
+and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
+is produced by creating a copy of the input `data`, and then updating its value to values
+specified by `updates` at specific index positions specified by `indices`. Its output shape
+is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
+That is, two or more `updates` for the same index-location is not supported.
+
+`indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
+ `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
+Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
+update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
+update to a slice of the tensor.
+
+`updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
+first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
+The remaining dimensions of `updates` correspond to the dimensions of the
+replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
+corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
+must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+of shapes.
+
+The `output` is calculated via the following equation:
+
+    output = np.copy(data)
+    update_indices = indices.shape[:-1]
+    for idx in np.ndindex(update_indices):
+        output[indices[idx]] = updates[idx]
+
+The order of iteration in the above loop is not specified.
+In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
+This ensures that the output value does not depend on the iteration order.
+
+This operator is the inverse of GatherND.
+
+Example 1:
+```
+  data    = [1, 2, 3, 4, 5, 6, 7, 8]
+  indices = [[4], [3], [1], [7]]
+  updates = [9, 10, 11, 12]
+  output  = [1, 11, 3, 10, 9, 6, 7, 12]
+```
+
+Example 2:
+```
+  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  indices = [[0], [2]]
+  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
+  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterND,
+    13,
+    OpSchema()
+        .SetDoc(ScatterND_ver13_doc)
+        .Input(
+            0,
+            "data",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of rank q >= 1.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank q + r - indices_shape[-1] - 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
           }
         }));
 
@@ -1104,6 +1204,123 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+static const char* ScatterElements_ver13_doc = R"DOC(
+ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
+rank r >= 1 and an optional attribute axis that identifies an axis of `data`
+(by default, the outer-most axis, that is axis 0). The output of the operation
+is produced by creating a copy of the input `data`, and then updating its value
+to values specified by `updates` at specific index positions specified by
+`indices`. Its output shape is the same as the shape of `data`.
+
+For each entry in `updates`, the target index in `data` is obtained by combining
+the corresponding entry in `indices` with the index of the entry itself: the
+index-value for dimension = axis is obtained from the value of the corresponding
+entry in `indices` and the index-value for dimension != axis is obtained from the
+index of the entry itself.
+
+For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
+is performed as below:
+```
+  output[indices[i][j]][j] = updates[i][j] if axis = 0,
+  output[i][indices[i][j]] = updates[i][j] if axis = 1,
+```
+
+This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+
+Example 1:
+```
+  data = [
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+  ]
+  indices = [
+      [1, 0, 2],
+      [0, 2, 1],
+  ]
+  updates = [
+      [1.0, 1.1, 1.2],
+      [2.0, 2.1, 2.2],
+  ]
+  output = [
+      [2.0, 1.1, 0.0]
+      [1.0, 0.0, 2.2]
+      [0.0, 2.1, 1.2]
+  ]
+```
+Example 2:
+```
+  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+  indices = [[1, 3]]
+  updates = [[1.1, 2.1]]
+  axis = 1
+  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterElements,
+    13,
+    OpSchema()
+        .SetDoc(ScatterElements_ver13_doc)
+        .Attr(
+            "axis",
+            "Which axis to scatter on. Negative value means "
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            0,
+            "data",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank r >=1 (same rank and shape as indices)",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank r >= 1 (same rank as input).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Input and output types can be of any tensor type.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 1)) {
@@ -1753,7 +1970,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "output",
-            "Output tensor of the same dimension and type as tensor input. "
+            "Output tensor of the same dimensions and type as tensor input. "
             "output_dim[i] = input_dim[i] * repeats[i]",
             "T")
         .TypeConstraint(
@@ -1899,13 +2116,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
-            " be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified. If 'size' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
+            " be the same as the rank of input 'X'. If 'size' is needed, the user must set 'scales' to an empty tensor.",
             "tensor(float)")
         .Input(
             3,
             "sizes",
             "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
-            " rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.",
+            " rank of input 'X'. May only be set if 'scales' is set to an empty tensor.",
             "tensor(int64)",
             OpSchema::Optional)
         .Output(0, "Y", "N-D tensor after resizing", "T1")
@@ -1919,7 +2136,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain roi type to float or double.")
         .SetDoc(Resize_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx, true);
+          resizeShapeInference(ctx);
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2300,7 +2517,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types(),
-            "Constrains input and output to only numeric types.")
+            "Constrain input and output to only numeric types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2660,7 +2877,8 @@ It takes a tensor as input and an argument `shape`. It outputs the reshaped tens
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC";
+from the input tensor). Shape (second input) could be an empty shape, which means converting to a scalar.
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -2977,8 +3195,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               starts.size() != ends.size()) {
             fail_shape_inference(
                 "Incorrect or missing attribute value for starts and ends");
-            ;
           }
+
           std::vector<int64_t> axes;
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
             for (int i = 0; (size_t)i < starts.size(); ++i) {
@@ -2986,9 +3204,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           } else if (axes.size() != starts.size()) {
             fail_shape_inference("Attribute axes has incorrect length");
-            ;
           } else if (!std::is_sorted(axes.begin(), axes.end())) {
             // TODO support shape inference for unsorted axes
+            return;
+          }
+
+          auto is_negative = [](int64_t index) {
+            return index < 0;
+          };
+          if (std::any_of(starts.begin(), starts.end(), is_negative) ||
+              std::any_of(ends.begin(), ends.end(), is_negative) ||
+              std::any_of(axes.begin(), axes.end(), is_negative)) {
+            // Negative axes were not explicitly discussed in the spec before opset-10.
+            // Hence, they are officially not part of the spec, but some models/runtimes may use them.
+            // So we perform simple rank inference in this case.
+            for (size_t i = 0; (int64_t)i <
+                ctx.getInputType(0)->tensor_type().shape().dim_size();
+                ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 
@@ -3701,11 +3935,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             OpSchema::all_numeric_types(),
-            "Constrains input to only numeric types.")
+            "Constrain input to only numeric types.")
         .TypeConstraint(
             "T2",
             OpSchema::all_numeric_types(),
-            "Constrains input to only numeric types.")
+            "Constrain input to only numeric types.")
         .TypeConstraint(
             "T3",
             OpSchema::all_tensor_types(),
@@ -3825,7 +4059,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains to boolean tensors."));
+            "Constrain to boolean tensors."));
 
 static const char* Split_ver2_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified
@@ -4175,4 +4409,106 @@ ONNX_OPERATOR_SET_SCHEMA(
                  ->add_dim() = data_shape.dim(i);
           }
         }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Identity,
+    14,
+    OpSchema()
+        .SetDoc("Identity operator")
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "V",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor to copy input into.",
+            "V",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "V",
+            [](){
+              auto t = OpSchema::all_tensor_types_with_bfloat();
+              auto s = OpSchema::all_tensor_sequence_types();
+              t.insert(t.end(), s.begin(), s.end());
+              return t;
+            }(),
+            "Constrain input and output types to all tensor and sequence types.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Where_ver9_doc = R"DOC(
+Return elements, either from X or Y, depending on condition.
+Where behaves like
+[numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
+with three parameters.
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Where,
+    9,
+    OpSchema()
+        .SetDoc(Where_ver9_doc + GenerateBroadcastingDocMul())
+        .Input(
+            0,
+            "condition",
+            "When True (nonzero), yield X, otherwise yield Y",
+            "B",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "X",
+            "values selected at indices where condition is True",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "Y",
+            "values selected at indices where condition is False",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of shape equal to the broadcasted shape of condition, X, and Y.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("B", {"tensor(bool)"}, "Constrain to boolean tensors.")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 1, 0);
+          if (hasNInputShapes(ctx, 3)) {
+            std::vector<const TensorShapeProto*> shapes;
+            shapes.push_back(&ctx.getInputType(0)->tensor_type().shape());
+            shapes.push_back(&ctx.getInputType(1)->tensor_type().shape());
+            shapes.push_back(&ctx.getInputType(2)->tensor_type().shape());
+            multidirectionalBroadcastShapeInference(
+                shapes,
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE

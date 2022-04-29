@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class Mod(Base):
 
     @staticmethod
-    def export_mod_mixed_sign_float64():  # type: () -> None
+    def export_mod_mixed_sign_float64() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -30,7 +25,7 @@ class Mod(Base):
                name='test_mod_mixed_sign_float64')
 
     @staticmethod
-    def export_mod_mixed_sign_float32():  # type: () -> None
+    def export_mod_mixed_sign_float32() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -45,7 +40,7 @@ class Mod(Base):
                name='test_mod_mixed_sign_float32')
 
     @staticmethod
-    def export_mod_mixed_sign_float16():  # type: () -> None
+    def export_mod_mixed_sign_float16() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -60,7 +55,7 @@ class Mod(Base):
                name='test_mod_mixed_sign_float16')
 
     @staticmethod
-    def export_mod_mixed_sign_int64():  # type: () -> None
+    def export_mod_mixed_sign_int64() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -74,7 +69,7 @@ class Mod(Base):
                name='test_mod_mixed_sign_int64')
 
     @staticmethod
-    def export_mod_mixed_sign_int32():  # type: () -> None
+    def export_mod_mixed_sign_int32() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -88,7 +83,7 @@ class Mod(Base):
                name='test_mod_mixed_sign_int32')
 
     @staticmethod
-    def export_mod_mixed_sign_int16():  # type: () -> None
+    def export_mod_mixed_sign_int16() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -102,7 +97,7 @@ class Mod(Base):
                name='test_mod_mixed_sign_int16')
 
     @staticmethod
-    def export_mod_mixed_sign_int8():  # type: () -> None
+    def export_mod_mixed_sign_int8() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -116,7 +111,7 @@ class Mod(Base):
                name='test_mod_mixed_sign_int8')
 
     @staticmethod
-    def export_mod_uint8():  # type: () -> None
+    def export_mod_uint8() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -130,7 +125,7 @@ class Mod(Base):
                name='test_mod_uint8')
 
     @staticmethod
-    def export_mod_uint16():  # type: () -> None
+    def export_mod_uint16() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -144,7 +139,7 @@ class Mod(Base):
                name='test_mod_uint16')
 
     @staticmethod
-    def export_mod_uint32():  # type: () -> None
+    def export_mod_uint32() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -158,7 +153,7 @@ class Mod(Base):
                name='test_mod_uint32')
 
     @staticmethod
-    def export_mod_uint64():  # type: () -> None
+    def export_mod_uint64() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -172,7 +167,7 @@ class Mod(Base):
                name='test_mod_uint64')
 
     @staticmethod
-    def export_mod_int64_fmod():  # type: () -> None
+    def export_mod_int64_fmod() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],
@@ -187,7 +182,7 @@ class Mod(Base):
                name='test_mod_int64_fmod')
 
     @staticmethod
-    def export_mod_broadcast():  # type: () -> None
+    def export_mod_broadcast() -> None:
         node = onnx.helper.make_node(
             'Mod',
             inputs=['x', 'y'],

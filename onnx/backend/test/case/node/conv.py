@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -15,7 +10,7 @@ from . import expect
 class Conv(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
 
         x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 5, 5) input tensor
                         [5., 6., 7., 8., 9.],
@@ -59,7 +54,7 @@ class Conv(Base):
                name='test_basic_conv_without_padding')
 
     @staticmethod
-    def export_conv_with_strides():  # type: () -> None
+    def export_conv_with_strides() -> None:
 
         x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 7, 5) input tensor
                         [5., 6., 7., 8., 9.],
@@ -120,7 +115,7 @@ class Conv(Base):
                name='test_conv_with_strides_and_asymmetric_padding')
 
     @staticmethod
-    def export_conv_with_autopad_same():  # type: () -> None
+    def export_conv_with_autopad_same() -> None:
 
         x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 5, 5) input tensor
                         [5., 6., 7., 8., 9.],

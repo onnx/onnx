@@ -1,28 +1,24 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import sys
 
 import numpy as np  # type: ignore
 from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
-from six import text_type, binary_type
+from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 from typing import Sequence, Any, Optional, Text, List, Dict
 
 
-def combine_pairs_to_complex(fa):  # type: (Sequence[int]) -> Sequence[np.complex64]
+def combine_pairs_to_complex(fa: Sequence[int]) -> Sequence[np.complex64]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
+def to_array(tensor: TensorProto, base_dir: Text = "") -> np.ndarray:
     """Converts a tensor def object to a numpy array.
 
     Inputs:
         tensor: a TensorProto object.
+        base_dir: if external tensor exists, base_dir can help to find the path to it
     Returns:
         arr: the converted array.
     """
@@ -44,6 +40,10 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         ss = list(s.decode('utf-8') for s in utf8_strings)
         return np.asarray(ss).astype(np_dtype).reshape(dims)
 
+    # Load raw data from external tensor if it exists
+    if uses_external_data(tensor):
+        load_external_data_for_tensor(tensor, base_dir)
+
     if tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
         if sys.byteorder == 'big':
@@ -53,44 +53,44 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
     else:
-        data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
-        if (tensor_dtype == TensorProto.COMPLEX64
-                or tensor_dtype == TensorProto.COMPLEX128):
-            data = combine_pairs_to_complex(data)
-        # F16 is stored as int32; Need view to get the original value
-        if tensor_dtype == TensorProto.FLOAT16:
+        # float16/bfloat16 is stored as int32 (uint16 type); Need view to get the original value
+        if (tensor_dtype == TensorProto.FLOAT16
+                or tensor_dtype == TensorProto.BFLOAT16):
             return (
                 np.asarray(
                     tensor.int32_data,
                     dtype=np.uint16)
                 .reshape(dims)
                 .view(np.float16))
-        # Otherwise simply use astype to convert; e.g., int->float, float->float
-        else:
-            return (
-                np.asarray(
-                    data,
-                    dtype=storage_np_dtype)
-                .astype(np_dtype)
-                .reshape(dims)
-            )
+        data = getattr(tensor, storage_field)
+        if (tensor_dtype == TensorProto.COMPLEX64
+                or tensor_dtype == TensorProto.COMPLEX128):
+            data = combine_pairs_to_complex(data)
+
+        return (
+            np.asarray(
+                data,
+                dtype=storage_np_dtype)
+            .astype(np_dtype)
+            .reshape(dims)
+        )
 
 
-def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> TensorProto
+def from_array(arr: np.ndarray, name: Optional[Text] = None) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
     Inputs:
         arr: a numpy array.
         name: (optional) the name of the tensor.
     Returns:
-        tensor_def: the converted tensor def.
+        TensorProto: the converted tensor def.
     """
     tensor = TensorProto()
     tensor.dims.extend(arr.shape)
     if name:
         tensor.name = name
 
-    if arr.dtype == np.object:
+    if arr.dtype == object:
         # Special care for strings.
         tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
         # TODO: Introduce full string support.
@@ -99,16 +99,16 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         # object. If you want more complex shapes then follow the below instructions.
         # Unlike other types where the shape is automatically inferred from
         # nested arrays of values, the only reliable way now to feed strings
-        # is to put them into a flat array then specify type astype(np.object)
+        # is to put them into a flat array then specify type astype(object)
         # (otherwise all strings may have different types depending on their length)
         # and then specify shape .reshape([x, y, z])
         flat_array = arr.flatten()
         for e in flat_array:
-            if isinstance(e, text_type):
+            if isinstance(e, str):
                 tensor.string_data.append(e.encode('utf-8'))
             elif isinstance(e, np.ndarray):
                 for s in e:
-                    if isinstance(s, text_type):
+                    if isinstance(s, str):
                         tensor.string_data.append(s.encode('utf-8'))
                     elif isinstance(s, bytes):
                         tensor.string_data.append(s)
@@ -134,15 +134,15 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
     return tensor
 
 
-def to_list(sequence):  # type: (SequenceProto) -> List[Any]
+def to_list(sequence: SequenceProto) -> List[Any]:
     """Converts a sequence def to a Python list.
 
     Inputs:
         sequence: a SequenceProto object.
     Returns:
-        lst: the converted list.
+        list: the converted list.
     """
-    lst = []  # type: List[Any]
+    lst: List[Any] = []
     elem_type = sequence.elem_type
     value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
     values = getattr(sequence, value_field)
@@ -158,7 +158,7 @@ def to_list(sequence):  # type: (SequenceProto) -> List[Any]
     return lst
 
 
-def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text], Optional[int]) -> SequenceProto
+def from_list(lst: List[Any], name: Optional[Text] = None, dtype: Optional[int] = None) -> SequenceProto:
     """Converts a list into a sequence def.
 
     Inputs:
@@ -167,7 +167,7 @@ def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text], 
         dtype: (optional) type of element in the input list, used for specifying
                           sequence values when converting an empty list.
     Returns:
-        sequence: the converted sequence def.
+        SequenceProto: the converted sequence def.
     """
     sequence = SequenceProto()
     if name:
@@ -208,7 +208,7 @@ def from_list(lst, name=None, dtype=None):  # type: (List[Any], Optional[Text], 
     return sequence
 
 
-def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
+def to_dict(map: MapProto) -> Dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
     Inputs:
@@ -216,7 +216,7 @@ def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
     Returns:
         dict: the converted dictionary.
     """
-    key_list = []  # type: List[Any]
+    key_list: List[Any] = []
     if map.key_type == TensorProto.STRING:
         key_list = list(map.string_keys)
     else:
@@ -231,14 +231,14 @@ def to_dict(map):  # type: (MapProto) -> np.ndarray[Any]
     return dictionary
 
 
-def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> MapProto
+def from_dict(dict: Dict[Any, Any], name: Optional[Text] = None) -> MapProto:
     """Converts a Python dictionary into a map def.
 
     Inputs:
         dict: Python dictionary
         name: (optional) the name of the map.
     Returns:
-        map: the converted map def.
+        MapProto: the converted map def.
     """
     map = MapProto()
     if name:
@@ -272,7 +272,7 @@ def from_dict(dict, name=None):  # type: (Dict[Any, Any], Optional[Text]) -> Map
     return map
 
 
-def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
+def to_optional(optional: OptionalProto) -> Optional[Any]:
     """Converts an optional def to a Python optional.
 
     Inputs:
@@ -280,8 +280,10 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
     Returns:
         opt: the converted optional.
     """
-    opt = None  # type: Optional[Any]
+    opt: Optional[Any] = None
     elem_type = optional.elem_type
+    if elem_type == OptionalProto.UNDEFINED:
+        return opt
     value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
     value = getattr(optional, value_field)
     # TODO: create a map and replace conditional branches
@@ -291,16 +293,18 @@ def to_optional(optional):  # type: (OptionalProto) -> Optional[Any]
         opt = to_list(value)
     elif elem_type == OptionalProto.MAP:
         opt = to_dict(value)
+    elif elem_type == OptionalProto.OPTIONAL:
+        return to_optional(value)
     else:
         raise TypeError("The element type in the input optional is not supported.")
     return opt
 
 
 def from_optional(
-        opt,  # type: Optional[Any]
-        name=None,  # type: Optional[Text]
-        dtype=None  # type: Optional[int]
-):  # type: (...) -> OptionalProto
+        opt: Optional[Any],
+        name: Optional[Text] = None,
+        dtype: Optional[int] = None
+) -> OptionalProto:
     """Converts an optional value into a Optional def.
 
     Inputs:
@@ -326,6 +330,8 @@ def from_optional(
         elem_type = OptionalProto.MAP
     elif isinstance(opt, list):
         elem_type = OptionalProto.SEQUENCE
+    elif opt is None:
+        elem_type = OptionalProto.UNDEFINED
     else:
         elem_type = OptionalProto.TENSOR
 
@@ -344,11 +350,12 @@ def from_optional(
     return optional
 
 
-def convert_endian(tensor):  # type: (TensorProto) -> None
+def convert_endian(tensor: TensorProto) -> None:
     """
-    call to convert endianess of raw data in tensor.
-    @params
-    TensorProto: TensorProto to be converted.
+    Call to convert endianess of raw data in tensor.
+
+    Arguments:
+        tensor (TensorProto): TensorProto to be converted.
     """
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]

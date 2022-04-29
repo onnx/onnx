@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import unittest
 import onnx
 import numpy as np  # type: ignore
@@ -13,7 +8,7 @@ from onnx import helper, numpy_helper, shape_inference, TensorProto
 
 
 class TestTrainingTool(unittest.TestCase):
-    def test_training_info_proto(self):  # type: () -> None
+    def test_training_info_proto(self) -> None:
         # Inference graph.
         A_shape = [2, 2]
         A_name = 'A'

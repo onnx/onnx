@@ -12,7 +12,7 @@
 
 namespace ONNX_NAMESPACE {
 // The below is called by ops after opset 11, inclusively.
-void resizeShapeInference(InferenceContext& ctx, bool is_resize_op);
+void resizeShapeInference(InferenceContext& ctx);
 
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
