@@ -49,7 +49,7 @@ std::ostream& operator<<(std::ostream& os, const TypeProto_Sequence& seqType) {
 }
 
 std::ostream& operator<<(std::ostream& os, const TypeProto_Map& mapType) {
-  return os << "map(" << PrimitiveTypeNameMap::ToString(mapType.key_type()) ", " << seqType.value_type() << ")";
+  return os << "map(" << PrimitiveTypeNameMap::ToString(mapType.key_type()) << ", " << mapType.value_type() << ")";
 }
 
 std::ostream& operator<<(std::ostream& os, const TypeProto_Optional& optType) {
@@ -57,10 +57,10 @@ std::ostream& operator<<(std::ostream& os, const TypeProto_Optional& optType) {
 }
 
 std::ostream& operator<<(std::ostream& os, const TypeProto_SparseTensor sparseType) {
-  os << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(tensortype.elem_type());
-  if (tensortype.has_shape()) {
-    if (tensortype.shape().dim_size() > 0)
-      os << tensortype.shape();
+  os << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(sparseType.elem_type());
+  if (sparseType.has_shape()) {
+    if (sparseType.shape().dim_size() > 0)
+      os << sparseType.shape();
   } else
     os << "[...]";
 
