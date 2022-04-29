@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import sys
 
 import onnx.defs
@@ -17,11 +12,11 @@ from ..test_case import TestCase
 _SimpleModelTestCases = []
 
 
-def expect(model,  # type: ModelProto
-           inputs,  # type: Sequence[np.ndarray]
-           outputs,  # type: Sequence[np.ndarray]
-           name=None,  # type: Optional[Text]
-           ):  # type: (...) -> None
+def expect(model: ModelProto,
+           inputs: Sequence[np.ndarray],
+           outputs: Sequence[np.ndarray],
+           name: Optional[Text] = None,
+           ) -> None:
     name = name or model.graph.name
     _SimpleModelTestCases.append(
         TestCase(
@@ -42,7 +37,7 @@ BASE_URL = 'https://s3.amazonaws.com/download.onnx/models/opset_{}'.format(
     base_model_opset_version)
 
 
-def collect_testcases():  # type: () -> List[TestCase]
+def collect_testcases() -> List[TestCase]:
     '''Collect model test cases defined in python/numpy code and in model zoo.
     '''
 

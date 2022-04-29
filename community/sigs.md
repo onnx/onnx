@@ -2,7 +2,7 @@
 
 # SIGs - Special Interest Groups
 
-As described in the ONNX [governance](https://github.com/onnx/onnx/tree/master/community#sig---special-interest-groups), Special Interest Groups (SIGs) are persistent groups responsible for specific parts of the project. SIGs have open and transparent proceedings to develop goals and implement code contributions. SIGs are also responsible for ongoing maintenance of the code in their areas.
+As described in the ONNX [governance](/community/readme.md#sig---special-interest-groups), Special Interest Groups (SIGs) are persistent groups responsible for specific parts of the project. SIGs have open and transparent proceedings to develop goals and implement code contributions. SIGs are also responsible for ongoing maintenance of the code in their areas.
 
 ## Joining a SIG
 

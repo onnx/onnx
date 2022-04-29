@@ -1261,20 +1261,7 @@ void convTransposeShapeInference1(InferenceContext& ctx) {
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
-        int64_t residual = 0;
-        int64_t stride = strides[i];
-        if (stride > 1) {
-          if (!input_shape.dim(2 + i).has_dim_value()) {
-            continue;
-          }
-          residual = input_shape.dim(2 + i).dim_value();
-          while (residual >= stride) {
-            residual -= stride;
-          }
-        }
-        int64_t total_pad = residual == 0
-            ? effective_kernel_shape[i] - stride
-            : effective_kernel_shape[i] - residual;
+        int64_t total_pad = effective_kernel_shape[i] - strides[i];
         if (total_pad < 0)
           total_pad = 0;
         int64_t half_pad_small = total_pad >> 1;
@@ -1888,9 +1875,21 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
           propagateShapeFromInputToOutput(ctx, 0, 0);
 
+          // Inputs 1 to 4 must be of rank 1.
+          checkInputRank(ctx, 1, 1);
+          checkInputRank(ctx, 2, 1);
+          checkInputRank(ctx, 3, 1);
+          checkInputRank(ctx, 4, 1);
+          
           Dim num_channels;
 
-          unifyInputDim(ctx, 0, 1, num_channels);
+          if (hasInputShape(ctx, 0)) {
+            if (getInputShape(ctx, 0).dim_size() > 1)
+              unifyInputDim(ctx, 0, 1, num_channels);
+            else
+              unifyDim(num_channels, 1);
+          }
+
           unifyInputDim(ctx, 1, 0, num_channels);
           unifyInputDim(ctx, 2, 0, num_channels);
           unifyInputDim(ctx, 3, 0, num_channels);

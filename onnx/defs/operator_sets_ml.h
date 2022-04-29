@@ -79,9 +79,21 @@ class OpSet_OnnxML_ver2 {
   }
 };
 
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 3, TreeEnsembleClassifier);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 3, TreeEnsembleRegressor);
+
+class OpSet_OnnxML_ver3 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 3, TreeEnsembleClassifier)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 3, TreeEnsembleRegressor)>());
+  }
+};
+
 inline void RegisterOnnxMLOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_OnnxML_ver1>();
   RegisterOpSetSchema<OpSet_OnnxML_ver2>();
+  RegisterOpSetSchema<OpSet_OnnxML_ver3>();
 }
 } // namespace ONNX_NAMESPACE
 

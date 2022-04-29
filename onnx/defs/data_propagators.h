@@ -7,11 +7,7 @@
 namespace ONNX_NAMESPACE {
 
 inline void appendDimToTensorShapeProto(TensorShapeProto& tsp, const TensorShapeProto_Dimension& dim) {
-  if (dim.has_dim_value()) {
-    tsp.mutable_dim()->Add()->set_dim_value(dim.dim_value());
-  } else if (dim.has_dim_param()) {
-    tsp.mutable_dim()->Add()->set_dim_param(dim.dim_param());
-  }
+  *tsp.add_dim() = dim;
 }
 
 // Returns true if the given axis attribute is 0

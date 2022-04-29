@@ -1,12 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from onnx import TensorProto, SequenceProto, OptionalProto
-from typing import Text, Any
 import numpy as np  # type: ignore
 
 TENSOR_TYPE_TO_NP_TYPE = {
@@ -19,15 +13,18 @@ TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.INT64): np.dtype('int64'),
     int(TensorProto.BOOL): np.dtype('bool'),
     int(TensorProto.FLOAT16): np.dtype('float16'),
+    int(TensorProto.BFLOAT16): np.dtype('float16'),  # native numpy does not support bfloat16
     int(TensorProto.DOUBLE): np.dtype('float64'),
     int(TensorProto.COMPLEX64): np.dtype('complex64'),
     int(TensorProto.COMPLEX128): np.dtype('complex128'),
     int(TensorProto.UINT32): np.dtype('uint32'),
     int(TensorProto.UINT64): np.dtype('uint64'),
-    int(TensorProto.STRING): np.dtype(np.object)
+    int(TensorProto.STRING): np.dtype('object')
 }
 
-NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items()}
+# Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
+# Numpy float16 array is only reversed to TensorProto.FLOAT16
+NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16}
 
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.FLOAT): int(TensorProto.FLOAT),

@@ -9,6 +9,15 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
+static std::vector<std::string> control_flow_types() {
+  auto t = OpSchema::all_tensor_types_with_bfloat();
+  auto s = OpSchema::all_tensor_sequence_types_with_bfloat();
+  auto o = OpSchema::all_optional_types_with_bfloat();
+  t.insert(t.end(), s.begin(), s.end());
+  t.insert(t.end(), o.begin(), o.end());
+  return t;
+}
+
 int handle_negative_axis_validate(
     const std::string& attrib,
     int axis,
@@ -250,6 +259,22 @@ void IfInferenceFunction(InferenceContext& ctx) {
   }
 }
 
+void ClearShape(TypeProto& input_type) {
+  if (input_type.has_tensor_type()) {
+    input_type.mutable_tensor_type()->clear_shape();
+  } else if (input_type.has_sequence_type()) {
+    auto& seq_type = *input_type.mutable_sequence_type();
+    if (seq_type.has_elem_type()) {
+      ClearShape(*(seq_type.mutable_elem_type()));
+    }
+  } else if (input_type.has_optional_type()) {
+    auto& opt_type = *input_type.mutable_optional_type();
+    if (opt_type.has_elem_type()) {
+      ClearShape(*(opt_type.mutable_elem_type()));
+    }
+  }
+}
+
 void LoopInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   assert(num_inputs >= 2);
@@ -282,15 +307,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
     temporary_type_protos.push_back(*ctx.getInputType(i));
     auto& input_type = temporary_type_protos.back();
 
-    if (input_type.has_tensor_type()) {
-      input_type.mutable_tensor_type()->clear_shape();
-    } else if (input_type.has_sequence_type()) {
-      auto& seq_type = *input_type.mutable_sequence_type();
-      if (seq_type.has_elem_type() && seq_type.elem_type().has_tensor_type()) {
-        seq_type.mutable_elem_type()->mutable_tensor_type()->clear_shape();
-      }
-    }
-
+    ClearShape(input_type);
     subgraph_input_types.push_back(&input_type);
   }
 
@@ -330,9 +347,9 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
       const bool is_loop_state_var = i < num_loop_state_vars;
 
-      if (!subgraph_output_type->has_tensor_type() && !subgraph_output_type->has_sequence_type()) {
+      if (!subgraph_output_type->has_tensor_type() && !subgraph_output_type->has_sequence_type() && !subgraph_output_type->has_optional_type()) {
         fail_type_inference(
-            "Loop 'body' subgraph outputs should all be tensors or sequences but output ",
+            "Loop 'body' subgraph outputs should all be tensors or sequences or optionals, but output ",
             i,
             " was ",
             subgraph_output_type->value_case());
@@ -384,7 +401,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
 ONNX_OPERATOR_SET_SCHEMA(
     If,
-    13,
+    16,
     OpSchema()
         .SetDoc("If conditional")
         .Input(0, "cond", "Condition for the if", "B")
@@ -424,17 +441,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint(
             "V",
-            [](){
-              auto t = OpSchema::all_tensor_types();
-              auto s = OpSchema::all_tensor_sequence_types();
-              t.insert(t.end(), s.begin(), s.end());
-              return t;
-            }(),
-            "All Tensor and Sequence types")
+            control_flow_types(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* Loop_ver13_doc = R"DOC(
+static const char* Loop_ver16_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -574,9 +586,9 @@ The input/output of subgraph (produced by loop node) matching is based on order 
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
-    13,
+    16,
     OpSchema()
-        .SetDoc(Loop_ver13_doc)
+        .SetDoc(Loop_ver16_doc)
         .Input(
             0,
             "M",
@@ -619,13 +631,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint(
             "V",
-            [](){
-              auto t = OpSchema::all_tensor_types();
-              auto s = OpSchema::all_tensor_sequence_types();
-              t.insert(t.end(), s.begin(), s.end());
-              return t;
-            }(),
-            "All Tensor and Sequence types")
+            control_flow_types(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types")
         .TypeConstraint(
             "I",
             {"tensor(int64)"},
@@ -636,10 +643,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* scan_11_doc = R"DOC(
+static const char* scan_16_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-functional programming constructs such as scan, fold, map, and zip and is intended to enable
+functional programming constructs such as scan, fold, map, and zip, and is intended to enable
 generalizations of RNN-like constructs for sequence-to-sequence processing.
 Other tensors (referred to as state_variables here) can be used to carry a state
 when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -762,9 +769,9 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
-    11,
+    16,
     OpSchema()
-        .SetDoc(scan_11_doc)
+        .SetDoc(scan_16_doc)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -829,8 +836,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "range is [-r, r-1].",
             AttributeProto::INTS,
             false)
-        .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+        .TypeConstraint("V", OpSchema::all_tensor_types_with_bfloat(), "All Tensor types")
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 } // namespace ONNX_NAMESPACE
