@@ -684,9 +684,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
           }
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
+          if (!hasInputShape(ctx, 0)) return;
 
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
@@ -717,20 +715,23 @@ ONNX_OPERATOR_SET_SCHEMA(
           int split_dim_value = static_cast<int>(split_dim.dim_value());
 
           TensorShapeProto splitProto;
-          size_t num_inputs = ctx.getNumInputs();
-          if ((num_inputs == 2) && ctx.getInputType(1)) { //'split' is input
-            if (!ctx.getInputData(1)) {
-              // Use symbolic input if initializer is not available
-              const TensorShapeProto* splitInput = ctx.getSymbolicInput(1);
-              if (!splitInput) return;
-              splitProto.CopyFrom(*splitInput);
-            } else {
-              std::vector<int64_t> split_vec = ParseData<int64_t>(ctx.getInputData(1));
-              int64_t total_dim = 0;
-              for (int64_t d : split_vec) {
-                splitProto.add_dim()->set_dim_value(d);
-                total_dim += d;
+          bool split_input_found = false;
+          if (ctx.getNumInputs() == 2) { //'split' is input
+            splitProto = getShapeInput(ctx, 1, split_input_found);
+          }
+          if (split_input_found) {
+            // If dim_value is available for all dims in splitProto, check the
+            // sum matches split_dim_value.
+            int total_dim = 0;
+            for (int i = 0; i < splitProto.dim_size(); i++) {
+              if (splitProto.dim(i).has_dim_value()) {
+                total_dim += splitProto.dim(i).dim_value();
+              } else {
+                total_dim = -1;
+                break;
               }
+            }
+            if (total_dim != -1) {
               if (total_dim != split_dim_value) {
                 fail_shape_inference(
                     "Mismatch between the sum of 'split' (",
@@ -749,6 +750,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ")");
             }
           } else { // no value available for 'split'
+            splitProto.Clear();
             int num_outputs = static_cast<int>(ctx.getNumOutputs());
             if (split_dim_value % num_outputs != 0) {
               fail_shape_inference("The input is not evenly splittable");
