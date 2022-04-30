@@ -85,20 +85,22 @@ std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
   os << PrimitiveTypeNameMap::ToString(tensor.data_type());
   print(os, "[", ",", "]", tensor.dims());
 
-  // TODO: does not yet handle name of tensor.
+  if (! tensor.name().empty()) {
+    os << " " << tensor.name() << " ";
+  }
   if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
       case TensorProto::DataType::TensorProto_DataType_INT32:
-        print(os, "[", ",", "]", ParseData<int32_t>(&tensor));
+        print(os, " {", ",", "}", ParseData<int32_t>(&tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
-        print(os, "[", ",", "]", ParseData<int64_t>(&tensor));
+        print(os, " {", ",", "}", ParseData<int64_t>(&tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_FLOAT:
-        print(os, "[", ",", "]", ParseData<float>(&tensor));
+        print(os, " {", ",", "}", ParseData<float>(&tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-        print(os, "[", ",", "]", ParseData<double>(&tensor));
+        print(os, " {", ",", "}", ParseData<double>(&tensor));
         break;
       default:
         os << "..."; // ParseData not instantiated for other types.
@@ -156,7 +158,7 @@ std::ostream& operator<<(std::ostream& os, const ValueInfoList& vilist) {
 std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
   // Special case of attr-ref:
   if (attr.has_ref_attr_name()) {
-    os << attr.name() << " : " << AttributeTypeNameMap::ToString(attr.type()) << " = " << attr.ref_attr_name();
+    os << attr.name() << " : " << AttributeTypeNameMap::ToString(attr.type()) << " = @" << attr.ref_attr_name();
     return os;
   }
   // General case:
@@ -188,6 +190,15 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
     }
     case AttributeProto_AttributeType_GRAPH:
       os << attr.g();
+      break;
+    case AttributeProto_AttributeType_GRAPHS:
+      print(os, "[", ", ", "]", attr.graphs());
+      break;
+    case AttributeProto_AttributeType_TENSOR:
+      os << attr.t();
+      break;
+    case AttributeProto_AttributeType_TENSORS:
+      print(os, "[", ", ", "]", attr.tensors());
       break;
     default:
       break;
