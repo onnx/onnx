@@ -622,7 +622,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return;
             }
             for (int j = 0; j < input_data->dim_size(); ++j) {
-              appendDimToTensorShapeProto(tsp, input_data->dim(j));
+              *tsp.add_dim() = input_data->dim(j);
             }
           }
           if (tsp.dim_size() > 0) {
@@ -1112,11 +1112,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto tsp;
             if (step > 0) {
               for (int i = start; i < end; i += step) {
-                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+                *tsp.add_dim() = input_data->dim(i);
               }
             } else {
               for (int i = start; i > end; i += step) {
-                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+                *tsp.add_dim() = input_data->dim(i);
               }
             }
             if (tsp.dim_size() > 0) {

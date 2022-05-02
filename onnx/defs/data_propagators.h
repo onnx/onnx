@@ -6,8 +6,12 @@
 
 namespace ONNX_NAMESPACE {
 
-inline void appendDimToTensorShapeProto(TensorShapeProto& tsp, const TensorShapeProto_Dimension& dim) {
-  *tsp.add_dim() = dim;
+inline void appendDimToTensorShapeProto(TensorShapeProto& tsp, const TensorShapeProto* input_data, int index) {
+  if (index >= input_data->dim_size() || index < -input_data->dim_size()) {
+    fail_shape_inference("indices must be in [-rank, rank-1].");
+  } else { 
+    *tsp.add_dim() = input_data->dim((index < 0)? input_data->dim_size() + index : index);
+  }
 }
 
 // Returns true if the given axis attribute is 0
@@ -54,6 +58,9 @@ inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
     return;
   }
   const auto input_data = ctx.getInputData(0);
+  if (input_data == nullptr) {
+    return;
+  }
   const auto input_indices = ctx.getInputData(1);
   if (input_data == nullptr || input_indices == nullptr) {
     return;
@@ -61,11 +68,10 @@ inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
   TensorShapeProto tsp;
   for (int i = 0; i < input_indices->dim_size(); ++i) {
     if (input_indices->dim(i).has_dim_value()) {
-      int index = input_indices->dim(i).dim_value();
-      appendDimToTensorShapeProto(tsp,
-        input_data->dim((index < 0)? input_data->dim_size() + index : index));
+      appendDimToTensorShapeProto(tsp, input_data, input_indices->dim(i).dim_value());
     } else {
-      return;
+      tsp.add_dim();
+      //return;
     }
   }
   if (tsp.dim_size() > 0) {

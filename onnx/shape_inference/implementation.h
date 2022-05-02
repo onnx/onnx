@@ -460,9 +460,9 @@ void InferShapes(
     const ShapeInferenceOptions& options = {}
     );
 
-void InferShapesAndDataPropagation(
+std::unordered_map<std::string, TensorShapeProto> InferShapesAndDataPropagation(
     ModelProto& m,
-    std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
+    const std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name = {},
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const ShapeInferenceOptions& options = {}
     );

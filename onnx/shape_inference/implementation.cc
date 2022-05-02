@@ -563,6 +563,10 @@ class ShapeInferenceImplBase {
             ir_version,
             model_local_functions_map} {}
 
+  std::unordered_map<std::string, TensorShapeProto> getGeneratedShapeData() {
+    return generated_shape_data_by_name;
+  }
+
  private:
   GraphProto& g;
   std::unordered_map<std::string, TypeProto*> value_types_by_name;
@@ -595,7 +599,6 @@ static void InferShapesImpl(
     const ShapeInferenceOptions& options,
     SymbolTable* symbol_table,
     const ModelLocalFunctionsMap& model_local_functions_map,
-    std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
 ) {
@@ -606,7 +609,7 @@ static void InferShapesImpl(
       options,
       symbol_table,
       model_local_functions_map,
-      generated_shape_data_by_name,
+      {},
       schema_registry,
       ir_version);
   base.process(*g);
@@ -620,7 +623,6 @@ void InferShapes(
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions) {
   SymbolTableImpl symbol_table;
   TraverseGraphsToAddExistingSymbols(*g, symbol_table);
-  std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
@@ -628,7 +630,6 @@ void InferShapes(
       options,
       &symbol_table,
       model_local_functions,
-      generated_shape_data_by_name,
       schema_registry);
 }
 
@@ -655,7 +656,6 @@ void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry, const Sh
       options,
       &symbol_table,
       model_local_functions_by_id,
-      generated_shape_data_by_name,
       schema_registry,
       m.ir_version());
 }
@@ -689,9 +689,9 @@ void InferShapes(
   }
 }
 
-void InferShapesAndDataPropagation(
+std::unordered_map<std::string, TensorShapeProto> InferShapesAndDataPropagation(
     ModelProto& m,
-    std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
+    const std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options) {
   std::unordered_map<std::string, int> opset_imports;
@@ -709,7 +709,7 @@ void InferShapesAndDataPropagation(
   // Force data propagation
   ShapeInferenceOptions options_with_data_prop{options.check_type, options.error_mode, true};
 
-  InferShapesImpl(
+  ShapeInferenceImplBase base(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
@@ -719,6 +719,8 @@ void InferShapesAndDataPropagation(
       generated_shape_data_by_name,
       schema_registry,
       m.ir_version());
+  base.process(*g);
+  return base.getGeneratedShapeData();
 }
 
 // Infer shape for functions.
@@ -836,7 +838,6 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // updating initializers that match subgraph inputs.
   (void)input_data;
   ShapeInferenceOptions options {};
-  std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
 
   InferShapesImpl(
       g_,
@@ -845,7 +846,6 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       options,
       symbol_table,
       context_->model_local_functions,
-      generated_shape_data_by_name,
       context_->schema_registry);
 
   std::vector<const TypeProto*> graph_output_types;
