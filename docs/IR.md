@@ -171,6 +171,41 @@ The ‘status’ property indicates whether the syntax, semantics, or presence o
 
 There are two distinct ways to pass information to operators – inputs and attributes. Inputs represent graph inputs or values computed elsewhere in the graph, while attributes are used for values that are constants in the graph. This distinction may be highly relevant to achieving good performance for some implementations, while completely irrelevant to others.
 
+### Functions
+
+A _function_ may be thought of an operator combined with an implementation of the operator using
+other, more primitive, ops, referrred to as the _function body_. The function body consists of a
+topologically sorted list of nodes that form a graph. Thus, a function combines aspects of both
+an operator as well a graph (described below).
+
+Each function contained in a Model (also referred to as a model-local function) serves
+as a default or fallback implementation of the corresponding operator. A runtime, however,
+may choose to use an alternative implementation of the operator (usually as an optimized kernel).
+As such, the unique name of a function is significant as it is implicitly associated with a
+semantic specification.
+
+A serialized function (a _FunctionProto_) has the following properties:
+
+|Name|Type|Description|
+|---|---|---|
+name|string|The name of the function
+domain|string|The domain to which this function belongs
+doc_string|string|Human-readable documentation for this function. Markdown is allowed.
+attribute|string[]|The attribute parameters of the function
+input|string[]|The input parameters of the function
+output|string[]|The output parameters of the function.
+node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
+|opset_import|OperatorSetId|A collection of operator set identifiers used by the function implementation.
+
+The name and domain serve to identify the operator uniquely. An opset version is not explicitly
+identified in a FunctionProto, but it is implicitly determined by the opset version of the domain
+included in the model.
+
+The input, output, and attribute constitute the signature part of the operator. No type information
+is explicitly incuded in the signature.
+
+The opset_import and node fields describe the implementation of the function.
+
 ### Graphs
 
 A graph is used to describe a side-effect-free computation (function).
