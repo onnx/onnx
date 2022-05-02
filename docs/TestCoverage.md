@@ -10879,7 +10879,7 @@ for test_name, shape in test_cases.items():
 
 
 ### Resize
-There are 27 test cases, listed as following:
+There are 37 test cases, listed as following:
 <details>
 <summary>resize_downsample_scales_cubic</summary>
 
@@ -11265,12 +11265,77 @@ data = np.array([[[
 
 sizes = np.array([1, 1, 1, 3], dtype=np.int64)
 
-# [[[[1. 3.]]]]
+# [[[[1. 2. 4.]]]]
 output = interpolate_nd(
     data, lambda x, _: nearest_coeffs(x), output_size=sizes).astype(np.float32)
 
 expect(node, inputs=[data, sizes], outputs=[output],
        name='test_resize_downsample_sizes_nearest')
+```
+
+</details>
+<details>
+<summary>resize_downsample_sizes_nearest_not_larger</summary>
+
+```python
+keep_aspect_ratio_policy = 'not_larger'
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+sizes = np.array([1, 3], dtype=np.int64)  # Results in 1x2
+
+# [[[[1. 3.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_nearest_not_larger')
+```
+
+</details>
+<details>
+<summary>resize_downsample_sizes_nearest_not_smaller</summary>
+
+```python
+keep_aspect_ratio_policy = 'not_smaller'
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+sizes = np.array([1, 3], dtype=np.int64)  # Results in 2x3
+
+# [[[[1. 2. 4.]
+#    [5. 6. 8.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_nearest_not_smaller')
 ```
 
 </details>
@@ -11305,6 +11370,76 @@ output = interpolate_nd(data, lambda x, _: linear_coeffs(x), output_size=sizes, 
 
 expect(node, inputs=[data, roi, sizes], outputs=[output],
        name='test_resize_tf_crop_and_resize')
+```
+
+</details>
+<details>
+<summary>resize_tf_crop_and_resize_axes_2_3</summary>
+
+```python
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', '', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='tf_crop_and_resize'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+# Note: for some rois, the result may be different with that of TF for inaccurate floating point
+roi = np.array([0.4, 0.6, 0.6, 0.8], dtype=np.float32)
+sizes = np.array([3, 3], dtype=np.int64)
+
+# [[[[ 7.6000004  7.9        8.2      ]
+#    [ 8.8        9.1        9.400001 ]
+#    [10.        10.3       10.6      ]]]]
+output = interpolate_nd(data, lambda x, _: linear_coeffs(x), output_size=sizes, roi=roi, axes=axes,
+                        coordinate_transformation_mode='tf_crop_and_resize').astype(np.float32)
+
+expect(node, inputs=[data, roi, sizes], outputs=[output],
+       name='test_resize_tf_crop_and_resize_axes_2_3')
+```
+
+</details>
+<details>
+<summary>resize_tf_crop_and_resize_axes_3_2</summary>
+
+```python
+axes = [3, 2]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', '', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='tf_crop_and_resize'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+# Note: for some rois, the result may be different with that of TF for inaccurate floating point
+roi = np.array([0.6, 0.4, 0.8, 0.6], dtype=np.float32)
+sizes = np.array([3, 3], dtype=np.int64)
+
+# [[[[ 7.6000004  7.9        8.2      ]
+#    [ 8.8        9.1        9.400001 ]
+#    [10.        10.3       10.6      ]]]]
+output = interpolate_nd(data, lambda x, _: linear_coeffs(x), output_size=sizes, roi=roi, axes=axes,
+                        coordinate_transformation_mode='tf_crop_and_resize').astype(np.float32)
+
+expect(node, inputs=[data, roi, sizes], outputs=[output],
+       name='test_resize_tf_crop_and_resize_axes_3_2')
 ```
 
 </details>
@@ -11615,6 +11750,70 @@ expect(node, inputs=[data, scales], outputs=[output],
 
 </details>
 <details>
+<summary>resize_upsample_scales_nearest_axes_2_3</summary>
+
+```python
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([2.0, 3.0], dtype=np.float32)
+
+# [[[[1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 2. 2. 2.]
+#    [3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), scale_factors=scales, axes=axes).astype(np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_upsample_scales_nearest_axes_2_3')
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_nearest_axes_3_2</summary>
+
+```python
+axes = [3, 2]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([3.0, 2.0], dtype=np.float32)
+
+# [[[[1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 2. 2. 2.]
+#    [3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), scale_factors=scales, axes=axes).astype(np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_upsample_scales_nearest_axes_3_2')
+```
+
+</details>
+<details>
 <summary>resize_upsample_sizes_cubic</summary>
 
 ```python
@@ -11694,6 +11893,76 @@ expect(node, inputs=[data, sizes], outputs=[output],
 
 </details>
 <details>
+<summary>resize_upsample_sizes_nearest_axes_2_3</summary>
+
+```python
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+sizes = np.array([7, 8], dtype=np.int64)
+
+# [[[[1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_axes_2_3')
+```
+
+</details>
+<details>
+<summary>resize_upsample_sizes_nearest_axes_3_2</summary>
+
+```python
+axes = [3, 2]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+sizes = np.array([8, 7], dtype=np.int64)
+
+# [[[[1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_axes_3_2')
+```
+
+</details>
+<details>
 <summary>resize_upsample_sizes_nearest_ceil_half_pixel</summary>
 
 ```python
@@ -11766,6 +12035,82 @@ output = interpolate_nd(
 
 expect(node, inputs=[data, sizes], outputs=[output],
        name='test_resize_upsample_sizes_nearest_floor_align_corners')
+```
+
+</details>
+<details>
+<summary>resize_upsample_sizes_nearest_not_larger</summary>
+
+```python
+keep_aspect_ratio_policy = 'not_larger'
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+sizes = np.array([7, 8], dtype=np.int64)  # Results in 7x7
+
+# [[[[1. 1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_not_larger')
+```
+
+</details>
+<details>
+<summary>resize_upsample_sizes_nearest_not_smaller</summary>
+
+```python
+keep_aspect_ratio_policy = 'not_smaller'
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+sizes = np.array([7, 8], dtype=np.int64)  # Results in 8x8
+
+# [[[[1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_not_larger')
 ```
 
 </details>

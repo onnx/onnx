@@ -416,6 +416,54 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (3, 5, 6, 7))])
 
+    def test_resize_size_axes_2_3(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], axes=(2, 3))],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 7))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 6, 7))])
+
+    def test_resize_size_axes_3_2(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], axes=(3, 2))],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 7))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 7, 6))])
+
+    def test_resize_size_axes_2_3_not_larger(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], axes=(2, 3), keep_aspect_ratio_policy='not_larger')],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 6))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 4, 6))])
+
+    def test_resize_size_axes_2_3_not_smaller(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], axes=(2, 3), keep_aspect_ratio_policy='not_smaller')],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 6))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 6, 10))])
+
     def test_resize_scale(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
@@ -424,6 +472,30 @@ class TestShapeInference(unittest.TestCase):
             [make_node("Resize", ['x', 'roi', 'scales'], ['y'])],
             [],
             initializer=[make_tensor('scales', TensorProto.FLOAT, (4,), (1.0, 1.1, 1.3, 1.9))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
+
+    def test_resize_scale_axes_2_3(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (8,)),
+             ('scales', TensorProto.FLOAT, (2,))],
+            [make_node("Resize", ['x', 'roi', 'scales'], ['y'], axes=(2, 3))],
+            [],
+            initializer=[make_tensor('scales', TensorProto.FLOAT, (2,), (1.3, 1.9))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
+
+    def test_resize_scale_axes_3_2(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (8,)),
+             ('scales', TensorProto.FLOAT, (4,))],
+            [make_node("Resize", ['x', 'roi', 'scales'], ['y'], axes=(3, 2))],
+            [],
+            initializer=[make_tensor('scales', TensorProto.FLOAT, (2,), (1.9, 1.3))])
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
