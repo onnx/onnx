@@ -740,8 +740,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(15), OpSetID(16)));
       registerAdapter(make_unique<CompatibleAdapter>("PRelu",
         OpSetID(15), OpSetID(16)));
+
+      /******** 16 -> 17 ********/
       registerAdapter(make_unique<CompatibleAdapter>("Resize",
-        OpSetID(15), OpSetID(17)));
+        OpSetID(16), OpSetID(17)));
     }
 
     ModelProto convert_version(
