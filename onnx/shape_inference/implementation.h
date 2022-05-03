@@ -459,7 +459,10 @@ void InferShapes(
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const ShapeInferenceOptions& options = {}
     );
-
+///
+/// Forces shape inference to run with data propagation and returns data propagation result
+/// Previous data propagation result can be provided
+/// 
 std::unordered_map<std::string, TensorShapeProto> InferShapesAndDataPropagation(
     ModelProto& m,
     const std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name = {},

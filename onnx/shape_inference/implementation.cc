@@ -648,7 +648,6 @@ void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry, const Sh
   auto* g = m.mutable_graph();
   SymbolTableImpl symbol_table;
   TraverseGraphsToAddExistingSymbols(*g, symbol_table);
-  std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
@@ -838,7 +837,6 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // updating initializers that match subgraph inputs.
   (void)input_data;
   ShapeInferenceOptions options {};
-
   InferShapesImpl(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
