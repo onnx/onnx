@@ -29,11 +29,13 @@ void KeepAspectRatioHelper(
     return;
   }
   float scale = policy == KeepAspectRatioPolicy::NOT_LARGER ?
-    std::numeric_limits<float>::max() :
-    std::numeric_limits<float>::min();
-  auto reduce_f = policy == KeepAspectRatioPolicy::NOT_LARGER ?
-    [] (float a, float b) { return std::min(a, b); } :
-    [] (float a, float b) { return std::max(a, b); };
+    std::numeric_limits<float>::max() : std::numeric_limits<float>::min();
+  std::function<float(float, float)> reduce_f;
+  if (policy == KeepAspectRatioPolicy::NOT_LARGER) {
+    reduce_f = [] (float a, float b) { return std::min(a, b); };
+  } else {
+    reduce_f = [] (float a, float b) { return std::max(a, b); };
+  }
 
   for (size_t i = 0; i < sizes_data.size(); i++) {
     int d = axes.empty() ? i : axes[i];
