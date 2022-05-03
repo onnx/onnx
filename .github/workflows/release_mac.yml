@@ -6,8 +6,16 @@ on:
     - cron:  '00 00 * * MON'
   push:
     branches: [main, rel-*]
+    # IMPORTANT:
+    # Following code change is for onnx-function-experiment only.
+    # DOT NOT merge this code to the main branch.
+    branches: [function-experiment, *]
   pull_request:
     branches: [main, rel-*]
+    # IMPORTANT:
+    # Following code change is for onnx-function-experiment only.
+    # DOT NOT merge this code to the main branch.
+    branches: [function-experiment, *]
   workflow_dispatch:
 
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
