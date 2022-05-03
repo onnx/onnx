@@ -24,6 +24,10 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, "onnx")
 TP_DIR = os.path.join(TOP_DIR, "third_party")
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, ".setuptools-cmake-build")
+
+# IMPORTANT:
+# Following code change is for onnx-function-experiment only.
+# DOT NOT merge this code to the main branch.
 PACKAGE_NAME = "onnx-function-experiment"
 
 WINDOWS = (os.name == "nt")
@@ -63,10 +67,12 @@ except (OSError, subprocess.CalledProcessError):
     git_version = None
 
 with open(os.path.join(TOP_DIR, "VERSION_NUMBER")) as version_file:
-    VERSION_NUMBER = version_file.read().strip()
+    # IMPORTANT:
+    # Following code change is for onnx-function-experiment only.
+    # DOT NOT merge this code to the main branch.
+    today_number = date.today().strftime("%Y%m%d")
+    VERSION_NUMBER = version_file.read().strip() +".dev" + today_number
     if "--weekly_build" in sys.argv:
-        today_number = date.today().strftime("%Y%m%d")
-        VERSION_NUMBER += ".dev" + today_number
         PACKAGE_NAME = "onnx-weekly"
         sys.argv.remove("--weekly_build")
     VersionInfo = namedtuple("VersionInfo", ["version", "git_version"])(
