@@ -35,10 +35,6 @@ export ONNX_ML=1
 export CMAKE_ARGS="-DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python${python_include[$PY_VERSION]}"
 
 # Install Python dependency
-if [ "$PLAT" == "manylinux2014_i686" ]; then
-    # cryptography 2.6.1 is the last version support i686
-    $PIP_INSTALL_COMMAND cryptography==2.6.1
-fi
 $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 
 # Build wheels
