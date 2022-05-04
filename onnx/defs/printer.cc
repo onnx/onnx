@@ -88,6 +88,7 @@ std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
   if (! tensor.name().empty()) {
     os << " " << tensor.name() << " ";
   }
+  // TODO: does not yet handle all types or externally stored data.
   if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
       case TensorProto::DataType::TensorProto_DataType_INT32:
