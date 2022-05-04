@@ -110,6 +110,9 @@ TEST(ParserTest, AttributeTest) {
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS);
   EXPECT_EQ(attr.floats_size(), 2);
 
+  Parse(attr, "x = float[3] {2.1, 4.1, 6.1}");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_TENSOR);
+
   Parse(attr, "x = \"astring\"");
   EXPECT_EQ(attr.name(), "x");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
