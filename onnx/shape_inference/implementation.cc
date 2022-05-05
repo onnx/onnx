@@ -599,6 +599,7 @@ static void InferShapesImpl(
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const int ir_version = IR_VERSION // default the latest one
 ) {
+  std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
   ShapeInferenceImplBase base(
       g,
       outer_scope_value_types_by_name,
@@ -606,7 +607,7 @@ static void InferShapesImpl(
       options,
       symbol_table,
       model_local_functions_map,
-      std::unordered_map<std::string, TensorShapeProto>(0),
+      generated_shape_data_by_name,
       schema_registry,
       ir_version);
   base.process(*g);
@@ -618,12 +619,13 @@ void InferShapes(
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options,
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions) {
+  SymbolTableImpl symbol_table;
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
       options,
-      &SymbolTableImpl(),
+      &symbol_table,
       model_local_functions,
       schema_registry);
 }
@@ -648,12 +650,13 @@ ModelLocalFunctionsMap GetModelLocalFunctionsMapFromModel(const ModelProto& mode
 }
 
 void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry, const ShapeInferenceOptions& options) {
+  SymbolTableImpl symbol_table;
   InferShapesImpl(
       m.mutable_graph(),
       std::unordered_map<std::string, TypeProto*>(0),
       GetOpsetImportsFromProto(m),
       options,
-      &SymbolTableImpl(),
+      &symbol_table,
       GetModelLocalFunctionsMapFromModel(m),
       schema_registry,
       m.ir_version());
@@ -696,12 +699,13 @@ void InferShapesAndDataPropagation(
   // Force data propagation
   ShapeInferenceOptions options_with_data_prop{options.check_type, options.error_mode, true};
   auto* g = m.mutable_graph();
+  SymbolTableImpl symbol_table;
   ShapeInferenceImplBase base(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       GetOpsetImportsFromProto(m),
       options_with_data_prop,
-      &SymbolTableImpl(),
+      &symbol_table,
       GetModelLocalFunctionsMapFromModel(m),
       generated_shape_data_by_name,
       schema_registry,
