@@ -41,6 +41,7 @@ TEST(ParserTest, TypeTest) {
   Parse(type, "float[N]");
   EXPECT_TRUE(type.has_tensor_type());
   int float_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_FLOAT);
+  int int32_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_INT32);
   EXPECT_EQ(type.tensor_type().elem_type(), float_type);
   EXPECT_TRUE(type.tensor_type().has_shape());
   EXPECT_EQ(type.tensor_type().shape().dim_size(), 1);
@@ -67,6 +68,37 @@ TEST(ParserTest, TypeTest) {
   Parse(type, "float[N,?,K]");
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_param());
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_value());
+
+  // sequence type:
+  Parse(type, "seq(float[])");
+  EXPECT_TRUE(type.has_sequence_type());
+  auto& elttype = type.sequence_type().elem_type();
+  EXPECT_TRUE(elttype.has_tensor_type());
+  EXPECT_EQ(elttype.tensor_type().elem_type(), float_type);
+  EXPECT_FALSE(elttype.tensor_type().has_shape());
+
+  // optional type:
+  Parse(type, "optional(float)");
+  EXPECT_TRUE(type.has_optional_type());
+  auto& optelttype = type.optional_type().elem_type();
+  EXPECT_TRUE(optelttype.has_tensor_type());
+  EXPECT_EQ(optelttype.tensor_type().elem_type(), float_type);
+  EXPECT_TRUE(optelttype.tensor_type().has_shape());
+
+  // optional type:
+  Parse(type, "sparse_tensor(float[1000])");
+  EXPECT_TRUE(type.has_sparse_tensor_type());
+  EXPECT_EQ(type.sparse_tensor_type().elem_type(), float_type);
+  EXPECT_EQ(type.sparse_tensor_type().shape().dim_size(), 1);
+
+  // map type:
+  Parse(type, "map(int32, float[N])");
+  EXPECT_TRUE(type.has_map_type());
+  EXPECT_EQ(type.map_type().key_type(), int32_type);
+  auto& valtype = type.map_type().value_type();
+  EXPECT_TRUE(valtype.has_tensor_type());
+  EXPECT_EQ(valtype.tensor_type().elem_type(), float_type);
+  EXPECT_EQ(valtype.tensor_type().shape().dim_size(), 1);
 }
 
 TEST(ParserTest, TensorProtoTest) {
