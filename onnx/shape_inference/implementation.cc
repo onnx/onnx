@@ -418,6 +418,7 @@ class ShapeInferenceImplBase {
   }
 
   void process(GraphProto& graph) {
+    TraverseGraphsToAddExistingSymbols(graph, *symbol_table);
     for (auto& vi : *graph.mutable_value_info()) {
       updateType(vi);
     }
@@ -617,40 +618,43 @@ void InferShapes(
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options,
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions) {
-  SymbolTableImpl symbol_table;
-  TraverseGraphsToAddExistingSymbols(*g, symbol_table);
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
       opset_imports,
       options,
-      &symbol_table,
+      &SymbolTableImpl(),
       model_local_functions,
       schema_registry);
 }
 
-void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry, const ShapeInferenceOptions& options) {
+// Either ModelProto or FunctionProto
+template <class T>
+std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
   std::unordered_map<std::string, int> opset_imports;
-  for (const auto& opset_import : m.opset_import()) {
+  for (const auto& opset_import : proto.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
+  return opset_imports;
+}
 
+ModelLocalFunctionsMap GetModelLocalFunctionsMapFromModel(const ModelProto& model) {
   ModelLocalFunctionsMap model_local_functions_by_id;
-  for (const auto& function_proto : m.functions()) {
+  for (const auto& function_proto : model.functions()) {
     model_local_functions_by_id.insert(
         {GetModelLocalFunctionsMapIdentifier(function_proto.domain(), function_proto.name()), &function_proto});
   }
+  return model_local_functions_by_id;
+}
 
-  auto* g = m.mutable_graph();
-  SymbolTableImpl symbol_table;
-  TraverseGraphsToAddExistingSymbols(*g, symbol_table);
+void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry, const ShapeInferenceOptions& options) {
   InferShapesImpl(
-      g,
+      m.mutable_graph(),
       std::unordered_map<std::string, TypeProto*>(0),
-      opset_imports,
+      GetOpsetImportsFromProto(m),
       options,
-      &symbol_table,
-      model_local_functions_by_id,
+      &SymbolTableImpl(),
+      GetModelLocalFunctionsMapFromModel(m),
       schema_registry,
       m.ir_version());
 }
@@ -689,28 +693,16 @@ void InferShapesAndDataPropagation(
     std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options) {
-  std::unordered_map<std::string, int> opset_imports;
-  for (const auto& opset_import : m.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
-  }
-  ModelLocalFunctionsMap model_local_functions_by_id;
-  for (const auto& function_proto : m.functions()) {
-    model_local_functions_by_id.insert(
-        {GetModelLocalFunctionsMapIdentifier(function_proto.domain(), function_proto.name()), &function_proto});
-  }
-  auto* g = m.mutable_graph();
-  SymbolTableImpl symbol_table;
-  TraverseGraphsToAddExistingSymbols(*g, symbol_table);
   // Force data propagation
   ShapeInferenceOptions options_with_data_prop{options.check_type, options.error_mode, true};
-
+  auto* g = m.mutable_graph();
   ShapeInferenceImplBase base(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
-      opset_imports,
+      GetOpsetImportsFromProto(m),
       options_with_data_prop,
-      &symbol_table,
-      model_local_functions_by_id,
+      &SymbolTableImpl(),
+      GetModelLocalFunctionsMapFromModel(m),
       generated_shape_data_by_name,
       schema_registry,
       m.ir_version());
@@ -754,14 +746,9 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
     SymbolTable* symbol_table,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
-  std::unordered_map<std::string, int> opset_imports;
-  for (const auto& opset_import : function_proto.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
-  }
-
   InferShapeForFunctionNode(
       function_proto,
-      opset_imports,
+      GetOpsetImportsFromProto(function_proto),
       schema_registry,
       ctx,
       options,
