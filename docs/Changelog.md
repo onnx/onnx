@@ -20956,6 +20956,55 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain to any tensor or sequence type.</dd>
 </dl>
 
+# ai.onnx.image
+## Version 1 of the 'ai.onnx.image' operator set
+### <a name="ai.onnx.image.CenterCropPad-1"></a>**ai.onnx.image.CenterCropPad-1**</a>
+
+  Center crop or pad an image to given dimensions.
+
+  The input image can have have channel-first (CHW) or channel-last layout (HWC), which can be controlled
+  by the `channel_first` argument.
+
+  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
+  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
+  so that the input image is centered in the output.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.image' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>channel_first</tt> : int (default is 0)</dt>
+<dd>If enabled, a channel-first layout is assumed (CHW). Otherwise, a channel-last is assumed (HWC)</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input_data</tt> (differentiable) : T</dt>
+<dd>Input image to extract the centered crop from.</dd>
+<dt><tt>shape</tt> (non-differentiable) : Tind</dt>
+<dd>1-D tensor representing the cropping window dimensions (height, width)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_data</tt> (differentiable) : T</dt>
+<dd>Output image.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>

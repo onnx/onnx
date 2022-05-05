@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from onnx import checker, helper, numpy_helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
-from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
+from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ONNX_IMAGE_DOMAIN
 from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
 from typing import Sequence, Union, Text, Tuple, Type, List, Any, Optional
 import onnx.shape_inference
@@ -4174,6 +4174,77 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (None, None, 3)),
              make_tensor_sequence_value_info('shapes', TensorProto.INT64, (3,)),
              ])  # type: ignore
+
+    def test_image_center_crop_pad_hwc_crop(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (20, 10, 3)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], domain='ai.onnx.image')],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (10, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (10, 8, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_IMAGE_DOMAIN, 1), helper.make_opsetid(ONNX_DOMAIN, 16)])
+
+    def test_image_center_crop_pad_chw_crop(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (3, 20, 10)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], channel_first=1, domain='ai.onnx.image')],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (10, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (3, 10, 8))],
+            opset_imports=[helper.make_opsetid(ONNX_IMAGE_DOMAIN, 1), helper.make_opsetid(ONNX_DOMAIN, 16)])
+
+    def test_image_center_crop_pad_hwc_croppad(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (10, 10, 3)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], domain='ai.onnx.image')],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (20, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (20, 8, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_IMAGE_DOMAIN, 1), helper.make_opsetid(ONNX_DOMAIN, 16)])
+
+    def test_image_center_crop_pad_chw_croppad(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (3, 10, 10)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], channel_first=1, domain='ai.onnx.image')],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (20, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (3, 20, 8))],
+            opset_imports=[helper.make_opsetid(ONNX_IMAGE_DOMAIN, 1), helper.make_opsetid(ONNX_DOMAIN, 16)])
+
+    def test_image_center_crop_pad_without_input_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (3, 2)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], domain='ai.onnx.image')],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, None)],
+            opset_imports=[helper.make_opsetid(ONNX_IMAGE_DOMAIN, 1), helper.make_opsetid(ONNX_DOMAIN, 16)])
+
+    def test_image_center_crop_pad_with_input_shape_containing_dim_params(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (20, 'W', 3)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], domain='ai.onnx.image')],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (10, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (10, 8, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_IMAGE_DOMAIN, 1), helper.make_opsetid(ONNX_DOMAIN, 16)])
 
 
 if __name__ == '__main__':

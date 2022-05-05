@@ -1,0 +1,21 @@
+backend-test:³
+A
+x
+shapey"CenterCropPad*
+channel_first :ai.onnx.image'test_image_center_crop_pad_crop_chw_padZ
+x
+
+
+
+
+Z
+shape
+
+
+b
+y
+
+
+
+
+B

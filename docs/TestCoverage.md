@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 156/171 (91.23%, 5 generators excluded) common operators.
+Node tests have covered 157/172 (91.28%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1861,6 +1861,157 @@ expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output],
        name='test_celu')
+```
+
+</details>
+
+
+### CenterCropPad
+There are 7 test cases, listed as following:
+<details>
+<summary>center_crop_pad_crop_chw_crop</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    domain='ai.onnx.image',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    channel_first=1,
+)
+
+x = np.random.randn(3, 20, 10).astype(np.float32)
+shape = np.array([10, 8], dtype=np.int64)
+y = x[:, 5:15, 1:9]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_image_center_crop_pad_crop_chw_crop')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_chw_crop_and_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    domain='ai.onnx.image',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    channel_first=1,
+)
+
+x = np.random.randn(3, 20, 8).astype(np.float32)
+shape = np.array([10, 10], dtype=np.int64)
+y = np.zeros([3, 10, 10], dtype=np.float32)
+y[:, :, 1:9] = x[:, 5:15, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_image_center_crop_pad_crop_chw_crop_and_pad')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_chw_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    domain='ai.onnx.image',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    channel_first=1,
+)
+
+x = np.random.randn(3, 10, 8).astype(np.float32)
+shape = np.array([20, 10], dtype=np.int64)
+y = np.zeros([3, 20, 10], dtype=np.float32)
+y[:, 5:15, 1:9] = x
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_image_center_crop_pad_crop_chw_pad')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_hwc_crop</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    domain='ai.onnx.image',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 3).astype(np.float32)
+shape = np.array([10, 8], dtype=np.int64)
+y = x[5:15, 1:9, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_image_center_crop_pad_crop_hwc_crop')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_hwc_crop_and_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    domain='ai.onnx.image',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 10], dtype=np.int64)
+y = np.zeros([10, 10, 3], dtype=np.float32)
+y[:, 1:9, :] = x[5:15, :, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_image_center_crop_pad_crop_hwc_crop_and_pad')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_hwc_crop_uneven</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    domain='ai.onnx.image',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 3).astype(np.float32)
+shape = np.array([10, 7], dtype=np.int64)
+y = x[5:15, 1:8, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_image_center_crop_pad_crop_hwc_crop')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_hwc_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    domain='ai.onnx.image',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+x = np.random.randn(10, 8, 3).astype(np.float32)
+shape = np.array([20, 10], dtype=np.int64)
+y = np.zeros([20, 10, 3], dtype=np.float32)
+y[5:15, 1:9, :] = x
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_image_center_crop_pad_crop_hwc_pad')
 ```
 
 </details>
