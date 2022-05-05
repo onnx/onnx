@@ -542,7 +542,7 @@ class ShapeInferenceImplBase {
       const ShapeInferenceOptions& options_in,
       SymbolTable* symbol_table_in,
       const ModelLocalFunctionsMap& model_local_functions_map_in,
-      const std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name_in,
+      std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       const int ir_version_in = IR_VERSION // default the latest one
       )
@@ -562,10 +562,6 @@ class ShapeInferenceImplBase {
             schema_registry,
             ir_version,
             model_local_functions_map} {}
-
-  std::unordered_map<std::string, TensorShapeProto> getGeneratedShapeData() {
-    return generated_shape_data_by_name;
-  }
 
  private:
   GraphProto& g;
@@ -609,7 +605,7 @@ static void InferShapesImpl(
       options,
       symbol_table,
       model_local_functions_map,
-      {},
+      std::unordered_map<std::string, TensorShapeProto>(0),
       schema_registry,
       ir_version);
   base.process(*g);
@@ -688,9 +684,9 @@ void InferShapes(
   }
 }
 
-std::unordered_map<std::string, TensorShapeProto> InferShapesAndDataPropagation(
+void InferShapesAndDataPropagation(
     ModelProto& m,
-    const std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
+    std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options) {
   std::unordered_map<std::string, int> opset_imports;
@@ -719,10 +715,9 @@ std::unordered_map<std::string, TensorShapeProto> InferShapesAndDataPropagation(
       schema_registry,
       m.ir_version());
   base.process(*g);
-  return base.getGeneratedShapeData();
 }
 
-// Infer shape for functions.
+// Infer shape for functions
 void InferShapeForFunctionNode(
     const FunctionProto& func_proto,
     const std::unordered_map<std::string, int>& func_opset_imports,
@@ -741,7 +736,7 @@ void InferShapeForFunctionNode(
 
   ShapeInferenceImplBase base(
       &g,
-      {}, //outer_scope_value_types_by_name,
+      {}, // outer_scope_value_types_by_name
       func_opset_imports,
       options,
       symbol_table,

@@ -130,7 +130,7 @@ struct InferenceContextImpl : public InferenceContext {
           inputDataByName,
       const std::unordered_map<std::string, const SparseTensorProto*>& 
           inputSparseDataByName,
-      const std::unordered_map<std::string, TensorShapeProto>* generatedShapeData = nullptr,
+      std::unordered_map<std::string, TensorShapeProto>* generatedShapeData = nullptr,
       GraphInferenceContext* graphInferenceContext = nullptr)
       : graphInferenceContext_{graphInferenceContext} {
     for (auto& attr : *n.mutable_attribute()) {
@@ -460,12 +460,12 @@ void InferShapes(
     const ShapeInferenceOptions& options = {}
     );
 ///
-/// Forces shape inference to run with data propagation and returns data propagation result
+/// Forces shape inference to run with data propagation and data propagation result will be updated in place
 /// Previous data propagation result can be provided
 /// 
-std::unordered_map<std::string, TensorShapeProto> InferShapesAndDataPropagation(
+void InferShapesAndDataPropagation(
     ModelProto& m,
-    const std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name = {},
+    std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const ShapeInferenceOptions& options = {}
     );
