@@ -572,7 +572,7 @@ class ShapeInferenceImplBase {
   const ShapeInferenceOptions& options;
   SymbolTable* symbol_table;
   const ModelLocalFunctionsMap& model_local_functions_map;
-  std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
+  std::unordered_map<std::string, TensorShapeProto>& generated_shape_data_by_name;
   const ISchemaRegistry* schema_registry;
   int ir_version;
   GraphInferenceContext graph_inference_context;
