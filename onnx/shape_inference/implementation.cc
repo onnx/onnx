@@ -287,7 +287,7 @@ class ShapeInferenceImplBase {
       has_experimental_op = true;
     } else if (n.op_type() == "Constant" && n.output().size() == 1) {
       for (const auto& attr : n.attribute()) {
-        if (attr.name() == "value") {
+        if (attr.name() == "value" || attr.name() == "value_ints") {
           if (attr.type() == AttributeProto::TENSOR && attr.has_t()) {
             input_data_by_name[n.output(0)] = &attr.t();
           } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
