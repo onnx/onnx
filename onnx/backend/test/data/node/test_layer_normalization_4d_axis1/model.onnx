@@ -1,0 +1,40 @@
+backend-test:”
+>
+X
+W
+BYMean	InvStdDev"LayerNormalization*
+axis !test_layer_normalization_4d_axis1Z
+X
+
+
+
+
+Z
+W
+
+
+
+Z
+B
+
+
+
+b
+Y
+
+
+
+
+b
+Mean
+
+
+
+
+b#
+	InvStdDev
+
+
+
+
+B
