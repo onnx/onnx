@@ -86,8 +86,71 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
       // Create shape with zero dimensions for scalar
       (void)(tensortype->mutable_shape());
     }
-  } else
-    return ParseError("Unexpected type.");
+  } else {
+    switch (KeyWordMap::Lookup(id)) {
+      case KeyWordMap::KeyWord::SEQ_TYPE: {
+        // Grammar: seq ( type )
+        MATCH('(');
+        auto* seqtype = typeProto.mutable_sequence_type();
+        PARSE(*seqtype->mutable_elem_type());
+        MATCH(')');
+        break;
+      }
+      case KeyWordMap::KeyWord::MAP_TYPE: {
+        // Grammar: map ( prim-type , type )
+        MATCH('(');
+        auto* maptype = typeProto.mutable_map_type();
+        CHECK_PARSER_STATUS(ParseIdentifier(id));
+        dtype = PrimitiveTypeNameMap::Lookup(id);
+        if (dtype == 0) {
+          return ParseError("Expecting primitive type as map key type.");
+        }
+        maptype->set_key_type(dtype);
+        MATCH(',');
+        PARSE(*maptype->mutable_value_type());
+        MATCH(')');
+        break;
+      }
+      case KeyWordMap::KeyWord::OPTIONAL_TYPE: {
+        // Grammar: optional ( type )
+        MATCH('(');
+        auto* opttype = typeProto.mutable_optional_type();
+        PARSE(*opttype->mutable_elem_type());
+        MATCH(')');
+        break;
+      }
+      case KeyWordMap::KeyWord::SPARSE_TENSOR_TYPE: {
+          // Grammar: sparse_tensor ( tensor-type )
+          MATCH('(');
+          CHECK_PARSER_STATUS(ParseIdentifier(id));
+          dtype = PrimitiveTypeNameMap::Lookup(id);
+          if (dtype != 0) {
+            auto* sparsetype = typeProto.mutable_sparse_tensor_type();
+            sparsetype->set_elem_type(dtype);
+            sparsetype->clear_shape();
+            // Grammar:
+            // float indicates scalar (rank 0)
+            // float [] indicates unknown rank tensor (not a zero rank tensor)
+            // float [one-or-more-dimensions] indicates tensor of known rank > 0.
+            if (Matches('[')) {
+              if (!Matches(']')) {
+                PARSE(*sparsetype->mutable_shape());
+                MATCH(']');
+              }
+            } else {
+              // Create shape with zero dimensions for scalar
+              (void)(sparsetype->mutable_shape());
+            }
+          } else {
+            return ParseError("Unexpected type in sparse-tensor element type.");
+          }
+          MATCH(')');
+          break;
+      }  
+      default:
+        return ParseError("Unexpected type.");
+    }
+  }
   return Status::OK();
 }
 

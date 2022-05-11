@@ -2546,7 +2546,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain roi type to float or double.")
         .SetDoc(Resize_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx, true);
+          resizeShapeInference(ctx);
         }));
 
 static const char* GridSample_ver16_doc = R"DOC(
