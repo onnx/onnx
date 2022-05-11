@@ -174,7 +174,7 @@ There are two distinct ways to pass information to operators – inputs and attr
 ### Functions
 
 A _function_ may be thought of as an operator combined with an implementation of the operator using
-other, more primitive, ops, referrred to as the _function body_. The function body consists of a
+other, more primitive, ops, referred to as the _function body_. The function body consists of a
 topologically sorted list of nodes that form a graph. Thus, a function combines aspects of both
 an operator as well a graph (described below).
 
@@ -202,7 +202,7 @@ identified in a FunctionProto, but it is implicitly determined by the opset vers
 included in the model.
 
 The input, output, and attribute constitute the signature part of the operator. No type information
-is explicitly incuded in the signature.
+is explicitly included in the signature.
 
 The opset_import and node fields describe the implementation of the function.
 
