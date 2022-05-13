@@ -9,7 +9,6 @@
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/operator_sets_preview.h"
 #include "onnx/defs/operator_sets_training.h"
-#include "onnx/defs/operator_sets_image.h"
 
 #ifdef ONNX_ML
 #include "onnx/defs/operator_sets_ml.h"
@@ -909,9 +908,6 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 
       // Invoke register of experimental operators.
       RegisterOnnxPreviewOperatorSetSchema();
-
-      // Invoke register of image processing operators
-      RegisterOnnxImageOperatorSetSchema();
 
 #ifndef NDEBUG
       size_t dbg_registered_schema_count = GetRegisteredSchemaCount() - dbg_initial_schema_count;

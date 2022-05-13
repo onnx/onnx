@@ -172,6 +172,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|
+|<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-17">17</a>|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
@@ -184,12 +185,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|
 |<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|
-
-### ai.onnx.image
-|**Operator**|**Since version**|
-|-|-|
-|**Function**|**Since version**|
-|<a href="#ai.onnx.image.CenterCropPad">ai.onnx.image.CenterCropPad</a>|<a href="Changelog.md#ai.onnx.image.CenterCropPad-1">1</a>|
 
 ### ai.onnx.preview.training
 |**Operator**|**Since version**|
@@ -2792,6 +2787,210 @@ expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output],
        name='test_celu')
+```
+
+</details>
+
+
+### <a name="CenterCropPad"></a><a name="centercroppad">**CenterCropPad**</a>
+
+  Center crop or pad an image to given dimensions.
+
+  The input image can have have channel-first (CHW) or channel-last layout (HWC), which can be controlled
+  by the `channel_first` argument.
+
+  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
+  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
+  so that the input image is centered in the output.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>channel_first</tt> : int (default is 0)</dt>
+<dd>If enabled, a channel-first layout is assumed (CHW). Otherwise, a channel-last is assumed (HWC)</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input_data</tt> (differentiable) : T</dt>
+<dd>Input image to extract the centered crop from.</dd>
+<dt><tt>shape</tt> (non-differentiable) : Tind</dt>
+<dd>1-D tensor representing the cropping window dimensions (height, width)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_data</tt> (differentiable) : T</dt>
+<dd>Output image.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>center_crop_pad_crop_chw_crop</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    channel_first=1,
+)
+
+x = np.random.randn(3, 20, 10).astype(np.float32)
+shape = np.array([10, 8], dtype=np.int64)
+y = x[:, 5:15, 1:9]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_chw_crop')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_chw_crop_and_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    channel_first=1,
+)
+
+x = np.random.randn(3, 20, 8).astype(np.float32)
+shape = np.array([10, 10], dtype=np.int64)
+y = np.zeros([3, 10, 10], dtype=np.float32)
+y[:, :, 1:9] = x[:, 5:15, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_chw_crop_and_pad')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_chw_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    channel_first=1,
+)
+
+x = np.random.randn(3, 10, 8).astype(np.float32)
+shape = np.array([20, 10], dtype=np.int64)
+y = np.zeros([3, 20, 10], dtype=np.float32)
+y[:, 5:15, 1:9] = x
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_chw_pad')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_hwc_crop</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 3).astype(np.float32)
+shape = np.array([10, 8], dtype=np.int64)
+y = x[5:15, 1:9, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_hwc_crop')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_hwc_crop_and_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 10], dtype=np.int64)
+y = np.zeros([10, 10, 3], dtype=np.float32)
+y[:, 1:9, :] = x[5:15, :, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_hwc_crop_and_pad')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_hwc_crop_uneven</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 3).astype(np.float32)
+shape = np.array([10, 7], dtype=np.int64)
+y = x[5:15, 1:8, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_hwc_crop')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_hwc_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+x = np.random.randn(10, 8, 3).astype(np.float32)
+shape = np.array([20, 10], dtype=np.int64)
+y = np.zeros([20, 10, 3], dtype=np.float32)
+y[5:15, 1:9, :] = x
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_hwc_pad')
 ```
 
 </details>
@@ -25289,218 +25488,6 @@ y = (np.random.randn(3, 1, 5, 6) > 0).astype(bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_bcast4v4d')
-```
-
-</details>
-
-
-## ai.onnx.image
-### <a name="ai.onnx.image.CenterCropPad"></a><a name="ai.onnx.image.centercroppad">**ai.onnx.image.CenterCropPad**</a>
-
-  Center crop or pad an image to given dimensions.
-
-  The input image can have have channel-first (CHW) or channel-last layout (HWC), which can be controlled
-  by the `channel_first` argument.
-
-  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
-  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-  so that the input image is centered in the output.
-
-#### Version
-
-This version of the operator has been available since version 1 of the 'ai.onnx.image' operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>channel_first</tt> : int (default is 0)</dt>
-<dd>If enabled, a channel-first layout is assumed (CHW). Otherwise, a channel-last is assumed (HWC)</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input_data</tt> (differentiable) : T</dt>
-<dd>Input image to extract the centered crop from.</dd>
-<dt><tt>shape</tt> (non-differentiable) : Tind</dt>
-<dd>1-D tensor representing the cropping window dimensions (height, width)</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output_data</tt> (differentiable) : T</dt>
-<dd>Output image.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>center_crop_pad_crop_chw_crop</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    domain='ai.onnx.image',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    channel_first=1,
-)
-
-x = np.random.randn(3, 20, 10).astype(np.float32)
-shape = np.array([10, 8], dtype=np.int64)
-y = x[:, 5:15, 1:9]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_chw_crop')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_chw_crop_and_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    domain='ai.onnx.image',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    channel_first=1,
-)
-
-x = np.random.randn(3, 20, 8).astype(np.float32)
-shape = np.array([10, 10], dtype=np.int64)
-y = np.zeros([3, 10, 10], dtype=np.float32)
-y[:, :, 1:9] = x[:, 5:15, :]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_chw_crop_and_pad')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_chw_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    domain='ai.onnx.image',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    channel_first=1,
-)
-
-x = np.random.randn(3, 10, 8).astype(np.float32)
-shape = np.array([20, 10], dtype=np.int64)
-y = np.zeros([3, 20, 10], dtype=np.float32)
-y[:, 5:15, 1:9] = x
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_chw_pad')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_hwc_crop</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    domain='ai.onnx.image',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 3).astype(np.float32)
-shape = np.array([10, 8], dtype=np.int64)
-y = x[5:15, 1:9, :]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_hwc_crop')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_hwc_crop_and_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    domain='ai.onnx.image',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 8, 3).astype(np.float32)
-shape = np.array([10, 10], dtype=np.int64)
-y = np.zeros([10, 10, 3], dtype=np.float32)
-y[:, 1:9, :] = x[5:15, :, :]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_hwc_crop_and_pad')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_hwc_crop_uneven</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    domain='ai.onnx.image',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-)
-
-x = np.random.randn(20, 10, 3).astype(np.float32)
-shape = np.array([10, 7], dtype=np.int64)
-y = x[5:15, 1:8, :]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_hwc_crop')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_hwc_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    domain='ai.onnx.image',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-)
-
-x = np.random.randn(10, 8, 3).astype(np.float32)
-shape = np.array([20, 10], dtype=np.int64)
-y = np.zeros([20, 10, 3], dtype=np.float32)
-y[5:15, 1:9, :] = x
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_hwc_pad')
 ```
 
 </details>

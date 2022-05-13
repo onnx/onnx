@@ -9,7 +9,7 @@ from typing import List, Dict
 ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = 'ai.onnx.ml'
 AI_ONNX_PREVIEW_TRAINING_DOMAIN = 'ai.onnx.preview.training'
-ONNX_IMAGE_DOMAIN = 'ai.onnx.image'
+
 
 has = C.has_schema
 get_schema = C.get_schema

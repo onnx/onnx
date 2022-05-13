@@ -1,8 +1,8 @@
-backend-test:´
-A
+backend-test:Ÿ
+2
 x
 shapey"CenterCropPad*
-channel_first :ai.onnx.image(test_image_center_crop_pad_crop_chw_cropZ
+channel_first "test_center_crop_pad_crop_chw_cropZ
 x
 
 

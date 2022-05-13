@@ -1874,7 +1874,6 @@ There are 7 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
-    domain='ai.onnx.image',
     inputs=['x', 'shape'],
     outputs=['y'],
     channel_first=1,
@@ -1885,7 +1884,7 @@ shape = np.array([10, 8], dtype=np.int64)
 y = x[:, 5:15, 1:9]
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_chw_crop')
+       name='test_center_crop_pad_crop_chw_crop')
 ```
 
 </details>
@@ -1895,7 +1894,6 @@ expect(node, inputs=[x, shape], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
-    domain='ai.onnx.image',
     inputs=['x', 'shape'],
     outputs=['y'],
     channel_first=1,
@@ -1907,7 +1905,7 @@ y = np.zeros([3, 10, 10], dtype=np.float32)
 y[:, :, 1:9] = x[:, 5:15, :]
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_chw_crop_and_pad')
+       name='test_center_crop_pad_crop_chw_crop_and_pad')
 ```
 
 </details>
@@ -1917,7 +1915,6 @@ expect(node, inputs=[x, shape], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
-    domain='ai.onnx.image',
     inputs=['x', 'shape'],
     outputs=['y'],
     channel_first=1,
@@ -1929,7 +1926,7 @@ y = np.zeros([3, 20, 10], dtype=np.float32)
 y[:, 5:15, 1:9] = x
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_chw_pad')
+       name='test_center_crop_pad_crop_chw_pad')
 ```
 
 </details>
@@ -1939,7 +1936,6 @@ expect(node, inputs=[x, shape], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
-    domain='ai.onnx.image',
     inputs=['x', 'shape'],
     outputs=['y'],
 )
@@ -1949,7 +1945,7 @@ shape = np.array([10, 8], dtype=np.int64)
 y = x[5:15, 1:9, :]
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_hwc_crop')
+       name='test_center_crop_pad_crop_hwc_crop')
 ```
 
 </details>
@@ -1959,7 +1955,6 @@ expect(node, inputs=[x, shape], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
-    domain='ai.onnx.image',
     inputs=['x', 'shape'],
     outputs=['y'],
 )
@@ -1970,7 +1965,7 @@ y = np.zeros([10, 10, 3], dtype=np.float32)
 y[:, 1:9, :] = x[5:15, :, :]
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_hwc_crop_and_pad')
+       name='test_center_crop_pad_crop_hwc_crop_and_pad')
 ```
 
 </details>
@@ -1980,7 +1975,6 @@ expect(node, inputs=[x, shape], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
-    domain='ai.onnx.image',
     inputs=['x', 'shape'],
     outputs=['y'],
 )
@@ -1990,7 +1984,7 @@ shape = np.array([10, 7], dtype=np.int64)
 y = x[5:15, 1:8, :]
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_hwc_crop')
+       name='test_center_crop_pad_crop_hwc_crop')
 ```
 
 </details>
@@ -2000,7 +1994,6 @@ expect(node, inputs=[x, shape], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
-    domain='ai.onnx.image',
     inputs=['x', 'shape'],
     outputs=['y'],
 )
@@ -2011,7 +2004,7 @@ y = np.zeros([20, 10, 3], dtype=np.float32)
 y[5:15, 1:9, :] = x
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_image_center_crop_pad_crop_hwc_pad')
+       name='test_center_crop_pad_crop_hwc_pad')
 ```
 
 </details>

@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np  # type: ignore
-
 import onnx
+
 from ..base import Base
 from . import expect
 
@@ -13,7 +13,6 @@ class CenterCropPad(Base):
     def export_center_crop_pad_crop_hwc_crop() -> None:
         node = onnx.helper.make_node(
             'CenterCropPad',
-            domain='ai.onnx.image',
             inputs=['x', 'shape'],
             outputs=['y'],
         )
@@ -23,13 +22,12 @@ class CenterCropPad(Base):
         y = x[5:15, 1:9, :]
 
         expect(node, inputs=[x, shape], outputs=[y],
-               name='test_image_center_crop_pad_crop_hwc_crop')
+               name='test_center_crop_pad_crop_hwc_crop')
 
     @staticmethod
     def export_center_crop_pad_crop_hwc_crop_uneven() -> None:
         node = onnx.helper.make_node(
             'CenterCropPad',
-            domain='ai.onnx.image',
             inputs=['x', 'shape'],
             outputs=['y'],
         )
@@ -39,13 +37,12 @@ class CenterCropPad(Base):
         y = x[5:15, 1:8, :]
 
         expect(node, inputs=[x, shape], outputs=[y],
-               name='test_image_center_crop_pad_crop_hwc_crop')
+               name='test_center_crop_pad_crop_hwc_crop')
 
     @staticmethod
     def export_center_crop_pad_crop_chw_crop() -> None:
         node = onnx.helper.make_node(
             'CenterCropPad',
-            domain='ai.onnx.image',
             inputs=['x', 'shape'],
             outputs=['y'],
             channel_first=1,
@@ -56,13 +53,12 @@ class CenterCropPad(Base):
         y = x[:, 5:15, 1:9]
 
         expect(node, inputs=[x, shape], outputs=[y],
-               name='test_image_center_crop_pad_crop_chw_crop')
+               name='test_center_crop_pad_crop_chw_crop')
 
     @staticmethod
     def export_center_crop_pad_crop_hwc_pad() -> None:
         node = onnx.helper.make_node(
             'CenterCropPad',
-            domain='ai.onnx.image',
             inputs=['x', 'shape'],
             outputs=['y'],
         )
@@ -73,13 +69,12 @@ class CenterCropPad(Base):
         y[5:15, 1:9, :] = x
 
         expect(node, inputs=[x, shape], outputs=[y],
-               name='test_image_center_crop_pad_crop_hwc_pad')
+               name='test_center_crop_pad_crop_hwc_pad')
 
     @staticmethod
     def export_center_crop_pad_crop_chw_pad() -> None:
         node = onnx.helper.make_node(
             'CenterCropPad',
-            domain='ai.onnx.image',
             inputs=['x', 'shape'],
             outputs=['y'],
             channel_first=1,
@@ -91,13 +86,12 @@ class CenterCropPad(Base):
         y[:, 5:15, 1:9] = x
 
         expect(node, inputs=[x, shape], outputs=[y],
-               name='test_image_center_crop_pad_crop_chw_pad')
+               name='test_center_crop_pad_crop_chw_pad')
 
     @staticmethod
     def export_center_crop_pad_crop_hwc_crop_and_pad() -> None:
         node = onnx.helper.make_node(
             'CenterCropPad',
-            domain='ai.onnx.image',
             inputs=['x', 'shape'],
             outputs=['y'],
         )
@@ -108,13 +102,12 @@ class CenterCropPad(Base):
         y[:, 1:9, :] = x[5:15, :, :]
 
         expect(node, inputs=[x, shape], outputs=[y],
-               name='test_image_center_crop_pad_crop_hwc_crop_and_pad')
+               name='test_center_crop_pad_crop_hwc_crop_and_pad')
 
     @staticmethod
     def export_center_crop_pad_crop_chw_crop_and_pad() -> None:
         node = onnx.helper.make_node(
             'CenterCropPad',
-            domain='ai.onnx.image',
             inputs=['x', 'shape'],
             outputs=['y'],
             channel_first=1,
@@ -126,4 +119,4 @@ class CenterCropPad(Base):
         y[:, :, 1:9] = x[:, 5:15, :]
 
         expect(node, inputs=[x, shape], outputs=[y],
-               name='test_image_center_crop_pad_crop_chw_crop_and_pad')
+               name='test_center_crop_pad_crop_chw_crop_and_pad')
