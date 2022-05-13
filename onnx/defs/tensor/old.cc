@@ -418,10 +418,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
               TensorProto::INT64);
-          auto* output_shape = 
+          auto* output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           auto* output_length = output_shape->add_dim();
-		
+
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
@@ -4509,6 +4509,186 @@ ONNX_OPERATOR_SET_SCHEMA(
                 shapes,
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
           }
+        }));
+
+static const char* Pad_ver13_doc = R"DOC(
+Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
+a padded tensor (`output`) is generated.
+
+The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+
+1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
+
+2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
+
+3) `edge` - pads with the edge values of array
+
+
+Example 1 (`constant` mode):
+  Insert 0 pads to the beginning of the second dimension.
+
+  data =
+  [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'constant'
+
+  constant_value = 0.0
+
+  output =
+  [
+      [0.0, 0.0, 1.0, 1.2],
+      [0.0, 0.0, 2.3, 3.4],
+      [0.0, 0.0, 4.5, 5.7],
+  ]
+
+
+Example 2 (`reflect` mode):
+  data =
+  [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'reflect'
+
+  output =
+  [
+      [1.0, 1.2, 1.0, 1.2],
+      [2.3, 3.4, 2.3, 3.4],
+      [4.5, 5.7, 4.5, 5.7],
+  ]
+
+
+Example 3 (`edge` mode):
+  data =
+  [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'edge'
+
+  output =
+  [
+      [1.0, 1.0, 1.0, 1.2],
+      [2.3, 2.3, 2.3, 3.4],
+      [4.5, 4.5, 4.5, 5.7],
+  ]
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Pad,
+    13,
+    OpSchema()
+        .Attr(
+            "mode",
+            "Supported modes: `constant`(default), `reflect`, `edge`",
+            AttributeProto::STRING,
+            std::string("constant"))
+        .SetDoc(Pad_ver13_doc)
+        .Input(
+            0,
+            "data",
+            "Input tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "pads",
+            "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
+            "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
+            "`pads` should be a 1D tensor of shape [2 * input_rank]. "
+            "`pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], "
+            "where xi_begin is the number of pad values added at the beginning of axis `i` and "
+            "xi_end, the number of pad values added at the end of axis `i`.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "constant_value",
+            "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, "
+            "empty string or False).",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor after padding.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape inference needs the input data shape
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_rank = input_shape.dim_size();
+
+          // Infer output shape if 'pads' tensor is available
+          const auto* pads_initializer = ctx.getInputData(1);
+          if (nullptr != pads_initializer) {
+            if (pads_initializer->dims_size() != 1 ||
+                pads_initializer->data_type() != TensorProto::INT64) {
+                  fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+            }
+
+            const auto& pads_data = ParseData<int64_t>(pads_initializer);
+            if (pads_data.size() != static_cast<size_t>(2 * input_rank)) {
+              fail_shape_inference("Pads has incorrect number of values");
+            }
+
+            auto* output_shape =
+                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
+              const auto& input_dim = input_shape.dim((int)i);
+              auto* output_dim = output_shape->add_dim();
+              if (input_dim.has_dim_value()) {
+                output_dim->set_dim_value(
+                    input_dim.dim_value() + pads_data[i] +
+                    pads_data[i + input_rank]);
+              } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
+                *output_dim = input_dim;
+              }
+            }
+          } else {
+            // Infer output shapes' rank in any case
+            auto* output_shape_0 = getOutputShape(ctx, 0);
+            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
+              output_shape_0->add_dim();
+            }
+          }
+          return;
         }));
 
 } // namespace ONNX_NAMESPACE

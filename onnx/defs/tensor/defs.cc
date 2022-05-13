@@ -3661,7 +3661,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Pad_ver13_doc = R"DOC(
+static const char* Pad_ver17_doc = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
@@ -3741,14 +3741,14 @@ Example 3 (`edge` mode):
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
-    13,
+    17,
     OpSchema()
         .Attr(
             "mode",
             "Supported modes: `constant`(default), `reflect`, `edge`",
             AttributeProto::STRING,
             std::string("constant"))
-        .SetDoc(Pad_ver13_doc)
+        .SetDoc(Pad_ver17_doc)
         .Input(
             0,
             "data",
@@ -3763,10 +3763,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "pads",
             "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
             "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
-            "`pads` should be a 1D tensor of shape [2 * input_rank]. "
-            "`pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], "
-            "where xi_begin is the number of pad values added at the beginning of axis `i` and "
-            "xi_end, the number of pad values added at the end of axis `i`.",
+            "`pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number "
+            "of elements in the `axes` input or the input rank if `axes` are not provided explicitly. "
+            "`pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], "
+            "where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and "
+            "xi_end, the number of pad values added at the end of axis `axes[i]`.",
             "tensor(int64)",
             OpSchema::Single,
             true,
@@ -3782,6 +3783,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
+        .Input(
+            3,
+            "axes",
+            "1-D tensor of axes that `pads` apply to. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an "
+            "axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).",
+            "Tind",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+
         .Output(
             0,
             "output",
@@ -3795,6 +3808,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -3805,40 +3822,65 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_rank = input_shape.dim_size();
 
-          // Infer output shape if 'pads' tensor is available
-          const auto* pads_initializer = ctx.getInputData(1);
-          if (nullptr != pads_initializer) {
-            if (pads_initializer->dims_size() != 1 ||
-                pads_initializer->data_type() != TensorProto::INT64) {
-                  fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+          std::vector<int64_t> axes;
+          if (hasInputShape(ctx, 3)) {  //'axes' input
+            auto axes_initializer = ctx.getInputData(3);
+            if (axes_initializer != nullptr)  // is initializer
+              axes = ParseData<int64_t>(axes_initializer);
+          } else {
+            axes.resize(input_rank);
+            std::iota(axes.begin(), axes.end(), 0);
+          }
+
+          if (static_cast<int>(axes.size()) > input_rank) {
+            fail_shape_inference("Too many axes provided");
+          }
+          int num_axes = axes.size();
+
+          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+          // Populating default dims
+          std::vector<TensorShapeProto_Dimension*> out_dims(input_rank);
+          for (int i = 0; i < input_rank; ++i) {
+            out_dims[i] = output_shape->add_dim();
+          }
+
+          // Shape Inference if
+          //     1. 'pads' are available.
+          // and 2. 'axes' are available, or default.
+          const TensorProto* pads_initializer = ctx.getInputData(1);
+          if (nullptr != pads_initializer && !axes.empty()) {
+            if (pads_initializer->dims_size() != 1 || pads_initializer->data_type() != TensorProto::INT64) {
+              fail_shape_inference("'pads' input must be a 1D (shape: [2 * num_axes]) tensor of type int64");
             }
 
             const auto& pads_data = ParseData<int64_t>(pads_initializer);
-            if (pads_data.size() != static_cast<size_t>(2 * input_rank)) {
-              fail_shape_inference("Pads has incorrect number of values");
+            if (pads_data.size() != static_cast<size_t>(2 * num_axes)) {
+              fail_shape_inference(
+                  "Pads has incorrect number of values. Expected 2 * ",
+                  num_axes, " values. Got ", pads_data.size(), " values.");
             }
 
-            auto* output_shape =
-                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
-              const auto& input_dim = input_shape.dim((int)i);
-              auto* output_dim = output_shape->add_dim();
+            // Set default dim values
+            for (int i = 0; i < input_rank; ++i) {
+              const auto& input_dim = input_shape.dim(i);
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(
-                    input_dim.dim_value() + pads_data[i] +
-                    pads_data[i + input_rank]);
-              } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
-                *output_dim = input_dim;
+                out_dims[i]->set_dim_value(input_dim.dim_value());
               }
             }
-          } else {
-            // Infer output shapes' rank in any case
-            auto* output_shape_0 = getOutputShape(ctx, 0);
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
-              output_shape_0->add_dim();
+
+            for (int i = 0; i < num_axes; ++i) {
+              auto axis = axes[i];
+              const auto& input_dim = input_shape.dim(axis);
+              auto& out_dim = *out_dims[axis];
+              auto total_pad = pads_data[i] + pads_data[num_axes + i];
+              if (input_dim.has_dim_value()) {
+                out_dim.set_dim_value(input_dim.dim_value() + total_pad);
+              } else if (total_pad == 0) {
+                out_dim = input_dim;
+              }
             }
           }
-          return;
         }));
 
 static const char* Trilu_ver14_doc = R"DOC(
