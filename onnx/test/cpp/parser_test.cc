@@ -462,7 +462,7 @@ square (x) => (y) {
 >
 agraph (float[N] x) => (float[N] out)
 {
-  out = custom_domain.foo<gamma=2.0, gamma=3.0>(x)
+  out = custom_domain.foo<alpha=2.0, gamma=3.0>(x)
 }
 
 <

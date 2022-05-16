@@ -393,7 +393,7 @@ class ParserBase {
     return Status::OK();
   }
 
-  bool PeekIsIdentifierAssignment(std::string& id) {
+  bool PeekIsAttributeValue(std::string& id) {
     SavePos();
     ParseOptionalIdentifier(id);
     bool is_assignment = Matches(':') || Matches('=');

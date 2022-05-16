@@ -95,12 +95,12 @@ enum Version {
   // - Implicitly add inference graph into each TrainingInfoProto's algorithm.
   IR_VERSION_2020_5_8 = 0x0000000000000007;
 
-  // IR VERSION 8 published on April 23, 2021
+  // IR VERSION 8 published on July 30, 2021
   // Introduce TypeProto.SparseTensor
   // Introduce TypeProto.Optional
   // Added a list of FunctionProtos local to the model
   // Deprecated since_version and operator status from FunctionProto
-  IR_VERSION_2021_4_23 = 0x0000000000000008;
+  IR_VERSION_2021_7_30 = 0x0000000000000008;
 
   // IR VERSION 9 published on TBD
   // Added AttributeProto to FunctionProto so that default attribute values can be set.

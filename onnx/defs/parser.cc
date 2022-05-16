@@ -48,7 +48,7 @@ Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
   attrlist.Clear();
   do {
     std::string id;
-    bool is_assignment = PeekIsIdentifierAssignment(id);
+    bool is_assignment = PeekIsAttributeValue(id);
     if (id.empty())
       return Status::OK(); // Treat as empty list of identifiers
     if (is_assignment) {
