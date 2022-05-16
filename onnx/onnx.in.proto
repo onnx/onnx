@@ -804,8 +804,8 @@ message FunctionProto {
   repeated string input = 4;
   repeated string output = 5;
 
-  // The attribute identifiers of the function.
-  // It is for function attributes without default values.
+  // The attribute parameters of the function.
+  // It is for function parameters without default values.
   repeated string attribute = 6;
 
   // The attribute protos of the function.
