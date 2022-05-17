@@ -4,6 +4,7 @@ import unittest
 from onnx import helper, parser, GraphProto
 from onnx import checker
 
+
 class TestBasicFunctions(unittest.TestCase):
     def check_graph(self, graph: GraphProto) -> None:
         self.assertTrue(len(graph.node) == 3)
@@ -68,8 +69,8 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertRaises(onnx.parser.ParseError, lambda: onnx.parser.parse_model(input))
 
     def test_parse_function_with_attributes(self) -> None:
-       input = '''
-         <
+        input = '''
+            <
             ir_version: 9,
             opset_import: [ "" : 15, "custom_domain" : 1],
             producer_name: "FunctionProtoTest",
@@ -107,8 +108,9 @@ class TestBasicFunctions(unittest.TestCase):
            }
          '''
 
-       model = onnx.parser.parse_model(input)
-       checker.check_model(model)
+        model = onnx.parser.parse_model(input)
+        checker.check_model(model)
+
 
 if __name__ == '__main__':
     unittest.main()
