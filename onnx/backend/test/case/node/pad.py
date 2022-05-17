@@ -1,22 +1,29 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np  # type: ignore
-
 import onnx
+
 from ..base import Base
 from . import expect
 
 
-def pad_impl(data, raw_pads, mode, constant_values=0.0):  # type: ignore
-
+def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ignore
     input_rank = data.ndim
-    if input_rank * 2 != raw_pads.size:
-        raise Exception('The number of elements in raw_pads should be 2 * data_rank')
+    if axes is None:
+        axes = list(range(input_rank))
+    num_axes = len(axes)
+
+    if num_axes * 2 != raw_pads.size:
+        raise Exception('The number of elements in raw_pads should be 2 * num_axes')
+
+    pad_width = []
+    for i in range(input_rank):
+        pad_width += [[0, 0]]  # init to zero
 
     # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
-    pad_width = ()
-    for i in range(int(raw_pads.size / 2)):
-        pad_width += ((raw_pads[i], raw_pads[i + input_rank])),  # type: ignore
+    for i in range(num_axes):
+        axis = axes[i]
+        pad_width[axis] = [raw_pads[i], raw_pads[i + num_axes]]
 
     if mode == 'constant':
         y = np.pad(
@@ -78,3 +85,26 @@ class Pad(Base):
 
             expect(node, inputs=[x, pads], outputs=[y],
                    name='test_{}_pad'.format(mode))
+
+    @staticmethod
+    def export_constant_pad_axes() -> None:
+        node = onnx.helper.make_node(
+            'Pad',
+            inputs=['x', 'pads', 'value', 'axes'],
+            outputs=['y'],
+            mode='constant'
+        )
+        x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+        pads = np.array([0, 3, 0, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+        value = np.float32(1.2)
+        axes = np.array([1, 3], dtype=np.int64)
+        y = pad_impl(
+            x,
+            pads,
+            'constant',
+            1.2,
+            [1, 3],
+        )
+
+        expect(node, inputs=[x, pads, value, axes], outputs=[y],
+               name='test_constant_pad_axes')

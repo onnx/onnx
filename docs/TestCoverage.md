@@ -1876,7 +1876,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
-    channel_first=1,
+    axes=[1, 2],
 )
 
 x = np.random.randn(3, 20, 10).astype(np.float32)
@@ -1896,7 +1896,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
-    channel_first=1,
+    axes=[1, 2],
 )
 
 x = np.random.randn(3, 20, 8).astype(np.float32)
@@ -1917,7 +1917,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
-    channel_first=1,
+    axes=[1, 2],
 )
 
 x = np.random.randn(3, 10, 8).astype(np.float32)
@@ -1938,6 +1938,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
+    axes=[0, 1],
 )
 
 x = np.random.randn(20, 10, 3).astype(np.float32)
@@ -1957,6 +1958,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
+    axes=[0, 1],
 )
 
 x = np.random.randn(20, 8, 3).astype(np.float32)
@@ -1977,6 +1979,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
+    axes=[0, 1],
 )
 
 x = np.random.randn(20, 10, 3).astype(np.float32)
@@ -1996,6 +1999,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
+    axes=[0, 1],
 )
 
 x = np.random.randn(10, 8, 3).astype(np.float32)
@@ -9081,7 +9085,7 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 
 ### Pad
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>constant_pad</summary>
 
@@ -9104,6 +9108,33 @@ y = pad_impl(
 
 expect(node, inputs=[x, pads, value], outputs=[y],
        name='test_constant_pad')
+```
+
+</details>
+<details>
+<summary>constant_pad_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x', 'pads', 'value', 'axes'],
+    outputs=['y'],
+    mode='constant'
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([1, 3], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    'constant',
+    1.2,
+    [1, 3],
+)
+
+expect(node, inputs=[x, pads, value, axes], outputs=[y],
+       name='test_constant_pad_axes')
 ```
 
 </details>
@@ -12748,6 +12779,12 @@ test_shape('_start_1_end_2', x, start=1, end=2)
 test_shape('_clip_start', x, start=-10)
 
 test_shape('_clip_end', x, end=10)
+
+test_shape('_axes_all', x, axes=[0, 1, 2])
+
+test_shape('_axes_negative', x, axes=[-3, -2, -1])
+
+test_shape('_axes_random_order', x, axes=[2, 0, 1])
 ```
 
 </details>

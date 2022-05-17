@@ -15,6 +15,7 @@ class CenterCropPad(Base):
             'CenterCropPad',
             inputs=['x', 'shape'],
             outputs=['y'],
+            axes=[0, 1],
         )
 
         x = np.random.randn(20, 10, 3).astype(np.float32)
@@ -30,6 +31,7 @@ class CenterCropPad(Base):
             'CenterCropPad',
             inputs=['x', 'shape'],
             outputs=['y'],
+            axes=[0, 1],
         )
 
         x = np.random.randn(20, 10, 3).astype(np.float32)
@@ -45,7 +47,7 @@ class CenterCropPad(Base):
             'CenterCropPad',
             inputs=['x', 'shape'],
             outputs=['y'],
-            channel_first=1,
+            axes=[1, 2],
         )
 
         x = np.random.randn(3, 20, 10).astype(np.float32)
@@ -61,6 +63,7 @@ class CenterCropPad(Base):
             'CenterCropPad',
             inputs=['x', 'shape'],
             outputs=['y'],
+            axes=[0, 1],
         )
 
         x = np.random.randn(10, 8, 3).astype(np.float32)
@@ -77,7 +80,7 @@ class CenterCropPad(Base):
             'CenterCropPad',
             inputs=['x', 'shape'],
             outputs=['y'],
-            channel_first=1,
+            axes=[1, 2],
         )
 
         x = np.random.randn(3, 10, 8).astype(np.float32)
@@ -94,6 +97,7 @@ class CenterCropPad(Base):
             'CenterCropPad',
             inputs=['x', 'shape'],
             outputs=['y'],
+            axes=[0, 1],
         )
 
         x = np.random.randn(20, 8, 3).astype(np.float32)
@@ -110,7 +114,7 @@ class CenterCropPad(Base):
             'CenterCropPad',
             inputs=['x', 'shape'],
             outputs=['y'],
-            channel_first=1,
+            axes=[1, 2],
         )
 
         x = np.random.randn(3, 20, 8).astype(np.float32)

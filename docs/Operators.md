@@ -99,7 +99,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
-|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
+|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-17">17</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
@@ -137,7 +137,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SequenceErase">SequenceErase</a>|<a href="Changelog.md#SequenceErase-11">11</a>|
 |<a href="#SequenceInsert">SequenceInsert</a>|<a href="Changelog.md#SequenceInsert-11">11</a>|
 |<a href="#SequenceLength">SequenceLength</a>|<a href="Changelog.md#SequenceLength-11">11</a>|
-|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
+|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-17">17</a>, <a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
 |<a href="#Sigmoid">Sigmoid</a>|<a href="Changelog.md#Sigmoid-13">13</a>, <a href="Changelog.md#Sigmoid-6">6</a>, <a href="Changelog.md#Sigmoid-1">1</a>|
 |<a href="#Sign">Sign</a>|<a href="Changelog.md#Sign-13">13</a>, <a href="Changelog.md#Sign-9">9</a>|
@@ -2810,17 +2810,17 @@ This version of the operator has been available since version 17 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>channel_first</tt> : int (default is 0)</dt>
-<dd>If enabled, a channel-first layout is assumed (CHW). Otherwise, a channel-last is assumed (HWC)</dd>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>If provided, it specifies a subset of axes that 'shape' refer to. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>input_data</tt> (differentiable) : T</dt>
-<dd>Input image to extract the centered crop from.</dd>
+<dd>Input to extract the centered crop from.</dd>
 <dt><tt>shape</tt> (non-differentiable) : Tind</dt>
-<dd>1-D tensor representing the cropping window dimensions (height, width)</dd>
+<dd>1-D tensor representing the cropping window dimensions.</dd>
 </dl>
 
 #### Outputs
@@ -2850,7 +2850,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
-    channel_first=1,
+    axes=[1, 2],
 )
 
 x = np.random.randn(3, 20, 10).astype(np.float32)
@@ -2872,7 +2872,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
-    channel_first=1,
+    axes=[1, 2],
 )
 
 x = np.random.randn(3, 20, 8).astype(np.float32)
@@ -2895,7 +2895,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
-    channel_first=1,
+    axes=[1, 2],
 )
 
 x = np.random.randn(3, 10, 8).astype(np.float32)
@@ -2918,6 +2918,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
+    axes=[0, 1],
 )
 
 x = np.random.randn(20, 10, 3).astype(np.float32)
@@ -2939,6 +2940,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
+    axes=[0, 1],
 )
 
 x = np.random.randn(20, 8, 3).astype(np.float32)
@@ -2961,6 +2963,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
+    axes=[0, 1],
 )
 
 x = np.random.randn(20, 10, 3).astype(np.float32)
@@ -2982,6 +2985,7 @@ node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
+    axes=[0, 1],
 )
 
 x = np.random.randn(10, 8, 3).astype(np.float32)
@@ -14391,9 +14395,9 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 17 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>
 
 #### Attributes
 
@@ -14402,15 +14406,17 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 <dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
 </dl>
 
-#### Inputs (2 - 3)
+#### Inputs (2 - 4)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Input tensor.</dd>
 <dt><tt>pads</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number of elements in the `axes` input or the input rank if `axes` are not provided explicitly. `pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and xi_end, the number of pad values added at the end of axis `axes[i]`.</dd>
 <dt><tt>constant_value</tt> (optional, non-differentiable) : T</dt>
 <dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, empty string or False).</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
+<dd>1-D tensor of axes that `pads` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).</dd>
 </dl>
 
 #### Outputs
@@ -14425,6 +14431,8 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
 </dl>
 
 
@@ -14452,6 +14460,35 @@ y = pad_impl(
 
 expect(node, inputs=[x, pads, value], outputs=[y],
        name='test_constant_pad')
+```
+
+</details>
+
+
+<details>
+<summary>constant_pad_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x', 'pads', 'value', 'axes'],
+    outputs=['y'],
+    mode='constant'
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([1, 3], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    'constant',
+    1.2,
+    [1, 3],
+)
+
+expect(node, inputs=[x, pads, value, axes], outputs=[y],
+       name='test_constant_pad_axes')
 ```
 
 </details>
@@ -20427,7 +20464,9 @@ expect(node, inputs=[x0, x1], outputs=[y0, y1],
 ### <a name="Shape"></a><a name="shape">**Shape**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
-  Optional attributes start and end can be used to compute a slice of the input tensor's shape.
+  Optional attributes `start` and `end` can be used to compute a slice of the input tensor's shape.
+  Optional attribute `axes` can be used to extract the extents of a subset of axes from the input tensor's shape.
+  Usage of attributes `start` and `end` is incompatible with usage of `axes`.
   If start axis is omitted, the slice starts from axis 0.
   The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
   If the end axis is omitted, the axes upto the last one will be included.
@@ -20458,17 +20497,19 @@ expect(node, inputs=[x0, x1], outputs=[y0, y1],
 
 #### Version
 
-This version of the operator has been available since version 15 of the default ONNX operator set.
+This version of the operator has been available since version 17 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-15">15</a>
 
 #### Attributes
 
 <dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>(Optional) If provided, it specifies a subset of axes to extract from the shape. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
 <dt><tt>end</tt> : int</dt>
-<dd>(Optional) Ending axis for slicing the shape. Negative value means counting dimensions from the back. If omitted, sizes of all axes upto (including) the last one will be included.</dd>
-<dt><tt>start</tt> : int (default is 0)</dt>
-<dd>(Optional) Starting axis for slicing the shape. Default value is 0.Negative value means counting dimensions from the back.</dd>
+<dd>(Optional) Ending axis for slicing the shape. Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). If omitted, sizes of all axes upto (including) the last one will be included. </dd>
+<dt><tt>start</tt> : int</dt>
+<dd>(Optional) Starting axis for slicing the shape. Default value is 0.Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). </dd>
 </dl>
 
 #### Inputs
@@ -20526,6 +20567,12 @@ test_shape('_start_1_end_2', x, start=1, end=2)
 test_shape('_clip_start', x, start=-10)
 
 test_shape('_clip_end', x, end=10)
+
+test_shape('_axes_all', x, axes=[0, 1, 2])
+
+test_shape('_axes_negative', x, axes=[-3, -2, -1])
+
+test_shape('_axes_random_order', x, axes=[2, 0, 1])
 ```
 
 </details>

@@ -375,9 +375,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shape_ver15_doc = R"DOC(
+static const char* Shape_ver17_doc = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
-Optional attributes start and end can be used to compute a slice of the input tensor's shape.
+Optional attributes `start` and `end` can be used to compute a slice of the input tensor's shape.
+Optional attribute `axes` can be used to extract the extents of a subset of axes from the input tensor's shape.
+Usage of attributes `start` and `end` is incompatible with usage of `axes`.
 If start axis is omitted, the slice starts from axis 0.
 The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
 If the end axis is omitted, the axes upto the last one will be included.
@@ -409,23 +411,31 @@ Output: [3]
 
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
-    15,
+    17,
     OpSchema()
-        .SetDoc(Shape_ver15_doc)
+        .SetDoc(Shape_ver17_doc)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
             "start",
             "(Optional) Starting axis for slicing the shape. Default value is 0."
-            "Negative value means counting dimensions from the back.",
+            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). ",
             AttributeProto::INT,
-            static_cast<int64_t>(0))
+            OPTIONAL_VALUE)
         .Attr(
             "end",
             "(Optional) Ending axis for slicing the shape. "
-            "Negative value means counting dimensions from the back. "
-            "If omitted, sizes of all axes upto (including) the last one will be included.",
+            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). "
+            "If omitted, sizes of all axes upto (including) the last one will be included. ",
             AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "axes",
+            "(Optional) If provided, it specifies a subset of axes to extract from the shape. "
+            "If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). "
+            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). "
+            "Behavior is undefined if an axis is repeated.",
+            AttributeProto::INTS,
             OPTIONAL_VALUE)
         .TypeConstraint("T", OpSchema::all_tensor_types_with_bfloat(), "Input tensor can be of arbitrary type.")
         .TypeConstraint("T1", {"tensor(int64)"}, "Constrain output to int64 tensor.")
@@ -439,20 +449,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
-          int64_t start = getAttribute(ctx, "start", 0);
-          if (start < 0)
-            start += rank;
-          start = (start < 0) ? 0 : (start > rank) ? rank : start;
-          int64_t end = getAttribute(ctx, "end", rank);
-          if (end < 0)
-            end += rank;
-          end = (end < 0) ? 0 : (end > rank) ? rank : end;
-          output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
-        })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            int64_t rank = static_cast<int64_t>(input_shape.dim_size());
+
+          auto axes_attr = ctx.getAttribute("axes");
+          if (axes_attr) {
+            auto axes = RetrieveValues<int64_t>(*axes_attr);
+            for (auto axis: axes) {
+              if (axis < -rank || axis >= (rank-1)) {
+                fail_shape_inference("Unexpected axis ", axis, " Expected range: [", -rank, ", ", rank-1, "].");
+              }
+            }
+            output_length->set_dim_value(static_cast<int64_t>(axes.size()));
+          } else {
             int64_t start = getAttribute(ctx, "start", 0);
             if (start < 0)
               start += rank;
@@ -461,9 +468,38 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (end < 0)
               end += rank;
             end = (end < 0) ? 0 : (end > rank) ? rank : end;
+            output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            int64_t rank = static_cast<int64_t>(input_shape.dim_size());
+
             TensorShapeProto output_shape;
-            for (int64_t d = start; d < end; ++d) {
-              *output_shape.add_dim() = input_shape.dim(static_cast<int>(d));
+            auto axes_attr = ctx.getAttribute("axes");
+            if (axes_attr) {
+              auto axes = RetrieveValues<int64_t>(*axes_attr);
+              for (size_t i = 0; i < axes.size(); i++) {
+                int axis = axes[i];
+                if (axis < 0)
+                  axis += rank;
+                if (axis < 0)
+                  axis += rank;
+                *output_shape.add_dim() = input_shape.dim(axis);
+              }
+            } else {
+              int64_t start = getAttribute(ctx, "start", 0);
+              if (start < 0)
+                start += rank;
+              start = (start < 0) ? 0 : (start > rank) ? rank : start;
+              int64_t end = getAttribute(ctx, "end", rank);
+              if (end < 0)
+                end += rank;
+              end = (end < 0) ? 0 : (end > rank) ? rank : end;
+              for (int64_t d = start; d < end; ++d) {
+                *output_shape.add_dim() = input_shape.dim(static_cast<int>(d));
+              }
             }
             ctx.addOutputData(0, std::move(output_shape));
           }
@@ -3973,7 +4009,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "input_data",
-            "Input image to extract the centered crop from.",
+            "Input to extract the centered crop from.",
             "T",
             OpSchema::Single,
             true,
@@ -3982,7 +4018,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "shape",
-            "1-D tensor representing the cropping window dimensions (height, width)",
+            "1-D tensor representing the cropping window dimensions.",
             "Tind",
             OpSchema::Single,
             true,
@@ -3990,10 +4026,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Output(0, "output_data", "Output image.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
-            "channel_first",
-            "If enabled, a channel-first layout is assumed (CHW). Otherwise, a channel-last is assumed (HWC)",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
+            "axes",
+            "If provided, it specifies a subset of axes that 'shape' refer to. "
+            "If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). "
+            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). "
+            "Behavior is undefined if an axis is repeated.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -4017,6 +4056,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!cropShapeInitializer->has_data_type())
             return;
 
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const int64_t input_rank = input_shape.dim_size();
+
           std::vector<int64_t> shape;
           if (cropShapeInitializer->data_type() == TensorProto::INT64) {
             const auto& data = ParseData<int64_t>(cropShapeInitializer);
@@ -4029,87 +4071,72 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("`shape` only supports `int32_t` or `int64_t` inputs");
           }
 
-          if (shape.size() != 2) {
-            fail_shape_inference("`shape` is expected to have 2 elements. Got ", shape.size(), ".");
+          auto axes_attr = ctx.getAttribute("axes");
+          std::vector<int64_t> axes;
+          if (axes_attr) {
+            axes = RetrieveValues<int64_t>(*axes_attr);
+          } else {
+            axes.resize(input_rank);
+            std::iota(axes.begin(), axes.end(), 0);
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-          const int64_t input_rank = input_shape.dim_size();
-
-          if (input_rank != 3) {
-            fail_shape_inference("Input rank is expected to be 3. Got ", input_rank, ".");
+          if (shape.size() != axes.size()) {
+            fail_shape_inference(
+                "Number of elements of input 'shape' (", shape.size(),
+                ") does not match the number of axes (", axes.size(),").");
           }
 
-          auto channel_first_attr = ctx.getAttribute("channel_first");
-          bool channel_first = false;
-          if (channel_first_attr)
-            channel_first = static_cast<bool>(channel_first_attr->i());
-
-          int channel_dim_axis = channel_first ? 0 : 2;
-
-          int j = 0;
+          // Populating default dims
+          std::vector<TensorShapeProto_Dimension*> out_dims(input_rank);
+          auto* output_shape = getOutputShape(ctx, 0);
           for (int i = 0; i < input_rank; ++i) {
-            // first update rank of output dim
-            auto* output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            out_dims[i] = output_shape->add_dim();
             const auto& input_dim = input_shape.dim(i);
-
-            if (channel_dim_axis == i) {
-              if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value());
-              } else if (input_dim.has_dim_param()) {
-                output_dim->set_dim_param(input_dim.dim_param());
-              }
-            } else {
-              output_dim->set_dim_value(shape[j++]);
+            if (input_dim.has_dim_value()) {
+              out_dims[i]->set_dim_value(input_dim.dim_value());
+            } else if (input_dim.has_dim_param()) {
+              out_dims[i]->set_dim_param(input_dim.dim_param());
             }
+          }
+          int j = 0;
+          for (int axis : axes) {
+            out_dims[axis]->set_dim_value(shape[j++]);
           }
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              auto channel_first_attr = ctx.getAttribute("channel_first");
-              bool channel_first = false;
-              if (channel_first_attr)
-                channel_first = static_cast<bool>(channel_first_attr->i());
+              const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+              const int64_t input_rank = input_shape.dim_size();
+
+              auto axes_attr = ctx.getAttribute("axes");
+              std::vector<int64_t> axes;
+              if (axes_attr) {
+                axes = RetrieveValues<int64_t>(*axes_attr);
+              } else {
+                axes.resize(input_rank);
+                std::iota(axes.begin(), axes.end(), 0);
+              }
 
               FunctionBuilder builder(functionProto);
               builder.Const("k2", std::vector<int64_t>{2});
-              builder.Add("x_shape = Shape(input_data)");
+              builder.Const("axes_input", axes);
 
-              if (channel_first) {
-                builder.Const("axes", std::vector<int64_t>{1, 2});
-                builder.Add("c, h, w = Split <axis = 0> (x_shape)");
-              } else {
-                builder.Const("axes", std::vector<int64_t>{0, 1});
-                builder.Add("h, w, c = Split <axis = 0> (x_shape)");
-              }
+              // First: Pad step
+              builder.Add("x_shape = Shape (input_data)", "axes", axes)
+                .Add("padded_sh = Max(x_shape, shape)")
+                .Add("pad_amount = Sub(padded_sh, x_shape)")
+                .Add("pad_amount_left = Div(pad_amount, k2)")
+                .Add("pad_amount_right = Sub(pad_amount, pad_amount_left)")
+                .Add("pads = Concat <axis = 0> (pad_amount_left, pad_amount_right)")
+                .Add("padded_input = Pad (input_data, pads, , axes_input)");
 
-              builder.Add("hw = Concat <axis = 0> (h, w)");
-              builder.Add("padded_hw = Max(hw, shape)");
+              // First: Slice step
+              builder.Add("x_shape2 = Shape (padded_input)", "axes", axes)
+                .Add("sh_diff = Sub (x_shape2, shape)")
+                .Add("start_dims = Div (sh_diff, k2)")
+                .Add("end_dims = Add (start_dims, shape)")
+                .Add("output_data = Slice (padded_input, start_dims, end_dims, axes_input)");
 
-              if (channel_first) {
-                builder.Add("padded_sh = Concat <axis = 0> (c, padded_hw)");
-              } else {
-                builder.Add("padded_sh = Concat <axis = 0> (padded_hw, c)");
-              }
-
-              builder.Add("pad_amount = Sub(padded_sh, x_shape)")
-                  .Add("pad_amount_left = Div(pad_amount, k2)")
-                  .Add("pad_amount_right = Sub(pad_amount, pad_amount_left)")
-                  .Add("pads = Concat <axis = 0> (pad_amount_left, pad_amount_right)")
-                  .Add("padded_image = Pad (input_data, pads)")
-                  .Add("x_shape2 = Shape(padded_image)");
-
-              if (channel_first) {
-                builder.Add("c2, h2, w2 = Split <axis = 0> (x_shape2)");
-              } else {
-                builder.Add("h2, w2, c2 = Split <axis = 0> (x_shape2)");
-              }
-
-              builder.Add("hw2 = Concat <axis = 0> (h2, w2)")
-                  .Add("hw_diff = Sub (hw2, shape)")
-                  .Add("start_xy = Div (hw_diff, k2)")
-                  .Add("end_xy = Add (start_xy, shape)")
-                  .Add("output_data = Slice (padded_image, start_xy, end_xy, axes)");
               schema.BuildFunction(functionProto);
               return true;
             }));
