@@ -1,18 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import sys
 import re
 
-from typing import List, Text, Sequence, Any, Union, Optional
+from typing import Callable, List, Text, Sequence, Any, Union, Optional, Dict
 import numpy as np  # type: ignore
 
 import onnx
 import onnx.mapping
+import onnx.helper
 
 from ..utils import import_recursive
 from ..test_case import TestCase
@@ -21,7 +17,61 @@ from ..test_case import TestCase
 _NodeTestCases = []
 _TargetOpType = ""
 
-from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto
+from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, GraphProto
+
+
+def _rename_edges_helper(internal_node: NodeProto,
+                         rename_helper: Callable[[Text], Text],
+                         attribute_map: Dict[Text, AttributeProto],
+                         prefix: Text) -> NodeProto:
+    new_node = NodeProto()
+    new_node.CopyFrom(internal_node)
+    new_node.ClearField("input")
+    new_node.ClearField("output")
+    new_node.ClearField("attribute")
+    for internal_name in internal_node.input:
+        new_node.input.append(rename_helper(internal_name))
+    for internal_name in internal_node.output:
+        new_node.output.append(rename_helper(internal_name))
+    for attr in internal_node.attribute:
+        if attr.HasField("ref_attr_name"):
+            if attr.ref_attr_name in attribute_map:
+                new_attr = AttributeProto()
+                new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                new_attr.name = attr.name
+                new_node.attribute.extend([new_attr])
+        else:
+            new_attr = AttributeProto()
+            new_attr.CopyFrom(attr)
+            if attr.type == AttributeProto.GRAPH:
+                new_graph = new_attr.g
+                sg_rename = {}
+                for in_desc in new_graph.input:
+                    sg_rename[in_desc.name] = in_desc.name = prefix + in_desc.name
+                for out_desc in new_graph.output:
+                    sg_rename[out_desc.name] = out_desc.name = prefix + out_desc.name
+                for init_desc in new_graph.initializer:
+                    sg_rename[init_desc.name] = init_desc.name = prefix + init_desc.name
+                for sparse_init_desc in new_graph.sparse_initializer:
+                    sg_rename[sparse_init_desc.values.name] = sparse_init_desc.values.name = prefix + \
+                        sparse_init_desc.values.name
+                for sparse_init_desc in new_graph.sparse_initializer:
+                    sg_rename[sparse_init_desc.indices.name] = sparse_init_desc.indices.name = prefix + \
+                        sparse_init_desc.indices.name
+
+                def subgraph_rename_helper(name: Text) -> Any:
+                    if name in sg_rename:
+                        return sg_rename[name]
+                    else:
+                        return rename_helper(name)
+                new_nodes = [
+                    _rename_edges_helper(node_desc, subgraph_rename_helper, attribute_map, prefix)
+                    for node_desc in new_graph.node
+                ]
+                new_graph.ClearField("node")
+                new_graph.node.extend(new_nodes)
+            new_node.attribute.extend([new_attr])
+    return new_node
 
 
 # FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
@@ -29,7 +79,6 @@ def function_expand_helper(node: NodeProto,
                            function_proto: FunctionProto,
                            op_prefix: Text
                            ) -> List[NodeProto]:
-    node_list = []
     io_names_map = dict()
     attribute_map = dict((a.name, a) for a in node.attribute)
 
@@ -47,40 +96,24 @@ def function_expand_helper(node: NodeProto,
         if idx in range(len(node.output)) and node.output[idx] != "":
             io_names_map[function_proto.output[idx]] = node.output[idx]
 
-    for internal_node in function_proto.node:
-        new_node = NodeProto()
-        new_node.CopyFrom(internal_node)
-        new_node.ClearField("input")
-        new_node.ClearField("output")
-        new_node.ClearField("attribute")
-        for internal_name in internal_node.input:
-            if internal_name in io_names_map:
-                new_node.input.append(io_names_map[internal_name])
-            else:
-                new_node.input.append(op_prefix + internal_name)
-        for internal_name in internal_node.output:
-            if internal_name in io_names_map:
-                new_node.output.append(io_names_map[internal_name])
-            else:
-                new_node.output.append(op_prefix + internal_name)
-        for attr in internal_node.attribute:
-            if attr.HasField("ref_attr_name"):
-                if attr.ref_attr_name in attribute_map:
-                    new_attr = AttributeProto()
-                    new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
-                    new_attr.name = attr.name
-                    new_node.attribute.extend([new_attr])
-            else:
-                new_attr = AttributeProto()
-                new_attr.CopyFrom(attr)
-                new_node.attribute.extend([new_attr])
-        node_list.append(new_node)
-    return node_list
+    def rename_helper(internal_name: Text) -> Any:
+        if internal_name in io_names_map:
+            return io_names_map[internal_name]
+        elif internal_name == '':
+            return ''
+        else:
+            return op_prefix + internal_name
+
+    new_node_list = [
+        _rename_edges_helper(internal_node, rename_helper, attribute_map, op_prefix)
+        for internal_node in function_proto.node
+    ]
+    return new_node_list
 
 
 def function_testcase_helper(node: NodeProto, input_types: List[TypeProto], name: Text) -> List[NodeProto]:
     test_op = node.op_type
-    op_prefix = test_op + "_" + name + "_expanded_function"
+    op_prefix = test_op + "_" + name + "_expanded_function_"
     schema = onnx.defs.get_schema(test_op, node.domain)
 
     if schema.has_function:    # type: ignore

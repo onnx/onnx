@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 import onnx
 from onnx import helper, TensorProto, shape_inference, version_converter, ValueInfoProto
 from typing import Text, List, Dict, Any, Union, Callable, Optional, cast
@@ -1060,6 +1059,15 @@ class TestAutomaticUpgrade(unittest.TestCase):
             input_types=[TensorProto.FLOAT, TensorProto.FLOAT16],
             output_types=[TensorProto.FLOAT16])
 
+    def test_LayerNormalization(self) -> None:
+        self._test_op_upgrade('LayerNormalization', 17,
+                              [[2, 3, 4, 5], [4, 5], [4, 5]],
+                              [[2, 3, 4, 5]],
+                              input_types=[TensorProto.FLOAT,
+                                           TensorProto.FLOAT, TensorProto.FLOAT],
+                              output_types=[TensorProto.FLOAT],
+                              attrs={'axis': 2})
+
     def test_ops_tested(self) -> None:
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
@@ -1073,6 +1081,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             'SequenceErase',
             'SequenceInsert',
             'SequenceLength',
+            'SequenceMap',
             'SplitToSequence',
             'Optional',
             'OptionalGetElement',

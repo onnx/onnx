@@ -340,7 +340,7 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
 static const char* scan_opset8_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-functional programming constructs such as scan, fold, map, and zip and is intended to enable
+functional programming constructs such as scan, fold, map, and zip, and is intended to enable
 generalizations of RNN-like constructs for sequence-to-sequence processing.
 Other tensors (referred to as state_variables here) can be used to carry a state
 when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -1112,7 +1112,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* scan_9_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-functional programming constructs such as scan, fold, map, and zip and is intended to enable
+functional programming constructs such as scan, fold, map, and zip, and is intended to enable
 generalizations of RNN-like constructs for sequence-to-sequence processing.
 Other tensors (referred to as state_variables here) can be used to carry a state
 when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -1299,7 +1299,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axis. If omitted, 0 will be used as the scan axis for every scan_output.",
             AttributeProto::INTS,
             false)
-        .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset9));
 
@@ -1986,7 +1985,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* scan_11_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
-functional programming constructs such as scan, fold, map, and zip and is intended to enable
+functional programming constructs such as scan, fold, map, and zip, and is intended to enable
 generalizations of RNN-like constructs for sequence-to-sequence processing.
 Other tensors (referred to as state_variables here) can be used to carry a state
 when iterating from one element to another (similar to hidden-state in RNNs, also referred
@@ -2178,7 +2177,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "range is [-r, r-1].",
             AttributeProto::INTS,
             false)
-        .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
 

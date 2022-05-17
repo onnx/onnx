@@ -1,0 +1,8 @@
+# Configuration for probot-stale - https://github.com/probot/stale
+
+daysUntilStale: 365
+daysUntilClose: 21
+exemptLabels: []
+# Label to use when marking as stale
+staleLabel: stale
+

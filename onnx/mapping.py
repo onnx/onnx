@@ -1,12 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from onnx import TensorProto, SequenceProto, OptionalProto
-from typing import Text, Any
 import numpy as np  # type: ignore
 
 TENSOR_TYPE_TO_NP_TYPE = {

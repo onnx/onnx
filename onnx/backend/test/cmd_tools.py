@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import argparse
 import json
 import os
@@ -47,8 +42,10 @@ def generate_data(args: argparse.Namespace) -> None:
                     'atol': case.atol,
                 }, fi, sort_keys=True)
         else:
+            assert case.model
             with open(os.path.join(output_dir, 'model.onnx'), 'wb') as f:
                 f.write(case.model.SerializeToString())
+            assert case.data_sets
             for i, (inputs, outputs) in enumerate(case.data_sets):
                 data_set_dir = os.path.join(
                     output_dir, 'test_data_set_{}'.format(i))

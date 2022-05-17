@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 import unittest
 
 import onnx
@@ -17,8 +13,8 @@ class TestFunction(unittest.TestCase):
                 next((f for f in extracted_model.functions
                 if f.name == function and f.domain == func_domain), None))
 
-    def test_extract_model_with_local_function(self):  # type: () -> None
-        '''
+    def test_extract_model_with_local_function(self) -> None:
+        r'''
         #   1. build a model with graph below. extract models with output combinations
         #   2. validate extracted models' local functions
         #
@@ -45,7 +41,7 @@ class TestFunction(unittest.TestCase):
         #                |
         #                c
         #
-        '''  # noqa: W605
+        '''
 
         # function common
         func_domain = 'local'
