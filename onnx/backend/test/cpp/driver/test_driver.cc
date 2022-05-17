@@ -17,6 +17,7 @@
 #include <dirent.h>
 #endif
 #include "onnx/common/common.h"
+#include "onnx/common/path.h"
 
 namespace ONNX_NAMESPACE {
 namespace testing {
@@ -54,15 +55,15 @@ void TestDriver::FetchSingleTestCase(const std::string& case_dir, const std::str
       std::string input_name, output_name;
       std::string case_dirname = case_dir;
       case_dirname += "test_data_set_" + ONNX_NAMESPACE::to_string(case_count);
-      input_name = case_dirname + "/input_" + "0" + ".pb";
-      output_name = case_dirname + "/output_" + "0" + ".pb";
+      input_name = case_dirname + k_preferred_path_separator + "input_" + "0" + ".pb";
+      output_name = case_dirname + k_preferred_path_separator + "output_" + "0" + ".pb";
       if (!FileExists(output_name) && !FileExists(input_name)) {
         break;
       }
 
       for (int data_count = 0;; data_count++) {
-        input_name = case_dirname + "/input_" + ONNX_NAMESPACE::to_string(data_count) + ".pb";
-        output_name = case_dirname + "/output_" + ONNX_NAMESPACE::to_string(data_count) + ".pb";
+        input_name = case_dirname + k_preferred_path_separator + "input_" + ONNX_NAMESPACE::to_string(data_count) + ".pb";
+        output_name = case_dirname + k_preferred_path_separator + "output_" + ONNX_NAMESPACE::to_string(data_count) + ".pb";
         const bool input_exists = FileExists(input_name);
         const bool output_exists = FileExists(output_name);
         if (!output_exists && !input_exists) {
@@ -87,13 +88,14 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
   if (target_dir == "") {
     target_dir = default_dir_;
   }
-  if (target_dir[target_dir.size() - 1] == '/') {
-    target_dir.erase(target_dir.size() - 1, 1);
+  if (target_dir.substr(target_dir.size() - k_preferred_path_separator.size(), target_dir.size()) == k_preferred_path_separator) {
+    target_dir.erase(target_dir.size() - k_preferred_path_separator.size(), k_preferred_path_separator.size());
   }
 #ifdef _WIN32
+  std::string target_dir_files = target_dir + "\\*";
   _finddata_t file;
   intptr_t lf;
-  if ((lf = _findfirst(target_dir.c_str(), &file)) == -1) {
+  if ((lf = _findfirst(target_dir_files.c_str(), &file)) == -1) {
     std::cerr << "Error: cannot open directory " << target_dir << " when fetching test data: " << strerror(errno)
               << std::endl;
     return false;
@@ -101,9 +103,8 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
     ONNX_TRY {
       do {
         std::string entry_dname = file.name;
-        std::string full_entry_dname;
         if (entry_dname != "." && entry_dname != "..") {
-          full_entry_dname = target_dir + "/" + entry_dname + "/";
+          std::string full_entry_dname = target_dir + k_preferred_path_separator + entry_dname + k_preferred_path_separator;
           FetchSingleTestCase(full_entry_dname, entry_dname);
         }
       } while (_findnext(lf, &file) == 0);
@@ -140,7 +141,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
       std::string full_entry_dname;
       std::string entry_dname = entry->d_name;
       if (entry_dname != "." && entry_dname != "..") {
-        full_entry_dname = target_dir + "/" + entry_dname + "/";
+        full_entry_dname = target_dir + k_preferred_path_separator + entry_dname + k_preferred_path_separator;
         FetchSingleTestCase(full_entry_dname, entry_dname);
       }
     }

@@ -94,3 +94,9 @@ jobs:
         if($lastexitcode -ne 0) {
           EXIT 1
         }
+
+        echo "Test drivers with input.pb and output.pb"
+        Release\onnxifi_test_driver_gtests.exe ..\onnx\backend\test\data\node
+        if($lastexitcode -ne 0) {
+          EXIT 1
+        }
