@@ -172,26 +172,13 @@ std::vector<UnsolvedTestCase> GetTestCase(const std::string& location) {
 }
 
 void LoadSingleFile(const std::string& filename, std::string& filedata) {
-  FILE* fp;
-  if ((fp = fopen(filename.c_str(), "r")) != NULL) {
-    ONNX_TRY {
-      int fsize;
-      char buff[1024] = {0};
-      do {
-        fsize = fread(buff, sizeof(char), 1024, fp);
-        filedata += std::string(buff, buff + fsize);
-      } while (fsize == 1024);
-    }
-    ONNX_CATCH(const std::exception& e) {
-      ONNX_HANDLE_EXCEPTION([&]() {
-        fclose(fp);
-        ONNX_THROW_EX(e);
-      });
-    }
-    fclose(fp);
-  } else {
-    std::cerr << "Warning: failed to open file: " << filename << std::endl;
+  std::fstream model_stream(filename, std::ios::in | std::ios::binary);
+  if (!model_stream.good()) {
+    std::cerr << "Unable to open model file: " << filename << std::endl;
+    return;
   }
+  std::string data{std::istreambuf_iterator<char>{model_stream}, std::istreambuf_iterator<char>{}};
+  filedata = data;
 }
 
 ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
@@ -207,6 +194,11 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       std::string input_data;
       ONNX_NAMESPACE::ValueInfoProto input_info;
       LoadSingleFile(input_file, input_data);
+      if (test_data_counter >= st.model_.graph().input().size()) {
+        std::cerr << "Input index " << test_data_counter << "for " << t.model_filename_ << " is out of the size " << st.model_.graph().input().size()
+        << std::endl;
+        break;
+      }
       input_info = st.model_.graph().input(test_data_counter);
       if (input_info.type().has_tensor_type()) {
         ONNX_NAMESPACE::TensorProto input_proto;
@@ -231,6 +223,11 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
     for (auto& output_file : test_data.output_filenames_) {
       std::string output_data;
       ONNX_NAMESPACE::ValueInfoProto output_info;
+      if (test_data_counter >= st.model_.graph().output().size()) {
+        std::cerr << "Output index " << test_data_counter << "for " << t.model_filename_ << " is out of the size " << st.model_.graph().output().size()
+        << std::endl;
+        break;
+      }
       output_info = st.model_.graph().output(test_data_counter);
       LoadSingleFile(output_file, output_data);
       if (output_info.type().has_tensor_type()) {
