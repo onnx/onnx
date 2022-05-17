@@ -2794,14 +2794,14 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 ### <a name="CenterCropPad"></a><a name="centercroppad">**CenterCropPad**</a>
 
-  Center crop or pad an image to given dimensions.
+  Center crop or pad an input to given dimensions.
 
-  The input image can have have channel-first (CHW) or channel-last layout (HWC), which can be controlled
-  by the `channel_first` argument.
+  The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
+  cropped or padded.
 
   If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
   If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-  so that the input image is centered in the output.
+  so that the input is centered in the output.
 
 #### Version
 
@@ -2827,7 +2827,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>output_data</tt> (differentiable) : T</dt>
-<dd>Output image.</dd>
+<dd>Output data.</dd>
 </dl>
 
 #### Type Constraints

@@ -3991,14 +3991,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* CenterCropPad_ver17_doc = R"DOC(
-Center crop or pad an image to given dimensions.
+Center crop or pad an input to given dimensions.
 
-The input image can have have channel-first (CHW) or channel-last layout (HWC), which can be controlled
-by the `channel_first` argument.
+The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
+cropped or padded.
 
 If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
 If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-so that the input image is centered in the output.
+so that the input is centered in the output.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -4024,7 +4024,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .Output(0, "output_data", "Output image.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "output_data", "Output data.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
             "axes",
             "If provided, it specifies a subset of axes that 'shape' refer to. "
