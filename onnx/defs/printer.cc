@@ -39,14 +39,45 @@ std::ostream& operator<<(std::ostream& os, const TypeProto_Tensor& tensortype) {
     if (tensortype.shape().dim_size() > 0)
       os << tensortype.shape();
   } else
-    os << "[...]";
+    os << "[]";
 
   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const TypeProto_Sequence& seqType) {
+  return os << "seq(" << seqType.elem_type() << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, const TypeProto_Map& mapType) {
+  return os << "map(" << PrimitiveTypeNameMap::ToString(mapType.key_type()) << ", " << mapType.value_type() << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, const TypeProto_Optional& optType) {
+  return os << "optional(" << optType.elem_type() << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, const TypeProto_SparseTensor sparseType) {
+  os << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(sparseType.elem_type());
+  if (sparseType.has_shape()) {
+    if (sparseType.shape().dim_size() > 0)
+      os << sparseType.shape();
+  } else
+    os << "[]";
+
+  return os << ")";
 }
 
 std::ostream& operator<<(std::ostream& os, const TypeProto& type) {
   if (type.has_tensor_type())
     os << type.tensor_type();
+  else if (type.has_sequence_type())
+    os << type.sequence_type();
+  else if (type.has_map_type())
+    os << type.map_type();
+  else if (type.has_optional_type())
+    os << type.optional_type();
+  else if (type.has_sparse_tensor_type())
+    os << type.sparse_tensor_type();
   return os;
 }
 
@@ -54,41 +85,63 @@ std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
   os << PrimitiveTypeNameMap::ToString(tensor.data_type());
   print(os, "[", ",", "]", tensor.dims());
 
-  // TODO: does not yet handle raw_data or FLOAT16 or externally stored data.
-  // TODO: does not yet handle name of tensor.
-  switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
-    case TensorProto::DataType::TensorProto_DataType_INT8:
-    case TensorProto::DataType::TensorProto_DataType_INT16:
-    case TensorProto::DataType::TensorProto_DataType_INT32:
-    case TensorProto::DataType::TensorProto_DataType_UINT8:
-    case TensorProto::DataType::TensorProto_DataType_UINT16:
-    case TensorProto::DataType::TensorProto_DataType_BOOL:
-      print(os, " {", ",", "}", tensor.int32_data());
-      break;
-    case TensorProto::DataType::TensorProto_DataType_INT64:
-      print(os, " {", ",", "}", tensor.int64_data());
-      break;
-    case TensorProto::DataType::TensorProto_DataType_UINT32:
-    case TensorProto::DataType::TensorProto_DataType_UINT64:
-      print(os, " {", ",", "}", tensor.uint64_data());
-      break;
-    case TensorProto::DataType::TensorProto_DataType_FLOAT:
-      print(os, " {", ",", "}", tensor.float_data());
-      break;
-    case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-      print(os, " {", ",", "}", tensor.double_data());
-      break;
-    case TensorProto::DataType::TensorProto_DataType_STRING: {
-      const char* sep = "{";
-      for (auto& elt : tensor.string_data()) {
-        os << sep << "\"" << elt << "\"";
-        sep = ", ";
-      }
-      os << "}";
-      break;
+  if (! tensor.name().empty()) {
+    os << " " << tensor.name() << " ";
+  }
+  // TODO: does not yet handle all types or externally stored data.
+  if (tensor.has_raw_data()) {
+    switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
+      case TensorProto::DataType::TensorProto_DataType_INT32:
+        print(os, " {", ",", "}", ParseData<int32_t>(&tensor));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_INT64:
+        print(os, " {", ",", "}", ParseData<int64_t>(&tensor));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_FLOAT:
+        print(os, " {", ",", "}", ParseData<float>(&tensor));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_DOUBLE:
+        print(os, " {", ",", "}", ParseData<double>(&tensor));
+        break;
+      default:
+        os << "..."; // ParseData not instantiated for other types.
+        break;
     }
-    default:
-      break;
+  } else {
+    switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
+      case TensorProto::DataType::TensorProto_DataType_INT8:
+      case TensorProto::DataType::TensorProto_DataType_INT16:
+      case TensorProto::DataType::TensorProto_DataType_INT32:
+      case TensorProto::DataType::TensorProto_DataType_UINT8:
+      case TensorProto::DataType::TensorProto_DataType_UINT16:
+      case TensorProto::DataType::TensorProto_DataType_BOOL:
+        print(os, " {", ",", "}", tensor.int32_data());
+        break;
+      case TensorProto::DataType::TensorProto_DataType_INT64:
+        print(os, " {", ",", "}", tensor.int64_data());
+        break;
+      case TensorProto::DataType::TensorProto_DataType_UINT32:
+      case TensorProto::DataType::TensorProto_DataType_UINT64:
+        print(os, " {", ",", "}", tensor.uint64_data());
+        break;
+      case TensorProto::DataType::TensorProto_DataType_FLOAT:
+        print(os, " {", ",", "}", tensor.float_data());
+        break;
+      case TensorProto::DataType::TensorProto_DataType_DOUBLE:
+        print(os, " {", ",", "}", tensor.double_data());
+        break;
+      case TensorProto::DataType::TensorProto_DataType_STRING: {
+        const char* sep = "{";
+        for (auto& elt : tensor.string_data()) {
+          os << sep << "\"" << elt << "\"";
+          sep = ", ";
+        }
+        os << "}";
+        break;
+      }
+      default:
+        break;
+    }
   }
   return os;
 }
@@ -104,6 +157,12 @@ std::ostream& operator<<(std::ostream& os, const ValueInfoList& vilist) {
 }
 
 std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
+  // Special case of attr-ref:
+  if (attr.has_ref_attr_name()) {
+    os << attr.name() << " : " << AttributeTypeNameMap::ToString(attr.type()) << " = @" << attr.ref_attr_name();
+    return os;
+  }
+  // General case:
   os << attr.name() << " = ";
   switch (attr.type()) {
     case AttributeProto_AttributeType_INT:
@@ -132,6 +191,15 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
     }
     case AttributeProto_AttributeType_GRAPH:
       os << attr.g();
+      break;
+    case AttributeProto_AttributeType_GRAPHS:
+      print(os, "[", ", ", "]", attr.graphs());
+      break;
+    case AttributeProto_AttributeType_TENSOR:
+      os << attr.t();
+      break;
+    case AttributeProto_AttributeType_TENSORS:
+      print(os, "[", ", ", "]", attr.tensors());
       break;
     default:
       break;
