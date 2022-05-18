@@ -367,13 +367,13 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.array([10, np.e, 1]).astype(np.float32)
-y = np.arccosh(x).astype(np.float32)  # expected output [2.99322295,  1.65745449,  0.]
+x = np.array([10, np.e, 1]).astype(np.float64)
+y = np.arccosh(x).astype(np.float64)  # expected output [2.99322295,  1.65745449,  0.]
 expect(node, inputs=[x], outputs=[y],
        name='test_acosh_example')
 
-x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
-y = np.arccosh(x).astype(np.float32)
+x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float64)
+y = np.arccosh(x).astype(np.float64)
 expect(node, inputs=[x], outputs=[y],
        name='test_acosh')
 ```
