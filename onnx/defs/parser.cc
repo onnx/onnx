@@ -48,26 +48,23 @@ Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
   attrlist.Clear();
   do {
     std::string id;
-    bool is_assignment = PeekIsAttributeValue(id);
-    if (id.empty())
-      return Status::OK(); // Treat as empty list of identifiers
-    if (is_assignment) {
-      PARSE(*attrlist.Add());
-    }
-    else {
-      ParseOptionalIdentifier(id);
+    ParseIdentifier(id);
+    auto next = NextChar();
+    if (next == ':' || next == '=')
+      Parse(*attrlist.Add(), id);
+    else
       *idlist.Add() = id;
-    }
   } while (Matches(','));
   return Status::OK();
 }
 
 Status OnnxParser::Parse(char open, IdList& idlist, AttrList& attrlist, char close) {
-  idlist.Clear();
-  attrlist.Clear();
   if (Matches(open)) {
     PARSE(idlist, attrlist);
     MATCH(close);
+  } else {
+    idlist.Clear();
+    attrlist.Clear();
   }
   return Status::OK();
 }
@@ -379,6 +376,10 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
 Status OnnxParser::Parse(AttributeProto& attr) {
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
+  return Parse(attr, name);
+}
+
+Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   attr.set_name(name);
   if (Matches(':')) {
     CHECK_PARSER_STATUS(ParseIdentifier(name));

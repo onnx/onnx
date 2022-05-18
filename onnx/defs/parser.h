@@ -393,14 +393,6 @@ class ParserBase {
     return Status::OK();
   }
 
-  bool PeekIsAttributeValue(std::string& id) {
-    SavePos();
-    ParseOptionalIdentifier(id);
-    bool is_assignment = Matches(':') || Matches('=');
-    RestorePos();
-    return is_assignment;
-  }
-
   Status Parse(KeyWordMap::KeyWord& keyword) {
     std::string id;
     CHECK_PARSER_STATUS(ParseIdentifier(id));
@@ -426,6 +418,8 @@ class OnnxParser : public ParserBase {
   Status Parse(TensorProto& tensorProto);
 
   Status Parse(AttributeProto& attr);
+
+  Status Parse(AttributeProto& attr, std::string& name);
 
   Status Parse(AttrList& attrlist);
 
