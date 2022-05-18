@@ -73,7 +73,7 @@ jobs:
 
       python onnx/backend/test/cmd_tools.py generate-data
       git status
-      git diff --exit-code  -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3
+      git diff --exit-code  -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3 :(exclude)*output_*.pb
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "pytest failed"
         EXIT 1

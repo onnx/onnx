@@ -367,13 +367,13 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-x = np.array([10, np.e, 1]).astype(np.float64)
-y = np.arccosh(x).astype(np.float64)  # expected output [2.99322295,  1.65745449,  0.]
+x = np.array([10, np.e, 1]).astype(np.float32)
+y = np.arccosh(x)  # expected output [2.99322295,  1.65745449,  0.]
 expect(node, inputs=[x], outputs=[y],
        name='test_acosh_example')
 
-x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float64)
-y = np.arccosh(x).astype(np.float64)
+x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
+y = np.arccosh(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acosh')
 ```
@@ -12848,7 +12848,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -13019,7 +13019,7 @@ node = onnx.helper.make_node(
 N, C = 3, 5
 np.random.seed(0)
 input = np.random.rand(N, C).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N))
+target = np.random.randint(0, high=C, size=(N)).astype(np.int64)
 target[0] = 10
 weight = np.random.rand(C).astype(np.float32)
 
