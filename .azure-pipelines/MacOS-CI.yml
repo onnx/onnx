@@ -104,7 +104,7 @@ jobs:
 
       python onnx/backend/test/cmd_tools.py generate-data
       git status
-      git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3' ':!*output_*.pb'
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!onnx/backend/test/data/node/test_log/test_data_set_0/input_0.pb'
       if [ $? -ne 0 ]; then
         echo "git diff returned failures"
         exit 1

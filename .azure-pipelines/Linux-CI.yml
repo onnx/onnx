@@ -136,7 +136,9 @@ jobs:
       # onnx.checker all generated backend data
       python onnx/backend/test/cmd_tools.py generate-data
       git status
-      git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3' ':(exclude)*output_*.pb'
+      # Skip *output_*.pb because NumPy functions might behave differently on different platforms
+      # Skip test_log's input.pb because it uses np.random, which might behave differently on different platforms
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!onnx/backend/test/data/node/test_log/test_data_set_0/input_0.pb'
       if [ $? -ne 0 ]; then
         echo "git diff returned failures"
         exit 1
