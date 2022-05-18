@@ -15,7 +15,6 @@ from ..test_case import TestCase
 
 _NodeTestCases = []
 _TargetOpType = None
-_TargetOpsetVersion = None
 
 
 from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, GraphProto, ModelProto
@@ -213,12 +212,7 @@ def expect(node: onnx.NodeProto,
     if "opset_imports" not in kwargs:
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
-        if _TargetOpsetVersion is None:
-            produce_opset_version = onnx.defs.get_schema(node.op_type, node.domain).since_version
-        # If given targeted opset version
-        # it will generate test data for the latest opset vesion that supports before targeted opset version
-        else:
-            produce_opset_version = onnx.defs.get_schema(node.op_type, int(_TargetOpsetVersion), node.domain).since_version
+        produce_opset_version = onnx.defs.get_schema(node.op_type, node.domain).since_version
         kwargs[str("opset_imports")] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
 
     model = _make_test_model_gen_version(graph, **kwargs)
@@ -268,14 +262,12 @@ def expect(node: onnx.NodeProto,
         ))
 
 
-def collect_testcases(op_type: Text, opset_version: int) -> List[TestCase]:
+def collect_testcases(op_type: Text) -> List[TestCase]:
     '''Collect node test cases
     '''
     # only keep those tests related to this operator
     global _TargetOpType
     _TargetOpType = op_type
 
-    global _TargetOpsetVersion
-    _TargetOpsetVersion = opset_version
     import_recursive(sys.modules[__name__])
     return _NodeTestCases
