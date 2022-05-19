@@ -139,7 +139,7 @@ class Sequence(Base):
             [onnx.TensorProto.FLOAT] * 3 + [onnx.TensorProto.INT64] * 2,  # type: ignore
             [onnx.TensorProto.FLOAT],
             [pos, pos_at])
-        model = onnx.helper.make_model(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
         expect(model, inputs=[x, y, z], outputs=[out], name="test_sequence_model1")
 
         #2nd testcase - erase and at.
@@ -175,7 +175,7 @@ class Sequence(Base):
             [onnx.TensorProto.FLOAT] * 3 + [onnx.TensorProto.INT64] * 2,  # type: ignore
             [onnx.TensorProto.FLOAT],
             [pos_erase, pos_at])
-        model = onnx.helper.make_model(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
         expect(model, inputs=[x, y, z], outputs=[out], name="test_sequence_model2")
 
         #3rd testcase - erase, insert and at, with negative index value.
@@ -215,7 +215,7 @@ class Sequence(Base):
             [onnx.TensorProto.FLOAT] * 3 + [onnx.TensorProto.INT64] * 3,  # type: ignore
             [onnx.TensorProto.FLOAT],
             [pos_erase, pos_insert, pos_at])
-        model = onnx.helper.make_model(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
         expect(model, inputs=[x, y, z], outputs=[out], name="test_sequence_model3")
 
         #4th testcase - concat
@@ -239,7 +239,7 @@ class Sequence(Base):
             ['out'],
             [onnx.TensorProto.FLOAT] * 3,  # type: ignore
             [onnx.TensorProto.FLOAT])
-        model = onnx.helper.make_model(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
         expect(model, inputs=[x, y, z], outputs=[concat_out], name="test_sequence_model4")
 
         #5th testcase - concat with new_axis = 1
@@ -263,7 +263,7 @@ class Sequence(Base):
             ['out'],
             [onnx.TensorProto.FLOAT] * 3,  # type: ignore
             [onnx.TensorProto.FLOAT],)
-        model = onnx.helper.make_model(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
         expect(model, inputs=[x, y, z], outputs=[concat_out], name="test_sequence_model5")
 
         #6th testcase - split and len
@@ -292,7 +292,7 @@ class Sequence(Base):
                     onnx.TensorProto.INT64,
                     len_shape)])  # type: ignore
 
-        model = onnx.helper.make_model(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
         expect(model, inputs=[x], outputs=[out], name="test_sequence_model6")
 
         #7th testcase - split with keepdims=0, and SequenceAt
@@ -319,7 +319,7 @@ class Sequence(Base):
             [onnx.TensorProto.DOUBLE, onnx.TensorProto.INT64],
             [onnx.TensorProto.DOUBLE],
             [pos_at])
-        model = onnx.helper.make_model(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
         expect(model, inputs=[x], outputs=[out], name="test_sequence_model7")
 
         #8th testcase - split zero length
@@ -351,5 +351,5 @@ class Sequence(Base):
                     onnx.TensorProto.INT64,
                     len_shape)])  # type: ignore
 
-        model = onnx.helper.make_model(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 12)])
         expect(model, inputs=[x, splits], outputs=[out_len], name="test_sequence_model8")
