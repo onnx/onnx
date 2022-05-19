@@ -622,7 +622,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return;
             }
             for (int j = 0; j < input_data->dim_size(); ++j) {
-              appendDimToTensorShapeProto(tsp, input_data->dim(j));
+              *tsp.add_dim() = input_data->dim(j);
             }
           }
           if (tsp.dim_size() > 0) {
@@ -1112,11 +1112,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto tsp;
             if (step > 0) {
               for (int i = start; i < end; i += step) {
-                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+                *tsp.add_dim() = input_data->dim(i);
               }
             } else {
               for (int i = start; i > end; i += step) {
-                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+                *tsp.add_dim() = input_data->dim(i);
               }
             }
             if (tsp.dim_size() > 0) {
@@ -1749,27 +1749,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          if (!axisIsZero(ctx, true)) {
-            return;
-          }
-          const auto input_data = ctx.getInputData(0);
-          const auto input_indices = ctx.getInputData(1);
-          if (input_data == nullptr || input_indices == nullptr) {
-            return;
-          }
-          TensorShapeProto tsp;
-          for (int i = 0; i < input_indices->dim_size(); ++i) {
-            if (input_indices->dim(i).has_dim_value()) {
-              int index = input_indices->dim(i).dim_value();
-              appendDimToTensorShapeProto(tsp,
-                input_data->dim((index < 0)? input_data->dim_size() + index : index));
-            } else {
-              return;
-            }
-          }
-          if (tsp.dim_size() > 0) {
-            ctx.addOutputData(0, std::move(tsp));
-          }
+          GatherOp13DataPropagator(ctx);
         }));
 
 static const char* GatherElements_ver13_doc = R"DOC(
@@ -3108,18 +3088,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* NonZero_ver13_doc = R"DOC(
-    Returns the indices of the elements that are non-zero
-    (in row-major order - by dimension).
-    NonZero behaves similar to numpy.nonzero:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     NonZero,
     13,
     OpSchema()
-        .SetDoc(NonZero_ver13_doc)
+        .SetDoc(NonZero_ver9_doc)
         .Input(
             0,
             "X",
