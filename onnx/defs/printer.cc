@@ -83,7 +83,8 @@ std::ostream& operator<<(std::ostream& os, const TypeProto& type) {
 
 std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
   os << PrimitiveTypeNameMap::ToString(tensor.data_type());
-  print(os, "[", ",", "]", tensor.dims());
+  if (tensor.dims_size() > 0)
+    print(os, "[", ",", "]", tensor.dims());
 
   if (! tensor.name().empty()) {
     os << " " << tensor.name() << " ";

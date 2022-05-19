@@ -8,10 +8,12 @@
 #include <limits>
 #include <tuple>
 #include <unordered_map>
+#include <sstream>
 
 #include "onnx/checker.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
+#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
@@ -29,6 +31,15 @@ static std::tuple<bool, py::bytes, py::bytes> Parse(const char* cstr) {
   std::string out;
   proto.SerializeToString(&out);
   return std::make_tuple(status.IsOK(), py::bytes(status.ErrorMessage()), py::bytes(out));
+}
+
+template <typename ProtoType>
+static std::string ProtoToText(const py::bytes& bytes) {
+  ProtoType proto{};
+  ParseProtoFromPyBytes(&proto, bytes);
+  std::stringstream ss;
+  ss << proto;
+  return ss.str();
 }
 
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
@@ -347,6 +358,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   parser.def("parse_model", Parse<ModelProto>);
   parser.def("parse_graph", Parse<GraphProto>);
+  parser.def("parse_function", Parse<FunctionProto>);
+
+    // Submodule `printer`
+  auto printer = onnx_cpp2py_export.def_submodule("printer");
+  printer.doc() = "Printer submodule";
+
+  printer.def("function_to_text", ProtoToText<FunctionProto>);
+  printer.def("graph_to_text", ProtoToText<GraphProto>);
+
 }
 
 } // namespace ONNX_NAMESPACE
