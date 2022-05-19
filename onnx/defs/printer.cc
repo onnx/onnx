@@ -2,10 +2,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <iomanip>
 #include "onnx/defs/printer.h"
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
+
+static int indent_level = 3;
+
+static void indent() { indent_level += 3; }
+
+static void outdent() { indent_level -= 3; }
 
 template <typename Collection>
 inline void print(std::ostream& os, const char* open, const char* separator, const char* close, Collection coll) {
@@ -191,10 +198,14 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
       break;
     }
     case AttributeProto_AttributeType_GRAPH:
+      indent();
       os << attr.g();
+      outdent();
       break;
     case AttributeProto_AttributeType_GRAPHS:
+      indent();
       print(os, "[", ", ", "]", attr.graphs());
+      outdent();
       break;
     case AttributeProto_AttributeType_TENSOR:
       os << attr.t();
@@ -209,21 +220,36 @@ std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
 }
 
 std::ostream& operator<<(std::ostream& os, const AttrList& attrlist) {
-  print(os, "<", ", ", ">", attrlist);
+  print(os, " <", ", ", ">", attrlist);
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const NodeProto& node) {
+  os << std::setw(indent_level) << ' ';
   print(os, "", ", ", "", node.output());
   os << " = " << node.op_type();
-  if (node.attribute_size() > 0)
+  bool has_subgraph = false;
+  for (auto attr: node.attribute())
+    if (attr.has_g() || (attr.graphs_size() > 0))
+      has_subgraph = true;
+  if ((!has_subgraph) && (node.attribute_size() > 0))
     os << node.attribute();
-  print(os, "(", ", ", ")", node.input());
+  print(os, " (", ", ", ")", node.input());
+  if ((has_subgraph) && (node.attribute_size() > 0))
+    os << node.attribute();
+  os << "\n";
   return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const NodeList& nodelist) {
-  print(os, "{\n", "\n", "\n}\n", nodelist);
+    const char* sep = "";
+  os << "{\n";
+  for (auto& node : nodelist) {
+    os << node;
+  }
+  if (indent_level > 3)
+    os << std::setw(indent_level-3) << "   ";
+  os << "}";
   return os;
 }
 
