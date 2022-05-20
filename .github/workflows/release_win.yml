@@ -74,14 +74,6 @@ jobs:
         cd onnx
         pytest
 
-    - name: Test generated backend test data
-      run: |
-        cd onnx
-        # onnx.checker all generated backend data
-        python onnx\backend\test\cmd_tools.py generate-data
-        # Only test generated backend node test data
-        pytest onnx\test\test_backend_test.py -k OnnxBackendNodeModelTest
-
     - uses: actions/upload-artifact@v1
       with:
         name: wheels
