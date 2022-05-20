@@ -11,7 +11,7 @@ from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto,
 from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
-from typing import Text, Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
+from typing import Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
 import numpy as np  # type: ignore
 import warnings
 

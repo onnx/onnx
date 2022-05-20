@@ -25,7 +25,6 @@ from typing import (
     Generator,
     List,
     Set,
-    Text,
     cast,
     Optional
 )
@@ -268,7 +267,7 @@ class PkgWriter:
             d.FieldDescriptorProto.TYPE_SINT32: lambda: "int",
 
             d.FieldDescriptorProto.TYPE_BOOL: lambda: "bool",
-            d.FieldDescriptorProto.TYPE_STRING: lambda: self._import("typing", "Text"),
+            d.FieldDescriptorProto.TYPE_STRING: lambda: "str",
             d.FieldDescriptorProto.TYPE_BYTES: lambda: "bytes",
 
             d.FieldDescriptorProto.TYPE_ENUM: lambda: self._import_message(field.type_name),

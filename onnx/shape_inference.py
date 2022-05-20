@@ -7,7 +7,7 @@ complete.
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C
 from onnx import ModelProto
-from typing import Text, Union
+from typing import Union
 
 
 def infer_shapes(model: Union[ModelProto, bytes], check_type: bool = False, strict_mode: bool = False, data_prop: bool = False) -> ModelProto:
@@ -20,7 +20,7 @@ def infer_shapes(model: Union[ModelProto, bytes], check_type: bool = False, stri
     bug in shape inference), and the result is unspecified.
 
     Arguments:
-        model (Union[ModelProto, Text, bytes], bool, bool, bool) -> ModelProto
+        model (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
         check_type (bool): Checks the type-equality for input and output
         strict_mode (bool): Stricter shape inference, it will throw errors if any;
             Otherwise, simply stop if any error

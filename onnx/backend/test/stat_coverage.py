@@ -9,7 +9,7 @@ from onnx import defs, load, AttributeProto
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.test.runner import Runner
 from onnx.backend.test.loader import load_model_tests
-from typing import Any, IO, Sequence, Text, Dict, List
+from typing import Any, IO, Sequence, Dict, List
 
 
 def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:

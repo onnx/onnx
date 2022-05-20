@@ -9,7 +9,7 @@ import typing
 from ..base import Base
 from . import expect
 from onnx import TensorProto
-from typing import List, Optional, Text, Union
+from typing import List, Optional, Union
 
 
 def SequenceEmptyImpl() -> List[Optional[np.ndarray]]:

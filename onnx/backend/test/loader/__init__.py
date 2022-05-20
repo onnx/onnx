@@ -4,7 +4,7 @@ import json
 import os
 
 from ..case.test_case import TestCase
-from typing import List, Text, Optional
+from typing import List, Optional
 
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.realpath(os.path.dirname(__file__))),

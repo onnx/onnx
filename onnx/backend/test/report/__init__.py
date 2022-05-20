@@ -4,7 +4,7 @@ import pytest  # type: ignore
 import _pytest  # type: ignore
 
 from .coverage import Coverage
-from typing import Dict, Text, Sequence, Any, List
+from typing import Dict, Sequence, Any, List
 
 _coverage = Coverage()
 _marks: Dict[str, Sequence[Any]] = {}

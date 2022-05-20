@@ -3,7 +3,7 @@
 import sys
 import re
 
-from typing import Callable, List, Text, Sequence, Any, Union, Optional, Dict
+from typing import Callable, List, Sequence, Any, Union, Optional, Dict
 import numpy as np  # type: ignore
 
 import onnx

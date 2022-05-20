@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import numpy as np  # type: ignore
 import itertools
-from typing import Text, Sequence
+from typing import Sequence
 
 
 def get_pad_shape(auto_pad: str,

@@ -6,7 +6,7 @@ import numpy as np  # type: ignore
 from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
-from typing import Sequence, Any, Optional, Text, List, Dict
+from typing import Sequence, Any, Optional, List, Dict
 
 
 def combine_pairs_to_complex(fa: Sequence[int]) -> Sequence[np.complex64]:

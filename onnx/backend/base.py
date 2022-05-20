@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from collections import namedtuple
-from typing import Text, Sequence, Any, Type, Tuple, NewType, Optional, Dict
+from typing import Sequence, Any, Type, Tuple, NewType, Optional, Dict
 
 import numpy  # type: ignore
 

@@ -17,7 +17,7 @@ from onnx.external_data_helper import convert_model_to_external_data
 from onnx.external_data_helper import convert_model_from_external_data
 from onnx.external_data_helper import load_external_data_for_model, load_external_data_for_tensor
 from onnx.numpy_helper import to_array, from_array
-from typing import Any, Tuple, Text, List
+from typing import Any, Tuple, List
 import pytest  # type: ignore
 import sys
 

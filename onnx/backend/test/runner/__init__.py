@@ -23,7 +23,7 @@ from urllib.request import urlretrieve
 from ..loader import load_model_tests
 from ..case.test_case import TestCase
 from .item import TestItem
-from typing import Optional, Pattern, Set, Dict, Text, Type, Sequence, Any, Callable, Union, Iterable, List
+from typing import Optional, Pattern, Set, Dict, Type, Sequence, Any, Callable, Union, Iterable, List
 
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):

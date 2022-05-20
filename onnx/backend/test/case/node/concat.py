@@ -5,7 +5,7 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from typing import Dict, Sequence, Text, Any
+from typing import Dict, Sequence, Any
 
 
 class Concat(Base):

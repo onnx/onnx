@@ -4,7 +4,7 @@ import os
 import re
 import sys
 from itertools import chain
-from typing import Callable, Iterable, Text, Optional
+from typing import Callable, Iterable, Optional
 
 from .onnx_pb import TensorProto, ModelProto, AttributeProto, GraphProto
 

@@ -3,7 +3,7 @@
 import numpy as np  # type: ignore
 import unittest
 
-from typing import Text, List, Optional, Tuple, Callable
+from typing import List, Optional, Tuple, Callable
 
 from onnx import helper, parser, checker, compose, version_converter, \
     ModelProto, GraphProto, ValueInfoProto, TensorProto, SparseTensorProto, \

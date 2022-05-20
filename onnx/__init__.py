@@ -18,7 +18,7 @@ import onnx.compose  # noqa
 
 import google.protobuf.message
 
-from typing import Union, Text, IO, Optional, cast, TypeVar, Any
+from typing import Union, IO, Optional, cast, TypeVar, Any
 
 
 # f should be either readable or a file path

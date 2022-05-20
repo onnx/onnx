@@ -11,7 +11,7 @@ from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 import onnx.shape_inference
 import onnx.version_converter
-from typing import Optional, Text, Any, Tuple, Sequence
+from typing import Optional, Any, Tuple, Sequence
 from onnx import NodeProto, ModelProto, TensorProto
 import numpy  # type: ignore
 

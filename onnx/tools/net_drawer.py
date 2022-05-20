@@ -17,7 +17,7 @@ from collections import defaultdict
 import json
 from onnx import ModelProto, GraphProto, NodeProto
 import pydot  # type: ignore
-from typing import Text, Any, Callable, Optional, Dict
+from typing import Any, Callable, Optional, Dict
 
 
 OP_STYLE = {

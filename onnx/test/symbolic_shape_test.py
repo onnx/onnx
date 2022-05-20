@@ -2,7 +2,7 @@
 
 from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, TensorShapeProto, ONNX_ML
 from onnx.helper import make_model, make_node, make_tensor, make_tensor_value_info
-from typing import Sequence, Union, Text, Tuple, List, Any, Optional
+from typing import Sequence, Union, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
 

@@ -4,7 +4,7 @@ import sys
 
 from .base import Snippets
 from .utils import import_recursive
-from typing import Dict, Text, List, Tuple
+from typing import Dict, List, Tuple
 
 
 def collect_snippets() -> Dict[str, List[Tuple[str, str]]]:
