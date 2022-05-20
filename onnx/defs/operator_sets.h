@@ -1064,6 +1064,7 @@ inline void RegisterOnnxOperatorSetSchema() {
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
   // Update here if opset_version bumps
   // These calls for schema registration here are required to be in descending order for this to work correctly
+  RegisterOpSetSchema<OpSet_Onnx_ver17>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver16>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver15>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver14>(target_version);
