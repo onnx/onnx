@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -64,7 +59,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction='none'):  # type:
 class ScatterElements(Base):
 
     @staticmethod
-    def export_scatter_elements_without_axis():  # type: () -> None
+    def export_scatter_elements_without_axis() -> None:
         node = onnx.helper.make_node(
             'ScatterElements',
             inputs=['data', 'indices', 'updates'],
@@ -84,7 +79,7 @@ class ScatterElements(Base):
                name='test_scatter_elements_without_axis')
 
     @staticmethod
-    def export_scatter_elements_with_axis():  # type: () -> None
+    def export_scatter_elements_with_axis() -> None:
         axis = 1
         node = onnx.helper.make_node(
             'ScatterElements',
@@ -104,7 +99,7 @@ class ScatterElements(Base):
                name='test_scatter_elements_with_axis')
 
     @staticmethod
-    def export_scatter_elements_with_negative_indices():  # type: () -> None
+    def export_scatter_elements_with_negative_indices() -> None:
         axis = 1
         node = onnx.helper.make_node(
             'ScatterElements',
@@ -124,7 +119,7 @@ class ScatterElements(Base):
                name='test_scatter_elements_with_negative_indices')
 
     @staticmethod
-    def export_scatter_elements_with_duplicate_indices():  # type: () -> None
+    def export_scatter_elements_with_duplicate_indices() -> None:
         axis = 1
         node = onnx.helper.make_node(
             'ScatterElements',

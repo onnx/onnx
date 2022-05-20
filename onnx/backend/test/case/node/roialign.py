@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -149,7 +144,7 @@ def get_roi_align_input_values():  # type: ignore
 
 class RoiAlign(Base):
     @staticmethod
-    def export_roialign_aligned_false():  # type: () -> None
+    def export_roialign_aligned_false() -> None:
         node = onnx.helper.make_node(
             "RoiAlign",
             inputs=["X", "rois", "batch_indices"],
@@ -199,7 +194,7 @@ class RoiAlign(Base):
         expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign_aligned_false")
 
     @staticmethod
-    def export_roialign_aligned_true():  # type: () -> None
+    def export_roialign_aligned_true() -> None:
         node = onnx.helper.make_node(
             "RoiAlign",
             inputs=["X", "rois", "batch_indices"],

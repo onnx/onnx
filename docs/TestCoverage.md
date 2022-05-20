@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 154/169 (91.12%, 5 generators excluded) common operators.
+Node tests have covered 156/171 (91.23%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -426,7 +426,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     keepdims=keepdims)
 
-# result: [[1], [1]]
+# result: [[1, 1]]
 result = argmax_use_numpy(data, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example')
 
@@ -572,7 +572,7 @@ node = onnx.helper.make_node(
     outputs=['result'],
     axis=axis,
     keepdims=keepdims)
-# result: [[0, 1]]
+# result: [0, 1]
 result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example')
 
@@ -597,7 +597,7 @@ node = onnx.helper.make_node(
     axis=axis,
     keepdims=keepdims,
     select_last_index=True)
-# result: [[1, 1]]
+# result: [1, 1]
 result = argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims)
 expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example_select_last_index')
 
@@ -2096,14 +2096,14 @@ There are 1 test cases, listed as following:
 <summary>concat</summary>
 
 ```python
-test_cases = {
+test_cases: Dict[Text, Sequence[Any]] = {
     '1d': ([1, 2],
            [3, 4]),
     '2d': ([[1, 2], [3, 4]],
            [[5, 6], [7, 8]]),
     '3d': ([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
-}  # type: Dict[Text, Sequence[Any]]
+}
 
 for test_case, values_ in test_cases.items():
     values = [np.asarray(v, dtype=np.float32) for v in values_]
@@ -4566,7 +4566,7 @@ graph = onnx.helper.make_graph(
 opsets = [
     onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
     onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
-model = onnx.helper.make_model(
+model = onnx.helper.make_model_gen_version(
     graph,
     producer_name='backend-test',
     opset_imports=opsets)
@@ -4618,7 +4618,7 @@ graph = onnx.helper.make_graph(
 opsets = [
     onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
     onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
-model = onnx.helper.make_model(graph,
+model = onnx.helper.make_model_gen_version(graph,
     producer_name='backend-test',
     opset_imports=opsets)
 expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
@@ -5808,6 +5808,134 @@ expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.
 </details>
 
 
+### LayerNormalization
+There are 4 test cases, listed as following:
+<details>
+<summary>d</summary>
+
+```python
+X = np.random.randn(3, 4).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    B = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis=axis)
+
+    node = onnx.helper.make_node(
+        'LayerNormalization',
+        inputs=['X', 'W', 'B'],
+        outputs=['Y', 'Mean', 'InvStdDev'],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f'test_layer_normalization_2d_axis_negative_{-axis}'
+    else:
+        name = f'test_layer_normalization_2d_axis{axis}'
+
+    expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+           name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+<details>
+<summary>d_epsilon</summary>
+
+```python
+X = np.random.randn(2, 3, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    B = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
+    node = onnx.helper.make_node(
+        'LayerNormalization',
+        inputs=['X', 'W', 'B'],
+        outputs=['Y', 'Mean', 'InvStdDev'],
+        axis=axis,
+        epsilon=1e-1
+    )
+
+    if axis < 0:
+        name = f'test_layer_normalization_3d_axis_negative_{-axis}_epsilon'
+    else:
+        name = f'test_layer_normalization_3d_axis{axis}_epsilon'
+
+    expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+           name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+<details>
+<summary>default_axis</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+# Default axis in LayerNormalization is -1.
+normalized_shape = calculate_normalized_shape(X.shape, -1)
+W = np.random.randn(*normalized_shape).astype(np.float32)
+B = np.random.randn(*normalized_shape).astype(np.float32)
+# Axis is default to -1 in the reference implementation.
+Y, mean, inv_std_dev = _layer_normalization(X, W, B)
+
+# Not specifying axis attribute means -1.
+node = onnx.helper.make_node(
+    'LayerNormalization',
+    inputs=['X', 'W', 'B'],
+    outputs=['Y', 'Mean', 'InvStdDev']
+)
+
+expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+        name='test_layer_normalization_default_axis')
+```
+
+</details>
+<details>
+<summary>layernormalization</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    B = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
+
+    node = onnx.helper.make_node(
+        'LayerNormalization',
+        inputs=['X', 'W', 'B'],
+        outputs=['Y', 'Mean', 'InvStdDev'],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f'test_layer_normalization_4d_axis_negative_{-axis}'
+    else:
+        name = f'test_layer_normalization_4d_axis{axis}'
+
+    expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+           name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+
+
 ### LeakyRelu
 There are 2 test cases, listed as following:
 <details>
@@ -6272,7 +6400,7 @@ node = onnx.helper.make_node(
 )
 
 trip_count = np.array(5).astype(np.int64)
-seq_empty = []  # type: List[Any]
+seq_empty: List[Any] = []
 seq_res = [x[:int(i)] for i in x]
 cond = np.array(1).astype(bool)
 expect(node, inputs=[trip_count, cond, seq_empty], outputs=[seq_res],
@@ -6460,7 +6588,7 @@ node = onnx.helper.make_node(
 trip_count = np.array(5).astype(np.int64)
 cond = np.array(1).astype(bool)
 seq_res = compute_loop_outputs(x, [x0], trip_count)
-opt_seq_in = [x0]  # type: List[Any]
+opt_seq_in: List[Any] = [x0]
 expect(node, inputs=[trip_count, cond, opt_seq_in], outputs=[seq_res],
        name='test_loop16_seq_none', opset_imports=[onnx.helper.make_opsetid("", 16)],
        input_type_protos=[onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, trip_count.shape),
@@ -7961,7 +8089,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -8120,7 +8248,7 @@ node = onnx.helper.make_node(
 N, C = 3, 5
 np.random.seed(0)
 input = np.random.rand(N, C).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N))
+target = np.random.randint(0, high=C, size=(N)).astype(np.int64)
 target[0] = 10
 weight = np.random.rand(C).astype(np.float32)
 
@@ -12184,6 +12312,262 @@ for test_name, test_inputs in test_cases.items():
         inserted = sequence_insert_reference_implementation(sequence, tensor)
         expect(node, inputs=[sequence, tensor], outputs=[inserted],
                name='test_sequence_insert_' + test_name)
+```
+
+</details>
+
+
+### SequenceMap
+There are 6 test cases, listed as following:
+<details>
+<summary>sequence_map_add_1_sequence_1_tensor</summary>
+
+```python
+body = onnx.helper.make_graph(
+    [onnx.helper.make_node('Add', ['in0', 'in1'], ['out0'])],
+    'seq_map_body',
+    [onnx.helper.make_tensor_value_info('in0', onnx.TensorProto.FLOAT, ['N']),
+     onnx.helper.make_tensor_value_info('in1', onnx.TensorProto.FLOAT, ['N'])],
+    [onnx.helper.make_tensor_value_info(
+        'out0', onnx.TensorProto.FLOAT, ['N'])]
+)
+
+node = onnx.helper.make_node(
+    'SequenceMap',
+    inputs=['x0', 'x1'],
+    outputs=['y0'],
+    body=body
+)
+
+x0 = [np.random.uniform(0.0, 1.0, 10).astype(np.float32) for k in range(3)]
+x1 = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+y0 = [x0[i] + x1 for i in range(3)]
+input_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+    onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N']),
+]
+output_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+]
+expect(node, inputs=[x0, x1], outputs=[y0],
+       input_type_protos=input_type_protos,
+       output_type_protos=output_type_protos,
+       name='test_sequence_map_add_1_sequence_1_tensor')
+```
+
+</details>
+<details>
+<summary>sequence_map_add_2_sequences</summary>
+
+```python
+body = onnx.helper.make_graph(
+    [onnx.helper.make_node('Add', ['in0', 'in1'], ['out0'])],
+    'seq_map_body',
+    [onnx.helper.make_tensor_value_info('in0', onnx.TensorProto.FLOAT, ['N']),
+     onnx.helper.make_tensor_value_info('in1', onnx.TensorProto.FLOAT, ['N'])],
+    [onnx.helper.make_tensor_value_info(
+        'out0', onnx.TensorProto.FLOAT, ['N'])]
+)
+
+node = onnx.helper.make_node(
+    'SequenceMap',
+    inputs=['x0', 'x1'],
+    outputs=['y0'],
+    body=body
+)
+
+N = [np.random.randint(1, 10) for _ in range(3)]
+x0 = [np.random.uniform(0.0, 1.0, N[k]).astype(np.float32)
+      for k in range(3)]
+x1 = [np.random.uniform(0.0, 1.0, N[k]).astype(np.float32)
+      for k in range(3)]
+y0 = [x0[k] + x1[k] for k in range(3)]
+input_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+]
+output_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+]
+expect(node, inputs=[x0, x1], outputs=[y0],
+       input_type_protos=input_type_protos,
+       output_type_protos=output_type_protos,
+       name='test_sequence_map_add_2_sequences')
+```
+
+</details>
+<details>
+<summary>sequence_map_extract_shapes</summary>
+
+```python
+body = onnx.helper.make_graph(
+    [onnx.helper.make_node('Shape', ['x'], ['shape'])],
+    'seq_map_body',
+    [onnx.helper.make_tensor_value_info('x', onnx.TensorProto.FLOAT, ['H', 'W', 'C'])],
+    [onnx.helper.make_tensor_value_info('shape', onnx.TensorProto.INT64, [3])]
+)
+
+node = onnx.helper.make_node(
+    'SequenceMap',
+    inputs=['in_seq'],
+    outputs=['shapes'],
+    body=body
+)
+
+shapes = [
+    np.array([40, 30, 3], dtype=np.int64),
+    np.array([20, 10, 3], dtype=np.int64),
+    np.array([10, 5, 3], dtype=np.int64),
+]
+x0 = [np.zeros(shape, dtype=np.float32) for shape in shapes]
+input_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['H', 'W', 'C'])),
+]
+output_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, [3])),
+]
+expect(node, inputs=[x0], outputs=[shapes],
+       input_type_protos=input_type_protos,
+       output_type_protos=output_type_protos,
+       name='test_sequence_map_extract_shapes')
+```
+
+</details>
+<details>
+<summary>sequence_map_identity_1_sequence</summary>
+
+```python
+body = onnx.helper.make_graph(
+    [onnx.helper.make_node('Identity', ['in0'], ['out0'])],
+    'seq_map_body',
+    [onnx.helper.make_tensor_value_info(
+        'in0', onnx.TensorProto.FLOAT, ['N'])],
+    [onnx.helper.make_tensor_value_info(
+        'out0', onnx.TensorProto.FLOAT, ['M'])]
+)
+
+node = onnx.helper.make_node(
+    'SequenceMap',
+    inputs=['x'],
+    outputs=['y'],
+    body=body
+)
+
+x = [np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+     for _ in range(3)]
+y = x
+input_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+]
+output_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+]
+expect(node, inputs=[x], outputs=[y],
+       input_type_protos=input_type_protos,
+       output_type_protos=output_type_protos,
+       name='test_sequence_map_identity_1_sequence')
+```
+
+</details>
+<details>
+<summary>sequence_map_identity_1_sequence_1_tensor</summary>
+
+```python
+body = onnx.helper.make_graph(
+    [onnx.helper.make_node('Identity', ['in0'], ['out0']),
+     onnx.helper.make_node('Identity', ['in1'], ['out1'])],
+    'seq_map_body',
+    [onnx.helper.make_tensor_value_info('in0', onnx.TensorProto.FLOAT, ['N']),
+     onnx.helper.make_tensor_value_info('in1', onnx.TensorProto.FLOAT, ['M'])],
+    [onnx.helper.make_tensor_value_info(
+        'out0', onnx.TensorProto.FLOAT, ['N']),
+     onnx.helper.make_tensor_value_info(
+        'out1', onnx.TensorProto.FLOAT, ['M'])]
+)
+
+node = onnx.helper.make_node(
+    'SequenceMap',
+    inputs=['x0', 'x1'],
+    outputs=['y0', 'y1'],
+    body=body
+)
+
+x0 = [np.random.uniform(0.0, 1.0, np.random.randint(
+    1, 10)).astype(np.float32) for _ in range(3)]
+x1 = np.random.uniform(0.0, 1.0, np.random.randint(
+    1, 10)).astype(np.float32)
+y0 = x0
+y1 = [x1 for _ in range(3)]
+input_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+    onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['M']),
+]
+output_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['M'])),
+]
+expect(node, inputs=[x0, x1], outputs=[y0, y1],
+       input_type_protos=input_type_protos,
+       output_type_protos=output_type_protos,
+       name='test_sequence_map_identity_1_sequence_1_tensor')
+```
+
+</details>
+<details>
+<summary>sequence_map_identity_2_sequences</summary>
+
+```python
+body = onnx.helper.make_graph(
+    [onnx.helper.make_node('Identity', ['in0'], ['out0']),
+     onnx.helper.make_node('Identity', ['in1'], ['out1'])],
+    'seq_map_body',
+    [onnx.helper.make_tensor_value_info('in0', onnx.TensorProto.FLOAT, ['N']),
+     onnx.helper.make_tensor_value_info('in1', onnx.TensorProto.FLOAT, ['M'])],
+    [onnx.helper.make_tensor_value_info('out0', onnx.TensorProto.FLOAT, ['N']),
+     onnx.helper.make_tensor_value_info('out1', onnx.TensorProto.FLOAT, ['M'])]
+)
+
+node = onnx.helper.make_node(
+    'SequenceMap',
+    inputs=['x0', 'x1'],
+    outputs=['y0', 'y1'],
+    body=body
+)
+
+x0 = [np.random.uniform(0.0, 1.0, np.random.randint(
+    1, 10)).astype(np.float32) for _ in range(3)]
+x1 = [np.random.uniform(0.0, 1.0, np.random.randint(
+    1, 10)).astype(np.float32) for _ in range(3)]
+y0 = x0
+y1 = x1
+input_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['M'])),
+]
+output_type_protos = [
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['N'])),
+    onnx.helper.make_sequence_type_proto(
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ['M'])),
+]
+expect(node, inputs=[x0, x1], outputs=[y0, y1],
+       input_type_protos=input_type_protos,
+       output_type_protos=output_type_protos,
+       name='test_sequence_map_identity_2_sequences')
 ```
 
 </details>

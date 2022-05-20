@@ -79,11 +79,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
-            "Constrains input to boolean tensor.")
+            "Constrain input to boolean tensor.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Or,
@@ -93,11 +93,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
-            "Constrains input to boolean tensor.")
+            "Constrain input to boolean tensor.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Xor,
@@ -107,11 +107,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
-            "Constrains input to boolean tensor.")
+            "Constrain input to boolean tensor.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Greater,
@@ -121,11 +121,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types_with_bfloat(),
-            "Constrains input types to all numeric tensors.")
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Less,
@@ -135,11 +135,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_numeric_types_with_bfloat(),
-            "Constrains input types to all numeric tensors.")
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,
@@ -161,11 +161,11 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float)",
              "tensor(double)",
              "tensor(bfloat16)"},
-            "Constrains input types to all numeric tensors.")
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor."));
+            "Constrain output to boolean tensor."));
 
 static const char* Not_ver1_doc = R"DOC(
 Returns the negation of the input tensor element-wise.
@@ -197,7 +197,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(bool)"},
-            "Constrains input/output to boolean tensors.")
+            "Constrain input/output to boolean tensors.")
         .TypeAndShapeInferenceFunction(unaryLogicalOpInference));
 
 static const char* BitShift_ver11_doc = R"DOC(
@@ -272,17 +272,17 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     LessOrEqual,
-    12,
+    16,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("less_equal"))
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
-            "Constrains input types to all numeric tensors.")
+            OpSchema::all_numeric_types_with_bfloat(),
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor.")
+            "Constrain output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
         .FunctionBody(R"ONNX(
         {
@@ -294,22 +294,24 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     GreaterOrEqual,
-    12,
+    16,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("greater_equal"))
         .TypeConstraint(
             "T",
-            OpSchema::all_numeric_types(),
-            "Constrains input types to all numeric tensors.")
+            OpSchema::all_numeric_types_with_bfloat(),
+            "Constrain input types to all numeric tensors.")
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains output to boolean tensor.")
+            "Constrain output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             {{"O1"}, "Greater", {"A", "B"}},
-             {{"O2"}, "Equal", {"A", "B"}},
-             {{"C"}, "Or", {"O1", "O2"}}})));
+        .FunctionBody(R"ONNX(
+        {
+            O1 = Greater (A, B)
+            O2 = Equal (A, B)
+            C = Or (O1, O2)
+        }
+        )ONNX"));
 
 } // namespace ONNX_NAMESPACE

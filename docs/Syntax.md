@@ -23,7 +23,7 @@ The key parser methods are the ```OnnxParser::Parse``` methods, used as below.
   ir_version: 7,
   opset_import: [ "" : 10 ]
 >
-agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
 {
     T = MatMul(X, W)
     S = Add(T, B)
@@ -49,16 +49,19 @@ The grammar below describes the syntax:
    tensor-dim ::= '?' | id | int-constant
    tensor-dims ::= tensor-dim (',' tensor-dim)*
    tensor-type ::= prim-type | prim-type '[' ']' | prim-type '[' tensor-dims ']'
-   type ::= tensor-type
+   type ::= tensor-type | 'seq' '(' type ')' | 'map' '(' prim-type ',' type ')'
+            | 'optional' '(' type ')' | 'sparse_tensor' '(' tensor-type ')'
    value-info ::= type id
    value-infos ::= value-info (',' value-info)*
    value-info-list ::= '(' value-infos? ')'
    prim-constants ::= prim-constant (',' prim-constant)*
-   tensor-constant ::= tensor-type '{' prim-constants '}'
-   single-attr-value ::= tensor-constant | graph | prim-constant
+   tensor-constant ::= tensor-type (id)? ('=')? '{' prim-constants '}'
+   attr-ref ::= '@' id
+   single-attr-value ::= tensor-constant | graph | prim-constant | attr-ref
    attr-value-list ::= '[' single-attr-value (',' single-attr-value)* ']'
    attr-value ::= single-attr-value | attr-value-list
-   attr ::= id '=' attr-value
+   attr-type ::= ':' id
+   attr ::= id attr-type? '=' attr-value
    attr-list ::= '<' attr (',' attr)* '>'
    node ::= id-list? '=' qualified-id attr-list? '(' id-list? ')'
          |  id-list? '=' qualified-id '(' id-list? ')' attr-list

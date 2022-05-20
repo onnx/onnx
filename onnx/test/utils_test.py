@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
 import shutil
 import tempfile
@@ -15,7 +10,7 @@ from onnx import helper, TensorProto
 
 
 class TestUtilityFunctions(unittest.TestCase):
-    def test_extract_model(self):  # type: () -> None
+    def test_extract_model(self) -> None:
         def create_tensor(name):  # type: ignore
             return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1, 2])
         A0 = create_tensor("A0")

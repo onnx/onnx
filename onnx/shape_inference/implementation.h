@@ -12,6 +12,8 @@
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
+using ModelLocalFunctionsMap = std::unordered_map<std::string, const FunctionProto*>;
+
 class SymbolTableImpl : public SymbolTable {
  public:
   SymbolTableImpl() : index_(0){}
@@ -83,21 +85,25 @@ struct GraphInferenceContext {
       const std::unordered_map<std::string, TypeProto*>&
           outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int> opset_imports_in,
-      SymbolTable* symbolTable_in,
+      SymbolTable* symbol_table_in = nullptr,
+      const ModelLocalFunctionsMap& model_local_functions_in = {},
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
+      std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name_in = nullptr,
       const int ir_version_in = IR_VERSION)
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{opset_imports_in},
+        symbol_table{symbol_table_in},
+        model_local_functions{model_local_functions_in},
         schema_registry{schema_registry_in},
-        symbolTable{symbolTable_in},
+        generated_shape_data_by_name{generated_shape_data_by_name_in},
         ir_version{ir_version_in} {}
 
-
-  const std::unordered_map<std::string, TypeProto*>*
-      outer_scope_value_types_by_name;
+  const std::unordered_map<std::string, TypeProto*>* outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
+  SymbolTable* symbol_table;
+  const ModelLocalFunctionsMap& model_local_functions;
   const ISchemaRegistry* schema_registry;
-  SymbolTable* symbolTable;
+  std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name;
   const int ir_version;
 };
 
@@ -109,14 +115,6 @@ class GraphInferencerImpl : public GraphInferencer {
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
       const std::vector<const TensorProto*>& inputData) override;
-
-  SymbolTable* getSymbolTable() {
-    return context_->symbolTable;
-  }
-
-  int getIRVersion() const {
-    return context_->ir_version;
-  }
 
  private:
   GraphProto* g_;
@@ -131,7 +129,7 @@ struct InferenceContextImpl : public InferenceContext {
           inputDataByName,
       const std::unordered_map<std::string, const SparseTensorProto*>& 
           inputSparseDataByName,
-      const std::unordered_map<std::string, TensorShapeProto>* generatedShapeData = nullptr,
+      std::unordered_map<std::string, TensorShapeProto>* generatedShapeData = nullptr,
       GraphInferenceContext* graphInferenceContext = nullptr)
       : graphInferenceContext_{graphInferenceContext} {
     for (auto& attr : *n.mutable_attribute()) {
@@ -424,67 +422,75 @@ void checkShapesAndTypes(
     const TypeProto& existingType);
 
 template <typename TensorTypeProto>
-void generateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTable);
+void GenerateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTable);
 
-void materializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable);
+void MaterializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable);
 
-void mergeShapesAndTypes(
-    const TypeProto_Tensor& inferredType,
-    TypeProto_Tensor* existingType);
+void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor* existingType);
 
-void mergeShapesAndTypes(
-    const TypeProto_SparseTensor& inferredType,
-    TypeProto_SparseTensor* existingType);
+void mergeShapesAndTypes(const TypeProto_SparseTensor& inferredType, TypeProto_SparseTensor* existingType);
 
-void mergeShapesAndTypes(
-    const TypeProto_Sequence& inferredType,
-    TypeProto_Tensor* existingType);
+void mergeShapesAndTypes(const TypeProto_Sequence& inferredType, TypeProto_Tensor* existingType);
 
-void mergeShapesAndTypes(
-    const TypeProto& inferredType,
-    TypeProto* existingType);
+void mergeShapesAndTypes(const TypeProto& inferredType, TypeProto* existingType);
 
-void InferShapes(
-    ModelProto& m,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const ShapeInferenceOptions& options = {}
-    );
-
+///
+/// ModelLocalFunctionsMap is a map of function id -> model local function proto
+/// All the ONNX helper utilities expect the function id == <function_proto.domain>:<function_proto.name>
+///
 void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const ShapeInferenceOptions& options = {}
+    const ShapeInferenceOptions& options = {},
+    const ModelLocalFunctionsMap& in_model_functions = {}
+    );
+
+void InferShapes(
+    ModelProto& m,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const ShapeInferenceOptions& options = {},
+    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr
     );
 
 void InferShapes(
     const std::string& model_path,
     const std::string& save_path = "",
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const ShapeInferenceOptions& options = {}
+    const ShapeInferenceOptions& options = {},
+    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr
     );
 
+///
+/// ModelLocalFunctionsMap is a map of function id -> model local function proto
+/// All the ONNX helper utilities expect the function id == <function_proto.domain>:<function_proto.name>
+///
 void InferShapeForFunctionNode(
-    const FunctionProto* func,
+    const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
     const ShapeInferenceOptions& options = {},
+    const ModelLocalFunctionsMap& model_local_functions_map = {},
     SymbolTable* symbolTable = nullptr,
-    std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName = nullptr);
+    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr);
 
+///
+/// ModelLocalFunctionsMap is a map of function id -> model local function proto
+/// All the ONNX helper utilities expect the function id == <function_proto.domain>:<function_proto.name>
+///
 void InferShapeForFunctionNode(
-    const FunctionProto* func,
+    const FunctionProto& func_proto,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
     const ShapeInferenceOptions& options = {},
+    const ModelLocalFunctionsMap& model_local_functions_map = {},
     SymbolTable* symbolTable = nullptr,
-    std::unordered_map<std::string, TensorShapeProto>* generatedShapeDataByName = nullptr);
-    
+    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr);
 
-std::string getErrorWithNodeInfo(NodeProto n, std::runtime_error err);
+std::string GetErrorWithNodeInfo(NodeProto n, std::runtime_error err);
 
-void traverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable);
+void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

@@ -1,6 +1,5 @@
 numpy
 protobuf
-six
 typing-extensions
 pytest
 pytest-cov
@@ -10,4 +9,3 @@ jupyter
 pyzmq
 setuptools
 twine
-wget

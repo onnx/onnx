@@ -399,13 +399,13 @@ message ModelProto {
   //
   // Name of the function "FunctionProto.name" should be unique within the domain "FunctionProto.domain".
   // In case of any conflicts the behavior (whether the model local functions are given higher priority,
-  // or standard opserator sets are given higher priotity or this is treated as error) is defined by 
+  // or standard opserator sets are given higher priotity or this is treated as error) is defined by
   // the runtimes.
-  // 
+  //
   // The operator sets imported by FunctionProto should be compatible with the ones
-  // imported by ModelProto and other model local FunctionProtos. 
-  // Example, if same operator set say 'A' is imported by a FunctionProto and ModelProto 
-  // or by 2 FunctionProtos then versions for the operator set may be different but, 
+  // imported by ModelProto and other model local FunctionProtos.
+  // Example, if same operator set say 'A' is imported by a FunctionProto and ModelProto
+  // or by 2 FunctionProtos then versions for the operator set may be different but,
   // the operator schema returned for op_type, domain, version combination
   // for both the versions should be same for every node in the function body.
   //
@@ -418,7 +418,7 @@ message ModelProto {
 // See https://developers.google.com/protocol-buffers/docs/proto3#maps
 message StringStringEntryProto {
   optional string key = 1;
-  optional string value= 2;
+  optional string value = 2;
 };
 
 message TensorAnnotation {
@@ -471,13 +471,8 @@ message GraphProto {
   // which means, tensor 'a_scale' and tensor 'a_zero_point' are scale and zero point of tensor 'a' in the model.
   repeated TensorAnnotation quantization_annotation = 14;
 
-  // DO NOT USE the following fields, they were deprecated from earlier versions.
-  // repeated string input = 3;
-  // repeated string output = 4;
-  // optional int64 ir_version = 6;
-  // optional int64 producer_version = 7;
-  // optional string producer_tag = 8;
-  // optional string domain = 9;
+  reserved 3, 4, 6 to 9;
+  reserved "ir_version", "producer_version", "producer_tag", "domain";
 }
 
 // Tensors
@@ -659,7 +654,7 @@ message TensorShapeProto {
     // Standard denotation can optionally be used to denote tensor
     // dimensions with standard semantic descriptions to ensure
     // that operations are applied to the correct axis of a tensor.
-    // Refer to https://github.com/onnx/onnx/blob/master/docs/DimensionDenotation.md#denotation-definition
+    // Refer to https://github.com/onnx/onnx/blob/main/docs/DimensionDenotation.md#denotation-definition
     // for pre-defined dimension denotations.
     optional string denotation = 3;
   };
@@ -754,7 +749,7 @@ message TypeProto {
 
   // An optional denotation can be used to denote the whole
   // type with a standard semantic description as to what is
-  // stored inside. Refer to https://github.com/onnx/onnx/blob/master/docs/TypeDenotation.md#type-denotation-definition
+  // stored inside. Refer to https://github.com/onnx/onnx/blob/main/docs/TypeDenotation.md#type-denotation-definition
   // for pre-defined type denotations.
   optional string denotation = 6;
 }
@@ -814,10 +809,10 @@ message FunctionProto {
   // with the same-domain/same-op_type operator with the HIGHEST version
   // in the referenced operator sets. This means at most one version can be relied
   // for one domain.
-  // 
+  //
   // The operator sets imported by FunctionProto should be compatible with the ones
   // imported by ModelProto. Example, if same operator set say 'A' is imported by FunctionProto
-  // and ModelProto then versions for the operator set may be different but, 
+  // and ModelProto then versions for the operator set may be different but,
   // the operator schema returned for op_type, domain, version combination
   // for both the versions should be same.
 

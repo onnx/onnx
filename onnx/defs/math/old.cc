@@ -967,7 +967,7 @@ static const char* Expand_ver8_doc = R"DOC(
 Broadcast the input tensor following the given shape and the broadcast rule.
 The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
 Dimensions are right alignment;
-Two corresponding dimension must have the same value, or one of them is equal to 1.
+Two corresponding dimensions must have the same value, or one of them is equal to 1.
 Also, this operator is similar to numpy.broadcast_to(input, shape),
 but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
 It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
@@ -1020,11 +1020,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               for (int64_t i = 0; i < dim_value; ++i) {
                 second_shape.add_dim();
               }
+            } else {
+                return;     
             }
             bidirectionalBroadcastShapeInference(
                 input_shape, second_shape, *getOutputShape(ctx, 0));
           }
-          return;
         }));
 
 static const char* Sign_ver9_doc = R"DOC(
@@ -3519,5 +3520,90 @@ ONNX_OPERATOR_SET_SCHEMA(
     Min,
     8,
     OpSchema().FillUsing(ElementwiseMultiOpDocGenerator_old("min")));
+
+static const char* LeakyRelu_ver6_doc = R"DOC(
+LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
+output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
+`f(x) = x for x >= 0`, is applied to the data tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LeakyRelu,
+    6,
+    OpSchema()
+        .Attr("alpha", "Coefficient of leakage.", AttributeProto::FLOAT, 0.01f)
+        .SetDoc(LeakyRelu_ver6_doc)
+        .Input(0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* PRelu_ver9_doc = R"DOC(
+PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
+output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
+`f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    PRelu,
+    9,
+    OpSchema()
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(PRelu_ver9_doc) +
+            GenerateBroadcastingDocUni("tensor slope", "input tensor X")))
+        .Input(0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "slope",
+            "Slope tensor. The shape of slope can be smaller then first input X; "
+            "if so, its shape must be unidirectional broadcastable to X",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(0,
+            "Y",
+            "Output tensor (same size as X)",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input and output types to float/int tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 } // namespace ONNX_NAMESPACE

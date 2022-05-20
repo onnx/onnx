@@ -70,7 +70,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     void assertInVersionRange(int64_t version) const {
       ONNX_ASSERTM(version >= version_range.first && version <=
           version_range.second,
-          "Warning: invalid version (must be between %s and %s)",
+          "Warning: invalid version (must be between %d and %d)",
           version_range.first, version_range.second);
     }
 
@@ -729,6 +729,16 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>("If",
         OpSetID(15), OpSetID(16)));
       registerAdapter(make_unique<CompatibleAdapter>("Where",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("Scan",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("LessOrEqual",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("GreaterOrEqual",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("LeakyRelu",
+        OpSetID(15), OpSetID(16)));
+      registerAdapter(make_unique<CompatibleAdapter>("PRelu",
         OpSetID(15), OpSetID(16)));
     }
 

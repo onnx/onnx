@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 import random
 
@@ -34,7 +29,7 @@ class Dropout(Base):
 
     # Inferencing tests.
     @staticmethod
-    def export_default():  # type: () -> None
+    def export_default() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -48,7 +43,7 @@ class Dropout(Base):
         expect(node, inputs=[x], outputs=[y], name='test_dropout_default')
 
     @staticmethod
-    def export_default_ratio():  # type: () -> None
+    def export_default_ratio() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -63,7 +58,7 @@ class Dropout(Base):
         expect(node, inputs=[x, r], outputs=[y], name='test_dropout_default_ratio')
 
     @staticmethod
-    def export_default_mask():  # type: () -> None
+    def export_default_mask() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -77,7 +72,7 @@ class Dropout(Base):
         expect(node, inputs=[x], outputs=[y, z], name='test_dropout_default_mask')
 
     @staticmethod
-    def export_default_mask_ratio():  # type: () -> None
+    def export_default_mask_ratio() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -94,7 +89,7 @@ class Dropout(Base):
     # Training tests.
 
     @staticmethod
-    def export_training_default():  # type: () -> None
+    def export_training_default() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -110,7 +105,7 @@ class Dropout(Base):
         expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_default')
 
     @staticmethod
-    def export_training_default_ratio_mask():  # type: () -> None
+    def export_training_default_ratio_mask() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -126,7 +121,7 @@ class Dropout(Base):
         expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_default_mask')
 
     @staticmethod
-    def export_training():  # type: () -> None
+    def export_training() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -142,7 +137,7 @@ class Dropout(Base):
         expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout')
 
     @staticmethod
-    def export_training_ratio_mask():  # type: () -> None
+    def export_training_ratio_mask() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -158,7 +153,7 @@ class Dropout(Base):
         expect(node, inputs=[x, r, t], outputs=[y, z], name='test_training_dropout_mask')
 
     @staticmethod
-    def export_training_default_zero_ratio():  # type: () -> None
+    def export_training_default_zero_ratio() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -174,7 +169,7 @@ class Dropout(Base):
         expect(node, inputs=[x, r, t], outputs=[y], name='test_training_dropout_zero_ratio')
 
     @staticmethod
-    def export_training_default_zero_ratio_mask():  # type: () -> None
+    def export_training_default_zero_ratio_mask() -> None:
         seed = np.int64(0)
         node = onnx.helper.make_node(
             'Dropout',
@@ -192,7 +187,7 @@ class Dropout(Base):
     # Old dropout tests
 
     @staticmethod
-    def export_default_old():  # type: () -> None
+    def export_default_old() -> None:
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x'],
@@ -205,7 +200,7 @@ class Dropout(Base):
                name='test_dropout_default_old', opset_imports=[helper.make_opsetid("", 11)])
 
     @staticmethod
-    def export_random_old():  # type: () -> None
+    def export_random_old() -> None:
         node = onnx.helper.make_node(
             'Dropout',
             inputs=['x'],
