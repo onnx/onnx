@@ -2466,9 +2466,9 @@ for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
     if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
-        np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.float32)
+        np_fp32 = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+            '0.47031248', '0.816468', '0.21087195', '0.7229038',
+            'NaN', 'INF', '+INF', '-INF'], dtype=np.float32)
         little_endisan = sys.byteorder == 'little'
         np_uint16_view = np_fp32.view(dtype=np.uint16)
         np_bfp16 = np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
@@ -2506,9 +2506,9 @@ for from_type, to_type in test_cases:
         else:
             output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     else:
-        input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(object)).reshape([3, 4])
+        input = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+            '0.47031248', '0.816468', '0.21087195', '0.7229038',
+            'NaN', 'INF', '+INF', '-INF'], dtype=np.dtype(object)).reshape([3, 4])
         output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
@@ -2589,9 +2589,9 @@ for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
     if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
-        np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.float32)
+        np_fp32 = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+            '0.47031248', '0.816468', '0.21087195', '0.7229038',
+            'NaN', 'INF', '+INF', '-INF'], dtype=np.float32)
         little_endisan = sys.byteorder == 'little'
         np_uint16_view = np_fp32.view(dtype=np.uint16)
         np_bfp16 = np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
@@ -2629,9 +2629,9 @@ for from_type, to_type in test_cases:
         else:
             output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     else:
-        input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
+        input = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+            '0.47031248', '0.816468', '0.21087195', '0.7229038',
+            'NaN', 'INF', '+INF', '-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
         output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     like = output.flatten()[0:1]
     node = onnx.helper.make_node(
@@ -3154,7 +3154,7 @@ Other versions of this operator: <a href="Changelog.md#Concat-1">1</a>, <a href=
 <summary>concat</summary>
 
 ```python
-test_cases: Dict[Text, Sequence[Any]] = {
+test_cases: Dict[str, Sequence[Any]] = {
     '1d': ([1, 2],
            [3, 4]),
     '2d': ([[1, 2], [3, 4]],
@@ -10930,7 +10930,7 @@ for op_dtype in all_numeric_dtypes:
         outputs=['result'],
     )
     expect(node, inputs=[data_0, data_1], outputs=[result],
-           name='test_max_{0}'.format(np.dtype(op_dtype).name))
+           name=f'test_max_{np.dtype(op_dtype).name}')
 ```
 
 </details>
@@ -11917,7 +11917,7 @@ for op_dtype in all_numeric_dtypes:
         outputs=['result'],
     )
     expect(node, inputs=[data_0, data_1], outputs=[result],
-           name='test_min_{0}'.format(np.dtype(op_dtype).name))
+           name=f'test_min_{np.dtype(op_dtype).name}')
 ```
 
 </details>
@@ -14273,7 +14273,7 @@ for mode in ['edge', 'reflect']:
     )
 
     expect(node, inputs=[x, pads], outputs=[y],
-           name='test_{}_pad'.format(mode))
+           name=f'test_{mode}_pad')
 ```
 
 </details>
@@ -22855,9 +22855,9 @@ This version of the operator has been available since version 10 of the default 
 <summary>monday_casesensintive_lower</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
-output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
-stopwords = [u'monday']
+input = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+output = np.array(['tuesday', 'wednesday', 'thursday']).astype(object)
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -22877,9 +22877,9 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_casesensintive_nochangecase</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
-output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
-stopwords = [u'monday']
+input = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+output = np.array(['tuesday', 'wednesday', 'thursday']).astype(object)
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -22898,9 +22898,9 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_casesensintive_upper</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
-output = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(object)
-stopwords = [u'monday']
+input = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+output = np.array(['TUESDAY', 'WEDNESDAY', 'THURSDAY']).astype(object)
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -22920,9 +22920,9 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_empty_output</summary>
 
 ```python
-input = np.array([u'monday', u'monday']).astype(object)
-output = np.array([u'']).astype(object)
-stopwords = [u'monday']
+input = np.array(['monday', 'monday']).astype(object)
+output = np.array(['']).astype(object)
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -22942,13 +22942,13 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_insensintive_upper_twodim</summary>
 
 ```python
-input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(object).reshape([1, 6])
+input = np.array(['Monday', 'tuesday', 'wednesday', 'Monday', 'tuesday', 'wednesday']).astype(object).reshape([1, 6])
 
 # It does upper case cecedille, accented E
 # and german umlaut but fails
 # with german eszett
-output = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(object).reshape([1, 4])
-stopwords = [u'monday']
+output = np.array(['TUESDAY', 'WEDNESDAY', 'TUESDAY', 'WEDNESDAY']).astype(object).reshape([1, 4])
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -22967,7 +22967,7 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>nostopwords_nochangecase</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday']).astype(object)
+input = np.array(['monday', 'tuesday']).astype(object)
 output = input
 
 # No stopwords. This is a NOOP
