@@ -25,7 +25,7 @@ import sys
 class TestLoadExternalDataBase(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.temp_dir: Text = tempfile.mkdtemp()
+        self.temp_dir: str = tempfile.mkdtemp()
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model_filename = self.create_test_model()
@@ -33,13 +33,13 @@ class TestLoadExternalDataBase(unittest.TestCase):
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_dir)
 
-    def get_temp_model_filename(self) -> Text:
+    def get_temp_model_filename(self) -> str:
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + '.onnx')
 
-    def create_external_data_tensor(self, value: List[Any], tensor_name: Text) -> TensorProto:
+    def create_external_data_tensor(self, value: List[Any], tensor_name: str) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
-        tensor_filename = "{}.bin".format(tensor_name)
+        tensor_filename = f"{tensor_name}.bin"
         set_external_data(tensor, location=tensor_filename)
 
         with open(os.path.join(self.temp_dir, tensor_filename), 'wb') as data_file:
@@ -48,7 +48,7 @@ class TestLoadExternalDataBase(unittest.TestCase):
         tensor.data_location = onnx.TensorProto.EXTERNAL
         return tensor
 
-    def create_test_model(self) -> Text:
+    def create_test_model(self) -> str:
 
         constant_node = onnx.helper.make_node(
             'Constant',
@@ -163,7 +163,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
 class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
 
     def setUp(self) -> None:
-        self.temp_dir: Text = tempfile.mkdtemp()
+        self.temp_dir: str = tempfile.mkdtemp()
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model = self.create_test_model_proto()
@@ -384,8 +384,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
 
 class TestExternalDataToArray(unittest.TestCase):
     def setUp(self) -> None:
-        self.temp_dir: Text = tempfile.mkdtemp()
-        self.model_file_path: Text = os.path.join(self.temp_dir, 'model.onnx')
+        self.temp_dir: str = tempfile.mkdtemp()
+        self.model_file_path: str = os.path.join(self.temp_dir, 'model.onnx')
         self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
         self.small_data = (200, 300)
         self.model = self.create_test_model()
@@ -393,7 +393,7 @@ class TestExternalDataToArray(unittest.TestCase):
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_dir)
 
-    def get_temp_model_filename(self) -> Text:
+    def get_temp_model_filename(self) -> str:
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + '.onnx')
 
     def create_test_model(self) -> ModelProto:

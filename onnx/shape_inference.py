@@ -41,7 +41,7 @@ def infer_shapes(model: Union[ModelProto, bytes], check_type: bool = False, stri
                          'incorrect type: {}'.format(type(model)))
 
 
-def infer_shapes_path(model_path: Text, output_path: Text = '', check_type: bool = False, strict_mode: bool = False, data_prop: bool = False) -> None:
+def infer_shapes_path(model_path: str, output_path: str = '', check_type: bool = False, strict_mode: bool = False, data_prop: bool = False) -> None:
     """
     Take model path for shape_inference same as infer_shape; it support >2GB models
     Directly output the inferred model to the output_path; Default is the original model path

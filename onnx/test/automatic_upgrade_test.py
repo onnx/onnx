@@ -20,14 +20,14 @@ class TestAutomaticUpgrade(unittest.TestCase):
 
     def _test_op_upgrade(
         self,
-        op: Text,
+        op: str,
         from_opset: int,
-        input_shapes: List[Union[List[Optional[int]], Text]] = [[3, 4, 5]],
+        input_shapes: List[Union[List[Optional[int]], str]] = [[3, 4, 5]],
         output_shapes: List[List[Optional[int]]] = [[3, 4, 5]],
         input_types: Union[List[Any], None] = None,
         output_types: Union[List[Any], None] = None,
         initializer: List[Any] = [],
-        attrs: Dict[Text, Any] = {},
+        attrs: Dict[str, Any] = {},
         seq_inputs: List[int] = [],
         seq_outputs: List[int] = [],
         optional_inputs: List[int] = [],

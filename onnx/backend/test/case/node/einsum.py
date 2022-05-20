@@ -9,7 +9,7 @@ from . import expect
 from typing import Tuple, Text
 
 
-def einsum_reference_implementation(Eqn: Text, Operands: Tuple[np.ndarray, ...]) -> np.ndarray:
+def einsum_reference_implementation(Eqn: str, Operands: Tuple[np.ndarray, ...]) -> np.ndarray:
     Z = np.einsum(Eqn, *Operands)
     return Z
 

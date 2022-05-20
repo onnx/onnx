@@ -8,7 +8,7 @@ from typing import Dict, Text, List, Tuple, Type, Sequence, Any
 import numpy as np  # type: ignore
 
 
-def process_snippet(op_name: Text, name: Text, export: Any) -> Tuple[Text, Text]:
+def process_snippet(op_name: str, name: str, export: Any) -> Tuple[str, str]:
     snippet_name = name[len('export_'):] or op_name.lower()
     source_code = dedent(inspect.getsource(export))
     # remove the function signature line
@@ -18,11 +18,11 @@ def process_snippet(op_name: Text, name: Text, export: Any) -> Tuple[Text, Text]
     return snippet_name, dedent("\n".join(lines[2:]))
 
 
-Snippets: Dict[Text, List[Tuple[Text, Text]]] = defaultdict(list)
+Snippets: Dict[str, List[Tuple[str, str]]] = defaultdict(list)
 
 
 class _Exporter(type):
-    exports: Dict[Text, List[Tuple[Text, Text]]] = defaultdict(list)
+    exports: Dict[str, List[Tuple[str, str]]] = defaultdict(list)
 
     def __init__(cls, name: str, bases: Tuple[Type[Any], ...], dct: Dict[str, Any]) -> None:
         for k, v in dct.items():
@@ -36,8 +36,8 @@ class _Exporter(type):
                 # TestCases
                 np.random.seed(seed=0)
                 export()
-        super(_Exporter, cls).__init__(name, bases, dct)
+        super().__init__(name, bases, dct)
 
 
-class Base(object, metaclass=_Exporter):
+class Base(metaclass=_Exporter):
     pass

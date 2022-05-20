@@ -10,7 +10,7 @@ from onnx import helper, parser, checker, compose, version_converter, \
     FunctionProto, NodeProto
 
 
-def _load_model(m_def: Text) -> ModelProto:
+def _load_model(m_def: str) -> ModelProto:
     '''
     Parses a model from a string representation, including checking the model for correctness
     '''
@@ -19,7 +19,7 @@ def _load_model(m_def: Text) -> ModelProto:
     return m
 
 
-def _prefixed(prefix: Text, s: Text) -> Text:
+def _prefixed(prefix: str, s: str) -> str:
     '''
     Prefixes a string (if not empty)
     '''
@@ -34,7 +34,7 @@ def _get_shape(value_info: ValueInfoProto) -> List[int]:
             for d in range(len(value_info.type.tensor_type.shape.dim))]
 
 
-def _make_sparse_tensor(name: Text) -> SparseTensorProto:
+def _make_sparse_tensor(name: str) -> SparseTensorProto:
     dense_shape = [3, 3]
     linear_indices = [2, 3, 5]
     sparse_values = [1.7, 0.4, 0.9]
@@ -80,14 +80,14 @@ m2_def = '''
 class TestComposeFunctions(unittest.TestCase):
     def _test_merge_models(
         self,
-        m1def: Text,
-        m2def: Text,
-        io_map: List[Tuple[Text, Text]],
+        m1def: str,
+        m2def: str,
+        io_map: List[Tuple[str, str]],
         check_expectations: Callable[[GraphProto, GraphProto, GraphProto], None],
-        inputs: Optional[List[Text]] = None,
-        outputs: Optional[List[Text]] = None,
-        prefix1: Optional[Text] = None,
-        prefix2: Optional[Text] = None
+        inputs: Optional[List[str]] = None,
+        outputs: Optional[List[str]] = None,
+        prefix1: Optional[str] = None,
+        prefix2: Optional[str] = None
     ) -> None:
         m1, m2 = _load_model(m1def), _load_model(m2def)
         g3 = compose.merge_graphs(
@@ -492,16 +492,16 @@ class TestComposeFunctions(unittest.TestCase):
 
     def _test_overlapping_names(
         self,
-        inputs0: List[Text] = ['i0', 'i1'],
-        inputs1: List[Text] = ['i2', 'i3'],
-        outputs0: List[Text] = ['o0', 'o1'],
-        outputs1: List[Text] = ['o2', 'o3'],
-        value_info0: List[Text] = ['v0', 'v1'],
-        value_info1: List[Text] = ['v2', 'v3'],
-        initializer0: List[Text] = ['init0', 'init1'],
-        initializer1: List[Text] = ['init2', 'init3'],
-        sparse_initializer0: List[Text] = ['sparse_init0', 'sparse_init1'],
-        sparse_initializer1: List[Text] = ['sparse_init2', 'sparse_init3'],
+        inputs0: List[str] = ['i0', 'i1'],
+        inputs1: List[str] = ['i2', 'i3'],
+        outputs0: List[str] = ['o0', 'o1'],
+        outputs1: List[str] = ['o2', 'o3'],
+        value_info0: List[str] = ['v0', 'v1'],
+        value_info1: List[str] = ['v2', 'v3'],
+        initializer0: List[str] = ['init0', 'init1'],
+        initializer1: List[str] = ['init2', 'init3'],
+        sparse_initializer0: List[str] = ['sparse_init0', 'sparse_init1'],
+        sparse_initializer1: List[str] = ['sparse_init2', 'sparse_init3'],
     ) -> None:
         n0 = [helper.make_node('Identity', inputs=[inputs0[i]], outputs=[outputs0[i]])
               for i in range(len(inputs0))]
@@ -623,10 +623,10 @@ class TestComposeFunctions(unittest.TestCase):
         ]
 
         def _make_function(
-            domain: Text,
-            fname: Text,
-            inputs: List[Text],
-            outputs: List[Text],
+            domain: str,
+            fname: str,
+            inputs: List[str],
+            outputs: List[str],
             nodes: List[NodeProto],
         ) -> FunctionProto:
             f = FunctionProto()
