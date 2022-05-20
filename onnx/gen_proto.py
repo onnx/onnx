@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
-import io
 import os
 import re
 import glob
