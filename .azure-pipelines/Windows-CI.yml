@@ -75,7 +75,7 @@ jobs:
       git status
       git diff --exit-code  -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 :!*output_*.pb :!onnx/backend/test/data/node/test_log/test_data_set_0/input_0.pb
       IF NOT %ERRORLEVEL% EQU 0 (
-        @echo "pytest failed"
+        @echo "git diff for test generation returned failures. Please check updated node test files"
         EXIT 1
       )
 
