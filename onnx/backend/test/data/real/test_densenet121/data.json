@@ -1,1 +1,1 @@
-{"atol": 1e-07, "model_name": "densenet121", "rtol": 0.002, "url": "https://s3.amazonaws.com/download.onnx/models/opset_9/densenet121.tar.gz"}
+{"atol": 1e-07, "model_name": "densenet121", "rtol": 0.002, "url": "https://s3.amazonaws.com/download.onnx/models/opset_10/densenet121.tar.gz"}
