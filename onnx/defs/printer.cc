@@ -94,7 +94,7 @@ std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
     print(os, "[", ",", "]", tensor.dims());
 
   if (! tensor.name().empty()) {
-    os << " " << tensor.name() << " ";
+    os << " " << tensor.name();
   }
   // TODO: does not yet handle all types or externally stored data.
   if (tensor.has_raw_data()) {
