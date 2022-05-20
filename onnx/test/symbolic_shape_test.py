@@ -16,12 +16,12 @@ class TestSymbolicShape(unittest.TestCase):
         """
         for expected_vi in value_infos:
             shape = self._get_shape_from_name(onnx_model, expected_vi.name)
-            assert shape is not None, '{}'.format(onnx_model)
+            assert shape is not None, f'{onnx_model}'
             if expected_vi.type.HasField('tensor_type'):
                 expected_shape = expected_vi.type.tensor_type.shape
             elif expected_vi.type.HasField('sparse_tensor_type'):
                 expected_shape = expected_vi.type.sparse_tensor_type.shape
-            assert len(shape.dim) == len(expected_shape.dim), '{}'.format(onnx_model)
+            assert len(shape.dim) == len(expected_shape.dim), f'{onnx_model}'
             for dim_i in range(len(shape.dim)):
                 dim = shape.dim[dim_i]
                 expected_dim = expected_shape.dim[dim_i]
@@ -30,7 +30,7 @@ class TestSymbolicShape(unittest.TestCase):
                     # symbolic dimension must exist
                     assert dim.dim_param, '%s' % (onnx_model)
                 else:
-                    assert dim.dim_value == expected_dim.dim_value, '{}'.format(onnx_model)
+                    assert dim.dim_value == expected_dim.dim_value, f'{onnx_model}'
 
     def _count_unique_dim_param_number(self, onnx_model: ModelProto) -> int:
         """
@@ -46,7 +46,7 @@ class TestSymbolicShape(unittest.TestCase):
                     symbol_shape_set.add(dim.dim_param)
         return len(symbol_shape_set)
 
-    def _get_shape_from_name(self, onnx_model: ModelProto, name: Text) -> Optional[TensorShapeProto]:
+    def _get_shape_from_name(self, onnx_model: ModelProto, name: str) -> Optional[TensorShapeProto]:
         """
             Get shape from tensor_type or sparse_tensor_type according to given name
         """
@@ -126,7 +126,7 @@ class TestSymbolicShape(unittest.TestCase):
         # new symbol 'unk__2' and 'unk__3' should be generated
         # original: {'unk_0', 'unk__1'}
         # inferred: {'unk_0', 'unk__1', 'unk__2', 'unk__3'}
-        assert inferred_count == original_count + 2, '%s%s' % (inferred_model, onnx_model)
+        assert inferred_count == original_count + 2, '{}{}'.format(inferred_model, onnx_model)
 
     def test_unknown_shape(self) -> None:
         concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)

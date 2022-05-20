@@ -10,20 +10,20 @@ import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx import ModelProto, NodeProto, IR_VERSION
 
 
-class DeviceType(object):
+class DeviceType:
     _Type = NewType('_Type', int)
     CPU: _Type = _Type(0)
     CUDA: _Type = _Type(1)
 
 
-class Device(object):
+class Device:
     '''
     Describes device type and device id
     syntax: device_type:device_id(optional)
     example: 'CPU', 'CUDA', 'CUDA:1'
     '''
 
-    def __init__(self, device: Text) -> None:
+    def __init__(self, device: str) -> None:
         options = device.split(':')
         self.type = getattr(DeviceType, options[0])
         self.device_id = 0
@@ -31,10 +31,10 @@ class Device(object):
             self.device_id = int(options[1])
 
 
-def namedtupledict(typename: Text, field_names: Sequence[Text], *args: Any, **kwargs: Any) -> Type[Tuple[Any, ...]]:
+def namedtupledict(typename: str, field_names: Sequence[str], *args: Any, **kwargs: Any) -> Type[Tuple[Any, ...]]:
     field_names_map = {n: i for i, n in enumerate(field_names)}
     # Some output names are invalid python identifier, e.g. "0"
-    kwargs.setdefault(str('rename'), True)
+    kwargs.setdefault('rename', True)
     data = namedtuple(typename, field_names, *args, **kwargs)  # type: ignore
 
     def getitem(self: Any, key: Any) -> Any:
@@ -45,16 +45,16 @@ def namedtupledict(typename: Text, field_names: Sequence[Text], *args: Any, **kw
     return data
 
 
-class BackendRep(object):
+class BackendRep:
     def run(self, inputs: Any, **kwargs: Any) -> Tuple[Any, ...]:
         pass
 
 
-class Backend(object):
+class Backend:
     @classmethod
     def is_compatible(cls,
                       model: ModelProto,
-                      device: Text = 'CPU',
+                      device: str = 'CPU',
                       **kwargs: Any
                       ) -> bool:
         # Return whether the model is compatible with the backend.
@@ -63,7 +63,7 @@ class Backend(object):
     @classmethod
     def prepare(cls,
                 model: ModelProto,
-                device: Text = 'CPU',
+                device: str = 'CPU',
                 **kwargs: Any
                 ) -> Optional[BackendRep]:
         # TODO Remove Optional from return type
@@ -74,7 +74,7 @@ class Backend(object):
     def run_model(cls,
                   model: ModelProto,
                   inputs: Any,
-                  device: Text = 'CPU',
+                  device: str = 'CPU',
                   **kwargs: Any
                   ) -> Tuple[Any, ...]:
         backend = cls.prepare(model, device, **kwargs)
@@ -85,9 +85,9 @@ class Backend(object):
     def run_node(cls,
                  node: NodeProto,
                  inputs: Any,
-                 device: Text = 'CPU',
+                 device: str = 'CPU',
                  outputs_info: Optional[Sequence[Tuple[numpy.dtype, Tuple[int, ...]]]] = None,
-                 **kwargs: Dict[Text, Any]
+                 **kwargs: Dict[str, Any]
                  ) -> Optional[Tuple[Any, ...]]:
         '''Simple run one operator and return the results.
         Args:
@@ -107,7 +107,7 @@ class Backend(object):
         return None
 
     @classmethod
-    def supports_device(cls, device: Text) -> bool:
+    def supports_device(cls, device: str) -> bool:
         """
         Checks whether the backend is compiled with particular device support.
         In particular it's used in the testing suite.

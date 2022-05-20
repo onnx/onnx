@@ -12,19 +12,19 @@ from . import expect
 class TfIdfVectorizerHelper():
     def __init__(self, **params: Any) -> None:
         # Attr names
-        mode = str('mode')
-        min_gram_length = str('min_gram_length')
-        max_gram_length = str('max_gram_length')
-        max_skip_count = str('max_skip_count')
-        ngram_counts = str('ngram_counts')
-        ngram_indexes = str('ngram_indexes')
-        pool_int64s = str('pool_int64s')
+        mode = 'mode'
+        min_gram_length = 'min_gram_length'
+        max_gram_length = 'max_gram_length'
+        max_skip_count = 'max_skip_count'
+        ngram_counts = 'ngram_counts'
+        ngram_indexes = 'ngram_indexes'
+        pool_int64s = 'pool_int64s'
 
         required_attr = [mode, min_gram_length, max_gram_length, max_skip_count,
                          ngram_counts, ngram_indexes, pool_int64s]
 
         for i in required_attr:
-            assert i in params, "Missing attribute: {0}".format(i)
+            assert i in params, f"Missing attribute: {i}"
 
         self.mode = params[mode]
         self.min_gram_length = params[min_gram_length]

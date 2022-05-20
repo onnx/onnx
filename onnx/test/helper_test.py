@@ -67,7 +67,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.s, b"test")
         checker.check_attribute(attr)
         # unicode
-        attr = helper.make_attribute("str", u"test")
+        attr = helper.make_attribute("str", "test")
         self.assertEqual(attr.name, "str")
         self.assertEqual(attr.s, b"test")
         checker.check_attribute(attr)
@@ -199,7 +199,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
 
     def test_is_attr_legal_verbose(self) -> None:
 
-        def _set(attr: AttributeProto, type: AttributeProto.AttributeType, var: Text, value: Any) -> None:
+        def _set(attr: AttributeProto, type: AttributeProto.AttributeType, var: str, value: Any) -> None:
             setattr(attr, var, value)
             setattr(attr, 'type', type)
 
@@ -328,13 +328,13 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
     def test_model_irversion(self) -> None:
-        def mk_model(opset_versions: List[Tuple[Text, int]]) -> ModelProto:
+        def mk_model(opset_versions: List[Tuple[str, int]]) -> ModelProto:
             graph = helper.make_graph([], "my graph", [], [])
             return helper.make_model_gen_version(
                 graph,
                 opset_imports=[helper.make_opsetid(*pair) for pair in opset_versions])
 
-        def test(opset_versions: List[Tuple[Text, int]], ir_version: int) -> None:
+        def test(opset_versions: List[Tuple[str, int]], ir_version: int) -> None:
             model = mk_model(opset_versions)
             self.assertEqual(model.ir_version, ir_version)
         # opset version 9 requires minimum ir_version 4

@@ -12,7 +12,7 @@ class Concat(Base):
 
     @staticmethod
     def export() -> None:
-        test_cases: Dict[Text, Sequence[Any]] = {
+        test_cases: Dict[str, Sequence[Any]] = {
             '1d': ([1, 2],
                    [3, 4]),
             '2d': ([[1, 2], [3, 4]],

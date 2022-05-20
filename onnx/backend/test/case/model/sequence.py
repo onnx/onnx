@@ -71,10 +71,10 @@ class Sequence(Base):
 
         def make_graph(
                 nodes: List[onnx.helper.NodeProto],
-                input_shapes: List[Optional[typing.Sequence[Union[Text, int]]]],
-                output_shapes: List[Optional[typing.Sequence[Union[Text, int]]]],
-                input_names: List[Text],
-                output_names: List[Text],
+                input_shapes: List[Optional[typing.Sequence[Union[str, int]]]],
+                output_shapes: List[Optional[typing.Sequence[Union[str, int]]]],
+                input_names: List[str],
+                output_names: List[str],
                 input_types: List[TensorProto.DataType],
                 output_types: List[TensorProto.DataType],
                 initializers: Optional[List[TensorProto]] = None

@@ -26,7 +26,7 @@ class TestChecker(unittest.TestCase):
                     values: Sequence[int],
                     indices_shape: Sequence[int],
                     indices: Sequence[int],
-                    name: Text = 'spval'
+                    name: str = 'spval'
                     ) -> SparseTensorProto:
         sparse = SparseTensorProto()
         sparse.dims.extend(shape)
@@ -285,11 +285,11 @@ class TestChecker(unittest.TestCase):
         tensor = TensorProto()
         tensor.data_type = TensorProto.STRING
         tensor.dims.append(1)
-        tensor.string_data.append('Test'.encode('utf-8'))
+        tensor.string_data.append(b'Test')
         checker.check_tensor(tensor)
 
         del tensor.string_data[:]
-        tensor.raw_data = 'Test'.encode('utf-8')
+        tensor.raw_data = b'Test'
         # string data should not be stored in raw_data field
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
@@ -660,7 +660,7 @@ class TestChecker(unittest.TestCase):
         )
         self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
 
-    def _contruct_loop_model(self, inputs_list: List[Text], outputs_list: List[Text]) -> onnx.ModelProto:
+    def _contruct_loop_model(self, inputs_list: List[str], outputs_list: List[str]) -> onnx.ModelProto:
         y_in = onnx.helper.make_tensor_value_info('y_in', onnx.TensorProto.FLOAT, [1])
         y_out = onnx.helper.make_tensor_value_info('y_out', onnx.TensorProto.FLOAT, [1])
         scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [1])

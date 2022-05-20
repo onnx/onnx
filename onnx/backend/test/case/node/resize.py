@@ -62,7 +62,7 @@ def interpolate_1d_with_x(data: np.ndarray,
                           get_coeffs: Callable[[float], np.ndarray],
                           roi: np.ndarray = None,
                           extrapolation_value: float = 0.0,
-                          coordinate_transformation_mode: Text = 'half_pixel',
+                          coordinate_transformation_mode: str = 'half_pixel',
                           exclude_outside: bool = False,
                           ) -> np.ndarray:
     def get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
@@ -211,7 +211,7 @@ def linear_coeffs(ratio: float) -> np.ndarray:
     return np.array([1 - ratio, ratio])
 
 
-def nearest_coeffs(ratio: float, mode: Text = 'round_prefer_floor') -> np.ndarray:
+def nearest_coeffs(ratio: float, mode: str = 'round_prefer_floor') -> np.ndarray:
     if type(ratio) == int or ratio.is_integer():
         return np.array([0, 1])
     elif mode == 'round_prefer_floor':

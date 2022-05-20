@@ -6,7 +6,7 @@ from onnx import ModelProto, ValueInfoProto
 import onnx.checker
 
 
-def update_inputs_outputs_dims(model: ModelProto, input_dims: Dict[Text, List[Any]], output_dims: Dict[Text, List[Any]]) -> ModelProto:
+def update_inputs_outputs_dims(model: ModelProto, input_dims: Dict[str, List[Any]], output_dims: Dict[str, List[Any]]) -> ModelProto:
     """
         This function updates the dimension sizes of the model's inputs and outputs to the values
         provided in input_dims and output_dims. if the dim value provided is negative, a unique dim_param
@@ -31,9 +31,9 @@ def update_inputs_outputs_dims(model: ModelProto, input_dims: Dict[Text, List[An
                 updated_model = update_inputs_outputs_dims(model, input_dims, output_dims)
                 onnx.save(updated_model, 'model.onnx')
     """
-    dim_param_set: Set[Text] = set()
+    dim_param_set: Set[str] = set()
 
-    def init_dim_param_set(dim_param_set: Set[Text], value_infos: List[ValueInfoProto]) -> None:
+    def init_dim_param_set(dim_param_set: Set[str], value_infos: List[ValueInfoProto]) -> None:
         for info in value_infos:
             shape = info.type.tensor_type.shape
             for dim in shape.dim:
@@ -44,7 +44,7 @@ def update_inputs_outputs_dims(model: ModelProto, input_dims: Dict[Text, List[An
     init_dim_param_set(dim_param_set, model.graph.output)  # type: ignore
     init_dim_param_set(dim_param_set, model.graph.value_info)  # type: ignore
 
-    def update_dim(tensor: ValueInfoProto, dim: Any, j: int, name: Text) -> None:
+    def update_dim(tensor: ValueInfoProto, dim: Any, j: int, name: str) -> None:
         dim_proto = tensor.type.tensor_type.shape.dim[j]
         if isinstance(dim, int):
             if dim >= 0:
@@ -61,7 +61,7 @@ def update_inputs_outputs_dims(model: ModelProto, input_dims: Dict[Text, List[An
         elif isinstance(dim, str):
             dim_proto.dim_param = dim
         else:
-            raise ValueError('Only int or str is accepted as dimension value, incorrect type: {}'.format(type(dim)))
+            raise ValueError(f'Only int or str is accepted as dimension value, incorrect type: {type(dim)}')
 
     for input in model.graph.input:
         input_name = input.name

@@ -9,8 +9,8 @@ from onnx import utils
 def check_overlapping_names(
     g1: GraphProto,
     g2: GraphProto,
-    io_map: Optional[List[Tuple[Text, Text]]] = None
-) -> List[Tuple[Text, List[Text]]]:
+    io_map: Optional[List[Tuple[str, str]]] = None
+) -> List[Tuple[str, List[str]]]:
     """Checks whether there are name collisions between two graphs
 
     Returns a list of tuples where the first element represents the member containing overlapping names
@@ -25,10 +25,10 @@ def check_overlapping_names(
     if type(g2) is not GraphProto:
         raise ValueError("g2 argument is not an ONNX graph")
 
-    def _overlapping(c1: List[Text], c2: List[Text]) -> List[Text]:
+    def _overlapping(c1: List[str], c2: List[str]) -> List[str]:
         return list(set(c1) & set(c2))
 
-    def _edge_names(graph: GraphProto, exclude: Set[Text] = set()) -> List[Text]:
+    def _edge_names(graph: GraphProto, exclude: Set[str] = set()) -> List[str]:
         edges = []
         for n in graph.node:
             for i in n.input:
@@ -43,7 +43,7 @@ def check_overlapping_names(
 
     if not io_map:
         io_map = []
-    io_map_inputs = set([elem[1] for elem in io_map])
+    io_map_inputs = {elem[1] for elem in io_map}
 
     # Edges already cover input/output
     overlap = _overlapping(
@@ -73,13 +73,13 @@ def check_overlapping_names(
 def merge_graphs(
         g1: GraphProto,
         g2: GraphProto,
-        io_map: List[Tuple[Text, Text]],
-        inputs: Optional[List[Text]] = None,
-        outputs: Optional[List[Text]] = None,
-        prefix1: Optional[Text] = None,
-        prefix2: Optional[Text] = None,
-        name: Optional[Text] = None,
-        doc_string: Optional[Text] = None,
+        io_map: List[Tuple[str, str]],
+        inputs: Optional[List[str]] = None,
+        outputs: Optional[List[str]] = None,
+        prefix1: Optional[str] = None,
+        prefix2: Optional[str] = None,
+        name: Optional[str] = None,
+        doc_string: Optional[str] = None,
 ) -> GraphProto:
     """Combines two ONNX graphs into a single one.
 
@@ -130,11 +130,11 @@ def merge_graphs(
              prefix2 + io[1] if prefix2 else io[1])
             for io in io_map]
 
-    io_map_g1_outs = set([io[0] for io in io_map])
-    io_map_g2_ins = set([io[1] for io in io_map])
+    io_map_g1_outs = {io[0] for io in io_map}
+    io_map_g2_ins = {io[1] for io in io_map}
     reversed_io_map = {in_name: out_name for out_name, in_name in io_map}
-    g1_outs = set([o.name for o in g1.output])
-    g2_ins = set([i.name for i in g2.input])
+    g1_outs = {o.name for o in g1.output}
+    g2_ins = {i.name for i in g2.input}
 
     # If necessary extract subgraphs
     if inputs or outputs:
@@ -233,16 +233,16 @@ def merge_graphs(
 def merge_models(
         m1: ModelProto,
         m2: ModelProto,
-        io_map: List[Tuple[Text, Text]],
-        inputs: Optional[List[Text]] = None,
-        outputs: Optional[List[Text]] = None,
-        prefix1: Optional[Text] = None,
-        prefix2: Optional[Text] = None,
-        name: Optional[Text] = None,
-        doc_string: Optional[Text] = None,
-        producer_name: Optional[Text] = 'onnx.compose.merge_models',
-        producer_version: Optional[Text] = "1.0",
-        domain: Optional[Text] = "",
+        io_map: List[Tuple[str, str]],
+        inputs: Optional[List[str]] = None,
+        outputs: Optional[List[str]] = None,
+        prefix1: Optional[str] = None,
+        prefix2: Optional[str] = None,
+        name: Optional[str] = None,
+        doc_string: Optional[str] = None,
+        producer_name: Optional[str] = 'onnx.compose.merge_models',
+        producer_version: Optional[str] = "1.0",
+        domain: Optional[str] = "",
         model_version: Optional[int] = 1
 ) -> ModelProto:
     """Combines two ONNX models into a single one.
@@ -290,7 +290,7 @@ def merge_models(
             " Both models should have have the same IR version")
     ir_version = m1.ir_version
 
-    opset_import_map: MutableMapping[Text, int] = {}
+    opset_import_map: MutableMapping[str, int] = {}
     opset_imports = \
         [entry for entry in m1.opset_import] + \
         [entry for entry in m2.opset_import]
@@ -350,7 +350,7 @@ def merge_models(
     helper.set_model_props(model, model_props)
 
     # Merging functions
-    function_overlap = list(set([f.name for f in m1.functions]) & set([f.name for f in m2.functions]))
+    function_overlap = list({f.name for f in m1.functions} & {f.name for f in m2.functions})
     if function_overlap:
         raise ValueError(
             "Can't merge models with overlapping local function names."
@@ -365,7 +365,7 @@ def merge_models(
 
 def add_prefix_graph(
         graph: GraphProto,
-        prefix: Text,
+        prefix: str,
         rename_nodes: Optional[bool] = True,
         rename_edges: Optional[bool] = True,
         rename_inputs: Optional[bool] = True,
@@ -404,7 +404,7 @@ def add_prefix_graph(
     else:
         g = graph
 
-    def _prefixed(prefix: Text, name: Text) -> Text:
+    def _prefixed(prefix: str, name: str) -> str:
         return prefix + name if len(name) > 0 else name
 
     name_map = {}
@@ -470,7 +470,7 @@ def add_prefix_graph(
 
 def add_prefix(
         model: ModelProto,
-        prefix: Text,
+        prefix: str,
         rename_nodes: Optional[bool] = True,
         rename_edges: Optional[bool] = True,
         rename_inputs: Optional[bool] = True,
