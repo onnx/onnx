@@ -192,12 +192,12 @@ def expect(node: onnx.NodeProto,
     present_outputs = [x for x in node.output if (x != "")]
     input_type_protos = [None] * len(inputs)
     if "input_type_protos" in kwargs:
-        input_type_protos = kwargs[str("input_type_protos")]
-        del kwargs[str("input_type_protos")]
+        input_type_protos = kwargs["input_type_protos"]
+        del kwargs["input_type_protos"]
     output_type_protos = [None] * len(outputs)
     if "output_type_protos" in kwargs:
-        output_type_protos = kwargs[str("output_type_protos")]
-        del kwargs[str("output_type_protos")]
+        output_type_protos = kwargs["output_type_protos"]
+        del kwargs["output_type_protos"]
     inputs_vi = [_extract_value_info(arr, arr_name, input_type)
                  for arr, arr_name, input_type in zip(inputs, present_inputs, input_type_protos)]
     outputs_vi = [_extract_value_info(arr, arr_name, output_type)
@@ -207,13 +207,13 @@ def expect(node: onnx.NodeProto,
         name=name,
         inputs=inputs_vi,
         outputs=outputs_vi)
-    kwargs[str("producer_name")] = "backend-test"
+    kwargs["producer_name"] = "backend-test"
 
     if "opset_imports" not in kwargs:
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
         produce_opset_version = onnx.defs.get_schema(node.op_type, node.domain).since_version
-        kwargs[str("opset_imports")] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
+        kwargs["opset_imports"] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
 
     model = _make_test_model_gen_version(graph, **kwargs)
 
@@ -247,7 +247,7 @@ def expect(node: onnx.NodeProto,
             name=function_test_name,
             inputs=inputs_vi,
             outputs=outputs_vi)
-        kwargs[str("producer_name")] = "backend-test"
+        kwargs["producer_name"] = "backend-test"
         model = _make_test_model_gen_version(graph, **kwargs)
         _NodeTestCases.append(TestCase(
             name=function_test_name,
@@ -262,7 +262,7 @@ def expect(node: onnx.NodeProto,
         ))
 
 
-def collect_testcases(op_type: Text) -> List[TestCase]:
+def collect_testcases(op_type: str) -> List[TestCase]:
     '''Collect node test cases
     '''
     # only keep those tests related to this operator

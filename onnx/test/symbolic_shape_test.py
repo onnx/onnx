@@ -126,7 +126,7 @@ class TestSymbolicShape(unittest.TestCase):
         # new symbol 'unk__2' and 'unk__3' should be generated
         # original: {'unk_0', 'unk__1'}
         # inferred: {'unk_0', 'unk__1', 'unk__2', 'unk__3'}
-        assert inferred_count == original_count + 2, '{}{}'.format(inferred_model, onnx_model)
+        assert inferred_count == original_count + 2, f'{inferred_model}{onnx_model}'
 
     def test_unknown_shape(self) -> None:
         concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)

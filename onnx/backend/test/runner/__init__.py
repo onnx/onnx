@@ -137,7 +137,7 @@ class Runner:
         '''
         test_cases = {}
         for category, items_map in self._filtered_test_items.items():
-            test_case_name = 'OnnxBackend{}Test'.format(category)
+            test_case_name = f'OnnxBackend{category}Test'
             test_case = self._get_test_case(test_case_name)
             for name, item in sorted(items_map.items()):
                 setattr(test_case, name, item.func)
