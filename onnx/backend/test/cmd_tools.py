@@ -23,12 +23,10 @@ def generate_data(args: argparse.Namespace) -> None:
         os.makedirs(path)
 
     cases = model_test.collect_testcases()
-    if args.op_type is None:
-        # include all of the testcases
-        cases += node_test.collect_testcases()
-    else:
-        # only include those testcases including the given operator
-        cases += node_test.collect_testcases_by_operator(args.op_type)
+    # If op_type is specified, only include those testcases including the given operator
+    # Otherwise, include all of the testcases
+    cases += node_test.collect_testcases(args.op_type)
+
     for case in cases:
         output_dir = os.path.join(
             args.output, case.kind, case.name)
