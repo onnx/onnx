@@ -76,7 +76,7 @@ class DummyBackend(onnx.backend.base.Backend):
 
 test_coverage_safelist = {
     'bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
-     'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'}
+    'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'}
 
 
 def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
