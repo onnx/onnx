@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-from typing import List, Tuple, Text
+from typing import List, Tuple
 
 import onnx.checker
 import onnx.helper

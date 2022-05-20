@@ -9,7 +9,7 @@ import re
 import glob
 import subprocess
 from textwrap import dedent
-from typing import Iterable, Text
+from typing import Iterable
 
 autogen_header = """\
 //

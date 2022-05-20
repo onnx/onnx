@@ -18,7 +18,7 @@ from onnx import (ValueInfoProto,
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
 from google.protobuf.message import Message
-from typing import TypeVar, Callable, Any, Type, cast, Union, Text
+from typing import TypeVar, Callable, Any, Type, cast, Union
 import onnx.shape_inference
 import sys
 

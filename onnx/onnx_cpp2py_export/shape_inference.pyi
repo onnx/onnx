@@ -1,6 +1,3 @@
-from typing import Text
-
-
 class InferenceError(Exception):
     ...
 

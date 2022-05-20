@@ -382,7 +382,7 @@ def add_prefix_graph(
 
     Arguments:
         graph (GraphProto): Graph
-        prefix (Text): Prefix to be added to each name in the graph
+        prefix (str): Prefix to be added to each name in the graph
         rename_nodes (bool): Whether to prefix node names
         rename_edges (bool): Whether to prefix node edge names
         rename_inputs (bool): Whether to prefix input names
@@ -488,7 +488,7 @@ def add_prefix(
 
     Arguments:
         model (ModelProto): Model
-        prefix (Text): Prefix to be added to each name in the graph
+        prefix (str): Prefix to be added to each name in the graph
         rename_nodes (bool): Whether to prefix node names
         rename_edges (bool): Whether to prefix node edge names
         rename_inputs (bool): Whether to prefix input names

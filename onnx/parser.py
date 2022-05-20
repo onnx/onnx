@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 import onnx
 import onnx.onnx_cpp2py_export.parser as C
-from typing import Text
 
 
 class ParseError(Exception):

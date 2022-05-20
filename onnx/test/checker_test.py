@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 
-from typing import List, Sequence, Text
+from typing import List, Sequence
 import numpy as np  # type: ignore
 
 from onnx import checker, helper, numpy_helper, shape_inference

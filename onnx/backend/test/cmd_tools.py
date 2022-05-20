@@ -8,7 +8,6 @@ import shutil
 import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
 from onnx import numpy_helper
-from typing import Text
 
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))

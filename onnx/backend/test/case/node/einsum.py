@@ -6,7 +6,7 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from typing import Tuple, Text
+from typing import Tuple
 
 
 def einsum_reference_implementation(Eqn: str, Operands: Tuple[np.ndarray, ...]) -> np.ndarray:

@@ -4,7 +4,7 @@ import importlib
 import inspect
 import sys
 import pkgutil
-from typing import Dict, Text
+from typing import Dict
 from types import ModuleType
 
 

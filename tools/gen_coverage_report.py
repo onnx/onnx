@@ -5,7 +5,6 @@
 import argparse
 import os
 import subprocess
-from typing import Text
 
 
 def parse_args() -> argparse.Namespace:

@@ -5,7 +5,7 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from typing import Any, List, Callable, Union, Optional, Text
+from typing import Any, List, Callable, Union, Optional
 
 
 def cartesian(arrays: List[np.ndarray], out: np.ndarray = None) -> np.ndarray:
