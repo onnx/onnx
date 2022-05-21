@@ -31,14 +31,14 @@ def _load_bytes(f: Union[IO[bytes], str]) -> bytes:
     return s
 
 
-# str should be bytes,
+# content should be bytes,
 # f should be either writable or a file path
-def _save_bytes(str: bytes, f: Union[IO[bytes], str]) -> None:
+def _save_bytes(content: bytes, f: Union[IO[bytes], str]) -> None:
     if hasattr(f, 'write') and callable(cast(IO[bytes], f).write):
-        cast(IO[bytes], f).write(str)
+        cast(IO[bytes], f).write(content)
     else:
         with open(cast(str, f), 'wb') as writable:
-            writable.write(str)
+            writable.write(content)
 
 
 # f should be either a readable file or a file path
