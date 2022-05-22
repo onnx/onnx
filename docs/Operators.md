@@ -175,6 +175,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
+|<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
@@ -9321,6 +9322,229 @@ expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.
 </details>
 
 
+### <a name="LayerNormalization"></a><a name="layernormalization">**LayerNormalization**</a>
+
+  This is layer normalization defined in ONNX as function.
+        The overall computation can be split into two stages.
+        The first stage is standardization, which makes the
+        normalized elements have zero mean and unit variances.
+        The computation required by standardization can be
+        described by the following equations.
+        ```
+        Mean = ReduceMean<axes=normalized_axes>(X)
+        D = Sub(X, Mean)
+        DD = Mul(Diff, Diff)
+        Var = ReduceMean<axes=normalized_axes>(DD)
+        VarEps = Add(Var, epsilon)
+        StdDev = Sqrt(VarEps)
+        InvStdDev = Reciprocal(StdDev)
+        Normalized = Mul(D, InvStdDev)
+        ```
+        where `normalized_axes` is `[axis, ..., rank of X - 1]`.
+        The variables `Var` and `StdDev` stand for variance and
+        standard deviation, respectively. The second output is
+        `Mean` and the last one is `InvStdDev`.
+        Depending on `stash_type` attribute, the actual computation
+        must happen in different floating-point precision.
+        For example, if `stash_type` is 1, this operator casts
+        all input variables to 32-bit float, perform the computation, and
+        finally cast `Normalized` back to the original type of `X`.
+        The second stage then scales and shifts the outcome of the
+        first stage using
+        ```
+        NormalizedScaled = Mul(Normalized, Scale)
+        Y = Add(NormalizedScaled, B)
+        ```
+        The second stage doesn't depends on `stash_type`.
+        All equations are in [this syntax](https://github.com/onnx/onnx/blob/main/docs/Syntax.md).
+        The same variable (i.e., input, output, and attribute) uses
+        the same name in the equations above and this operator's definition.
+        Let `d[i]` indicate the i-th dimension of `X`.
+        If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+        the shape of `Mean` and `InvStdDev` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+        `Y` and `X` have the same shape.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r]. Negative value means counting dimensions from the back.</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>Type of Mean and InvStdDev. This also specifies stage one's computation precision.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor to be normalized.</dd>
+<dt><tt>Scale</tt> : T</dt>
+<dd>Scale tensor.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>Bias tensor.</dd>
+</dl>
+
+#### Outputs (1 - 3)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Normalized tensor.</dd>
+<dt><tt>Mean</tt> (optional) : U</dt>
+<dd>Saved mean used during training to speed up gradient computation</dd>
+<dt><tt>InvStdDev</tt> (optional) : U</dt>
+<dd>Saved inverse standard deviation used during training to speed up gradient computation.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input types and output Y type to float tensors.</dd>
+<dt><tt>U</tt> : tensor(float), tensor(bfloat16)</dt>
+<dd>Type of Mean and InvStdDev tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>d</summary>
+
+```python
+X = np.random.randn(3, 4).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    B = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis=axis)
+
+    node = onnx.helper.make_node(
+        'LayerNormalization',
+        inputs=['X', 'W', 'B'],
+        outputs=['Y', 'Mean', 'InvStdDev'],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f'test_layer_normalization_2d_axis_negative_{-axis}'
+    else:
+        name = f'test_layer_normalization_2d_axis{axis}'
+
+    expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+           name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+
+
+<details>
+<summary>d_epsilon</summary>
+
+```python
+X = np.random.randn(2, 3, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    B = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
+    node = onnx.helper.make_node(
+        'LayerNormalization',
+        inputs=['X', 'W', 'B'],
+        outputs=['Y', 'Mean', 'InvStdDev'],
+        axis=axis,
+        epsilon=1e-1
+    )
+
+    if axis < 0:
+        name = f'test_layer_normalization_3d_axis_negative_{-axis}_epsilon'
+    else:
+        name = f'test_layer_normalization_3d_axis{axis}_epsilon'
+
+    expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+           name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+
+
+<details>
+<summary>default_axis</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+# Default axis in LayerNormalization is -1.
+normalized_shape = calculate_normalized_shape(X.shape, -1)
+W = np.random.randn(*normalized_shape).astype(np.float32)
+B = np.random.randn(*normalized_shape).astype(np.float32)
+# Axis is default to -1 in the reference implementation.
+Y, mean, inv_std_dev = _layer_normalization(X, W, B)
+
+# Not specifying axis attribute means -1.
+node = onnx.helper.make_node(
+    'LayerNormalization',
+    inputs=['X', 'W', 'B'],
+    outputs=['Y', 'Mean', 'InvStdDev']
+)
+
+expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+        name='test_layer_normalization_default_axis')
+```
+
+</details>
+
+
+<details>
+<summary>layernormalization</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    B = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
+
+    node = onnx.helper.make_node(
+        'LayerNormalization',
+        inputs=['X', 'W', 'B'],
+        outputs=['Y', 'Mean', 'InvStdDev'],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f'test_layer_normalization_4d_axis_negative_{-axis}'
+    else:
+        name = f'test_layer_normalization_4d_axis{axis}'
+
+    expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
+           name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+
+
 ### <a name="LeakyRelu"></a><a name="leakyrelu">**LeakyRelu**</a>
 
   LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
@@ -12624,7 +12848,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -12795,7 +13019,7 @@ node = onnx.helper.make_node(
 N, C = 3, 5
 np.random.seed(0)
 input = np.random.rand(N, C).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N))
+target = np.random.randint(0, high=C, size=(N)).astype(np.int64)
 target[0] = 10
 weight = np.random.rand(C).astype(np.float32)
 
@@ -13194,7 +13418,8 @@ expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, s
   Returns the indices of the elements that are non-zero
       (in row-major order - by dimension).
       NonZero behaves similar to numpy.nonzero:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
+      but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 
 #### Version
 
@@ -25669,7 +25894,7 @@ graph = onnx.helper.make_graph(
 opsets = [
     onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
     onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
-model = onnx.helper.make_model(
+model = onnx.helper.make_model_gen_version(
     graph,
     producer_name='backend-test',
     opset_imports=opsets)
@@ -25723,7 +25948,7 @@ graph = onnx.helper.make_graph(
 opsets = [
     onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
     onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
-model = onnx.helper.make_model(graph,
+model = onnx.helper.make_model_gen_version(graph,
     producer_name='backend-test',
     opset_imports=opsets)
 expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],

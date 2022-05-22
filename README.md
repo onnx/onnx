@@ -30,9 +30,6 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Graph Optimization](https://github.com/onnx/optimizer)
 * [Opset Version Conversion](docs/VersionConverter.md)
 
-# NOTICE: ONNX now uses main branch as default branch
-Here are the [steps](https://github.com/onnx/onnx/wiki/How-to-migrate-to-main-branch-in-local-repo) from ONNX wiki for migrating to main branch in local repo.
-
 # Contribute
 ONNX is a [community project](community/readme.md). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [Special Interest Groups](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
 

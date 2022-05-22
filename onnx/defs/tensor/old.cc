@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include "onnx/defs/data_propagators.h"
 #include "onnx/defs/tensor/utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -469,6 +470,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             output_length->set_dim_value(
                 ctx.getInputType(0)->tensor_type().shape().dim_size());
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          ShapeOp13DataPropagator(ctx);
         }));
 
 static const char* Size_ver1_doc = R"DOC(
@@ -1542,6 +1546,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                                             : // i - axis < q
                     data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          GatherOp13DataPropagator(ctx);
         }));
 
 static const char* GatherElements_ver11_doc = R"DOC(
@@ -2136,7 +2143,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain roi type to float or double.")
         .SetDoc(Resize_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx, true);
+          resizeShapeInference(ctx);
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2203,11 +2210,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* NonZero_ver9_doc = R"DOC(
+const char* NonZero_ver9_doc = R"DOC(
     Returns the indices of the elements that are non-zero
     (in row-major order - by dimension).
     NonZero behaves similar to numpy.nonzero:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
+    but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -3737,6 +3745,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                                             : // i - axis < q
                     data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          GatherOp13DataPropagator(ctx);
         }));
 
 static const char* Squeeze_ver1_doc = R"DOC(

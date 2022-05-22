@@ -13,7 +13,6 @@ from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 from typing import Text, Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
 import numpy as np  # type: ignore
-import warnings
 
 VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, int]]
 VersionTableType = List[VersionRowType]
@@ -52,6 +51,8 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
         for pair in zip(['ai.onnx', 'ai.onnx.ml', 'ai.onnx.training'], args):
             if (pair not in result):
                 result[pair] = ir_version
+                if pair[0] == 'ai.onnx.training':
+                    result['ai.onnx.preview.training', pair[1]] = ir_version
     for row in table:
         process(*row)
     return result
@@ -1000,16 +1001,3 @@ def make_training_info(algorithm: GraphProto, algorithm_bindings: AssignmentBind
             binding.value = v
 
     return training_info
-
-
-# For backwards compatibility
-def make_sequence_value_info(
-        name: Text,
-        elem_type: int,
-        shape: Optional[Sequence[Union[Text, int, None]]],
-        doc_string: Text = "",
-        elem_shape_denotation: Optional[List[Text]] = None,
-) -> ValueInfoProto:
-    """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
-    warnings.warn(str("`onnx.helper.make_sequence_value_info` is a deprecated alias for `onnx.helper.make_tensor_sequence_value_info`. To silence this warning, please use `make_tensor_sequence_value_info` for `TensorProto` sequences. Deprecated in ONNX v1.10.0, `onnx.helper.make_sequence_value_info alias` will be removed in an upcoming release."), DeprecationWarning, stacklevel=2)
-    return make_tensor_sequence_value_info(name, elem_type, shape, doc_string, elem_shape_denotation)
