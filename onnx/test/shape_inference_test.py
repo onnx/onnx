@@ -69,6 +69,7 @@ class TestShapeInference(unittest.TestCase):
             assert vi_type.tensor_type.elem_type == inferred_vi_type.tensor_type.elem_type
             assert vi_type.tensor_type.HasField('shape') == inferred_vi_type.tensor_type.HasField('shape')
             if vi_type.tensor_type.HasField('shape'):
+                assert len(vi_type.tensor_type.shape.dim) == len(inferred_vi_type.tensor_type.shape.dim)
                 for dim_i in range(len(vi_type.tensor_type.shape.dim)):
                     dim = vi_type.tensor_type.shape.dim[dim_i]
                     inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
@@ -631,6 +632,15 @@ class TestShapeInference(unittest.TestCase):
             [],
             initializer=[make_tensor('axes', TensorProto.INT64, (2,), (0, -1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 3, 4, 5, 1))])
+
+    def test_unsqueeze_scalar(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ()),
+            ('axes', TensorProto.INT64, ())],
+            [make_node('Unsqueeze', ['x', 'axes'], 'y')],
+            [],
+            initializer=[make_tensor('axes', TensorProto.INT64, (), (-1,))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1,))])
 
     def test_slice_without_input_shape(self) -> None:
         graph = self._make_graph(
@@ -3816,6 +3826,13 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('y', TensorProto.INT64, (None, 'NZ'))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1, 'NZ'))])  # type: ignore
 
+    def test_nonzero_scalar(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ())],
+            [make_node('NonZero', ['x'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT64, (0, None))])  # type: ignore
+
     def test_optional_construct_empty_tensor(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[1, 2, 3])
         optional_type_proto = helper.make_optional_type_proto(tensor_type_proto)
@@ -4009,6 +4026,171 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, ('N', 'C', None, None))])  # type: ignore
+
+    def test_sequence_map_identity_known_dims(self):  # type: () -> None
+        input_value_infos = [make_tensor_value_info(
+            'input', TensorProto.FLOAT, (220, 220, 3))]
+        output_value_infos = [make_tensor_value_info(
+            'output', TensorProto.FLOAT, (220, 220, 3))]
+        body_graph = helper.make_graph(
+            [make_node('Identity', ['input'], ['output'])],
+            "body_graph",
+            input_value_infos,
+            output_value_infos
+        )
+        graph = self._make_graph(
+            [('input1', TensorProto.FLOAT, (220, 220, 3)),
+             ('input2', TensorProto.FLOAT, (220, 220, 3)),
+             ('input3', TensorProto.FLOAT, (220, 220, 3)),
+             ],
+            [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['in_sequence']),
+             make_node('SequenceMap', ['in_sequence'], ['out_sequence'], body=body_graph)],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (220, 220, 3)),
+             make_tensor_sequence_value_info('out_sequence', TensorProto.FLOAT, (220, 220, 3))]
+        )  # type: ignore
+
+    def test_sequence_map_identity_unknown_dims(self):  # type: () -> None
+        input_value_infos = [make_tensor_value_info(
+            'input', TensorProto.FLOAT, ('H', 'W', 3))]
+        output_value_infos = [make_tensor_value_info(
+            'output', TensorProto.FLOAT, ('H', 'W', 3))]
+        body_graph = helper.make_graph(
+            [make_node('Identity', ['input'], ['output'])],
+            "body_graph",
+            input_value_infos,
+            output_value_infos
+        )
+        graph = self._make_graph(
+            [('input1', TensorProto.FLOAT, (200, 300, 3)),
+             ('input2', TensorProto.FLOAT, (100, 200, 3)),
+             ('input3', TensorProto.FLOAT, (5, 1, 3)),
+             ],
+            [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['in_sequence']),
+             make_node('SequenceMap', ['in_sequence'], ['out_sequence'], body=body_graph)],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (None, None, 3)),
+             make_tensor_sequence_value_info('out_sequence', TensorProto.FLOAT, (None, None, 3))])  # type: ignore
+
+    def test_sequence_map_slice_outs_known_dims(self):  # type: () -> None
+        body_graph = helper.make_graph(
+            nodes=[make_node('Slice', ['x', 'starts1', 'ends1', 'axes', ''], ['y1']),
+                   make_node('Slice', ['x', 'starts2', 'ends2', 'axes', ''], ['y2'])],
+            name='body_graph',
+            inputs=[
+                onnx.helper.make_tensor_value_info(
+                    'x', onnx.TensorProto.FLOAT, ('H', 'W', 3))
+            ],
+            outputs=[
+                onnx.helper.make_tensor_value_info(
+                    'y1', onnx.TensorProto.FLOAT, (10, 20, 3)),
+                onnx.helper.make_tensor_value_info(
+                    'y2', onnx.TensorProto.FLOAT, (30, 40, 3)),
+            ],
+            initializer=[make_tensor('axes', TensorProto.INT64, (2,), (0, 1)),
+                         make_tensor('starts1', TensorProto.INT64,
+                                     (2,), (0, 0)),
+                         make_tensor('ends1', TensorProto.INT64,
+                                     (2,), (10, 20)),
+                         make_tensor('starts2', TensorProto.INT64,
+                                     (2,), (0, 0)),
+                         make_tensor('ends2', TensorProto.INT64,
+                                     (2,), (30, 40)),
+                         ]
+        )  # type: ignore
+
+        graph = self._make_graph(
+            [('input1', TensorProto.FLOAT, (220, 310, 3)),
+             ('input2', TensorProto.FLOAT, (110, 210, 3)),
+             ('input3', TensorProto.FLOAT, (90, 110, 3)),
+             ],
+            [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['in_sequence']),
+             make_node('SequenceMap', ['in_sequence'], ['out_sequence1', 'out_sequence2'], body=body_graph)],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (None, None, 3)),
+             make_tensor_sequence_value_info(
+                 'out_sequence1', TensorProto.FLOAT, (10, 20, 3)),
+             make_tensor_sequence_value_info(
+                 'out_sequence2', TensorProto.FLOAT, (30, 40, 3)),
+             ])  # type: ignore
+
+    def test_sequence_map_slice_outs_unknown_dims(self):  # type: () -> None
+        body_graph = helper.make_graph(
+            nodes=[make_node('Slice', ['x', 'starts1', 'ends1', 'axes', ''], ['y1']),
+                   make_node('Slice', ['x', 'starts2', 'ends2', 'axes', ''], ['y2'])],
+            name='body_graph',
+            inputs=[
+                onnx.helper.make_tensor_value_info(
+                    'x', onnx.TensorProto.FLOAT, ('H', 'W', 3))
+            ],
+            outputs=[
+                onnx.helper.make_tensor_value_info(
+                    'y1', onnx.TensorProto.FLOAT, ('H1', 'W1', 3)),
+                onnx.helper.make_tensor_value_info(
+                    'y2', onnx.TensorProto.FLOAT, ('H2', 'W2', 3)),
+            ],
+            initializer=[make_tensor('axes', TensorProto.INT64, (2,), (0, 1)),
+                         make_tensor('starts1', TensorProto.INT64,
+                                     (2,), (0, 0)),
+                         make_tensor('ends1', TensorProto.INT64,
+                                     (2,), (10, 20)),
+                         make_tensor('starts2', TensorProto.INT64,
+                                     (2,), (0, 0)),
+                         make_tensor('ends2', TensorProto.INT64,
+                                     (2,), (30, 40)),
+                         ]
+        )  # type: ignore
+
+        graph = self._make_graph(
+            [('input1', TensorProto.FLOAT, (220, 310, 3)),
+             ('input2', TensorProto.FLOAT, (110, 210, 3)),
+             ('input3', TensorProto.FLOAT, (90, 110, 3)),
+             ],
+            [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['in_sequence']),
+             make_node('SequenceMap', ['in_sequence'], ['out_sequence1', 'out_sequence2'], body=body_graph)],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (None, None, 3)),
+             make_tensor_sequence_value_info(
+                 'out_sequence1', TensorProto.FLOAT, (None, None, 3)),
+             make_tensor_sequence_value_info(
+                 'out_sequence2', TensorProto.FLOAT, (None, None, 3)),
+             ])  # type: ignore
+
+    def test_sequence_map_different_tensor_type(self):  # type: () -> None
+        body_graph = helper.make_graph(
+            nodes=[make_node('Shape', ['x'], ['shape'])],
+            name='body_graph',
+            inputs=[
+                onnx.helper.make_tensor_value_info(
+                    'x', onnx.TensorProto.FLOAT, ('H', 'W', 'C'))
+            ],
+            outputs=[
+                onnx.helper.make_tensor_value_info(
+                    'shape', onnx.TensorProto.INT64, (3,))
+            ],
+        )  # type: ignore
+
+        graph = self._make_graph(
+            [('input1', TensorProto.FLOAT, (220, 310, 3)),
+             ('input2', TensorProto.FLOAT, (110, 210, 3)),
+             ('input3', TensorProto.FLOAT, (90, 110, 3)),
+             ],
+            [make_node('SequenceConstruct', ['input1', 'input2', 'input3'], ['in_sequence']),
+             make_node('SequenceMap', ['in_sequence'], ['shapes'], body=body_graph)],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_sequence_value_info('in_sequence', TensorProto.FLOAT, (None, None, 3)),
+             make_tensor_sequence_value_info('shapes', TensorProto.INT64, (3,)),
+             ])  # type: ignore
 
 
 if __name__ == '__main__':

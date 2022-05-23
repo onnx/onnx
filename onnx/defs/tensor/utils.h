@@ -12,7 +12,7 @@
 
 namespace ONNX_NAMESPACE {
 // The below is called by ops after opset 11, inclusively.
-void resizeShapeInference(InferenceContext& ctx, bool is_resize_op);
+void resizeShapeInference(InferenceContext& ctx);
 
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
@@ -31,4 +31,6 @@ void resizeShapeInferenceHelper_opset7_to_10(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
     TensorShapeProto* output_shape);
+
+extern const char* NonZero_ver9_doc;
 } // namespace ONNX_NAMESPACE
