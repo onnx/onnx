@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 156/171 (91.23%, 5 generators excluded) common operators.
+Node tests have covered 162/177 (91.53%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1630,6 +1630,31 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### BlackmanWindow
+There are 1 test cases, listed as following:
+<details>
+<summary>blackmanwindow</summary>
+
+```python
+node = onnx.helper.make_node(
+    'BlackmanWindow',
+    inputs=['x'],
+    outputs=['y'],
+)
+size = np.int32(10)
+a0 = 7938 / 18608
+a1 = 9240 / 18608
+a2 = 1430 / 18608
+y = a0
+y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+expect(node, inputs=[size], outputs=[y],
+       name='test_blackmanwindow')
+```
+
+</details>
+
+
 ### Cast
 There are 1 test cases, listed as following:
 <details>
@@ -2915,6 +2940,59 @@ axis = np.int32(-1)
 y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_negative_axis')
+```
+
+</details>
+
+
+### DFT
+There are 1 test cases, listed as following:
+<details>
+<summary>dft</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DFT',
+    inputs=['x'],
+    outputs=['y'],
+    axis=1
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+y = np.fft.fft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x], outputs=[y],
+       name='test_dft')
+
+node = onnx.helper.make_node(
+    'DFT',
+    inputs=['x'],
+    outputs=['y'],
+    axis=2
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+y = np.fft.fft(x, axis=1)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x], outputs=[y],
+       name='test_dft_axis')
+
+node = onnx.helper.make_node(
+    'DFT',
+    inputs=['x'],
+    outputs=['y'],
+    inverse=1,
+    axis=1
+)
+x = np.arange(0, 100, dtype=np.complex64).reshape(10, 10,)
+y = np.fft.ifft(x, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x], outputs=[y],
+       name='test_dft_inverse')
 ```
 
 </details>
@@ -5050,6 +5128,50 @@ Y_reflection = np.array(
 
 expect(node, inputs=[X, Grid], outputs=[Y_reflection],
        name='test_gridsample_reflection_padding')
+```
+
+</details>
+
+
+### HammingWindow
+There are 1 test cases, listed as following:
+<details>
+<summary>hammingwindow</summary>
+
+```python
+node = onnx.helper.make_node(
+    'HammingWindow',
+    inputs=['x'],
+    outputs=['y'],
+)
+size = np.int32(10)
+a0 = .5
+a1 = .5
+y = a0 + a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+expect(node, inputs=[size], outputs=[y],
+       name='test_hammingwindow')
+```
+
+</details>
+
+
+### HannWindow
+There are 1 test cases, listed as following:
+<details>
+<summary>hannwindow</summary>
+
+```python
+node = onnx.helper.make_node(
+    'HannWindow',
+    inputs=['x'],
+    outputs=['y'],
+)
+size = np.int32(10)
+a0 = .5
+a1 = .5
+y = a0 + a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+expect(node, inputs=[size], outputs=[y],
+       name='test_hannwindow')
 ```
 
 </details>
@@ -7321,6 +7443,72 @@ expected_output = (input_data - data_mean) / (std + 1e-9)
 
 expect(node, inputs=[input_data], outputs=[expected_output],
        name='test_mvn')
+```
+
+</details>
+
+
+### MelWeightMatrix
+There are 1 test cases, listed as following:
+<details>
+<summary>melweightmatrix</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MelWeightMatrix",
+    inputs=['num_mel_bins', 'dft_length', 'sample_rate', 'lower_edge_hertz', 'upper_edge_hertz'],
+    outputs=['output'],
+)
+
+num_mel_bins = np.int32(8)
+dft_length = np.int32(16)
+sample_rate = np.int32(8192)
+lower_edge_hertz = np.float32(0)
+upper_edge_hertz = np.float32(8192 / 2)
+
+num_spectrogram_bins = dft_length // 2 + 1
+frequency_bins = np.arange(0, num_mel_bins + 2)
+
+low_frequency_mel = 2595 * np.log10(1 + lower_edge_hertz / 700)
+high_frequency_mel = 2595 * np.log10(1 + upper_edge_hertz / 700)
+mel_step = (high_frequency_mel - low_frequency_mel) / frequency_bins.shape[0]
+
+frequency_bins = frequency_bins * mel_step + low_frequency_mel
+frequency_bins = 700 * (np.power(10, (frequency_bins / 2595)) - 1)
+frequency_bins = ((dft_length + 1) * frequency_bins) // sample_rate
+frequency_bins = frequency_bins.astype(int)
+
+output = np.zeros((num_spectrogram_bins, num_mel_bins))
+output.flags.writeable = True
+
+for i in range(num_mel_bins):
+    lower_frequency_value = frequency_bins[i]     # left
+    center_frequency_point = frequency_bins[i + 1]  # center
+    higher_frequency_point = frequency_bins[i + 2]  # right
+    low_to_center = center_frequency_point - lower_frequency_value
+    if low_to_center == 0:
+        output[center_frequency_point, i] = 1
+    else:
+        for j in range(lower_frequency_value, center_frequency_point + 1):
+            output[j, i] = float(j - lower_frequency_value) / float(low_to_center)
+    center_to_high = higher_frequency_point - center_frequency_point
+    if center_to_high > 0:
+        for j in range(center_frequency_point, higher_frequency_point):
+            output[j, i] = float(higher_frequency_point - j) / float(center_to_high)
+
+# Expected output
+# 1.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 1.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+output = output.astype(np.float32)
+expect(node, inputs=[num_mel_bins, dft_length, sample_rate, lower_edge_hertz, upper_edge_hertz], outputs=[output],
+        name='test_melweightmatrix')
 ```
 
 </details>
@@ -11874,6 +12062,61 @@ y = np.array([0., 0., 1., 1., 2.,
             -2., -2., -2., -2., -3.]).astype(np.float32)  # expected output
 expect(node, inputs=[x], outputs=[y],
        name='test_round')
+```
+
+</details>
+
+
+### STFT
+There are 1 test cases, listed as following:
+<details>
+<summary>stft</summary>
+
+```python
+signal = np.arange(0, 128, dtype=np.float32).reshape(1, 128, 1)
+length = np.array((16)).astype(np.int64)
+step = np.array((8)).astype(np.int64)
+
+no_window = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'STFT',
+    inputs=['signal', 'frame_step', no_window, 'frame_length'],
+    outputs=['output'],
+)
+
+nstfts = ((signal.shape[1] - length) // step) + 1
+# [batch_size][frames][frame_length][2]
+output = np.empty([1, nstfts, length, 2], dtype=np.float32)
+for i in range(nstfts):
+    start = i * step
+    stop = i * step + length
+    complex_out = np.fft.fft(signal[0, start:stop, 0])
+    output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
+
+expect(node, inputs=[signal, step, length], outputs=[output],
+       name='test_stft')
+
+node = onnx.helper.make_node(
+    'STFT',
+    inputs=['signal', 'frame_step', 'window'],
+    outputs=['output'],
+)
+
+# Test with window
+a0 = .5
+a1 = .5
+window = a0 + a1 * np.cos(2 * 3.1415 * np.arange(0, length, 1, dtype=np.float32) / length)
+nstfts = 1 + (signal.shape[1] - window.shape[0]) // step
+
+# [batch_size][frames][frame_length][2]
+output = np.empty([1, nstfts, length, 2], dtype=np.float32)
+for i in range(nstfts):
+    start = i * step
+    stop = i * step + length
+    complex_out = np.fft.fft(signal[0, start:stop, 0] * window)
+    output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
+expect(node, inputs=[signal, step, window], outputs=[output],
+       name='test_stft_with_window')
 ```
 
 </details>
