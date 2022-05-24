@@ -1070,7 +1070,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
                               output_types=[TensorProto.FLOAT],
                               attrs={'axis': 2})
 
-    def _test_window_function(self, window_function_name: Text) -> None:
+    def _test_window_function(self, window_function_name: str) -> None:
         size = helper.make_tensor('a', TensorProto.INT64, dims=[], vals=np.array([10]))
         self._test_op_upgrade(window_function_name,
                               17,
@@ -1096,7 +1096,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
         self._test_op_upgrade('DFT', 17, [[2, 16, 1], []], [[2, 16, 2]], attrs={'inverse': 1})
         self._test_op_upgrade('DFT', 17, [[2, 16, 2], []], [[2, 16, 2]], attrs={'inverse': 1})
 
-    def _test_short_time_fourier_transform(self, operator_name: Text) -> None:
+    def _test_short_time_fourier_transform(self, operator_name: str) -> None:
         # Real
         signal = helper.make_tensor('a', TensorProto.FLOAT, dims=[2, 64], vals=np.random.rand(2, 64).astype(np.float32))
         frame_step = helper.make_tensor('b', TensorProto.INT64, dims=[1], vals=np.array([8]))

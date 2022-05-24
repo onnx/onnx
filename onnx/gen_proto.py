@@ -141,7 +141,7 @@ def convert(stem: str, package_name: str, output: str, do_onnx_ml: bool = False,
     proto3 = qualify(f"{proto_base}.proto3", pardir=output)
 
     print(f"Processing {proto_in}")
-    with open(proto_in, 'r') as fin:
+    with open(proto_in) as fin:
         source = fin.read()
         print(f"Writing {proto}")
         with open(proto, 'w', newline='') as fout:
