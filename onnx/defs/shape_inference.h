@@ -311,6 +311,25 @@ inline const TensorShapeProto& getInputShape(InferenceContext& ctx, size_t n) {
   }
 }
 
+inline const TensorShapeProto* getOptionalInputShape(InferenceContext& ctx, size_t n) {
+  const auto* input_type = ctx.getInputType(n);
+
+  if (input_type == nullptr)
+  {
+    return nullptr;
+  }
+
+  const auto value_case = input_type->value_case();
+  if (value_case != TypeProto::kTensorType && value_case != TypeProto::kSparseTensorType) {
+    fail_type_inference("Attribute expected to have tensor or sparse tensor type");
+  }
+  if (value_case == TypeProto::kTensorType) {
+    return &input_type->tensor_type().shape();
+  } else {
+    return &input_type->sparse_tensor_type().shape();
+  }
+}
+
 // Caller must make sure fromDimIndex is strictly less than shape.dim_size()
 inline void appendSingleDimCopiedFromInputTypeToOutputType(
     InferenceContext& ctx,
