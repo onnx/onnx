@@ -32,10 +32,7 @@ class Split_13_12 : public Adapter {
             raw_data.size() != 0 && raw_data.size() % 8 == 0,
             "Raw Data must be non-empty and size must be a multiple of 8");
         int64_t* raw = (int64_t*)const_cast<char*>(raw_data.c_str());
-        node->is_(
-            ksplit,
-            std::vector<int64_t>(
-                raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
+        node->is_(ksplit, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
       } else {
         node->is_(ksplit, std::forward<const std::vector<int64_t>>(int64s));
       }
@@ -48,9 +45,7 @@ class Split_13_12 : public Adapter {
       // Get Value name, find Initializer with same name
       for (const auto& initializer : graph->initializers()) {
         if (initializer.name() == inputs[1]->uniqueName()) {
-          node->is_(
-              ksplit,
-              std::forward<const std::vector<int64_t>>(initializer.int64s()));
+          node->is_(ksplit, std::forward<const std::vector<int64_t>>(initializer.int64s()));
           node->removeInput(1);
           // Remove initializer
           if (const_val->uses().size() < 1)
@@ -59,9 +54,7 @@ class Split_13_12 : public Adapter {
         }
       }
     }
-    ONNX_ASSERTM(
-        node->hasAttribute(ksplit),
-        "No initializer or constant input to node found");
+    ONNX_ASSERTM(node->hasAttribute(ksplit), "No initializer or constant input to node found");
     return node;
   }
 };

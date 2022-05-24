@@ -4192,6 +4192,233 @@ class TestShapeInference(unittest.TestCase):
              make_tensor_sequence_value_info('shapes', TensorProto.INT64, (3,)),
              ])  # type: ignore
 
+    def test_hammingwindow(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (), (10,))),
+             make_node("HammingWindow", ['shape'], ['y'])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, ()),
+             make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
+
+    def test_hannwindow(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (), (10,))),
+             make_node("HannWindow", ['shape'], ['y'])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, ()),
+             make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
+
+    def test_blackmanwindow(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (), (10,))),
+             make_node("BlackmanWindow", ['shape'], ['y'])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, ()),
+             make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
+
+    def test_dft_reals(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (2, 5, 1), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, ))),
+             make_node("DFT", ['input', ''], ['output'])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (2, 5, 1)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (2, 5, 2))])  # type: ignore
+
+    def test_dft_reals2(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (1, 5, 10, 1,), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4))),
+             make_node("DFT", ['input', ''], ['output'], axis=1, onesided=1)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (1, 5, 10, 1)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (1, 3, 10, 2))])  # type: ignore
+
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (1, 5, 10, 1,), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4))),
+             make_node("DFT", ['input', ''], ['output'], axis=2, onesided=1)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (1, 5, 10, 1)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (1, 5, 6, 2))])  # type: ignore
+
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (1, 5, 10, 1,), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4))),
+             make_node("DFT", ['input', ''], ['output'], axis=1, onesided=0)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (1, 5, 10, 1)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (1, 5, 10, 2))])  # type: ignore
+
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (1, 5, 10, 1,), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4))),
+             make_node("DFT", ['input', ''], ['output'], axis=2, onesided=0)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (1, 5, 10, 1)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (1, 5, 10, 2))])  # type: ignore
+
+    def test_dft_complex(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (2, 5, 2), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, ))),
+             make_node("DFT", ['input', ''], ['output'])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (2, 5, 2)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (2, 5, 2))])  # type: ignore
+
+    def test_dft_reals_onesided(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (2, 5, 1), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, ))),
+             make_node("DFT", ['input', ''], ['output'], onesided=1)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (2, 5, 1)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (2, 3, 2))])  # type: ignore
+
+    def test_dft_complex_onesided(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (2, 5, 2), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, ))),
+             make_node("DFT", ['input', ''], ['output'], onesided=1)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (2, 5, 2)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (2, 3, 2))])  # type: ignore
+
+    def test_dft_reals_inverse(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (2, 5, 1), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, ))),
+             make_node("DFT", ['input', ''], ['output'], inverse=1)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (2, 5, 1)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (2, 5, 2))])  # type: ignore
+
+    def test_dft_complex_inverse(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['input'],
+                       value=make_tensor('input', TensorProto.FLOAT, (2, 5, 2), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, ))),
+             make_node("DFT", ['input', ''], ['output'], inverse=1)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.FLOAT, (2, 5, 2)),
+             make_tensor_value_info('y', TensorProto.FLOAT, (2, 5, 2))])  # type: ignore
+
+    def test_stft_reals(self):  # type: () -> None
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Constant", [], ['signal'], value=make_tensor('signal', TensorProto.FLOAT, (2, 10, 1), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3))),
+                make_node("Constant", [], ['frame_step'], value=make_tensor('frame_step', TensorProto.INT64, (), (2, ))),
+                make_node("Constant", [], ['window'], value=make_tensor('window', TensorProto.INT64, (5, ), (1, 2, 3, 4, 5))),
+                make_node("STFT", ['signal', 'frame_step', 'window'], ['output']),
+            ],
+            [])
+
+        self._assert_inferred(graph,
+            [
+                make_tensor_value_info('signal', TensorProto.FLOAT, (2, 10, 1)),
+                make_tensor_value_info('frame_step', TensorProto.INT64, ()),
+                make_tensor_value_info('window', TensorProto.INT64, (5, )),
+                make_tensor_value_info('output', TensorProto.FLOAT, (2, 3, 5, 2))
+            ]
+        )  # type: ignore
+
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Constant", [], ['signal'], value=make_tensor('signal', TensorProto.FLOAT, (2, 10, 1), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3))),
+                make_node("Constant", [], ['frame_step'], value=make_tensor('frame_step', TensorProto.INT64, (), (2, ))),
+                make_node("Constant", [], ['window'], value=make_tensor('window', TensorProto.INT64, (5, ), (1, 2, 3, 4, 5))),
+                make_node("Constant", [], ['frame_length'], value=make_tensor('frame_length', TensorProto.INT64, (), (5, ))),
+                make_node("STFT", ['signal', 'frame_step', 'window'], ['output']),
+            ],
+            [])
+
+        self._assert_inferred(graph,
+            [
+                make_tensor_value_info('signal', TensorProto.FLOAT, (2, 10, 1)),
+                make_tensor_value_info('frame_step', TensorProto.INT64, ()),
+                make_tensor_value_info('window', TensorProto.INT64, (5, )),
+                make_tensor_value_info('frame_length', TensorProto.INT64, ()),
+                make_tensor_value_info('output', TensorProto.FLOAT, (2, 3, 5, 2))
+            ]
+        )  # type: ignore
+
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Constant", [], ['signal'], value=make_tensor('signal', TensorProto.FLOAT, (2, 10, 1), (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3))),
+                make_node("Constant", [], ['frame_step'], value=make_tensor('frame_step', TensorProto.INT64, (), (2, ))),
+                make_node("Constant", [], ['frame_length'], value=make_tensor('frame_length', TensorProto.INT64, (), (5, ))),
+                make_node("STFT", ['signal', 'frame_step', '', 'frame_length'], ['output']),
+            ],
+            [])
+
+        self._assert_inferred(graph,
+            [
+                make_tensor_value_info('signal', TensorProto.FLOAT, (2, 10, 1)),
+                make_tensor_value_info('frame_step', TensorProto.INT64, ()),
+                make_tensor_value_info('frame_length', TensorProto.INT64, ()),
+                make_tensor_value_info('output', TensorProto.FLOAT, (2, 3, 5, 2))
+            ]
+        )  # type: ignore
+
+    def test_melweightmatrix(self):  # type: () -> None
+        graph = self._make_graph([],
+            [
+                make_node("Constant", [], ['num_mel_bins'], value=make_tensor('num_mel_bins', TensorProto.INT64, (), (10,))),
+                make_node("Constant", [], ['dft_length'], value=make_tensor('dft_length', TensorProto.INT64, (), (128,))),
+                make_node("Constant", [], ['sample_rate'], value=make_tensor('sample_rate', TensorProto.INT64, (), (10,))),
+                make_node("Constant", [], ['lower_edge_hertz'], value=make_tensor('lower_edge_hertz', TensorProto.FLOAT, (), (10.,))),
+                make_node("Constant", [], ['upper_edge_hertz'], value=make_tensor('upper_edge_hertz', TensorProto.FLOAT, (), (100.,))),
+                make_node("MelWeightMatrix", ['num_mel_bins', 'dft_length', 'sample_rate', 'lower_edge_hertz', 'upper_edge_hertz'], ['output'])],
+            [])
+        self._assert_inferred(graph,
+            [
+                make_tensor_value_info('num_mel_bins', TensorProto.INT64, ()),
+                make_tensor_value_info('dft_length', TensorProto.INT64, ()),
+                make_tensor_value_info('sample_rate', TensorProto.INT64, ()),
+                make_tensor_value_info('lower_edge_hertz', TensorProto.FLOAT, ()),
+                make_tensor_value_info('upper_edge_hertz', TensorProto.FLOAT, ()),
+                make_tensor_value_info('output', TensorProto.FLOAT, (65, 10))
+            ])  # type: ignore
+
+    def test_melweightmatrix_with_output_datatype(self):  # type: () -> None
+        graph = self._make_graph([],
+            [
+                make_node("Constant", [], ['num_mel_bins'], value=make_tensor('num_mel_bins', TensorProto.INT64, (), (10,))),
+                make_node("Constant", [], ['dft_length'], value=make_tensor('dft_length', TensorProto.INT64, (), (128,))),
+                make_node("Constant", [], ['sample_rate'], value=make_tensor('sample_rate', TensorProto.INT64, (), (10,))),
+                make_node("Constant", [], ['lower_edge_hertz'], value=make_tensor('lower_edge_hertz', TensorProto.FLOAT, (), (10.,))),
+                make_node("Constant", [], ['upper_edge_hertz'], value=make_tensor('upper_edge_hertz', TensorProto.FLOAT, (), (100.,))),
+                make_node("MelWeightMatrix", ['num_mel_bins', 'dft_length', 'sample_rate', 'lower_edge_hertz', 'upper_edge_hertz'], ['output'], output_datatype=TensorProto.DOUBLE)],
+            [])
+        self._assert_inferred(graph,
+            [
+                make_tensor_value_info('num_mel_bins', TensorProto.INT64, ()),
+                make_tensor_value_info('dft_length', TensorProto.INT64, ()),
+                make_tensor_value_info('sample_rate', TensorProto.INT64, ()),
+                make_tensor_value_info('lower_edge_hertz', TensorProto.FLOAT, ()),
+                make_tensor_value_info('upper_edge_hertz', TensorProto.FLOAT, ()),
+                make_tensor_value_info('output', TensorProto.DOUBLE, (65, 10))
+            ])  # type: ignore
+
 
 if __name__ == '__main__':
     unittest.main()

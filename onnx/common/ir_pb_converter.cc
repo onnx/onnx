@@ -11,8 +11,7 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested,
-  const int ir_version=IR_VERSION);
+std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, const int ir_version = IR_VERSION);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   Tensor ret;
@@ -95,8 +94,7 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   return ret;
 }
 
-void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n,
-  const int ir_version=IR_VERSION) {
+void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, const int ir_version = IR_VERSION) {
   Symbol sym = Symbol(ap.name());
   switch (ap.type()) {
     case ONNX_NAMESPACE::AttributeProto_AttributeType_FLOAT:
@@ -181,7 +179,7 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n,
   }
 }
 
-void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version=IR_VERSION) {
+void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version = IR_VERSION) {
   for (int i = 0; i < np.attribute_size(); i++) {
     convertAttribute(np.attribute(i), n, ir_version);
   }
@@ -204,15 +202,17 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
   return dims;
 }
 
-void createDummyValue(std::unique_ptr<Graph>& g, const std::string& name, std::unordered_map<std::string, Value*>& value_by_name_of) {
+void createDummyValue(
+    std::unique_ptr<Graph>& g,
+    const std::string& name,
+    std::unordered_map<std::string, Value*>& value_by_name_of) {
   auto* undef = g->create(kCaptured, 1);
   g->appendNode(undef);
   undef->outputs()[0]->setUniqueName(name);
   value_by_name_of[name] = undef->outputs()[0];
 }
 
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
-  bool nested, const int ir_version) {
+std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int ir_version) {
   std::unique_ptr<Graph> g(new Graph());
 
   if (gp.has_name()) {
