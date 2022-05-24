@@ -4566,7 +4566,7 @@ graph = onnx.helper.make_graph(
 opsets = [
     onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
     onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
-model = onnx.helper.make_model(
+model = onnx.helper.make_model_gen_version(
     graph,
     producer_name='backend-test',
     opset_imports=opsets)
@@ -4618,7 +4618,7 @@ graph = onnx.helper.make_graph(
 opsets = [
     onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
     onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
-model = onnx.helper.make_model(graph,
+model = onnx.helper.make_model_gen_version(graph,
     producer_name='backend-test',
     opset_imports=opsets)
 expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],
@@ -8089,7 +8089,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -8248,7 +8248,7 @@ node = onnx.helper.make_node(
 N, C = 3, 5
 np.random.seed(0)
 input = np.random.rand(N, C).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N))
+target = np.random.randint(0, high=C, size=(N)).astype(np.int64)
 target[0] = 10
 weight = np.random.rand(C).astype(np.float32)
 
