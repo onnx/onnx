@@ -758,28 +758,28 @@ void check_model_local_functions(
     const ModelProto& model,
     const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
-    // make a copy of model opset imports to maintain a main copy of opset imports across the model and 
-    // all model local functions to verify opset compatibility
-    std::unordered_map<std::string, int> model_opset_imports(ctx.get_opset_imports());
+  // make a copy of model opset imports to maintain a main copy of opset imports across the model and
+  // all model local functions to verify opset compatibility
+  std::unordered_map<std::string, int> model_opset_imports(ctx.get_opset_imports());
 
-    // merge the opset imports from every function in model_opset_imports
-    // only add the opset import if an entry for it does not exist in model_opset_imports
-    // if there is an entry then the compatibility will be checked later on in check_opset_compatibility
-    // called by check_function.
-    for (const auto& function_proto : model.functions()) {
-      for (const auto& opset_import : function_proto.opset_import()) {
-        if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
-          model_opset_imports[opset_import.domain()] = opset_import.version();
-        }
+  // merge the opset imports from every function in model_opset_imports
+  // only add the opset import if an entry for it does not exist in model_opset_imports
+  // if there is an entry then the compatibility will be checked later on in check_opset_compatibility
+  // called by check_function.
+  for (const auto& function_proto : model.functions()) {
+    for (const auto& opset_import : function_proto.opset_import()) {
+      if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
+        model_opset_imports[opset_import.domain()] = opset_import.version();
       }
     }
+  }
 
-    CheckerContext ctx_copy = ctx;
-    ctx_copy.set_opset_imports(model_opset_imports);
+  CheckerContext ctx_copy = ctx;
+  ctx_copy.set_opset_imports(model_opset_imports);
 
-    for (const auto& function_proto : model.functions()) {
-        check_function(function_proto, ctx_copy, parent_lex);
-    }
+  for (const auto& function_proto : model.functions()) {
+    check_function(function_proto, ctx_copy, parent_lex);
+  }
 }
 
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {

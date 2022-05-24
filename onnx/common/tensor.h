@@ -12,11 +12,12 @@
 #include <numeric>
 #include "onnx/common/assertions.h"
 #include "onnx/onnx_pb.h"
+#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 
 struct Tensor final {
-private:
+ private:
   bool is_segment_;
   int64_t segment_begin_;
   int64_t segment_end_;
@@ -46,37 +47,36 @@ private:
 
  public:
   Tensor()
-  : is_segment_(false)
-  , segment_begin_(0)
-  , segment_end_(0)
-  , has_name_(false)
-  , elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED)
-  , is_raw_data_(false)
-  {}
+      : is_segment_(false),
+        segment_begin_(0),
+        segment_end_(0),
+        has_name_(false),
+        elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
+        is_raw_data_(false) {}
 
-  Tensor(const Tensor &other)
-  : is_segment_(other.is_segment_)
-  , segment_begin_(other.segment_begin_)
-  , segment_end_(other.segment_end_)
-  , has_name_(other.has_name_)
-  , elem_type_(other.elem_type_)
-  , sizes_(other.sizes_)
-  , float_data_(other.float_data_)
-  , double_data_(other.double_data_)
-  , int32_data_(other.int32_data_)
-  , int64_data_(other.int64_data_)
-  , uint64_data_(other.uint64_data_)
-  , is_raw_data_(other.is_raw_data_) {
+  Tensor(const Tensor& other)
+      : is_segment_(other.is_segment_),
+        segment_begin_(other.segment_begin_),
+        segment_end_(other.segment_end_),
+        has_name_(other.has_name_),
+        elem_type_(other.elem_type_),
+        sizes_(other.sizes_),
+        float_data_(other.float_data_),
+        double_data_(other.double_data_),
+        int32_data_(other.int32_data_),
+        int64_data_(other.int64_data_),
+        uint64_data_(other.uint64_data_),
+        is_raw_data_(other.is_raw_data_) {
     // Deep copy. Avoid copy on write when using gcc<5.0
     string_data_.resize(other.string_data_.size());
-    for(unsigned int i=0; i<other.string_data_.size(); ++i) {
-      string_data_[i] = std::string( other.string_data_[i].data(), other.string_data_[i].size() );
+    for (unsigned int i = 0; i < other.string_data_.size(); ++i) {
+      string_data_[i] = std::string(other.string_data_[i].data(), other.string_data_[i].size());
     }
     name_ = std::string(other.name_.data(), other.name_.size());
     raw_data_ = std::string(other.raw_data_.data(), other.raw_data_.size());
   }
 
-  friend void swap(Tensor& first, Tensor& second){
+  friend void swap(Tensor& first, Tensor& second) {
     using std::swap;
     swap(first.is_segment_, second.is_segment_);
     swap(first.segment_begin_, second.segment_begin_);
@@ -221,65 +221,65 @@ private:
     return is_raw_data_;
   }
 
-  //this += a
-  //Supported for
-  //FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
-  //UINT32, UINT64, DOUBLE,
-  //TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
+  // this += a
+  // Supported for
+  // FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
+  // UINT32, UINT64, DOUBLE,
+  // TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
   void add(const Tensor& a);
 
-  //this -= a
-  //Supported for
-  //FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
-  //UINT32, UINT64, DOUBLE
-  //TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
+  // this -= a
+  // Supported for
+  // FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
+  // UINT32, UINT64, DOUBLE
+  // TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
   void subtract(const Tensor& a);
 
-  //this *= a
-  //Supported for
-  //FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
-  //UINT32, UINT64, DOUBLE
-  //TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
+  // this *= a
+  // Supported for
+  // FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
+  // UINT32, UINT64, DOUBLE
+  // TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
   void multiply(const Tensor& a);
 
-  //this /= a
-  //Supported for
-  //FLOAT, INT8, INT16, INT32, UINT8, UINT16, INT64,
-  //UINT32, UINT64, DOUBLE
-  //TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
+  // this /= a
+  // Supported for
+  // FLOAT, INT8, INT16, INT32, UINT8, UINT16, INT64,
+  // UINT32, UINT64, DOUBLE
+  // TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
   void divide(const Tensor& a);
 
-  //Element-wise square root of This
-  //Supported for
-  //FLOAT, DOUBLE,
-  //TODO: Support for FLOAT16
+  // Element-wise square root of This
+  // Supported for
+  // FLOAT, DOUBLE,
+  // TODO: Support for FLOAT16
   void sqrt();
 
-  //Element wise scaling of tensor s
-  //s is one dimensional, has size M, where M is size of first dimension of tensor
-  //s must have has data type corresponding to this
-  //Supported for
-  //FLOAT16, FLOAT, DOUBLE
+  // Element wise scaling of tensor s
+  // s is one dimensional, has size M, where M is size of first dimension of tensor
+  // s must have has data type corresponding to this
+  // Supported for
+  // FLOAT16, FLOAT, DOUBLE
   void scale_by_first_dim(const Tensor& s);
 };
 
-#define define_data(type, field)                  \
-  template <>                                     \
-  inline type* Tensor::data<type>() {             \
-    if (is_raw_data_) {                           \
+#define define_data(type, field)                             \
+  template <>                                                \
+  inline type* Tensor::data<type>() {                        \
+    if (is_raw_data_) {                                      \
       return (type*)const_cast<char*>(&raw_data_.data()[0]); \
-    } else {                                      \
-      return field.data();                        \
-    }                                             \
-  }                                               \
-                                                  \
-  template <>                                     \
-  inline const type* Tensor::data<type>() const { \
-    if (is_raw_data_) {                           \
-      return (const type*)(raw_data_.data());     \
-    } else {                                      \
-      return field.data();                        \
-    }                                             \
+    } else {                                                 \
+      return field.data();                                   \
+    }                                                        \
+  }                                                          \
+                                                             \
+  template <>                                                \
+  inline const type* Tensor::data<type>() const {            \
+    if (is_raw_data_) {                                      \
+      return (const type*)(raw_data_.data());                \
+    } else {                                                 \
+      return field.data();                                   \
+    }                                                        \
   }
 
 define_data(float, float_data_);
@@ -372,7 +372,7 @@ APPLY_BINARY_FUNCTION(divide, std::divides)
 #undef APPLY_BINARY_FUNCTION
 
 inline void Tensor::sqrt() {
-  switch(elem_type_) {
+  switch (elem_type_) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
       un_func<float (*)(float), float>(std::sqrt, data<float>());
       break;
@@ -382,20 +382,15 @@ inline void Tensor::sqrt() {
       break;
     }
     default:
-      TENSOR_ASSERTM(
-          false,
-          "Operation sqrt not supported for data type %s",
-          to_string(elem_type_).c_str());
+      TENSOR_ASSERTM(false, "Operation sqrt not supported for data type %s", to_string(elem_type_).c_str());
   }
 }
 
 inline void Tensor::scale_by_first_dim(const Tensor& other) {
-  ONNX_ASSERT(
-      sizes_.size() > 1 && other.sizes().size() == 1 &&
-      other.sizes()[0] == sizes_[0]);
+  ONNX_ASSERT(sizes_.size() > 1 && other.sizes().size() == 1 && other.sizes()[0] == sizes_[0]);
   ONNX_ASSERT(other.elem_type() == elem_type_);
 
-  switch(elem_type_) {
+  switch (elem_type_) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
       scale_dim(data<float>(), other.data<float>());
       break;
@@ -410,9 +405,7 @@ inline void Tensor::scale_by_first_dim(const Tensor& other) {
     }
     default:
       TENSOR_ASSERTM(
-          false,
-          "Operation scale_by_first_dim not supported for data type %s",
-          to_string(elem_type_).c_str());
+          false, "Operation scale_by_first_dim not supported for data type %s", to_string(elem_type_).c_str());
   }
 }
 
