@@ -70,7 +70,7 @@ jobs:
   - script: |
       source py$(python.version)/bin/activate
 
-      # style check (flake8 and mypy)
+      # style check (flake8, mypy, and clang-format)
       pip install .[lint]
       bash tools/style.sh
       if [ $? -ne 0 ]; then

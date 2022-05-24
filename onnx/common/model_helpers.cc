@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include "onnx/common/model_helpers.h"
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
@@ -19,10 +18,7 @@ Common::Status BuildNode(
     std::vector<std::string> const& outputs,
     NodeProto* node) {
   if (node == NULL) {
-    return Common::Status(
-        Common::CHECKER,
-        Common::INVALID_ARGUMENT,
-        "node_proto should not be nullptr.");
+    return Common::Status(Common::CHECKER, Common::INVALID_ARGUMENT, "node_proto should not be nullptr.");
   }
   node->set_name(name);
   node->set_domain(domain);

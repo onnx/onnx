@@ -17,11 +17,10 @@ extern "C" {
  * The caller should convert this generic function pointer to the function
  * pointer specific for an extension function type.
  */
-typedef onnxStatus (ONNXIFI_ABI* onnxExtensionFunctionPointer)(void);
+typedef onnxStatus(ONNXIFI_ABI* onnxExtensionFunctionPointer)(void);
 
 /* Function pointer declarations for dynamic loading */
-typedef ONNXIFI_CHECK_RESULT onnxStatus
-  (ONNXIFI_ABI* onnxGetExtensionFunctionAddressFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxGetExtensionFunctionAddressFunction)(
     onnxBackendID backendID,
     const char* name,
     onnxExtensionFunctionPointer* function);
@@ -63,14 +62,10 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
  */
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-onnxGetExtensionFunctionAddress(
-    onnxBackendID backendID,
-    const char* name,
-    onnxExtensionFunctionPointer* function);
+onnxGetExtensionFunctionAddress(onnxBackendID backendID, const char* name, onnxExtensionFunctionPointer* function);
 
 /* Extension function pointer declarations for dynamic loading */
-typedef ONNXIFI_CHECK_RESULT onnxStatus
-  (ONNXIFI_ABI* onnxSetIOAndRunGraphFunction)(
+typedef ONNXIFI_CHECK_RESULT onnxStatus(ONNXIFI_ABI* onnxSetIOAndRunGraphFunction)(
     onnxGraph graph,
     uint32_t inputsCount,
     const onnxTensorDescriptorV1* inputDescriptors,
