@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include "tensor_util.h"
 #include <vector>
 #include "onnx/common/platform_helpers.h"

@@ -5,11 +5,11 @@
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
-#include <vector>
 #include <stdint.h>
+#include <mutex>
 #include <string>
 #include <unordered_map>
-#include <mutex>
+#include <vector>
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/interned_strings.h"
@@ -17,40 +17,41 @@
 namespace ONNX_NAMESPACE {
 
 struct InternedStrings {
-  InternedStrings()
-  : next_sym(kLastSymbol) {
-    #define REGISTER_SYMBOL(s) \
-      string_to_sym_[#s] = k##s; \
-      sym_to_string_[k##s] = #s;
+  InternedStrings() : next_sym(kLastSymbol) {
+#define REGISTER_SYMBOL(s)   \
+  string_to_sym_[#s] = k##s; \
+  sym_to_string_[k##s] = #s;
     FORALL_BUILTIN_SYMBOLS(REGISTER_SYMBOL)
-    #undef REGISTER_SYMBOL
+#undef REGISTER_SYMBOL
   }
-  uint32_t symbol(const std::string & s) {
+  uint32_t symbol(const std::string& s) {
     std::lock_guard<std::mutex> guard(mutex_);
     auto it = string_to_sym_.find(s);
-    if(it != string_to_sym_.end())
+    if (it != string_to_sym_.end())
       return it->second;
     uint32_t k = next_sym++;
     string_to_sym_[s] = k;
     sym_to_string_[k] = s;
     return k;
   }
-  const char * string(Symbol sym) {
+  const char* string(Symbol sym) {
     // Builtin Symbols are also in the maps, but
     // we can bypass the need to acquire a lock
     // to read the map for Builtins because we already
     // know their string value
-    switch(sym) {
-      #define DEFINE_CASE(s) \
-        case k##s: return #s;
+    switch (sym) {
+#define DEFINE_CASE(s) \
+  case k##s:           \
+    return #s;
       FORALL_BUILTIN_SYMBOLS(DEFINE_CASE)
-      #undef DEFINE_CASE
-        default:
-          return customString(sym);
+#undef DEFINE_CASE
+      default:
+        return customString(sym);
     }
   }
-private:
-  const char * customString(Symbol sym) {
+
+ private:
+  const char* customString(Symbol sym) {
     std::lock_guard<std::mutex> guard(mutex_);
     auto it = sym_to_string_.find(sym);
     ONNX_ASSERT(it != sym_to_string_.end());
@@ -62,17 +63,15 @@ private:
   std::mutex mutex_;
 };
 
-static InternedStrings & globalStrings() {
+static InternedStrings& globalStrings() {
   static InternedStrings s;
   return s;
 }
 
-const char * Symbol::toString() const {
+const char* Symbol::toString() const {
   return globalStrings().string(*this);
 }
 
-Symbol::Symbol(const std::string & s)
-  : value(globalStrings().symbol(s)) {
-}
+Symbol::Symbol(const std::string& s) : value(globalStrings().symbol(s)) {}
 
 } // namespace ONNX_NAMESPACE

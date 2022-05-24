@@ -8,18 +8,11 @@
 
 using namespace ONNX_NAMESPACE;
 
-
-inline void createValueInfo4D(
-    ValueInfoProto& value_info,
-    const std::string& name,
-    int64_t n,
-    int64_t c,
-    int64_t h,
-    int64_t w) {
+inline void
+createValueInfo4D(ValueInfoProto& value_info, const std::string& name, int64_t n, int64_t c, int64_t h, int64_t w) {
   value_info.set_name(name);
 
-  TypeProto_Tensor* tensor_type =
-      value_info.mutable_type()->mutable_tensor_type();
+  TypeProto_Tensor* tensor_type = value_info.mutable_type()->mutable_tensor_type();
   tensor_type->set_elem_type(TensorProto_DataType_FLOAT);
 
   TensorShapeProto* shape = tensor_type->mutable_shape();
@@ -29,11 +22,7 @@ inline void createValueInfo4D(
   shape->add_dim()->set_dim_value(w);
 }
 
-inline void createValueInfo2D(
-    ValueInfoProto& value_info,
-    const std::string& name,
-    int64_t h,
-    int64_t w) {
+inline void createValueInfo2D(ValueInfoProto& value_info, const std::string& name, int64_t h, int64_t w) {
   value_info.set_name(name);
 
   TypeProto* type = value_info.mutable_type();

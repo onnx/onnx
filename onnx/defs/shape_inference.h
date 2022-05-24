@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <functional>
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
-#include <functional>
 
 namespace ONNX_NAMESPACE {
 
@@ -23,20 +23,18 @@ struct ShapeInferenceOptions {
   // Enables data propagation for limited operators
   // to perform shape computation
   bool enable_data_propagation;
-  ShapeInferenceOptions(bool check_type_val = false,
-    int strict_mode_val = 0,bool data_prop_val = false):
-    check_type(check_type_val), error_mode(strict_mode_val),
-    enable_data_propagation(data_prop_val) {};
+  ShapeInferenceOptions(bool check_type_val = false, int strict_mode_val = 0, bool data_prop_val = false)
+      : check_type(check_type_val), error_mode(strict_mode_val), enable_data_propagation(data_prop_val){};
 };
 
 // Maintains a SymbolTable for symbolic shape inference
 class SymbolTable {
  public:
-    // Adds existing symbols from a main graph or subgraph
-    virtual void addFromGraph(const GraphProto& g) = 0;
-    // Creates a new symbol which is not duplicate as any existing one
-    virtual std::string createNew(const std::string& symbol_prefix) = 0;
-    virtual ~SymbolTable() = default;
+  // Adds existing symbols from a main graph or subgraph
+  virtual void addFromGraph(const GraphProto& g) = 0;
+  // Creates a new symbol which is not duplicate as any existing one
+  virtual std::string createNew(const std::string& symbol_prefix) = 0;
+  virtual ~SymbolTable() = default;
 };
 
 class GraphInferencer {
@@ -119,10 +117,10 @@ using DataPropagationFunction = std::function<void(DataPropagationContext&)>;
 
 // This no-op inference function is used for operators without an
 // inference implementation.
-inline void dummyInferenceFunction(InferenceContext&) {};
+inline void dummyInferenceFunction(InferenceContext&){};
 
 // This no-op data propagation function is used for operators without a defined data propagator
-inline void dummyDataPropagationFunction(DataPropagationContext&) {};
+inline void dummyDataPropagationFunction(DataPropagationContext&){};
 
 template <typename T>
 inline bool getRepeatedAttribute(InferenceContext& ctx, std::string attr_name, std::vector<T>& values) {
@@ -314,8 +312,7 @@ inline const TensorShapeProto& getInputShape(InferenceContext& ctx, size_t n) {
 inline const TensorShapeProto* getOptionalInputShape(InferenceContext& ctx, size_t n) {
   const auto* input_type = ctx.getInputType(n);
 
-  if (input_type == nullptr)
-  {
+  if (input_type == nullptr) {
     return nullptr;
   }
 

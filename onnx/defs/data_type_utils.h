@@ -48,7 +48,7 @@ class DataTypeUtils final {
   // If ONNX_NO_EXCEPTIONS is set it will abort.
   static const TypeProto& ToTypeProto(const DataType& data_type);
   static std::string ToDataTypeString(int32_t tensor_data_type);
- 
+
  private:
   static void FromString(const std::string& type_str, TypeProto& type_proto);
 
