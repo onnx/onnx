@@ -1029,6 +1029,12 @@ class OpSet_Onnx_ver16 {
 // Forward declarations for ai.onnx version 17
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, LayerNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, SequenceMap);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, DFT);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, HannWindow);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, HammingWindow);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, BlackmanWindow);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, MelWeightMatrix);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, STFT);
 
 // Iterate over schema from ai.onnx version 17
 class OpSet_Onnx_ver17 {
@@ -1036,6 +1042,12 @@ class OpSet_Onnx_ver17 {
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, LayerNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, SequenceMap)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, DFT)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, HannWindow)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, HammingWindow)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, BlackmanWindow)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, MelWeightMatrix)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, STFT)>());
   }
 };
 
