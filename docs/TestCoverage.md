@@ -12074,8 +12074,8 @@ There are 1 test cases, listed as following:
 
 ```python
 signal = np.arange(0, 128, dtype=np.float32).reshape(1, 128, 1)
-length = np.array((16)).astype(np.int64)
-step = np.array((8)).astype(np.int64)
+length = np.array(16).astype(np.int64)
+step = np.array(8).astype(np.int64)
 
 no_window = ""  # optional input, not supplied
 node = onnx.helper.make_node(
