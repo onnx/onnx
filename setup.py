@@ -88,7 +88,7 @@ assert CMAKE, "Could not find cmake executable!"
 @contextmanager
 def cd(path):
     if not os.path.isabs(path):
-        raise RuntimeError("Can only cd to absolute path, got: {}".format(path))
+        raise RuntimeError(f"Can only cd to absolute path, got: {path}")
     orig_path = os.getcwd()
     os.chdir(path)
     try:
@@ -135,7 +135,7 @@ class cmake_build(setuptools.Command):
     to `setup.py build`.  By default all CPUs are used.
     """
     user_options = [
-        (str("jobs="), str("j"), str("Specifies the number of jobs to use with make"))
+        ("jobs=", "j", "Specifies the number of jobs to use with make")
     ]
 
     built = False
@@ -161,12 +161,12 @@ class cmake_build(setuptools.Command):
             # configure
             cmake_args = [
                 CMAKE,
-                "-DPYTHON_INCLUDE_DIR={}".format(sysconfig.get_python_inc()),
-                "-DPYTHON_EXECUTABLE={}".format(sys.executable),
+                f"-DPYTHON_INCLUDE_DIR={sysconfig.get_python_inc()}",
+                f"-DPYTHON_EXECUTABLE={sys.executable}",
                 "-DBUILD_ONNX_PYTHON=ON",
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-                "-DONNX_NAMESPACE={}".format(ONNX_NAMESPACE),
-                "-DPY_EXT_SUFFIX={}".format(sysconfig.get_config_var("EXT_SUFFIX") or ''),
+                f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
+                f"-DPY_EXT_SUFFIX={sysconfig.get_config_var('EXT_SUFFIX') or ''}",
             ]
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
@@ -174,13 +174,13 @@ class cmake_build(setuptools.Command):
                 # in order to get accurate coverage information, the
                 # build needs to turn off optimizations
                 build_type = "Debug"
-            cmake_args.append("-DCMAKE_BUILD_TYPE=%s" % build_type)
+            cmake_args.append(f"-DCMAKE_BUILD_TYPE={build_type}")
             if WINDOWS:
                 cmake_args.extend([
                     # we need to link with libpython on windows, so
                     # passing python version to window in order to
                     # find python in cmake
-                    "-DPY_VERSION={}".format("{0}.{1}".format(*sys.version_info[:2])),
+                    f"-DPY_VERSION={'{}.{}'.format(*sys.version_info[:2])}",
                 ])
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append("-DONNX_USE_MSVC_STATIC_RUNTIME=ON")
@@ -200,10 +200,10 @@ class cmake_build(setuptools.Command):
                 extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
                 # prevent crossfire with downstream scripts
                 del os.environ["CMAKE_ARGS"]
-                log.info("Extra cmake args: {}".format(extra_cmake_args))
+                log.info(f"Extra cmake args: {extra_cmake_args}")
                 cmake_args.extend(extra_cmake_args)
             cmake_args.append(TOP_DIR)
-            log.info("Using cmake args: {}".format(cmake_args))
+            log.info(f"Using cmake args: {cmake_args}")
             if "-DONNX_DISABLE_EXCEPTIONS=ON" in cmake_args:
                 raise RuntimeError("-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled.")
             subprocess.check_call(cmake_args)
@@ -211,7 +211,7 @@ class cmake_build(setuptools.Command):
             build_args = [CMAKE, "--build", os.curdir]
             if WINDOWS:
                 build_args.extend(["--config", build_type])
-                build_args.extend(["--", "/maxcpucount:{}".format(self.jobs)])
+                build_args.extend(["--", f"/maxcpucount:{self.jobs}"])
             else:
                 build_args.extend(["--", "-j", str(self.jobs)])
             subprocess.check_call(build_args)
@@ -288,7 +288,7 @@ cmdclass = {
 
 ext_modules = [
     setuptools.Extension(
-        name=str("onnx.onnx_cpp2py_export"),
+        name="onnx.onnx_cpp2py_export",
         sources=[])
 ]
 

@@ -5,7 +5,7 @@ import sys
 import onnx.defs
 import numpy as np  # type: ignore
 from onnx import ModelProto
-from typing import List, Optional, Text, Sequence
+from typing import List, Optional, Sequence
 from ..utils import import_recursive
 from ..test_case import TestCase
 
@@ -15,7 +15,7 @@ _SimpleModelTestCases = []
 def expect(model: ModelProto,
            inputs: Sequence[np.ndarray],
            outputs: Sequence[np.ndarray],
-           name: Optional[Text] = None,
+           name: Optional[str] = None,
            ) -> None:
     name = name or model.graph.name
     _SimpleModelTestCases.append(
@@ -56,7 +56,7 @@ def collect_testcases() -> List[TestCase]:
     ]
 
     for test_name, model_name, rtol, atol in model_tests:
-        url = '{}/{}.tar.gz'.format(BASE_URL, model_name)
+        url = f'{BASE_URL}/{model_name}.tar.gz'
         real_model_testcases.append(TestCase(
             name=test_name,
             model_name=model_name,
