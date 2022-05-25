@@ -2269,7 +2269,7 @@ void col2imShapeInference(InferenceContext& ctx) {
   // Dimensions N and C are always present
   Dim N, C;
   if (ctx.getInputType(0)->tensor_type().shape().dim(0).has_dim_value()) {
-    N = input_shape.dim(0);  // Otherwise, N is unknown.
+    N = input_shape.dim(0); // Otherwise, N is unknown.
   }
   *final_image_shape->add_dim() = N;
 
@@ -2279,7 +2279,7 @@ void col2imShapeInference(InferenceContext& ctx) {
   *final_image_shape->add_dim() = C;
 
   // Image dimensions are dynamic
-  for (size_t i=0; i < n_input_dims; ++i) {
+  for (size_t i = 0; i < n_input_dims; ++i) {
     Dim image_dim_i;
     if (image_shape.size() > 0) {
       image_dim_i.set_dim_value(image_shape[i]); // Otherwise, spatial dimensions are unknown
@@ -2289,7 +2289,7 @@ void col2imShapeInference(InferenceContext& ctx) {
   return;
 }
 
-static const char* Col2Im_ver16_doc = R"DOC(
+static const char* Col2Im_ver17_doc = R"DOC(
 The operator rearranges column blocks back into a multidimensional image
 
 Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/generated/torch.nn.Fold.html,
@@ -2303,7 +2303,7 @@ NOTE: Although specifying image_shape looks redundant because it could be calcul
 
 ONNX_OPERATOR_SET_SCHEMA(
     Col2Im,
-    16,
+    17,
     OpSchema()
         .Attr(
             "dilations",
@@ -2328,7 +2328,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If not present, the stride defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .SetDoc(Col2Im_ver16_doc)
+        .SetDoc(Col2Im_ver17_doc)
         .Input(
             0,
             "input",
