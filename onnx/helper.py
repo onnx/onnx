@@ -17,7 +17,7 @@ from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 
-VersionRowType = Union[Tuple[str, int, int, int], Tuple[Text, int, int, int, int]]
+VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
 VersionTableType = List[VersionRowType]
 AssignmentBindingType = List[Tuple[str, str]]
 
@@ -613,8 +613,7 @@ def make_tensor_type_proto(
                 dim.dim_param = d
             else:
                 raise ValueError(
-                    'Invalid item in shape: {}. '
-                    'Needs to be of int or str.'.format(d))
+                    f'Invalid item in shape: {d}. Needs to be of int or str.')
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
@@ -678,8 +677,7 @@ def make_sparse_tensor_type_proto(
                 dim.dim_param = d
             else:
                 raise ValueError(
-                    'Invalid item in shape: {}. '
-                    'Needs to be of int or text.'.format(d))
+                    f'Invalid item in shape: {d}. Needs to be of int or text.')
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
@@ -862,7 +860,7 @@ def printable_type(t: TypeProto) -> str:
         return s
     if t.WhichOneof('value') is None:
         return ""
-    return 'Unknown type {}'.format(t.WhichOneof('value'))
+    return f"Unknown type {t.WhichOneof('value')}"
 
 
 def printable_value_info(v: ValueInfoProto) -> str:
