@@ -3,7 +3,7 @@
 import sys
 import re
 
-from typing import Callable, List, Text, Sequence, Any, Union, Optional, Dict
+from typing import Callable, List, Sequence, Any, Union, Optional, Dict
 import numpy as np  # type: ignore
 
 import onnx
@@ -21,9 +21,9 @@ from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, Gr
 
 
 def _rename_edges_helper(internal_node: NodeProto,
-                         rename_helper: Callable[[Text], Text],
-                         attribute_map: Dict[Text, AttributeProto],
-                         prefix: Text) -> NodeProto:
+                         rename_helper: Callable[[str], str],
+                         attribute_map: Dict[str, AttributeProto],
+                         prefix: str) -> NodeProto:
     new_node = NodeProto()
     new_node.CopyFrom(internal_node)
     new_node.ClearField("input")
@@ -59,7 +59,7 @@ def _rename_edges_helper(internal_node: NodeProto,
                     sg_rename[sparse_init_desc.indices.name] = sparse_init_desc.indices.name = prefix + \
                         sparse_init_desc.indices.name
 
-                def subgraph_rename_helper(name: Text) -> Any:
+                def subgraph_rename_helper(name: str) -> Any:
                     if name in sg_rename:
                         return sg_rename[name]
                     else:
@@ -77,10 +77,10 @@ def _rename_edges_helper(internal_node: NodeProto,
 # FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
 def function_expand_helper(node: NodeProto,
                            function_proto: FunctionProto,
-                           op_prefix: Text
+                           op_prefix: str
                            ) -> List[NodeProto]:
     io_names_map = dict()
-    attribute_map = dict((a.name, a) for a in node.attribute)
+    attribute_map = {a.name: a for a in node.attribute}
 
     for idx in range(len(function_proto.input)):
         io_names_map[function_proto.input[idx]] = node.input[idx] \
@@ -96,7 +96,7 @@ def function_expand_helper(node: NodeProto,
         if idx in range(len(node.output)) and node.output[idx] != "":
             io_names_map[function_proto.output[idx]] = node.output[idx]
 
-    def rename_helper(internal_name: Text) -> Any:
+    def rename_helper(internal_name: str) -> Any:
         if internal_name in io_names_map:
             return io_names_map[internal_name]
         elif internal_name == '':
@@ -111,7 +111,7 @@ def function_expand_helper(node: NodeProto,
     return new_node_list
 
 
-def function_testcase_helper(node: NodeProto, input_types: List[TypeProto], name: Text) -> List[NodeProto]:
+def function_testcase_helper(node: NodeProto, input_types: List[TypeProto], name: str) -> List[NodeProto]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
     schema = onnx.defs.get_schema(test_op, node.domain)
@@ -136,7 +136,7 @@ def function_testcase_helper(node: NodeProto, input_types: List[TypeProto], name
     return node_list
 
 
-def _extract_value_info(input: Union[List[Any], np.ndarray, None], name: Text, type_proto: Optional[TypeProto] = None) -> onnx.ValueInfoProto:
+def _extract_value_info(input: Union[List[Any], np.ndarray, None], name: str, type_proto: Optional[TypeProto] = None) -> onnx.ValueInfoProto:
     if type_proto is None:
         if input is None:
             raise NotImplementedError("_extract_value_info: both input and type_proto arguments cannot be None.")
@@ -182,7 +182,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 def expect(node: onnx.NodeProto,
            inputs: Sequence[np.ndarray],
            outputs: Sequence[np.ndarray],
-           name: Text,
+           name: str,
            **kwargs: Any
            ) -> None:
     # skip if the node's op_type is not same as the given one
@@ -192,12 +192,12 @@ def expect(node: onnx.NodeProto,
     present_outputs = [x for x in node.output if (x != "")]
     input_type_protos = [None] * len(inputs)
     if "input_type_protos" in kwargs:
-        input_type_protos = kwargs[str("input_type_protos")]
-        del kwargs[str("input_type_protos")]
+        input_type_protos = kwargs["input_type_protos"]
+        del kwargs["input_type_protos"]
     output_type_protos = [None] * len(outputs)
     if "output_type_protos" in kwargs:
-        output_type_protos = kwargs[str("output_type_protos")]
-        del kwargs[str("output_type_protos")]
+        output_type_protos = kwargs["output_type_protos"]
+        del kwargs["output_type_protos"]
     inputs_vi = [_extract_value_info(arr, arr_name, input_type)
                  for arr, arr_name, input_type in zip(inputs, present_inputs, input_type_protos)]
     outputs_vi = [_extract_value_info(arr, arr_name, output_type)
@@ -207,13 +207,13 @@ def expect(node: onnx.NodeProto,
         name=name,
         inputs=inputs_vi,
         outputs=outputs_vi)
-    kwargs[str("producer_name")] = "backend-test"
+    kwargs["producer_name"] = "backend-test"
 
     if "opset_imports" not in kwargs:
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
         produce_opset_version = onnx.defs.get_schema(node.op_type, node.domain).since_version
-        kwargs[str("opset_imports")] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
+        kwargs["opset_imports"] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
 
     model = _make_test_model_gen_version(graph, **kwargs)
 
@@ -231,7 +231,7 @@ def expect(node: onnx.NodeProto,
 
     # Create list of types for node.input, filling a default TypeProto for missing inputs:
     # E.g. merge(["x", "", "y"], [x-value-info, y-value-info]) will return [x-type, default-type, y-type]
-    def merge(node_inputs: List[Text], present_value_info: List[onnx.ValueInfoProto]) -> List[TypeProto]:
+    def merge(node_inputs: List[str], present_value_info: List[onnx.ValueInfoProto]) -> List[TypeProto]:
         if (node_inputs):
             if (node_inputs[0] != ""):
                 return [present_value_info[0].type] + merge(node_inputs[1:], present_value_info[1:])
@@ -247,7 +247,7 @@ def expect(node: onnx.NodeProto,
             name=function_test_name,
             inputs=inputs_vi,
             outputs=outputs_vi)
-        kwargs[str("producer_name")] = "backend-test"
+        kwargs["producer_name"] = "backend-test"
         model = _make_test_model_gen_version(graph, **kwargs)
         _NodeTestCases.append(TestCase(
             name=function_test_name,
@@ -262,7 +262,7 @@ def expect(node: onnx.NodeProto,
         ))
 
 
-def collect_testcases(op_type: Text) -> List[TestCase]:
+def collect_testcases(op_type: str) -> List[TestCase]:
     '''Collect node test cases
     '''
     # only keep those tests related to this operator

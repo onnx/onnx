@@ -8,7 +8,6 @@ import shutil
 import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
 from onnx import numpy_helper
-from typing import Text
 
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
@@ -17,7 +16,7 @@ DATA_DIR = os.path.join(TOP_DIR, 'data')
 
 def generate_data(args: argparse.Namespace) -> None:
 
-    def prepare_dir(path: Text) -> None:
+    def prepare_dir(path: str) -> None:
         if os.path.exists(path):
             shutil.rmtree(path)
         os.makedirs(path)
@@ -46,11 +45,11 @@ def generate_data(args: argparse.Namespace) -> None:
             assert case.data_sets
             for i, (inputs, outputs) in enumerate(case.data_sets):
                 data_set_dir = os.path.join(
-                    output_dir, 'test_data_set_{}'.format(i))
+                    output_dir, f'test_data_set_{i}')
                 prepare_dir(data_set_dir)
                 for j, input in enumerate(inputs):
                     with open(os.path.join(
-                            data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
+                            data_set_dir, f'input_{j}.pb'), 'wb') as f:
                         if case.model.graph.input[j].type.HasField('map_type'):
                             f.write(numpy_helper.from_dict(
                                 input, case.model.graph.input[j].name).SerializeToString())
@@ -66,7 +65,7 @@ def generate_data(args: argparse.Namespace) -> None:
                                 input, case.model.graph.input[j].name).SerializeToString())
                 for j, output in enumerate(outputs):
                     with open(os.path.join(
-                            data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
+                            data_set_dir, f'output_{j}.pb'), 'wb') as f:
                         if case.model.graph.output[j].type.HasField('map_type'):
                             f.write(numpy_helper.from_dict(
                                 output, case.model.graph.output[j].name).SerializeToString())

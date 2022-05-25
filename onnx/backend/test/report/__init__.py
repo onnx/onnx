@@ -4,13 +4,13 @@ import pytest  # type: ignore
 import _pytest  # type: ignore
 
 from .coverage import Coverage
-from typing import Dict, Text, Sequence, Any, List
+from typing import Dict, Sequence, Any, List
 
 _coverage = Coverage()
-_marks: Dict[Text, Sequence[Any]] = {}
+_marks: Dict[str, Sequence[Any]] = {}
 
 
-def _add_mark(mark: Any, bucket: Text) -> None:
+def _add_mark(mark: Any, bucket: str) -> None:
     proto = mark.args[0]
     if isinstance(proto, list):
         assert len(proto) == 1

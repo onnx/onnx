@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import onnx
 from onnx import helper, TensorProto, shape_inference, version_converter, ValueInfoProto
-from typing import Text, List, Dict, Any, Union, Callable, Optional, cast
+from typing import List, Dict, Any, Union, Callable, Optional, cast
 import string
 import numpy as np  # type: ignore
 import unittest
@@ -22,14 +22,14 @@ class TestAutomaticUpgrade(unittest.TestCase):
 
     def _test_op_upgrade(
         self,
-        op: Text,
+        op: str,
         from_opset: int,
-        input_shapes: List[Union[List[Optional[int]], Text]] = [[3, 4, 5]],
+        input_shapes: List[Union[List[Optional[int]], str]] = [[3, 4, 5]],
         output_shapes: List[List[Optional[int]]] = [[3, 4, 5]],
         input_types: Union[List[Any], None] = None,
         output_types: Union[List[Any], None] = None,
         initializer: List[Any] = [],
-        attrs: Dict[Text, Any] = {},
+        attrs: Dict[str, Any] = {},
         seq_inputs: List[int] = [],
         seq_outputs: List[int] = [],
         optional_inputs: List[int] = [],
@@ -1070,7 +1070,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
                               output_types=[TensorProto.FLOAT],
                               attrs={'axis': 2})
 
-    def _test_window_function(self, window_function_name: Text) -> None:
+    def _test_window_function(self, window_function_name: str) -> None:
         size = helper.make_tensor('a', TensorProto.INT64, dims=[], vals=np.array([10]))
         self._test_op_upgrade(window_function_name,
                               17,
@@ -1096,7 +1096,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
         self._test_op_upgrade('DFT', 17, [[2, 16, 1], []], [[2, 16, 2]], attrs={'inverse': 1})
         self._test_op_upgrade('DFT', 17, [[2, 16, 2], []], [[2, 16, 2]], attrs={'inverse': 1})
 
-    def _test_short_time_fourier_transform(self, operator_name: Text) -> None:
+    def _test_short_time_fourier_transform(self, operator_name: str) -> None:
         # Real
         signal = helper.make_tensor('a', TensorProto.FLOAT, dims=[2, 64], vals=np.random.rand(2, 64).astype(np.float32))
         frame_step = helper.make_tensor('b', TensorProto.INT64, dims=[1], vals=np.array([8]))
