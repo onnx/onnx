@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import random
+import struct
 
 import numpy as np  # type: ignore
 
@@ -416,7 +417,21 @@ class TestHelperTensorFunctions(unittest.TestCase):
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
     def test_make_bfloat16_tensor(self) -> None:
-        np_array = np.random.randn(8, 7).astype(np.float16)
+        # numpy doesn't support bf16, so we have to compute the correct result manually
+        #   np_array = np.random.randn(2, 3).astype(np.float16)
+        np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]])
+        np_results = np.array([
+            [struct.unpack('!f', bytes.fromhex('3F800000'))[0],   # 1.0
+             struct.unpack('!f', bytes.fromhex('40000000'))[0]],  # 2.0
+            [struct.unpack('!f', bytes.fromhex('40400000'))[0],   # 3.0
+             struct.unpack('!f', bytes.fromhex('40800000'))[0]],  # 4.0
+            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # round-to-nearest-even rounds down (0x8000)
+             struct.unpack('!f', bytes.fromhex('3DCC0000'))[0]],  # round-to-nearest-even rounds up   (0x8000)
+            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # round-to-nearest-even rounds down (0x7fff)
+             struct.unpack('!f', bytes.fromhex('3DCD0000'))[0]],  # round-to-nearest-even rounds up   (0xCCCD)
+            [struct.unpack('!f', bytes.fromhex('7FC00000'))[0],   # NaN
+             struct.unpack('!f', bytes.fromhex('7F800000'))[0]],  # inf
+        ])
 
         tensor = helper.make_tensor(
             name='test',
@@ -425,20 +440,38 @@ class TestHelperTensorFunctions(unittest.TestCase):
             vals=np_array
         )
         self.assertEqual(tensor.name, 'test')
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+        np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
     def test_make_bfloat16_tensor_with_raw(self) -> None:
-        np_array = np.random.randn(8, 7).astype(np.float16)
+        # numpy doesn't support bf16, so we have to compute the correct result manually
+        #   np_array = np.random.randn(8, 7).astype(np.float16)
+        np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]])
+        np_results = np.array([
+            [struct.unpack('!f', bytes.fromhex('3F800000'))[0],   # 1.0
+             struct.unpack('!f', bytes.fromhex('40000000'))[0]],  # 2.0
+            [struct.unpack('!f', bytes.fromhex('40400000'))[0],   # 3.0
+             struct.unpack('!f', bytes.fromhex('40800000'))[0]],  # 4.0
+            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # truncated
+             struct.unpack('!f', bytes.fromhex('3DCB0000'))[0]],  # truncated
+            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # truncated
+             struct.unpack('!f', bytes.fromhex('3DCC0000'))[0]],  # truncated
+            [struct.unpack('!f', bytes.fromhex('7FC00000'))[0],   # NaN
+             struct.unpack('!f', bytes.fromhex('7F800000'))[0]],  # inf
+        ])
 
+        # write out 16-bit of fp32 to create bf16 using truncation, no rounding
+        truncate = lambda x: x >> 16  # noqa: E731
+        values_as_ints = np_array.astype(np.float32).view(np.uint32).flatten()
+        packed_values = truncate(values_as_ints).astype(np.uint16).tobytes()
         tensor = helper.make_tensor(
             name='test',
             data_type=TensorProto.BFLOAT16,
             dims=np_array.shape,
-            vals=np_array.view(dtype=np.uint16).flatten().tobytes(),
+            vals=packed_values,
             raw=True
         )
         self.assertEqual(tensor.name, 'test')
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+        np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]

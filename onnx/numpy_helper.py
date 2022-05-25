@@ -3,6 +3,7 @@
 import sys
 
 import numpy as np  # type: ignore
+import numpy.typing as nptyping  # type: ignore
 from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
@@ -11,6 +12,12 @@ from typing import Sequence, Any, Optional, List, Dict
 
 def combine_pairs_to_complex(fa: Sequence[int]) -> Sequence[np.complex64]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
+
+
+def bfloat16_to_float32(data: np.ndarray, dims: nptyping._ShapeLike) -> np.ndarray:
+    """Converts ndarray of bf16 (as uint32) to f32 (as uint32)."""
+    shift = lambda x: x << 16  # noqa: E731
+    return shift(data.astype(np.int32)).reshape(dims).view(np.float32)
 
 
 def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
@@ -49,19 +56,30 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         if sys.byteorder == 'big':
             # Convert endian from little to big
             convert_endian(tensor)
+
+        # manually convert bf16 since there's no numpy support
+        if tensor_dtype == TensorProto.BFLOAT16:
+            data = np.frombuffer(tensor.raw_data, dtype=np.int16)
+            return bfloat16_to_float32(data, dims)
+
         return np.frombuffer(
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
     else:
-        # float16/bfloat16 is stored as int32 (uint16 type); Need view to get the original value
-        if (tensor_dtype == TensorProto.FLOAT16
-                or tensor_dtype == TensorProto.BFLOAT16):
+        # float16 is stored as int32 (uint16 type); Need view to get the original value
+        if tensor_dtype == TensorProto.FLOAT16:
             return (
                 np.asarray(
                     tensor.int32_data,
                     dtype=np.uint16)
                 .reshape(dims)
                 .view(np.float16))
+
+        # bfloat16 is stored as int32 (uint16 type); no numpy support for bf16
+        if tensor_dtype == TensorProto.BFLOAT16:
+            data = np.asarray(tensor.int32_data, dtype=np.int32)
+            return bfloat16_to_float32(data, dims)
+
         data = getattr(tensor, storage_field)
         if (tensor_dtype == TensorProto.COMPLEX64
                 or tensor_dtype == TensorProto.COMPLEX128):
