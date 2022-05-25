@@ -28,7 +28,7 @@ class TestSymbolicShape(unittest.TestCase):
                 # -1 means it's a symbolic shape
                 if expected_dim.dim_value == -1:
                     # symbolic dimension must exist
-                    assert dim.dim_param, '%s' % (onnx_model)
+                    assert dim.dim_param, f'{onnx_model}'
                 else:
                     assert dim.dim_value == expected_dim.dim_value, f'{onnx_model}'
 

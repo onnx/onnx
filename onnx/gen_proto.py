@@ -176,14 +176,14 @@ def convert(stem: str, package_name: str, output: str, do_onnx_ml: bool = False,
 
     # Generate py mapping
     # "-" is invalid in python module name, replaces '-' with '_'
-    pb_py = qualify('{}_pb.py'.format(stem.replace('-', '_')), pardir=output)
+    pb_py = qualify(f"{stem.replace('-', '_')}_pb.py", pardir=output)
     if need_rename:
-        pb2_py = qualify('{}_pb2.py'.format(proto_base.replace('-', '_')), pardir=output)
+        pb2_py = qualify(f"{proto_base.replace('-', '_')}_pb2.py", pardir=output)
     else:
         if do_onnx_ml:
-            pb2_py = qualify('{}_ml_pb2.py'.format(stem.replace('-', '_')), pardir=output)
+            pb2_py = qualify(f"{stem.replace('-', '_')}_ml_pb2.py", pardir=output)
         else:
-            pb2_py = qualify('{}_pb2.py'.format(stem.replace('-', '_')), pardir=output)
+            pb2_py = qualify(f"{stem.replace('-', '_')}_pb2.py", pardir=output)
 
     print(f'generating {pb_py}')
     with open(pb_py, 'w') as f:

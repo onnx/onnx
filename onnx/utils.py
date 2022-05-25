@@ -179,7 +179,7 @@ def extract_model(
         check_model (bool): Whether to run model checker on the extracted model.
     """
     if not os.path.exists(input_path):
-        raise ValueError("Invalid input model path: %s" % input_path)
+        raise ValueError(f"Invalid input model path: {input_path}")
     if not output_path:
         raise ValueError("Output model path shall not be empty!")
     if not output_names:

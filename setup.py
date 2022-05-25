@@ -166,7 +166,7 @@ class cmake_build(setuptools.Command):
                 "-DBUILD_ONNX_PYTHON=ON",
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
-                "-DPY_EXT_SUFFIX={}".format(sysconfig.get_config_var("EXT_SUFFIX") or ''),
+                f"-DPY_EXT_SUFFIX={sysconfig.get_config_var('EXT_SUFFIX') or ''}",
             ]
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
@@ -174,13 +174,13 @@ class cmake_build(setuptools.Command):
                 # in order to get accurate coverage information, the
                 # build needs to turn off optimizations
                 build_type = "Debug"
-            cmake_args.append("-DCMAKE_BUILD_TYPE=%s" % build_type)
+            cmake_args.append(f"-DCMAKE_BUILD_TYPE={build_type}")
             if WINDOWS:
                 cmake_args.extend([
                     # we need to link with libpython on windows, so
                     # passing python version to window in order to
                     # find python in cmake
-                    "-DPY_VERSION={}".format("{}.{}".format(*sys.version_info[:2])),
+                    f"-DPY_VERSION={'{}.{}'.format(*sys.version_info[:2])}",
                 ])
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append("-DONNX_USE_MSVC_STATIC_RUNTIME=ON")

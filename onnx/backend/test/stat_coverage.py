@@ -96,7 +96,7 @@ def gen_node_test_coverage(schemas: Sequence[defs.OpSchema], f: IO[Any], ml: boo
     all_lists = [common_covered, common_no_cover,
             experimental_covered, experimental_no_cover]
     for t in titles:
-        f.write('* [{}](#{})\n'.format(t[9:], t[9:].lower().replace(' ', '-')))
+        f.write(f"* [{t[9:]}](#{t[9:].lower().replace(' ', '-')})\n")
     f.write('\n')
     for t, l in zip(titles, all_lists):
         f.write(f'## {t}\n')
