@@ -14,6 +14,10 @@ from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 from typing import Text, Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
 import numpy as np  # type: ignore
 
+from cmath import isnan
+import struct
+import sys
+
 VersionRowType = Union[Tuple[Text, int, int, int], Tuple[Text, int, int, int, int]]
 VersionTableType = List[VersionRowType]
 AssignmentBindingType = List[Tuple[Text, Text]]
@@ -278,6 +282,24 @@ def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
             for i in range(len(ca) * 2)]
 
 
+# convert a f32 to bf16 (as int)
+def float32_to_bfloat16(fval: float) -> int:
+    ival = int.from_bytes(struct.pack('<f', fval), 'little')
+    if isnan(fval):
+        # NaN requires at least 1 significand bit set
+        ival16 = 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
+    else:
+        # drop bottom 16-bits
+        # round remaining bits using round-to-nearest-even
+        round = ((ival >> 16) & 1) + 0x7fff
+        ival16 = (ival + round) >> 16
+    # swap byte order for big-endian
+    if sys.byteorder == 'big':
+        bytes = struct.pack('<h', ival16)
+        ival16 = int.from_bytes(bytes, 'big')
+    return ival16
+
+
 def make_tensor(
         name: Text,
         data_type: int,
@@ -328,10 +350,11 @@ def make_tensor(
         if (data_type == TensorProto.COMPLEX64
                 or data_type == TensorProto.COMPLEX128):
             vals = split_complex_to_pairs(vals)
-        # floa16/bfloat16 are stored as uint16
-        elif (data_type == TensorProto.FLOAT16
-                or data_type == TensorProto.BFLOAT16):
+        # float16/bfloat16 are stored as uint16
+        elif data_type == TensorProto.FLOAT16:
             vals = np.array(vals).astype(np.float16).view(dtype=np.uint16).flatten().tolist()
+        elif data_type == TensorProto.BFLOAT16:
+            vals = list(map(float32_to_bfloat16, np.array(vals).astype(np.float32).flatten().tolist()))
         field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
             mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]]
         getattr(tensor, field).extend(vals)
