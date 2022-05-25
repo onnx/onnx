@@ -1,9 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
 
@@ -17,8 +13,8 @@ class STFT(Base):
     @staticmethod
     def export() -> None:
         signal = np.arange(0, 128, dtype=np.float32).reshape(1, 128, 1)
-        length = np.array((16)).astype(np.int64)
-        step = np.array((8)).astype(np.int64)
+        length = np.array(16).astype(np.int64)
+        step = np.array(8).astype(np.int64)
 
         no_window = ""  # optional input, not supplied
         node = onnx.helper.make_node(

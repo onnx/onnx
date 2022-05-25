@@ -7,20 +7,20 @@ import numpy.typing as nptyping  # type: ignore
 from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
-from typing import Sequence, Any, Optional, Text, List, Dict
+from typing import Sequence, Any, Optional, List, Dict
 
 
 def combine_pairs_to_complex(fa: Sequence[int]) -> Sequence[np.complex64]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-# convert ndarray of bf16 (as uint32) to f32 (as uint32)
 def bfloat16_to_float32(data: np.ndarray, dims: nptyping._ShapeLike) -> np.ndarray:
+    """Converts ndarray of bf16 (as uint32) to f32 (as uint32)."""
     shift = lambda x: x << 16  # noqa: E731
     return shift(data.astype(np.int32)).reshape(dims).view(np.float32)
 
 
-def to_array(tensor: TensorProto, base_dir: Text = "") -> np.ndarray:
+def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     """Converts a tensor def object to a numpy array.
 
     Inputs:
@@ -94,7 +94,7 @@ def to_array(tensor: TensorProto, base_dir: Text = "") -> np.ndarray:
         )
 
 
-def from_array(arr: np.ndarray, name: Optional[Text] = None) -> TensorProto:
+def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
     Inputs:
@@ -142,7 +142,7 @@ def from_array(arr: np.ndarray, name: Optional[Text] = None) -> TensorProto:
         dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
     except KeyError:
         raise RuntimeError(
-            "Numpy data type not understood yet: {}".format(str(arr.dtype)))
+            f"Numpy data type not understood yet: {str(arr.dtype)}")
     tensor.data_type = dtype
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
     if sys.byteorder == 'big':
@@ -176,7 +176,7 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     return lst
 
 
-def from_list(lst: List[Any], name: Optional[Text] = None, dtype: Optional[int] = None) -> SequenceProto:
+def from_list(lst: List[Any], name: Optional[str] = None, dtype: Optional[int] = None) -> SequenceProto:
     """Converts a list into a sequence def.
 
     Inputs:
@@ -249,7 +249,7 @@ def to_dict(map: MapProto) -> Dict[Any, Any]:
     return dictionary
 
 
-def from_dict(dict: Dict[Any, Any], name: Optional[Text] = None) -> MapProto:
+def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
     """Converts a Python dictionary into a map def.
 
     Inputs:
@@ -320,7 +320,7 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
 
 def from_optional(
         opt: Optional[Any],
-        name: Optional[Text] = None,
+        name: Optional[str] = None,
         dtype: Optional[int] = None
 ) -> OptionalProto:
     """Converts an optional value into a Optional def.

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-from typing import List, Tuple, Text
+from typing import List, Tuple
 
 import onnx.checker
 import onnx.helper
@@ -39,16 +39,16 @@ class Extractor:
         new_io_tensors_map = self._build_name2obj_dict(new_io_tensors)
         return [new_io_tensors_map[name] for name in io_names_to_extract]
 
-    def _collect_new_inputs(self, names: List[Text]) -> List[ValueInfoProto]:
+    def _collect_new_inputs(self, names: List[str]) -> List[ValueInfoProto]:
         return self._collect_new_io_core(self.graph.input, names)  # type: ignore
 
-    def _collect_new_outputs(self, names: List[Text]) -> List[ValueInfoProto]:
+    def _collect_new_outputs(self, names: List[str]) -> List[ValueInfoProto]:
         return self._collect_new_io_core(self.graph.output, names)  # type: ignore
 
     def _dfs_search_reachable_nodes(
             self,
-            node_output_name: Text,
-            graph_input_names: List[Text],
+            node_output_name: str,
+            graph_input_names: List[str],
             reachable_nodes: List[NodeProto],
     ) -> None:
         if node_output_name in graph_input_names:
@@ -64,8 +64,8 @@ class Extractor:
 
     def _collect_reachable_nodes(
             self,
-            input_names: List[Text],
-            output_names: List[Text],
+            input_names: List[str],
+            output_names: List[str],
     ) -> List[NodeProto]:
         reachable_nodes = list()  # type: ignore
         for name in output_names:
@@ -143,8 +143,8 @@ class Extractor:
 
     def extract_model(
             self,
-            input_names: List[Text],
-            output_names: List[Text],
+            input_names: List[str],
+            output_names: List[str],
     ) -> ModelProto:
         inputs = self._collect_new_inputs(input_names)
         outputs = self._collect_new_outputs(output_names)
@@ -157,10 +157,10 @@ class Extractor:
 
 
 def extract_model(
-        input_path: Text,
-        output_path: Text,
-        input_names: List[Text],
-        output_names: List[Text],
+        input_path: str,
+        output_path: str,
+        input_names: List[str],
+        output_names: List[str],
         check_model: bool = True,
 ) -> None:
     """Extracts sub-model from an ONNX model.
@@ -179,7 +179,7 @@ def extract_model(
         check_model (bool): Whether to run model checker on the extracted model.
     """
     if not os.path.exists(input_path):
-        raise ValueError("Invalid input model path: %s" % input_path)
+        raise ValueError(f"Invalid input model path: {input_path}")
     if not output_path:
         raise ValueError("Output model path shall not be empty!")
     if not output_names:
