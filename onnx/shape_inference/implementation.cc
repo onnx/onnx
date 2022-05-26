@@ -304,7 +304,7 @@ class ShapeInferenceImplBase {
     if (dit == opset_imports.end()) {
       // Both "" and "ai.onnx" refer to the default ONNX domain
       if (n.domain() == "") {
-         dit = opset_imports.find("ai.onnx");
+        dit = opset_imports.find("ai.onnx");
       }
       if (dit == opset_imports.end()) {
         fail_type_inference(
