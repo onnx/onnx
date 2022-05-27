@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 
+import onnx
 import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
 from onnx import numpy_helper
@@ -61,8 +62,13 @@ def generate_data(args: argparse.Namespace) -> None:
                                 input, case.model.graph.input[j].name).SerializeToString())
                         else:
                             assert case.model.graph.input[j].type.HasField('tensor_type')
-                            f.write(numpy_helper.from_array(
-                                input, case.model.graph.input[j].name).SerializeToString())
+                            tensor = numpy_helper.from_array(input, case.model.graph.input[j].name)
+                            elem_type = case.model.graph.input[j].type.tensor_type.elem_type
+                            if elem_type == onnx.TensorProto.BFLOAT16:
+                                tensor.data_type = elem_type
+                            else:
+                                assert tensor.data_type == elem_type
+                            f.write(tensor.SerializeToString())
                 for j, output in enumerate(outputs):
                     with open(os.path.join(
                             data_set_dir, f'output_{j}.pb'), 'wb') as f:
@@ -77,8 +83,13 @@ def generate_data(args: argparse.Namespace) -> None:
                                 output, case.model.graph.output[j].name).SerializeToString())
                         else:
                             assert case.model.graph.output[j].type.HasField('tensor_type')
-                            f.write(numpy_helper.from_array(
-                                output, case.model.graph.output[j].name).SerializeToString())
+                            tensor = numpy_helper.from_array(output, case.model.graph.output[j].name)
+                            elem_type = case.model.graph.output[j].type.tensor_type.elem_type
+                            if elem_type == onnx.TensorProto.BFLOAT16:
+                                tensor.data_type = elem_type
+                            else:
+                                assert tensor.data_type == elem_type
+                            f.write(tensor.SerializeToString())
 
 
 def parse_args() -> argparse.Namespace:
