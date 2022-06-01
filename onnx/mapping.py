@@ -3,6 +3,7 @@
 from onnx import TensorProto, SequenceProto, OptionalProto
 import numpy as np  # type: ignore
 
+# This map refers to which numpy type you should use as given values while making tensor
 TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.FLOAT): np.dtype('float32'),
     int(TensorProto.UINT8): np.dtype('uint8'),
@@ -13,7 +14,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.INT64): np.dtype('int64'),
     int(TensorProto.BOOL): np.dtype('bool'),
     int(TensorProto.FLOAT16): np.dtype('float16'),
-    int(TensorProto.BFLOAT16): np.dtype('float32'),  # Native numpy does not support bfloat16
+    int(TensorProto.BFLOAT16): np.dtype('float32'),  # Native numpy does not support bfloat16 so now use float32 for bf16 values
     int(TensorProto.DOUBLE): np.dtype('float64'),
     int(TensorProto.COMPLEX64): np.dtype('complex64'),
     int(TensorProto.COMPLEX128): np.dtype('complex128'),
@@ -26,6 +27,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
 # Numpy float32 array is only reversed to TensorProto.FLOAT
 NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16}
 
+# This map refers to which TensorPrto type you should store for certain TensorPrto type
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.FLOAT): int(TensorProto.FLOAT),
     int(TensorProto.UINT8): int(TensorProto.INT32),
