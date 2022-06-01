@@ -3,7 +3,7 @@
 from onnx import TensorProto, SequenceProto, OptionalProto
 import numpy as np  # type: ignore
 
-# This map refers to which numpy type you should use as given values while making tensor
+# This map is used for converting TensorProto values into Numpy arrays
 TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.FLOAT): np.dtype('float32'),
     int(TensorProto.UINT8): np.dtype('uint8'),
@@ -27,7 +27,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
 # Numpy float32 array is only reversed to TensorProto.FLOAT
 NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16}
 
-# This map refers to which TensorPrto type you should store for certain TensorPrto type
+# This map indicates what storage-type is used in the protobuf (serialized) representation for TensorProto
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.FLOAT): int(TensorProto.FLOAT),
     int(TensorProto.UINT8): int(TensorProto.INT32),
