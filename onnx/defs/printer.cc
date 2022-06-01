@@ -2,117 +2,171 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iomanip>
 #include "onnx/defs/printer.h"
+#include <iomanip>
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 
-static int indent_level = 3;
+class ProtoPrinter {
+ public:
+  ProtoPrinter(std::ostream& os) : output(os) {}
 
-static void indent() { indent_level += 3; }
+  void print(const TensorShapeProto_Dimension& dim);
 
-static void outdent() { indent_level -= 3; }
+  void print(const TensorShapeProto& shape);
 
-template <typename Collection>
-inline void print(std::ostream& os, const char* open, const char* separator, const char* close, Collection coll) {
-  const char* sep = "";
-  os << open;
-  for (auto& elt : coll) {
-    os << sep << elt;
-    sep = separator;
+  void print(const TypeProto_Tensor& tensortype);
+
+  void print(const TypeProto& type);
+
+  void print(const TypeProto_Sequence& seqType);
+
+  void print(const TypeProto_Map& mapType);
+
+  void print(const TypeProto_Optional& optType);
+
+  void print(const TypeProto_SparseTensor sparseType);
+
+  void print(const TensorProto& tensor);
+
+  void print(const ValueInfoProto& value_info);
+
+  void print(const ValueInfoList& vilist);
+
+  void print(const AttributeProto& attr);
+
+  void print(const AttrList& attrlist);
+
+  void print(const NodeProto& node);
+
+  void print(const NodeList& nodelist);
+
+  void print(const GraphProto& graph);
+
+  void print(const FunctionProto& fn);
+
+  void print(const OperatorSetIdProto& opset);
+
+ private:
+  template <typename T>
+  inline void print(T prim) {
+    output << prim;
   }
-  os << close;
-}
 
-std::ostream& operator<<(std::ostream& os, const TensorShapeProto_Dimension& dim) {
+  template <typename Collection>
+  inline void print(const char* open, const char* separator, const char* close, Collection coll) {
+    const char* sep = "";
+    output << open;
+    for (auto& elt : coll) {
+      output << sep;
+      print(elt);
+      sep = separator;
+    }
+    output << close;
+  }
+
+  std::ostream& output;
+  int indent_level = 3;
+
+  void indent() {
+    indent_level += 3;
+  }
+
+  void outdent() {
+    indent_level -= 3;
+  }
+};
+
+void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
   if (dim.has_dim_value())
-    os << dim.dim_value();
+    output << dim.dim_value();
   else if (dim.has_dim_param())
-    os << dim.dim_param();
+    output << dim.dim_param();
   else
-    os << "?";
-  return os;
+    output << "?";
 }
 
-std::ostream& operator<<(std::ostream& os, const TensorShapeProto& shape) {
-  print(os, "[", ",", "]", shape.dim());
-  return os;
+void ProtoPrinter::print(const TensorShapeProto& shape) {
+  print("[", ",", "]", shape.dim());
 }
 
-std::ostream& operator<<(std::ostream& os, const TypeProto_Tensor& tensortype) {
-  os << PrimitiveTypeNameMap::ToString(tensortype.elem_type());
+void ProtoPrinter::print(const TypeProto_Tensor& tensortype) {
+  output << PrimitiveTypeNameMap::ToString(tensortype.elem_type());
   if (tensortype.has_shape()) {
     if (tensortype.shape().dim_size() > 0)
-      os << tensortype.shape();
+      print(tensortype.shape());
   } else
-    os << "[]";
-
-  return os;
+    output << "[]";
 }
 
-std::ostream& operator<<(std::ostream& os, const TypeProto_Sequence& seqType) {
-  return os << "seq(" << seqType.elem_type() << ")";
+void ProtoPrinter::print(const TypeProto_Sequence& seqType) {
+  output << "seq(";
+  print(seqType.elem_type());
+  output << ")";
 }
 
-std::ostream& operator<<(std::ostream& os, const TypeProto_Map& mapType) {
-  return os << "map(" << PrimitiveTypeNameMap::ToString(mapType.key_type()) << ", " << mapType.value_type() << ")";
+void ProtoPrinter::print(const TypeProto_Map& mapType) {
+  output << "map(" << PrimitiveTypeNameMap::ToString(mapType.key_type()) << ", ";
+  print(mapType.value_type());
+  output << ")";
 }
 
-std::ostream& operator<<(std::ostream& os, const TypeProto_Optional& optType) {
-  return os << "optional(" << optType.elem_type() << ")";
+void ProtoPrinter::print(const TypeProto_Optional& optType) {
+  output << "optional(";
+  print(optType.elem_type());
+  output << ")";
 }
 
-std::ostream& operator<<(std::ostream& os, const TypeProto_SparseTensor sparseType) {
-  os << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(sparseType.elem_type());
+void ProtoPrinter::print(const TypeProto_SparseTensor sparseType) {
+  output << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(sparseType.elem_type());
   if (sparseType.has_shape()) {
     if (sparseType.shape().dim_size() > 0)
-      os << sparseType.shape();
+      print(sparseType.shape());
   } else
-    os << "[]";
+    output << "[]";
 
-  return os << ")";
+  output << ")";
 }
 
-std::ostream& operator<<(std::ostream& os, const TypeProto& type) {
+void ProtoPrinter::print(const TypeProto& type) {
   if (type.has_tensor_type())
-    os << type.tensor_type();
+    print(type.tensor_type());
   else if (type.has_sequence_type())
-    os << type.sequence_type();
+    print(type.sequence_type());
   else if (type.has_map_type())
-    os << type.map_type();
+    print(type.map_type());
   else if (type.has_optional_type())
-    os << type.optional_type();
+    print(type.optional_type());
   else if (type.has_sparse_tensor_type())
-    os << type.sparse_tensor_type();
-  return os;
+    print(type.sparse_tensor_type());
 }
 
-std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
-  os << PrimitiveTypeNameMap::ToString(tensor.data_type());
+void ProtoPrinter::print(const TensorProto& tensor) {
+  output << PrimitiveTypeNameMap::ToString(tensor.data_type());
   if (tensor.dims_size() > 0)
-    print(os, "[", ",", "]", tensor.dims());
+    print("[", ",", "]", tensor.dims());
 
-  if (! tensor.name().empty()) {
-    os << " " << tensor.name();
+  if (!tensor.name().empty()) {
+    output << " " << tensor.name();
   }
   // TODO: does not yet handle all types or externally stored data.
   if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
       case TensorProto::DataType::TensorProto_DataType_INT32:
-        print(os, " {", ",", "}", ParseData<int32_t>(&tensor));
+        print(" {", ",", "}", ParseData<int32_t>(&tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
-        print(os, " {", ",", "}", ParseData<int64_t>(&tensor));
+        print(" {", ",", "}", ParseData<int64_t>(&tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_FLOAT:
-        print(os, " {", ",", "}", ParseData<float>(&tensor));
+        print(" {", ",", "}", ParseData<float>(&tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-        print(os, " {", ",", "}", ParseData<double>(&tensor));
+        print(" {", ",", "}", ParseData<double>(&tensor));
         break;
       default:
-        os << "..."; // ParseData not instantiated for other types.
+        output << "..."; // ParseData not instantiated for other types.
         break;
     }
   } else {
@@ -123,162 +177,187 @@ std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
       case TensorProto::DataType::TensorProto_DataType_UINT8:
       case TensorProto::DataType::TensorProto_DataType_UINT16:
       case TensorProto::DataType::TensorProto_DataType_BOOL:
-        print(os, " {", ",", "}", tensor.int32_data());
+        print(" {", ",", "}", tensor.int32_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
-        print(os, " {", ",", "}", tensor.int64_data());
+        print(" {", ",", "}", tensor.int64_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_UINT32:
       case TensorProto::DataType::TensorProto_DataType_UINT64:
-        print(os, " {", ",", "}", tensor.uint64_data());
+        print(" {", ",", "}", tensor.uint64_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_FLOAT:
-        print(os, " {", ",", "}", tensor.float_data());
+        print(" {", ",", "}", tensor.float_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-        print(os, " {", ",", "}", tensor.double_data());
+        print(" {", ",", "}", tensor.double_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_STRING: {
         const char* sep = "{";
         for (auto& elt : tensor.string_data()) {
-          os << sep << "\"" << elt << "\"";
+          output << sep << "\"" << elt << "\"";
           sep = ", ";
         }
-        os << "}";
+        output << "}";
         break;
       }
       default:
         break;
     }
   }
-  return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const ValueInfoProto& value_info) {
-  os << value_info.type() << " " << value_info.name();
-  return os;
+void ProtoPrinter::print(const ValueInfoProto& value_info) {
+  print(value_info.type());
+  output << " " << value_info.name();
 }
 
-std::ostream& operator<<(std::ostream& os, const ValueInfoList& vilist) {
-  print(os, "(", ", ", ")", vilist);
-  return os;
+void ProtoPrinter::print(const ValueInfoList& vilist) {
+  print("(", ", ", ")", vilist);
 }
 
-std::ostream& operator<<(std::ostream& os, const AttributeProto& attr) {
+void ProtoPrinter::print(const AttributeProto& attr) {
   // Special case of attr-ref:
   if (attr.has_ref_attr_name()) {
-    os << attr.name() << " : " << AttributeTypeNameMap::ToString(attr.type()) << " = @" << attr.ref_attr_name();
-    return os;
+    output << attr.name() << " : " << AttributeTypeNameMap::ToString(attr.type()) << " = @" << attr.ref_attr_name();
   }
   // General case:
-  os << attr.name() << " = ";
+  output << attr.name() << " = ";
   switch (attr.type()) {
     case AttributeProto_AttributeType_INT:
-      os << attr.i();
+      output << attr.i();
       break;
     case AttributeProto_AttributeType_INTS:
-      print(os, "[", ", ", "]", attr.ints());
+      print("[", ", ", "]", attr.ints());
       break;
     case AttributeProto_AttributeType_FLOAT:
-      os << attr.f();
+      output << attr.f();
       break;
     case AttributeProto_AttributeType_FLOATS:
-      print(os, "[", ", ", "]", attr.floats());
+      print("[", ", ", "]", attr.floats());
       break;
     case AttributeProto_AttributeType_STRING:
-      os << "\"" << attr.s() << "\"";
+      output << "\"" << attr.s() << "\"";
       break;
     case AttributeProto_AttributeType_STRINGS: {
       const char* sep = "[";
       for (auto& elt : attr.strings()) {
-        os << sep << "\"" << elt << "\"";
+        output << sep << "\"" << elt << "\"";
         sep = ", ";
       }
-      os << "]";
+      output << "]";
       break;
     }
     case AttributeProto_AttributeType_GRAPH:
       indent();
-      os << attr.g();
+      print(attr.g());
       outdent();
       break;
     case AttributeProto_AttributeType_GRAPHS:
       indent();
-      print(os, "[", ", ", "]", attr.graphs());
+      print("[", ", ", "]", attr.graphs());
       outdent();
       break;
     case AttributeProto_AttributeType_TENSOR:
-      os << attr.t();
+      print(attr.t());
       break;
     case AttributeProto_AttributeType_TENSORS:
-      print(os, "[", ", ", "]", attr.tensors());
+      print("[", ", ", "]", attr.tensors());
       break;
     default:
       break;
   }
-  return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const AttrList& attrlist) {
-  print(os, " <", ", ", ">", attrlist);
-  return os;
+void ProtoPrinter::print(const AttrList& attrlist) {
+  print(" <", ", ", ">", attrlist);
 }
 
-std::ostream& operator<<(std::ostream& os, const NodeProto& node) {
-  os << std::setw(indent_level) << ' ';
-  print(os, "", ", ", "", node.output());
-  os << " = " << node.op_type();
+void ProtoPrinter::print(const NodeProto& node) {
+  output << std::setw(indent_level) << ' ';
+  print("", ", ", "", node.output());
+  output << " = " << node.op_type();
   bool has_subgraph = false;
-  for (auto attr: node.attribute())
+  for (auto attr : node.attribute())
     if (attr.has_g() || (attr.graphs_size() > 0))
       has_subgraph = true;
   if ((!has_subgraph) && (node.attribute_size() > 0))
-    os << node.attribute();
-  print(os, " (", ", ", ")", node.input());
+    print(node.attribute());
+  print(" (", ", ", ")", node.input());
   if ((has_subgraph) && (node.attribute_size() > 0))
-    os << node.attribute();
-  os << "\n";
-  return os;
+    print(node.attribute());
+  output << "\n";
 }
 
-std::ostream& operator<<(std::ostream& os, const NodeList& nodelist) {
-    const char* sep = "";
-  os << "{\n";
+void ProtoPrinter::print(const NodeList& nodelist) {
+  const char* sep = "";
+  output << "{\n";
   for (auto& node : nodelist) {
-    os << node;
+    print(node);
   }
   if (indent_level > 3)
-    os << std::setw(indent_level-3) << "   ";
-  os << "}";
-  return os;
+    output << std::setw(indent_level - 3) << "   ";
+  output << "}";
 }
 
-std::ostream& operator<<(std::ostream& os, const GraphProto& graph) {
-  os << graph.name() << " " << graph.input() << " => " << graph.output() << " ";
-  os << graph.node();
-  return os;
+void ProtoPrinter::print(const GraphProto& graph) {
+  output << graph.name() << " " << graph.input() << " => " << graph.output() << " ";
+  print(graph.node());
 }
 
-std::ostream& operator<<(std::ostream& os, const OperatorSetIdProto& opset) {
-  os << "\"" << opset.domain() << "\" : " << opset.version();
-  return os;
+void ProtoPrinter::print(const OperatorSetIdProto& opset) {
+  output << "\"" << opset.domain() << "\" : " << opset.version();
 }
 
-std::ostream& operator<<(std::ostream& os, const FunctionProto& fn) {
-  os << "<\n";
-  os << "  " << "domain: \"" << fn.domain() << "\",\n";
-  os << "  " << "opset_import: ";
-  print (os, "[", ",", "]", fn.opset_import());
-  os << "\n>\n";
-  os << fn.name() << " ";
+void ProtoPrinter::print(const FunctionProto& fn) {
+  output << "<\n";
+  output << "  "
+         << "domain: \"" << fn.domain() << "\",\n";
+  output << "  "
+         << "opset_import: ";
+  print("[", ",", "]", fn.opset_import());
+  output << "\n>\n";
+  output << fn.name() << " ";
   if (fn.attribute_size() > 0)
-    print(os, "<", ",", ">", fn.attribute());
-  print(os, "(", ", ", ")", fn.input());
-  os << " => ";
-  print(os, "(", ", ", ")", fn.output());
-  os << "\n";
-  os << fn.node();
-  return os;
+    print("<", ",", ">", fn.attribute());
+  print("(", ", ", ")", fn.input());
+  output << " => ";
+  print("(", ", ", ")", fn.output());
+  output << "\n";
+  print(fn.node());
 }
+
+#define DEF_OP(T) \
+  std::ostream& operator<<(std::ostream& os, const T& proto) { \
+    ProtoPrinter printer(os); \
+    printer.print(proto); \
+    return os; \
+  };
+
+DEF_OP(TensorShapeProto_Dimension)
+
+DEF_OP(TensorShapeProto)
+
+DEF_OP(TypeProto_Tensor)
+
+DEF_OP(TypeProto)
+
+DEF_OP(TensorProto)
+
+DEF_OP(ValueInfoProto)
+
+DEF_OP(ValueInfoList)
+
+DEF_OP(AttributeProto)
+
+DEF_OP(AttrList)
+
+DEF_OP(NodeProto)
+
+DEF_OP(NodeList)
+
+DEF_OP(GraphProto)
+
+DEF_OP(FunctionProto)
 
 } // namespace ONNX_NAMESPACE
