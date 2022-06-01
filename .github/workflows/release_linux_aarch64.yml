@@ -8,14 +8,14 @@ on:
     # IMPORTANT:
     # Following code change is for onnx-function-experiment only.
     # DOT NOT merge this code to the main branch.
-    # branches: [main, rel-*]
-    branches: [function-experiment, *]
+    # branches: []
+    branches: [function-experiment, main, rel-*]
   pull_request:
     # IMPORTANT:
     # Following code change is for onnx-function-experiment only.
     # DOT NOT merge this code to the main branch.
     # branches: [main, rel-*]
-    branches: [function-experiment, *]
+    branches: [function-experiment, main, rel-*]
   workflow_dispatch:
 
 jobs:
