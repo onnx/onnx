@@ -1137,7 +1137,9 @@ struct Graph final {
   // Must have no uses
   void eraseInitializerAndInput(Value* v) {
     eraseInitializer(v->uniqueName());
-    eraseInput(v->offset());
+    if (v->node() == input_) {
+      eraseInput(v->offset());
+    }
   }
 
   ~Graph() {
@@ -1248,10 +1250,25 @@ inline const Graph* Value::owningGraph() const {
 // `captured` nodes in subgraph determines which value it captures
 // by storing the value's unique name, so old unique names in `captured` nodes
 // should also be updated.
-inline Value* Value::setUniqueName(const std::string& name, bool rename_subgraph_captured_nodes) {
-  if (has_unique_name() && rename_subgraph_captured_nodes) {
-    auto* graph = owningGraph();
-    graph->forEachNode([this, &name](Node* node) {
+// Initializer names are also storaged in graph.initializer_names_, it should be
+// updated too.
+inline Value* Value::setUniqueName(const std::string &name, bool update_related_names) {
+  if (has_unique_name() && update_related_names) {
+    for (size_t i = 0; i < owningGraph()->initializer_names_.size(); i++) {
+      auto &initializer_name = owningGraph()->initializer_names_[i];
+      if (initializer_name == unique_name_) {
+        initializer_name = name;
+        owningGraph()->initializers_[i].setName(name);
+        auto& initializer_to_offset_map = owningGraph()->initializer_to_offset_map_;
+        if (initializer_to_offset_map.count(unique_name_) > 0) {
+          auto offset = initializer_to_offset_map[unique_name_];
+          initializer_to_offset_map[name] = offset;
+          initializer_to_offset_map.erase(unique_name_);
+        }
+      }
+    }
+    auto *graph = owningGraph();
+    graph->forEachNode([this, &name](Node *node) {
       if (node->owningGraph() == this->owningGraph()) {
         // skip non-subgraph
         return;
