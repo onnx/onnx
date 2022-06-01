@@ -1254,28 +1254,29 @@ inline const Graph* Value::owningGraph() const {
 // updated too.
 inline Value* Value::setUniqueName(const std::string& name, bool update_related_names) {
   if (has_unique_name() && update_related_names) {
+    auto old_name = unique_name_;
     for (size_t i = 0; i < owningGraph()->initializer_names_.size(); i++) {
       auto &initializer_name = owningGraph()->initializer_names_[i];
-      if (initializer_name == unique_name_) {
+      if (initializer_name == old_name) {
         initializer_name = name;
         owningGraph()->initializers_[i].setName(name);
         auto& initializer_to_offset_map = owningGraph()->initializer_to_offset_map_;
-        if (initializer_to_offset_map.count(unique_name_) > 0) {
-          auto offset = initializer_to_offset_map[unique_name_];
+        if (initializer_to_offset_map.count(old_name) > 0) {
+          auto offset = initializer_to_offset_map[old_name];
           initializer_to_offset_map[name] = offset;
-          initializer_to_offset_map.erase(unique_name_);
+          initializer_to_offset_map.erase(old_name);
         }
       }
     }
     auto *graph = owningGraph();
-    graph->forEachNode([this, &name](Node* node) {
+    graph->forEachNode([this, &name, &old_name](Node* node) {
       if (node->owningGraph() == this->owningGraph()) {
         // skip non-subgraph
         return;
       }
       if (node->kind() == kCaptured) {
         Value* output = node->output();
-        if (output->uniqueName() == this->uniqueName()) {
+        if (output->uniqueName() == old_name) {
           output->setUniqueName(name, false);
         }
       }
