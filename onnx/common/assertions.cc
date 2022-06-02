@@ -5,10 +5,10 @@
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
+#include "onnx/common/assertions.h"
 #include <cstdarg>
 #include <cstdio>
 #include "onnx/common/common.h"
-#include "onnx/common/assertions.h"
 
 namespace ONNX_NAMESPACE {
 

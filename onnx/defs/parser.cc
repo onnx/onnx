@@ -146,33 +146,33 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
         break;
       }
       case KeyWordMap::KeyWord::SPARSE_TENSOR_TYPE: {
-          // Grammar: sparse_tensor ( tensor-type )
-          MATCH('(');
-          CHECK_PARSER_STATUS(ParseIdentifier(id));
-          dtype = PrimitiveTypeNameMap::Lookup(id);
-          if (dtype != 0) {
-            auto* sparsetype = typeProto.mutable_sparse_tensor_type();
-            sparsetype->set_elem_type(dtype);
-            sparsetype->clear_shape();
-            // Grammar:
-            // float indicates scalar (rank 0)
-            // float [] indicates unknown rank tensor (not a zero rank tensor)
-            // float [one-or-more-dimensions] indicates tensor of known rank > 0.
-            if (Matches('[')) {
-              if (!Matches(']')) {
-                PARSE(*sparsetype->mutable_shape());
-                MATCH(']');
-              }
-            } else {
-              // Create shape with zero dimensions for scalar
-              (void)(sparsetype->mutable_shape());
+        // Grammar: sparse_tensor ( tensor-type )
+        MATCH('(');
+        CHECK_PARSER_STATUS(ParseIdentifier(id));
+        dtype = PrimitiveTypeNameMap::Lookup(id);
+        if (dtype != 0) {
+          auto* sparsetype = typeProto.mutable_sparse_tensor_type();
+          sparsetype->set_elem_type(dtype);
+          sparsetype->clear_shape();
+          // Grammar:
+          // float indicates scalar (rank 0)
+          // float [] indicates unknown rank tensor (not a zero rank tensor)
+          // float [one-or-more-dimensions] indicates tensor of known rank > 0.
+          if (Matches('[')) {
+            if (!Matches(']')) {
+              PARSE(*sparsetype->mutable_shape());
+              MATCH(']');
             }
           } else {
-            return ParseError("Unexpected type in sparse-tensor element type.");
+            // Create shape with zero dimensions for scalar
+            (void)(sparsetype->mutable_shape());
           }
-          MATCH(')');
-          break;
-      }  
+        } else {
+          return ParseError("Unexpected type in sparse-tensor element type.");
+        }
+        MATCH(')');
+        break;
+      }
       default:
         return ParseError("Unexpected type.");
     }

@@ -13,10 +13,7 @@ namespace version_conversion {
 
 class AxesInputToAttribute : public Adapter {
  public:
-  explicit AxesInputToAttribute(
-      const std::string& op_name,
-      const OpSetID& initial,
-      const OpSetID& target)
+  explicit AxesInputToAttribute(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
@@ -36,10 +33,7 @@ class AxesInputToAttribute : public Adapter {
             raw_data.size() != 0 && raw_data.size() % 8 == 0,
             "Raw Data must be non-empty and size must be a multiple of 8");
         int64_t* raw = (int64_t*)const_cast<char*>(raw_data.c_str());
-        node->is_(
-            kaxes,
-            std::vector<int64_t>(
-                raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
+        node->is_(kaxes, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
       } else {
         node->is_(kaxes, std::forward<const std::vector<int64_t>>(int64s));
       }
@@ -52,9 +46,7 @@ class AxesInputToAttribute : public Adapter {
       // Get Value name, find Initializer with same name
       for (const auto& initializer : graph->initializers()) {
         if (initializer.name() == inputs[1]->uniqueName()) {
-          node->is_(
-              kaxes,
-              std::forward<const std::vector<int64_t>>(initializer.int64s()));
+          node->is_(kaxes, std::forward<const std::vector<int64_t>>(initializer.int64s()));
           node->removeInput(1);
           // Remove initializer
           if (const_val->uses().size() < 1)
@@ -63,9 +55,7 @@ class AxesInputToAttribute : public Adapter {
         }
       }
     }
-    ONNX_ASSERTM(
-        node->hasAttribute(kaxes),
-        "No initializer or constant input to node found");
+    ONNX_ASSERTM(node->hasAttribute(kaxes), "No initializer or constant input to node found");
     return node;
   }
 };

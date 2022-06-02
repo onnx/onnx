@@ -13,11 +13,7 @@ std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
         std::string("foward"));
-    schema.Attr(
-        "hidden_size",
-        "Number of neurons in the hidden layer",
-        AttributeProto::INT,
-        OPTIONAL_VALUE);
+    schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
         "Optional scaling values used by some activation functions. The values "
@@ -83,8 +79,7 @@ std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeConstraint(
-        "T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
   };
 }
 
@@ -204,8 +199,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 // Versions 1 to 6 of RNN/LSTM and versions 3 to 6 of GRU:
 
 void RNNShapeInference1(InferenceContext& ctx) {
-  TensorShapeProto::Dimension num_directions, seq_length, batch_size,
-      hidden_size;
+  TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
   if ((direction == "forward") || (direction == "reverse"))
@@ -240,14 +234,11 @@ void RNNShapeInference1(InferenceContext& ctx) {
 
   if (output_sequence) {
     // No ambiguity in spec
-    updateOutputShape(
-        ctx, 0, {seq_length, num_directions, batch_size, hidden_size}); // Y
+    updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size}); // Y
     if (num_outputs > 1)
-      updateOutputShape(
-          ctx, 1, {num_directions, batch_size, hidden_size}); // Y_h
+      updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_h
     if (num_outputs > 2)
-      updateOutputShape(
-          ctx, 2, {num_directions, batch_size, hidden_size}); // Y_c
+      updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size}); // Y_c
   } else {
     // Documentation suggests that the output Y is absent in this case
     // Different tests seem to disagree on whether Y_h and Y_c, if present,
@@ -266,11 +257,7 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
         std::string("forward"));
-    schema.Attr(
-        "hidden_size",
-        "Number of neurons in the hidden layer",
-        AttributeProto::INT,
-        OPTIONAL_VALUE);
+    schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
         "Optional scaling values used by some activation functions. The values "
@@ -338,8 +325,7 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeConstraint(
-        "T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference1);
   };
 }
@@ -719,8 +705,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 namespace ONNX_NAMESPACE {
 void RNNShapeInference2(InferenceContext& ctx) {
-  TensorShapeProto::Dimension num_directions, seq_length, batch_size,
-      hidden_size;
+  TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
   if ((direction == "forward") || (direction == "reverse"))
@@ -747,8 +732,7 @@ void RNNShapeInference2(InferenceContext& ctx) {
   if (num_outputs > 0) {
     // Y
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
-    updateOutputShape(
-        ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
+    updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
   }
 
   if (num_outputs > 1) {
@@ -772,11 +756,7 @@ std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
         std::string("forward"));
-    schema.Attr(
-        "hidden_size",
-        "Number of neurons in the hidden layer",
-        AttributeProto::INT,
-        OPTIONAL_VALUE);
+    schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
         "Optional scaling values used by some activation functions. The values "
@@ -838,8 +818,7 @@ std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeConstraint(
-        "T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference2);
   };
 }
@@ -1160,11 +1139,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "for default if not specified.",
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
-        .Attr(
-            "input_forget",
-            "Couple the input and forget gates if 1.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
+        .Attr("input_forget", "Couple the input and forget gates if 1.", AttributeProto::INT, static_cast<int64_t>(0))
         .Input(
             1,
             "W",

@@ -85,7 +85,7 @@ std::ostream& operator<<(std::ostream& os, const TensorProto& tensor) {
   os << PrimitiveTypeNameMap::ToString(tensor.data_type());
   print(os, "[", ",", "]", tensor.dims());
 
-  if (! tensor.name().empty()) {
+  if (!tensor.name().empty()) {
     os << " " << tensor.name() << " ";
   }
   // TODO: does not yet handle all types or externally stored data.
@@ -239,9 +239,11 @@ std::ostream& operator<<(std::ostream& os, const OperatorSetIdProto& opset) {
 
 std::ostream& operator<<(std::ostream& os, const FunctionProto& fn) {
   os << "<\n";
-  os << "  " << "domain: \"" << fn.domain() << "\",\n";
-  os << "  " << "opset_import: ";
-  print (os, "[", ",", "]", fn.opset_import());
+  os << "  "
+     << "domain: \"" << fn.domain() << "\",\n";
+  os << "  "
+     << "opset_import: ";
+  print(os, "[", ",", "]", fn.opset_import());
   os << "\n>\n";
   os << fn.name() << " ";
   if (fn.attribute_size() > 0)
