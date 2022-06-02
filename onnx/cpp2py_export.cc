@@ -8,7 +8,6 @@
 #include <limits>
 #include <tuple>
 #include <unordered_map>
-#include <sstream>
 
 #include "onnx/checker.h"
 #include "onnx/defs/function.h"
@@ -34,7 +33,7 @@ static std::tuple<bool, py::bytes, py::bytes> Parse(const char* cstr) {
 }
 
 template <typename ProtoType>
-static std::string ProtoToText(const py::bytes& bytes) {
+static std::string ProtoBytesToText(const py::bytes& bytes) {
   ProtoType proto{};
   ParseProtoFromPyBytes(&proto, bytes);
   std::stringstream ss;
@@ -364,9 +363,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto printer = onnx_cpp2py_export.def_submodule("printer");
   printer.doc() = "Printer submodule";
 
-  printer.def("model_to_text", ProtoToText<ModelProto>);
-  printer.def("function_to_text", ProtoToText<FunctionProto>);
-  printer.def("graph_to_text", ProtoToText<GraphProto>);
+  printer.def("model_to_text", ProtoBytesToText<ModelProto>);
+  printer.def("function_to_text", ProtoBytesToText<FunctionProto>);
+  printer.def("graph_to_text", ProtoBytesToText<GraphProto>);
 
 }
 
