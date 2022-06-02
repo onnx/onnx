@@ -879,8 +879,6 @@ struct Graph final {
 
   std::vector<Tensor> initializers_;
   std::vector<std::string> initializer_names_;
-  // Store a name to offset map for erasing initializer node
-  std::map<std::string, int> initializer_to_offset_map_;
 
   bool has_name_;
   std::string name_;
@@ -959,7 +957,6 @@ struct Graph final {
     init_value->setUniqueName(initializer.name());
     init_value->setSizes(dim_sizes);
     init_value->setElemType(initializer.elem_type());
-    initializer_to_offset_map_[initializer.name()] = init_value->offset();
     return init_value;
   }
 
@@ -972,9 +969,11 @@ struct Graph final {
         initializers_.end());
     initializer_names_.erase(
         std::remove(initializer_names_.begin(), initializer_names_.end(), name), initializer_names_.end());
-    if (initializer_to_offset_map_.count(name) > 0) {
-      initializer_node_->eraseOutput(initializer_to_offset_map_[name]);
-      initializer_to_offset_map_.erase(name);
+    for (size_t i = 0; i < initializer_node_->outputs().size(); i++) {
+      if (initializer_node_->outputs()[i]->uniqueName() == name) {
+        initializer_node_->eraseOutput(i);
+        break;
+      }
     }
   }
   void clearInitializers() {
@@ -1260,12 +1259,6 @@ inline Value* Value::setUniqueName(const std::string& name, bool update_related_
       if (initializer_name == old_name) {
         initializer_name = name;
         owningGraph()->initializers_[i].setName(name);
-        auto& initializer_to_offset_map = owningGraph()->initializer_to_offset_map_;
-        if (initializer_to_offset_map.count(old_name) > 0) {
-          auto offset = initializer_to_offset_map[old_name];
-          initializer_to_offset_map[name] = offset;
-          initializer_to_offset_map.erase(old_name);
-        }
       }
     }
     auto *graph = owningGraph();
