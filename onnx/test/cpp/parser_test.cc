@@ -482,7 +482,6 @@ doc_string: "function foo"
 )ONNX";
 
   CheckModel(code_function_with_attributes);
-
 }
 
 } // namespace Test
