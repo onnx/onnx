@@ -205,7 +205,7 @@ class ParserBase {
     const char* context_start = (p > start_) ? (p + 1) : start_;
     for (p = context_start; (p < end_) && (*p != '\n'); ++p)
       ;
-    return std::string(context_start, p-context_start);
+    return std::string(context_start, p - context_start);
   }
 
   template <typename... Args>

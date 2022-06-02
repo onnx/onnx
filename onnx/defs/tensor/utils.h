@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #pragma once
 
 #include "onnx/defs/schema.h"
@@ -31,4 +30,6 @@ void resizeShapeInferenceHelper_opset7_to_10(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
     TensorShapeProto* output_shape);
+
+extern const char* NonZero_ver9_doc;
 } // namespace ONNX_NAMESPACE

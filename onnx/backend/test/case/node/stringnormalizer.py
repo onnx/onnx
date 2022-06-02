@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-# coding: utf-8
 
 
 import numpy as np  # type: ignore
@@ -13,7 +12,7 @@ class StringNormalizer(Base):
 
     @staticmethod
     def export_nostopwords_nochangecase() -> None:
-        input = np.array([u'monday', u'tuesday']).astype(object)
+        input = np.array(['monday', 'tuesday']).astype(object)
         output = input
 
         # No stopwords. This is a NOOP
@@ -27,9 +26,9 @@ class StringNormalizer(Base):
 
     @staticmethod
     def export_monday_casesensintive_nochangecase() -> None:
-        input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
-        output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
-        stopwords = [u'monday']
+        input = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+        output = np.array(['tuesday', 'wednesday', 'thursday']).astype(object)
+        stopwords = ['monday']
 
         node = onnx.helper.make_node(
             'StringNormalizer',
@@ -42,9 +41,9 @@ class StringNormalizer(Base):
 
     @staticmethod
     def export_monday_casesensintive_lower() -> None:
-        input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
-        output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
-        stopwords = [u'monday']
+        input = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+        output = np.array(['tuesday', 'wednesday', 'thursday']).astype(object)
+        stopwords = ['monday']
 
         node = onnx.helper.make_node(
             'StringNormalizer',
@@ -58,9 +57,9 @@ class StringNormalizer(Base):
 
     @staticmethod
     def export_monday_casesensintive_upper() -> None:
-        input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
-        output = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(object)
-        stopwords = [u'monday']
+        input = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+        output = np.array(['TUESDAY', 'WEDNESDAY', 'THURSDAY']).astype(object)
+        stopwords = ['monday']
 
         node = onnx.helper.make_node(
             'StringNormalizer',
@@ -74,9 +73,9 @@ class StringNormalizer(Base):
 
     @staticmethod
     def export_monday_empty_output() -> None:
-        input = np.array([u'monday', u'monday']).astype(object)
-        output = np.array([u'']).astype(object)
-        stopwords = [u'monday']
+        input = np.array(['monday', 'monday']).astype(object)
+        output = np.array(['']).astype(object)
+        stopwords = ['monday']
 
         node = onnx.helper.make_node(
             'StringNormalizer',
@@ -90,13 +89,13 @@ class StringNormalizer(Base):
 
     @staticmethod
     def export_monday_insensintive_upper_twodim() -> None:
-        input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(object).reshape([1, 6])
+        input = np.array(['Monday', 'tuesday', 'wednesday', 'Monday', 'tuesday', 'wednesday']).astype(object).reshape([1, 6])
 
         # It does upper case cecedille, accented E
         # and german umlaut but fails
         # with german eszett
-        output = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(object).reshape([1, 4])
-        stopwords = [u'monday']
+        output = np.array(['TUESDAY', 'WEDNESDAY', 'TUESDAY', 'WEDNESDAY']).astype(object).reshape([1, 4])
+        stopwords = ['monday']
 
         node = onnx.helper.make_node(
             'StringNormalizer',
