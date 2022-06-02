@@ -2599,6 +2599,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           OpSchema::Differentiable)
         .Input(
           6, // input num
+          "out_weight", // input name
+          "Feedforward tensor weight of the multiheadattention;
+          dimensions are (E, E), 
+          where S is the source sequence length, 
+          N is the batch size, 
+          E is the embedding dimension.", // description
+          "T", // type_str
+          OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
+          true, // variadic 时 多个参数是否必须保持一致
+          1, // 最小参数数量，对于variadic
+          OpSchema::Differentiable)
+        .Input(
+          7, // input num
           "q_bias", // input name
           "query bias of the multiheadattention;
           dimensions are (1, 1, E), 
@@ -2609,7 +2622,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           1, // 最小参数数量，对于variadic
           OpSchema::Differentiable)
         .Input(
-          7, // input num
+          8, // input num
           "k_bias", // input name
           "key bias of the multiheadattention;
           dimensions are (1, 1, E), 
@@ -2620,26 +2633,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           1, // 最小参数数量，对于variadic
           OpSchema::Differentiable)
         .Input(
-          8, // input num
+          9, // input num
           "v_bias", // input name
           "value bias of the multiheadattention;
           dimensions are (1, 1, E), 
           where S is the source sequence length.", // description
           "T", // type_str
           OpSchema::Optional, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
-          true, // variadic 时 多个参数是否必须保持一致
-          1, // 最小参数数量，对于variadic
-          OpSchema::Differentiable)
-        .Input(
-          9, // input num
-          "out_weight", // input name
-          "Feedforward tensor weight of the multiheadattention;
-          dimensions are (E, E), 
-          where S is the source sequence length, 
-          N is the batch size, 
-          E is the embedding dimension.", // description
-          "T", // type_str
-          OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
           1, // 最小参数数量，对于variadic
           OpSchema::Differentiable)
@@ -2706,7 +2706,49 @@ ONNX_OPERATOR_SET_SCHEMA(
           "I",
           {"tensor(int64)"},
           "Constrain input and output type to int64")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .TypeAndShapeInferenceFunction([] (InferenceContext& ctx) {
+          if (ctx.getNumInputs() < 7 {
+            fail_shape_inference("MultiHeadAttention op must have at lease eight inputs.");
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          checkInputRank(ctx, 0, 3);
+          checkInputRank(ctx, 1, 3);
+          checkInputRank(ctx, 2, 3);
+          checkInputRank(ctx, 3, 2);
+          checkInputRank(ctx, 4, 2);
+          checkInputRank(ctx, 5, 2);
+          checkInputRank(ctx, 6, 2);
+
+          Dim batch, embedding_dim, tgt_len, src_len, num_heads;
+
+          unifyInputDim(ctx, 0, 0, batch);
+          unifyInputDim(ctx, 0, 1, embedding_dim);
+          unifyInputDim(ctx, 0, 2, tgt_len);   
+
+          unifyInputDim(ctx, 1, 0, batch);
+          unifyInputDim(ctx, 1, 1, embedding_dim);
+          unifyInputDim(ctx, 1, 2, src_len);   
+
+          unifyInputDim(ctx, 2, 0, batch);
+          unifyInputDim(ctx, 2, 1, embedding_dim);
+          unifyInputDim(ctx, 2, 2, src_len); 
+
+          unifyInputDim(ctx, 3, 0, tgt_len);
+          unifyInputDim(ctx, 3, 1, embedding_dim);
+
+          unifyInputDim(ctx, 4, 0, src_len);
+          unifyInputDim(ctx, 4, 1, embedding_dim);
+
+          unifyInputDim(ctx, 5, 0, src_len);
+          unifyInputDim(ctx, 5, 1, embedding_dim);
+
+          unifyInputDim(ctx, 6, 0, embedding_dim);
+          unifyInputDim(ctx, 6, 1, embedding_dim);
+
+          unifyDim(tgt_len, embedding_dim);
+        })
         );
 
 static const char* LayerNormalization_ver17_doc = R"DOC(
