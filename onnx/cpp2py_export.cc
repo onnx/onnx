@@ -36,9 +36,7 @@ template <typename ProtoType>
 static std::string ProtoBytesToText(const py::bytes& bytes) {
   ProtoType proto{};
   ParseProtoFromPyBytes(&proto, bytes);
-  std::stringstream ss;
-  ss << proto;
-  return ss.str();
+  return ProtoToString(proto);
 }
 
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
