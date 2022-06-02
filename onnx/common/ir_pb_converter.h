@@ -26,16 +26,14 @@ class ConvertError final : public std::runtime_error {
   }
 
   void AppendContext(const std::string& context) {
-    expanded_message_ = MakeString(
-        std::runtime_error::what(), "\n\n==> Context: ", context);
+    expanded_message_ = MakeString(std::runtime_error::what(), "\n\n==> Context: ", context);
   }
 
  private:
   std::string expanded_message_;
 };
 
-#define fail_convert(...) \
-  ONNX_THROW_EX(ConvertError(MakeString(__VA_ARGS__)));
+#define fail_convert(...) ONNX_THROW_EX(ConvertError(MakeString(__VA_ARGS__)));
 
 void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g);
 

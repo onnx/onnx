@@ -8,13 +8,13 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE { namespace version_conversion {
+namespace ONNX_NAMESPACE {
+namespace version_conversion {
 
-struct Upsample_8_9 final: public Adapter {
+struct Upsample_8_9 final : public Adapter {
   explicit Upsample_8_9() : Adapter("Upsample", OpSetID(8), OpSetID(9)) {}
 
   void adapt_upsample_8_9(std::shared_ptr<Graph> graph, Node* node) const {
-
     Symbol input_dirs = Symbol("scales");
     int dim = (int)(node->fs(kscales).size());
     Tensor t;
@@ -23,17 +23,17 @@ struct Upsample_8_9 final: public Adapter {
     auto& data = t.floats();
 
     if (node->hasAttribute(input_dirs)) {
-      for(double scale : node->fs(kscales)) {
+      for (double scale : node->fs(kscales)) {
         data.emplace_back((float)scale);
       }
 
       Node* constant = graph->create(kConstant);
       constant->insertBefore(node);
-      constant->t_(kvalue, t);        
+      constant->t_(kvalue, t);
       node->addInput(constant->output());
       node->removeAttribute(kscales);
-      }
     }
+  }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_upsample_8_9(graph, node);
@@ -41,4 +41,5 @@ struct Upsample_8_9 final: public Adapter {
   }
 };
 
-}} // namespace ONNX_NAMESPACE::version_conversion
+} // namespace version_conversion
+} // namespace ONNX_NAMESPACE

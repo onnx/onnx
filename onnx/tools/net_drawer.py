@@ -17,7 +17,7 @@ from collections import defaultdict
 import json
 from onnx import ModelProto, GraphProto, NodeProto
 import pydot  # type: ignore
-from typing import Text, Any, Callable, Optional, Dict
+from typing import Any, Callable, Optional, Dict
 
 
 OP_STYLE = {
@@ -32,12 +32,12 @@ BLOB_STYLE = {'shape': 'octagon'}
 _NodeProducer = Callable[[NodeProto, int], pydot.Node]
 
 
-def _escape_label(name: Text) -> Text:
+def _escape_label(name: str) -> str:
     # json.dumps is poor man's escaping
     return json.dumps(name)
 
 
-def _form_and_sanitize_docstring(s: Text) -> Text:
+def _form_and_sanitize_docstring(s: str) -> str:
     url = 'javascript:alert('
     url += _escape_label(s).replace('"', '\'').replace('<', '').replace('>', '')
     url += ')'
@@ -64,16 +64,16 @@ def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProd
 
 def GetPydotGraph(
     graph: GraphProto,
-    name: Optional[Text] = None,
-    rankdir: Text = 'LR',
+    name: Optional[str] = None,
+    rankdir: str = 'LR',
     node_producer: Optional[_NodeProducer] = None,
     embed_docstring: bool = False,
 ) -> pydot.Dot:
     if node_producer is None:
         node_producer = GetOpNodeProducer(embed_docstring=embed_docstring, **OP_STYLE)
     pydot_graph = pydot.Dot(name, rankdir=rankdir)
-    pydot_nodes: Dict[Text, pydot.Node] = {}
-    pydot_node_counts: Dict[Text, int] = defaultdict(int)
+    pydot_nodes: Dict[str, pydot.Node] = {}
+    pydot_node_counts: Dict[str, int] = defaultdict(int)
     for op_id, op in enumerate(graph.node):
         op_node = node_producer(op, op_id)
         pydot_graph.add_node(op_node)
@@ -109,16 +109,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="ONNX net drawer")
     parser.add_argument(
         "--input",
-        type=Text, required=True,
+        type=str, required=True,
         help="The input protobuf file.",
     )
     parser.add_argument(
         "--output",
-        type=Text, required=True,
+        type=str, required=True,
         help="The output protobuf file.",
     )
     parser.add_argument(
-        "--rankdir", type=Text, default='LR',
+        "--rankdir", type=str, default='LR',
         help="The rank direction of the pydot graph.",
     )
     parser.add_argument(

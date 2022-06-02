@@ -1,4 +1,4 @@
-from typing import Sequence, Text
+from typing import Sequence
 
 class ConvertError(Exception):
     ...

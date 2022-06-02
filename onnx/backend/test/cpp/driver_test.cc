@@ -34,19 +34,16 @@ class CompareOnnxifiData {
  public:
   bool IsEqual(void* P, void* Q) {
     T x = *((T*)P), y = *((T*)Q);
-    return ((x - y) > -onnxifi_testdata_eps) &&
-        ((x - y) < onnxifi_testdata_eps);
+    return ((x - y) > -onnxifi_testdata_eps) && ((x - y) < onnxifi_testdata_eps);
   }
 };
 
-class ONNXCppDriverTest : public ::testing::TestWithParam<
-                              ONNX_NAMESPACE::testing::ResolvedTestCase> {
+class ONNXCppDriverTest : public ::testing::TestWithParam<ONNX_NAMESPACE::testing::ResolvedTestCase> {
  public:
   struct PrintToStringParamName {
     template <class T>
     std::string operator()(const ::testing::TestParamInfo<T>& t) const {
-      auto test_case =
-          static_cast<ONNX_NAMESPACE::testing::ResolvedTestCase>(t.param);
+      auto test_case = static_cast<ONNX_NAMESPACE::testing::ResolvedTestCase>(t.param);
       /**
        *  We pick folder name instead of model.graph().name as test case name
        * here mostly for two reasons:
@@ -82,10 +79,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
     return d_size;
   }
 
-  bool IsGtestAssertMemorySafeSuccess(
-      onnxStatus x,
-      onnxGraph* graph_pointer,
-      onnxifi_library& lib) {
+  bool IsGtestAssertMemorySafeSuccess(onnxStatus x, onnxGraph* graph_pointer, onnxifi_library& lib) {
     if (x != ONNXIFI_STATUS_SUCCESS) {
       if (graph_pointer != NULL) {
         lib.onnxReleaseGraph(*graph_pointer);
@@ -122,9 +116,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
     return false;
   }
 
-  bool IsDescriptorEqual(
-      const onnxTensorDescriptorV1& x,
-      const onnxTensorDescriptorV1& y) {
+  bool IsDescriptorEqual(const onnxTensorDescriptorV1& x, const onnxTensorDescriptorV1& y) {
     if (x.dataType != y.dataType || x.dimensions != y.dimensions) {
       return false;
     }
@@ -209,10 +201,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
     return true;
   }
 
-  void RunAndVerify(
-      onnxifi_library& lib,
-      onnxBackend& backend,
-      onnxBackendID backendID) {
+  void RunAndVerify(onnxifi_library& lib, onnxBackend& backend, onnxBackendID backendID) {
     // Check Model
     ONNX_NAMESPACE::checker::check_model(model_);
     // Check Input & Output Data
@@ -246,22 +235,18 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
     if (!ONNXIFI_DUMMY_BACKEND) {
       onnxGraph graph;
       uint32_t weightCount = model_.graph().initializer_size();
-      onnxTensorDescriptorV1 weightDescriptors,
-          *weightDescriptors_pointer = NULL;
+      onnxTensorDescriptorV1 weightDescriptors, *weightDescriptors_pointer = NULL;
       if (weightCount != 0) {
         weightDescriptors =
-            ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
-                model_.graph().initializer(0), shape_pool);
+            ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(model_.graph().initializer(0), shape_pool);
         weightDescriptors_pointer = &weightDescriptors;
       }
       std::string serialized_model;
       model_.SerializeToString(&serialized_model);
-      auto is_compatible = lib.onnxGetBackendCompatibility(
-          backendID, serialized_model.size(), serialized_model.data());
+      auto is_compatible = lib.onnxGetBackendCompatibility(backendID, serialized_model.size(), serialized_model.data());
       std::string error_msg;
       if (IsUnsupported(is_compatible, error_msg)) {
-        std::cout << "Warning: " << error_msg
-                  << " This test case will be skipped." << std::endl;
+        std::cout << "Warning: " << error_msg << " This test case will be skipped." << std::endl;
         GTEST_SKIP();
         return;
       }
@@ -278,27 +263,21 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
           NULL,
           lib));
       for (const auto& proto_test_data : protos_) {
-        std::vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor,
-            result_descriptor;
+        std::vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor, result_descriptor;
         for (const auto& input : proto_test_data.inputs_) {
-          input_descriptor.push_back(
-              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
-                  input, shape_pool));
+          input_descriptor.push_back(ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(input, shape_pool));
         }
         int output_count = 0;
         for (auto& output : proto_test_data.outputs_) {
           output_count++;
-          output_descriptor.push_back(
-              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
-                  output, shape_pool));
+          output_descriptor.push_back(ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(output, shape_pool));
           onnxTensorDescriptorV1 result;
           result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
           std::string name_string = output_descriptor[output_count - 1].name;
           result.name = name_string.c_str();
           result.dataType = output.data_type();
           result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
-          std::vector<uint64_t> shape_values(
-              output.dims().begin(), output.dims().end());
+          std::vector<uint64_t> shape_values(output.dims().begin(), output.dims().end());
           shape_pool.emplace_back(std::move(shape_values));
           result.dimensions = shape_pool.back().size();
           result.shape = shape_pool.back().data();
@@ -322,16 +301,11 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
         outputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
         inputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
         outputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
-        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
-            lib.onnxInitEvent(backend, &inputFence.event), &graph, lib));
-        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
-            lib.onnxInitEvent(backend, &outputFence.event), &graph, lib));
-        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
-            lib.onnxRunGraph(graph, &inputFence, &outputFence), &graph, lib));
-        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
-            lib.onnxSignalEvent(inputFence.event), &graph, lib));
-        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
-            lib.onnxWaitEvent(outputFence.event), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(lib.onnxInitEvent(backend, &inputFence.event), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(lib.onnxInitEvent(backend, &outputFence.event), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(lib.onnxRunGraph(graph, &inputFence, &outputFence), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(lib.onnxSignalEvent(inputFence.event), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(lib.onnxWaitEvent(outputFence.event), &graph, lib));
         lib.onnxReleaseEvent(outputFence.event);
         lib.onnxReleaseEvent(inputFence.event);
         ASSERT_EQ(output_descriptor.size(), result_descriptor.size());
@@ -340,9 +314,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
           auto result_size = GetDescriptorSize(&result_descriptor[i]);
           ASSERT_EQ(output_size, result_size);
           for (int j = 0; j < output_size; j++) {
-            EXPECT_EQ(
-                IsDescriptorEqual(output_descriptor[i], result_descriptor[i]),
-                true);
+            EXPECT_EQ(IsDescriptorEqual(output_descriptor[i], result_descriptor[i]), true);
           }
         }
 /*
@@ -351,14 +323,10 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
 #ifdef ONNXIFI_ENABLE_EXT
         onnxExtensionFunctionPointer* f;
         ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
-            lib.onnxGetExtensionFunctionAddress(
-                backendID, "onnxGetExtensionFunctionAddress", f),
-            NULL,
-            lib));
+            lib.onnxGetExtensionFunctionAddress(backendID, "onnxGetExtensionFunctionAddress", f), NULL, lib));
 #endif
       }
-      ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
-          lib.onnxReleaseGraph(graph), NULL, lib));
+      ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(lib.onnxReleaseGraph(graph), NULL, lib));
     }
   }
 };
@@ -369,7 +337,7 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
  *	Check onnxifi_loader.c for more detail of how to indicate specific
  *  backend.
  */
-TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
+TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest) {
   onnxifi_library lib;
   onnxBackendID* backendIDs = NULL;
   onnxBackend backend;
@@ -377,24 +345,17 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
   if (!ONNXIFI_DUMMY_BACKEND) {
     ASSERT_TRUE(onnxifi_load(1, NULL, &lib));
     size_t numBackends = 0;
-    ASSERT_EQ(
-        lib.onnxGetBackendIDs(backendIDs, &numBackends),
-        ONNXIFI_STATUS_FALLBACK);
+    ASSERT_EQ(lib.onnxGetBackendIDs(backendIDs, &numBackends), ONNXIFI_STATUS_FALLBACK);
     backendIDs = (void**)malloc(numBackends * sizeof(onnxBackendID));
-    ASSERT_EQ(
-        lib.onnxGetBackendIDs(backendIDs, &numBackends),
-        ONNXIFI_STATUS_SUCCESS);
+    ASSERT_EQ(lib.onnxGetBackendIDs(backendIDs, &numBackends), ONNXIFI_STATUS_SUCCESS);
 
     for (int i = 0; i < numBackends; i++) {
       const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
-      ASSERT_EQ(
-          lib.onnxInitBackend(backendIDs[i], backendProperties, &backend),
-          ONNXIFI_STATUS_SUCCESS);
+      ASSERT_EQ(lib.onnxInitBackend(backendIDs[i], backendProperties, &backend), ONNXIFI_STATUS_SUCCESS);
       char infovalue[max_info_size];
       size_t infoValueSize = max_info_size;
       ASSERT_EQ(
-          lib.onnxGetBackendInfo(
-              backendIDs[i], ONNXIFI_BACKEND_NAME, infovalue, &infoValueSize),
+          lib.onnxGetBackendInfo(backendIDs[i], ONNXIFI_BACKEND_NAME, infovalue, &infoValueSize),
           ONNXIFI_STATUS_SUCCESS);
       RunAndVerify(lib, backend, backendIDs[i]);
       lib.onnxReleaseBackend(backend);
