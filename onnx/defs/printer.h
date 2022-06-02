@@ -38,4 +38,6 @@ std::ostream& operator<<(std::ostream& os, const GraphProto& graph);
 
 std::ostream& operator<<(std::ostream& os, const FunctionProto& fn);
 
+std::ostream& operator<<(std::ostream& os, const ModelProto& model);
+
 } // namespace ONNX_NAMESPACE

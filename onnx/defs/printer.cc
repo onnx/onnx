@@ -8,6 +8,9 @@
 
 namespace ONNX_NAMESPACE {
 
+using MetaDataProp = StringStringEntryProto;
+using MetaDataProps = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
+
 class ProtoPrinter {
  public:
   ProtoPrinter(std::ostream& os) : output(os) {}
@@ -26,7 +29,7 @@ class ProtoPrinter {
 
   void print(const TypeProto_Optional& optType);
 
-  void print(const TypeProto_SparseTensor sparseType);
+  void print(const TypeProto_SparseTensor& sparseType);
 
   void print(const TensorProto& tensor);
 
@@ -46,12 +49,47 @@ class ProtoPrinter {
 
   void print(const FunctionProto& fn);
 
+  void print(const ModelProto& model);
+
   void print(const OperatorSetIdProto& opset);
+
+  void print(const OpsetIdList& opsets);
+
+  void print(const MetaDataProps& metadataprops) {
+    print ("[", ", ", "]", metadataprops);
+  }
+
+  void print(const MetaDataProp& metadata) {
+    printQuoted(metadata.key());
+    output << " : ";
+    printQuoted(metadata.value());
+  }
 
  private:
   template <typename T>
   inline void print(T prim) {
     output << prim;
+  }
+
+  void printQuoted(const std::string& str) {
+    // TODO: support quotes within a string via escape character.
+    output << "\"" << str << "\"";
+  }
+
+  template <typename T>
+  inline void print(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
+    if (addsep)
+      output << "," << std::endl;
+    output << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << " : ";
+    print(val);
+  }
+
+  template <>
+  inline void print<std::string> (KeyWordMap::KeyWord key, const std::string& val, bool addsep) {
+    if (addsep)
+      output << "," << std::endl;
+    output << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << " : ";
+    printQuoted(val);
   }
 
   template <typename Collection>
@@ -118,7 +156,7 @@ void ProtoPrinter::print(const TypeProto_Optional& optType) {
   output << ")";
 }
 
-void ProtoPrinter::print(const TypeProto_SparseTensor sparseType) {
+void ProtoPrinter::print(const TypeProto_SparseTensor& sparseType) {
   output << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(sparseType.elem_type());
   if (sparseType.has_shape()) {
     if (sparseType.shape().dim_size() > 0)
@@ -305,8 +343,37 @@ void ProtoPrinter::print(const GraphProto& graph) {
   print(graph.node());
 }
 
+void ProtoPrinter::print(const ModelProto& model) {
+  output << "<\n";
+  print(KeyWordMap::KeyWord::IR_VERSION, model.ir_version(), false);
+  print(KeyWordMap::KeyWord::OPSET_IMPORT, model.opset_import());
+  if (model.has_producer_name())
+    print(KeyWordMap::KeyWord::PRODUCER_NAME, model.producer_name());
+  if (model.has_producer_version())
+    print(KeyWordMap::KeyWord::PRODUCER_VERSION, model.producer_version());
+  if (model.has_domain())
+    print(KeyWordMap::KeyWord::DOMAIN_KW, model.domain());
+  if (model.has_model_version())
+    print(KeyWordMap::KeyWord::MODEL_VERSION, model.model_version());
+  if (model.has_doc_string())
+    print(KeyWordMap::KeyWord::DOC_STRING, model.doc_string());
+  if (model.metadata_props_size() > 0)
+    print(KeyWordMap::KeyWord::METADATA_PROPS, model.metadata_props());
+  output << std::endl << ">" << std::endl;
+
+  print(model.graph());
+  for (const auto& fn : model.functions()) {
+    output << std::endl;
+    print(fn);
+  }
+}
+
 void ProtoPrinter::print(const OperatorSetIdProto& opset) {
   output << "\"" << opset.domain() << "\" : " << opset.version();
+}
+
+void ProtoPrinter::print(const OpsetIdList& opsets) {
+  print("[", ", ", "]", opsets);
 }
 
 void ProtoPrinter::print(const FunctionProto& fn) {
@@ -327,11 +394,11 @@ void ProtoPrinter::print(const FunctionProto& fn) {
   print(fn.node());
 }
 
-#define DEF_OP(T) \
+#define DEF_OP(T)                                              \
   std::ostream& operator<<(std::ostream& os, const T& proto) { \
-    ProtoPrinter printer(os); \
-    printer.print(proto); \
-    return os; \
+    ProtoPrinter printer(os);                                  \
+    printer.print(proto);                                      \
+    return os;                                                 \
   };
 
 DEF_OP(TensorShapeProto_Dimension)
@@ -359,5 +426,7 @@ DEF_OP(NodeList)
 DEF_OP(GraphProto)
 
 DEF_OP(FunctionProto)
+
+DEF_OP(ModelProto)
 
 } // namespace ONNX_NAMESPACE

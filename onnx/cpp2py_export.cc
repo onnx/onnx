@@ -364,6 +364,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto printer = onnx_cpp2py_export.def_submodule("printer");
   printer.doc() = "Printer submodule";
 
+  printer.def("model_to_text", ProtoToText<ModelProto>);
   printer.def("function_to_text", ProtoToText<FunctionProto>);
   printer.def("graph_to_text", ProtoToText<GraphProto>);
 

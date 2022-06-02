@@ -160,6 +160,15 @@ class KeyWordMap {
     return KeyWord::NONE;
   }
 
+  static const std::string& ToString(KeyWord kw) {
+    static std::string undefined("undefined");
+    for (const auto& pair : Instance()) {
+      if (pair.second == kw)
+        return pair.first;
+    }
+    return undefined;
+  }
+
  private:
   std::unordered_map<std::string, KeyWord> map_;
 };
