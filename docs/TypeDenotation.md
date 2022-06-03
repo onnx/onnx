@@ -6,7 +6,7 @@ Type Denotation is used to describe semantic information around what the inputs 
 
 ## Motivation
 
-The motivation of such a mechanism can be illustrated via a simple example. In the the neural network SqueezeNet, it takes in an NCHW image input float[1,3,244,244] and produces a output float[1,1000,1,1]:
+The motivation of such a mechanism can be illustrated via a simple example. In the neural network SqueezeNet, it takes in an NCHW image input float[1,3,244,244] and produces a output float[1,1000,1,1]:
 
 ```
 input_in_NCHW -> data_0 -> SqueezeNet() -> output_softmaxout_1

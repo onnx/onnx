@@ -128,11 +128,11 @@ class TestHelperAttributeFunctions(unittest.TestCase):
                                         dims=[len(sparse_values)],
                                         vals=np.array(sparse_values).astype(np.float32), raw=False)
 
-        linear_indicies = [2, 3, 5]
-        indicies_tensor = helper.make_tensor(name='indicies', data_type=TensorProto.INT64,
-                                        dims=[len(linear_indicies)],
-                                        vals=np.array(linear_indicies).astype(np.int64), raw=False)
-        sparse_tensor = helper.make_sparse_tensor(values_tensor, indicies_tensor, dense_shape)
+        linear_indices = [2, 3, 5]
+        indices_tensor = helper.make_tensor(name='indices', data_type=TensorProto.INT64,
+                                        dims=[len(linear_indices)],
+                                        vals=np.array(linear_indices).astype(np.int64), raw=False)
+        sparse_tensor = helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
 
         attr = helper.make_attribute("sparse_attr", sparse_tensor)
         self.assertEqual(attr.name, "sparse_attr")
@@ -146,11 +146,11 @@ class TestHelperAttributeFunctions(unittest.TestCase):
                                         dims=[len(sparse_values)],
                                         vals=np.array(sparse_values).astype(np.float32), raw=False)
 
-        linear_indicies = [2, 3, 5]
-        indicies_tensor = helper.make_tensor(name='indicies', data_type=TensorProto.INT64,
-                                        dims=[len(linear_indicies)],
-                                        vals=np.array(linear_indicies).astype(np.int64), raw=False)
-        sparse_tensor = helper.make_sparse_tensor(values_tensor, indicies_tensor, dense_shape)
+        linear_indices = [2, 3, 5]
+        indices_tensor = helper.make_tensor(name='indices', data_type=TensorProto.INT64,
+                                        dims=[len(linear_indices)],
+                                        vals=np.array(linear_indices).astype(np.int64), raw=False)
+        sparse_tensor = helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
 
         repeated_sparse = [sparse_tensor, sparse_tensor]
         attr = helper.make_attribute("sparse_attrs", repeated_sparse)

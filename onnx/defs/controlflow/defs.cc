@@ -381,7 +381,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "static shapes S1 and S2, then the shape of the corresponding output "
             "variable of the if-node (if present) must be compatible with both S1 "
             "and S2 as it represents the union of both possible shapes."
-            "For example, if in a model file, the the first "
+            "For example, if in a model file, the first "
             "output of `then_branch` is typed float tensor with shape [2] and the "
             "first output of `else_branch` is another float tensor with shape [3], "
             "If's first output should have (a) no shape set, or (b) "
