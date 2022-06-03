@@ -419,8 +419,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
     def test_make_bfloat16_tensor(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
-        #   np_array = np.random.randn(2, 3).astype(np.float16)
-        np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]])
+        np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]],
+            dtype=np.float32)
         np_results = np.array([
             [struct.unpack('!f', bytes.fromhex('3F800000'))[0],   # 1.0
              struct.unpack('!f', bytes.fromhex('40000000'))[0]],  # 2.0
@@ -445,8 +445,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
     def test_make_bfloat16_tensor_with_raw(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
-        #   np_array = np.random.randn(8, 7).astype(np.float16)
-        np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]])
+        np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]],
+            dtype=np.float32)
         np_results = np.array([
             [struct.unpack('!f', bytes.fromhex('3F800000'))[0],   # 1.0
              struct.unpack('!f', bytes.fromhex('40000000'))[0]],  # 2.0
