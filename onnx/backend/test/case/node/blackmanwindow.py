@@ -40,7 +40,7 @@ class BlackmanWindow(Base):
         a1 = -.5
         a2 = .08
         y = a0
-        y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size-1))
-        y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size-1))
+        y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+        y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
         expect(node, inputs=[size], outputs=[y],
                name='test_blackmanwindow_symmetric')
