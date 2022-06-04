@@ -82,7 +82,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.")
+            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_nodeids",

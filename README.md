@@ -51,18 +51,9 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 # Installation
 
-## Prerequisites
-
-```
-numpy >= 1.16.6
-protobuf >= 3.12.2
-typing-extensions >= 3.6.2.1
-```
-
 ## Official Python packages
 ONNX released packages are published in PyPi.
 ```
-pip install numpy protobuf==3.16.0
 pip install onnx
 ```
 
@@ -72,7 +63,6 @@ pip install onnx
 ## Conda packages
 A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
 ```
-conda install -c conda-forge numpy protobuf==3.16.0 libprotobuf=3.16.0
 conda install -c conda-forge onnx
 ```
 
