@@ -40,7 +40,7 @@ jobs:
       versionSpec: '$(python.version)'
 
   - script: |
-      # Install protobuf 3.16.0 from source
+      # Install Protobuf from source
       export NUM_CORES=`sysctl -n hw.logicalcpu`
       source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
 
@@ -58,7 +58,6 @@ jobs:
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
-      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py -q install
     displayName: 'Install dependencies and ONNX'
 
