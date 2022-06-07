@@ -2487,8 +2487,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX"
         ));
 
-static const char* MultiHeadAttention_ver10_doc = R"DOCAllows 
-      the model to jointly attend to information
+static const char* MultiHeadAttention_ver10_doc = R"DOC(
+      Allows the model to jointly attend to information
       from different representation subspaces.
       See reference: Attention Is All You Need.
       The computation can be described by the following equations.
@@ -2496,7 +2496,8 @@ static const char* MultiHeadAttention_ver10_doc = R"DOCAllows
       MultiHeadAttention(query, key, vector) = Concat(head_1, ..., head_h)W^O
       where: `head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)`. The default is with a bias.
       if query, key and value tensor is same, then it will be self attention.
-      ```";
+      ```
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     MultiHeadAttention,

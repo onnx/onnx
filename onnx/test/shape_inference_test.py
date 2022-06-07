@@ -4418,6 +4418,19 @@ class TestShapeInference(unittest.TestCase):
                 make_tensor_value_info('upper_edge_hertz', TensorProto.FLOAT, ()),
                 make_tensor_value_info('output', TensorProto.DOUBLE, (65, 10))
             ])  # type: ignore
+    
+    def test_multiheadattention(self):
+        graph = self._make_graph(
+            [('query', TensorProto.FLOAT, (4, 16, 16)),
+             ('key', TensorProto.FLOAT, (4, 16, 20)),
+             ('value', TensorProto.FLOAT, (4, 16, 20)),
+             ('q_weight', TensorProto.FLOAT, (16, 16)),
+             ('k_weight', TensorProto.FLOAT, (20, 16)),
+             ('v_weight', TensorProto.FLOAT, (20, 16)),
+             ('out_weight', TensorProto.FLOAT, (4, 16, 16)),],
+            [make_node('MultiHeadAttention', ['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight', 'out_weight'], ['attn_output'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('attn_output', TensorProto.FLOAT, (4, 16, 16))])
 
 
 if __name__ == '__main__':

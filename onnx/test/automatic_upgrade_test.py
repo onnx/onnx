@@ -656,6 +656,8 @@ class TestAutomaticUpgrade(unittest.TestCase):
         self._test_op_upgrade('Mul', 1, [[2, 3, 4], [2, 1, 4]], [[2, 3, 4]],
             attrs={'consumed_inputs': [0]}
         )
+    def test_MultiHeadAttention(self) -> None:
+        self._test_op_upgrade()
 
     def test_Multinomial(self) -> None:
         self._test_op_upgrade('Multinomial', 7, [[3, 5]], [[3, 7]],
@@ -1069,6 +1071,15 @@ class TestAutomaticUpgrade(unittest.TestCase):
                                            TensorProto.FLOAT, TensorProto.FLOAT],
                               output_types=[TensorProto.FLOAT],
                               attrs={'axis': 2})
+
+    def test_MultiHeadAttention(self) -> None:
+        self._test_op_upgrade('MultiHeadAttention', 10,
+                              [[4, 16, 16], [4, 16, 20], [4, 16, 20], [16, 16], [20, 16], [20, 16]],
+                              [[4, 16, 16]],
+                              input_types=[TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, 
+                                           TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+                              output_types=[TensorProto.FLOAT],
+                              attrs={'training_mode': 0})
 
     def _test_window_function(self, window_function_name: str) -> None:
         size = helper.make_tensor('a', TensorProto.INT64, dims=[], vals=np.array([10]))
