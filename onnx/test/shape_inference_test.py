@@ -4202,11 +4202,29 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('shape', TensorProto.INT64, ()),
              make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
 
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (), (10,))),
+             make_node("HammingWindow", ['shape'], ['y'], periodic=0)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, ()),
+             make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
+
     def test_hannwindow(self):  # type: () -> None
         graph = self._make_graph([],
             [make_node("Constant", [], ['shape'],
                        value=make_tensor('shape', TensorProto.INT64, (), (10,))),
              make_node("HannWindow", ['shape'], ['y'])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, ()),
+             make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
+             
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (), (10,))),
+             make_node("HannWindow", ['shape'], ['y'], periodic=0)],
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('shape', TensorProto.INT64, ()),
@@ -4217,6 +4235,15 @@ class TestShapeInference(unittest.TestCase):
             [make_node("Constant", [], ['shape'],
                        value=make_tensor('shape', TensorProto.INT64, (), (10,))),
              make_node("BlackmanWindow", ['shape'], ['y'])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, ()),
+             make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
+
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (), (10,))),
+             make_node("BlackmanWindow", ['shape'], ['y'], periodic=0)],
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('shape', TensorProto.INT64, ()),

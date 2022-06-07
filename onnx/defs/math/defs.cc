@@ -757,7 +757,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
         .FunctionBody(R"ONNX(
           {
-            HS_X = HardSigmoid<alpha = 0.16666667163372, beta = 0.5>(X)
+            HS_X = HardSigmoid<alpha = 0.16666667163372, beta = 0.5>(X) 
             Y = Mul (X, HS_X)
           }
         )ONNX"));
@@ -1708,14 +1708,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* QLinearMatMul_ver10_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
-It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
-and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
-For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
-Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor
-(per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row
-or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be
-an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K]
-for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may
+It consumes two quantized input tensors, their scales and zero points, scale and zero point of output, 
+and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point). 
+For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 
+Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor 
+(per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row 
+or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be 
+an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K] 
+for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may 
 have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
 Production must never overflow, and accumulation may overflow if and only if in 32 bits.
 )DOC";
@@ -2858,9 +2858,16 @@ Generates a {name} window as described in the paper https://ieeexplore.ieee.org/
         true,
         1,
         OpSchema::NonDifferentiable);
-    std::string output_doc("A {name} window with length: size. The output has the shape: [size].");
-    ReplaceAll(output_doc, "{name}", name);
-    schema.Output(0, "output", output_doc, "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable);
+    schema.Output(
+        0,
+        "output",
+        "A Hann window with length: size. "
+        "The output has the shape: [size].",
+        "T2",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
     schema.TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
       // Update the output data type to the output_datatype
       auto output_datatype = getAttribute(ctx, "output_datatype", static_cast<int64_t>(TensorProto_DataType_FLOAT));
@@ -2918,7 +2925,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           Symmetric_Component = Mul(Symmetric_Size_FP, IsSymmetric_FP)
           Size_FP = Add(Periodic_Component, Symmetric_Component)
           AngularIncrement = Div (Tau, Size_FP)
-          Range = Range (Zero, Size_FP, One)
+          Range = Range (Zero, Periodic_Size_FP, One)
           RangeAngular = Mul (Range, AngularIncrement)
           TwoRangeAngular = Mul (RangeAngular, Two)
           CosTwoRangeAngular = Cos (TwoRangeAngular)
@@ -2956,7 +2963,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           Symmetric_Component = Mul(Symmetric_Size_FP, IsSymmetric_FP)
           Size_FP = Add(Periodic_Component, Symmetric_Component)
           AngularIncrement = Div (Tau, Size_FP)
-          Range = Range (Zero, Size_FP, One)
+          Range = Range (Zero, Periodic_Size_FP, One)
           RangeAngular = Mul (Range, AngularIncrement)
           TwoRangeAngular = Mul (RangeAngular, Two)
           CosTwoRangeAngular = Cos (TwoRangeAngular)
@@ -2994,7 +3001,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           Symmetric_Component = Mul(Symmetric_Size_FP, IsSymmetric_FP)
           Size_FP = Add(Periodic_Component, Symmetric_Component)
           AngularIncrement = Div (Tau, Size_FP)
-          Range = Range (Zero, Size_FP, One)
+          Range = Range (Zero, Periodic_Size_FP, One)
           RangeAngular = Mul (Range, AngularIncrement)
           TwoRangeAngular = Mul (RangeAngular, Two)
           CosTwoRangeAngular = Cos (TwoRangeAngular)
@@ -3010,7 +3017,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* MelWeightMatrix_ver17_doc = R"DOC(
 Generate a MelWeightMatrix that can be used to re-weight a Tensor containing a linearly sampled frequency spectra (from DFT or STFT) into num_mel_bins frequency information based on the [lower_edge_hertz, upper_edge_hertz] range on the mel scale.
 This function defines the mel scale in terms of a frequency in hertz according to the following formula:
-
+    
     mel(f) = 2595 * log10(1 + f/700)
 
 In the returned matrix, all the triangles (filterbanks) have a peak value of 1.0.
