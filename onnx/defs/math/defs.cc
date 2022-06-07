@@ -757,7 +757,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
         .FunctionBody(R"ONNX(
           {
-            HS_X = HardSigmoid<alpha = 0.16666667163372, beta = 0.5>(X) 
+            HS_X = HardSigmoid<alpha = 0.16666667163372, beta = 0.5>(X)
             Y = Mul (X, HS_X)
           }
         )ONNX"));
