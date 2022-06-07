@@ -61,6 +61,7 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
+
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly TestPyPI package"
           python setup.py bdist_wheel --weekly_build
@@ -113,7 +114,7 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.19.0
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==4.21.1
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 

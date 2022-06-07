@@ -119,7 +119,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip uninstall -y onnx && python -m pip install protobuf==3.19.0 && \
+          python -m pip uninstall -y onnx && python -m pip install protobuf==4.21.1 && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
