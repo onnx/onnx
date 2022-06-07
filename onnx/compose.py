@@ -287,7 +287,7 @@ def merge_models(
     if m1.ir_version != m2.ir_version:
         raise ValueError(
             f"IR version mismatch {m1.ir_version} != {m2.ir_version}."
-            " Both models should have have the same IR version")
+            " Both models should have the same IR version")
     ir_version = m1.ir_version
 
     opset_import_map: MutableMapping[str, int] = {}

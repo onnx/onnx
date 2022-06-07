@@ -333,7 +333,8 @@ def make_tensor(
         assert not raw, "Can not use raw_data to store string type"
 
     # Check number of vals specified equals tensor size
-    expected_size = 1 if (not raw) else (mapping.TENSOR_TYPE_TO_NP_TYPE[data_type].itemsize)
+    storage_type = mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]
+    expected_size = 1 if (not raw) else (mapping.TENSOR_TYPE_TO_NP_TYPE[storage_type].itemsize)
     # Flatten a numpy array if its rank > 1
     if type(vals) is np.ndarray and len(vals.shape) > 1:
         vals = vals.flatten()
