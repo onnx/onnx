@@ -4220,7 +4220,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(graph,
             [make_tensor_value_info('shape', TensorProto.INT64, ()),
              make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
-             
+
         graph = self._make_graph([],
             [make_node("Constant", [], ['shape'],
                        value=make_tensor('shape', TensorProto.INT64, (), (10,))),
