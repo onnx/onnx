@@ -20845,7 +20845,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T2</dt>
-<dd>A Hann window with length: size. The output has the shape: [size].</dd>
+<dd>A Blackman window with length: size. The output has the shape: [size].</dd>
 </dl>
 
 #### Type Constraints
@@ -20929,7 +20929,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T2</dt>
-<dd>A Hann window with length: size. The output has the shape: [size].</dd>
+<dd>A Hamming window with length: size. The output has the shape: [size].</dd>
 </dl>
 
 #### Type Constraints
