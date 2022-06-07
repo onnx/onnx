@@ -2,7 +2,7 @@
 
 param(
     [Parameter()]
-    [String]$arch = "x64"
+    [String]$arch = "x64",
 
     [Parameter()]
     [String]$build_type = "Release"
