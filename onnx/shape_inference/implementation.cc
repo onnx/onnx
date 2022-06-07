@@ -302,13 +302,19 @@ class ShapeInferenceImplBase {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
-      fail_type_inference(
-          "Cannot infer type and shape for node name ",
-          n.name(),
-          ". No opset import for domain",
-          n.domain(),
-          " optype ",
-          n.op_type());
+      // Both "" and "ai.onnx" refer to the default ONNX domain
+      if (n.domain() == "") {
+        dit = opset_imports.find("ai.onnx");
+      }
+      if (dit == opset_imports.end()) {
+        fail_type_inference(
+            "Cannot infer type and shape for node name ",
+            n.name(),
+            ". No opset import for domain",
+            n.domain(),
+            " optype ",
+            n.op_type());
+      }
     }
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
