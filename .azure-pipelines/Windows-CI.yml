@@ -41,7 +41,7 @@ jobs:
 
   - script: |
       conda create --yes --quiet --name py$(python.version) python=$(python.version)
-      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf=4.21.1
+      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf
     displayName: Create Anaconda environment
 
   - script: |
