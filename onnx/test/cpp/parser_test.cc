@@ -19,6 +19,17 @@ static void Parse(T& parsedData, const char* input) {
   auto status = parser.Parse(parsedData);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+  // Extra checks for printer:
+  // Check we can convert data back to text form.
+  std::string text1 = ProtoToString(parsedData);
+  // Check that we can round-trip between the two representations.
+  // We cannot expect equality between text1 and input due to white-space and syntactic sugar,
+  // so, we convert it once more, and check for equality.
+  T temp;
+  status = OnnxParser::Parse(temp, text1.c_str());
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  std::string text2 = ProtoToString(temp);
+  EXPECT_EQ(text1, text2);
 }
 
 template <typename T>

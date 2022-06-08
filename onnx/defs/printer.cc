@@ -85,9 +85,8 @@ class ProtoPrinter {
     print(val);
   }
 
-  inline void printKeyValuePair (KeyWordMap::KeyWord key, const std::string& val, bool addsep) {
-    if (addsep)
-      output << "," << std::endl;
+  inline void printKeyValuePair (KeyWordMap::KeyWord key, const std::string& val) {
+    output << "," << std::endl;
     output << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << " : ";
     printQuoted(val);
   }
@@ -258,6 +257,7 @@ void ProtoPrinter::print(const AttributeProto& attr) {
   // Special case of attr-ref:
   if (attr.has_ref_attr_name()) {
     output << attr.name() << " : " << AttributeTypeNameMap::ToString(attr.type()) << " = @" << attr.ref_attr_name();
+    return;
   }
   // General case:
   output << attr.name() << " = ";

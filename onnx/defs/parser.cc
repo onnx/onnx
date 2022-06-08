@@ -348,6 +348,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
 }
 
 Status OnnxParser::Parse(AttributeProto& attr) {
+  attr.Clear();
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
   attr.set_name(name);
