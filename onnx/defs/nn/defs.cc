@@ -2507,16 +2507,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
           "embedding_dim",
           "total dimension of the model, must be equal to target sequence length.",
-          AttributeProto::INT);
+          AttributeProto::INT)
         .Attr(
           "num_heads",
           "number of the parallel attention heads.",
-          AttributeProto::INT);
+          AttributeProto::INT)
         .Attr(
           "drop_probability",
           "the probability of dropout operator. Default is 0.0",
-          AttributeProto::FLOAT
-          0.0f);
+          AttributeProto::FLOAT,
+          0.0f)
         .Attr(
           "training_mode",
           "If set to true, it indicates BatchNormalization is being used for training, and outputs 1, "
@@ -2526,11 +2526,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           0, // input num
           "query", // input name
-          "Input query tensor of the multiheadattention;
-          dimensions are (N, E, L), 
-          where L is the target sequence length, which is equal to embedding dimension number.
-          N is the batch size, 
-          E is the embedding dimension.", // description
+          "Input query tensor of the multiheadattention;"
+          "dimensions are (N, E, L), "
+          "where L is the target sequence length, which is equal to embedding dimension number."
+          "N is the batch size, "
+          "E is the embedding dimension.", // description
           "T", // type_str
           OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2539,24 +2539,24 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           1, // input num
           "key", // input name
-          "Input key tensor of the multiheadattention;
-          dimensions are (N, E, S), 
-          where S is the source sequence length, 
-          N is the batch size, 
-          E is the embedding dimension.", // description
+          "Input key tensor of the multiheadattention;"
+          "dimensions are (N, E, S),"
+          "where S is the source sequence length,"
+          "N is the batch size,"
+          "E is the embedding dimension.", // description
           "T", // type_str
           OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
-          1, // 最小参数数量，对于variadic
+          1, // 最小参数数量,对于variadic
           OpSchema::NonDifferentiable)
         .Input(
           2, // input num
           "value", // input name
-          "Input value tensor of the multiheadattention;
-          dimensions are (N, E, S), 
-          where S is the source sequence length, 
-          N is the batch size, 
-          E is the embedding dimension.", // description
+          "Input value tensor of the multiheadattention;"
+          "dimensions are (N, E, S)," 
+          "where S is the source sequence length," 
+          "N is the batch size," 
+          "E is the embedding dimension.", // description
           "T", // type_str
           OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2565,10 +2565,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           3, // input num
           "q_weight", // input name
-          "query weight of the multiheadattention;
-          dimensions are (L, E), 
-          where E is the embedding dimension,
-          L is target sequence length.", // description
+          "query weight of the multiheadattention;"
+          "dimensions are (L, E)," 
+          "where E is the embedding dimension,"
+          "L is target sequence length.", // description
           "T", // type_str
           OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2577,10 +2577,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           4, // input num
           "k_weight", // input name
-          "key weight of the multiheadattention;
-          dimensions are (S, E),  
-          where E is the embedding dimension,
-          S is source sequence length.", // description
+          "key weight of the multiheadattention;"
+          "dimensions are (S, E),"  
+          "where E is the embedding dimension,"
+          "S is source sequence length.", // description
           "T", // type_str
           OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2589,10 +2589,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           5, // input num
           "v_weight", // input name
-          "value weight of the multiheadattention;
-          dimensions are (S, E),  
-          where E is the embedding dimension,
-          K is source sequence length.", // description
+          "value weight of the multiheadattention;"
+          "dimensions are (S, E),"  
+          "where E is the embedding dimension,"
+          "K is source sequence length.", // description
           "T", // type_str
           OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2601,11 +2601,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           6, // input num
           "out_weight", // input name
-          "Feedforward tensor weight of the multiheadattention;
-          dimensions are (E, E), 
-          where S is the source sequence length, 
-          N is the batch size, 
-          E is the embedding dimension.", // description
+          "Feedforward tensor weight of the multiheadattention;"
+          "dimensions are (E, E), "
+          "where S is the source sequence length," 
+          "N is the batch size," 
+          "E is the embedding dimension.", // description
           "T", // type_str
           OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2614,9 +2614,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           7, // input num
           "q_bias", // input name
-          "query bias of the multiheadattention;
-          dimensions are (1, 1, E), 
-          E is the embedding dimension.", // description
+          "query bias of the multiheadattention;"
+          "dimensions are (1, 1, E)," 
+          "E is the embedding dimension.", // description
           "T", // type_str
           OpSchema::Optional, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2625,9 +2625,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           8, // input num
           "k_bias", // input name
-          "key bias of the multiheadattention;
-          dimensions are (1, 1, E), 
-          where S is the source sequence length.", // description
+          "key bias of the multiheadattention;"
+          "dimensions are (1, 1, E)," 
+          "where S is the source sequence length.", // description
           "T", // type_str
           OpSchema::Optional, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2636,9 +2636,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           9, // input num
           "v_bias", // input name
-          "value bias of the multiheadattention;
-          dimensions are (1, 1, E), 
-          where S is the source sequence length.", // description
+          "value bias of the multiheadattention;"
+          "dimensions are (1, 1, E)," 
+          "where S is the source sequence length.", // description
           "T", // type_str
           OpSchema::Optional, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2647,11 +2647,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           10, // input num
           "out_bias", // input name
-          "Feedforward tensor bias of the multiheadattention;
-          dimensions are (1, 1, E), 
-          where S is the source sequence length, 
-          N is the batch size, 
-          E is the embedding dimension.", // description
+          "Feedforward tensor bias of the multiheadattention;"
+          "dimensions are (1, 1, E)," 
+          "where S is the source sequence length," 
+          "N is the batch size," 
+          "E is the embedding dimension.", // description
           "T", // type_str
           OpSchema::Optional, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2660,13 +2660,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           11, // input num
           "padding_mask", // input name
-          "Mask is for padded sequence.
-          If is provided, the non-zero positions 
-          will be ignored while the position
-          with the zero positions will be unchanged;
-          dimensions are (N, S), 
-          where N is the batch size, 
-          S is the source sequence length.", // description
+          "Mask is for padded sequence."
+          "If is provided, the non-zero positions" 
+          "will be ignored while the position"
+          "with the zero positions will be unchanged;"
+          "dimensions are (N, S)," 
+          "where N is the batch size," 
+          "S is the source sequence length.", // description
           "T", // type_str
           OpSchema::Optional, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2675,12 +2675,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
           12, // input num
           "attn_mask", // input name
-          "Mask is to prevent leftward information flow 
-          in the decoder to preserve the auto-regressive property ;
-          dimensions are (N * num_heads, L, S), 
-          where N is the batch size, 
-          L is the target sequence length,
-          S is the source sequence length.", // description
+          "Mask is to prevent leftward information flow" 
+          "in the decoder to preserve the auto-regressive property;"
+          "dimensions are (N * num_heads, L, S)," 
+          "where N is the batch size," 
+          "L is the target sequence length,"
+          "S is the source sequence length.", // description
           "T", // type_str
           OpSchema::Optional, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2689,11 +2689,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
           0, // output num
           "attn_out",
-          "Operator output result, 
-          dimensions are (N, E, L),
-          where N is the batch size, 
-          L is the target sequence length,
-          E is the embedding dimension."
+          "Operator output result," 
+          "dimensions are (N, E, L),"
+          "where N is the batch size," 
+          "L is the target sequence length,"
+          "E is the embedding dimension.",
           "T", // type_str
           OpSchema::Single, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
@@ -2708,7 +2708,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           {"tensor(int64)"},
           "Constrain input and output type to int64")
         .TypeAndShapeInferenceFunction([] (InferenceContext& ctx) {
-          if (ctx.getNumInputs() < 7 {
+          if (ctx.getNumInputs() < 7) {
             fail_shape_inference("MultiHeadAttention op must have at lease eight inputs.");
           }
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
