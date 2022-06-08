@@ -30,7 +30,6 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertEqual(text1, text2)
         self.check_graph(graph2)
 
+
 if __name__ == '__main__':
     unittest.main()
-
-

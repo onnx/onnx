@@ -5,7 +5,8 @@ import onnx.onnx_cpp2py_export.printer as C
 from typing import Text, Union
 
 
-def to_text(proto):  # type: Union[onnx.ModelProto, onnx.FunctionProto, onnx.GraphProto] -> Text
+# type: Union[onnx.ModelProto, onnx.FunctionProto, onnx.GraphProto] -> Text
+def to_text(proto):
     if isinstance(proto, onnx.ModelProto):
         return C.model_to_text(proto.SerializeToString())
     if isinstance(proto, onnx.FunctionProto):
