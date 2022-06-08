@@ -328,7 +328,6 @@ void ProtoPrinter::print(const NodeProto& node) {
 }
 
 void ProtoPrinter::print(const NodeList& nodelist) {
-  const char* sep = "";
   output << "{\n";
   for (auto& node : nodelist) {
     print(node);
