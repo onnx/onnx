@@ -3,7 +3,6 @@ import collections.abc  # type: ignore
 import numbers
 from cmath import isnan
 import struct
-import sys
 from typing import Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
 
 import google.protobuf.message
@@ -282,22 +281,23 @@ def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
             for i in range(len(ca) * 2)]
 
 
-# convert a f32 to bf16 (as int)
-def float32_to_bfloat16(fval: float) -> int:
+# convert a float32 value to a bfloat16 (as int)
+# By default, this conversion rounds-to-nearest-even and supports NaN
+# Setting `truncate` to True enables a simpler conversion. In this mode the
+# conversion is performed by simply dropping the 2 least significant bytes of
+# the significand. In this mode an error of up to 1 bit may be introduced and
+# preservation of NaN values is not be guaranteed.
+def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     ival = int.from_bytes(struct.pack('<f', fval), 'little')
+    if truncate:
+        return ival >> 16
+    # NaN requires at least 1 significand bit set
     if isnan(fval):
-        # NaN requires at least 1 significand bit set
-        ival16 = 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
-    else:
-        # drop bottom 16-bits
-        # round remaining bits using round-to-nearest-even
-        round = ((ival >> 16) & 1) + 0x7fff
-        ival16 = (ival + round) >> 16
-    # swap byte order for big-endian
-    if sys.byteorder == 'big':
-        bytes = struct.pack('<h', ival16)
-        ival16 = int.from_bytes(bytes, 'big')
-    return ival16
+        return 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
+    # drop bottom 16-bits
+    # round remaining bits using round-to-nearest-even
+    round = ((ival >> 16) & 1) + 0x7fff
+    return (ival + round) >> 16
 
 
 def make_tensor(
