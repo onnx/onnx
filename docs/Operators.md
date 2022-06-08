@@ -2417,7 +2417,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T2</dt>
-<dd>A Hann window with length: size. The output has the shape: [size].</dd>
+<dd>A Blackman window with length: size. The output has the shape: [size].</dd>
 </dl>
 
 #### Type Constraints
@@ -8232,7 +8232,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T2</dt>
-<dd>A Hann window with length: size. The output has the shape: [size].</dd>
+<dd>A Hamming window with length: size. The output has the shape: [size].</dd>
 </dl>
 
 #### Type Constraints
@@ -19263,8 +19263,8 @@ nstfts = ((signal.shape[1] - length) // step) + 1
 output = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
 for i in range(nstfts):
     start = i * step
-    stop = i * step + onesided_length
-    complex_out = np.fft.fft(signal[0, start:stop, 0])
+    stop = i * step + length
+    complex_out = np.fft.fft(signal[0, start:stop, 0])[0:onesided_length]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 
 expect(node, inputs=[signal, step, length], outputs=[output],

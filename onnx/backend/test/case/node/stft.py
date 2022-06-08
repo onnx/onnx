@@ -29,8 +29,8 @@ class STFT(Base):
         output = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
         for i in range(nstfts):
             start = i * step
-            stop = i * step + onesided_length
-            complex_out = np.fft.fft(signal[0, start:stop, 0])
+            stop = i * step + length
+            complex_out = np.fft.fft(signal[0, start:stop, 0])[0:onesided_length]
             output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 
         expect(node, inputs=[signal, step, length], outputs=[output],
