@@ -56,7 +56,7 @@ class ProtoPrinter {
   void print(const OpsetIdList& opsets);
 
   void print(const MetaDataProps& metadataprops) {
-    print ("[", ", ", "]", metadataprops);
+    printSet ("[", ", ", "]", metadataprops);
   }
 
   void print(const MetaDataProp& metadata) {
@@ -77,15 +77,15 @@ class ProtoPrinter {
   }
 
   template <typename T>
-  inline void print(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
+  inline void printKeyValuePair
+  (KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
     if (addsep)
       output << "," << std::endl;
     output << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << " : ";
     print(val);
   }
 
-  template <>
-  inline void print<std::string> (KeyWordMap::KeyWord key, const std::string& val, bool addsep) {
+  inline void printKeyValuePair (KeyWordMap::KeyWord key, const std::string& val, bool addsep) {
     if (addsep)
       output << "," << std::endl;
     output << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << " : ";
@@ -93,7 +93,7 @@ class ProtoPrinter {
   }
 
   template <typename Collection>
-  inline void print(const char* open, const char* separator, const char* close, Collection coll) {
+  inline void printSet(const char* open, const char* separator, const char* close, Collection coll) {
     const char* sep = "";
     output << open;
     for (auto& elt : coll) {
@@ -126,7 +126,7 @@ void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
 }
 
 void ProtoPrinter::print(const TensorShapeProto& shape) {
-  print("[", ",", "]", shape.dim());
+  printSet("[", ",", "]", shape.dim());
 }
 
 void ProtoPrinter::print(const TypeProto_Tensor& tensortype) {
@@ -183,7 +183,7 @@ void ProtoPrinter::print(const TypeProto& type) {
 void ProtoPrinter::print(const TensorProto& tensor) {
   output << PrimitiveTypeNameMap::ToString(tensor.data_type());
   if (tensor.dims_size() > 0)
-    print("[", ",", "]", tensor.dims());
+    printSet("[", ",", "]", tensor.dims());
 
   if (!tensor.name().empty()) {
     output << " " << tensor.name();
@@ -192,16 +192,16 @@ void ProtoPrinter::print(const TensorProto& tensor) {
   if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
       case TensorProto::DataType::TensorProto_DataType_INT32:
-        print(" {", ",", "}", ParseData<int32_t>(&tensor));
+        printSet(" {", ",", "}", ParseData<int32_t>(&tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
-        print(" {", ",", "}", ParseData<int64_t>(&tensor));
+        printSet(" {", ",", "}", ParseData<int64_t>(&tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_FLOAT:
-        print(" {", ",", "}", ParseData<float>(&tensor));
+        printSet(" {", ",", "}", ParseData<float>(&tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-        print(" {", ",", "}", ParseData<double>(&tensor));
+        printSet(" {", ",", "}", ParseData<double>(&tensor));
         break;
       default:
         output << "..."; // ParseData not instantiated for other types.
@@ -215,20 +215,20 @@ void ProtoPrinter::print(const TensorProto& tensor) {
       case TensorProto::DataType::TensorProto_DataType_UINT8:
       case TensorProto::DataType::TensorProto_DataType_UINT16:
       case TensorProto::DataType::TensorProto_DataType_BOOL:
-        print(" {", ",", "}", tensor.int32_data());
+        printSet(" {", ",", "}", tensor.int32_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
-        print(" {", ",", "}", tensor.int64_data());
+        printSet(" {", ",", "}", tensor.int64_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_UINT32:
       case TensorProto::DataType::TensorProto_DataType_UINT64:
-        print(" {", ",", "}", tensor.uint64_data());
+        printSet(" {", ",", "}", tensor.uint64_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_FLOAT:
-        print(" {", ",", "}", tensor.float_data());
+        printSet(" {", ",", "}", tensor.float_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-        print(" {", ",", "}", tensor.double_data());
+        printSet(" {", ",", "}", tensor.double_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_STRING: {
         const char* sep = "{";
@@ -251,7 +251,7 @@ void ProtoPrinter::print(const ValueInfoProto& value_info) {
 }
 
 void ProtoPrinter::print(const ValueInfoList& vilist) {
-  print("(", ", ", ")", vilist);
+  printSet("(", ", ", ")", vilist);
 }
 
 void ProtoPrinter::print(const AttributeProto& attr) {
@@ -266,13 +266,13 @@ void ProtoPrinter::print(const AttributeProto& attr) {
       output << attr.i();
       break;
     case AttributeProto_AttributeType_INTS:
-      print("[", ", ", "]", attr.ints());
+      printSet("[", ", ", "]", attr.ints());
       break;
     case AttributeProto_AttributeType_FLOAT:
       output << attr.f();
       break;
     case AttributeProto_AttributeType_FLOATS:
-      print("[", ", ", "]", attr.floats());
+      printSet("[", ", ", "]", attr.floats());
       break;
     case AttributeProto_AttributeType_STRING:
       output << "\"" << attr.s() << "\"";
@@ -293,14 +293,14 @@ void ProtoPrinter::print(const AttributeProto& attr) {
       break;
     case AttributeProto_AttributeType_GRAPHS:
       indent();
-      print("[", ", ", "]", attr.graphs());
+      printSet("[", ", ", "]", attr.graphs());
       outdent();
       break;
     case AttributeProto_AttributeType_TENSOR:
       print(attr.t());
       break;
     case AttributeProto_AttributeType_TENSORS:
-      print("[", ", ", "]", attr.tensors());
+      printSet("[", ", ", "]", attr.tensors());
       break;
     default:
       break;
@@ -308,12 +308,12 @@ void ProtoPrinter::print(const AttributeProto& attr) {
 }
 
 void ProtoPrinter::print(const AttrList& attrlist) {
-  print(" <", ", ", ">", attrlist);
+  printSet(" <", ", ", ">", attrlist);
 }
 
 void ProtoPrinter::print(const NodeProto& node) {
   output << std::setw(indent_level) << ' ';
-  print("", ", ", "", node.output());
+  printSet("", ", ", "", node.output());
   output << " = " << node.op_type();
   bool has_subgraph = false;
   for (auto attr : node.attribute())
@@ -321,7 +321,7 @@ void ProtoPrinter::print(const NodeProto& node) {
       has_subgraph = true;
   if ((!has_subgraph) && (node.attribute_size() > 0))
     print(node.attribute());
-  print(" (", ", ", ")", node.input());
+  printSet(" (", ", ", ")", node.input());
   if ((has_subgraph) && (node.attribute_size() > 0))
     print(node.attribute());
   output << "\n";
@@ -345,20 +345,20 @@ void ProtoPrinter::print(const GraphProto& graph) {
 
 void ProtoPrinter::print(const ModelProto& model) {
   output << "<\n";
-  print(KeyWordMap::KeyWord::IR_VERSION, model.ir_version(), false);
-  print(KeyWordMap::KeyWord::OPSET_IMPORT, model.opset_import());
+  printKeyValuePair(KeyWordMap::KeyWord::IR_VERSION, model.ir_version(), false);
+  printKeyValuePair(KeyWordMap::KeyWord::OPSET_IMPORT, model.opset_import());
   if (model.has_producer_name())
-    print(KeyWordMap::KeyWord::PRODUCER_NAME, model.producer_name());
+    printKeyValuePair(KeyWordMap::KeyWord::PRODUCER_NAME, model.producer_name());
   if (model.has_producer_version())
-    print(KeyWordMap::KeyWord::PRODUCER_VERSION, model.producer_version());
+    printKeyValuePair(KeyWordMap::KeyWord::PRODUCER_VERSION, model.producer_version());
   if (model.has_domain())
-    print(KeyWordMap::KeyWord::DOMAIN_KW, model.domain());
+    printKeyValuePair(KeyWordMap::KeyWord::DOMAIN_KW, model.domain());
   if (model.has_model_version())
-    print(KeyWordMap::KeyWord::MODEL_VERSION, model.model_version());
+    printKeyValuePair(KeyWordMap::KeyWord::MODEL_VERSION, model.model_version());
   if (model.has_doc_string())
-    print(KeyWordMap::KeyWord::DOC_STRING, model.doc_string());
+    printKeyValuePair(KeyWordMap::KeyWord::DOC_STRING, model.doc_string());
   if (model.metadata_props_size() > 0)
-    print(KeyWordMap::KeyWord::METADATA_PROPS, model.metadata_props());
+    printKeyValuePair(KeyWordMap::KeyWord::METADATA_PROPS, model.metadata_props());
   output << std::endl << ">" << std::endl;
 
   print(model.graph());
@@ -373,7 +373,7 @@ void ProtoPrinter::print(const OperatorSetIdProto& opset) {
 }
 
 void ProtoPrinter::print(const OpsetIdList& opsets) {
-  print("[", ", ", "]", opsets);
+  printSet("[", ", ", "]", opsets);
 }
 
 void ProtoPrinter::print(const FunctionProto& fn) {
@@ -382,14 +382,14 @@ void ProtoPrinter::print(const FunctionProto& fn) {
          << "domain: \"" << fn.domain() << "\",\n";
   output << "  "
          << "opset_import: ";
-  print("[", ",", "]", fn.opset_import());
+  printSet("[", ",", "]", fn.opset_import());
   output << "\n>\n";
   output << fn.name() << " ";
   if (fn.attribute_size() > 0)
-    print("<", ",", ">", fn.attribute());
-  print("(", ", ", ")", fn.input());
+    printSet("<", ",", ">", fn.attribute());
+  printSet("(", ", ", ")", fn.input());
   output << " => ";
-  print("(", ", ", ")", fn.output());
+  printSet("(", ", ", ")", fn.output());
   output << "\n";
   print(fn.node());
 }
