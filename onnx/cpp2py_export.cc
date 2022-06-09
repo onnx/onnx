@@ -318,14 +318,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   parser.def("parse_graph", Parse<GraphProto>);
   parser.def("parse_function", Parse<FunctionProto>);
 
-    // Submodule `printer`
+  // Submodule `printer`
   auto printer = onnx_cpp2py_export.def_submodule("printer");
   printer.doc() = "Printer submodule";
 
   printer.def("model_to_text", ProtoBytesToText<ModelProto>);
   printer.def("function_to_text", ProtoBytesToText<FunctionProto>);
   printer.def("graph_to_text", ProtoBytesToText<GraphProto>);
-
 }
 
 } // namespace ONNX_NAMESPACE
