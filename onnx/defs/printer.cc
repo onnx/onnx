@@ -72,8 +72,13 @@ class ProtoPrinter {
   }
 
   void printQuoted(const std::string& str) {
-    // TODO: support quotes within a string via escape character.
-    output << "\"" << str << "\"";
+    output << "\"";
+    for (const char* p = str.c_str(); *p; ++p) {
+      if ((*p == '\\') || (*p == '"'))
+        output << '\\';
+      output << *p;
+    }
+    output << "\"";
   }
 
   template <typename T>
@@ -231,7 +236,8 @@ void ProtoPrinter::print(const TensorProto& tensor) {
       case TensorProto::DataType::TensorProto_DataType_STRING: {
         const char* sep = "{";
         for (auto& elt : tensor.string_data()) {
-          output << sep << "\"" << elt << "\"";
+          output << sep;
+          printQuoted(elt);
           sep = ", ";
         }
         output << "}";

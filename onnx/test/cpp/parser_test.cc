@@ -45,6 +45,18 @@ static void CheckModel(const char* code) {
   checker::check_model(model);
 }
 
+TEST(ParserTest, EscapeStringLiteral) {
+  OnnxParser parser(R"(
+    "123\"56\\89"
+  )");
+
+  std::string s;
+  auto status = parser.ParserBase::Parse(s);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+  EXPECT_EQ(s, std::string("123\"56\\89"));
+}
+
 TEST(ParserTest, TypeTest) {
   TypeProto type;
 
@@ -131,6 +143,11 @@ TEST(ParserTest, TensorProtoTest) {
   Parse(tensorProto, "float[5] {1e1, 2.0e-1, 3.1E-1, 4E+1, 5.5e-10}");
 
   Parse(tensorProto, "string[2] { \"Hello\", \"World\" }");
+
+  // String literals with escape character
+  Parse(tensorProto, R"(
+    string[2] { "Use a \"quoted\" word", "Use a backslash \\ like this." }
+  )");
 }
 
 TEST(ParserTest, AttributeTest) {

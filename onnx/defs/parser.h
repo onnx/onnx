@@ -278,13 +278,32 @@ class ParserBase {
     auto from = next_;
     if (nextch == '"') {
       ++next_;
-      // TODO: Handle escape characters
+      bool has_escape = false;
       while ((next_ < end_) && (*next_ != '"')) {
+        if (*next_ == '\\') {
+          has_escape = true;
+          ++next_;
+          if (next_ >= end_)
+            return ParseError("Incomplete string literal.");
+        }
         ++next_;
       }
+      if (next_ >= end_)
+        return ParseError("Incomplete string literal.");
       ++next_;
       result.type = LiteralType::STRING_LITERAL;
-      result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
+      if (has_escape) {
+        std::string& target = result.value;
+        target.clear();
+        target.reserve(next_ - from - 2); // upper bound
+        // *from is the starting quote. *(next_-1) is the ending quote.
+        // Copy what is in-between, except for the escape character
+        while (++from < next_ - 1) {
+          // Copy current char, if not escape, or next char otherwise.
+          target.push_back(*from != '\\' ? (*from) : *(++from));
+        }
+      } else
+        result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
     } else if ((isdigit(nextch) || (nextch == '-'))) {
       ++next_;
 
