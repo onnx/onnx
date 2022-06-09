@@ -2417,7 +2417,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T2</dt>
-<dd>A Hann window with length: size. The output has the shape: [size].</dd>
+<dd>A Blackman window with length: size. The output has the shape: [size].</dd>
 </dl>
 
 #### Type Constraints
@@ -2436,20 +2436,38 @@ This version of the operator has been available since version 17 of the default 
 <summary>blackmanwindow</summary>
 
 ```python
+# Test periodic window
 node = onnx.helper.make_node(
     'BlackmanWindow',
     inputs=['x'],
     outputs=['y'],
 )
 size = np.int32(10)
-a0 = 7938 / 18608
-a1 = 9240 / 18608
-a2 = 1430 / 18608
+a0 = .42
+a1 = -.5
+a2 = .08
 y = a0
 y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
 y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y],
        name='test_blackmanwindow')
+
+# Test symmetric window
+node = onnx.helper.make_node(
+    'BlackmanWindow',
+    inputs=['x'],
+    outputs=['y'],
+    periodic=0
+)
+size = np.int32(10)
+a0 = .42
+a1 = -.5
+a2 = .08
+y = a0
+y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+expect(node, inputs=[size], outputs=[y],
+       name='test_blackmanwindow_symmetric')
 ```
 
 </details>
@@ -8214,7 +8232,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T2</dt>
-<dd>A Hann window with length: size. The output has the shape: [size].</dd>
+<dd>A Hamming window with length: size. The output has the shape: [size].</dd>
 </dl>
 
 #### Type Constraints
@@ -8233,17 +8251,32 @@ This version of the operator has been available since version 17 of the default 
 <summary>hammingwindow</summary>
 
 ```python
+# Test periodic window
 node = onnx.helper.make_node(
     'HammingWindow',
     inputs=['x'],
     outputs=['y'],
 )
 size = np.int32(10)
-a0 = .5
-a1 = .5
-y = a0 + a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+a0 = 25 / 46
+a1 = 1 - a0
+y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y],
        name='test_hammingwindow')
+
+# Test symmetric window
+node = onnx.helper.make_node(
+    'HammingWindow',
+    inputs=['x'],
+    outputs=['y'],
+    periodic=0
+)
+size = np.int32(10)
+a0 = 25 / 46
+a1 = 1 - a0
+y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+expect(node, inputs=[size], outputs=[y],
+       name='test_hammingwindow_symmetric')
 ```
 
 </details>
@@ -8296,6 +8329,7 @@ This version of the operator has been available since version 17 of the default 
 <summary>hannwindow</summary>
 
 ```python
+# Test periodic window
 node = onnx.helper.make_node(
     'HannWindow',
     inputs=['x'],
@@ -8304,9 +8338,23 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = .5
 a1 = .5
-y = a0 + a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y],
        name='test_hannwindow')
+
+# Test symmetric window
+node = onnx.helper.make_node(
+    'HannWindow',
+    inputs=['x'],
+    outputs=['y'],
+    periodic=0
+)
+size = np.int32(10)
+a0 = .5
+a1 = .5
+y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+expect(node, inputs=[size], outputs=[y],
+       name='test_hannwindow_symmetric')
 ```
 
 </details>
@@ -8735,7 +8783,7 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
 </dl>
 
 #### Type Constraints
@@ -11859,7 +11907,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="MaxUnpool"></a><a name="maxunpool">**MaxUnpool**</a>
 
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
-   The input information to this op is typically the the output information from a MaxPool op. The first
+   The input information to this op is typically the output information from a MaxPool op. The first
    input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
    from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
@@ -19200,6 +19248,7 @@ This version of the operator has been available since version 17 of the default 
 ```python
 signal = np.arange(0, 128, dtype=np.float32).reshape(1, 128, 1)
 length = np.array(16).astype(np.int64)
+onesided_length = (length >> 1) + 1
 step = np.array(8).astype(np.int64)
 
 no_window = ""  # optional input, not supplied
@@ -19211,11 +19260,11 @@ node = onnx.helper.make_node(
 
 nstfts = ((signal.shape[1] - length) // step) + 1
 # [batch_size][frames][frame_length][2]
-output = np.empty([1, nstfts, length, 2], dtype=np.float32)
+output = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
 for i in range(nstfts):
     start = i * step
     stop = i * step + length
-    complex_out = np.fft.fft(signal[0, start:stop, 0])
+    complex_out = np.fft.fft(signal[0, start:stop, 0])[0:onesided_length]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 
 expect(node, inputs=[signal, step, length], outputs=[output],
@@ -19234,11 +19283,11 @@ window = a0 + a1 * np.cos(2 * 3.1415 * np.arange(0, length, 1, dtype=np.float32)
 nstfts = 1 + (signal.shape[1] - window.shape[0]) // step
 
 # [batch_size][frames][frame_length][2]
-output = np.empty([1, nstfts, length, 2], dtype=np.float32)
+output = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
 for i in range(nstfts):
     start = i * step
     stop = i * step + length
-    complex_out = np.fft.fft(signal[0, start:stop, 0] * window)
+    complex_out = np.fft.fft(signal[0, start:stop, 0] * window)[0:onesided_length]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 expect(node, inputs=[signal, step, window], outputs=[output],
        name='test_stft_with_window')

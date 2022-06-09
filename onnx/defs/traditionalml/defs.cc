@@ -378,7 +378,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-            "The input must be a tensor of a numeric type, and of of shape [N,C] or [C]. In the latter case, it will be treated as [1,C]")
+            "The input must be a tensor of a numeric type, and of shape [N,C] or [C]. In the latter case, it will be treated as [1,C]")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
@@ -604,7 +604,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used. Its size will match the bactch size of the input.")
+            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used. Its size will match the bactch size of the input.")
         .Attr(
             "kernel_type",
             "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID'.",
@@ -721,7 +721,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.")
+            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_nodeids",
