@@ -90,6 +90,7 @@ The ON/OFF depends on what kind of protobuf library you have. Shared libraries a
 If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.16.0.
 
 The instructions in this README assume you are using Visual Studio.  It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
+If you have any protobuf shared libraries (such as libprotobuf) installed, and you are planning to build Protobuf locally as a static library, ensure that the libprotobuf version is also set to 3.16.0 to ensure compatibility.
 
 You can get protobuf by running the following commands:
 ```bat
@@ -112,6 +113,15 @@ Please note: if your protobuf_install_dir contains spaces, **do not** add quotat
 Alternative: if you don't want to change your PATH, you can set ONNX_PROTOC_EXECUTABLE instead.
 ```bat
 set CMAKE_ARGS=-DONNX_PROTOC_EXECUTABLE=<full_path_to_protoc.exe>
+```
+
+Before proceeding, ensure that you have pybind11 installed on your computer. You can do this using pip:
+```bat
+pip install pybind11
+```
+Alternatively, you can use conda-forge:
+```bat
+conda install -c conda-forge pybind11
 ```
 
 Then you can build ONNX as:
