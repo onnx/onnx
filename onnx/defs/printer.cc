@@ -56,7 +56,7 @@ class ProtoPrinter {
   void print(const OpsetIdList& opsets);
 
   void print(const MetaDataProps& metadataprops) {
-    printSet ("[", ", ", "]", metadataprops);
+    printSet("[", ", ", "]", metadataprops);
   }
 
   void print(const MetaDataProp& metadata) {
@@ -77,15 +77,14 @@ class ProtoPrinter {
   }
 
   template <typename T>
-  inline void printKeyValuePair
-  (KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
+  inline void printKeyValuePair(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
     if (addsep)
       output << "," << std::endl;
     output << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     print(val);
   }
 
-  inline void printKeyValuePair (KeyWordMap::KeyWord key, const std::string& val) {
+  inline void printKeyValuePair(KeyWordMap::KeyWord key, const std::string& val) {
     output << "," << std::endl;
     output << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     printQuoted(val);
