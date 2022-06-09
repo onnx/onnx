@@ -7,3 +7,7 @@ def parse_model(model: str) -> Tuple[bool, bytes, bytes]:
 
 def parse_graph(graph: str) -> Tuple[bool, bytes, bytes]:
     ...
+
+
+def parse_function(function: str) -> Tuple[bool, bytes, bytes]:
+    ...

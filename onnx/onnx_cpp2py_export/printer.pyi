@@ -1,6 +1,10 @@
-from typing import Text, Union
-from onnx import GraphProto, FunctionProto
+def function_to_text(serialized_function_proto : str) -> str:
+    ...
 
 
-def to_text(proto : Union[GraphProto, FunctionProto]) -> Text:
+def graph_to_text(serialized_graph_proto : str) -> str:
+    ...
+
+
+def model_to_text(serialized_model_proto : str) -> str:
     ...
