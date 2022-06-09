@@ -90,7 +90,6 @@ The ON/OFF depends on what kind of protobuf library you have. Shared libraries a
 If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.16.0.
 
 The instructions in this README assume you are using Visual Studio.  It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
-If you have any protobuf shared libraries (such as libprotobuf) installed, and you are planning to build Protobuf locally as a static library, ensure that the libprotobuf version is also set to 3.16.0 to ensure compatibility.
 
 You can get protobuf by running the following commands:
 ```bat
@@ -115,14 +114,8 @@ Alternative: if you don't want to change your PATH, you can set ONNX_PROTOC_EXEC
 set CMAKE_ARGS=-DONNX_PROTOC_EXECUTABLE=<full_path_to_protoc.exe>
 ```
 
-Before proceeding, ensure that you have pybind11 installed on your computer. You can do this using pip:
-```bat
-pip install pybind11
-```
-Alternatively, you can use conda-forge:
-```bat
-conda install -c conda-forge pybind11
-```
+Note: if you run into any issues while building Protobuf as a static library, please ensure that shared Protobuf libraries, like libprotobuf, are not installed on your device or in the conda environment.
+If these shared libraries exist, either remove them from your conda environment to build Protobuf from source as a static library, or skip the Protobuf build from source to use the shared version directly.
 
 Then you can build ONNX as:
 ```
@@ -133,6 +126,9 @@ git submodule update --init --recursive
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
+
+Note: if you run into any issues while building ONNX, please ensure that the Python version for your activated conda environment is set to 3.8, and that python38.lib exists in the environment's folder on your device.
+
 ### Linux
 
 First, you need to install protobuf.
