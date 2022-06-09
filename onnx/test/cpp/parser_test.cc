@@ -41,6 +41,7 @@ TEST(ParserTest, TypeTest) {
   Parse(type, "float[N]");
   EXPECT_TRUE(type.has_tensor_type());
   int float_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_FLOAT);
+  int int32_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_INT32);
   EXPECT_EQ(type.tensor_type().elem_type(), float_type);
   EXPECT_TRUE(type.tensor_type().has_shape());
   EXPECT_EQ(type.tensor_type().shape().dim_size(), 1);
@@ -67,6 +68,37 @@ TEST(ParserTest, TypeTest) {
   Parse(type, "float[N,?,K]");
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_param());
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_value());
+
+  // sequence type:
+  Parse(type, "seq(float[])");
+  EXPECT_TRUE(type.has_sequence_type());
+  auto& elttype = type.sequence_type().elem_type();
+  EXPECT_TRUE(elttype.has_tensor_type());
+  EXPECT_EQ(elttype.tensor_type().elem_type(), float_type);
+  EXPECT_FALSE(elttype.tensor_type().has_shape());
+
+  // optional type:
+  Parse(type, "optional(float)");
+  EXPECT_TRUE(type.has_optional_type());
+  auto& optelttype = type.optional_type().elem_type();
+  EXPECT_TRUE(optelttype.has_tensor_type());
+  EXPECT_EQ(optelttype.tensor_type().elem_type(), float_type);
+  EXPECT_TRUE(optelttype.tensor_type().has_shape());
+
+  // optional type:
+  Parse(type, "sparse_tensor(float[1000])");
+  EXPECT_TRUE(type.has_sparse_tensor_type());
+  EXPECT_EQ(type.sparse_tensor_type().elem_type(), float_type);
+  EXPECT_EQ(type.sparse_tensor_type().shape().dim_size(), 1);
+
+  // map type:
+  Parse(type, "map(int32, float[N])");
+  EXPECT_TRUE(type.has_map_type());
+  EXPECT_EQ(type.map_type().key_type(), int32_type);
+  auto& valtype = type.map_type().value_type();
+  EXPECT_TRUE(valtype.has_tensor_type());
+  EXPECT_EQ(valtype.tensor_type().elem_type(), float_type);
+  EXPECT_EQ(valtype.tensor_type().shape().dim_size(), 1);
 }
 
 TEST(ParserTest, TensorProtoTest) {
@@ -80,7 +112,12 @@ TEST(ParserTest, TensorProtoTest) {
 
   Parse(tensorProto, "int32[5] {1, 2, 3, 4, 5}");
 
+  Parse(tensorProto, "int32[5] T {1, 2, 3, 4, 5}");
+  EXPECT_EQ(tensorProto.name(), "T");
+
   Parse(tensorProto, "float[5] {1, 2.0, 3.1, 4, 5.5}");
+
+  Parse(tensorProto, "float[5] {1e1, 2.0e-1, 3.1E-1, 4E+1, 5.5e-10}");
 
   Parse(tensorProto, "string[2] { \"Hello\", \"World\" }");
 }
@@ -105,6 +142,9 @@ TEST(ParserTest, AttributeTest) {
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS);
   EXPECT_EQ(attr.floats_size(), 2);
 
+  Parse(attr, "x = float[3] {2.1, 4.1, 6.1}");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_TENSOR);
+
   Parse(attr, "x = \"astring\"");
   EXPECT_EQ(attr.name(), "x");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
@@ -112,6 +152,10 @@ TEST(ParserTest, AttributeTest) {
 
   Parse(attr, "x = [\"abc\", \"def\"]");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS);
+
+  Parse(attr, "x : ints = @xyz");
+  EXPECT_EQ(attr.ref_attr_name(), "xyz");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
 
   Parse(attr, R"ONNX(
     body = somegraph (float[N] y, float[N] z) => (float[N] w)
@@ -213,6 +257,28 @@ TEST(ParserTest, NodeAttrTest2) {
 TEST(ParserTest, GraphTest) {
   const char* code = R"ONNX(
 agraph (float[N] y, float[N] z) => (float[N] w)
+<float[2] w1 = {1.0, 2.0}, float[3] w2 = {4.0, 5.0, 6.0}, float[N] x>
+{
+    # This is a comment.
+    x = foo(y, z, w1) # More comments.
+    w = bar(x, y, w2)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.name(), "agraph");
+  EXPECT_EQ(graph.input_size(), 2);
+  EXPECT_EQ(graph.output_size(), 1);
+  EXPECT_EQ(graph.node_size(), 2);
+  EXPECT_EQ(graph.initializer_size(), 2);
+  EXPECT_EQ(graph.value_info_size(), 1);
+}
+
+TEST(ParserTest, GraphPartialTypeTest) {
+  const char* code = R"ONNX(
+agraph (float[N] y, z) => (float[N] w)
 {
     x = foo(y, z)
     w = bar(x, y)
@@ -225,7 +291,50 @@ agraph (float[N] y, float[N] z) => (float[N] w)
   EXPECT_EQ(graph.name(), "agraph");
   EXPECT_EQ(graph.input_size(), 2);
   EXPECT_EQ(graph.output_size(), 1);
-  EXPECT_EQ(graph.node_size(), 2);
+}
+
+TEST(ParserTest, FunctionTest) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+f (y, z) => (w)
+{
+    x = Add(y, z)
+    w = Mul(x, y)
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
+
+  EXPECT_EQ(fp.name(), "f");
+  EXPECT_EQ(fp.input_size(), 2);
+  EXPECT_EQ(fp.output_size(), 1);
+  EXPECT_EQ(fp.node_size(), 2);
+  EXPECT_EQ(fp.attribute_size(), 0);
+  EXPECT_EQ(fp.opset_import_size(), 1);
+}
+
+TEST(ParserTest, InitializerTest) {
+  const char* code = R"ONNX(
+agraph (float y = {1.0}, float[N] z) => (float[N] w)
+<float[2] w1 = {1.0, 2.0}, float[3] w2 = {4.0, 5.0, 6.0}, float[N] x>
+{
+    x = foo(y, z, w1)
+    w = bar(x, y, w2)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.input_size(), 2);
+  EXPECT_EQ(graph.output_size(), 1);
+  EXPECT_EQ(graph.initializer_size(), 3); // y, w1, w2
+  EXPECT_EQ(graph.value_info_size(), 1); // x
 }
 
 TEST(ParserTest, IfNodeTest) {
@@ -305,6 +414,42 @@ iftest (bool b, float[128] X, float[128] Y) => (float[128] Z)
       then_branch = g1 () => (float[128] z_then) { z_then = Identity(X) },
       else_branch = g2 () => (float[128] z_else) { z_else = Identity(Y) }
       >
+}
+)ONNX";
+
+  CheckModel(code);
+}
+
+TEST(ParserTest, FunModelTest) {
+  const char* code = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 10, "local" : 1 ]
+>
+agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+{
+  T = local.foo (X, W, B)
+  C = local.square(T)
+}
+
+<
+  opset_import: [ "" : 10 ],
+  domain: "local",
+  doc_string: "Function foo."
+>
+foo (x, w, b) => (c) {
+  T = MatMul(x, w)
+  S = Add(T, b)
+  c = Softmax(S)
+}
+
+<
+  opset_import: [ "" : 10 ],
+  domain: "local",
+  doc_string: "Function square."
+>
+square (x) => (y) {
+  y = Mul (x, x)
 }
 )ONNX";
 

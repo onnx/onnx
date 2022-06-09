@@ -1,20 +1,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from dataclasses import dataclass
+from typing import Optional, Sequence, Tuple
+import onnx
+import numpy as np  # type: ignore
 
-from collections import namedtuple
 
-TestCase = namedtuple('TestCase', [
-    'name',
-    'model_name',
-    'url',
-    'model_dir',
-    'model',
-    'data_sets',
-    'kind',
-    'rtol',
-    'atol',
-])
+@dataclass
+class TestCase:
+    name: str
+    model_name: str
+    url: Optional[str]
+    model_dir: Optional[str]
+    model: Optional[onnx.ModelProto]
+    data_sets: Optional[Sequence[Tuple[Sequence[np.ndarray], Sequence[np.ndarray]]]]
+    kind: str
+    rtol: float
+    atol: float
+    # Tell PyTest this isn't a real test.
+    __test__: bool = False

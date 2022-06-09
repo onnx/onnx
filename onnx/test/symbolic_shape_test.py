@@ -1,43 +1,38 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, TensorShapeProto, ONNX_ML
 from onnx.helper import make_model, make_node, make_tensor, make_tensor_value_info
-from typing import Sequence, Union, Text, Tuple, List, Any, Optional
+from typing import Sequence, Union, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
 
 
 class TestSymbolicShape(unittest.TestCase):
 
-    def _assert_valueinfo_shape(self, onnx_model, value_infos):  # type: (ModelProto, List[ValueInfoProto]) -> None
+    def _assert_valueinfo_shape(self, onnx_model: ModelProto, value_infos: List[ValueInfoProto]) -> None:
         """
             Assert onnx_model.value_info should be the same as expected value_infos
             Instead of exact symbol, use -1 to represent symbolic shape in expected value_infos
         """
         for expected_vi in value_infos:
             shape = self._get_shape_from_name(onnx_model, expected_vi.name)
-            assert shape is not None, '{}'.format(onnx_model)
+            assert shape is not None, f'{onnx_model}'
             if expected_vi.type.HasField('tensor_type'):
                 expected_shape = expected_vi.type.tensor_type.shape
             elif expected_vi.type.HasField('sparse_tensor_type'):
                 expected_shape = expected_vi.type.sparse_tensor_type.shape
-            assert len(shape.dim) == len(expected_shape.dim), '{}'.format(onnx_model)
+            assert len(shape.dim) == len(expected_shape.dim), f'{onnx_model}'
             for dim_i in range(len(shape.dim)):
                 dim = shape.dim[dim_i]
                 expected_dim = expected_shape.dim[dim_i]
                 # -1 means it's a symbolic shape
                 if expected_dim.dim_value == -1:
                     # symbolic dimension must exist
-                    assert dim.dim_param, '%s' % (onnx_model)
+                    assert dim.dim_param, f'{onnx_model}'
                 else:
-                    assert dim.dim_value == expected_dim.dim_value, '{}'.format(onnx_model)
+                    assert dim.dim_value == expected_dim.dim_value, f'{onnx_model}'
 
-    def _count_unique_dim_param_number(self, onnx_model):  # type: (ModelProto) -> int
+    def _count_unique_dim_param_number(self, onnx_model: ModelProto) -> int:
         """
            return the total number of unique symbolic shape
         """
@@ -51,7 +46,7 @@ class TestSymbolicShape(unittest.TestCase):
                     symbol_shape_set.add(dim.dim_param)
         return len(symbol_shape_set)
 
-    def _get_shape_from_name(self, onnx_model, name):  # type: (ModelProto, Text) -> Optional[TensorShapeProto]
+    def _get_shape_from_name(self, onnx_model: ModelProto, name: str) -> Optional[TensorShapeProto]:
         """
             Get shape from tensor_type or sparse_tensor_type according to given name
         """
@@ -66,7 +61,7 @@ class TestSymbolicShape(unittest.TestCase):
                     return v.type.sparse_tensor_type.shape
         return None
 
-    def test_concat_enable_symbolic(self):  # type: () -> None
+    def test_concat_enable_symbolic(self) -> None:
         concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
             inputs=['C'],
@@ -76,7 +71,7 @@ class TestSymbolicShape(unittest.TestCase):
             nodes=[concat, cast],
             inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'A']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3])],
-            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'M'])]
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, None])]
         )
 
         onnx_model = make_model(graph_def)
@@ -85,7 +80,7 @@ class TestSymbolicShape(unittest.TestCase):
         # the symbolic shape of C and output should be the same
         assert self._get_shape_from_name(inferred_model, 'C') == self._get_shape_from_name(inferred_model, 'output')
 
-    def test_two_symbolic_concat(self):  # type: () -> None
+    def test_two_symbolic_concat(self) -> None:
         concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         concat2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
@@ -97,7 +92,7 @@ class TestSymbolicShape(unittest.TestCase):
             inputs=[helper.make_tensor_value_info('A', TensorProto.FLOAT, [2, 'A']),
                 helper.make_tensor_value_info('B', TensorProto.FLOAT, [2, 3]),
                 helper.make_tensor_value_info('D', TensorProto.FLOAT, [2, 'D'])],
-            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, 'M'])]
+            outputs=[helper.make_tensor_value_info('output', TensorProto.FLOAT, [2, None])]
         )
 
         onnx_model = make_model(graph_def)
@@ -108,7 +103,7 @@ class TestSymbolicShape(unittest.TestCase):
         # the symbolic shape of E and output should be the same
         assert self._get_shape_from_name(inferred_model, 'E') == self._get_shape_from_name(inferred_model, 'output')
 
-    def test_duplicate_symbolic_shape(self):  # type: () -> None
+    def test_duplicate_symbolic_shape(self) -> None:
         concat1 = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         concat2 = helper.make_node('Concat', inputs=['C', 'D'], outputs=['E'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
@@ -131,9 +126,9 @@ class TestSymbolicShape(unittest.TestCase):
         # new symbol 'unk__2' and 'unk__3' should be generated
         # original: {'unk_0', 'unk__1'}
         # inferred: {'unk_0', 'unk__1', 'unk__2', 'unk__3'}
-        assert inferred_count == original_count + 2, '%s%s' % (inferred_model, onnx_model)
+        assert inferred_count == original_count + 2, f'{inferred_model}{onnx_model}'
 
-    def test_unknown_shape(self):  # type: () -> None
+    def test_unknown_shape(self) -> None:
         concat = helper.make_node('Concat', inputs=['A', 'B'], outputs=['C'], name='Concat', axis=1)
         cast = onnx.helper.make_node('Cast',
             inputs=['C'],

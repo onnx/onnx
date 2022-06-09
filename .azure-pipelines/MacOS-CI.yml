@@ -1,24 +1,34 @@
 trigger:
-- master
+- main
 
 jobs:
 - job: 'Test'
   pool:
-    vmImage: 'macOS-10.14'
+    vmImage: 'macOS-10.15'
   strategy:
     matrix:
-      py36:
-        python.version: '3.6'
+      py39:
+        python.version: '3.9'
+        onnx_ml: 0
+        onnx_debug: 0
+        onnx_lite: 0
+      py38:
+        python.version: '3.8'
         onnx_ml: 0
         onnx_debug: 0
         onnx_lite: 1
-      py36-ml:
-        python.version: '3.6'
+      py38-ml:
+        python.version: '3.8'
         onnx_ml: 1
         onnx_debug: 0
         onnx_lite: 1
-      py36-ml-debug:
-        python.version: '3.6'
+      py38-ml-debug:
+        python.version: '3.8'
+        onnx_ml: 1
+        onnx_debug: 1
+        onnx_lite: 0
+      py37-ml-debug:
+        python.version: '3.7'
         onnx_ml: 1
         onnx_debug: 1
         onnx_lite: 0
@@ -30,12 +40,13 @@ jobs:
       versionSpec: '$(python.version)'
 
   - script: |
+      # Install protobuf 3.16.0 from source
+      export NUM_CORES=`sysctl -n hw.logicalcpu`
+      source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
+
       git submodule update --init --recursive
-      python -m pip install --upgrade setuptools
-      python -m pip install numpy
-      conda install -y -c conda-forge pybind11 protobuf
-      brew update
-      brew install protobuf
+      python -m pip install -q --upgrade pip
+      python -m pip install -q -r requirements-release.txt
       export ONNX_BUILD_TESTS=1
       if [ '$(onnx_debug)' == '1' ]; then
         export DEBUG=1
@@ -48,18 +59,10 @@ jobs:
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py --quiet install
+      python setup.py -q install
     displayName: 'Install dependencies and ONNX'
 
   - script: |
-      # lint python code
-      pip install --quiet flake8
-      flake8
-      if [ $? -ne 0 ]; then
-        echo "flake8 returned failures"
-        exit 1
-      fi
-
       # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
@@ -79,12 +82,6 @@ jobs:
       ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
-      # onnx python api tests
-      # pytest 6.0 made deprecation warnings fail by default, pinning pytest to 5.4.3.
-      # TODO replace deprecated function with the suggested one. https://docs.pytest.org/en/stable/deprecations.html#id5
-      # TODO Remove fixed ipython 7.16.1 once ONNX has removed Python 3.6
-      pip install --quiet pytest==5.4.3 nbval ipython==7.16.1
-
       pytest
       if [ $? -ne 0 ]; then
         echo "pytest failed"
@@ -102,6 +99,14 @@ jobs:
       ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
       if [ $? -ne 0 ]; then
         echo "onnxifi_test_driver_gtests failed"
+        exit 1
+      fi
+
+      python onnx/backend/test/cmd_tools.py generate-data
+      git status
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+      if [ $? -ne 0 ]; then
+        echo "git diff for test generation returned failures. Please check updated node test files"
         exit 1
       fi
 

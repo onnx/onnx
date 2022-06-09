@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -16,9 +11,9 @@ from typing import Sequence
 class ExpandDynamicShape(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
 
-        def make_graph(node, input_shape, shape_shape, output_shape):  # type: (onnx.helper.NodeProto, Sequence[int], Sequence[int], Sequence[int]) -> onnx.helper.GraphProto
+        def make_graph(node: onnx.helper.NodeProto, input_shape: Sequence[int], shape_shape: Sequence[int], output_shape: Sequence[int]) -> onnx.helper.GraphProto:
             graph = onnx.helper.make_graph(
                 nodes=[node],
                 name='Expand',
@@ -42,26 +37,26 @@ class ExpandDynamicShape(Base):
         shape = np.array([3, 1], dtype=np.int64)
         y = x * np.ones(shape, dtype=np.float32)
         graph = make_graph(node, input_shape, shape.shape, y.shape)
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 9)])
         expect(model, inputs=[x, shape], outputs=[y], name="test_expand_shape_model1")
 
         #2nd testcase
         shape = np.array([1, 3], dtype=np.int64)
         y = x * np.ones(shape, dtype=np.float32)
         graph = make_graph(node, input_shape, shape.shape, y.shape)
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 9)])
         expect(model, inputs=[x, shape], outputs=[y], name="test_expand_shape_model2")
 
         #3rd testcase
         shape = np.array([3, 1, 3], dtype=np.int64)
         y = x * np.ones(shape, dtype=np.float32)
         graph = make_graph(node, input_shape, shape.shape, y.shape)
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 9)])
         expect(model, inputs=[x, shape], outputs=[y], name="test_expand_shape_model3")
 
         #4th testcase
         shape = np.array([3, 3, 1, 3], dtype=np.int64)
         y = x * np.ones(shape, dtype=np.float32)
         graph = make_graph(node, input_shape, shape.shape, y.shape)
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 9)])
         expect(model, inputs=[x, shape], outputs=[y], name="test_expand_shape_model4")

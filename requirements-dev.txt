@@ -1,0 +1,11 @@
+numpy
+protobuf
+typing-extensions
+pytest
+pytest-cov
+nbval
+wheel
+jupyter
+pyzmq
+setuptools
+twine

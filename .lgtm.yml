@@ -1,0 +1,12 @@
+# By default, C/C++ extraction from LGTM.com uses Python 2
+# Add this file to make it use Python 3
+# Build protobuf from source with -fPIC is required here to prevent protobuf symbol error
+extraction:
+  cpp:
+    before_index:
+      # Always use Python 3
+      - cp `which python3` $LGTM_WORKSPACE/python
+      - PATH=$LGTM_WORKSPACE:$PATH
+      # Build protobuf from source with -fPIC
+      - mkdir protobuf && cd protobuf
+      - source ../workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc) $(pwd)/protobuf_install

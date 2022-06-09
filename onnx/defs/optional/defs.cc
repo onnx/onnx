@@ -25,17 +25,17 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "The optional output enclosing the input element.", "O")
         .TypeConstraint(
             "V",
-            [](){
+            []() {
               auto t = OpSchema::all_tensor_types();
               auto s = OpSchema::all_tensor_sequence_types();
               t.insert(t.end(), s.begin(), s.end());
               return t;
             }(),
-            "Constrains input type to all tensor and sequence types.")
+            "Constrain input type to all tensor and sequence types.")
         .TypeConstraint(
             "O",
             OpSchema::all_optional_types(),
-            "Constrains output type to all optional tensor or optional sequence types.")
+            "Constrain output type to all optional tensor or optional sequence types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numOutputs = ctx.getNumOutputs();
           if (numOutputs != 1) {
@@ -80,8 +80,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "O",
             OpSchema::all_optional_types(),
-            "Constrains input type to optional tensor and optional sequence types.")
-        .TypeConstraint("B", {"tensor(bool)"}, "Constrains output to a boolean tensor.")
+            "Constrain input type to optional tensor and optional sequence types.")
+        .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
           if (numInputs != 1) {
@@ -111,10 +111,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "O",
             OpSchema::all_optional_types(),
-            "Constrains input type to optional tensor and optional sequence types.")
+            "Constrain input type to optional tensor and optional sequence types.")
         .TypeConstraint(
             "V",
-            [](){
+            []() {
               auto t = OpSchema::all_tensor_types();
               auto s = OpSchema::all_tensor_sequence_types();
               t.insert(t.end(), s.begin(), s.end());

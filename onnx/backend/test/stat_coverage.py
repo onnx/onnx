@@ -2,11 +2,6 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
 import io
 
@@ -14,17 +9,17 @@ from onnx import defs, load, AttributeProto
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.test.runner import Runner
 from onnx.backend.test.loader import load_model_tests
-from typing import Any, IO, Sequence, Text, Dict, List
+from typing import Any, IO, Sequence, Dict, List
 
 
-def is_ml(schemas):  # type: (Sequence[defs.OpSchema]) -> bool
+def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:
     for s in schemas:
         if s.domain == 'ai.onnx.ml':
             return True
     return False
 
 
-def gen_outlines(f, ml):  # type: (IO[Any], bool) -> None
+def gen_outlines(f: IO[Any], ml: bool) -> None:
     f.write('# Test Coverage Report')
     if ml:
         f.write(' (ONNX-ML Operators)\n')
@@ -36,12 +31,11 @@ def gen_outlines(f, ml):  # type: (IO[Any], bool) -> None
     f.write('* [Overall Test Coverage](#overall-test-coverage)\n')
 
 
-common_covered = []  # type: Sequence[Text]
-experimental_covered = []  # type: Sequence[Text]
+common_covered: Sequence[str] = []
+experimental_covered: Sequence[str] = []
 
 
-def gen_node_test_coverage(schemas, f, ml):
-    # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
+def gen_node_test_coverage(schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool) -> None:
     global common_covered
     global experimental_covered
     generators = set({
@@ -52,26 +46,26 @@ def gen_node_test_coverage(schemas, f, ml):
         'RandomUniformLike',
     })
     node_tests = collect_snippets()
-    common_covered = sorted([s.name for s in schemas
+    common_covered = sorted(s.name for s in schemas
             if s.name in node_tests
             and s.support_level == defs.OpSchema.SupportType.COMMON
-            and (s.domain == 'ai.onnx.ml') == ml])
-    common_no_cover = sorted([s.name for s in schemas
+            and (s.domain == 'ai.onnx.ml') == ml)
+    common_no_cover = sorted(s.name for s in schemas
             if s.name not in node_tests
             and s.support_level == defs.OpSchema.SupportType.COMMON
-            and (s.domain == 'ai.onnx.ml') == ml])
-    common_generator = sorted([name for name in common_no_cover
-            if name in generators])
-    experimental_covered = sorted([s.name for s in schemas
+            and (s.domain == 'ai.onnx.ml') == ml)
+    common_generator = sorted(name for name in common_no_cover
+            if name in generators)
+    experimental_covered = sorted(s.name for s in schemas
             if s.name in node_tests
             and s.support_level == defs.OpSchema.SupportType.EXPERIMENTAL
-            and (s.domain == 'ai.onnx.ml') == ml])
-    experimental_no_cover = sorted([s.name for s in schemas
+            and (s.domain == 'ai.onnx.ml') == ml)
+    experimental_no_cover = sorted(s.name for s in schemas
             if s.name not in node_tests
             and s.support_level == defs.OpSchema.SupportType.EXPERIMENTAL
-            and (s.domain == 'ai.onnx.ml') == ml])
-    experimental_generator = sorted([name for name in experimental_no_cover
-            if name in generators])
+            and (s.domain == 'ai.onnx.ml') == ml)
+    experimental_generator = sorted(name for name in experimental_no_cover
+            if name in generators)
     num_common = len(common_covered) + len(common_no_cover) \
             - len(common_generator)
     num_experimental = len(experimental_covered) + len(experimental_no_cover) \
@@ -102,19 +96,19 @@ def gen_node_test_coverage(schemas, f, ml):
     all_lists = [common_covered, common_no_cover,
             experimental_covered, experimental_no_cover]
     for t in titles:
-        f.write('* [{}](#{})\n'.format(t[9:], t[9:].lower().replace(' ', '-')))
+        f.write(f"* [{t[9:]}](#{t[9:].lower().replace(' ', '-')})\n")
     f.write('\n')
     for t, l in zip(titles, all_lists):
-        f.write('## {}\n'.format(t))
+        f.write(f'## {t}\n')
         for s in l:
-            f.write('### {}'.format(s))
+            f.write(f'### {s}')
             if s in node_tests:
                 f.write('\nThere are {} test cases, listed as following:\n'.format(
                     len(node_tests[s])))
                 for summary, code in sorted(node_tests[s]):
                     f.write('<details>\n')
-                    f.write('<summary>{}</summary>\n\n'.format(summary))
-                    f.write('```python\n{}\n```\n\n'.format(code))
+                    f.write(f'<summary>{summary}</summary>\n\n')
+                    f.write(f'```python\n{code}\n```\n\n')
                     f.write('</details>\n')
             else:
                 if s in generators:
@@ -125,8 +119,7 @@ def gen_node_test_coverage(schemas, f, ml):
         f.write('<br/>\n\n')
 
 
-def gen_model_test_coverage(schemas, f, ml):
-    # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
+def gen_model_test_coverage(schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool) -> None:
     f.write('# Model Test Coverage\n')
     # Process schemas
     schema_dict = dict()
@@ -134,8 +127,8 @@ def gen_model_test_coverage(schemas, f, ml):
         schema_dict[schema.name] = schema
     # Load models from each model test using Runner.prepare_model_data
     # Need to grab associated nodes
-    attrs = dict()  # type: Dict[Text, Dict[Text, List[Any]]]
-    model_paths = []  # type: List[Any]
+    attrs: Dict[str, Dict[str, List[Any]]] = dict()
+    model_paths: List[Any] = []
     for rt in load_model_tests(kind='real'):
         model_dir = Runner.prepare_model_data(rt)
         model_paths.append(os.path.join(model_dir, 'model.onnx'))
@@ -152,7 +145,7 @@ def gen_model_test_coverage(schemas, f, ml):
                 continue
             else:
                 model_written = True
-        f.write('## {}\n'.format(model.graph.name))
+        f.write(f'## {model.graph.name}\n')
         # Deconstruct model
         num_covered = 0
         for node in model.graph.node:
@@ -209,28 +202,25 @@ def gen_model_test_coverage(schemas, f, ml):
                         .attributes)))
             for attribute in sorted(schema_dict[op].attributes):
                 if attribute in attrs[op]:
-                    f.write('{}: {}\n'.format(attribute, len(attrs[op][attribute])))
+                    f.write(f'{attribute}: {len(attrs[op][attribute])}\n')
                 else:
-                    f.write('{}: 0\n'.format(attribute))
+                    f.write(f'{attribute}: 0\n')
             f.write('</details>\n')
         f.write('</details>\n\n\n')
     if not model_written and ml:
         f.write('No model tests present for selected domain\n')
 
 
-def gen_overall_test_coverage(schemas, f, ml):
-    # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
+def gen_overall_test_coverage(schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool) -> None:
     f.write('# Overall Test Coverage\n')
     f.write('## To be filled.\n')
 
 
-def gen_spdx(f):
-    # type: (IO[Any]) -> None
+def gen_spdx(f: IO[Any]) -> None:
     f.write('<!--- SPDX-License-Identifier: Apache-2.0 -->\n')
 
 
-def main():
-    # type: () -> None
+def main() -> None:
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.realpath(__file__)))))
     docs_dir = os.path.join(base_dir, 'docs')
@@ -238,7 +228,7 @@ def main():
 
     has_ml = is_ml(schemas)
     fname = os.path.join(docs_dir, 'TestCoverage.md')
-    with io.open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
+    with open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
         gen_spdx(f)
         gen_outlines(f, False)
         gen_node_test_coverage(schemas, f, False)
@@ -247,7 +237,7 @@ def main():
 
     if has_ml:
         fname = os.path.join(docs_dir, 'TestCoverage-ml.md')
-        with io.open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
+        with open(fname, 'w+', newline='', encoding="utf-8") as f:  # type: ignore
             gen_spdx(f)
             gen_outlines(f, True)
             gen_node_test_coverage(schemas, f, True)

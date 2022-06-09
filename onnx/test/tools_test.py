@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import unittest
 import onnx
 from onnx.tools import update_model_dims
@@ -12,7 +7,7 @@ from onnx import helper, TensorProto
 
 
 class TestToolsFunctions(unittest.TestCase):
-    def test_update_inputs_outputs_dim(self):  # type: () -> None
+    def test_update_inputs_outputs_dim(self) -> None:
         node_def = helper.make_node(
             "Conv",
             inputs=['x', 'W'],

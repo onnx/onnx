@@ -1,11 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# coding: utf-8
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
 
@@ -18,8 +12,8 @@ from typing import Sequence
 class NormalizeStrings(Base):
 
     @staticmethod
-    def export():  # type: () -> None
-        def make_graph(node, input_shape, output_shape):  # type: (onnx.helper.NodeProto, Sequence[int], Sequence[int]) -> onnx.helper.GraphProto
+    def export() -> None:
+        def make_graph(node: onnx.helper.NodeProto, input_shape: Sequence[int], output_shape: Sequence[int]) -> onnx.helper.GraphProto:
             graph = onnx.helper.make_graph(
                 nodes=[node],
                 name='StringNormalizer',
@@ -32,7 +26,7 @@ class NormalizeStrings(Base):
             return graph
 
         #1st model_monday_casesensintive_nochangecase
-        stopwords = [u'monday']
+        stopwords = ['monday']
         node = onnx.helper.make_node(
             'StringNormalizer',
             inputs=['x'],
@@ -41,11 +35,11 @@ class NormalizeStrings(Base):
             stopwords=stopwords
         )
 
-        x = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
-        y = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+        x = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+        y = np.array(['tuesday', 'wednesday', 'thursday']).astype(object)
 
         graph = make_graph(node, [4], [3])
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 10)])
         expect(model, inputs=[x], outputs=[y], name="test_strnorm_model_monday_casesensintive_nochangecase")
 
         #2nd model_nostopwords_nochangecase
@@ -56,15 +50,15 @@ class NormalizeStrings(Base):
             is_case_sensitive=1
         )
 
-        x = np.array([u'monday', u'tuesday']).astype(np.object)
+        x = np.array(['monday', 'tuesday']).astype(object)
         y = x
 
         graph = make_graph(node, [2], [2])
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 10)])
         expect(model, inputs=[x], outputs=[y], name="test_strnorm_model_nostopwords_nochangecase")
 
         # 3rd model_monday_casesensintive_lower
-        stopwords = [u'monday']
+        stopwords = ['monday']
         node = onnx.helper.make_node(
             'StringNormalizer',
             inputs=['x'],
@@ -74,15 +68,15 @@ class NormalizeStrings(Base):
             stopwords=stopwords
         )
 
-        x = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
-        y = np.array([u'tuesday', u'wednesday', u'thursday']).astype(np.object)
+        x = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+        y = np.array(['tuesday', 'wednesday', 'thursday']).astype(object)
 
         graph = make_graph(node, [4], [3])
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 10)])
         expect(model, inputs=[x], outputs=[y], name="test_strnorm_model_monday_casesensintive_lower")
 
         #4 model_monday_casesensintive_upper
-        stopwords = [u'monday']
+        stopwords = ['monday']
         node = onnx.helper.make_node(
             'StringNormalizer',
             inputs=['x'],
@@ -92,15 +86,15 @@ class NormalizeStrings(Base):
             stopwords=stopwords
         )
 
-        x = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(np.object)
-        y = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(np.object)
+        x = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+        y = np.array(['TUESDAY', 'WEDNESDAY', 'THURSDAY']).astype(object)
 
         graph = make_graph(node, [4], [3])
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 10)])
         expect(model, inputs=[x], outputs=[y], name="test_strnorm_model_monday_casesensintive_upper")
 
         #5 monday_insensintive_upper_twodim
-        stopwords = [u'monday']
+        stopwords = ['monday']
         node = onnx.helper.make_node(
             'StringNormalizer',
             inputs=['x'],
@@ -111,15 +105,15 @@ class NormalizeStrings(Base):
 
         input_shape = [1, 6]
         output_shape = [1, 4]
-        x = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(np.object).reshape(input_shape)
-        y = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(np.object).reshape(output_shape)
+        x = np.array(['Monday', 'tuesday', 'wednesday', 'Monday', 'tuesday', 'wednesday']).astype(object).reshape(input_shape)
+        y = np.array(['TUESDAY', 'WEDNESDAY', 'TUESDAY', 'WEDNESDAY']).astype(object).reshape(output_shape)
 
         graph = make_graph(node, input_shape, output_shape)
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 10)])
         expect(model, inputs=[x], outputs=[y], name="test_strnorm_model_monday_insensintive_upper_twodim")
 
         #6 monday_empty_output
-        stopwords = [u'monday']
+        stopwords = ['monday']
         node = onnx.helper.make_node(
             'StringNormalizer',
             inputs=['x'],
@@ -129,9 +123,9 @@ class NormalizeStrings(Base):
             stopwords=stopwords
         )
 
-        x = np.array([u'monday', u'monday']).astype(np.object)
-        y = np.array([u'']).astype(np.object)
+        x = np.array(['monday', 'monday']).astype(object)
+        y = np.array(['']).astype(object)
 
         graph = make_graph(node, [2], [1])
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 10)])
         expect(model, inputs=[x], outputs=[y], name="test_strnorm_model_monday_empty_output")

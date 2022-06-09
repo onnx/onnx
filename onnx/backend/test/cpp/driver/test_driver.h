@@ -2,14 +2,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <cstdlib>
 #include <iostream>
 #include <queue>
-#include <cstdlib>
 
+#include "onnx/onnx-data_pb.h"
 #include "onnx/onnxifi_loader.h"
 #include "onnx/onnxifi_utils.h"
 #include "onnx/string_utils.h"
-#include "onnx/onnx-data_pb.h"
 
 #include "gtest/gtest.h"
 namespace ONNX_NAMESPACE {
@@ -25,11 +25,8 @@ struct UnsolvedTestData {
   std::vector<std::string> input_filenames_;
   std::vector<std::string> output_filenames_;
   UnsolvedTestData() {}
-  UnsolvedTestData(
-      const std::vector<std::string>& input_filenames,
-      const std::vector<std::string>& output_filenames)
-      : input_filenames_(input_filenames),
-        output_filenames_(output_filenames) {}
+  UnsolvedTestData(const std::vector<std::string>& input_filenames, const std::vector<std::string>& output_filenames)
+      : input_filenames_(input_filenames), output_filenames_(output_filenames) {}
 };
 
 /**
@@ -44,9 +41,7 @@ struct UnsolvedTestCase {
       const std::string& model_filename,
       const std::string& model_dirname,
       const std::vector<UnsolvedTestData>& test_data)
-      : model_filename_(model_filename),
-        model_dirname_(model_dirname),
-        test_data_(test_data) {}
+      : model_filename_(model_filename), model_dirname_(model_dirname), test_data_(test_data) {}
 
   UnsolvedTestCase() {}
   std::string test_case_name_;
@@ -114,9 +109,7 @@ class TestDriver {
    *	Regular file(s): input_X.pb, store one input tensor.
    *	Regular file(s): output_X.pb, store one output tensor.
    */
-  void FetchSingleTestCase(
-      const std::string& case_dir,
-      const std::string& test_case_name);
+  void FetchSingleTestCase(const std::string& case_dir, const std::string& test_case_name);
 };
 
 std::vector<UnsolvedTestCase> GetTestCase();
@@ -135,8 +128,7 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t);
  *	Load all test cases.
  */
 std::vector<ResolvedTestCase> LoadAllTestCases(const std::string& location);
-std::vector<ResolvedTestCase> LoadAllTestCases(
-    const std::vector<UnsolvedTestCase>& t);
+std::vector<ResolvedTestCase> LoadAllTestCases(const std::vector<UnsolvedTestCase>& t);
 
 } // namespace testing
 } // namespace ONNX_NAMESPACE

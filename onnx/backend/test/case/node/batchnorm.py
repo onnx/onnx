@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -34,7 +29,7 @@ def _batchnorm_training_mode(x, s, bias, mean, var, momentum=0.9, epsilon=1e-5):
 
 class BatchNormalization(Base):
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         # input size: (2, 3, 4, 5)
         x = np.random.randn(2, 3, 4, 5).astype(np.float32)
         s = np.random.randn(3).astype(np.float32)
@@ -74,7 +69,7 @@ class BatchNormalization(Base):
                name='test_batchnorm_epsilon')
 
     @staticmethod
-    def export_train():  # type: () -> None
+    def export_train() -> None:
         # input size: (2, 3, 4, 5)
         x = np.random.randn(2, 3, 4, 5).astype(np.float32)
         s = np.random.randn(3).astype(np.float32)

@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
@@ -44,7 +39,7 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0):  # type: ignore
 class Pad(Base):
 
     @staticmethod
-    def export_constant_pad():  # type: () -> None
+    def export_constant_pad() -> None:
         node = onnx.helper.make_node(
             'Pad',
             inputs=['x', 'pads', 'value'],
@@ -65,7 +60,7 @@ class Pad(Base):
                name='test_constant_pad')
 
     @staticmethod
-    def export_reflection_and_edge_pad():  # type: () -> None
+    def export_reflection_and_edge_pad() -> None:
         for mode in ['edge', 'reflect']:
             node = onnx.helper.make_node(
                 'Pad',
@@ -82,4 +77,4 @@ class Pad(Base):
             )
 
             expect(node, inputs=[x, pads], outputs=[y],
-                   name='test_{}_pad'.format(mode))
+                   name=f'test_{mode}_pad')

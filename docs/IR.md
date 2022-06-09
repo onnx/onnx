@@ -11,7 +11,7 @@ The `.proto` and `.proto3` files found under the [onnx folder](/onnx/) form the 
 
 __Notes on model validation__
 
-A [tool](../onnx/checker.py) is available to perform general validation of models against this specification. It is implemented in C++ with Python command-line wrapper.
+A [tool](../onnx/checker.py) is available to perform general validation of models against this specification. It is implemented in C++ with a Python command-line wrapper.
 
 __Notes on language in this and all related documents__:
 
@@ -101,7 +101,7 @@ Alternatively, you can use a tool like [Netron](https://github.com/lutzroeder/ne
 
 ### Model Semantics
 
-The semantics of an inference-model is a _stateless function_ (except possibly for the state used for random-number generation). Thus, whenever an inference-model (without random-generator operations) is used to perform inference on the same input, it is expeced to produce the same output.
+The semantics of an inference-model is a _stateless function_ (except possibly for the state used for random-number generation). Thus, whenever an inference-model (without random-generator operations) is used to perform inference on the same input, it is expected to produce the same output.
 
 The semantics of a training model is that of a _stateful object_, with the state consisting of the current values of trained-weights (and any other auxiliary state required, such as momentum, for example, used by the learning algorithm). Specifically, its semantics is captured via three methods: an initialization method (which is used to initialize or reset the values of state variables), a training step method (to train using a batch of input-output pairs), and an inference method to perform inference using the current values of the learned weights. The first two methods update the state of the object, while the third method is side-effect-free.
 
@@ -114,6 +114,18 @@ Name|Type|Format|Description
 model_author|string|A comma-separated list of names.|The personal name of the author(s) of the model, and/or their organizations.
 model_license|string|Name or URL.|The well-known name or URL of the license under which the model is made available.
 
+### Operator Set Identifiers
+
+Each operator set is uniquely identified by a (domain, version) pair.
+
+Name|Type|Description
+|---|---|---|
+domain|string|The domain of the operator set being identified.
+version|int64|The version of the operator set being identified. Same as 'opset_version' in the operator set.
+
+The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published.
+
+Operator sets other than the default operator set MUST specify a domain and SHOULD use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
 ### Operator Sets
 
@@ -148,7 +160,7 @@ The properties of an operator definition are:
 
 Name|Type|Description
 |---|---|---|
-op_type|string|The name of the operator, as used in graph nodes. MUST be unique within the operator set’s domain.
+op_type|string|The name of the operator (case sensitive), as used in graph nodes. MUST be unique within the operator set’s domain.
 since_version|int64|The version of the operator set when this operator was introduced.
 status|OperatorStatus|One of ‘EXPERIMENTAL’ or ‘STABLE.’
 doc_string|string|A human-readable documentation string for this operator. Markdown is allowed.
@@ -158,6 +170,41 @@ The version value MUST be the same value as the operator set version when the op
 The ‘status’ property indicates whether the syntax, semantics, or presence of the operator is in an experimental or stable stage. Once an operator is published as STABLE, it’s syntax and semantics MUST NOT change in subsequent versions of the operator set.
 
 There are two distinct ways to pass information to operators – inputs and attributes. Inputs represent graph inputs or values computed elsewhere in the graph, while attributes are used for values that are constants in the graph. This distinction may be highly relevant to achieving good performance for some implementations, while completely irrelevant to others.
+
+### Functions
+
+A _function_ may be thought of as an operator combined with an implementation of the operator using
+other, more primitive, ops, referred to as the _function body_. The function body consists of a
+topologically sorted list of nodes that form a graph. Thus, a function combines aspects of both
+an operator as well a graph (described below).
+
+Each function contained in a Model (also referred to as a model-local function) serves
+as a default or fallback implementation of the corresponding operator. A runtime, however,
+may choose to use an alternative implementation of the operator (usually as an optimized kernel).
+As such, the unique name of a function is significant as it is implicitly associated with a
+semantic specification.
+
+A serialized function (a _FunctionProto_) has the following properties:
+
+|Name|Type|Description|
+|---|---|---|
+name|string|The name of the function
+domain|string|The domain to which this function belongs
+doc_string|string|Human-readable documentation for this function. Markdown is allowed.
+attribute|string[]|The attribute parameters of the function
+input|string[]|The input parameters of the function
+output|string[]|The output parameters of the function.
+node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
+|opset_import|OperatorSetId|A collection of operator set identifiers used by the function implementation.
+
+The name and domain serve to identify the operator uniquely. An opset version is not explicitly
+identified in a FunctionProto, but it is implicitly determined by the opset version of the domain
+included in the model.
+
+The input, output, and attribute constitute the signature part of the operator. No type information
+is explicitly included in the signature.
+
+The opset_import and node fields describe the implementation of the function.
 
 ### Graphs
 
@@ -237,7 +284,7 @@ A name belonging to the Value namespace may appear in multiple places, namely as
 
 A value name used in a graph must have a unique definition, with the exception that the same name MAY appear in both the graph input list and graph initializer list. (Further exceptions apply in the presence of nested subgraphs, as described later.)
 
-When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input unless the corresponding op's specification explicitly allows it.
+When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to be overridden by the caller should appear only in the initializer list and not in the graph input list. In models with IR version >= 4, in nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input unless the corresponding op's specification explicitly allows it. In models with IR version <= 3, users MAY use the same name as both a subgraph initializer and subgraph input, but this is restricted to support constants via initializers that are not intended to correspond to any actual inputs passed from the node into the subgraph. In particular, the control-flow operator semantics determines the set of inputs supplied to the execution of the subgraph, and these input names MUST NOT appear as subgraph initializers. Subgraph initializer names must appear in the graph input list _after_ the actual inputs. This allows the actual inputs and formal inputs to be matched positionally.
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
@@ -316,6 +363,28 @@ The following data types are supported by ONNX for inputs and outputs of graphs 
 
 Primitive numeric, string, and Boolean types MUST be used as elements of tensors.
 
+### Tensor Definition
+
+Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
+
+Mathematically, a tensor can be defined as a pair of sequences/lists (V, S) where S is the shape of the tensor (a list of non-negative integers) and V is a list of values with length equal to the product of the dimensions in S. Two tensors (V, S) and (V', S') are equal if and only if V = V' and S = S'. The length of S is referred to as the rank.
+
+ - If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
+ - S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
+ - If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
+ - A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
+
+A tensor's shape S is a list but can be represented as a tensor with values S and shape [R] where R is the rank of the tensor.
+
+ - For a tensor (V, S), the tensor representing its shape is (S, [R]).
+ - The shape of a scalar is []. Represented as a tensor, [] has shape [0].
+
+#### Representation
+
+It is common to represent a tensor as a nested list. This generally works fine, but is problematic when zero dimensions are involved. A tensor of shape (5, 0) can be represented as [[], [], [], [], []], but (0, 5) is represented as [] which loses the information that the second dimension is 5.
+
+ - A nested list is not a complete representation of a tensor with dimensions of value zero.
+
 ### Tensor Element Types
 
 |Group|Types|Description|
@@ -333,10 +402,10 @@ The following types are used to define the types of graph and node inputs and ou
 
 |Variant | Type | Description |
 |---|---|---|
-ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
+ONNX|dense tensors|Represents a Tensor. See definition above. 
 ONNX|sequence|Sequences are dense, ordered, collections of elements that are of homogeneous types.
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
-ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](docs/ONNXTypes.md)
+ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](ONNXTypes.md)
 
 #### Static tensor shapes
 

@@ -16,6 +16,7 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/stl_backports.h"
+#include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {
 // -1 means ONNX schema hasn't been loaded yet
@@ -185,10 +186,7 @@ void OpSchema::Verify(const NodeProto& node) const {
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
     if (in_idx >= static_cast<int>(inputs_.size())) {
-      if (!inputs_.empty() && Variadic == inputs_.back().GetOption()) {
-        // The last input formal parameter should be variadic.
-        break;
-      } else {
+      if (inputs_.empty() || Variadic != inputs_.back().GetOption()) {
         fail_check(
             "Node (",
             node.name(),
@@ -199,17 +197,22 @@ void OpSchema::Verify(const NodeProto& node) const {
             ") in op definition.");
       }
     }
-    if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
+    if ((in_idx >= static_cast<int>(inputs_.size()) && Variadic == inputs_.back().GetOption()) ||
+        Variadic == inputs_[in_idx].GetOption()) {
+      do {
+        if (node.input(in_idx).empty()) {
+          fail_check(
+              "Node (", node.name(), ")'s input ", in_idx, " is marked Variadic but has an empty string in the graph");
+        }
+      } while (++in_idx < node.input_size());
+    } else if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
       fail_check("Node (", node.name(), ")'s input ", in_idx, " is marked single but has an empty string in the graph");
     }
   }
 
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
     if (out_idx >= static_cast<int>(outputs_.size())) {
-      if (!outputs_.empty() && Variadic == outputs_.back().GetOption()) {
-        // The last output formal parameter should be variadic.
-        break;
-      } else {
+      if (outputs_.empty() || Variadic != outputs_.back().GetOption()) {
         fail_check(
             "Node (",
             node.name(),
@@ -220,8 +223,19 @@ void OpSchema::Verify(const NodeProto& node) const {
             ") in op definition.");
       }
     }
-
-    if (node.output(out_idx).empty() && (Single == outputs_[out_idx].GetOption())) {
+    if ((out_idx >= static_cast<int>(outputs_.size()) && Variadic == outputs_.back().GetOption()) ||
+        Variadic == outputs_[out_idx].GetOption()) {
+      do {
+        if (node.output(out_idx).empty()) {
+          fail_check(
+              "Node (",
+              node.name(),
+              ")'s output ",
+              out_idx,
+              " is marked Variadic but has an empty string in the graph");
+        }
+      } while (++out_idx < node.output_size());
+    } else if (node.output(out_idx).empty() && (Single == outputs_[out_idx].GetOption())) {
       fail_check(
           "Node (", node.name(), ")'s output ", out_idx, " is marked single but has an empty string in the graph");
     }
@@ -371,6 +385,11 @@ OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
 
 OpSchema& OpSchema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction) {
   tensor_inference_function_ = std::move(inferenceFunction);
+  return *this;
+}
+
+OpSchema& OpSchema::PartialDataPropagationFunction(DataPropagationFunction dataPropagationFunction) {
+  data_propagation_function_ = std::move(dataPropagationFunction);
   return *this;
 }
 
@@ -671,6 +690,16 @@ bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx
     return false;
 }
 
+OpSchema& OpSchema::FunctionBody(const char* func_body) {
+  OnnxParser parser(func_body);
+  auto status = parser.Parse(*function_body_.mutable_node());
+  if (!status.IsOK())
+    ONNX_THROW_EX(std::logic_error("Error parsing function body:" + status.ErrorMessage()));
+  if (!parser.EndOfInput())
+    ONNX_THROW_EX(std::logic_error("Extra unparsed input unexpected."));
+  return *this;
+}
+
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
   for (const auto& node : func_nodes) {
     auto new_node = function_body_.add_node();
@@ -717,7 +746,7 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   // In a typical onnx function where the function and all the
   // ops in function body belong to the same domain we implicitly add
   // {domain_, since_version_} to funciton opset imports if it is not already added.
-  // This is simply for convienince. If any of the function body ops do not belong to same 
+  // This is simply for convienince. If any of the function body ops do not belong to same
   // domain as function itself, then the function author needs to explicitly add all the relevant
   // opset imports.
   if (function_body.opset_import().size() == 0) {

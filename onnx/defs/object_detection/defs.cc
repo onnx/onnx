@@ -2,13 +2,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include "onnx/defs/schema.h"
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-static const char* RoiAlign_ver1_doc = R"DOC(
+static const char* RoiAlign_ver16_doc = R"DOC(
 Region of Interest (RoI) align operation described in the
 [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
 RoiAlign consumes an input tensor X and region of interests (rois)
@@ -24,9 +23,9 @@ through bilinear interpolation.
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
-    10,
+    16,
     OpSchema()
-        .SetDoc(RoiAlign_ver1_doc)
+        .SetDoc(RoiAlign_ver16_doc)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -35,16 +34,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input image. E.g.; default is 1.0f. ",
             AttributeProto::FLOAT,
             1.f)
-        .Attr(
-            "output_height",
-            "default 1; Pooled output Y's height.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
-        .Attr(
-            "output_width",
-            "default 1; Pooled output Y's width.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
+        .Attr("output_height", "default 1; Pooled output Y's height.", AttributeProto::INT, static_cast<int64_t>(1))
+        .Attr("output_width", "default 1; Pooled output Y's width.", AttributeProto::INT, static_cast<int64_t>(1))
         .Attr(
             "sampling_ratio",
             "Number of sampling points in the interpolation grid used to compute "
@@ -60,6 +51,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Default is 'avg'.",
             AttributeProto::STRING,
             std::string("avg"))
+        .Attr(
+            "coordinate_transformation_mode",
+            "Allowed values are 'half_pixel' and 'output_half_pixel'. "
+            "Use the value 'half_pixel' to pixel shift the input coordinates by -0.5 (the recommended behavior). "
+            "Use the value 'output_half_pixel' to omit the pixel shift for the input (use this for a "
+            "backward-compatible behavior).",
+            AttributeProto::STRING,
+            std::string("half_pixel"))
         .Input(
             0,
             "X",
@@ -94,10 +93,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain types to float tensors.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(int64)"},
-            "Constrain types to int tensors.")
+        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
@@ -147,11 +143,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "boxes",
             "An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.",
             "tensor(float)")
-        .Input(
-            1,
-            "scores",
-            "An input tensor with shape [num_batches, num_classes, spatial_dimension]",
-            "tensor(float)")
+        .Input(1, "scores", "An input tensor with shape [num_batches, num_classes, spatial_dimension]", "tensor(float)")
         .Input(
             2,
             "max_output_boxes_per_class",
@@ -186,10 +178,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(NonMaxSuppression_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference - Output is always of type INT64
-          auto* selected_indices_type =
-              ctx.getOutputType(0)->mutable_tensor_type();
-          selected_indices_type->set_elem_type(
-              TensorProto_DataType::TensorProto_DataType_INT64);
+          auto* selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
+          selected_indices_type->set_elem_type(TensorProto_DataType::TensorProto_DataType_INT64);
 
           // Shape inference
           // The exact shape cannot be determined as it depends on the input and

@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 import argparse
 import config
 import gc
@@ -15,18 +14,18 @@ cwd_path = Path.cwd()
 
 def run_lfs_install():
     result = subprocess.run(['git', 'lfs', 'install'], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    print('Git LFS install completed with return code= {}'.format(result.returncode))
+    print(f'Git LFS install completed with return code= {result.returncode}')
 
 
 def pull_lfs_file(file_name):
     result = subprocess.run(['git', 'lfs', 'pull', '--include', file_name, '--exclude', '\'\''], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    print('LFS pull completed with return code= {}'.format(result.returncode))
+    print(f'LFS pull completed with return code= {result.returncode}')
     print(result)
 
 
 def run_lfs_prune():
     result = subprocess.run(['git', 'lfs', 'prune'], cwd=cwd_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    print('LFS prune completed with return code= {}'.format(result.returncode))
+    print(f'LFS prune completed with return code= {result.returncode}')
 
 
 def main():
@@ -55,7 +54,7 @@ def main():
     # run lfs install before starting the tests
     run_lfs_install()
 
-    print('=== Running ONNX Checker on {} models ==='.format(len(model_list)))
+    print(f'=== Running ONNX Checker on {len(model_list)} models ===')
     # run checker on each model
     failed_models = []
     failed_messages = []
@@ -65,10 +64,10 @@ def main():
         model_name = model_path.split('/')[-1]
         # if the model_path exists in the skip list, simply skip it
         if model_path.replace('\\', '/') in config.SKIP_CHECKER_MODELS:
-            print('Skip model: {}'.format(model_path))
+            print(f'Skip model: {model_path}')
             skip_models.append(model_path)
             continue
-        print('-----------------Testing: {}-----------------'.format(model_name))
+        print(f'-----------------Testing: {model_name}-----------------')
         try:
             pull_lfs_file(model_path)
             model = onnx.load(model_path)
@@ -79,23 +78,23 @@ def main():
                 os.remove(model_path)
             # clean git lfs cache
             run_lfs_prune()
-            print('[PASS]: {} is checked by onnx. '.format(model_name))
+            print(f'[PASS]: {model_name} is checked by onnx. ')
 
         except Exception as e:
-            print('[FAIL]: {}'.format(e))
+            print(f'[FAIL]: {e}')
             failed_models.append(model_path)
             failed_messages.append((model_name, e))
         end = time.time()
-        print('--------------Time used: {} secs-------------'.format(end - start))
+        print(f'--------------Time used: {end - start} secs-------------')
         # enable gc collection to prevent MemoryError by loading too many large models
         gc.collect()
 
     if len(failed_models) == 0:
-        print('{} models have been checked. {} models were skipped.'.format(len(model_list), len(skip_models)))
+        print(f'{len(model_list)} models have been checked. {len(skip_models)} models were skipped.')
     else:
-        print('In all {} models, {} models failed, {} models were skipped'.format(len(model_list), len(failed_models), len(skip_models)))
+        print(f'In all {len(model_list)} models, {len(failed_models)} models failed, {len(skip_models)} models were skipped')
         for model, error in failed_messages:
-            print('{} failed because: {}'.format(model, error))
+            print(f'{model} failed because: {error}')
         sys.exit(1)
 
 

@@ -1,11 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# coding: utf-8
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
 
@@ -21,7 +15,7 @@ import sys
 class Cast(Base):
 
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         shape = (3, 4)
         test_cases = [
             ('FLOAT', 'FLOAT16'),
@@ -40,9 +34,9 @@ class Cast(Base):
             input_type_proto = None
             output_type_proto = None
             if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
-                np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-                    u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-                    u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.float32)
+                np_fp32 = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+                    '0.47031248', '0.816468', '0.21087195', '0.7229038',
+                    'NaN', 'INF', '+INF', '-INF'], dtype=np.float32)
                 little_endisan = sys.byteorder == 'little'
                 np_uint16_view = np_fp32.view(dtype=np.uint16)
                 np_bfp16 = np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
@@ -69,20 +63,20 @@ class Cast(Base):
                 input = np.random.random_sample(shape).astype(
                     TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
                 if ('STRING' == to_type):
-                    # Converting input to str, then give it np.object dtype for generating script
+                    # Converting input to str, then give it object dtype for generating script
                     ss = []
                     for i in input.flatten():
                         s = str(i).encode('utf-8')
                         su = s.decode('utf-8')
                         ss.append(su)
 
-                    output = np.array(ss).astype(np.object).reshape([3, 4])
+                    output = np.array(ss).astype(object).reshape([3, 4])
                 else:
                     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
             else:
-                input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-                    u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-                    u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
+                input = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+                    '0.47031248', '0.816468', '0.21087195', '0.7229038',
+                    'NaN', 'INF', '+INF', '-INF'], dtype=np.dtype(object)).reshape([3, 4])
                 output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
             node = onnx.helper.make_node(
                 'Cast',

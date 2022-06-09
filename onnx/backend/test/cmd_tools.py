@@ -1,10 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import argparse
 import json
 import os
@@ -13,27 +8,24 @@ import shutil
 import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
 from onnx import numpy_helper
-from typing import Text
 
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(TOP_DIR, 'data')
 
 
-def generate_data(args):  # type: (argparse.Namespace) -> None
+def generate_data(args: argparse.Namespace) -> None:
 
-    def prepare_dir(path):  # type: (Text) -> None
+    def prepare_dir(path: str) -> None:
         if os.path.exists(path):
             shutil.rmtree(path)
         os.makedirs(path)
 
     cases = model_test.collect_testcases()
-    if args.op_type is None:
-        # include all of the testcases
-        cases += node_test.collect_testcases()
-    else:
-        # only include those testcases including the given operator
-        cases += node_test.collect_testcases_by_operator(args.op_type)
+    # If op_type is specified, only include those testcases including the given operator
+    # Otherwise, include all of the testcases
+    cases += node_test.collect_testcases(args.op_type)
+
     for case in cases:
         output_dir = os.path.join(
             args.output, case.kind, case.name)
@@ -47,15 +39,17 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                     'atol': case.atol,
                 }, fi, sort_keys=True)
         else:
+            assert case.model
             with open(os.path.join(output_dir, 'model.onnx'), 'wb') as f:
                 f.write(case.model.SerializeToString())
+            assert case.data_sets
             for i, (inputs, outputs) in enumerate(case.data_sets):
                 data_set_dir = os.path.join(
-                    output_dir, 'test_data_set_{}'.format(i))
+                    output_dir, f'test_data_set_{i}')
                 prepare_dir(data_set_dir)
                 for j, input in enumerate(inputs):
                     with open(os.path.join(
-                            data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
+                            data_set_dir, f'input_{j}.pb'), 'wb') as f:
                         if case.model.graph.input[j].type.HasField('map_type'):
                             f.write(numpy_helper.from_dict(
                                 input, case.model.graph.input[j].name).SerializeToString())
@@ -71,7 +65,7 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                                 input, case.model.graph.input[j].name).SerializeToString())
                 for j, output in enumerate(outputs):
                     with open(os.path.join(
-                            data_set_dir, 'output_{}.pb'.format(j)), 'wb') as f:
+                            data_set_dir, f'output_{j}.pb'), 'wb') as f:
                         if case.model.graph.output[j].type.HasField('map_type'):
                             f.write(numpy_helper.from_dict(
                                 output, case.model.graph.output[j].name).SerializeToString())
@@ -87,7 +81,7 @@ def generate_data(args):  # type: (argparse.Namespace) -> None
                                 output, case.model.graph.output[j].name).SerializeToString())
 
 
-def parse_args():  # type: () -> argparse.Namespace
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser('backend-test-tools')
     subparsers = parser.add_subparsers()
 
@@ -101,7 +95,7 @@ def parse_args():  # type: () -> argparse.Namespace
     return parser.parse_args()
 
 
-def main():  # type: () -> None
+def main() -> None:
     args = parse_args()
     args.func(args)
 

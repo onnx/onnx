@@ -2,13 +2,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 void RNNShapeInference(InferenceContext& ctx) {
-  TensorShapeProto::Dimension num_directions, seq_length, batch_size,
-      hidden_size;
+  TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
   if ((direction == "forward") || (direction == "reverse"))
@@ -38,7 +36,7 @@ void RNNShapeInference(InferenceContext& ctx) {
     // Y
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-    if (layout_value == 0) {      
+    if (layout_value == 0) {
       auto dims = {seq_length, num_directions, batch_size, hidden_size};
       updateOutputShape(ctx, 0, dims);
     } else {
@@ -51,7 +49,7 @@ void RNNShapeInference(InferenceContext& ctx) {
     // Y_h
     propagateElemTypeFromInputToOutput(ctx, 0, 1);
 
-    if (layout_value == 0) {      
+    if (layout_value == 0) {
       auto dims = {num_directions, batch_size, hidden_size};
       updateOutputShape(ctx, 1, dims);
     } else {
@@ -64,7 +62,7 @@ void RNNShapeInference(InferenceContext& ctx) {
     // Y_c : only in the case of LSTM
     propagateElemTypeFromInputToOutput(ctx, 0, 2);
 
-    if (layout_value == 0) {      
+    if (layout_value == 0) {
       auto dims = {num_directions, batch_size, hidden_size};
       updateOutputShape(ctx, 2, dims);
     } else {
@@ -95,11 +93,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "initial_h.shape = Y_h.shape = [batch_size, num_directions, hidden_size].",
         AttributeProto::INT,
         static_cast<int64_t>(0));
-    schema.Attr(
-        "hidden_size",
-        "Number of neurons in the hidden layer",
-        AttributeProto::INT,
-        OPTIONAL_VALUE);
+    schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
         "Optional scaling values used by some activation functions. The values "
@@ -177,8 +171,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeConstraint(
-        "T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference);
   };
 }
@@ -250,8 +243,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     RNN,
     14,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(
-            std::string(RNN_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(RNN_ver14_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -374,8 +366,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     GRU,
     14,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(
-            std::string(GRU_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(GRU_ver14_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -514,8 +505,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
     14,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(
-            std::string(LSTM_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(LSTM_ver14_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "
@@ -524,26 +514,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "for default if not specified.",
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
-      .Attr(
-          "layout",
-          "The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. "
-          "If 0, the following shapes are expected: "
-          "X.shape = [seq_length, batch_size, input_size], "
-          "Y.shape = [seq_length, num_directions, batch_size, hidden_size], "
-          "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
-          "[num_directions, batch_size, hidden_size]. "
-          "If 1, the following shapes are expected: "
-          "X.shape = [batch_size, seq_length, input_size], "
-          "Y.shape = [batch_size, seq_length, num_directions, hidden_size], "
-          "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
-          "[num_directions, batch_size, hidden_size].",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
         .Attr(
-            "input_forget",
-            "Couple the input and forget gates if 1.",
+            "layout",
+            "The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. "
+            "If 0, the following shapes are expected: "
+            "X.shape = [seq_length, batch_size, input_size], "
+            "Y.shape = [seq_length, num_directions, batch_size, hidden_size], "
+            "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
+            "[num_directions, batch_size, hidden_size]. "
+            "If 1, the following shapes are expected: "
+            "X.shape = [batch_size, seq_length, input_size], "
+            "Y.shape = [batch_size, seq_length, num_directions, hidden_size], "
+            "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
+            "[batch_size, num_directions, hidden_size].",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr("input_forget", "Couple the input and forget gates if 1.", AttributeProto::INT, static_cast<int64_t>(0))
         .Input(
             1,
             "W",

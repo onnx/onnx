@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-
 # A library and utility for drawing ONNX nets. Most of this implementation has
 # been borrowed from the caffe2 implementation
 # https://github.com/caffe2/caffe2/blob/master/caffe2/python/net_drawer.py
@@ -12,17 +11,13 @@
 # with the graphviz `dot` utility, like so:
 #
 #   $ dot -Tsvg my_output.dot -o my_output.svg
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import argparse
 from collections import defaultdict
 import json
 from onnx import ModelProto, GraphProto, NodeProto
 import pydot  # type: ignore
-from typing import Text, Any, Callable, Optional, Dict
+from typing import Any, Callable, Optional, Dict
 
 
 OP_STYLE = {
@@ -37,20 +32,20 @@ BLOB_STYLE = {'shape': 'octagon'}
 _NodeProducer = Callable[[NodeProto, int], pydot.Node]
 
 
-def _escape_label(name):  # type: (Text) -> Text
+def _escape_label(name: str) -> str:
     # json.dumps is poor man's escaping
     return json.dumps(name)
 
 
-def _form_and_sanitize_docstring(s):  # type: (Text) -> Text
+def _form_and_sanitize_docstring(s: str) -> str:
     url = 'javascript:alert('
     url += _escape_label(s).replace('"', '\'').replace('<', '').replace('>', '')
     url += ')'
     return url
 
 
-def GetOpNodeProducer(embed_docstring=False, **kwargs):  # type: (bool, **Any) -> _NodeProducer
-    def ReallyGetOpNode(op, op_id):  # type: (NodeProto, int) -> pydot.Node
+def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProducer:
+    def ReallyGetOpNode(op: NodeProto, op_id: int) -> pydot.Node:
         if op.name:
             node_name = '%s/%s (op#%d)' % (op.name, op.op_type, op_id)
         else:
@@ -68,17 +63,17 @@ def GetOpNodeProducer(embed_docstring=False, **kwargs):  # type: (bool, **Any) -
 
 
 def GetPydotGraph(
-    graph,  # type: GraphProto
-    name=None,  # type: Optional[Text]
-    rankdir='LR',  # type: Text
-    node_producer=None,  # type: Optional[_NodeProducer]
-    embed_docstring=False,  # type: bool
-):  # type: (...) -> pydot.Dot
+    graph: GraphProto,
+    name: Optional[str] = None,
+    rankdir: str = 'LR',
+    node_producer: Optional[_NodeProducer] = None,
+    embed_docstring: bool = False,
+) -> pydot.Dot:
     if node_producer is None:
         node_producer = GetOpNodeProducer(embed_docstring=embed_docstring, **OP_STYLE)
     pydot_graph = pydot.Dot(name, rankdir=rankdir)
-    pydot_nodes = {}  # type: Dict[Text, pydot.Node]
-    pydot_node_counts = defaultdict(int)  # type: Dict[Text, int]
+    pydot_nodes: Dict[str, pydot.Node] = {}
+    pydot_node_counts: Dict[str, int] = defaultdict(int)
     for op_id, op in enumerate(graph.node):
         op_node = node_producer(op, op_id)
         pydot_graph.add_node(op_node)
@@ -110,20 +105,20 @@ def GetPydotGraph(
     return pydot_graph
 
 
-def main():  # type: () -> None
+def main() -> None:
     parser = argparse.ArgumentParser(description="ONNX net drawer")
     parser.add_argument(
         "--input",
-        type=Text, required=True,
+        type=str, required=True,
         help="The input protobuf file.",
     )
     parser.add_argument(
         "--output",
-        type=Text, required=True,
+        type=str, required=True,
         help="The output protobuf file.",
     )
     parser.add_argument(
-        "--rankdir", type=Text, default='LR',
+        "--rankdir", type=str, default='LR',
         help="The rank direction of the pydot graph.",
     )
     parser.add_argument(

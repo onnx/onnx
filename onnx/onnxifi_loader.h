@@ -86,13 +86,13 @@ extern "C" {
  * @return Non-zero if the function succeeds, or zero if the function fails.
  */
 ONNXIFI_HIDDEN int ONNXIFI_ABI onnxifi_load(
-  uint32_t flags,
+    uint32_t flags,
 #ifdef _WIN32
-  const wchar_t* path,
+    const wchar_t* path,
 #else
-  const char* path,
+    const char* path,
 #endif
-  struct onnxifi_library* library);
+    struct onnxifi_library* library);
 
 /**
  * Unload the dynamically loaded ONNXIFI library.
@@ -103,8 +103,7 @@ ONNXIFI_HIDDEN int ONNXIFI_ABI onnxifi_load(
  *                          The function zero-initialized the structure before
  *                          returning.
  */
-ONNXIFI_HIDDEN void ONNXIFI_ABI onnxifi_unload(
-  struct onnxifi_library* library);
+ONNXIFI_HIDDEN void ONNXIFI_ABI onnxifi_unload(struct onnxifi_library* library);
 
 #ifdef __cplusplus
 } /* extern "C" */

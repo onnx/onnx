@@ -2,18 +2,12 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-
 import argparse
 import os
 import subprocess
-import tempfile
-
-MYPY = False
-if MYPY:
-    from typing import Text
 
 
-def parse_args():  # type: () -> argparse.Namespace
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(os.path.basename(__file__))
     parser.add_argument('-r', '--root',
                         default=os.path.dirname(
@@ -24,7 +18,7 @@ def parse_args():  # type: () -> argparse.Namespace
     return parser.parse_args()
 
 
-def gen_trace_file(root_dir, out_path):  # type: (Text, Text) -> None
+def gen_trace_file(root_dir: str, out_path: str) -> None:
     subprocess.check_output([
         'lcov',
         '-c',
@@ -54,7 +48,7 @@ def gen_trace_file(root_dir, out_path):  # type: (Text, Text) -> None
     ])
 
 
-def gen_html_files(root_dir, trace_path, out_dir):  # type: (Text, Text, Text) -> None
+def gen_html_files(root_dir: str, trace_path: str, out_dir: str) -> None:
     subprocess.check_output([
         'genhtml',
         trace_path,
@@ -65,7 +59,7 @@ def gen_html_files(root_dir, trace_path, out_dir):  # type: (Text, Text, Text) -
     ])
 
 
-def main():  # type: () -> None
+def main() -> None:
     args = parse_args()
 
     root = os.path.abspath(args.root)
@@ -79,7 +73,7 @@ def main():  # type: () -> None
     html_dir = os.path.join(out, 'html')
     gen_html_files(root, trace_path, html_dir)
 
-    print('Static HTML files have been generated at:\n\t{}'.format(html_dir))
+    print(f'Static HTML files have been generated at:\n\t{html_dir}')
 
 
 if __name__ == '__main__':

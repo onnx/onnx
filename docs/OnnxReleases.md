@@ -1,6 +1,6 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-The ONNX project, going forward, will plan to release roughly on a two month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
+The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
 ## Preparation
 
@@ -10,19 +10,19 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 * Prepare a change log for the release –
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
     * And draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.
-* Before creating the release branch, increase `VERSION_NUMBER` in the main branch. The following files will be updated: [VERSION_NUMBER file](https://github.com/onnx/onnx/blob/master/VERSION_NUMBER) and
-[version.h](../onnx/common/version.h)
+* Before creating the release branch, increase `VERSION_NUMBER` in the main branch. The following files will be updated: [VERSION_NUMBER file](/VERSION_NUMBER) and
+[version.h](/onnx/common/version.h)
 
 * Please use a VERSION_NUMBER smaller than the target (release VERSION_NUMBER) and larger than the previous one to test TestPyPI before using the target VERSION_NUMBER. 
 
 * Make sure that the IR version number and opset version numbers are up-to-date in
-[ONNX proto files](../onnx/onnx.in.proto),
+[ONNX proto files](/onnx/onnx.in.proto),
 [Versioning.md](Versioning.md),
-[schema.h](../onnx/defs/schema.h),
-[helper.py](../onnx/helper.py) and [helper_test.py](../onnx/test/helper_test.py). Please note that this also needs to be happened in the main branch before creating the release branch.
+[schema.h](/onnx/defs/schema.h),
+[helper.py](/onnx/helper.py) and [helper_test.py](/onnx/test/helper_test.py). Please note that this also needs to be happened in the main branch before creating the release branch.
 
-* Create a release branch (please use rel-* as the branch name) from master. Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
-* Create an issue in onnxruntime to update onnx commit in onnxruntime to the release branch commit and run all the CI and packaging pipelines.
+* Create a release branch (please use rel-* as the branch name) from main. Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
+* Create an issue in onnxruntime repo. See [a sample issue](https://github.com/microsoft/onnxruntime/issues/11108) for details. The issue is to request onnxruntime to update with the onnx release branch and to run all CI and packaging pipelines ([How_To_Update_ONNX_Dev_Notes](https://github.com/microsoft/onnxruntime/blob/master/docs/How_To_Update_ONNX_Dev_Notes.md)). It is possible that onnx bugs are detected with onnxruntime pipeline runs. In such case the bugs shall be fixed in the onnx main branch and cherry-picked into the release branch. Follow up with onnxruntime to ensure the issue is resolved in time before onnx release.
 
 ## Upload to TestPyPI
 **Wheels**
@@ -31,7 +31,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
   * Use GitHub Action (`.github/workflows/release_win.yml`) under onnx repo to produce wheels for Windows.
 
 * Linux
-  * Use GitHub Action (`.github/workflows/release_linux_x86_64.yml`) and (`.github/workflows/release_linux_i686.yml`) under onnx repo to produce x64/i686 wheels for Linux.
+  * Use GitHub Action (`.github/workflows/release_linux_x86_64.yml`) and (`.github/workflows/release_linux_aarch64.yml`) under onnx repo to produce x64/aarch64 wheels for Linux.
 
 * Mac
   * Use GitHub Action (`.github/workflows/release_mac.yml`) under onnx repo to produce wheels for Mac.
@@ -50,7 +50,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
         * onnx/onnx.pb.h
     * If they are present run ``git clean -ixd`` and remove those files from your local branch
 * Do ``python setup.py sdist`` to generate the source distribution.
-* Do ``twine upload dist/* https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`` to upload it to the test instance of PyPI.
+* Do ``twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`` to upload it to the test instance of PyPI.
 
 ## TestPyPI package verification
 **Test ONNX itself**
@@ -59,7 +59,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
   * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
   * Utilize the following matrix to check:
 
-    |   | 3.5 | 3.6 | 3.7 | 3.8 |
+    |   | 3.7 | 3.8 | 3.9 | 3.10 |
     -- | -- | -- | -- | -- |
     Linux |   |   |   |   |
     Windows |   |   |   |   |
@@ -70,7 +70,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 **Partner Validation**
 
- * Test with onnxruntime package: To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model. For example, run the test script from [test_with_ort.py](../onnx/test/test_with_ort.py) with installed onnxruntime package.
+ * Test with onnxruntime package: To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model. For example, run the test script from [test_with_ort.py](/onnx/test/test_with_ort.py) with installed onnxruntime package.
 
  * Test with ONNX converters: Create GitHub issues in converters repos to provide them the package links and have them test the TestPyPI packages.
    * https://github.com/pytorch/pytorch
@@ -84,7 +84,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 
 
 **Source distribution verification**
-* Test the source distribution by doing ``pip install -i https://test.pypi.org/simple/ onnx`` in a new environment.
+* Test the source distribution by doing ``pip install --index-url https://test.pypi.org/simple --no-binary onnx onnx`` in a new environment.
 
 ## Upload to official PyPI
 **NOTE: Once the packages are uploaded to PyPI, you cannot overwrite it on the same PyPI instance. Please make sure everything is good on TestPyPI before uploading to PyPI**
@@ -96,7 +96,7 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 **Source Distribution**
 * Follow the same process in TestPyPI to produce the source distribution.
 * Use ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`` instead to upload to the official PyPI.
-* Test with ``pip install --index-url https://upload.pypi.org/legacy/ onnx``
+* Test with ``pip install --no-binary onnx onnx``
 
 ## After PyPI Release
 
@@ -115,8 +115,9 @@ The ONNX project, going forward, will plan to release roughly on a two month cad
 **Merge into main branch**
 * After everything above is done, merge the release branch into the main branch to make it consistent.
 
-## TODO list for next release
-* Remove `onnx.optimizer` in ONNX 1.9
-* Be aware of protobuf version gap issue (like building onnx with protobuf>=3.12 is not compatible with older protobuf)
-* (Optional) Deprecate Python 3.5 and add Python 3.9.
-* (Optional) Automatically upload created wheels for Windows
+**Remove old onnx-weekly packages on TestPyPI**
+* Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://test.pypi.org/project/onnx-weekly/#history) on TestPyPI to save space.
+* Steps: Login and go [here](https://test.pypi.org/manage/project/onnx-weekly/releases/) -> Choose target package -> Options -> Delete.
+
+**Bump opset version for ai.onnx**
+* Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes. For example, this [demo PR](https://github.com/onnx/onnx/pull/4134/files).

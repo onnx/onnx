@@ -1,15 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import json
 import os
 
 from ..case.test_case import TestCase
-from typing import List, Text, Optional
+from typing import List, Optional
 
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.realpath(os.path.dirname(__file__))),
@@ -17,15 +12,15 @@ DATA_DIR = os.path.join(
 
 
 def load_model_tests(
-    data_dir=DATA_DIR,  # type: Text
-    kind=None,  # type: Optional[Text]
-):  # type: (...) -> List[TestCase]
+    data_dir: str = DATA_DIR,
+    kind: Optional[str] = None,
+) -> List[TestCase]:
     '''Load model test cases from on-disk data files.
     '''
 
     supported_kinds = os.listdir(data_dir)
     if kind not in supported_kinds:
-        raise ValueError("kind must be one of {}".format(supported_kinds))
+        raise ValueError(f"kind must be one of {supported_kinds}")
 
     testcases = []
 
@@ -40,7 +35,7 @@ def load_model_tests(
         if os.path.exists(os.path.join(case_dir, 'model.onnx')):
             url = None
             model_name = test_name[len('test_')]
-            model_dir = case_dir  # type: Optional[Text]
+            model_dir: Optional[str] = case_dir
         else:
             with open(os.path.join(case_dir, 'data.json')) as f:
                 data = json.load(f)

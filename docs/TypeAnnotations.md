@@ -23,7 +23,7 @@ If you're using Python 3, you can simply install mypy as an extra dependency of 
 
 Call from the top level directory of your onnx repository:
 
-    ~/onnx $ pip install -e .[mypy]
+    ~/onnx $ pip install -e .[lint]
 
 And then run the type checks:
 
