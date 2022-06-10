@@ -9796,20 +9796,19 @@ for i in range(len(X.shape)):
 <summary>d_epsilon</summary>
 
 ```python
-epsilon = 1e-1
 X = np.random.randn(2, 3, 5).astype(np.float32)
 
 def case(axis: int) -> None:
     normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
-    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis, epsilon)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
     node = onnx.helper.make_node(
         'LayerNormalization',
         inputs=['X', 'W', 'B'],
         outputs=['Y', 'Mean', 'InvStdDev'],
         axis=axis,
-        epsilon=epsilon
+        epsilon=1e-1
     )
 
     if axis < 0:
@@ -9849,7 +9848,7 @@ node = onnx.helper.make_node(
 )
 
 expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-       name='test_layer_normalization_default_axis')
+        name='test_layer_normalization_default_axis')
 ```
 
 </details>
