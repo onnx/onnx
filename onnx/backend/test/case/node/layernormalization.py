@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np  # type: ignore
-import onnx
 
+import onnx
 from ..base import Base
 from . import expect
 
@@ -112,7 +112,7 @@ class LayerNormalization(Base):
         )
 
         expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-               name='test_layer_normalization_default_axis')
+                name='test_layer_normalization_default_axis')
 
     @staticmethod
     def export2d() -> None:
@@ -145,20 +145,19 @@ class LayerNormalization(Base):
 
     @staticmethod
     def export3d_epsilon() -> None:
-        epsilon = 1e-1
         X = np.random.randn(2, 3, 5).astype(np.float32)
 
         def case(axis: int) -> None:
             normalized_shape = calculate_normalized_shape(X.shape, axis)
             W = np.random.randn(*normalized_shape).astype(np.float32)
             B = np.random.randn(*normalized_shape).astype(np.float32)
-            Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis, epsilon)
+            Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
             node = onnx.helper.make_node(
                 'LayerNormalization',
                 inputs=['X', 'W', 'B'],
                 outputs=['Y', 'Mean', 'InvStdDev'],
                 axis=axis,
-                epsilon=epsilon
+                epsilon=1e-1
             )
 
             if axis < 0:
