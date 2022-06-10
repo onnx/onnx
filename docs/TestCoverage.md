@@ -6017,19 +6017,20 @@ for i in range(len(X.shape)):
 <summary>d_epsilon</summary>
 
 ```python
+epsilon = 1e-1
 X = np.random.randn(2, 3, 5).astype(np.float32)
 
 def case(axis: int) -> None:
     normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
-    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis, epsilon)
     node = onnx.helper.make_node(
         'LayerNormalization',
         inputs=['X', 'W', 'B'],
         outputs=['Y', 'Mean', 'InvStdDev'],
         axis=axis,
-        epsilon=1e-1
+        epsilon=epsilon
     )
 
     if axis < 0:
@@ -6067,7 +6068,7 @@ node = onnx.helper.make_node(
 )
 
 expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-        name='test_layer_normalization_default_axis')
+       name='test_layer_normalization_default_axis')
 ```
 
 </details>
@@ -12138,8 +12139,8 @@ nstfts = ((signal.shape[1] - length) // step) + 1
 output = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
 for i in range(nstfts):
     start = i * step
-    stop = i * step + onesided_length
-    complex_out = np.fft.fft(signal[0, start:stop, 0])
+    stop = i * step + length
+    complex_out = np.fft.fft(signal[0, start:stop, 0])[0:onesided_length]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 
 expect(node, inputs=[signal, step, length], outputs=[output],
