@@ -2353,7 +2353,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
               .Add("PrefixShape = Slice (XShape, Zero1D, Axis1D)") // [d[0], ..., d[axis-1]]
               .Add(
-                  axis > 0 // number of axes that are reduced =
+                  axis >= 0 // number of axes that are reduced =
                       ? "NumReducedAxes = Sub (Rank, Axis1D)" // [rank - axis]: 1D tensor
                       : "NumReducedAxes = Neg (Axis1D)") // [-axis] : 1D tensor
               .Add(
