@@ -414,7 +414,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
-
     def test_make_float16_tensor(self) -> None:
         np_array = np.random.randn(2, 3).astype(np.float16)
 
