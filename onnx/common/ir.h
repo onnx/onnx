@@ -1253,6 +1253,7 @@ inline const Graph* Value::owningGraph() const {
 // updated too.
 inline Value* Value::setUniqueName(const std::string& name, bool update_related_names) {
   if (has_unique_name() && update_related_names) {
+    auto *graph = owningGraph();
     auto old_name = unique_name_;
     for (size_t i = 0; i < owningGraph()->initializer_names_.size(); i++) {
       auto &initializer_name = owningGraph()->initializer_names_[i];
@@ -1261,7 +1262,6 @@ inline Value* Value::setUniqueName(const std::string& name, bool update_related_
         owningGraph()->initializers_[i].setName(name);
       }
     }
-    auto *graph = owningGraph();
     graph->forEachNode([this, &name, &old_name](Node* node) {
       if (node->owningGraph() == this->owningGraph()) {
         // skip non-subgraph
