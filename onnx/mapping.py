@@ -2,6 +2,7 @@
 
 from onnx import TensorProto, SequenceProto, OptionalProto
 import numpy as np  # type: ignore
+from typing import Any
 import warnings
 
 # tesnor_type: (numpy type, storage type, string name)
@@ -69,22 +70,22 @@ OPTIONAL_ELEMENT_TYPE_TO_FIELD = {
 }
 
 
-def to_np_type(tensor_type) -> int:
+def to_np_type(tensor_type: str) -> Any:
     return TENSOR_TYPE_MAP[tensor_type][0]
 
 
-def to_sotrage_tensor_type(tensor_type) -> int:
+def to_sotrage_tensor_type(tensor_type: str) -> int:
     return TENSOR_TYPE_MAP[tensor_type][1]
 
 
-def to_string(tensor_type) -> str:
+def to_string(tensor_type: str) -> str:
     return TENSOR_TYPE_MAP[tensor_type][2]
 
 
-def to_storage_numpy_type(tensor_type) -> int:
+def to_storage_numpy_type(tensor_type: str) -> int:
     return to_np_type(to_sotrage_tensor_type(tensor_type))
 
 
 # This map is used to get storage field for certain tensor type
-def to_field(tensor_type) -> int:
+def to_field(tensor_type: str) -> str:
     return STORAGE_TENSOR_TYPE_TO_FIELD[TENSOR_TYPE_MAP[tensor_type][1]]

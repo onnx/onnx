@@ -7,8 +7,8 @@ import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto, SequenceProto
-from onnx.mapping import to_string, TENSOR_TYPE_TO_NP_TYPE
-import pytest
+from onnx.mapping import to_string, TENSOR_TYPE_MAP
+import pytest  # type: ignore
 from typing import Any, List, Tuple
 
 import unittest
@@ -595,11 +595,11 @@ class TestPrintableGraph(unittest.TestCase):
 
 
 @pytest.mark.parametrize("tensor_type",
-    [t for t in TENSOR_TYPE_TO_NP_TYPE if t not in {TensorProto.BFLOAT16, TensorProto.STRING, TensorProto.COMPLEX64, TensorProto.COMPLEX128}],
+    [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING, TensorProto.COMPLEX64, TensorProto.COMPLEX128}],
     ids=lambda tensor_type: to_string(tensor_type)
 )
-def test_make_tensor_vals(tensor_type) -> None:
-    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_TO_NP_TYPE[tensor_type])
+def test_make_tensor_vals(tensor_type: str) -> None:
+    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_MAP[tensor_type])
     tensor = helper.make_tensor(
         name='test',
         data_type=tensor_type,
@@ -610,11 +610,11 @@ def test_make_tensor_vals(tensor_type) -> None:
 
 
 @pytest.mark.parametrize("tensor_type",
-    [t for t in TENSOR_TYPE_TO_NP_TYPE if t not in {TensorProto.BFLOAT16, TensorProto.STRING}],
+    [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING}],
     ids=lambda tensor_type: to_string(tensor_type)
 )
-def test_make_tensor_raw(tensor_type) -> None:
-    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_TO_NP_TYPE[tensor_type])
+def test_make_tensor_raw(tensor_type: str) -> None:
+    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_MAP[tensor_type])
     tensor = helper.make_tensor(
         name='test',
         data_type=tensor_type,
