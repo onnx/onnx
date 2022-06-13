@@ -2070,7 +2070,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           // Shape inference
 
-          // Needs atleast the first input to proceed
+          // Needs at least the first input to proceed
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }

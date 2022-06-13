@@ -12,6 +12,7 @@ class HannWindow(Base):
 
     @staticmethod
     def export() -> None:
+        # Test periodic window
         node = onnx.helper.make_node(
             'HannWindow',
             inputs=['x'],
@@ -20,6 +21,20 @@ class HannWindow(Base):
         size = np.int32(10)
         a0 = .5
         a1 = .5
-        y = a0 + a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+        y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
         expect(node, inputs=[size], outputs=[y],
                name='test_hannwindow')
+
+        # Test symmetric window
+        node = onnx.helper.make_node(
+            'HannWindow',
+            inputs=['x'],
+            outputs=['y'],
+            periodic=0
+        )
+        size = np.int32(10)
+        a0 = .5
+        a1 = .5
+        y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+        expect(node, inputs=[size], outputs=[y],
+               name='test_hannwindow_symmetric')

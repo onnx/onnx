@@ -256,7 +256,7 @@ void convPoolShapeInference1(
 
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have atleast 2 dimensions");
+    fail_shape_inference("Input tensor must have at least 2 dimensions");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -720,7 +720,7 @@ void maxUnpoolShapeInference1(InferenceContext& ctx) {
   }
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor X must have atleast 2 dimensions.");
+    fail_shape_inference("Input tensor X must have at least 2 dimensions.");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -795,7 +795,7 @@ void maxUnpoolShapeInference1(InferenceContext& ctx) {
 
 static const char* MaxUnpool_ver9_doc = R"DOC(
 MaxUnpool essentially computes the partial inverse of the MaxPool op.
- The input information to this op is typically the the output information from a MaxPool op. The first
+ The input information to this op is typically the output information from a MaxPool op. The first
  input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
  from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
  to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
