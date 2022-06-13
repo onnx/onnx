@@ -357,11 +357,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shape_ver17_doc = R"DOC(
+static const char* Shape_ver15_doc = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
-Optional attributes `start` and `end` can be used to compute a slice of the input tensor's shape.
-Optional attribute `axes` can be used to extract the extents of a subset of axes from the input tensor's shape.
-Usage of attributes `start` and `end` is incompatible with usage of `axes`.
+Optional attributes start and end can be used to compute a slice of the input tensor's shape.
 If start axis is omitted, the slice starts from axis 0.
 The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
 If the end axis is omitted, the axes upto the last one will be included.
@@ -393,31 +391,23 @@ Output: [3]
 
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
-    17,
+    15,
     OpSchema()
-        .SetDoc(Shape_ver17_doc)
+        .SetDoc(Shape_ver15_doc)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
             "start",
             "(Optional) Starting axis for slicing the shape. Default value is 0."
-            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). ",
+            "Negative value means counting dimensions from the back.",
             AttributeProto::INT,
-            OPTIONAL_VALUE)
+            static_cast<int64_t>(0))
         .Attr(
             "end",
             "(Optional) Ending axis for slicing the shape. "
-            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). "
-            "If omitted, sizes of all axes upto (including) the last one will be included. ",
+            "Negative value means counting dimensions from the back. "
+            "If omitted, sizes of all axes upto (including) the last one will be included.",
             AttributeProto::INT,
-            OPTIONAL_VALUE)
-        .Attr(
-            "axes",
-            "(Optional) If provided, it specifies a subset of axes to extract from the shape. "
-            "If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). "
-            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). "
-            "Behavior is undefined if an axis is repeated.",
-            AttributeProto::INTS,
             OPTIONAL_VALUE)
         .TypeConstraint("T", OpSchema::all_tensor_types_with_bfloat(), "Input tensor can be of arbitrary type.")
         .TypeConstraint("T1", {"tensor(int64)"}, "Constrain output to int64 tensor.")
@@ -431,17 +421,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
-
-          auto axes_attr = ctx.getAttribute("axes");
-          if (axes_attr) {
-            auto axes = RetrieveValues<int64_t>(*axes_attr);
-            for (auto axis: axes) {
-              if (axis < -rank || axis >= (rank-1)) {
-                fail_shape_inference("Unexpected axis ", axis, " Expected range: [", -rank, ", ", rank-1, "].");
-              }
-            }
-            output_length->set_dim_value(static_cast<int64_t>(axes.size()));
-          } else {
+          int64_t start = getAttribute(ctx, "start", 0);
+          if (start < 0)
+            start += rank;
+          start = (start < 0) ? 0 : (start > rank) ? rank : start;
+          int64_t end = getAttribute(ctx, "end", rank);
+          if (end < 0)
+            end += rank;
+          end = (end < 0) ? 0 : (end > rank) ? rank : end;
+          output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          if (ctx.getInputType(0)->tensor_type().has_shape()) {
+            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            int64_t rank = static_cast<int64_t>(input_shape.dim_size());
             int64_t start = getAttribute(ctx, "start", 0);
             if (start < 0)
               start += rank;
@@ -450,38 +443,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (end < 0)
               end += rank;
             end = (end < 0) ? 0 : (end > rank) ? rank : end;
-            output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
-          }
-        })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            int64_t rank = static_cast<int64_t>(input_shape.dim_size());
-
             TensorShapeProto output_shape;
-            auto axes_attr = ctx.getAttribute("axes");
-            if (axes_attr) {
-              auto axes = RetrieveValues<int64_t>(*axes_attr);
-              for (size_t i = 0; i < axes.size(); i++) {
-                int axis = axes[i];
-                if (axis < 0)
-                  axis += rank;
-                if (axis < 0)
-                  axis += rank;
-                *output_shape.add_dim() = input_shape.dim(axis);
-              }
-            } else {
-              int64_t start = getAttribute(ctx, "start", 0);
-              if (start < 0)
-                start += rank;
-              start = (start < 0) ? 0 : (start > rank) ? rank : start;
-              int64_t end = getAttribute(ctx, "end", rank);
-              if (end < 0)
-                end += rank;
-              end = (end < 0) ? 0 : (end > rank) ? rank : end;
-              for (int64_t d = start; d < end; ++d) {
-                *output_shape.add_dim() = input_shape.dim(static_cast<int>(d));
-              }
+            for (int64_t d = start; d < end; ++d) {
+              *output_shape.add_dim() = input_shape.dim(static_cast<int>(d));
             }
             ctx.addOutputData(0, std::move(output_shape));
           }

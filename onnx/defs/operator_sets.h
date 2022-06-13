@@ -984,7 +984,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, BlackmanWindow);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, MelWeightMatrix);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, STFT);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, Pad);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, Shape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, CenterCropPad);
 
 // Iterate over schema from ai.onnx version 17
@@ -1000,7 +999,6 @@ class OpSet_Onnx_ver17 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, MelWeightMatrix)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, STFT)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, Pad)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, Shape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, CenterCropPad)>());
   }
 };
