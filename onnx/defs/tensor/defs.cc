@@ -3610,37 +3610,46 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-              const int64_t input_rank = input_shape.dim_size();
+              FunctionBuilder builder(functionProto);
+              builder.Const("k2", std::vector<int64_t>{2});
 
               auto axes_attr = ctx.getAttribute("axes");
               std::vector<int64_t> axes;
-              if (axes_attr) {
+              if (axes_attr) {  // axes provided, need to work on a subset of dimensions
                 axes = RetrieveValues<int64_t>(*axes_attr);
-              } else {
-                axes.resize(input_rank);
-                std::iota(axes.begin(), axes.end(), 0);
+                builder.Const("axes_input", axes);
+                builder.Add("x_shape_alldims = Shape (input_data)")
+                  .Add("x_shape = Gather (x_shape_alldims, axes_input)");
+              } else {  // axes not provided, assuming all dims
+                 builder.Add("x_shape = Shape (input_data)");
               }
 
-              FunctionBuilder builder(functionProto);
-              builder.Const("k2", std::vector<int64_t>{2});
-              builder.Const("axes_input", axes);
-
               // First: Pad step
-              builder.Add("x_shape = Shape (input_data)", "axes", axes)
-                .Add("padded_sh = Max(x_shape, shape)")
+              builder.Add("padded_sh = Max(x_shape, shape)")
                 .Add("pad_amount = Sub(padded_sh, x_shape)")
                 .Add("pad_amount_left = Div(pad_amount, k2)")
                 .Add("pad_amount_right = Sub(pad_amount, pad_amount_left)")
-                .Add("pads = Concat <axis = 0> (pad_amount_left, pad_amount_right)")
-                .Add("padded_input = Pad (input_data, pads, , axes_input)");
+                .Add("pads = Concat <axis = 0> (pad_amount_left, pad_amount_right)");
+              if (axes_attr)
+                builder.Add("padded_input = Pad (input_data, pads, , axes_input)");
+              else
+                builder.Add("padded_input = Pad (input_data, pads)");
 
-              // First: Slice step
-              builder.Add("x_shape2 = Shape (padded_input)", "axes", axes)
-                .Add("sh_diff = Sub (x_shape2, shape)")
+              // Second: Slice step
+              if (axes_attr) {
+                builder.Add("x_shape_alldims2 = Shape (padded_input)")
+                  .Add("x_shape2 = Gather (x_shape_alldims2, axes_input)");
+              } else {
+                builder.Add("x_shape2 = Shape (padded_input)");
+              }
+
+              builder.Add("sh_diff = Sub (x_shape2, shape)")
                 .Add("start_dims = Div (sh_diff, k2)")
-                .Add("end_dims = Add (start_dims, shape)")
-                .Add("output_data = Slice (padded_input, start_dims, end_dims, axes_input)");
+                .Add("end_dims = Add (start_dims, shape)");
+              if (axes_attr)
+                builder.Add("output_data = Slice (padded_input, start_dims, end_dims, axes_input)");
+              else
+                builder.Add("output_data = Slice (padded_input, start_dims, end_dims)");
 
               schema.BuildFunction(functionProto);
               return true;

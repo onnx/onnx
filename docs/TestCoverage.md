@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 162/177 (91.53%, 5 generators excluded) common operators.
+Node tests have covered 163/178 (91.57%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1904,6 +1904,154 @@ expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output],
        name='test_celu')
+```
+
+</details>
+
+
+### CenterCropPad
+There are 7 test cases, listed as following:
+<details>
+<summary>center_crop_pad_crop_chw_crop</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[1, 2],
+)
+
+x = np.random.randn(3, 20, 10).astype(np.float32)
+shape = np.array([10, 8], dtype=np.int64)
+y = x[:, 5:15, 1:9]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_chw_crop')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_chw_crop_and_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[1, 2],
+)
+
+x = np.random.randn(3, 20, 8).astype(np.float32)
+shape = np.array([10, 10], dtype=np.int64)
+y = np.zeros([3, 10, 10], dtype=np.float32)
+y[:, :, 1:9] = x[:, 5:15, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_chw_crop_and_pad')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_chw_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[1, 2],
+)
+
+x = np.random.randn(3, 10, 8).astype(np.float32)
+shape = np.array([20, 10], dtype=np.int64)
+y = np.zeros([3, 20, 10], dtype=np.float32)
+y[:, 5:15, 1:9] = x
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_chw_pad')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_hwc_crop</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[0, 1],
+)
+
+x = np.random.randn(20, 10, 3).astype(np.float32)
+shape = np.array([10, 8], dtype=np.int64)
+y = x[5:15, 1:9, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_hwc_crop')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_hwc_crop_and_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[0, 1],
+)
+
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 10], dtype=np.int64)
+y = np.zeros([10, 10, 3], dtype=np.float32)
+y[:, 1:9, :] = x[5:15, :, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_hwc_crop_and_pad')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_hwc_crop_uneven</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[0, 1],
+)
+
+x = np.random.randn(20, 10, 3).astype(np.float32)
+shape = np.array([10, 7], dtype=np.int64)
+y = x[5:15, 1:8, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_hwc_crop')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_hwc_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[0, 1],
+)
+
+x = np.random.randn(10, 8, 3).astype(np.float32)
+shape = np.array([20, 10], dtype=np.int64)
+y = np.zeros([20, 10, 3], dtype=np.float32)
+y[5:15, 1:9, :] = x
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_hwc_pad')
 ```
 
 </details>
@@ -9174,7 +9322,7 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 
 ### Pad
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>constant_pad</summary>
 
@@ -9197,6 +9345,33 @@ y = pad_impl(
 
 expect(node, inputs=[x, pads, value], outputs=[y],
        name='test_constant_pad')
+```
+
+</details>
+<details>
+<summary>constant_pad_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x', 'pads', 'value', 'axes'],
+    outputs=['y'],
+    mode='constant'
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([1, 3], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    'constant',
+    1.2,
+    [1, 3],
+)
+
+expect(node, inputs=[x, pads, value, axes], outputs=[y],
+       name='test_constant_pad_axes')
 ```
 
 </details>
