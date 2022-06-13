@@ -272,68 +272,7 @@ class ParserBase {
     std::string value;
   };
 
-  Status Parse(Literal& result) {
-    bool decimal_point = false;
-    auto nextch = NextChar();
-    auto from = next_;
-    if (nextch == '"') {
-      ++next_;
-      bool has_escape = false;
-      while ((next_ < end_) && (*next_ != '"')) {
-        if (*next_ == '\\') {
-          has_escape = true;
-          ++next_;
-          if (next_ >= end_)
-            return ParseError("Incomplete string literal.");
-        }
-        ++next_;
-      }
-      if (next_ >= end_)
-        return ParseError("Incomplete string literal.");
-      ++next_;
-      result.type = LiteralType::STRING_LITERAL;
-      if (has_escape) {
-        std::string& target = result.value;
-        target.clear();
-        target.reserve(next_ - from - 2); // upper bound
-        // *from is the starting quote. *(next_-1) is the ending quote.
-        // Copy what is in-between, except for the escape character
-        while (++from < next_ - 1) {
-          // Copy current char, if not escape, or next char otherwise.
-          target.push_back(*from != '\\' ? (*from) : *(++from));
-        }
-      } else
-        result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
-    } else if ((isdigit(nextch) || (nextch == '-'))) {
-      ++next_;
-
-      while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
-        if (*next_ == '.') {
-          if (decimal_point)
-            break; // Only one decimal point allowed in numeric literal
-          decimal_point = true;
-        }
-        ++next_;
-      }
-
-      if (next_ == from)
-        return ParseError("Value expected but not found.");
-
-      // Optional exponent syntax: (e|E)(+|-)?[0-9]+
-      if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
-        decimal_point = true; // treat as float-literal
-        ++next_;
-        if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
-          ++next_;
-        while ((next_ < end_) && (isdigit(*next_)))
-          ++next_;
-      }
-
-      result.value = std::string(from, next_ - from);
-      result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
-    }
-    return Status::OK();
-  }
+  Status Parse(Literal& result);
 
   Status Parse(int64_t& val) {
     Literal literal;
