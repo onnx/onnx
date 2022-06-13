@@ -39,6 +39,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Cos">Cos</a>|<a href="Changelog.md#Cos-7">7</a>|
 |<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-9">9</a>|
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
+|<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-11">11</a>|
@@ -85,6 +86,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#MaxRoiPool">MaxRoiPool</a>|<a href="Changelog.md#MaxRoiPool-1">1</a>|
 |<a href="#MaxUnpool">MaxUnpool</a>|<a href="Changelog.md#MaxUnpool-11">11</a>, <a href="Changelog.md#MaxUnpool-9">9</a>|
 |<a href="#Mean">Mean</a>|<a href="Changelog.md#Mean-13">13</a>, <a href="Changelog.md#Mean-8">8</a>, <a href="Changelog.md#Mean-6">6</a>, <a href="Changelog.md#Mean-1">1</a>|
+|<a href="#MelWeightMatrix">MelWeightMatrix</a>|<a href="Changelog.md#MelWeightMatrix-17">17</a>|
 |<a href="#Min">Min</a>|<a href="Changelog.md#Min-13">13</a>, <a href="Changelog.md#Min-12">12</a>, <a href="Changelog.md#Min-8">8</a>, <a href="Changelog.md#Min-6">6</a>, <a href="Changelog.md#Min-1">1</a>|
 |<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
 |<a href="#Mul">Mul</a>|<a href="Changelog.md#Mul-14">14</a>, <a href="Changelog.md#Mul-13">13</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-1">1</a>|
@@ -99,7 +101,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
-|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-17">17</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
+|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
@@ -126,6 +128,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
+|<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
 |<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
@@ -137,7 +140,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SequenceErase">SequenceErase</a>|<a href="Changelog.md#SequenceErase-11">11</a>|
 |<a href="#SequenceInsert">SequenceInsert</a>|<a href="Changelog.md#SequenceInsert-11">11</a>|
 |<a href="#SequenceLength">SequenceLength</a>|<a href="Changelog.md#SequenceLength-11">11</a>|
-|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-17">17</a>, <a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
+|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
 |<a href="#Sigmoid">Sigmoid</a>|<a href="Changelog.md#Sigmoid-13">13</a>, <a href="Changelog.md#Sigmoid-6">6</a>, <a href="Changelog.md#Sigmoid-1">1</a>|
 |<a href="#Sign">Sign</a>|<a href="Changelog.md#Sign-13">13</a>, <a href="Changelog.md#Sign-9">9</a>|
@@ -170,11 +173,13 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|
+|<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|
-|<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-17">17</a>|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
+|<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|
+|<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|
@@ -2384,6 +2389,90 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### <a name="BlackmanWindow"></a><a name="blackmanwindow">**BlackmanWindow**</a>
+
+  Generates a Blackman window as described in the paper https://ieeexplore.ieee.org/document/1455106.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Blackman window with length: size. The output has the shape: [size].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>blackmanwindow</summary>
+
+```python
+# Test periodic window
+node = onnx.helper.make_node(
+    'BlackmanWindow',
+    inputs=['x'],
+    outputs=['y'],
+)
+size = np.int32(10)
+a0 = .42
+a1 = -.5
+a2 = .08
+y = a0
+y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+expect(node, inputs=[size], outputs=[y],
+       name='test_blackmanwindow')
+
+# Test symmetric window
+node = onnx.helper.make_node(
+    'BlackmanWindow',
+    inputs=['x'],
+    outputs=['y'],
+    periodic=0
+)
+size = np.int32(10)
+a0 = .42
+a1 = -.5
+a2 = .08
+y = a0
+y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+expect(node, inputs=[size], outputs=[y],
+       name='test_blackmanwindow_symmetric')
+```
+
+</details>
+
+
 ### <a name="Cast"></a><a name="cast">**Cast**</a>
 
   The operator casts the elements of a given input tensor to a data type
@@ -2467,9 +2556,9 @@ for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
     if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
-        np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.float32)
+        np_fp32 = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+            '0.47031248', '0.816468', '0.21087195', '0.7229038',
+            'NaN', 'INF', '+INF', '-INF'], dtype=np.float32)
         little_endisan = sys.byteorder == 'little'
         np_uint16_view = np_fp32.view(dtype=np.uint16)
         np_bfp16 = np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
@@ -2507,9 +2596,9 @@ for from_type, to_type in test_cases:
         else:
             output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     else:
-        input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(object)).reshape([3, 4])
+        input = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+            '0.47031248', '0.816468', '0.21087195', '0.7229038',
+            'NaN', 'INF', '+INF', '-INF'], dtype=np.dtype(object)).reshape([3, 4])
         output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
@@ -2590,9 +2679,9 @@ for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
     if 'BFLOAT16' == from_type or 'BFLOAT16' == to_type:
-        np_fp32 = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.float32)
+        np_fp32 = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+            '0.47031248', '0.816468', '0.21087195', '0.7229038',
+            'NaN', 'INF', '+INF', '-INF'], dtype=np.float32)
         little_endisan = sys.byteorder == 'little'
         np_uint16_view = np_fp32.view(dtype=np.uint16)
         np_bfp16 = np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
@@ -2630,9 +2719,9 @@ for from_type, to_type in test_cases:
         else:
             output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     else:
-        input = np.array([u'0.47892547', u'0.48033667', u'0.49968487', u'0.81910545',
-            u'0.47031248', u'0.816468', u'0.21087195', u'0.7229038',
-            u'NaN', u'INF', u'+INF', u'-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
+        input = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
+            '0.47031248', '0.816468', '0.21087195', '0.7229038',
+            'NaN', 'INF', '+INF', '-INF'], dtype=np.dtype(np.object)).reshape([3, 4])
         output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     like = output.flatten()[0:1]
     node = onnx.helper.make_node(
@@ -2787,214 +2876,6 @@ expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output],
        name='test_celu')
-```
-
-</details>
-
-
-### <a name="CenterCropPad"></a><a name="centercroppad">**CenterCropPad**</a>
-
-  Center crop or pad an input to given dimensions.
-
-  The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
-  cropped or padded.
-
-  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
-  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-  so that the input is centered in the output.
-
-#### Version
-
-This version of the operator has been available since version 17 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>If provided, it specifies a subset of axes that 'shape' refer to. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input_data</tt> (differentiable) : T</dt>
-<dd>Input to extract the centered crop from.</dd>
-<dt><tt>shape</tt> (non-differentiable) : Tind</dt>
-<dd>1-D tensor representing the cropping window dimensions.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output_data</tt> (differentiable) : T</dt>
-<dd>Output data.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>center_crop_pad_crop_chw_crop</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[1, 2],
-)
-
-x = np.random.randn(3, 20, 10).astype(np.float32)
-shape = np.array([10, 8], dtype=np.int64)
-y = x[:, 5:15, 1:9]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_chw_crop')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_chw_crop_and_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[1, 2],
-)
-
-x = np.random.randn(3, 20, 8).astype(np.float32)
-shape = np.array([10, 10], dtype=np.int64)
-y = np.zeros([3, 10, 10], dtype=np.float32)
-y[:, :, 1:9] = x[:, 5:15, :]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_chw_crop_and_pad')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_chw_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[1, 2],
-)
-
-x = np.random.randn(3, 10, 8).astype(np.float32)
-shape = np.array([20, 10], dtype=np.int64)
-y = np.zeros([3, 20, 10], dtype=np.float32)
-y[:, 5:15, 1:9] = x
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_chw_pad')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_hwc_crop</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[0, 1],
-)
-
-x = np.random.randn(20, 10, 3).astype(np.float32)
-shape = np.array([10, 8], dtype=np.int64)
-y = x[5:15, 1:9, :]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_hwc_crop')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_hwc_crop_and_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[0, 1],
-)
-
-x = np.random.randn(20, 8, 3).astype(np.float32)
-shape = np.array([10, 10], dtype=np.int64)
-y = np.zeros([10, 10, 3], dtype=np.float32)
-y[:, 1:9, :] = x[5:15, :, :]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_hwc_crop_and_pad')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_hwc_crop_uneven</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[0, 1],
-)
-
-x = np.random.randn(20, 10, 3).astype(np.float32)
-shape = np.array([10, 7], dtype=np.int64)
-y = x[5:15, 1:8, :]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_hwc_crop')
-```
-
-</details>
-
-
-<details>
-<summary>center_crop_pad_crop_hwc_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[0, 1],
-)
-
-x = np.random.randn(10, 8, 3).astype(np.float32)
-shape = np.array([20, 10], dtype=np.int64)
-y = np.zeros([20, 10, 3], dtype=np.float32)
-y[5:15, 1:9, :] = x
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_hwc_pad')
 ```
 
 </details>
@@ -3363,7 +3244,7 @@ Other versions of this operator: <a href="Changelog.md#Concat-1">1</a>, <a href=
 <summary>concat</summary>
 
 ```python
-test_cases: Dict[Text, Sequence[Any]] = {
+test_cases: Dict[str, Sequence[Any]] = {
     '1d': ([1, 2],
            [3, 4]),
     '2d': ([[1, 2], [3, 4]],
@@ -4655,6 +4536,104 @@ axis = np.int32(-1)
 y = np.array([1., 3., 6., 4., 9., 15.]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y],
        name='test_cumsum_2d_negative_axis')
+```
+
+</details>
+
+
+### <a name="DFT"></a><a name="dft">**DFT**</a>
+
+  Computes the discrete Fourier transform of input.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index.</dd>
+<dt><tt>inverse</tt> : int (default is 0)</dt>
+<dd>Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to false.</dd>
+<dt><tt>onesided</tt> : int (default is 0)</dt>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input</tt> (non-differentiable) : T1</dt>
+<dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimentions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
+<dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
+<dd>The length of the signal.If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T1</dt>
+<dd>The Fourier Transform of the input vector.If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=0 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N-1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain scalar length types to int64_t.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>dft</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DFT',
+    inputs=['x'],
+    outputs=['y'],
+    axis=1
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+y = np.fft.fft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x], outputs=[y],
+       name='test_dft')
+
+node = onnx.helper.make_node(
+    'DFT',
+    inputs=['x'],
+    outputs=['y'],
+    axis=2
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+y = np.fft.fft(x, axis=1)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x], outputs=[y],
+       name='test_dft_axis')
+
+node = onnx.helper.make_node(
+    'DFT',
+    inputs=['x'],
+    outputs=['y'],
+    inverse=1,
+    axis=1
+)
+x = np.arange(0, 100, dtype=np.complex64).reshape(10, 10,)
+y = np.fft.ifft(x, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x], outputs=[y],
+       name='test_dft_inverse')
 ```
 
 </details>
@@ -8225,6 +8204,162 @@ expect(node, inputs=[X, Grid], outputs=[Y_reflection],
 </details>
 
 
+### <a name="HammingWindow"></a><a name="hammingwindow">**HammingWindow**</a>
+
+  Generates a Hamming window as described in the paper https://ieeexplore.ieee.org/document/1455106.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Hamming window with length: size. The output has the shape: [size].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>hammingwindow</summary>
+
+```python
+# Test periodic window
+node = onnx.helper.make_node(
+    'HammingWindow',
+    inputs=['x'],
+    outputs=['y'],
+)
+size = np.int32(10)
+a0 = 25 / 46
+a1 = 1 - a0
+y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+expect(node, inputs=[size], outputs=[y],
+       name='test_hammingwindow')
+
+# Test symmetric window
+node = onnx.helper.make_node(
+    'HammingWindow',
+    inputs=['x'],
+    outputs=['y'],
+    periodic=0
+)
+size = np.int32(10)
+a0 = 25 / 46
+a1 = 1 - a0
+y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+expect(node, inputs=[size], outputs=[y],
+       name='test_hammingwindow_symmetric')
+```
+
+</details>
+
+
+### <a name="HannWindow"></a><a name="hannwindow">**HannWindow**</a>
+
+  Generates a Hann window as described in the paper https://ieeexplore.ieee.org/document/1455106.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Hann window with length: size. The output has the shape: [size].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>hannwindow</summary>
+
+```python
+# Test periodic window
+node = onnx.helper.make_node(
+    'HannWindow',
+    inputs=['x'],
+    outputs=['y'],
+)
+size = np.int32(10)
+a0 = .5
+a1 = .5
+y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+expect(node, inputs=[size], outputs=[y],
+       name='test_hannwindow')
+
+# Test symmetric window
+node = onnx.helper.make_node(
+    'HannWindow',
+    inputs=['x'],
+    outputs=['y'],
+    periodic=0
+)
+size = np.int32(10)
+a0 = .5
+a1 = .5
+y = a0 - a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1))
+expect(node, inputs=[size], outputs=[y],
+       name='test_hannwindow_symmetric')
+```
+
+</details>
+
+
 ### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
 
   HardSigmoid takes one input data (Tensor<T>) and produces one output data
@@ -8648,7 +8783,7 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
 </dl>
 
 #### Type Constraints
@@ -9661,19 +9796,20 @@ for i in range(len(X.shape)):
 <summary>d_epsilon</summary>
 
 ```python
+epsilon = 1e-1
 X = np.random.randn(2, 3, 5).astype(np.float32)
 
 def case(axis: int) -> None:
     normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
     B = np.random.randn(*normalized_shape).astype(np.float32)
-    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis)
+    Y, mean, inv_std_dev = _layer_normalization(X, W, B, axis, epsilon)
     node = onnx.helper.make_node(
         'LayerNormalization',
         inputs=['X', 'W', 'B'],
         outputs=['Y', 'Mean', 'InvStdDev'],
         axis=axis,
-        epsilon=1e-1
+        epsilon=epsilon
     )
 
     if axis < 0:
@@ -9713,7 +9849,7 @@ node = onnx.helper.make_node(
 )
 
 expect(node, inputs=[X, W, B], outputs=[Y, mean, inv_std_dev],
-        name='test_layer_normalization_default_axis')
+       name='test_layer_normalization_default_axis')
 ```
 
 </details>
@@ -11139,7 +11275,7 @@ for op_dtype in all_numeric_dtypes:
         outputs=['result'],
     )
     expect(node, inputs=[data_0, data_1], outputs=[result],
-           name='test_max_{0}'.format(np.dtype(op_dtype).name))
+           name=f'test_max_{np.dtype(op_dtype).name}')
 ```
 
 </details>
@@ -11772,7 +11908,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="MaxUnpool"></a><a name="maxunpool">**MaxUnpool**</a>
 
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
-   The input information to this op is typically the the output information from a MaxPool op. The first
+   The input information to this op is typically the output information from a MaxPool op. The first
    input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
    from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
@@ -12039,6 +12175,128 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 </details>
 
 
+### <a name="MelWeightMatrix"></a><a name="melweightmatrix">**MelWeightMatrix**</a>
+
+  Generate a MelWeightMatrix that can be used to re-weight a Tensor containing a linearly sampled frequency spectra (from DFT or STFT) into num_mel_bins frequency information based on the [lower_edge_hertz, upper_edge_hertz] range on the mel scale.
+  This function defines the mel scale in terms of a frequency in hertz according to the following formula:
+
+      mel(f) = 2595 * log10(1 + f/700)
+
+  In the returned matrix, all the triangles (filterbanks) have a peak value of 1.0.
+
+  The returned MelWeightMatrix can be used to right-multiply a spectrogram S of shape [frames, num_spectrogram_bins] of linear scale spectrum values (e.g. STFT magnitudes) to generate a "mel spectrogram" M of shape [frames, num_mel_bins].
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T3. The default value is 1 = FLOAT. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>num_mel_bins</tt> (non-differentiable) : T1</dt>
+<dd>The number of bands in the mel spectrum.</dd>
+<dt><tt>dft_length</tt> (non-differentiable) : T1</dt>
+<dd>The size of the original DFT. The size of the original DFT is used to infer the size of the onesided DFT, which is understood to be floor(dft_length/2) + 1, i.e. the spectrogram only contains the nonredundant DFT bins.</dd>
+<dt><tt>sample_rate</tt> (non-differentiable) : T1</dt>
+<dd>Samples per second of the input signal used to create the spectrogram. Used to figure out the frequencies corresponding to each spectrogram bin, which dictates how they are mapped into the mel scale.</dd>
+<dt><tt>lower_edge_hertz</tt> (non-differentiable) : T2</dt>
+<dd>Lower bound on the frequencies to be included in the mel spectrum. This corresponds to the lower edge of the lowest triangular band.</dd>
+<dt><tt>upper_edge_hertz</tt> (non-differentiable) : T2</dt>
+<dd>The desired top edge of the highest frequency band.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T3</dt>
+<dd>The Mel Weight Matrix. The output has the shape: [floor(dft_length/2) + 1][num_mel_bins].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain to integer tensors.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain to float tensors</dd>
+<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain to any numerical types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>melweightmatrix</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MelWeightMatrix",
+    inputs=['num_mel_bins', 'dft_length', 'sample_rate', 'lower_edge_hertz', 'upper_edge_hertz'],
+    outputs=['output'],
+)
+
+num_mel_bins = np.int32(8)
+dft_length = np.int32(16)
+sample_rate = np.int32(8192)
+lower_edge_hertz = np.float32(0)
+upper_edge_hertz = np.float32(8192 / 2)
+
+num_spectrogram_bins = dft_length // 2 + 1
+frequency_bins = np.arange(0, num_mel_bins + 2)
+
+low_frequency_mel = 2595 * np.log10(1 + lower_edge_hertz / 700)
+high_frequency_mel = 2595 * np.log10(1 + upper_edge_hertz / 700)
+mel_step = (high_frequency_mel - low_frequency_mel) / frequency_bins.shape[0]
+
+frequency_bins = frequency_bins * mel_step + low_frequency_mel
+frequency_bins = 700 * (np.power(10, (frequency_bins / 2595)) - 1)
+frequency_bins = ((dft_length + 1) * frequency_bins) // sample_rate
+frequency_bins = frequency_bins.astype(int)
+
+output = np.zeros((num_spectrogram_bins, num_mel_bins))
+output.flags.writeable = True
+
+for i in range(num_mel_bins):
+    lower_frequency_value = frequency_bins[i]     # left
+    center_frequency_point = frequency_bins[i + 1]  # center
+    higher_frequency_point = frequency_bins[i + 2]  # right
+    low_to_center = center_frequency_point - lower_frequency_value
+    if low_to_center == 0:
+        output[center_frequency_point, i] = 1
+    else:
+        for j in range(lower_frequency_value, center_frequency_point + 1):
+            output[j, i] = float(j - lower_frequency_value) / float(low_to_center)
+    center_to_high = higher_frequency_point - center_frequency_point
+    if center_to_high > 0:
+        for j in range(center_frequency_point, higher_frequency_point):
+            output[j, i] = float(higher_frequency_point - j) / float(center_to_high)
+
+# Expected output
+# 1.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 1.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+# 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
+output = output.astype(np.float32)
+expect(node, inputs=[num_mel_bins, dft_length, sample_rate, lower_edge_hertz, upper_edge_hertz], outputs=[output],
+        name='test_melweightmatrix')
+```
+
+</details>
+
+
 ### <a name="Min"></a><a name="min">**Min**</a>
 
   Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
@@ -12126,7 +12384,7 @@ for op_dtype in all_numeric_dtypes:
         outputs=['result'],
     )
     expect(node, inputs=[data_0, data_1], outputs=[result],
-           name='test_min_{0}'.format(np.dtype(op_dtype).name))
+           name=f'test_min_{np.dtype(op_dtype).name}')
 ```
 
 </details>
@@ -13057,7 +13315,7 @@ node = onnx.helper.make_node(
 N, C, dim1, dim2 = 3, 5, 6, 6
 np.random.seed(0)
 input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
 negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
 
@@ -13228,7 +13486,7 @@ node = onnx.helper.make_node(
 N, C = 3, 5
 np.random.seed(0)
 input = np.random.rand(N, C).astype(np.float32)
-target = np.random.randint(0, high=C, size=(N))
+target = np.random.randint(0, high=C, size=(N)).astype(np.int64)
 target[0] = 10
 weight = np.random.rand(C).astype(np.float32)
 
@@ -13627,7 +13885,8 @@ expect(node, inputs=[boxes, scores, max_output_boxes_per_class, iou_threshold, s
   Returns the indices of the elements that are non-zero
       (in row-major order - by dimension).
       NonZero behaves similar to numpy.nonzero:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
+      but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 
 #### Version
 
@@ -14395,9 +14654,9 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 17 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>
 
 #### Attributes
 
@@ -14406,17 +14665,15 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 <dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
 </dl>
 
-#### Inputs (2 - 4)
+#### Inputs (2 - 3)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Input tensor.</dd>
 <dt><tt>pads</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number of elements in the `axes` input or the input rank if `axes` are not provided explicitly. `pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and xi_end, the number of pad values added at the end of axis `axes[i]`.</dd>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
 <dt><tt>constant_value</tt> (optional, non-differentiable) : T</dt>
 <dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, empty string or False).</dd>
-<dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
-<dd>1-D tensor of axes that `pads` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).</dd>
 </dl>
 
 #### Outputs
@@ -14431,8 +14688,6 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
 </dl>
 
 
@@ -14466,35 +14721,6 @@ expect(node, inputs=[x, pads, value], outputs=[y],
 
 
 <details>
-<summary>constant_pad_axes</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Pad',
-    inputs=['x', 'pads', 'value', 'axes'],
-    outputs=['y'],
-    mode='constant'
-)
-x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-pads = np.array([0, 3, 0, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
-value = np.float32(1.2)
-axes = np.array([1, 3], dtype=np.int64)
-y = pad_impl(
-    x,
-    pads,
-    'constant',
-    1.2,
-    [1, 3],
-)
-
-expect(node, inputs=[x, pads, value, axes], outputs=[y],
-       name='test_constant_pad_axes')
-```
-
-</details>
-
-
-<details>
 <summary>reflection_and_edge_pad</summary>
 
 ```python
@@ -14514,7 +14740,7 @@ for mode in ['edge', 'reflect']:
     )
 
     expect(node, inputs=[x, pads], outputs=[y],
-           name='test_{}_pad'.format(mode))
+           name=f'test_{mode}_pad')
 ```
 
 </details>
@@ -18970,6 +19196,107 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="STFT"></a><a name="stft">**STFT**</a>
+
+  Computes the Short-time Fourier Transform of the signal.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>onesided</tt> : int (default is 1)</dt>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT).When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>signal</tt> (non-differentiable) : T1</dt>
+<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal.</dd>
+<dt><tt>frame_step</tt> (non-differentiable) : T2</dt>
+<dd>The number of samples to step between successive DFTs.</dd>
+<dt><tt>window</tt> (optional, non-differentiable) : T1</dt>
+<dd>A tensor representing the window that will be slid over the signal.The window must have rank 1 with shape: [window_shape]. It's an optional value. </dd>
+<dt><tt>frame_length</tt> (optional, non-differentiable) : T2</dt>
+<dd>A scalar representing the size of the DFT. It's an optional value.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T1</dt>
+<dd>The Short-time Fourier Transform of the signals.If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT) If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain signal and output to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain scalar length types to int64_t.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>stft</summary>
+
+```python
+signal = np.arange(0, 128, dtype=np.float32).reshape(1, 128, 1)
+length = np.array(16).astype(np.int64)
+onesided_length = (length >> 1) + 1
+step = np.array(8).astype(np.int64)
+
+no_window = ""  # optional input, not supplied
+node = onnx.helper.make_node(
+    'STFT',
+    inputs=['signal', 'frame_step', no_window, 'frame_length'],
+    outputs=['output'],
+)
+
+nstfts = ((signal.shape[1] - length) // step) + 1
+# [batch_size][frames][frame_length][2]
+output = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
+for i in range(nstfts):
+    start = i * step
+    stop = i * step + length
+    complex_out = np.fft.fft(signal[0, start:stop, 0])[0:onesided_length]
+    output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
+
+expect(node, inputs=[signal, step, length], outputs=[output],
+       name='test_stft')
+
+node = onnx.helper.make_node(
+    'STFT',
+    inputs=['signal', 'frame_step', 'window'],
+    outputs=['output'],
+)
+
+# Test with window
+a0 = .5
+a1 = .5
+window = a0 + a1 * np.cos(2 * 3.1415 * np.arange(0, length, 1, dtype=np.float32) / length)
+nstfts = 1 + (signal.shape[1] - window.shape[0]) // step
+
+# [batch_size][frames][frame_length][2]
+output = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
+for i in range(nstfts):
+    start = i * step
+    stop = i * step + length
+    complex_out = np.fft.fft(signal[0, start:stop, 0] * window)[0:onesided_length]
+    output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
+expect(node, inputs=[signal, step, window], outputs=[output],
+       name='test_stft_with_window')
+```
+
+</details>
+
+
 ### <a name="Scan"></a><a name="scan">**Scan**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
@@ -20464,9 +20791,7 @@ expect(node, inputs=[x0, x1], outputs=[y0, y1],
 ### <a name="Shape"></a><a name="shape">**Shape**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
-  Optional attributes `start` and `end` can be used to compute a slice of the input tensor's shape.
-  Optional attribute `axes` can be used to extract the extents of a subset of axes from the input tensor's shape.
-  Usage of attributes `start` and `end` is incompatible with usage of `axes`.
+  Optional attributes start and end can be used to compute a slice of the input tensor's shape.
   If start axis is omitted, the slice starts from axis 0.
   The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
   If the end axis is omitted, the axes upto the last one will be included.
@@ -20497,19 +20822,17 @@ expect(node, inputs=[x0, x1], outputs=[y0, y1],
 
 #### Version
 
-This version of the operator has been available since version 17 of the default ONNX operator set.
+This version of the operator has been available since version 15 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-15">15</a>
+Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>(Optional) If provided, it specifies a subset of axes to extract from the shape. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
 <dt><tt>end</tt> : int</dt>
-<dd>(Optional) Ending axis for slicing the shape. Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). If omitted, sizes of all axes upto (including) the last one will be included. </dd>
-<dt><tt>start</tt> : int</dt>
-<dd>(Optional) Starting axis for slicing the shape. Default value is 0.Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). </dd>
+<dd>(Optional) Ending axis for slicing the shape. Negative value means counting dimensions from the back. If omitted, sizes of all axes upto (including) the last one will be included.</dd>
+<dt><tt>start</tt> : int (default is 0)</dt>
+<dd>(Optional) Starting axis for slicing the shape. Default value is 0.Negative value means counting dimensions from the back.</dd>
 </dl>
 
 #### Inputs
@@ -20567,12 +20890,6 @@ test_shape('_start_1_end_2', x, start=1, end=2)
 test_shape('_clip_start', x, start=-10)
 
 test_shape('_clip_end', x, end=10)
-
-test_shape('_axes_all', x, axes=[0, 1, 2])
-
-test_shape('_axes_negative', x, axes=[-3, -2, -1])
-
-test_shape('_axes_random_order', x, axes=[2, 0, 1])
 ```
 
 </details>
@@ -23106,9 +23423,9 @@ This version of the operator has been available since version 10 of the default 
 <summary>monday_casesensintive_lower</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
-output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
-stopwords = [u'monday']
+input = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+output = np.array(['tuesday', 'wednesday', 'thursday']).astype(object)
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -23128,9 +23445,9 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_casesensintive_nochangecase</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
-output = np.array([u'tuesday', u'wednesday', u'thursday']).astype(object)
-stopwords = [u'monday']
+input = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+output = np.array(['tuesday', 'wednesday', 'thursday']).astype(object)
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -23149,9 +23466,9 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_casesensintive_upper</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday', u'wednesday', u'thursday']).astype(object)
-output = np.array([u'TUESDAY', u'WEDNESDAY', u'THURSDAY']).astype(object)
-stopwords = [u'monday']
+input = np.array(['monday', 'tuesday', 'wednesday', 'thursday']).astype(object)
+output = np.array(['TUESDAY', 'WEDNESDAY', 'THURSDAY']).astype(object)
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -23171,9 +23488,9 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_empty_output</summary>
 
 ```python
-input = np.array([u'monday', u'monday']).astype(object)
-output = np.array([u'']).astype(object)
-stopwords = [u'monday']
+input = np.array(['monday', 'monday']).astype(object)
+output = np.array(['']).astype(object)
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -23193,13 +23510,13 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_insensintive_upper_twodim</summary>
 
 ```python
-input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(object).reshape([1, 6])
+input = np.array(['Monday', 'tuesday', 'wednesday', 'Monday', 'tuesday', 'wednesday']).astype(object).reshape([1, 6])
 
 # It does upper case cecedille, accented E
 # and german umlaut but fails
 # with german eszett
-output = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(object).reshape([1, 4])
-stopwords = [u'monday']
+output = np.array(['TUESDAY', 'WEDNESDAY', 'TUESDAY', 'WEDNESDAY']).astype(object).reshape([1, 4])
+stopwords = ['monday']
 
 node = onnx.helper.make_node(
     'StringNormalizer',
@@ -23218,7 +23535,7 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>nostopwords_nochangecase</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday']).astype(object)
+input = np.array(['monday', 'tuesday']).astype(object)
 output = input
 
 # No stopwords. This is a NOOP
@@ -26145,7 +26462,7 @@ graph = onnx.helper.make_graph(
 opsets = [
     onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
     onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
-model = onnx.helper.make_model(
+model = onnx.helper.make_model_gen_version(
     graph,
     producer_name='backend-test',
     opset_imports=opsets)
@@ -26199,7 +26516,7 @@ graph = onnx.helper.make_graph(
 opsets = [
     onnx.helper.make_operatorsetid(ONNX_DOMAIN, 12),
     onnx.helper.make_operatorsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)]
-model = onnx.helper.make_model(graph,
+model = onnx.helper.make_model_gen_version(graph,
     producer_name='backend-test',
     opset_imports=opsets)
 expect(model, inputs=[a, b], outputs=[d, dd_da, dd_db],

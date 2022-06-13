@@ -21,8 +21,8 @@ class ShrinkTest(Base):
                 'x', onnx.TensorProto.FLOAT, [5])],
             outputs=[onnx.helper.make_tensor_value_info(
                 'y', onnx.TensorProto.FLOAT, [5])])
-        model = onnx.helper.make_model(graph,
-                                       producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph,
+                                       producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 10)])
 
         x = np.array([-2.0, -1.0, 0.0, 1.0, 2.0], dtype=np.float32)
         y = np.array([-0.5, 0.0, 0.0, 0.0, 0.5], dtype=np.float32)

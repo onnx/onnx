@@ -30,9 +30,6 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Graph Optimization](https://github.com/onnx/optimizer)
 * [Opset Version Conversion](docs/VersionConverter.md)
 
-# NOTICE: ONNX now uses main branch as default branch
-Here are the [steps](https://github.com/onnx/onnx/wiki/How-to-migrate-to-main-branch-in-local-repo) from ONNX wiki for migrating to main branch in local repo.
-
 # Contribute
 ONNX is a [community project](community/readme.md). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [Special Interest Groups](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
 
@@ -54,18 +51,9 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 # Installation
 
-## Prerequisites
-
-```
-numpy >= 1.16.6
-protobuf >= 3.12.2
-typing-extensions >= 3.6.2.1
-```
-
 ## Official Python packages
 ONNX released packages are published in PyPi.
 ```
-pip install numpy protobuf==3.16.0
 pip install onnx
 ```
 
@@ -75,7 +63,6 @@ pip install onnx
 ## Conda packages
 A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
 ```
-conda install -c conda-forge numpy protobuf==3.16.0 libprotobuf=3.16.0
 conda install -c conda-forge onnx
 ```
 

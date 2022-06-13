@@ -15,11 +15,8 @@ flake8 onnx tools workflow_scripts
 echo -e "\n===> check mypy"
 mypy . --no-site-packages
 
-# Currently, clang-format is not checked on CIs.
-if [ "${ENABLE_CLANG_FORMAT:-0}" == "1" ]; then
-    echo -e "\n===> run clang-format"
-    git ls-files --exclude-standard -- '*/*.cc' '*/*.h' | \
-        xargs ${CLANG_FORMAT_BIN:-clang-format} -i
-fi
+echo -e "\n===> run clang-format"
+git ls-files --exclude-standard -- '*/*.cc' '*/*.h' | \
+    xargs ${CLANG_FORMAT_BIN:-clang-format} -i
 
 git diff --exit-code

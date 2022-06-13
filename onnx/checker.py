@@ -18,7 +18,7 @@ from onnx import (ValueInfoProto,
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
 from google.protobuf.message import Message
-from typing import TypeVar, Callable, Any, Type, cast, Union, Text
+from typing import TypeVar, Callable, Any, Type, cast, Union
 import onnx.shape_inference
 import sys
 
@@ -85,7 +85,7 @@ def check_sparse_tensor(sparse: SparseTensorProto, ctx: C.CheckerContext = DEFAU
     C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
-def check_model(model: Union[ModelProto, Text, bytes], full_check: bool = False) -> None:
+def check_model(model: Union[ModelProto, str, bytes], full_check: bool = False) -> None:
     """Check the consistency of a model. An exception is raised if the test fails.
 
     Arguments:

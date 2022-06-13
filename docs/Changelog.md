@@ -2112,7 +2112,7 @@ This version of the operator has been available since version 1 of the default O
           user_defined_vals[i] = b + b;
           /* End user-defined code */
         }
-        // my_local = 123; // Can't do this. my_local was defined in the the body
+        // my_local = 123; // Can't do this. my_local was defined in the body
 
         // These below values are live-out from the loop and therefore accessible
         b_out; user_defined_vals; keepgoing_out;
@@ -8546,7 +8546,7 @@ This version of the operator has been available since version 9 of the default O
 ### <a name="MaxUnpool-9"></a>**MaxUnpool-9**</a>
 
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
-   The input information to this op is typically the the output information from a MaxPool op. The first
+   The input information to this op is typically the output information from a MaxPool op. The first
    input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
    from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
@@ -8648,7 +8648,8 @@ This version of the operator has been available since version 9 of the default O
   Returns the indices of the elements that are non-zero
       (in row-major order - by dimension).
       NonZero behaves similar to numpy.nonzero:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
+      but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 
 #### Version
 
@@ -11512,7 +11513,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
 </dl>
 
 #### Type Constraints
@@ -11880,7 +11881,7 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="MaxUnpool-11"></a>**MaxUnpool-11**</a>
 
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
-   The input information to this op is typically the the output information from a MaxPool op. The first
+   The input information to this op is typically the output information from a MaxPool op. The first
    input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
    from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
@@ -16113,7 +16114,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
 </dl>
 
 #### Type Constraints
@@ -16905,7 +16906,8 @@ This version of the operator has been available since version 13 of the default 
   Returns the indices of the elements that are non-zero
       (in row-major order - by dimension).
       NonZero behaves similar to numpy.nonzero:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
+      but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 
 #### Version
 
@@ -20019,7 +20021,7 @@ This version of the operator has been available since version 16 of the default 
 
 <dl>
 <dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
 </dl>
 
 #### Type Constraints
@@ -20815,16 +20817,9 @@ This version of the operator has been available since version 16 of the default 
 </dl>
 
 ## Version 17 of the default ONNX operator set
-### <a name="CenterCropPad-17"></a>**CenterCropPad-17**</a>
+### <a name="BlackmanWindow-17"></a>**BlackmanWindow-17**</a>
 
-  Center crop or pad an input to given dimensions.
-
-  The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
-  cropped or padded.
-
-  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
-  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-  so that the input is centered in the output.
+  Generates a Blackman window as described in the paper https://ieeexplore.ieee.org/document/1455106.
 
 #### Version
 
@@ -20833,33 +20828,157 @@ This version of the operator has been available since version 17 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>If provided, it specifies a subset of axes that 'shape' refer to. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
 </dl>
 
 #### Inputs
 
 <dl>
-<dt><tt>input_data</tt> (differentiable) : T</dt>
-<dd>Input to extract the centered crop from.</dd>
-<dt><tt>shape</tt> (non-differentiable) : Tind</dt>
-<dd>1-D tensor representing the cropping window dimensions.</dd>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output_data</tt> (differentiable) : T</dt>
-<dd>Output data.</dd>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Blackman window with length: size. The output has the shape: [size].</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
+</dl>
+
+### <a name="DFT-17"></a>**DFT-17**</a>
+
+  Computes the discrete Fourier transform of input.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index.</dd>
+<dt><tt>inverse</tt> : int (default is 0)</dt>
+<dd>Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to false.</dd>
+<dt><tt>onesided</tt> : int (default is 0)</dt>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input</tt> (non-differentiable) : T1</dt>
+<dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimentions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
+<dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
+<dd>The length of the signal.If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T1</dt>
+<dd>The Fourier Transform of the input vector.If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=0 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N-1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain scalar length types to int64_t.</dd>
+</dl>
+
+### <a name="HammingWindow-17"></a>**HammingWindow-17**</a>
+
+  Generates a Hamming window as described in the paper https://ieeexplore.ieee.org/document/1455106.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Hamming window with length: size. The output has the shape: [size].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
+</dl>
+
+### <a name="HannWindow-17"></a>**HannWindow-17**</a>
+
+  Generates a Hann window as described in the paper https://ieeexplore.ieee.org/document/1455106.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Hann window with length: size. The output has the shape: [size].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
 </dl>
 
 ### <a name="LayerNormalization-17"></a>**LayerNormalization-17**</a>
@@ -20950,83 +21069,16 @@ This version of the operator has been available since version 17 of the default 
 <dd>Type of Mean and InvStdDev tensors.</dd>
 </dl>
 
-### <a name="Pad-17"></a>**Pad-17**</a>
+### <a name="MelWeightMatrix-17"></a>**MelWeightMatrix-17**</a>
 
-  Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
-  a padded tensor (`output`) is generated.
+  Generate a MelWeightMatrix that can be used to re-weight a Tensor containing a linearly sampled frequency spectra (from DFT or STFT) into num_mel_bins frequency information based on the [lower_edge_hertz, upper_edge_hertz] range on the mel scale.
+  This function defines the mel scale in terms of a frequency in hertz according to the following formula:
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+      mel(f) = 2595 * log10(1 + f/700)
 
-  1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
+  In the returned matrix, all the triangles (filterbanks) have a peak value of 1.0.
 
-  2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
-
-  3) `edge` - pads with the edge values of array
-
-
-  Example 1 (`constant` mode):
-    Insert 0 pads to the beginning of the second dimension.
-
-    data =
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
-
-    pads = [0, 2, 0, 0]
-
-    mode = 'constant'
-
-    constant_value = 0.0
-
-    output =
-    [
-        [0.0, 0.0, 1.0, 1.2],
-        [0.0, 0.0, 2.3, 3.4],
-        [0.0, 0.0, 4.5, 5.7],
-    ]
-
-
-  Example 2 (`reflect` mode):
-    data =
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
-
-    pads = [0, 2, 0, 0]
-
-    mode = 'reflect'
-
-    output =
-    [
-        [1.0, 1.2, 1.0, 1.2],
-        [2.3, 3.4, 2.3, 3.4],
-        [4.5, 5.7, 4.5, 5.7],
-    ]
-
-
-  Example 3 (`edge` mode):
-    data =
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
-
-    pads = [0, 2, 0, 0]
-
-    mode = 'edge'
-
-    output =
-    [
-        [1.0, 1.0, 1.0, 1.2],
-        [2.3, 2.3, 2.3, 3.4],
-        [4.5, 4.5, 4.5, 5.7],
-    ]
-
+  The returned MelWeightMatrix can be used to right-multiply a spectrogram S of shape [frames, num_spectrogram_bins] of linear scale spectrum values (e.g. STFT magnitudes) to generate a "mel spectrogram" M of shape [frames, num_mel_bins].
 
 #### Version
 
@@ -21035,37 +21087,85 @@ This version of the operator has been available since version 17 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>mode</tt> : string (default is constant)</dt>
-<dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T3. The default value is 1 = FLOAT. </dd>
 </dl>
 
-#### Inputs (2 - 4)
+#### Inputs
 
 <dl>
-<dt><tt>data</tt> (differentiable) : T</dt>
-<dd>Input tensor.</dd>
-<dt><tt>pads</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number of elements in the `axes` input or the input rank if `axes` are not provided explicitly. `pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and xi_end, the number of pad values added at the end of axis `axes[i]`.</dd>
-<dt><tt>constant_value</tt> (optional, non-differentiable) : T</dt>
-<dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, empty string or False).</dd>
-<dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
-<dd>1-D tensor of axes that `pads` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).</dd>
+<dt><tt>num_mel_bins</tt> (non-differentiable) : T1</dt>
+<dd>The number of bands in the mel spectrum.</dd>
+<dt><tt>dft_length</tt> (non-differentiable) : T1</dt>
+<dd>The size of the original DFT. The size of the original DFT is used to infer the size of the onesided DFT, which is understood to be floor(dft_length/2) + 1, i.e. the spectrogram only contains the nonredundant DFT bins.</dd>
+<dt><tt>sample_rate</tt> (non-differentiable) : T1</dt>
+<dd>Samples per second of the input signal used to create the spectrogram. Used to figure out the frequencies corresponding to each spectrogram bin, which dictates how they are mapped into the mel scale.</dd>
+<dt><tt>lower_edge_hertz</tt> (non-differentiable) : T2</dt>
+<dd>Lower bound on the frequencies to be included in the mel spectrum. This corresponds to the lower edge of the lowest triangular band.</dd>
+<dt><tt>upper_edge_hertz</tt> (non-differentiable) : T2</dt>
+<dd>The desired top edge of the highest frequency band.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> (differentiable) : T</dt>
-<dd>Tensor after padding.</dd>
+<dt><tt>output</tt> (non-differentiable) : T3</dt>
+<dd>The Mel Weight Matrix. The output has the shape: [floor(dft_length/2) + 1][num_mel_bins].</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
-<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain indices to integer types</dd>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain to integer tensors.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain to float tensors</dd>
+<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain to any numerical types.</dd>
+</dl>
+
+### <a name="STFT-17"></a>**STFT-17**</a>
+
+  Computes the Short-time Fourier Transform of the signal.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>onesided</tt> : int (default is 1)</dt>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT).When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>signal</tt> (non-differentiable) : T1</dt>
+<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal.</dd>
+<dt><tt>frame_step</tt> (non-differentiable) : T2</dt>
+<dd>The number of samples to step between successive DFTs.</dd>
+<dt><tt>window</tt> (optional, non-differentiable) : T1</dt>
+<dd>A tensor representing the window that will be slid over the signal.The window must have rank 1 with shape: [window_shape]. It's an optional value. </dd>
+<dt><tt>frame_length</tt> (optional, non-differentiable) : T2</dt>
+<dd>A scalar representing the size of the DFT. It's an optional value.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T1</dt>
+<dd>The Short-time Fourier Transform of the signals.If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT) If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain signal and output to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain scalar length types to int64_t.</dd>
 </dl>
 
 ### <a name="SequenceMap-17"></a>**SequenceMap-17**</a>
@@ -21119,78 +21219,6 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain input types to any sequence type.</dd>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain to any tensor or sequence type.</dd>
-</dl>
-
-### <a name="Shape-17"></a>**Shape-17**</a>
-
-  Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
-  Optional attributes `start` and `end` can be used to compute a slice of the input tensor's shape.
-  Optional attribute `axes` can be used to extract the extents of a subset of axes from the input tensor's shape.
-  Usage of attributes `start` and `end` is incompatible with usage of `axes`.
-  If start axis is omitted, the slice starts from axis 0.
-  The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
-  If the end axis is omitted, the axes upto the last one will be included.
-  Negative axes indicate counting back from the last axis.
-  Note that axes will be clamped to the range [0, r-1], where r is the
-  rank of the input tensor if they are out-of-range (after adding r in the case of
-  negative axis). Thus, specifying any end value > r is equivalent to specifying an end
-  value of r, and specifying any start value < -r is equivalent to specifying a start
-  value of 0.
-
-  For example:
-  Input tensor with shape: [2, 3, 4]
-  No attributes specified.
-  Output: [2, 3, 4]
-
-  Input tensor with shape: [2, 3, 4]
-  start: -1
-  Output: [4]
-
-  Input tensor with shape: [2, 3, 4]
-  end: -1
-  Output: [2, 3]
-
-  Input tensor with shape: [2, 3, 4]
-  start: 1
-  end: 2
-  Output: [3]
-
-#### Version
-
-This version of the operator has been available since version 17 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>(Optional) If provided, it specifies a subset of axes to extract from the shape. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
-<dt><tt>end</tt> : int</dt>
-<dd>(Optional) Ending axis for slicing the shape. Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). If omitted, sizes of all axes upto (including) the last one will be included. </dd>
-<dt><tt>start</tt> : int</dt>
-<dd>(Optional) Starting axis for slicing the shape. Default value is 0.Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). </dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>data</tt> (non-differentiable) : T</dt>
-<dd>An input tensor.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>shape</tt> (non-differentiable) : T1</dt>
-<dd>Shape of the input tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Input tensor can be of arbitrary type.</dd>
-<dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrain output to int64 tensor.</dd>
 </dl>
 
 # ai.onnx.preview.training

@@ -14,11 +14,6 @@
 
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-)
 
 import sys
 from collections import defaultdict
@@ -30,7 +25,6 @@ from typing import (
     Generator,
     List,
     Set,
-    Text,
     cast,
     Optional
 )
@@ -39,7 +33,7 @@ try:
     import google.protobuf.descriptor_pb2 as d_typed
     from google.protobuf.compiler import plugin_pb2 as plugin
 except ImportError as e:
-    sys.stderr.write('Failed to generate mypy stubs: {}\n'.format(e))
+    sys.stderr.write(f'Failed to generate mypy stubs: {e}\n')
     sys.exit(0)
 
 
@@ -47,24 +41,24 @@ except ImportError as e:
 d: Any = d_typed
 
 GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is generated
-HEADER = "# {} by generate_proto_mypy_stubs.py.  Do not edit!\n".format(GENERATED)
+HEADER = f"# {GENERATED} by generate_proto_mypy_stubs.py.  Do not edit!\n"
 
 
-class Descriptors(object):
+class Descriptors:
 
     def __init__(self, request: plugin.CodeGeneratorRequest) -> None:
         files = {f.name: f for f in request.proto_file}
         to_generate = {n: files[n] for n in request.file_to_generate}
-        self.files: Dict[Text, d.FileDescriptorProto] = files
-        self.to_generate: Dict[Text, d.FileDescriptorProto] = to_generate
-        self.messages: Dict[Text, d.DescriptorProto] = {}
-        self.message_to_fd: Dict[Text, d.FileDescriptorProto] = {}
+        self.files: Dict[str, d.FileDescriptorProto] = files
+        self.to_generate: Dict[str, d.FileDescriptorProto] = to_generate
+        self.messages: Dict[str, d.DescriptorProto] = {}
+        self.message_to_fd: Dict[str, d.FileDescriptorProto] = {}
 
-        def _add_enums(enums: d.EnumDescriptorProto, prefix: Text, fd: d.FileDescriptorProto) -> None:
+        def _add_enums(enums: d.EnumDescriptorProto, prefix: str, fd: d.FileDescriptorProto) -> None:
             for enum in enums:
                 self.message_to_fd[prefix + enum.name] = fd
 
-        def _add_messages(messages: d.DescriptorProto, prefix: Text, fd: d.FileDescriptorProto) -> None:
+        def _add_messages(messages: d.DescriptorProto, prefix: str, fd: d.FileDescriptorProto) -> None:
             for message in messages:
                 self.messages[prefix + message.name] = message
                 self.message_to_fd[prefix + message.name] = fd
@@ -78,34 +72,34 @@ class Descriptors(object):
             _add_enums(fd.enum_type, start_prefix, fd)
 
 
-class PkgWriter(object):
+class PkgWriter:
     """Writes a single pyi file"""
 
     def __init__(self, fd: d.FileDescriptorProto, descriptors: Descriptors) -> None:
         self.fd = fd
         self.descriptors = descriptors
-        self.lines: List[Text] = []
+        self.lines: List[str] = []
         self.indent = ""
 
         # dictionary of x->y for `from {x} import {y}`
-        self.imports: Dict[Text, Set[Text]] = defaultdict(set)
-        self.locals: Set[Text] = set()
+        self.imports: Dict[str, Set[str]] = defaultdict(set)
+        self.locals: Set[str] = set()
 
-    def _import(self, path: Text, name: Text, import_as: Optional[Text] = None) -> Text:
+    def _import(self, path: str, name: str, import_as: Optional[str] = None) -> str:
         """Imports a stdlib path and returns a handle to it
         eg. self._import("typing", "Optional") -> "Optional"
         """
         imp = path.replace('/', '.')
         if import_as is not None:
-            self.imports[imp].add("{} as {}".format(name, import_as))
+            self.imports[imp].add(f"{name} as {import_as}")
             return import_as
         else:
             self.imports[imp].add(name)
             return name
 
-    def _import_message(self, type_name: d.FieldDescriptorProto) -> Text:
+    def _import_message(self, type_name: d.FieldDescriptorProto) -> str:
         """Import a referenced message and return a handle"""
-        name = cast(Text, type_name)
+        name = cast(str, type_name)
 
         if name[0] == '.' and name[1].isupper() and name[2].islower():
             # Message defined in this file
@@ -139,7 +133,7 @@ class PkgWriter(object):
         yield
         self.indent = self.indent[:-4]
 
-    def _write_line(self, line: Text, *args: Text) -> None:
+    def _write_line(self, line: str, *args: str) -> None:
         self.lines.append(self.indent + line.format(*args))
 
     def write_enums(self, enums: List[d.EnumDescriptorProto]) -> None:
@@ -166,7 +160,7 @@ class PkgWriter(object):
                 line("{} = {}({}, {})", val.name, self._import("typing", "cast"), enum.name, val.number)
             line("")
 
-    def write_messages(self, messages: List[d.DescriptorProto], prefix: Text) -> None:
+    def write_messages(self, messages: List[d.DescriptorProto], prefix: str) -> None:
         line = self._write_line
         message_class = self._import("google.protobuf.message", "Message")
 
@@ -256,8 +250,8 @@ class PkgWriter(object):
                 line("def __init__(self, rpc_channel: {}) -> None: ...",
                   self._import("google.protobuf.service", "RpcChannel"))
 
-    def python_type(self, field: d.FieldDescriptorProto) -> Text:
-        mapping: Dict[int, Callable[[], Text]] = {
+    def python_type(self, field: d.FieldDescriptorProto) -> str:
+        mapping: Dict[int, Callable[[], str]] = {
             d.FieldDescriptorProto.TYPE_DOUBLE: lambda: "float",
             d.FieldDescriptorProto.TYPE_FLOAT: lambda: "float",
 
@@ -273,7 +267,7 @@ class PkgWriter(object):
             d.FieldDescriptorProto.TYPE_SINT32: lambda: "int",
 
             d.FieldDescriptorProto.TYPE_BOOL: lambda: "bool",
-            d.FieldDescriptorProto.TYPE_STRING: lambda: self._import("typing", "Text"),
+            d.FieldDescriptorProto.TYPE_STRING: lambda: "str",
             d.FieldDescriptorProto.TYPE_BYTES: lambda: "bytes",
 
             d.FieldDescriptorProto.TYPE_ENUM: lambda: self._import_message(field.type_name),
@@ -284,13 +278,13 @@ class PkgWriter(object):
         assert field.type in mapping, "Unrecognized type: " + field.type
         return mapping[field.type]()
 
-    def write(self) -> Text:
+    def write(self) -> str:
         imports = []
         for pkg, items in self.imports.items():
-            imports.append(u"from {} import (".format(pkg))
+            imports.append(f"from {pkg} import (")
             for item in sorted(items):
-                imports.append(u"    {},".format(item))
-            imports.append(u")\n")
+                imports.append(f"    {item},")
+            imports.append(")\n")
 
         return "\n".join(imports + self.lines)
 

@@ -3,8 +3,8 @@
  */
 
 #include "onnx/defs/data_propagators.h"
-#include "onnx/defs/tensor/utils.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/tensor/utils.h"
 #include "onnx/defs/tensor_proto_util.h"
 
 #include <algorithm>
@@ -45,15 +45,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The data type to which the elements of the input tensor are cast. "
             "Strictly must be one of the types from DataType enum in TensorProto",
             AttributeProto::INT)
-        .Input(
-            0,
-            "input",
-            "Input tensor to be cast.",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
             "output",
@@ -115,92 +107,82 @@ See documentation of the Cast operator for further details.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-	CastLike,
-	15,
-	OpSchema()
-	.SetDoc(CastLike_ver15_doc)
-	.Input(
-		0,
-		"input",
-		"Input tensor to be cast.",
-		"T1",
-		OpSchema::Single,
-		true,
-		1,
-		OpSchema::Differentiable)
-	.Input(
-		1,
-		"target_type",
-		"The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.",
-		"T2",
-		OpSchema::Single,
-		true,
-		1,
-		OpSchema::NonDifferentiable)
-	.Output(
-		0,
-		"output",
-		"Output tensor produced by casting the first input tensor to have the same type as the second input tensor.",
-		"T2",
-		OpSchema::Single,
-		true,
-		1,
-		OpSchema::Differentiable)
-	.TypeConstraint(
-		"T1",
-		{ "tensor(float16)",
-		 "tensor(float)",
-		 "tensor(double)",
-		 "tensor(int8)",
-		 "tensor(int16)",
-		 "tensor(int32)",
-		 "tensor(int64)",
-		 "tensor(uint8)",
-		 "tensor(uint16)",
-		 "tensor(uint32)",
-		 "tensor(uint64)",
-		 "tensor(bool)",
-		 "tensor(string)",
-		 "tensor(bfloat16)" },
-		"Constrain input types. Casting from complex is not supported.")
-	.TypeConstraint(
-		"T2",
-		{ "tensor(float16)",
-		 "tensor(float)",
-		 "tensor(double)",
-		 "tensor(int8)",
-		 "tensor(int16)",
-		 "tensor(int32)",
-		 "tensor(int64)",
-		 "tensor(uint8)",
-		 "tensor(uint16)",
-		 "tensor(uint32)",
-		 "tensor(uint64)",
-		 "tensor(bool)",
-		 "tensor(string)",
-		 "tensor(bfloat16)" },
-		"Constrain output types. Casting to complex is not supported.")
-	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-	propagateElemTypeFromInputToOutput(ctx, 1, 0);
-	if (hasNInputShapes(ctx, 1)) {
-		propagateShapeFromInputToOutput(ctx, 0, 0);
-	}
-})
-.SetContextDependentFunctionBodyBuilder(
-	[](const FunctionBodyBuildContext& ctx,
-		const OpSchema& schema,
-		FunctionProto& functionProto) -> bool {
-	auto target_type = ctx.getInputType(1);
-	if ((target_type == nullptr) || (!target_type->has_tensor_type())) {
-		// we cannot create a correct function body without knowing the target element type
-		return false;
-	}
-	auto target_elt_type = target_type->tensor_type().elem_type();
-  FunctionBuilder builder(functionProto);
-  builder.Add("output = Cast (input)", "to", (int64_t)(target_elt_type));
-  schema.BuildFunction(functionProto);
-  return true;
-}));
+    CastLike,
+    15,
+    OpSchema()
+        .SetDoc(CastLike_ver15_doc)
+        .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "target_type",
+            "The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor produced by casting the first input tensor to have the same type as the second input tensor.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)",
+             "tensor(string)",
+             "tensor(bfloat16)"},
+            "Constrain input types. Casting from complex is not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)",
+             "tensor(string)",
+             "tensor(bfloat16)"},
+            "Constrain output types. Casting to complex is not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 1, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
+              auto target_type = ctx.getInputType(1);
+              if ((target_type == nullptr) || (!target_type->has_tensor_type())) {
+                // we cannot create a correct function body without knowing the target element type
+                return false;
+              }
+              auto target_elt_type = target_type->tensor_type().elem_type();
+              FunctionBuilder builder(functionProto);
+              builder.Add("output = Cast (input)", "to", (int64_t)(target_elt_type));
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 
 static const char* Reshape_ver14_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
@@ -514,15 +496,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(Size_ver13_doc)
-        .Input(0,
-            "data",
-            "An input tensor.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(0,
+        .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(
+            0,
             "size",
             "Total number of elements of the input tensor",
             "T1",
@@ -530,17 +506,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Input tensor can be of arbitrary type.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(int64)"},
-            "Constrain output to int64 tensor, which should be a scalar though.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_with_bfloat(), "Input tensor can be of arbitrary type.")
+        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain output to int64 tensor, which should be a scalar though.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
-              TensorProto::INT64);
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
@@ -573,24 +542,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .Output(
-            0,
-            "concat_result",
-            "Concatenated tensor",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Constrain output types to any tensor type.")
+        .Output(0, "concat_result", "Concatenated tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_with_bfloat(), "Constrain output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto numInputs = ctx.getNumInputs();
-          if (numInputs < 1 ||
-              !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+          if (numInputs < 1 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
             return;
           }
 
@@ -616,8 +573,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool all_lengths_known = true;
           int total_length = 0;
 
-          auto* output_shape =
-              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           for (int64_t i = 0; i < rank; ++i) {
             output_shape->add_dim();
@@ -626,7 +582,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
             if (shape.dim_size() != rank) {
-              fail_shape_inference("All inputs to Concat must have same rank. Input ", i , " has rank ", shape.dim_size(), " != ", rank);
+              fail_shape_inference(
+                  "All inputs to Concat must have same rank. Input ", i, " has rank ", shape.dim_size(), " != ", rank);
             }
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
@@ -658,7 +615,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return;
             }
             for (int j = 0; j < input_data->dim_size(); ++j) {
-              appendDimToTensorShapeProto(tsp, input_data->dim(j));
+              *tsp.add_dim() = input_data->dim(j);
             }
           }
           if (tsp.dim_size() > 0) {
@@ -676,15 +633,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Split,
     13,
     OpSchema()
-        .Input(
-            0,
-            "input",
-            "The tensor to split",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "input", "The tensor to split", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "split",
@@ -728,11 +677,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           int rank = shape.dim_size();
           int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
           if (axis < -rank || axis >= rank) {
-            fail_type_inference(
-                "Invalid value of attribute 'axis'. Rank=",
-                rank,
-                " Value=",
-                axis);
+            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis);
           }
           if (axis < 0) {
             axis += rank;
@@ -740,13 +685,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& split_dim = shape.dim(axis);
           if (!split_dim.has_dim_value()) {
             for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
-              *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
-                  shape;
-              ctx.getOutputType(i)
-                  ->mutable_tensor_type()
-                  ->mutable_shape()
-                  ->mutable_dim(axis)
-                  ->Clear();
+              *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() = shape;
+              ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->Clear();
             }
             return;
           }
@@ -763,11 +703,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             split = ParseData<int64_t>(split_proto);
             if (split.size() != ctx.getNumOutputs()) {
               fail_shape_inference(
-                  "Mismatch between number of splits (",
-                  split.size(),
-                  ") and outputs (",
-                  ctx.getNumOutputs(),
-                  ")");
+                  "Mismatch between number of splits (", split.size(), ") and outputs (", ctx.getNumOutputs(), ")");
             }
             int64_t total_dim = 0;
             for (int64_t d : split) {
@@ -793,13 +729,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
-            *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
-                shape;
-            ctx.getOutputType(i)
-                ->mutable_tensor_type()
-                ->mutable_shape()
-                ->mutable_dim(axis)
-                ->set_dim_value(split[i]);
+            *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() = shape;
+            ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->set_dim_value(split[i]);
           }
         }));
 
@@ -861,8 +792,7 @@ Example 2:
   ]
 )DOC";
 
-inline void processSliceInputs(const int64_t input_rank,
-  int64_t& start, int64_t& end, int64_t& step) {
+inline void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t& step) {
   auto clamp = [](int64_t val, int64_t min, int64_t max) -> int64_t {
     return (val < min) ? min : (val > max) ? max : val;
   };
@@ -940,28 +870,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "output",
-            "Sliced data tensor.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Output(0, "output", "Sliced data tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
-        .TypeConstraint(
-            "Tind",
-            {"tensor(int32)", "tensor(int64)"},
-            "Constrain indices to integer types")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           size_t num_inputs = ctx.getNumInputs();
           if (num_inputs != 3 && num_inputs != 4 && num_inputs != 5) {
-            fail_type_inference(
-                "Slice op must have either three, four or five inputs.");
+            fail_type_inference("Slice op must have either three, four or five inputs.");
           }
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 1)) {
@@ -973,13 +891,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           // or set and is initializer.
           const TensorProto* startsInitializer = ctx.getInputData(1);
           const TensorProto* endsInitializer = ctx.getInputData(2);
-          const TensorProto* axesInitializer =
-              hasInputShape(ctx, 3) ? ctx.getInputData(3) : nullptr;
-          const TensorProto* stepsInitializer =
-              hasInputShape(ctx, 4) ? ctx.getInputData(4) : nullptr;
+          const TensorProto* axesInitializer = hasInputShape(ctx, 3) ? ctx.getInputData(3) : nullptr;
+          const TensorProto* stepsInitializer = hasInputShape(ctx, 4) ? ctx.getInputData(4) : nullptr;
 
-          if (!startsInitializer || !endsInitializer ||
-              (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
+          if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
             return;
           }
@@ -988,8 +903,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!startsInitializer->has_data_type())
             return;
 
-          auto get_initializer_data =
-              [](const TensorProto* initializer) -> std::vector<int64_t> {
+          auto get_initializer_data = [](const TensorProto* initializer) -> std::vector<int64_t> {
             std::vector<int64_t> vec;
             if (initializer->data_type() == TensorProto::INT64) {
               const auto& data = ParseData<int64_t>(initializer);
@@ -999,8 +913,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               vec.insert(vec.end(), data.begin(), data.end());
             } else {
               // unaccepted data type
-              fail_shape_inference(
-                  "Only supports `int32_t` or `int64_t` inputs for starts/ends/axes/steps");
+              fail_shape_inference("Only supports `int32_t` or `int64_t` inputs for starts/ends/axes/steps");
             }
             return vec;
           };
@@ -1009,8 +922,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> ends = get_initializer_data(endsInitializer);
 
           if (starts.size() != ends.size()) {
-            fail_shape_inference(
-                "Incorrect or missing input value for starts and ends");
+            fail_shape_inference("Incorrect or missing input value for starts and ends");
           }
 
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
@@ -1037,10 +949,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (size_t i = 0; (int64_t)i < input_rank; ++i) {
             // first update rank of output dim
-            auto* output_dim = ctx.getOutputType(0)
-                                   ->mutable_tensor_type()
-                                   ->mutable_shape()
-                                   ->add_dim();
+            auto* output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             const auto& input_dim = input_shape.dim((int)i);
             if (input_dim.has_dim_value()) {
               output_dim->set_dim_value(input_dim.dim_value());
@@ -1052,9 +961,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::unordered_set<int64_t> unique_axes;
           size_t axes_size = axes.size();
           for (size_t axis_index = 0; axis_index < axes_size; ++axis_index) {
-            auto axis = axes[axis_index] < 0
-                ? axes[axis_index] + static_cast<int64_t>(input_rank)
-                : axes[axis_index];
+            auto axis = axes[axis_index] < 0 ? axes[axis_index] + static_cast<int64_t>(input_rank) : axes[axis_index];
 
             if (axis >= static_cast<int64_t>(input_rank) || axis < 0) {
               fail_shape_inference("Input axes has invalid data");
@@ -1066,8 +973,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             unique_axes.insert(axis);
 
-            auto input_dim =
-                ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
+            auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
 
             // input dim value is missing - cannot perform shape inference for
             // this axis
@@ -1092,11 +998,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               temp = 0;
 
             // assign output value
-            ctx.getOutputType(0)
-                ->mutable_tensor_type()
-                ->mutable_shape()
-                ->mutable_dim((int)axis)
-                ->set_dim_value(temp);
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->mutable_dim((int)axis)->set_dim_value(temp);
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
@@ -1125,12 +1027,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
           if (starts->dim_size() != ends->dim_size()) {
-            fail_shape_inference("Input rank for starts and ends should be the same: (",
-            starts->dim_size(), ") vs (", ends->dim_size(), ").");
+            fail_shape_inference(
+                "Input rank for starts and ends should be the same: (",
+                starts->dim_size(),
+                ") vs (",
+                ends->dim_size(),
+                ").");
           }
           // Only supports axis = 0 since the data comes from Shape
-          if ((!axes_specified || (axes->dim_size() == 1 && axes->dim(0).dim_value() == 0))
-            && starts->dim_size () == 1 && ends->dim_size() == 1) {
+          if ((!axes_specified || (axes->dim_size() == 1 && axes->dim(0).dim_value() == 0)) &&
+              starts->dim_size() == 1 && ends->dim_size() == 1) {
             auto start = starts->dim(0).dim_value();
             auto end = ends->dim(0).dim_value();
             int64_t step = 1; // Default step is 1
@@ -1148,11 +1054,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto tsp;
             if (step > 0) {
               for (int i = start; i < end; i += step) {
-                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+                *tsp.add_dim() = input_data->dim(i);
               }
             } else {
               for (int i = start; i > end; i += step) {
-                appendDimToTensorShapeProto(tsp, input_data->dim(i));
+                *tsp.add_dim() = input_data->dim(i);
               }
             }
             if (tsp.dim_size() > 0) {
@@ -1178,24 +1084,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "otherwise permute the axes according to the values given.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .Input(
-            0,
-            "data",
-            "An input tensor.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(
-            0,
-            "transposed",
-            "Transposed output.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "transposed", "Transposed output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -1244,8 +1134,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           for (size_t i = 0; i < perm.size(); ++i) {
-            appendSingleDimCopiedFromInputTypeToOutputType(
-                ctx, 0, 0, static_cast<size_t>(perm[i]));
+            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(perm[i]));
           }
         }));
 
@@ -1317,15 +1206,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(
-            0,
-            "data",
-            "Tensor of rank r >= 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "indices",
@@ -1354,14 +1235,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types(),
-            "Input and output types can be of any tensor type.")
-        .TypeConstraint(
-            "Tind",
-            {"tensor(int32)", "tensor(int64)"},
-            "Constrain indices to integer types")
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input and output types can be of any tensor type.")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 1)) {
@@ -1459,15 +1334,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'mul': reduction using the multiplication operation.",
             AttributeProto::STRING,
             std::string("none"))
-        .Input(
-            0,
-            "data",
-            "Tensor of rank r >= 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "indices",
@@ -1486,15 +1353,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "Tensor of rank r >= 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -1592,15 +1451,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'mul': reduction using the multiplication operation.",
             AttributeProto::STRING,
             std::string("none"))
-        .Input(
-            0,
-            "data",
-            "Tensor of rank r >= 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "indices",
@@ -1633,10 +1484,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Input and output types can be of any tensor type.")
-        .TypeConstraint(
-            "Tind",
-            {"tensor(int32)", "tensor(int64)"},
-            "Constrain indices to integer types")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 1)) {
@@ -1713,15 +1561,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(
-            0,
-            "data",
-            "Tensor of rank r >= 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "indices",
@@ -1732,32 +1572,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "output",
-            "Tensor of rank q + (r - 1).",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Output(0, "output", "Tensor of rank q + (r - 1).", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to any tensor type.")
-        .TypeConstraint(
-            "Tind",
-            {"tensor(int32)", "tensor(int64)"},
-            "Constrain indices to integer types")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 2)) {
             return;
           }
-          const TensorShapeProto& data_shape =
-              ctx.getInputType(0)->tensor_type().shape();
-          const TensorShapeProto& indices_shape =
-              ctx.getInputType(1)->tensor_type().shape();
+          const TensorShapeProto& data_shape = ctx.getInputType(0)->tensor_type().shape();
+          const TensorShapeProto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
           int r = data_shape.dim_size();
           if (r < 1) {
             fail_shape_inference("data tensor must have rank >= 1");
@@ -1775,38 +1602,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           }
           for (int i = 0; i < out_rank; ++i) {
-            *ctx.getOutputType(0)
-                 ->mutable_tensor_type()
-                 ->mutable_shape()
-                 ->add_dim() = (i < axis) ? data_shape.dim(i) : // i < axis < r
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = (i < axis) ? data_shape.dim(i)
+                                                                                                  : // i < axis < r
                 (i >= axis && i < axis + q) ? indices_shape.dim(i - axis)
                                             : // i - axis < q
-                    data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
+                data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          if (!axisIsZero(ctx, true)) {
-            return;
-          }
-          const auto input_data = ctx.getInputData(0);
-          const auto input_indices = ctx.getInputData(1);
-          if (input_data == nullptr || input_indices == nullptr) {
-            return;
-          }
-          TensorShapeProto tsp;
-          for (int i = 0; i < input_indices->dim_size(); ++i) {
-            if (input_indices->dim(i).has_dim_value()) {
-              int index = input_indices->dim(i).dim_value();
-              appendDimToTensorShapeProto(tsp,
-                input_data->dim((index < 0)? input_data->dim_size() + index : index));
-            } else {
-              return;
-            }
-          }
-          if (tsp.dim_size() > 0) {
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) { GatherOp13DataPropagator(ctx); }));
 
 static const char* GatherElements_ver13_doc = R"DOC(
 
@@ -1874,15 +1677,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(
-            0,
-            "data",
-            "Tensor of rank r >= 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "indices",
@@ -1906,10 +1701,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to any tensor type.")
-        .TypeConstraint(
-            "Tind",
-            {"tensor(int32)", "tensor(int64)"},
-            "Constrain indices to integer types")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           // propagate indices' shape to output if it exists
@@ -1980,25 +1772,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             axes = ParseData<int64_t>(axes_proto);
           } else {
-              // axes not specified
-              axes_not_specified = true;
+            // axes not specified
+            axes_not_specified = true;
           }
 
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
-          std::transform(
-              axes.begin(),
-              axes.end(),
-              axes.begin(),
-              [&](int64_t axis) -> int64_t {
-                return axis < 0 ? axis + input_ndim : axis;
-              });
+          std::transform(axes.begin(), axes.end(), axes.begin(), [&](int64_t axis) -> int64_t {
+            return axis < 0 ? axis + input_ndim : axis;
+          });
 
           for (int i = 0; i < input_ndim; ++i) {
-            if(!input_shape.dim(i).has_dim_value() && axes_not_specified) {
-                // if dim has a symbolic value and the axes spec want to act on all dims,
-                // return early because we can't infer the shape
-                return;
+            if (!input_shape.dim(i).has_dim_value() && axes_not_specified) {
+              // if dim has a symbolic value and the axes spec want to act on all dims,
+              // return early because we can't infer the shape
+              return;
             }
           }
 
@@ -2006,8 +1794,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (int i = 0; i < input_ndim; ++i) {
             if (axes_not_specified && input_shape.dim(i).dim_value() == 1) {
-                // if axes not specified, do not keep shape if the dimension is equal to one
-                continue;
+              // if axes not specified, do not keep shape if the dimension is equal to one
+              continue;
             } else if (!axes_not_specified && std::find(axes.begin(), axes.end(), i) != axes.end()) {
               // if axes wants to explictly act on this dim, fail explicitly only if the
               // dim is numerical and != 1. If the dim is 1 or symbolic, remove it. If
@@ -2015,16 +1803,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               // actually 1 when the op is evaluated
               if (input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
-                    "Dimension of input ",
-                    i,
-                    " must be 1 instead of ",
-                    input_shape.dim(i).dim_value());
+                    "Dimension of input ", i, " must be 1 instead of ", input_shape.dim(i).dim_value());
               }
             } else {
-              *ctx.getOutputType(0)
-                   ->mutable_tensor_type()
-                   ->mutable_shape()
-                   ->add_dim() = input_shape.dim(i);
+              *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = input_shape.dim(i);
             }
           }
         })
@@ -2052,15 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(Unsqueeze_ver13_doc)
-        .Input(
-            0,
-            "data",
-            "Original tensor",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "data", "Original tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "axes",
@@ -2101,8 +1875,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::unordered_set<int64_t> unique_values;
           for (const auto val : axes) {
             if (unique_values.find(val) != unique_values.end()) {
-              fail_shape_inference(
-                  "'axes' attribute must not contain any duplicates");
+              fail_shape_inference("'axes' attribute must not contain any duplicates");
             }
             unique_values.insert(val);
           }
@@ -2113,8 +1886,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto output_ndim = input_ndim + static_cast<int>(axes.size());
           for (auto& axe : axes) {
             if (axe < -output_ndim || axe >= output_ndim) {
-              fail_shape_inference(
-                  "values in 'axes' are beyond the bounds of the computed output shape");
+              fail_shape_inference("values in 'axes' are beyond the bounds of the computed output shape");
             }
             if (axe < 0) {
               axe += output_ndim;
@@ -2128,29 +1900,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           int j = 0;
           for (int i = 0; i < input_ndim; ++i) {
             while (static_cast<size_t>(j) < axes.size() &&
-                   axes[j] ==
-                       ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
-              ctx.getOutputType(0)
-                  ->mutable_tensor_type()
-                  ->mutable_shape()
-                  ->add_dim()
-                  ->set_dim_value(1);
+                   axes[j] == ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(1);
               ++j;
             }
-            *ctx.getOutputType(0)
-                 ->mutable_tensor_type()
-                 ->mutable_shape()
-                 ->add_dim() =
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
                 ctx.getInputType(0)->tensor_type().shape().dim(i);
           }
           while (static_cast<size_t>(j) < axes.size() &&
-                 axes[j] ==
-                     ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
-            ctx.getOutputType(0)
-                ->mutable_tensor_type()
-                ->mutable_shape()
-                ->add_dim()
-                ->set_dim_value(1);
+                 axes[j] == ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(1);
             ++j;
           }
         })
@@ -2168,10 +1927,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     SpaceToDepth,
     13,
     OpSchema()
-        .Attr(
-            "blocksize",
-            "Blocks of [blocksize, blocksize] are moved.",
-            AttributeProto::INT)
+        .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
         .SetDoc(SpaceToDepth_ver13_doc)
         .Input(
             0,
@@ -2254,10 +2010,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     DepthToSpace,
     13,
     OpSchema()
-        .Attr(
-            "blocksize",
-            "Blocks of [blocksize, blocksize] are moved.",
-            AttributeProto::INT)
+        .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
         .Attr(
             "mode",
             "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
@@ -2322,15 +2075,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(Tile_ver13_doc)
-        .Input(
-            0,
-            "input",
-            "Input tensor of any shape.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "input", "Input tensor of any shape.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "repeats",
@@ -2355,16 +2100,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(int64)"},
-            "Constrain repeat's type to int64 tensors.")
+        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain repeat's type to int64 tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           // Shape inference
 
-          // Needs atleast the first input to proceed
+          // Needs at least the first input to proceed
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
@@ -2374,17 +2116,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           const auto* repeats_inputs = ctx.getInputData(1);
 
-          auto* output_shape =
-              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           if (nullptr != repeats_inputs && hasNInputShapes(ctx, 2)) {
             // shape inference is possible only when 'repeats' is an initializer
-            const auto& repeats_shape =
-                ctx.getInputType(1)->tensor_type().shape();
-            if (repeats_shape.dim_size() != 1 ||
-                repeats_inputs->data_type() != TensorProto::INT64) {
-                  fail_shape_inference("'Repeats' input must be 1D tensor of type int64");
-                }
+            const auto& repeats_shape = ctx.getInputType(1)->tensor_type().shape();
+            if (repeats_shape.dim_size() != 1 || repeats_inputs->data_type() != TensorProto::INT64) {
+              fail_shape_inference("'Repeats' input must be 1D tensor of type int64");
+            }
 
             const auto& repeats_data = ParseData<int64_t>(repeats_inputs);
 
@@ -2399,8 +2138,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               const auto& input_dim = input_shape.dim((int)i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(
-                    input_dim.dim_value() * repeats_data[i]);
+                output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
               }
             }
           } else {
@@ -2430,12 +2168,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)",
             AttributeProto::STRING,
             std::string("nearest"))
-        .Input(
-            0,
-            "X",
-            "N-D tensor",
-            "T",
-            OpSchema::Single)
+        .Input(0, "X", "N-D tensor", "T", OpSchema::Single)
         .Input(
             1,
             "scales",
@@ -2443,20 +2176,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             " The number of elements of 'scales' should be the same as the rank of input 'X'.",
             "tensor(float)",
             OpSchema::Single)
-        .Output(
-            0,
-            "Y",
-            "N-D tensor after resizing",
-            "T",
-            OpSchema::Single)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types(),
-            "Constrain input 'X' and output 'Y' to all tensor types.")
+        .Output(0, "Y", "N-D tensor after resizing", "T", OpSchema::Single)
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input 'X' and output 'Y' to all tensor types.")
         .SetDoc(Upsample_ver10_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference_opset7_to_10(ctx);
-        }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
 static const char* Resize_ver13_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
@@ -2524,15 +2247,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "When coordinate_transformation_mode is \"tf_crop_and_resize\" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.",
             AttributeProto::FLOAT,
             static_cast<float>(0))
-        .Input(
-            0,
-            "X",
-            "N-D tensor",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "X", "N-D tensor", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "roi",
@@ -2563,15 +2278,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "Y",
-            "N-D tensor after resizing",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Output(0, "Y", "N-D tensor after resizing", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -2581,9 +2288,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
         .SetDoc(Resize_ver13_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx);
-        }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference(ctx); }));
 
 static const char* GridSample_ver16_doc = R"DOC(
 Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
@@ -2655,10 +2360,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T1",
-            OpSchema::all_tensor_types(),
-            "Constrain input types to all tensor types.")
+        .TypeConstraint("T1", OpSchema::all_tensor_types(), "Constrain input types to all tensor types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -2694,27 +2396,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     16,
     OpSchema()
         .SetDoc("Identity operator")
-        .Input(
-            0,
-            "input",
-            "Input tensor",
-            "V",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "Tensor to copy input into.",
-            "V",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "input", "Input tensor", "V", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "output", "Tensor to copy input into.", "V", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "V",
-            [](){
+            []() {
               auto t = OpSchema::all_tensor_types_with_bfloat();
               auto s = OpSchema::all_tensor_sequence_types();
               auto o = OpSchema::all_optional_types();
@@ -2743,15 +2429,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             OPTIONAL_VALUE)
-        .Input(
-            0,
-            "input",
-            "Tensor of rank r >= 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "input", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "condition",
@@ -2773,19 +2451,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types(),
-            "Constrain input and output types to all tensor types.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(bool)"},
-            "Constrain to boolean tensors.")
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
+        .TypeConstraint("T1", {"tensor(bool)"}, "Constrain to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasInputShape(ctx, 0)) {
-            const TensorShapeProto& indices_shape =
-                ctx.getInputType(0)->tensor_type().shape();
+            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
             int r = indices_shape.dim_size();
             if (r < 1) {
               fail_shape_inference("Indices tensor must have rank >= 1");
@@ -2794,8 +2465,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (axisAttr) {
               int axis = static_cast<int>(axisAttr->i());
               if (axis < -r || axis >= r) {
-                fail_shape_inference(
-                    "'axis' must be in [-rank(indices), rank(indices)-1]");
+                fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
               }
               if (axis < 0) {
                 axis += r;
@@ -2887,18 +2557,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint(
-            "T1",
-            OpSchema::all_numeric_types(),
-            "Constrain input to only numeric types.")
-        .TypeConstraint(
-            "T2",
-            OpSchema::all_numeric_types(),
-            "Constrain input to only numeric types.")
-        .TypeConstraint(
-            "T3",
-            OpSchema::all_tensor_types(),
-            "Constrain to any tensor type.")
+        .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
+        .TypeConstraint("T2", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
+        .TypeConstraint("T3", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Check that the node has three inputs.
           if (ctx.getNumInputs() != 3) {
@@ -2915,14 +2576,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
             if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
-              fail_type_inference(
-                  "Input 'depth' must be a scalar or rank 1 tensor.");
+              fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
             }
-            if (depth_shape.dim_size() == 1 &&
-                depth_shape.dim((int)0).has_dim_value() &&
+            if (depth_shape.dim_size() == 1 && depth_shape.dim((int)0).has_dim_value() &&
                 depth_shape.dim((int)0).dim_value() != 1) {
-              fail_type_inference(
-                  "Input 'depth' must have exactly one element.");
+              fail_type_inference("Input 'depth' must have exactly one element.");
             }
           }
           // Input 'values' must be a two-element vector.
@@ -2931,18 +2589,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (values_shape.dim_size() != 1) {
               fail_type_inference("Input 'values' must be rank 1 tensor.");
             }
-            if (values_shape.dim((int)0).has_dim_value() &&
-                values_shape.dim((int)0).dim_value() != 2) {
-              fail_type_inference(
-                  "Input 'values' must have exactly two elements.");
+            if (values_shape.dim((int)0).has_dim_value() && values_shape.dim((int)0).dim_value() != 2) {
+              fail_type_inference("Input 'values' must have exactly two elements.");
             }
           }
           // Set output type to be the same as the third input, 'values'.
           propagateElemTypeFromInputToOutput(ctx, 2, 0);
           // Set the output shape, if input 0 (indices) shape is available.
           if (hasInputShape(ctx, 0)) {
-            const TensorShapeProto& indices_shape =
-                ctx.getInputType(0)->tensor_type().shape();
+            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
             int r = indices_shape.dim_size();
             if (r < 1) {
               fail_shape_inference("Indices tensor must have rank >= 1");
@@ -2950,8 +2605,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             int out_rank = r + 1;
             int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
             if (axis < -out_rank || axis >= out_rank) {
-              fail_shape_inference(
-                  "'axis' must be in [-rank(indices), rank(indices)-1]");
+              fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
             }
             if (axis < 0) {
               axis += out_rank;
@@ -2981,35 +2635,13 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
-        .Input(
-            0,
-            "X",
-            "input",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "Y",
-            "output",
-            "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+        .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(bfloat16)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input types to float tensors.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(bool)"},
-            "Constrain output types to boolean tensors.")
+        .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
           if (hasInputShape(ctx, 0)) {
@@ -3022,24 +2654,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     10,
     OpSchema()
         .SetDoc(R"DOC(Map infinity to true and other values to false.)DOC")
-        .Input(
-            0,
-            "X",
-            "input",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "Y",
-            "output",
-            "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+        .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
             "detect_positive",
             "(Optional) Whether map positive infinity to true. Default to 1 "
@@ -3054,14 +2670,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "if negative infinity should be mapped to false.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .TypeConstraint(
-            "T1",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(bool)"},
-            "Constrain output types to boolean tensors.")
+        .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float tensors.")
+        .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
           if (hasInputShape(ctx, 0)) {
@@ -3087,8 +2697,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     Where,
     16,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(
-            std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()) +
+        .SetDoc(
+            GET_OP_DOC_STR(std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()) +
             std::string(Where_ver16_history))
         .Input(
             0,
@@ -3139,45 +2749,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             shapes.push_back(&ctx.getInputType(1)->tensor_type().shape());
             shapes.push_back(&ctx.getInputType(2)->tensor_type().shape());
             multidirectionalBroadcastShapeInference(
-                shapes,
-                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+                shapes, *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
           }
         }));
-
-static const char* NonZero_ver13_doc = R"DOC(
-    Returns the indices of the elements that are non-zero
-    (in row-major order - by dimension).
-    NonZero behaves similar to numpy.nonzero:
-    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
-)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     NonZero,
     13,
     OpSchema()
-        .SetDoc(NonZero_ver13_doc)
-        .Input(
-            0,
-            "X",
-            "input",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "Y",
-            "output",
-            "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Constrain to all tensor types.")
+        .SetDoc(NonZero_ver9_doc)
+        .Input(0, "X", "input", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", "tensor(int64)", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_with_bfloat(), "Constrain to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::INT64);
           TensorShapeProto output_shape;
@@ -3241,28 +2824,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) Specify which axis is batch axis. Must be one of 1 (default), or 0.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .Input(
-            0,
-            "input",
-            "Tensor of rank r >= 2.",
-            "T",
-            OpSchema::Single)
+        .Input(0, "input", "Tensor of rank r >= 2.", "T", OpSchema::Single)
         .Input(
             1,
             "sequence_lens",
             "Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.",
             "tensor(int64)",
             OpSchema::Single)
-        .Output(
-            0,
-            "Y",
-            "Tensor with same shape of input.",
-            "T",
-            OpSchema::Single)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types(),
-            "Input and output types can be of any tensor type.")
+        .Output(0, "Y", "Tensor with same shape of input.", "T", OpSchema::Single)
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input and output types can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 2)) {
@@ -3432,10 +3002,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types(),
-            "Input can be of any tensor type.")
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -3453,25 +3020,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (num_outputs >= 2) {
             indicesTensorProto = ctx.getOutputType(1);
             updateOutputElemType(ctx, 1, TensorProto::INT64);
-            indicesTensorProto->mutable_tensor_type()
-                ->mutable_shape()
-                ->add_dim();
+            indicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
           }
 
           if (num_outputs >= 3) {
             inverseIndicesTensorProto = ctx.getOutputType(2);
             updateOutputElemType(ctx, 2, TensorProto::INT64);
-            inverseIndicesTensorProto->mutable_tensor_type()
-                ->mutable_shape()
-                ->add_dim();
+            inverseIndicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
           }
 
           if (num_outputs >= 4) {
             countsTensorProto = ctx.getOutputType(3);
             updateOutputElemType(ctx, 3, TensorProto::INT64);
-            countsTensorProto->mutable_tensor_type()
-                ->mutable_shape()
-                ->add_dim();
+            countsTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
           }
 
           auto axisAttr = ctx.getAttribute("axis");
@@ -3482,23 +3043,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // 'axis' is provided.
             int axis = static_cast<int>(axisAttr->i());
-            if(!xTensorProto->tensor_type().has_shape()) {
+            if (!xTensorProto->tensor_type().has_shape()) {
               return;
             }
-            const TensorShapeProto& input_shape =
-                xTensorProto->tensor_type().shape();
+            const TensorShapeProto& input_shape = xTensorProto->tensor_type().shape();
             int rank = input_shape.dim_size();
             if (axis < 0)
               axis += rank;
-            if (axis < 0 || axis >= rank){
+            if (axis < 0 || axis >= rank) {
               fail_shape_inference("Invalid value for attribute axis");
             }
             // 'Y' has the same shape as 'X' except in the 'axis' dimension
             // which is unknown.
             for (int i = 0; i < input_shape.dim_size(); i++) {
-              auto* dim = yTensorProto->mutable_tensor_type()
-                              ->mutable_shape()
-                              ->add_dim();
+              auto* dim = yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
               if (i != axis) {
                 *dim = input_shape.dim(i);
               }
@@ -3610,15 +3168,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(
-            0,
-            "data",
-            "Tensor of rank r >= 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "indices",
@@ -3655,11 +3205,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto data_rank = data_shape.dim_size();
 
-          const auto& indices_shape =
-              ctx.getInputType(1)->tensor_type().shape();
+          const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
           const auto indices_rank = indices_shape.dim_size();
 
-        int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
+          int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
           if (data_rank < 1 || indices_rank < 1) {
             fail_shape_inference(
                 "Both `data` and `indices` input tensors in GatherND op "
@@ -3672,8 +3221,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension =
-              indices_shape.dim(indices_rank - 1).dim_value() + batch_dims_data;
+          const auto last_index_dimension = indices_shape.dim(indices_rank - 1).dim_value() + batch_dims_data;
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
@@ -3682,18 +3230,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           for (int i = 0; i < indices_rank - 1; ++i) {
-            *ctx.getOutputType(0)
-                 ->mutable_tensor_type()
-                 ->mutable_shape()
-                 ->add_dim() = indices_shape.dim(i);
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = indices_shape.dim(i);
           }
 
-          for (int i = static_cast<int>(last_index_dimension); i < data_rank;
-               ++i) {
-            *ctx.getOutputType(0)
-                 ->mutable_tensor_type()
-                 ->mutable_shape()
-                 ->add_dim() = data_shape.dim(i);
+          for (int i = static_cast<int>(last_index_dimension); i < data_rank; ++i) {
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = data_shape.dim(i);
           }
         }));
 
@@ -3939,7 +3480,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     14,
     OpSchema()
         .SetDoc(Trilu_ver14_doc)
-        .Attr("upper",
+        .Attr(
+            "upper",
             "Boolean. Indicates whether upper or lower part of matrix is retained. Default is true.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
@@ -3965,8 +3507,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "output",
-	          "Output tensor of the same type and shape as the input tensor.",
-	          "T",
+            "Output tensor of the same type and shape as the input tensor.",
+            "T",
             OpSchema::Single,
             true,
             1,
@@ -3980,14 +3522,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           // Shape inference needs the input data shape
           if (hasInputShape(ctx, 0)) {
-	          const TensorShapeProto& input_shape =
-	              ctx.getInputType(0)->tensor_type().shape();
-	          const int rank = static_cast<int>(input_shape.dim_size());
-	          if (rank < 2) {
-	            fail_shape_inference("Input rank must be >= 2.")
-	          }
-	          propagateShapeFromInputToOutput(ctx, 0, 0);
-	        }
+            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            const int rank = static_cast<int>(input_shape.dim_size());
+            if (rank < 2) {
+              fail_shape_inference("Input rank must be >= 2.")
+            }
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
         }));
 
 static const char* CenterCropPad_ver17_doc = R"DOC(

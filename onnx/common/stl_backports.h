@@ -19,11 +19,10 @@
  *   }
  */
 #ifdef __cpp_init_captures
-  #define MOVE_CAPTURE_IF_CPP14(variable) variable = std::move(variable)
+#define MOVE_CAPTURE_IF_CPP14(variable) variable = std::move(variable)
 #else
-  #define MOVE_CAPTURE_IF_CPP14(variable) variable
+#define MOVE_CAPTURE_IF_CPP14(variable) variable
 #endif
-
 
 /**
  * For exception safety and consistency with make_shared. Erase me when
@@ -34,11 +33,11 @@
  * @author Sebastian Messmer (messmer@fb.com)
  */
 
-#if __cplusplus >= 201402L || __cpp_lib_make_unique >= 201304L || \
-    (__ANDROID__ && __cplusplus >= 201300L) || _MSC_VER >= 1900
+#if __cplusplus >= 201402L || __cpp_lib_make_unique >= 201304L || (__ANDROID__ && __cplusplus >= 201300L) || \
+    _MSC_VER >= 1900
 
 namespace ONNX_NAMESPACE {
-  using std::make_unique;
+using std::make_unique;
 }
 
 #else
@@ -46,24 +45,20 @@ namespace ONNX_NAMESPACE {
 namespace ONNX_NAMESPACE {
 
 template <typename T, typename... Args>
-typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
-make_unique(Args&&... args) {
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type make_unique(Args&&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
 // Allows 'make_unique<T[]>(10)'. (N3690 s20.9.1.4 p3-4)
 template <typename T>
-typename std::enable_if<std::is_array<T>::value, std::unique_ptr<T>>::type
-make_unique(const size_t n) {
+typename std::enable_if<std::is_array<T>::value, std::unique_ptr<T>>::type make_unique(const size_t n) {
   return std::unique_ptr<T>(new typename std::remove_extent<T>::type[n]());
 }
 
 // Disallows 'make_unique<T[10]>()'. (N3690 s20.9.1.4 p5)
 template <typename T, typename... Args>
-typename std::enable_if<
-  std::extent<T>::value != 0, std::unique_ptr<T>>::type
-make_unique(Args&&...) = delete;
+typename std::enable_if<std::extent<T>::value != 0, std::unique_ptr<T>>::type make_unique(Args&&...) = delete;
 
-}
+} // namespace ONNX_NAMESPACE
 
 #endif
