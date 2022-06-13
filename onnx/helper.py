@@ -362,8 +362,7 @@ def make_tensor(
             vals = np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
         elif data_type == TensorProto.BFLOAT16:
             vals = list(map(float32_to_bfloat16, np.array(vals).astype(np_dtype).flatten().tolist()))
-        field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
-            mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]]
+        field = mapping.to_field(data_type)
         getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)
     return tensor

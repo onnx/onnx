@@ -37,9 +37,8 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
 
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
-    storage_type = mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[tensor_dtype]
-    storage_np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[storage_type]
-    storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[storage_type]
+    storage_np_dtype = mapping.to_storage_numpy_type(tensor_dtype)
+    storage_field = mapping.to_field(tensor_dtype)
     dims = tensor.dims
 
     if tensor.data_type == TensorProto.STRING:

@@ -7,6 +7,8 @@ import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto, SequenceProto
+from onnx.mapping import to_string, TENSOR_TYPE_TO_NP_TYPE
+import pytest
 from typing import Any, List, Tuple
 
 import unittest
@@ -360,28 +362,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
 
 class TestHelperTensorFunctions(unittest.TestCase):
 
-    def test_make_tensor(self) -> None:
-        np_array = np.random.randn(2, 3).astype(np.float32)
-
-        tensor = helper.make_tensor(
-            name='test',
-            data_type=TensorProto.FLOAT,
-            dims=(2, 3),
-            vals=np_array
-        )
-        self.assertEqual(tensor.name, 'test')
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
-        # use raw_data field to store the data
-        tensor = helper.make_tensor(
-            name='test',
-            data_type=TensorProto.FLOAT,
-            dims=(2, 3),
-            vals=np_array.tobytes(),
-            raw=True,
-        )
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
+    def test_make_string_tensor(self) -> None:
         string_list = list(s.encode('utf-8') for s in ['Amy', 'Billy', 'Cindy', 'David'])
         tensor = helper.make_tensor(
             name='test',
@@ -391,53 +372,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=False
         )
         self.assertEqual(string_list, list(tensor.string_data))
-
-    def test_make_int8_tensor(self) -> None:
-        np_array = np.random.randn(2, 3).astype(np.int8)
-
-        tensor = helper.make_tensor(
-            name='test',
-            data_type=TensorProto.INT8,
-            dims=(2, 3),
-            vals=np_array
-        )
-        self.assertEqual(tensor.name, 'test')
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
-        # use raw_data field to store the data
-        tensor = helper.make_tensor(
-            name='test',
-            data_type=TensorProto.INT8,
-            dims=(2, 3),
-            vals=np_array.tobytes(),
-            raw=True,
-        )
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
-    def test_make_float16_tensor(self) -> None:
-        np_array = np.random.randn(2, 3).astype(np.float16)
-
-        tensor = helper.make_tensor(
-            name='test',
-            data_type=TensorProto.FLOAT16,
-            dims=np_array.shape,
-            vals=np_array
-        )
-        self.assertEqual(tensor.name, 'test')
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
-    def test_make_float16_tensor_raw(self) -> None:
-        np_array = np.random.randn(2, 3).astype(np.float16)
-
-        tensor = helper.make_tensor(
-            name='test',
-            data_type=TensorProto.FLOAT16,
-            dims=np_array.shape,
-            vals=np_array.view(dtype=np.uint16).flatten().tobytes(),
-            raw=True
-        )
-        self.assertEqual(tensor.name, 'test')
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
     def test_make_bfloat16_tensor(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
@@ -660,5 +594,37 @@ class TestPrintableGraph(unittest.TestCase):
   %Y_Initializer[FLOAT, 1]''' in graph_str, graph_str)
 
 
+@pytest.mark.parametrize("tensor_type",
+    [t for t in TENSOR_TYPE_TO_NP_TYPE if t not in {TensorProto.BFLOAT16, TensorProto.STRING, TensorProto.COMPLEX64, TensorProto.COMPLEX128}],
+    ids=lambda tensor_type: to_string(tensor_type)
+)
+def test_make_tensor_vals(tensor_type) -> None:
+    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_TO_NP_TYPE[tensor_type])
+    tensor = helper.make_tensor(
+        name='test',
+        data_type=tensor_type,
+        dims=np_array.shape,
+        vals=np_array
+    )
+    np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+
+@pytest.mark.parametrize("tensor_type",
+    [t for t in TENSOR_TYPE_TO_NP_TYPE if t not in {TensorProto.BFLOAT16, TensorProto.STRING}],
+    ids=lambda tensor_type: to_string(tensor_type)
+)
+def test_make_tensor_raw(tensor_type) -> None:
+    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_TO_NP_TYPE[tensor_type])
+    tensor = helper.make_tensor(
+        name='test',
+        data_type=tensor_type,
+        dims=np_array.shape,
+        vals=np_array.tobytes(),
+        raw=True,
+    )
+    np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+
 if __name__ == '__main__':
     unittest.main()
+    pytest.main([__file__])
