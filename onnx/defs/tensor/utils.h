@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #pragma once
 
 #include "onnx/defs/schema.h"
@@ -44,5 +43,6 @@ void KeepAspectRatioHelper(
   const std::vector<int64_t>& axes,
   std::vector<int64_t>& sizes_data);
 
+extern const char* NonZero_ver9_doc;
 
 } // namespace ONNX_NAMESPACE

@@ -5,7 +5,6 @@
 import argparse
 import os
 import subprocess
-from typing import Text
 
 
 def parse_args() -> argparse.Namespace:
@@ -19,7 +18,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def gen_trace_file(root_dir: Text, out_path: Text) -> None:
+def gen_trace_file(root_dir: str, out_path: str) -> None:
     subprocess.check_output([
         'lcov',
         '-c',
@@ -49,7 +48,7 @@ def gen_trace_file(root_dir: Text, out_path: Text) -> None:
     ])
 
 
-def gen_html_files(root_dir: Text, trace_path: Text, out_dir: Text) -> None:
+def gen_html_files(root_dir: str, trace_path: str, out_dir: str) -> None:
     subprocess.check_output([
         'genhtml',
         trace_path,
@@ -74,7 +73,7 @@ def main() -> None:
     html_dir = os.path.join(out, 'html')
     gen_html_files(root, trace_path, html_dir)
 
-    print('Static HTML files have been generated at:\n\t{}'.format(html_dir))
+    print(f'Static HTML files have been generated at:\n\t{html_dir}')
 
 
 if __name__ == '__main__':

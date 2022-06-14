@@ -11,18 +11,18 @@ from . import expect
 class GRU_Helper():
     def __init__(self, **params: Any) -> None:
         # GRU Input Names
-        X = str('X')
-        W = str('W')
-        R = str('R')
-        B = str('B')
-        H_0 = str('initial_h')
-        LBR = str('linear_before_reset')
-        LAYOUT = str('layout')
+        X = 'X'
+        W = 'W'
+        R = 'R'
+        B = 'B'
+        H_0 = 'initial_h'
+        LBR = 'linear_before_reset'
+        LAYOUT = 'layout'
         number_of_gates = 3
 
         required_inputs = [X, W, R]
         for i in required_inputs:
-            assert i in params, "Missing Required Input: {0}".format(i)
+            assert i in params, f"Missing Required Input: {i}"
 
         self.num_directions = params[W].shape[0]
 

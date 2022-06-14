@@ -5,7 +5,11 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
+<<<<<<< HEAD
 from typing import Any, List, Callable, Optional, Text
+=======
+from typing import Any, List, Callable, Union, Optional
+>>>>>>> upstream/main
 
 
 def cartesian(arrays: List[np.ndarray], out: np.ndarray = None) -> np.ndarray:
@@ -73,7 +77,7 @@ def interpolate_1d_with_x(data: np.ndarray,
                           get_coeffs: Callable[[float, float], np.ndarray],
                           roi: np.ndarray = None,
                           extrapolation_value: float = 0.0,
-                          coordinate_transformation_mode: Text = 'half_pixel',
+                          coordinate_transformation_mode: str = 'half_pixel',
                           exclude_outside: bool = False,
                           ) -> np.ndarray:
     def get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
@@ -282,6 +286,7 @@ def linear_coeffs(ratio: float) -> np.ndarray:
     return np.array([1 - ratio, ratio])
 
 
+<<<<<<< HEAD
 def linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
     if scale > 1.0:  # Antialias is applied when downsampling
         scale = 1.0
@@ -293,6 +298,9 @@ def linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
 
 
 def nearest_coeffs(ratio: float, mode: Text = 'round_prefer_floor') -> np.ndarray:
+=======
+def nearest_coeffs(ratio: float, mode: str = 'round_prefer_floor') -> np.ndarray:
+>>>>>>> upstream/main
     if type(ratio) == int or ratio.is_integer():
         return np.array([0, 1])
     elif mode == 'round_prefer_floor':

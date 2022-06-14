@@ -198,7 +198,7 @@ void OpSchema::Verify(const NodeProto& node) const {
       }
     }
     if ((in_idx >= static_cast<int>(inputs_.size()) && Variadic == inputs_.back().GetOption()) ||
-      Variadic == inputs_[in_idx].GetOption()) {
+        Variadic == inputs_[in_idx].GetOption()) {
       do {
         if (node.input(in_idx).empty()) {
           fail_check(
@@ -224,11 +224,15 @@ void OpSchema::Verify(const NodeProto& node) const {
       }
     }
     if ((out_idx >= static_cast<int>(outputs_.size()) && Variadic == outputs_.back().GetOption()) ||
-      Variadic == outputs_[out_idx].GetOption()) {
+        Variadic == outputs_[out_idx].GetOption()) {
       do {
         if (node.output(out_idx).empty()) {
           fail_check(
-              "Node (", node.name(), ")'s output ", out_idx, " is marked Variadic but has an empty string in the graph");
+              "Node (",
+              node.name(),
+              ")'s output ",
+              out_idx,
+              " is marked Variadic but has an empty string in the graph");
         }
       } while (++out_idx < node.output_size());
     } else if (node.output(out_idx).empty() && (Single == outputs_[out_idx].GetOption())) {

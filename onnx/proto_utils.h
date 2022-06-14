@@ -13,7 +13,7 @@
 #include <google/protobuf/message_lite.h>
 #else // ONNX_USE_LITE_PROTO
 #include <google/protobuf/message.h>
-#endif  // !ONNX_USE_LITE_PROTO
+#endif // !ONNX_USE_LITE_PROTO
 
 namespace ONNX_NAMESPACE {
 
@@ -38,27 +38,31 @@ bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
   ::google::protobuf::io::CodedInputStream coded_stream(&input_stream);
   int total_bytes_limit = (2048LL << 20) - 1;
 #if GOOGLE_PROTOBUF_VERSION >= 3011000
-    // Only take one parameter since protobuf 3.11
-    coded_stream.SetTotalBytesLimit(total_bytes_limit);
+  // Only take one parameter since protobuf 3.11
+  coded_stream.SetTotalBytesLimit(total_bytes_limit);
 #else
-    // Total bytes hard limit / warning limit are set to 2GB and 512MB respectively.
-    coded_stream.SetTotalBytesLimit(total_bytes_limit, 512LL << 20);
+  // Total bytes hard limit / warning limit are set to 2GB and 512MB respectively.
+  coded_stream.SetTotalBytesLimit(total_bytes_limit, 512LL << 20);
 #endif
 
   return proto->ParseFromCodedStream(&coded_stream);
 }
 
-template<typename T> inline std::vector<T> RetrieveValues(const AttributeProto& attr);
-template<> inline std::vector<int64_t> RetrieveValues(const AttributeProto& attr) {
+template <typename T>
+inline std::vector<T> RetrieveValues(const AttributeProto& attr);
+template <>
+inline std::vector<int64_t> RetrieveValues(const AttributeProto& attr) {
   return {attr.ints().begin(), attr.ints().end()};
 }
 
-template<> inline std::vector<std::string> RetrieveValues(const AttributeProto& attr) {
-  return { attr.strings().begin(), attr.strings().end() };
+template <>
+inline std::vector<std::string> RetrieveValues(const AttributeProto& attr) {
+  return {attr.strings().begin(), attr.strings().end()};
 }
 
-template<> inline std::vector<float> RetrieveValues(const AttributeProto& attr) {
-  return { attr.floats().begin(), attr.floats().end() };
+template <>
+inline std::vector<float> RetrieveValues(const AttributeProto& attr) {
+  return {attr.floats().begin(), attr.floats().end()};
 }
 
 } // namespace ONNX_NAMESPACE

@@ -2,41 +2,37 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include "attr_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 
-#define ADD_BASIC_ATTR_IMPL(type, enumType, field)       \
-  AttributeProto MakeAttribute(                          \
-      const std::string& attr_name, const type& value) { \
-    AttributeProto a;                                    \
-    a.set_name(attr_name);                               \
-    a.set_type(enumType);                                \
-    a.set_##field(value);                                \
-    return a;                                            \
+#define ADD_BASIC_ATTR_IMPL(type, enumType, field)                                \
+  AttributeProto MakeAttribute(const std::string& attr_name, const type& value) { \
+    AttributeProto a;                                                             \
+    a.set_name(attr_name);                                                        \
+    a.set_type(enumType);                                                         \
+    a.set_##field(value);                                                         \
+    return a;                                                                     \
   }
 
-#define ADD_ATTR_IMPL(type, enumType, field)             \
-  AttributeProto MakeAttribute(                          \
-      const std::string& attr_name, const type& value) { \
-    AttributeProto a;                                    \
-    a.set_name(attr_name);                               \
-    a.set_type(enumType);                                \
-    *(a.mutable_##field()) = value;                      \
-    return a;                                            \
+#define ADD_ATTR_IMPL(type, enumType, field)                                      \
+  AttributeProto MakeAttribute(const std::string& attr_name, const type& value) { \
+    AttributeProto a;                                                             \
+    a.set_name(attr_name);                                                        \
+    a.set_type(enumType);                                                         \
+    *(a.mutable_##field()) = value;                                               \
+    return a;                                                                     \
   }
 
-#define ADD_LIST_ATTR_IMPL(type, enumType, field)                      \
-  AttributeProto MakeAttribute(                                        \
-      const std::string& attr_name, const std::vector<type>& values) { \
-    AttributeProto a;                                                  \
-    a.set_name(attr_name);                                             \
-    a.set_type(enumType);                                              \
-    for (const auto& val : values) {                                   \
-      *(a.mutable_##field()->Add()) = val;                             \
-    }                                                                  \
-    return a;                                                          \
+#define ADD_LIST_ATTR_IMPL(type, enumType, field)                                               \
+  AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<type>& values) { \
+    AttributeProto a;                                                                           \
+    a.set_name(attr_name);                                                                      \
+    a.set_type(enumType);                                                                       \
+    for (const auto& val : values) {                                                            \
+      *(a.mutable_##field()->Add()) = val;                                                      \
+    }                                                                                           \
+    return a;                                                                                   \
   }
 
 ADD_BASIC_ATTR_IMPL(float, AttributeProto_AttributeType_FLOAT, f)
@@ -52,9 +48,7 @@ ADD_LIST_ATTR_IMPL(TensorProto, AttributeProto_AttributeType_TENSORS, tensors)
 ADD_LIST_ATTR_IMPL(GraphProto, AttributeProto_AttributeType_GRAPHS, graphs)
 ADD_LIST_ATTR_IMPL(TypeProto, AttributeProto_AttributeType_TYPE_PROTOS, type_protos)
 
-AttributeProto MakeRefAttribute(
-    const std::string& attr_name,
-    AttributeProto_AttributeType type) {
+AttributeProto MakeRefAttribute(const std::string& attr_name, AttributeProto_AttributeType type) {
   return MakeRefAttribute(attr_name, attr_name, type);
 }
 

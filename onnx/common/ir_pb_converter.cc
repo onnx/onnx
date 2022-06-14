@@ -11,8 +11,7 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested,
-  const int ir_version=IR_VERSION);
+std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, const int ir_version = IR_VERSION);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   Tensor ret;
@@ -95,8 +94,7 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   return ret;
 }
 
-void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n,
-  const int ir_version=IR_VERSION) {
+void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, const int ir_version = IR_VERSION) {
   Symbol sym = Symbol(ap.name());
   switch (ap.type()) {
     case ONNX_NAMESPACE::AttributeProto_AttributeType_FLOAT:
@@ -181,7 +179,7 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n,
   }
 }
 
-void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version=IR_VERSION) {
+void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version = IR_VERSION) {
   for (int i = 0; i < np.attribute_size(); i++) {
     convertAttribute(np.attribute(i), n, ir_version);
   }
@@ -204,15 +202,17 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
   return dims;
 }
 
-void createDummyValue(std::unique_ptr<Graph>& g, const std::string& name, std::unordered_map<std::string, Value*>& value_by_name_of) {
+void createDummyValue(
+    std::unique_ptr<Graph>& g,
+    const std::string& name,
+    std::unordered_map<std::string, Value*>& value_by_name_of) {
   auto* undef = g->create(kCaptured, 1);
   g->appendNode(undef);
   undef->outputs()[0]->setUniqueName(name);
   value_by_name_of[name] = undef->outputs()[0];
 }
 
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
-  bool nested, const int ir_version) {
+std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int ir_version) {
   std::unique_ptr<Graph> g(new Graph());
 
   if (gp.has_name()) {
@@ -269,6 +269,23 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
     value_by_name_of[vip.name()] = v;
   }
 
+  // initializers should be added before all nodes,
+  // otherwise getNextUnique() may conflicts with an existing initializer name.
+  for (int i = 0; i < gp.initializer_size(); ++i) {
+    auto init = tensorProtoToTensor(gp.initializer(i));
+    // If ir_version >= 4, initializer does not have to be included in input
+    // Create a Value from initializer by addInitializerNode if name does not exist in input
+    // and save it into value_by_name_of for later use (node input)
+    if (ir_version >= 4 && value_by_name_of.count(init.name()) == 0) {
+      value_by_name_of[init.name()] = g->addInitializerAndCreateValue(init);
+    } else {
+      // If ir_version < 4 or the initializer exists in input
+      // Simply add initializer without creating new value
+      // which means it will prioritize input value over initializer value if both exist
+      g->addInitializer(init);
+    }
+  }
+
   for (int i = 0; i < gp.node_size(); i++) {
     auto np = gp.node(i);
     auto* n = g->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
@@ -295,21 +312,6 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp,
     }
     if (np.has_domain()) {
       n->setDomain(np.domain());
-    }
-  }
-
-  for (int i = 0; i < gp.initializer_size(); ++i) {
-    auto init = tensorProtoToTensor(gp.initializer(i));
-    // If ir_version >= 4, initializer does not have to be included in input
-    // Create a Value from initializer by addInitializerNode if name does not exist in input
-    // and save it into value_by_name_of for later use (node input)
-    if (ir_version >= 4 && value_by_name_of.count(init.name()) == 0) {
-      value_by_name_of[init.name()] = g->addInitializerAndCreateValue(init);
-    } else {
-      // If ir_version < 4 or the initializer exists in input
-      // Simply add initializer without creating new value
-      // which means it will prioritize input value over initializer value if both exist
-      g->addInitializer(init);
     }
   }
 
