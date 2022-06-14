@@ -383,9 +383,9 @@ void ProtoPrinter::print(const OpsetIdList& opsets) {
 void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "<\n";
   output_ << "  "
-         << "domain: \"" << fn.domain() << "\",\n";
+          << "domain: \"" << fn.domain() << "\",\n";
   output_ << "  "
-         << "opset_import: ";
+          << "opset_import: ";
   printSet("[", ",", "]", fn.opset_import());
   output_ << "\n>\n";
   output_ << fn.name() << " ";
