@@ -114,9 +114,6 @@ Alternative: if you don't want to change your PATH, you can set ONNX_PROTOC_EXEC
 set CMAKE_ARGS=-DONNX_PROTOC_EXECUTABLE=<full_path_to_protoc.exe>
 ```
 
-Note: if you run into any issues while building Protobuf as a static library, please ensure that shared Protobuf libraries, like libprotobuf, are not installed on your device or in the conda environment.
-If these shared libraries exist, either remove them from your conda environment to build Protobuf from source as a static library, or skip the Protobuf build from source to use the shared version directly.
-
 Then you can build ONNX as:
 ```
 git clone https://github.com/onnx/onnx.git
@@ -126,8 +123,6 @@ git submodule update --init --recursive
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
-
-Note: if you run into any issues while building ONNX, please ensure that the Python version for your activated conda environment is set to 3.8, and that python38.lib exists in the environment's folder on your device.
 
 ### Linux
 
@@ -252,6 +247,10 @@ For full list refer to CMakeLists.txt
 * Note: the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
 
 * Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
+
+* If you run into any issues while building Protobuf as a static library, please ensure that shared Protobuf libraries, like libprotobuf, are not installed on your device or in the conda environment. If these shared libraries exist, either remove them to build Protobuf from source as a static library, or skip the Protobuf build from source to use the shared version directly.
+
+* If you run into any issues while building ONNX from source, and your error message reads, "Could not find pythonXX.lib", ensure that you have consistent Python versions for common commands, such as `python` and `pip`. Clean all exist6ing build files and rebuild ONNX again.
 
 # Testing
 
