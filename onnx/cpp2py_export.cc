@@ -16,6 +16,7 @@
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
+#include "pybind11_protobuf/native_proto_caster.h"
 
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
@@ -32,6 +33,7 @@ static std::tuple<bool, py::bytes, py::bytes> Parse(const char* cstr) {
 }
 
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+  pybind11_protobuf::ImportNativeProtoCasters();
   onnx_cpp2py_export.doc() = "Python interface to onnx";
 
   onnx_cpp2py_export.attr("ONNX_ML") = py::bool_(
@@ -250,6 +252,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   checker.def("check_model", [](const py::bytes& bytes) -> void {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
+    checker::check_model(proto);
+  });
+
+  checker.def("check_model_c", [](ModelProto proto) -> void {
     checker::check_model(proto);
   });
 

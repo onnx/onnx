@@ -456,9 +456,12 @@ if(BUILD_ONNX_PYTHON)
     if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
       add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
     else()
-      message(FATAL_ERROR "cannot find pybind")
+      message(FATAL_ERROR "cannot find pybind11")
     endif()
   endif()
+  message(STATUS "ONNX_ROOT=${ONNX_ROOT}")
+  message(STATUS "pybind11_INCLUDE_DIRS=${pybind11_INCLUDE_DIRS}")
+  message(STATUS "PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}")
 
   target_include_directories(onnx_cpp2py_export PUBLIC
     "${pybind11_INCLUDE_DIRS}"
