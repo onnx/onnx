@@ -269,6 +269,23 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     value_by_name_of[vip.name()] = v;
   }
 
+  // initializers should be added before all nodes,
+  // otherwise getNextUnique() may conflicts with an existing initializer name.
+  for (int i = 0; i < gp.initializer_size(); ++i) {
+    auto init = tensorProtoToTensor(gp.initializer(i));
+    // If ir_version >= 4, initializer does not have to be included in input
+    // Create a Value from initializer by addInitializerNode if name does not exist in input
+    // and save it into value_by_name_of for later use (node input)
+    if (ir_version >= 4 && value_by_name_of.count(init.name()) == 0) {
+      value_by_name_of[init.name()] = g->addInitializerAndCreateValue(init);
+    } else {
+      // If ir_version < 4 or the initializer exists in input
+      // Simply add initializer without creating new value
+      // which means it will prioritize input value over initializer value if both exist
+      g->addInitializer(init);
+    }
+  }
+
   for (int i = 0; i < gp.node_size(); i++) {
     auto np = gp.node(i);
     auto* n = g->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
@@ -295,21 +312,6 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     }
     if (np.has_domain()) {
       n->setDomain(np.domain());
-    }
-  }
-
-  for (int i = 0; i < gp.initializer_size(); ++i) {
-    auto init = tensorProtoToTensor(gp.initializer(i));
-    // If ir_version >= 4, initializer does not have to be included in input
-    // Create a Value from initializer by addInitializerNode if name does not exist in input
-    // and save it into value_by_name_of for later use (node input)
-    if (ir_version >= 4 && value_by_name_of.count(init.name()) == 0) {
-      value_by_name_of[init.name()] = g->addInitializerAndCreateValue(init);
-    } else {
-      // If ir_version < 4 or the initializer exists in input
-      // Simply add initializer without creating new value
-      // which means it will prioritize input value over initializer value if both exist
-      g->addInitializer(init);
     }
   }
 
