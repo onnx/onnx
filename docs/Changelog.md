@@ -21069,14 +21069,6 @@ This version of the operator has been available since version 17 of the default 
 <dd>Type of Mean and InvStdDev tensors.</dd>
 </dl>
 
-<<<<<<< HEAD
-### <a name="Resize-17"></a>**Resize-17**</a>
-
-  Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
-  Each dimension value of the output tensor is: <br/>
-    `output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)` <br/>
-  if input \"sizes\" is not specified.
-=======
 ### <a name="MelWeightMatrix-17"></a>**MelWeightMatrix-17**</a>
 
   Generate a MelWeightMatrix that can be used to re-weight a Tensor containing a linearly sampled frequency spectra (from DFT or STFT) into num_mel_bins frequency information based on the [lower_edge_hertz, upper_edge_hertz] range on the mel scale.
@@ -21132,10 +21124,12 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain to any numerical types.</dd>
 </dl>
 
-### <a name="STFT-17"></a>**STFT-17**</a>
+### <a name="Resize-17"></a>**Resize-17**</a>
 
-  Computes the Short-time Fourier Transform of the signal.
->>>>>>> upstream/main
+  Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
+  Each dimension value of the output tensor is: <br/>
+    `output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)` <br/>
+  if input \"sizes\" is not specified.
 
 #### Version
 
@@ -21144,7 +21138,6 @@ This version of the operator has been available since version 17 of the default 
 #### Attributes
 
 <dl>
-<<<<<<< HEAD
 <dt><tt>antialias</tt> : int (default is 0)</dt>
 <dd>If set to 1, "linear" and "cubic" interpolation modes will use an antialiasing filter when downscaling. Antialiasing is achieved by stretching the resampling filter by a factor max(1, 1 / scale), which means that when downsampling, more input pixels contribute to an output pixel.</dd>
 <dt><tt>axes</tt> : list of ints</dt>
@@ -21214,7 +21207,35 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 <dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X' or the length of 'axes', if provided. One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.</dd>
 <dt><tt>sizes</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>Target size of the output tensor. Its interpretation depends on the 'keep_aspect_ratio_policy' value.The number of elements of 'sizes' should be the same as the rank of input 'X', or the length of 'axes', if provided. Only one of 'scales' and 'sizes' can be specified. </dd>
-=======
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T1</dt>
+<dd>N-D tensor after resizing</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain roi type to float or double.</dd>
+</dl>
+
+### <a name="STFT-17"></a>**STFT-17**</a>
+
+  Computes the Short-time Fourier Transform of the signal.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
 <dt><tt>onesided</tt> : int (default is 1)</dt>
 <dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT).When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
 </dl>
@@ -21230,35 +21251,22 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 <dd>A tensor representing the window that will be slid over the signal.The window must have rank 1 with shape: [window_shape]. It's an optional value. </dd>
 <dt><tt>frame_length</tt> (optional, non-differentiable) : T2</dt>
 <dd>A scalar representing the size of the DFT. It's an optional value.</dd>
->>>>>>> upstream/main
 </dl>
 
 #### Outputs
 
 <dl>
-<<<<<<< HEAD
-<dt><tt>Y</tt> (differentiable) : T1</dt>
-<dd>N-D tensor after resizing</dd>
-=======
 <dt><tt>output</tt> (non-differentiable) : T1</dt>
 <dd>The Short-time Fourier Transform of the signals.If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT) If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT.</dd>
->>>>>>> upstream/main
 </dl>
 
 #### Type Constraints
 
 <dl>
-<<<<<<< HEAD
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain roi type to float or double.</dd>
-=======
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain signal and output to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain scalar length types to int64_t.</dd>
->>>>>>> upstream/main
 </dl>
 
 ### <a name="SequenceMap-17"></a>**SequenceMap-17**</a>

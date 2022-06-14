@@ -12,7 +12,9 @@ void resizeShapeInferenceHelper(
   if (!sizes_data.empty()) {
     for (int i = 0; i < input_shape.dim_size(); ++i) {
       auto* dim = output_shape->mutable_dim(i);
-      dim->set_dim_value(sizes_data[i]);
+      if (sizes_data[i] >= 0) {
+        dim->set_dim_value(sizes_data[i]);
+      }
     }
     return;
   }
@@ -39,14 +41,13 @@ void KeepAspectRatioHelper(
   for (size_t i = 0; i < sizes_data.size(); i++) {
     int d = axes.empty() ? i : axes[i];
     if (!input_shape.dim(d).has_dim_value())
-      fail_shape_inference("Can't keep aspect ratio because input shape has no dim value for dimension ", d, ".");
-
+      continue;
     float s = sizes_data[i] / static_cast<float>(input_shape.dim(d).dim_value());
     scale = reduce_f(scale, s);
   }
   for (size_t i = 0; i < sizes_data.size(); i++) {
     int d = axes.empty() ? i : axes[i];
-    sizes_data[i] = std::roundf(scale * input_shape.dim(d).dim_value());
+    sizes_data[i] = input_shape.dim(d).has_dim_value() ? std::roundf(scale * input_shape.dim(d).dim_value()) : -1;
   }
 }
 
@@ -146,7 +147,7 @@ void resizeShapeInference(InferenceContext& ctx) {
         if (!axes.empty()) {
           std::vector<int64_t> tmp(rank_x);
           for (size_t i = 0; i < rank_x; i++) {
-            tmp[i] = input_shape.dim(i).dim_value();
+            tmp[i] = input_shape.dim(i).has_dim_value() ? input_shape.dim(i).dim_value() : -1;
           }
           for (size_t i = 0; i < axes.size(); i++) {
             int d = axes[i];
