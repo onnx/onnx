@@ -4517,5 +4517,6 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('y', TensorProto.FLOAT, (10, 8, 3))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)])
 
+
 if __name__ == '__main__':
     unittest.main()
