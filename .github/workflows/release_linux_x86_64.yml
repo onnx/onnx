@@ -80,13 +80,6 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-    - name: Verify ONNX with the minimum supported numpy  (from requirements.txt)
-      if: ${{ always() }}
-      run: |
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
-        python -m pip install dist/*manylinux2014_x86_64.whl
-        pytest
-
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
