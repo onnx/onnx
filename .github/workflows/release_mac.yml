@@ -94,7 +94,6 @@ jobs:
     - name: Verify ONNX with the minimum supported numpy  (from requirements.txt)
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
