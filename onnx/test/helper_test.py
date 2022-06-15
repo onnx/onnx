@@ -7,7 +7,7 @@ import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto, SequenceProto
-from onnx.mapping import to_string, TENSOR_TYPE_MAP
+from onnx.mapping import to_np_type, to_string, TENSOR_TYPE_MAP
 import pytest  # type: ignore
 from typing import Any, List, Tuple
 
@@ -598,8 +598,8 @@ class TestPrintableGraph(unittest.TestCase):
     [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING, TensorProto.COMPLEX64, TensorProto.COMPLEX128}],
     ids=lambda tensor_type: to_string(tensor_type)
 )
-def test_make_tensor_vals(tensor_type: str) -> None:
-    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_MAP[tensor_type])
+def test_make_tensor_vals(tensor_type: int) -> None:
+    np_array = np.random.randn(2, 3).astype(to_np_type(tensor_type))
     tensor = helper.make_tensor(
         name='test',
         data_type=tensor_type,
@@ -613,8 +613,8 @@ def test_make_tensor_vals(tensor_type: str) -> None:
     [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING}],
     ids=lambda tensor_type: to_string(tensor_type)
 )
-def test_make_tensor_raw(tensor_type: str) -> None:
-    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_MAP[tensor_type])
+def test_make_tensor_raw(tensor_type: int) -> None:
+    np_array = np.random.randn(2, 3).astype(to_np_type(tensor_type))
     tensor = helper.make_tensor(
         name='test',
         data_type=tensor_type,
