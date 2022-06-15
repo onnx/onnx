@@ -2487,7 +2487,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX"
         ));
 
-static const char* MultiHeadAttention_ver10_doc = R"DOC(
+static const char* MultiHeadAttention_ver11_doc = R"DOC(
       Allows the model to jointly attend to information
       from different representation subspaces.
       See reference: Attention Is All You Need.
@@ -2501,9 +2501,9 @@ static const char* MultiHeadAttention_ver10_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     MultiHeadAttention,
-    10,
+    11,
     OpSchema()
-        .SetDoc(MultiHeadAttention_ver10_doc)
+        .SetDoc(MultiHeadAttention_ver11_doc)
         .Attr(
           "embedding_dim",
           "total dimension of the model, must be equal to target sequence length.",
@@ -2753,8 +2753,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           unifyInputDim(ctx, 6, 1, embedding_dim);
 
           unifyDim(tgt_len, embedding_dim);
-        })
-        );
+        }));
 
 static const char* LayerNormalization_ver17_doc = R"DOC(
       This is layer normalization defined in ONNX as function.
