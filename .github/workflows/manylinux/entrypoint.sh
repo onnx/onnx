@@ -59,5 +59,5 @@ fi
 # Remove useless *-linux*.whl; only keep manylinux*.whl
 rm -f dist/*-linux*.whl
 
-echo "Succesfully build wheels:"
+echo "Successfully build wheels:"
 find . -type f -iname "*manylinux*.whl"
