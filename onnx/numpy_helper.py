@@ -12,7 +12,7 @@ from onnx.external_data_helper import load_external_data_for_tensor, uses_extern
 _ShapeLike = Union[SupportsIndex, Sequence[SupportsIndex]]
 
 
-def combine_pairs_to_complex(fa: Sequence[int]) -> Sequence[np.complex64]:
+def combine_pairs_to_complex(fa: Sequence[int]) -> List[complex]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
