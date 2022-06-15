@@ -1,4 +1,4 @@
-#include "native_proto_caster.h"
+#include "pybind11_protobuf/native_proto_caster.h"
 
 void pybind11_proto_casters_collision() {
   // This symbol intentionally defined to cause ODR violations. It exists in:

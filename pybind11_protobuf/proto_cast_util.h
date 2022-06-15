@@ -10,8 +10,8 @@
 #include <type_traits>
 #include <utility>
 
-#include <google/protobuf/descriptor.h>
-#include <google/protobuf/message.h>
+#include "google/protobuf/descriptor.h"
+#include "google/protobuf/message.h"
 
 namespace pybind11_protobuf {
 
@@ -26,7 +26,7 @@ void ImportProtoDescriptorModule(const ::google::protobuf::Descriptor *);
 const ::google::protobuf::Message *PyProtoGetCppMessagePointer(pybind11::handle src);
 
 // Returns the protocol buffer's py_proto.DESCRIPTOR.full_name attribute.
-std::string PyProtoDescriptorName(pybind11::handle py_proto);
+absl::optional<std::string> PyProtoDescriptorName(pybind11::handle py_proto);
 
 // Return whether py_proto is compatible with the C++ descriptor.
 // The py_proto name must match the C++ Descriptor::full_name(), and is

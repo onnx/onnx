@@ -1,10 +1,10 @@
 #ifndef PYBIND11_PROTOBUF_NATIVE_PROTO_CASTERS_H_
 #define PYBIND11_PROTOBUF_NATIVE_PROTO_CASTERS_H_
 
+#include <Python.h>
 #include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
-#include <Python.h>
 
 #include <functional>
 #include <memory>
@@ -13,9 +13,9 @@
 #include <type_traits>
 #include <utility>
 
-#include <google/protobuf/message.h>
-#include "enum_type_caster.h"
-#include "proto_caster_impl.h"
+#include "google/protobuf/message.h"
+#include "pybind11_protobuf/enum_type_caster.h"
+#include "pybind11_protobuf/proto_caster_impl.h"
 
 // NOTE: This directly currently contains 2 mutually incompatible
 // implementations of pybind11::type_caster<> for ::google::protobuf::Message types due to
@@ -82,9 +82,9 @@ constexpr bool pybind11_protobuf_enable_type_caster(...) { return true; }
 template <typename ProtoType>
 struct type_caster<
     ProtoType,
-    typename std::enable_if<(std::is_base_of<::google::protobuf::Message, ProtoType>::value &&
+    std::enable_if_t<(std::is_base_of<::google::protobuf::Message, ProtoType>::value &&
                       pybind11_protobuf_enable_type_caster(
-                          static_cast<ProtoType *>(nullptr)))>::type>
+                          static_cast<ProtoType *>(nullptr)))>>
     : public pybind11_protobuf::proto_caster<
           ProtoType, pybind11_protobuf::native_cast_impl> {};
 
@@ -101,9 +101,9 @@ struct type_caster<
 template <typename ProtoType, typename HolderType>
 struct move_only_holder_caster<
     ProtoType, HolderType,
-    typename std::enable_if<(std::is_base_of<::google::protobuf::Message, ProtoType>::value &&
+    std::enable_if_t<(std::is_base_of<::google::protobuf::Message, ProtoType>::value &&
                       pybind11_protobuf_enable_type_caster(
-                          static_cast<ProtoType *>(nullptr)))>::type> {
+                          static_cast<ProtoType *>(nullptr)))>> {
  private:
   using Base = type_caster<intrinsic_t<ProtoType>>;
   static constexpr bool const_element =
@@ -153,9 +153,9 @@ struct move_only_holder_caster<
 template <typename ProtoType, typename HolderType>
 struct copyable_holder_caster<
     ProtoType, HolderType,
-    typename std::enable_if<(std::is_base_of<::google::protobuf::Message, ProtoType>::value &&
+    std::enable_if_t<(std::is_base_of<::google::protobuf::Message, ProtoType>::value &&
                       pybind11_protobuf_enable_type_caster(
-                          static_cast<ProtoType *>(nullptr)))>::type> {
+                          static_cast<ProtoType *>(nullptr)))>> {
  private:
   using Base = type_caster<intrinsic_t<ProtoType>>;
   static constexpr bool const_element =

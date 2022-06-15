@@ -3,18 +3,17 @@
 // All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-#include "proto_utils.h"
+#include "pybind11_protobuf/proto_utils.h"
 
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <typeindex>
 
-#include <google/protobuf/any.pb.h>
-#include <google/protobuf/descriptor.pb.h>
-#include <google/protobuf/descriptor.h>
-#include <google/protobuf/message.h>
-//#include "absl/strings/string_view.h"
+#include "google/protobuf/any.pb.h"
+#include "google/protobuf/descriptor.pb.h"
+#include "google/protobuf/descriptor.h"
+#include "google/protobuf/message.h"
 
 namespace pybind11 {
 namespace google {

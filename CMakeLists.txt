@@ -438,7 +438,13 @@ if(BUILD_ONNX_PYTHON)
     endif()
   endif()
 
-  add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  add_library(onnx_cpp2py_export MODULE 
+      "${ONNX_ROOT}/onnx/cpp2py_export.cc"
+      "${ONNX_ROOT}/pybind11_protobuf/native_proto_caster.cc"
+      "${ONNX_ROOT}/pybind11_protobuf/proto_cast_util.cc"
+      "${ONNX_ROOT}/pybind11_protobuf/proto_utils.cc"
+      "${ONNX_ROOT}/pybind11_protobuf/proto.cc"
+      )
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")

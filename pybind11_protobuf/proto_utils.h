@@ -17,11 +17,10 @@
 #include <stdexcept>
 #include <string>
 
-#include <google/protobuf/any.pb.h>
-#include <google/protobuf/descriptor.h>
-#include <google/protobuf/message.h>
-#include <google/protobuf/reflection.h>
-//#include "absl/strings/string_view.h"
+#include "google/protobuf/any.pb.h"
+#include "google/protobuf/descriptor.h"
+#include "google/protobuf/message.h"
+#include "google/protobuf/reflection.h"
 
 namespace pybind11 {
 namespace google {
@@ -39,13 +38,13 @@ inline bool IsWrappedCProto(handle handle) {
 }
 
 // Gets the field with the given name from the given message as a python object.
-object ProtoGetField(::google::protobuf::Message* message, absl::string_view name);
+object ProtoGetField(::google::protobuf::Message* message, const std::string& name);
 object ProtoGetField(::google::protobuf::Message* message,
                      const ::google::protobuf::FieldDescriptor* field_desc);
 
 // Sets the field with the given name in the given message from a python object.
 // As in the native API, message, repeated, and map fields cannot be set.
-void ProtoSetField(::google::protobuf::Message* message, absl::string_view name,
+void ProtoSetField(::google::protobuf::Message* message, const std::string& name,
                    handle value);
 void ProtoSetField(::google::protobuf::Message* message,
                    const ::google::protobuf::FieldDescriptor* field_desc, handle value);

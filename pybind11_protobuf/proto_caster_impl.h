@@ -1,7 +1,7 @@
 #ifndef PYBIND11_PROTOBUF_PROTO_CASTER_IMPL_H_
 #define PYBIND11_PROTOBUF_PROTO_CASTER_IMPL_H_
 
-//#include <Python.h>
+#include <Python.h>
 #include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
@@ -13,10 +13,10 @@
 #include <type_traits>
 #include <utility>
 
-#include <google/protobuf/descriptor.pb.h>
-#include <google/protobuf/descriptor.h>
-#include <google/protobuf/message.h>
-#include "proto_cast_util.h"
+#include "google/protobuf/descriptor.pb.h"
+#include "google/protobuf/descriptor.h"
+#include "google/protobuf/message.h"
+#include "pybind11_protobuf/proto_cast_util.h"
 
 // Enables unsafe conversions; currently these are a work in progress.
 #if !defined(PYBIND11_PROTOBUF_UNSAFE)
@@ -108,12 +108,12 @@ struct proto_caster_load_impl<::google::protobuf::Message> {
     // `src` is not a C++ proto instance from the generated_pool,
     // so create a compatible native C++ proto.
     auto descriptor_name = pybind11_protobuf::PyProtoDescriptorName(src);
-    if (descriptor_name.empty()) {
+    if (!descriptor_name) {
       return false;
     }
     owned.reset(static_cast<ProtoType *>(
         pybind11_protobuf::AllocateCProtoFromPythonSymbolDatabase(
-            src, descriptor_name)
+            src, *descriptor_name)
             .release()));
     value = owned.get();
     return pybind11_protobuf::PyProtoCopyToCProto(src, owned.get());
@@ -283,18 +283,17 @@ struct proto_caster : public proto_caster_load_impl<ProtoType>,
   // input parameter type.
   // clang-format off
   template <typename T_>
-  using cast_op_type = typename
-      std::conditional<
+  using cast_op_type =
+      std::conditional_t<
+          std::is_same<std::remove_reference_t<T_>, const ProtoType *>::value,
+              const ProtoType *,
+      std::conditional_t<
           std::is_same<
-              typename std::remove_reference<T_>::type, const ProtoType *>::value,
-                  const ProtoType *,
-      std::conditional<
-          std::is_same<
-               typename std::remove_reference<T_>::type, ProtoType *>::value, ProtoType *,
-      std::conditional<
+              std::remove_reference_t<T_>, ProtoType *>::value, ProtoType *,
+      std::conditional_t<
           std::is_same<T_, const ProtoType &>::value, const ProtoType &,
-      std::conditional<std::is_same<T_, ProtoType &>::value, ProtoType &,
-      /*default is T&&*/ T_>>>>::type;
+      std::conditional_t<std::is_same<T_, ProtoType &>::value, ProtoType &,
+      /*default is T&&*/ T_>>>>;
   // clang-format on
 };
 

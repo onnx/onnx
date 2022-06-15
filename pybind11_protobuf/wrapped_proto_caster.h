@@ -12,11 +12,9 @@
 #include <type_traits>
 #include <utility>
 
-#include <google/protobuf/message.h>
-//#include "absl/status/statusor.h"
-//#include "absl/types/optional.h"
-#include "proto_cast_util.h"
-#include "proto_caster_impl.h"
+#include "google/protobuf/message.h"
+#include "pybind11_protobuf/proto_cast_util.h"
+#include "pybind11_protobuf/proto_caster_impl.h"
 
 // pybind11::type_caster<> specialization for ::google::protobuf::Message types using
 // pybind11_protobuf::WrappedProto<> wrappers. When passing from C++ to
