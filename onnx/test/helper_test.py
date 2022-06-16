@@ -107,13 +107,13 @@ class TestHelperAttributeFunctions(unittest.TestCase):
     def test_attr_repeated_tensor_proto(self) -> None:
         tensors = [
             helper.make_tensor(
-                name='a',
+                name="a",
                 data_type=TensorProto.FLOAT,
                 dims=(1,),
                 vals=np.ones(1)
             ),
             helper.make_tensor(
-                name='b',
+                name="b",
                 data_type=TensorProto.FLOAT,
                 dims=(1,),
                 vals=np.ones(1)
@@ -126,12 +126,12 @@ class TestHelperAttributeFunctions(unittest.TestCase):
     def test_attr_sparse_tensor_proto(self) -> None:
         dense_shape = [3, 3]
         sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
-        values_tensor = helper.make_tensor(name='sparse_values', data_type=TensorProto.FLOAT,
+        values_tensor = helper.make_tensor(name="sparse_values", data_type=TensorProto.FLOAT,
                                         dims=[len(sparse_values)],
                                         vals=np.array(sparse_values).astype(np.float32), raw=False)
 
         linear_indices = [2, 3, 5]
-        indices_tensor = helper.make_tensor(name='indices', data_type=TensorProto.INT64,
+        indices_tensor = helper.make_tensor(name="indices", data_type=TensorProto.INT64,
                                         dims=[len(linear_indices)],
                                         vals=np.array(linear_indices).astype(np.int64), raw=False)
         sparse_tensor = helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
@@ -144,12 +144,12 @@ class TestHelperAttributeFunctions(unittest.TestCase):
     def test_attr_sparse_tensor_repeated_protos(self) -> None:
         dense_shape = [3, 3]
         sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
-        values_tensor = helper.make_tensor(name='sparse_values', data_type=TensorProto.FLOAT,
+        values_tensor = helper.make_tensor(name="sparse_values", data_type=TensorProto.FLOAT,
                                         dims=[len(sparse_values)],
                                         vals=np.array(sparse_values).astype(np.float32), raw=False)
 
         linear_indices = [2, 3, 5]
-        indices_tensor = helper.make_tensor(name='indices', data_type=TensorProto.INT64,
+        indices_tensor = helper.make_tensor(name="indices", data_type=TensorProto.INT64,
                                         dims=[len(linear_indices)],
                                         vals=np.array(linear_indices).astype(np.int64), raw=False)
         sparse_tensor = helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
@@ -204,11 +204,11 @@ class TestHelperAttributeFunctions(unittest.TestCase):
 
         def _set(attr: AttributeProto, type: AttributeProto.AttributeType, var: str, value: Any) -> None:
             setattr(attr, var, value)
-            setattr(attr, 'type', type)
+            setattr(attr, "type", type)
 
         def _extend(attr: AttributeProto, type: AttributeProto.AttributeType, var: List[Any], value: Any) -> None:
             var.extend(value)
-            setattr(attr, 'type', type)
+            setattr(attr, "type", type)
 
         SET_ATTR = [
             (lambda attr: _set(attr, AttributeProto.FLOAT, "f", 1.0)),
@@ -253,7 +253,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
 
     def test_node_with_arg(self) -> None:
         self.assertTrue(defs.has("Relu"))
-        # Note: Relu actually does not need an arg, but let's
+        # Note: Relu actually does not need an arg, but let"s
         # test it.
         node_def = helper.make_node(
             "Relu", ["X"], ["Y"],
@@ -306,28 +306,28 @@ class TestHelperNodeFunctions(unittest.TestCase):
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
         self.assertRaises(AttributeError, helper.make_model, graph_def, xxx=1)
-        model_def = helper.make_model(graph_def, producer_name='test')
-        self.assertEqual(model_def.producer_name, 'test')
+        model_def = helper.make_model(graph_def, producer_name="test")
+        self.assertEqual(model_def.producer_name, "test")
 
     def test_model_docstring(self) -> None:
         graph = helper.make_graph([], "my graph", [], [])
-        model_def = helper.make_model(graph, doc_string='test')
-        # models may have their own documentation, but don't have a name
+        model_def = helper.make_model(graph, doc_string="test")
+        # models may have their own documentation, but don"t have a name
         # their name is the domain-qualified name of the underlying graph.
         self.assertFalse(hasattr(model_def, "name"))
-        self.assertEqual(model_def.doc_string, 'test')
+        self.assertEqual(model_def.doc_string, "test")
 
     def test_model_metadata_props(self) -> None:
         graph = helper.make_graph([], "my graph", [], [])
-        model_def = helper.make_model(graph, doc_string='test')
-        helper.set_model_props(model_def, {'Title': 'my graph', 'Keywords': 'test;graph'})
+        model_def = helper.make_model(graph, doc_string="test")
+        helper.set_model_props(model_def, {"Title": "my graph", "Keywords": "test;graph"})
         checker.check_model(model_def)
-        helper.set_model_props(model_def, {'Title': 'my graph', 'Keywords': 'test;graph'})
+        helper.set_model_props(model_def, {"Title": "my graph", "Keywords": "test;graph"})
         checker.check_model(model_def)  # helper replaces, so no dupe
 
         dupe = model_def.metadata_props.add()
-        dupe.key = 'Title'
-        dupe.value = 'Other'
+        dupe.key = "Title"
+        dupe.value = "Other"
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
     def test_model_irversion(self) -> None:
@@ -363,9 +363,9 @@ class TestHelperNodeFunctions(unittest.TestCase):
 class TestHelperTensorFunctions(unittest.TestCase):
 
     def test_make_string_tensor(self) -> None:
-        string_list = list(s.encode('utf-8') for s in ['Amy', 'Billy', 'Cindy', 'David'])
+        string_list = list(s.encode("utf-8") for s in ["Amy", "Billy", "Cindy", "David"])
         tensor = helper.make_tensor(
-            name='test',
+            name="test",
             data_type=TensorProto.STRING,
             dims=(2, 2),
             vals=string_list,
@@ -374,46 +374,46 @@ class TestHelperTensorFunctions(unittest.TestCase):
         self.assertEqual(string_list, list(tensor.string_data))
 
     def test_make_bfloat16_tensor(self) -> None:
-        # numpy doesn't support bf16, so we have to compute the correct result manually
+        # numpy doesn"t support bf16, so we have to compute the correct result manually
         np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]],
             dtype=np.float32)
         np_results = np.array([
-            [struct.unpack('!f', bytes.fromhex('3F800000'))[0],   # 1.0
-             struct.unpack('!f', bytes.fromhex('40000000'))[0]],  # 2.0
-            [struct.unpack('!f', bytes.fromhex('40400000'))[0],   # 3.0
-             struct.unpack('!f', bytes.fromhex('40800000'))[0]],  # 4.0
-            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # round-to-nearest-even rounds down (0x8000)
-             struct.unpack('!f', bytes.fromhex('3DCC0000'))[0]],  # round-to-nearest-even rounds up   (0x8000)
-            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # round-to-nearest-even rounds down (0x7fff)
-             struct.unpack('!f', bytes.fromhex('3DCD0000'))[0]],  # round-to-nearest-even rounds up   (0xCCCD)
-            [struct.unpack('!f', bytes.fromhex('7FC00000'))[0],   # NaN
-             struct.unpack('!f', bytes.fromhex('7F800000'))[0]],  # inf
+            [struct.unpack("!f", bytes.fromhex("3F800000"))[0],   # 1.0
+             struct.unpack("!f", bytes.fromhex("40000000"))[0]],  # 2.0
+            [struct.unpack("!f", bytes.fromhex("40400000"))[0],   # 3.0
+             struct.unpack("!f", bytes.fromhex("40800000"))[0]],  # 4.0
+            [struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],   # round-to-nearest-even rounds down (0x8000)
+             struct.unpack("!f", bytes.fromhex("3DCC0000"))[0]],  # round-to-nearest-even rounds up   (0x8000)
+            [struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],   # round-to-nearest-even rounds down (0x7fff)
+             struct.unpack("!f", bytes.fromhex("3DCD0000"))[0]],  # round-to-nearest-even rounds up   (0xCCCD)
+            [struct.unpack("!f", bytes.fromhex("7FC00000"))[0],   # NaN
+             struct.unpack("!f", bytes.fromhex("7F800000"))[0]],  # inf
         ])
 
         tensor = helper.make_tensor(
-            name='test',
+            name="test",
             data_type=TensorProto.BFLOAT16,
             dims=np_array.shape,
             vals=np_array
         )
-        self.assertEqual(tensor.name, 'test')
+        self.assertEqual(tensor.name, "test")
         np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
     def test_make_bfloat16_tensor_raw(self) -> None:
-        # numpy doesn't support bf16, so we have to compute the correct result manually
+        # numpy doesn"t support bf16, so we have to compute the correct result manually
         np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]],
             dtype=np.float32)
         np_results = np.array([
-            [struct.unpack('!f', bytes.fromhex('3F800000'))[0],   # 1.0
-             struct.unpack('!f', bytes.fromhex('40000000'))[0]],  # 2.0
-            [struct.unpack('!f', bytes.fromhex('40400000'))[0],   # 3.0
-             struct.unpack('!f', bytes.fromhex('40800000'))[0]],  # 4.0
-            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # truncated
-             struct.unpack('!f', bytes.fromhex('3DCB0000'))[0]],  # truncated
-            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # truncated
-             struct.unpack('!f', bytes.fromhex('3DCC0000'))[0]],  # truncated
-            [struct.unpack('!f', bytes.fromhex('7FC00000'))[0],   # NaN
-             struct.unpack('!f', bytes.fromhex('7F800000'))[0]],  # inf
+            [struct.unpack("!f", bytes.fromhex("3F800000"))[0],   # 1.0
+             struct.unpack("!f", bytes.fromhex("40000000"))[0]],  # 2.0
+            [struct.unpack("!f", bytes.fromhex("40400000"))[0],   # 3.0
+             struct.unpack("!f", bytes.fromhex("40800000"))[0]],  # 4.0
+            [struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],   # truncated
+             struct.unpack("!f", bytes.fromhex("3DCB0000"))[0]],  # truncated
+            [struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],   # truncated
+             struct.unpack("!f", bytes.fromhex("3DCC0000"))[0]],  # truncated
+            [struct.unpack("!f", bytes.fromhex("7FC00000"))[0],   # NaN
+             struct.unpack("!f", bytes.fromhex("7F800000"))[0]],  # inf
         ])
 
         # write out 16-bit of fp32 to create bf16 using truncation, no rounding
@@ -421,26 +421,26 @@ class TestHelperTensorFunctions(unittest.TestCase):
         values_as_ints = np_array.astype(np.float32).view(np.uint32).flatten()
         packed_values = truncate(values_as_ints).astype(np.uint16).tobytes()
         tensor = helper.make_tensor(
-            name='test',
+            name="test",
             data_type=TensorProto.BFLOAT16,
             dims=np_array.shape,
             vals=packed_values,
             raw=True
         )
-        self.assertEqual(tensor.name, 'test')
+        self.assertEqual(tensor.name, "test")
         np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
         values_tensor = helper.make_tensor(
-            name='test',
+            name="test",
             data_type=TensorProto.FLOAT,
             dims=(5, ),
             vals=values
         )
         indices = [1, 3, 5, 7, 9]
         indices_tensor = helper.make_tensor(
-            name='test_indices',
+            name="test_indices",
             data_type=TensorProto.INT64,
             dims=(5, ),
             vals=indices
@@ -452,19 +452,19 @@ class TestHelperTensorFunctions(unittest.TestCase):
         self.assertEqual(sparse.dims, dense_shape)
 
     def test_make_tensor_value_info(self) -> None:
-        vi = helper.make_tensor_value_info('X', TensorProto.FLOAT, (2, 4))
+        vi = helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 4))
         checker.check_value_info(vi)
 
         # scalar value
-        vi = helper.make_tensor_value_info('Y', TensorProto.FLOAT, ())
+        vi = helper.make_tensor_value_info("Y", TensorProto.FLOAT, ())
         checker.check_value_info(vi)
 
     def test_make_sparse_tensor_value_info(self) -> None:
-        vi = helper.make_sparse_tensor_value_info('X', TensorProto.FLOAT, (2, 3))
+        vi = helper.make_sparse_tensor_value_info("X", TensorProto.FLOAT, (2, 3))
         checker.check_value_info(vi)
 
         # scalar value
-        vi = helper.make_sparse_tensor_value_info('Y', TensorProto.FLOAT, ())
+        vi = helper.make_sparse_tensor_value_info("Y", TensorProto.FLOAT, ())
         checker.check_value_info(vi)
 
 
@@ -472,56 +472,56 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
     def test_make_optional(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
         values_tensor = helper.make_tensor(
-            name='test',
+            name="test",
             data_type=TensorProto.FLOAT,
             dims=(5,),
             vals=values
         )
         optional = helper.make_optional(
-            name='test',
+            name="test",
             elem_type=OptionalProto.TENSOR,
             value=values_tensor
         )
-        self.assertEqual(optional.name, 'test')
+        self.assertEqual(optional.name, "test")
         self.assertEqual(optional.elem_type, OptionalProto.TENSOR)
         self.assertEqual(optional.tensor_value, values_tensor)
 
         # Test Sequence
         values_sequence = helper.make_sequence(
-            name='test',
+            name="test",
             elem_type=SequenceProto.TENSOR,
             values=[values_tensor, values_tensor]
         )
         optional = helper.make_optional(
-            name='test',
+            name="test",
             elem_type=OptionalProto.SEQUENCE,
             value=values_sequence
         )
-        self.assertEqual(optional.name, 'test')
+        self.assertEqual(optional.name, "test")
         self.assertEqual(optional.elem_type, OptionalProto.SEQUENCE)
         self.assertEqual(optional.sequence_value, values_sequence)
 
         # Test None
         optional_none = helper.make_optional(
-            name='test',
+            name="test",
             elem_type=OptionalProto.UNDEFINED,
             value=None
         )
-        self.assertEqual(optional_none.name, 'test')
+        self.assertEqual(optional_none.name, "test")
         self.assertEqual(optional_none.elem_type, OptionalProto.UNDEFINED)
-        self.assertFalse(optional_none.HasField('tensor_value'))
+        self.assertFalse(optional_none.HasField("tensor_value"))
 
     def test_make_optional_value_info(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=2, shape=[5])
         tensor_val_into = helper.make_value_info(
-            name='test',
+            name="test",
             type_proto=tensor_type_proto)
         optional_type_proto = helper.make_optional_type_proto(tensor_type_proto)
         optional_val_info = helper.make_value_info(
-            name='test',
+            name="test",
             type_proto=optional_type_proto)
 
-        self.assertEqual(optional_val_info.name, 'test')
+        self.assertEqual(optional_val_info.name, "test")
         self.assertTrue(optional_val_info.type.optional_type)
         self.assertEqual(optional_val_info.type.optional_type.elem_type, tensor_val_into.type)
 
@@ -529,13 +529,13 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
         sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
         optional_type_proto = helper.make_optional_type_proto(sequence_type_proto)
         optional_val_info = helper.make_value_info(
-            name='test',
+            name="test",
             type_proto=optional_type_proto)
 
-        self.assertEqual(optional_val_info.name, 'test')
+        self.assertEqual(optional_val_info.name, "test")
         self.assertTrue(optional_val_info.type.optional_type)
         sequence_value_info = helper.make_value_info(
-            name='test',
+            name="test",
             type_proto=tensor_type_proto)
         self.assertEqual(optional_val_info.type.optional_type.elem_type.sequence_type.elem_type, sequence_value_info.type)
 
@@ -543,11 +543,11 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=2, shape=None)
         sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
         sequence_val_info = helper.make_value_info(
-            name='test',
+            name="test",
             type_proto=sequence_type_proto
         )
         sequence_val_info_prim = helper.make_tensor_sequence_value_info(
-            name='test',
+            name="test",
             elem_type=2,
             shape=None)
 
@@ -601,7 +601,7 @@ class TestPrintableGraph(unittest.TestCase):
 def test_make_tensor_vals(tensor_type: str) -> None:
     np_array = np.random.randn(2, 3).astype(to_np_type(tensor_type))
     tensor = helper.make_tensor(
-        name='test',
+        name="test",
         data_type=tensor_type,
         dims=np_array.shape,
         vals=np_array
