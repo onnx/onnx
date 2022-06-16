@@ -1,4 +1,5 @@
 from typing import Dict, Union
+from onnx import ModelProto
 
 
 class CheckerContext:
