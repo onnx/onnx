@@ -3,7 +3,8 @@ import unittest
 
 from typing import List, Sequence
 import numpy as np  # type: ignore
-
+import google.protobuf.internal.api_implementation  # noqa
+import google.protobuf.pyext._message as m
 from onnx import checker, helper, numpy_helper, shape_inference
 from onnx import TensorProto, GraphProto, SparseTensorProto
 import onnx.onnx_cpp2py_export.checker as C
@@ -251,8 +252,6 @@ class TestChecker(unittest.TestCase):
 
     def test_check_model_c(self) -> None:
         # needed to load the capsule holding a pointer on PyProto_API
-        import google.protobuf.internal.api_implementation
-        import google.protobuf.pyext._message as m
         assert m.proto_API is not None
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
