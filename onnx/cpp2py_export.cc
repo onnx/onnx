@@ -19,7 +19,6 @@
 
 #include <google/protobuf/descriptor.h>
 
-
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
 using namespace pybind11::literals;
