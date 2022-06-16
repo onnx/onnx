@@ -26,8 +26,8 @@ using namespace pybind11::literals;
 
 struct PyProto_API {
   virtual ~PyProto_API() {}
-  virtual const Message* GetMessagePointer(PyObject* msg) const = 0;
-  virtual Message* GetMutableMessagePointer(PyObject* msg) const = 0;
+  virtual const google::protobuf::Message* GetMessagePointer(PyObject* msg) const = 0;
+  virtual google::protobuf::Message* GetMutableMessagePointer(PyObject* msg) const = 0;
   virtual const google::protobuf::Descriptor* MessageDescriptor_AsDescriptor(PyObject* desc) const = 0;
   virtual const google::protobuf::EnumDescriptor* EnumDescriptor_AsDescriptor(PyObject* enum_desc) const = 0;
   virtual const google::protobuf::DescriptorPool* GetDefaultDescriptorPool() const = 0;
@@ -284,10 +284,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   checker.def("check_model_c", [](py::object& obj) -> void {
     const Message* message = PyProtoGetCppMessagePointer(obj);
-    std::cout << "message:" << (int64_t) message << "\n";
     const ModelProto* proto = reinterpret_cast<const ModelProto*>(message);
-    std::cout << "proto:" << (int64_t) proto << "\n";
-    std::cout << "ir_version:" << proto->ir_version() << "\n";
     checker::check_model(*proto);
   });
 
