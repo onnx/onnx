@@ -42,7 +42,7 @@ inline const char* PyProtoAPICapsuleName() {
   return kCapsuleName;
 }
 
-const Message* PyProtoGetCppMessagePointer(py::object& src) {
+const google::protobuf::Message* PyProtoGetCppMessagePointer(py::object& src) {
   static PyProto_API* py_proto_api = static_cast<PyProto_API*>(PyCapsule_Import(PyProtoAPICapsuleName(), 0));
   if (py_proto_api == nullptr)
     return nullptr;
@@ -283,7 +283,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
 
   checker.def("check_model_c", [](py::object& obj) -> void {
-    const Message* message = PyProtoGetCppMessagePointer(obj);
+    const google::protobuf::Message* message = PyProtoGetCppMessagePointer(obj);
     const ModelProto* proto = reinterpret_cast<const ModelProto*>(message);
     checker::check_model(*proto);
   });
