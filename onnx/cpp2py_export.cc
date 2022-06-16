@@ -17,9 +17,38 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
+#include <google/protobuf/descriptor.h>
+
+
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
 using namespace pybind11::literals;
+
+struct PyProto_API {
+  virtual ~PyProto_API() {}
+  virtual const Message* GetMessagePointer(PyObject* msg) const = 0;
+  virtual Message* GetMutableMessagePointer(PyObject* msg) const = 0;
+  virtual const google::protobuf::Descriptor* MessageDescriptor_AsDescriptor(PyObject* desc) const = 0;
+  virtual const google::protobuf::EnumDescriptor* EnumDescriptor_AsDescriptor(PyObject* enum_desc) const = 0;
+  virtual const google::protobuf::DescriptorPool* GetDefaultDescriptorPool() const = 0;
+  virtual google::protobuf::MessageFactory* GetDefaultMessageFactory() const = 0;
+  virtual PyObject* NewMessage(const google::protobuf::Descriptor* descriptor, PyObject* py_message_factory) const = 0;
+  virtual PyObject* NewMessageOwnedExternally(google::protobuf::Message* msg, PyObject* py_message_factory) const = 0;
+  virtual PyObject* DescriptorPool_FromPool(const google::protobuf::DescriptorPool* pool) const = 0;
+};
+
+inline const char* PyProtoAPICapsuleName() {
+  static const char kCapsuleName[] = "google.protobuf.pyext._message.proto_API";
+  return kCapsuleName;
+}
+
+const Message* PyProtoGetCppMessagePointer(py::object& src) {
+  static PyProto_API* py_proto_api = static_cast<PyProto_API*>(PyCapsule_Import(PyProtoAPICapsuleName(), 0));
+  if (py_proto_api == nullptr)
+    return nullptr;
+  auto* ptr = py_proto_api->GetMessagePointer(src.ptr());
+  return ptr;
+}
 
 template <typename ProtoType>
 static std::tuple<bool, py::bytes, py::bytes> Parse(const char* cstr) {
@@ -251,6 +280,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
     checker::check_model(proto);
+  });
+
+  checker.def("check_model_c", [](py::object& obj) -> void {
+    const Message* message = PyProtoGetCppMessagePointer(obj);
+    std::cout << "message:" << (int64_t) message << "\n";
+    const ModelProto* proto = reinterpret_cast<const ModelProto*>(message);
+    std::cout << "proto:" << (int64_t) proto << "\n";
+    std::cout << "ir_version:" << proto->ir_version() << "\n";
+    checker::check_model(*proto);
   });
 
   checker.def("check_model_path", (void (*)(const std::string&)) & checker::check_model);

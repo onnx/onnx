@@ -249,6 +249,22 @@ class TestChecker(unittest.TestCase):
 
         checker.check_model(model)
 
+    def test_check_model_c(self) -> None:
+        # needed to load the capsule holding a pointer on PyProto_API
+        import google.protobuf.internal.api_implementation
+        import google.protobuf.pyext._message as m
+        assert m.proto_API is not None
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        model = helper.make_model(graph, producer_name='test')
+
+        C.check_model_c(model)
+
     def test_check_serialized_model(self) -> None:
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
