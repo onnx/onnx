@@ -7,7 +7,7 @@ import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto, SequenceProto
-from onnx.mapping import to_string, TENSOR_TYPE_MAP
+from onnx.mapping import to_np_type, to_string, TENSOR_TYPE_MAP
 import pytest  # type: ignore
 from typing import Any, List, Tuple
 
@@ -599,7 +599,7 @@ class TestPrintableGraph(unittest.TestCase):
     ids=lambda tensor_type: to_string(tensor_type)
 )
 def test_make_tensor_vals(tensor_type: str) -> None:
-    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_MAP[tensor_type])
+    np_array = np.random.randn(2, 3).astype(to_np_type(tensor_type))
     tensor = helper.make_tensor(
         name='test',
         data_type=tensor_type,
@@ -614,9 +614,9 @@ def test_make_tensor_vals(tensor_type: str) -> None:
     ids=lambda tensor_type: to_string(tensor_type)
 )
 def test_make_tensor_raw(tensor_type: str) -> None:
-    np_array = np.random.randn(2, 3).astype(TENSOR_TYPE_MAP[tensor_type])
+    np_array = np.random.randn(2, 3).astype(to_np_type(tensor_type))
     tensor = helper.make_tensor(
-        name='test',
+        name="test",
         data_type=tensor_type,
         dims=np_array.shape,
         vals=np_array.tobytes(),
@@ -625,6 +625,6 @@ def test_make_tensor_raw(tensor_type: str) -> None:
     np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
     pytest.main([__file__])

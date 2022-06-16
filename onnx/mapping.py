@@ -5,7 +5,7 @@ import numpy as np  # type: ignore
 from typing import Any
 import warnings
 
-# tesnor_type: (numpy type, storage type, string name)
+# tensor_type: (numpy type, storage type, string name)
 TENSOR_TYPE_MAP = {
     int(TensorProto.FLOAT): (np.dtype('float32'), int(TensorProto.FLOAT), 'TensorProto.FLOAT'),
     int(TensorProto.UINT8): (np.dtype('uint8'), int(TensorProto.INT32), 'TensorProto.UINT8'),
@@ -31,7 +31,7 @@ TENSOR_TYPE_MAP = {
 TENSOR_TYPE_TO_NP_TYPE = {tensor_type: value[0] for tensor_type, value in TENSOR_TYPE_MAP.items()}
 # This is only used to get keys into STORAGE_TENSOR_TYPE_TO_FIELD.
 # TODO(https://github.com/onnx/onnx/issues/4261): Remove this.
-warnings.warn(str("`mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE` is deprecated in ONNX 1.13 and will be removed in next release. To silence this warning, please use `to_sotrage_tensor_type` instead."), DeprecationWarning, stacklevel=2)
+warnings.warn(str("`mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE` is deprecated in ONNX 1.13 and will be removed in next release. To silence this warning, please use `to_storage_tensor_type` instead."), DeprecationWarning, stacklevel=2)
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {tensor_type: value[1] for tensor_type, value in TENSOR_TYPE_MAP.items()}
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
@@ -74,7 +74,7 @@ def to_np_type(tensor_type: str) -> Any:
     return TENSOR_TYPE_MAP[tensor_type][0]
 
 
-def to_sotrage_tensor_type(tensor_type: str) -> int:
+def to_storage_tensor_type(tensor_type: str) -> int:
     return TENSOR_TYPE_MAP[tensor_type][1]
 
 
@@ -83,7 +83,7 @@ def to_string(tensor_type: str) -> str:
 
 
 def to_storage_numpy_type(tensor_type: str) -> int:
-    return to_np_type(to_sotrage_tensor_type(tensor_type))
+    return to_np_type(to_storage_tensor_type(tensor_type))
 
 
 # This map is used to get storage field for certain tensor type
