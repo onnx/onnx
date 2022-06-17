@@ -428,7 +428,9 @@ class ShapeInferenceImplBase {
   }
 
   void process(GraphProto& graph) {
-    TraverseGraphsToAddExistingSymbols(graph, *symbol_table);
+    if (symbol_table) {
+      TraverseGraphsToAddExistingSymbols(graph, *symbol_table);
+    }
     for (auto& vi : *graph.mutable_value_info()) {
       updateType(vi);
     }
