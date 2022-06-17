@@ -2175,7 +2175,8 @@ if coordinate_transformation_mode is `"tf_crop_and_resize"`, <br/>
 .)DOC";
 
 static const char* Resize_attr_keep_aspect_ratio_policy_doc = R"DOC(
-This attribute describes how to interpret the `sizes` input with regard to keeping the original aspect ratio of the input. <br/>
+This attribute describes how to interpret the `sizes` input with regard to keeping the original aspect ratio of the input, and it is not applicable when
+the `scales` input is used. <br/>
 
 Given a set of `sizes`, associated with a subset of `axes` (explicitly provided or default), and assuming `d = axes[i]`, with `i` being the index of the provided `sizes`. <br/>
 

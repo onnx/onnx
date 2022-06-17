@@ -38,16 +38,21 @@ void KeepAspectRatioHelper(
     reduce_f = [] (float a, float b) { return std::max(a, b); };
   }
 
+  bool has_unknown_dim = false;
   for (size_t i = 0; i < sizes_data.size(); i++) {
     int d = axes.empty() ? i : axes[i];
-    if (!input_shape.dim(d).has_dim_value())
-      continue;
+    if (!input_shape.dim(d).has_dim_value()) {
+      has_unknown_dim = true;
+      break;
+    }
     float s = sizes_data[i] / static_cast<float>(input_shape.dim(d).dim_value());
     scale = reduce_f(scale, s);
   }
+  // If there's at least one unknown dim we can't infer the output shape, since it
+  // will depend on the original aspect ratio of the input.
   for (size_t i = 0; i < sizes_data.size(); i++) {
     int d = axes.empty() ? i : axes[i];
-    sizes_data[i] = input_shape.dim(d).has_dim_value() ? std::roundf(scale * input_shape.dim(d).dim_value()) : -1;
+    sizes_data[i] = has_unknown_dim ? -1 : std::roundf(scale * input_shape.dim(d).dim_value());
   }
 }
 
