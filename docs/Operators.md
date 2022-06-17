@@ -90,6 +90,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Min">Min</a>|<a href="Changelog.md#Min-13">13</a>, <a href="Changelog.md#Min-12">12</a>, <a href="Changelog.md#Min-8">8</a>, <a href="Changelog.md#Min-6">6</a>, <a href="Changelog.md#Min-1">1</a>|
 |<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
 |<a href="#Mul">Mul</a>|<a href="Changelog.md#Mul-14">14</a>, <a href="Changelog.md#Mul-13">13</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-1">1</a>|
+|<a href="#MultiHeadAttention">MultiHeadAttention</a>|<a href="Changelog.md#MultiHeadAttention-11">11</a>|
 |<a href="#Multinomial">Multinomial</a>|<a href="Changelog.md#Multinomial-7">7</a>|
 |<a href="#Neg">Neg</a>|<a href="Changelog.md#Neg-13">13</a>, <a href="Changelog.md#Neg-6">6</a>, <a href="Changelog.md#Neg-1">1</a>|
 |<a href="#NonMaxSuppression">NonMaxSuppression</a>|<a href="Changelog.md#NonMaxSuppression-11">11</a>, <a href="Changelog.md#NonMaxSuppression-10">10</a>|
@@ -12755,6 +12756,275 @@ y = np.random.randn(5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mul_bcast')
+```
+
+</details>
+
+
+### <a name="MultiHeadAttention"></a><a name="multiheadattention">**MultiHeadAttention**</a>
+
+  Allows the model to jointly attend to information
+        from different representation subspaces.
+        See reference: Attention Is All You Need.
+        The computation can be described by the following equations.
+        ```
+        MultiHeadAttention(query, key, vector) = Concat(head_1, ..., head_h)W^O
+        where: `head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)`. The default is with a bias.
+        if query, key and value tensor is same, then it will be self attention.
+        ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>drop_probability</tt> : float (default is 0.0)</dt>
+<dd>the probability of dropout operator. Default is 0.0</dd>
+<dt><tt>embedding_dim</tt> : int (required)</dt>
+<dd>total dimension of the model, must be equal to target sequence length.</dd>
+<dt><tt>num_heads</tt> : int (required)</dt>
+<dd>number of the parallel attention heads.</dd>
+<dt><tt>training_mode</tt> : int (default is 0)</dt>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
+</dl>
+
+#### Inputs (7 - 13)
+
+<dl>
+<dt><tt>query</tt> (non-differentiable) : T</dt>
+<dd>Input query tensor of the multiheadattention;dimensions are (N, E, L), where L is the target sequence length, which is equal to embedding dimension number.N is the batch size, E is the embedding dimension.</dd>
+<dt><tt>key</tt> (non-differentiable) : T</dt>
+<dd>Input key tensor of the multiheadattention;dimensions are (N, E, S),where S is the source sequence length,N is the batch size,E is the embedding dimension.</dd>
+<dt><tt>value</tt> (non-differentiable) : T</dt>
+<dd>Input value tensor of the multiheadattention;dimensions are (N, E, S),where S is the source sequence length,N is the batch size,E is the embedding dimension.</dd>
+<dt><tt>q_weight</tt> (differentiable) : T</dt>
+<dd>query weight of the multiheadattention;dimensions are (L, E),where E is the embedding dimension,L is target sequence length.</dd>
+<dt><tt>k_weight</tt> (differentiable) : T</dt>
+<dd>key weight of the multiheadattention;dimensions are (S, E),where E is the embedding dimension,S is source sequence length.</dd>
+<dt><tt>v_weight</tt> (differentiable) : T</dt>
+<dd>value weight of the multiheadattention;dimensions are (S, E),where E is the embedding dimension,K is source sequence length.</dd>
+<dt><tt>out_weight</tt> (differentiable) : T</dt>
+<dd>Feedforward tensor weight of the multiheadattention;dimensions are (E, E), where S is the source sequence length,N is the batch size,E is the embedding dimension.</dd>
+<dt><tt>q_bias</tt> (optional, differentiable) : T</dt>
+<dd>query bias of the multiheadattention;dimensions are (1, 1, E),E is the embedding dimension.</dd>
+<dt><tt>k_bias</tt> (optional, differentiable) : T</dt>
+<dd>key bias of the multiheadattention;dimensions are (1, 1, E),where S is the source sequence length.</dd>
+<dt><tt>v_bias</tt> (optional, differentiable) : T</dt>
+<dd>value bias of the multiheadattention;dimensions are (1, 1, E),where S is the source sequence length.</dd>
+<dt><tt>out_bias</tt> (optional, differentiable) : T</dt>
+<dd>Feedforward tensor bias of the multiheadattention;dimensions are (1, 1, E),where S is the source sequence length,N is the batch size,E is the embedding dimension.</dd>
+<dt><tt>padding_mask</tt> (optional, non-differentiable) : T</dt>
+<dd>Mask is for padded sequence.If is provided, the non-zero positionswill be ignored while the positionwith the zero positions will be unchanged;dimensions are (N, S),where N is the batch size,S is the source sequence length.</dd>
+<dt><tt>attn_mask</tt> (optional, non-differentiable) : T</dt>
+<dd>Mask is to prevent leftward information flowin the decoder to preserve the auto-regressive property;dimensions are (N * num_heads, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>attn_out</tt> (non-differentiable) : T</dt>
+<dd>Operator output result,dimensions are (N, E, L),where N is the batch size,L is the target sequence length,E is the embedding dimension.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output type to float tensors</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain input and output type to int64</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>multiheadattention</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MultiHeadAttention',
+    inputs=[
+        'query', 'key', 'value', \
+        'q_weight', 'k_weight', 'v_weight', \
+        'q_bias', 'k_bias', 'v_bias', \
+        'out_weight', 'out_bias', 
+        ],
+    outputs=['attn_out'],
+)
+query = np.random.randn(4, 16, 16)
+key = np.random.randn(4, 20, 16)
+value = np.random.randn(4, 20, 16)
+
+q_weight = np.random.randn(16, 16)
+k_weight = np.random.randn(16, 16)
+v_weight = np.random.randn(16, 16)
+
+q_bias = np.random.randn(1, 1, 16)
+k_bias = np.random.randn(1, 1, 16)
+v_bias = np.random.randn(1, 1, 16)
+
+out_weight = np.random.randn(16, 16)
+out_bias = np.random.randn(1, 1, 16)
+
+q = query.dot(q_weight) + q_bias
+k = key.dot(k_weight) + k_bias
+v = value.dot(v_weight) + v_bias
+
+bsz, tgt_len, embed_dim = query.shape
+bsz, src_len, embed_dim = key.shape
+
+num_heads = 4
+head_dim = embed_dim // num_heads 
+scaling = float(head_dim) ** -0.5
+q = q * scaling
+q = q.reshape(bsz*num_heads, tgt_len, head_dim)
+k = k.reshape(bsz*num_heads, head_dim, src_len)
+v = v.reshape(bsz*num_heads, src_len, head_dim)
+attn_output_weights = np.matmul(q, k) / scaling
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention)
+attn_output = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
+
+expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, \
+    q_bias, k_bias, v_bias, out_weight, out_bias], 
+    outputs=[attn_output],
+    name='test_multiheadattention')
+```
+
+</details>
+
+
+<details>
+<summary>with_attn_mask</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MultiHeadAttention',
+    inputs=[
+        'query', 'key', 'value', \
+        'q_weight', 'k_weight', 'v_weight', \
+        'q_bias', 'k_bias', 'v_bias', \
+        'out_weight', 'out_bias', \
+        'attn_mask'
+        ],
+    outputs=['attn_out'],
+)
+query = np.random.randn(4, 16, 16)
+key = np.random.randn(4, 20, 16)
+value = np.random.randn(4, 20, 16)
+
+q_weight = np.random.randn(16, 16)
+k_weight = np.random.randn(16, 16)
+v_weight = np.random.randn(16, 16)
+
+q_bias = np.random.randn(1, 1, 16)
+k_bias = np.random.randn(1, 1, 16)
+v_bias = np.random.randn(1, 1, 16)
+
+out_weight = np.random.randn(16, 16)
+out_bias = np.random.randn(1, 1, 16)
+
+q = query.dot(q_weight) + q_bias
+k = key.dot(k_weight) + k_bias
+v = value.dot(v_weight) + v_bias
+
+bsz, tgt_len, embed_dim = query.shape
+bsz, src_len, embed_dim = key.shape
+
+num_heads = 4
+head_dim = embed_dim // num_heads 
+scaling = float(head_dim) ** -0.5
+q = q * scaling
+q = q.reshape(bsz*num_heads, tgt_len, head_dim)
+k = k.reshape(bsz*num_heads, head_dim, src_len)
+v = v.reshape(bsz*num_heads, src_len, head_dim)
+attn_output_weights = np.matmul(q, k) / scaling
+
+attn_mask = np.random.randn(bsz*num_heads, tgt_len, src_len)
+attn_output_weights += attn_mask
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention)
+attn_output = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
+
+expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, \
+    q_bias, k_bias, v_bias, out_weight, out_bias, attn_mask], 
+    outputs=[attn_output],
+    name='test_multiheadattention')
+```
+
+</details>
+
+
+<details>
+<summary>with_padding_mask</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MultiHeadAttention',
+    inputs=[
+        'query', 'key', 'value', \
+        'q_weight', 'k_weight', 'v_weight', \
+        'q_bias', 'k_bias', 'v_bias', \
+        'out_weight', 'out_bias', \
+        'padding_mask'
+        ],
+    outputs=['attn_out'],
+)
+query = np.random.randn(4, 16, 16)
+key = np.random.randn(4, 20, 16)
+value = np.random.randn(4, 20, 16)
+
+q_weight = np.random.randn(16, 16)
+k_weight = np.random.randn(16, 16)
+v_weight = np.random.randn(16, 16)
+
+q_bias = np.random.randn(1, 1, 16)
+k_bias = np.random.randn(1, 1, 16)
+v_bias = np.random.randn(1, 1, 16)
+
+out_weight = np.random.randn(16, 16)
+out_bias = np.random.randn(1, 1, 16)
+
+padding_mask = np.random.randn(4, 20) > 0
+
+q = query.dot(q_weight) + q_bias
+k = key.dot(k_weight) + k_bias
+v = value.dot(v_weight) + v_bias
+
+bsz, tgt_len, embed_dim = query.shape
+bsz, src_len, embed_dim = key.shape
+
+num_heads = 4
+head_dim = embed_dim // num_heads 
+scaling = float(head_dim) ** -0.5
+q = q * scaling
+q = q.reshape(bsz*num_heads, tgt_len, head_dim)
+k = k.reshape(bsz*num_heads, head_dim, src_len)
+v = v.reshape(bsz*num_heads, src_len, head_dim)
+attn_output_weights = np.matmul(q, k) / scaling
+
+attn_output_weights = attn_output_weights.reshape(bsz, num_heads, tgt_len, src_len)
+mask = np.concatenate([padding_mask] * num_heads * tgt_len).reshape(bsz, num_heads, tgt_len, src_len)
+mask = np.ma.masked_where(mask, attn_output_weights)
+mask = np.ma.filled(np.array(mask), -np.inf)
+attn_output_weights = attn_output_weights.reshape(bsz * num_heads, tgt_len, src_len)  
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention)
+attn_output = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
+
+expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, \
+    q_bias, k_bias, v_bias, out_weight, out_bias, padding_mask], 
+    outputs=[attn_output],
+    name='test_multiheadattention')
 ```
 
 </details>
