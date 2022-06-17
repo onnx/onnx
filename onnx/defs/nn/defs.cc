@@ -2667,7 +2667,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           "dimensions are (N, S)," 
           "where N is the batch size," 
           "S is the source sequence length.", // description
-          "T", // type_str
+          "B", // type_str
           OpSchema::Optional, // FormalParameterOption 必填参数， optional 选填， variadic 多个参数
           true, // variadic 时 多个参数是否必须保持一致
           1, // 最小参数数量，对于variadic
@@ -2707,6 +2707,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           "I",
           {"tensor(int64)"},
           "Constrain input and output type to int64")
+        .TypeConstraint(
+          "B",
+          {"tensor(int64)"},
+          "Constrain input and output type to boolean")
         .TypeAndShapeInferenceFunction([] (InferenceContext& ctx) {
           if (ctx.getNumInputs() < 7) {
             fail_shape_inference("MultiHeadAttention op must have at lease eight inputs.");
