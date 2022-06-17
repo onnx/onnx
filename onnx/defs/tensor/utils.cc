@@ -93,6 +93,31 @@ void resizeShapeInference(InferenceContext& ctx) {
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
   const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
+  const TensorProto* sizes  = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
+
+  if ((scales != nullptr) + (sizes != nullptr) != 1) {
+    fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
+  }
+
+  auto keep_aspect_ratio_policy_attr = ctx.getAttribute("keep_aspect_ratio_policy");
+  KeepAspectRatioPolicy keep_aspect_ratio_policy = KeepAspectRatioPolicy::STRETCH;
+  if (keep_aspect_ratio_policy_attr && keep_aspect_ratio_policy_attr->has_s()) {
+    auto str = keep_aspect_ratio_policy_attr->s();
+    if (str == "stretch") {
+      keep_aspect_ratio_policy = KeepAspectRatioPolicy::STRETCH;
+    } else if (str == "not_larger") {
+      keep_aspect_ratio_policy = KeepAspectRatioPolicy::NOT_LARGER;
+    } else if (str == "not_smaller") {
+      keep_aspect_ratio_policy = KeepAspectRatioPolicy::NOT_SMALLER;
+    } else {
+      fail_shape_inference("Unknown value for `keep_aspect_ratio_policy`: ", str, ".");
+    }
+  }
+
+  if (scales != nullptr && keep_aspect_ratio_policy != KeepAspectRatioPolicy::STRETCH) {
+    fail_shape_inference(
+        "Providing `scales` is incompatible with a `keep_aspect_ratio_policy` other than \"stretch\".");
+  }
 
   if (output_shape->dim_size() > 0) {
     if (output_shape->dim_size() != input_shape.dim_size()) {
@@ -111,68 +136,54 @@ void resizeShapeInference(InferenceContext& ctx) {
 
   auto axes_attr = ctx.getAttribute("axes");
   size_t rank_x = input_shape.dim_size();
+  std::vector<int64_t> axes;
+  if (axes_attr) {
+    axes = RetrieveValues<int64_t>(*axes_attr);
+  }
 
-  if (ctx.getNumInputs() == 4) {
-    const auto* sizes = ctx.getInputData(3);
-    if (nullptr != sizes) {
-      if (sizes->data_type() == TensorProto::INT64) {
-        auto sizes_data = ParseData<int64_t>(sizes);
-        std::vector<int64_t> axes;
-        if (axes_attr) {
-          axes = RetrieveValues<int64_t>(*axes_attr);
-          if (sizes_data.size() != axes.size()) {
-            fail_shape_inference(
-                "Number of elements of input 'sizes' (", sizes_data.size(),
-                ") does not match the number of axes (", axes.size(),").");
-          }
-        } else {
-          // sizes_data contains scales for all axes
-          if (sizes_data.size() != rank_x) {
-            fail_shape_inference(
-              "Number of elements of input 'sizes' must be same as rank of input 'X'");
-          }
+  if (nullptr != sizes) {
+    if (sizes->data_type() == TensorProto::INT64) {
+      auto sizes_data = ParseData<int64_t>(sizes);
+      if (!axes.empty()) {
+        if (sizes_data.size() != axes.size()) {
+          fail_shape_inference(
+              "Number of elements of input 'sizes' (", sizes_data.size(),
+              ") does not match the number of axes (", axes.size(),").");
         }
-
-        auto keep_aspect_ratio_policy_attr = ctx.getAttribute("keep_aspect_ratio_policy");
-        KeepAspectRatioPolicy keep_aspect_ratio_policy = KeepAspectRatioPolicy::STRETCH;
-        if (keep_aspect_ratio_policy_attr && keep_aspect_ratio_policy_attr->has_s()) {
-          auto str = keep_aspect_ratio_policy_attr->s();
-          if (str == "stretch") {
-            keep_aspect_ratio_policy = KeepAspectRatioPolicy::STRETCH;
-          } else if (str == "not_larger") {
-            keep_aspect_ratio_policy = KeepAspectRatioPolicy::NOT_LARGER;
-          } else if (str == "not_smaller") {
-            keep_aspect_ratio_policy = KeepAspectRatioPolicy::NOT_SMALLER;
-          }
-        }
-        // Process sizes_data according to the selected policy
-        KeepAspectRatioHelper(keep_aspect_ratio_policy, input_shape, axes, sizes_data);
-
-        // If axes subset is provided, populate new sizes_data with all dims
-        if (!axes.empty()) {
-          std::vector<int64_t> tmp(rank_x);
-          for (size_t i = 0; i < rank_x; i++) {
-            tmp[i] = input_shape.dim(i).has_dim_value() ? input_shape.dim(i).dim_value() : -1;
-          }
-          for (size_t i = 0; i < axes.size(); i++) {
-            int d = axes[i];
-            tmp[d] = sizes_data[i];
-          }
-          std::swap(tmp, sizes_data);
-        }
-
-        resizeShapeInferenceHelper(input_shape, sizes_data, output_shape);
       } else {
-        fail_shape_inference("Input 'sizes' must have int64 element type.");
+        // sizes_data contains scales for all axes
+        if (sizes_data.size() != rank_x) {
+          fail_shape_inference(
+            "Number of elements of input 'sizes' must be same as rank of input 'X'");
+        }
       }
+
+      // Process sizes_data according to the selected policy
+      KeepAspectRatioHelper(keep_aspect_ratio_policy, input_shape, axes, sizes_data);
+
+      // If axes subset is provided, populate new sizes_data with all dims
+      if (!axes.empty()) {
+        std::vector<int64_t> tmp(rank_x);
+        for (size_t i = 0; i < rank_x; i++) {
+          tmp[i] = input_shape.dim(i).has_dim_value() ? input_shape.dim(i).dim_value() : -1;
+        }
+        for (size_t i = 0; i < axes.size(); i++) {
+          int d = axes[i];
+          tmp[d] = sizes_data[i];
+        }
+        std::swap(tmp, sizes_data);
+      }
+
+      resizeShapeInferenceHelper(input_shape, sizes_data, output_shape);
+    } else {
+      fail_shape_inference("Input 'sizes' must have int64 element type.");
     }
   } else if (nullptr != scales) {
     // Infer output shape's dimension value if 'scales' is known.
     if (scales->data_type() == TensorProto::FLOAT) {
       auto scales_data = ParseData<float>(scales);
 
-      if (axes_attr) {
-        auto axes = RetrieveValues<int64_t>(*axes_attr);
+      if (!axes.empty()) {
         // scales_data contains scales for a subset of axes. The rest should not be resized
         if (scales_data.size() != axes.size()) {
           fail_shape_inference(

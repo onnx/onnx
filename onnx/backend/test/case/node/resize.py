@@ -56,17 +56,6 @@ def cartesian(arrays: List[np.ndarray], out: np.ndarray = None) -> np.ndarray:
     return out
 
 
-def round_half_up(x: float) -> int:
-    """
-    Computes the nearest integer value, rounding halfway cases up
-    """
-    fractional = x - int(x)
-    if fractional == 0.5:
-        return int(x) + 1
-    else:
-        return round(x)
-
-
 def interpolate_1d_with_x(data: np.ndarray,
                           scale_factor: float,
                           x: float,
@@ -234,6 +223,10 @@ def interpolate_nd(data: np.ndarray,
                 raise ValueError(f'invalid keep_aspect_ratio_policy: {keep_aspect_ratio_policy}')
 
             scale_factors = [scale if i in axes else 1.0 for i in range(r)]
+
+            def round_half_up(x: float) -> int:
+                return int(x + 0.5)
+
             output_size = [round_half_up(scale * data.shape[i]) if i in axes else data.shape[i] for i in range(r)]
 
     else:
