@@ -2709,7 +2709,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           "Constrain input and output type to int64")
         .TypeConstraint(
           "B",
-          {"tensor(int64)"},
+          {"tensor(bool)"},
           "Constrain input and output type to boolean")
         .TypeAndShapeInferenceFunction([] (InferenceContext& ctx) {
           if (ctx.getNumInputs() < 7) {
