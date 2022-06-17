@@ -3614,10 +3614,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               builder.Const("k2", std::vector<int64_t>{2});
 
               auto axes_attr = ctx.getAttribute("axes");
-              std::vector<int64_t> axes;
               if (axes_attr) {  // axes provided, need to work on a subset of dimensions
-                axes = RetrieveValues<int64_t>(*axes_attr);
-                builder.Const("axes_input", axes);
+                builder.Add("axes_input = Constant <value_ints : ints = @axes>()");
                 builder.Add("x_shape_alldims = Shape (input_data)")
                   .Add("x_shape = Gather (x_shape_alldims, axes_input)");
               } else {  // axes not provided, assuming all dims
