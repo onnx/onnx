@@ -11941,6 +11941,84 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
+### <a name="MultiHeadAttention-11"></a>**MultiHeadAttention-11**</a>
+
+  Allows the model to jointly attend to information
+        from different representation subspaces.
+        See reference: Attention Is All You Need.
+        The computation can be described by the following equations.
+        ```
+        MultiHeadAttention(query, key, vector) = Concat(head_1, ..., head_h)W^O
+        where: `head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)`. The default is with a bias.
+        if query, key and value tensor is same, then it will be self attention.
+        ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>drop_probability</tt> : float (default is 0.0)</dt>
+<dd>the probability of dropout operator. Default is 0.0</dd>
+<dt><tt>embedding_dim</tt> : int (required)</dt>
+<dd>total dimension of the model, must be equal to target sequence length.</dd>
+<dt><tt>num_heads</tt> : int (required)</dt>
+<dd>number of the parallel attention heads.</dd>
+<dt><tt>training_mode</tt> : int (default is 0)</dt>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
+</dl>
+
+#### Inputs (7 - 13)
+
+<dl>
+<dt><tt>query</tt> (non-differentiable) : T</dt>
+<dd>Input query tensor of the multiheadattention;dimensions are (N, L, E), where L is the target sequence length, which is equal to embedding dimension number.N is the batch size, E is the embedding dimension.</dd>
+<dt><tt>key</tt> (non-differentiable) : T</dt>
+<dd>Input key tensor of the multiheadattention;dimensions are (N, S, E),where S is the source sequence length,N is the batch size,E is the embedding dimension.</dd>
+<dt><tt>value</tt> (non-differentiable) : T</dt>
+<dd>Input value tensor of the multiheadattention;dimensions are (N, S, E),where S is the source sequence length,N is the batch size,E is the embedding dimension.</dd>
+<dt><tt>q_weight</tt> (differentiable) : T</dt>
+<dd>query weight of the multiheadattention;dimensions are (E, E),where E is the embedding dimension,L is target sequence length.</dd>
+<dt><tt>k_weight</tt> (differentiable) : T</dt>
+<dd>key weight of the multiheadattention;dimensions are (E, E),where E is the embedding dimension,S is source sequence length.</dd>
+<dt><tt>v_weight</tt> (differentiable) : T</dt>
+<dd>value weight of the multiheadattention;dimensions are (E, E),where E is the embedding dimension,K is source sequence length.</dd>
+<dt><tt>out_weight</tt> (differentiable) : T</dt>
+<dd>Feedforward tensor weight of the multiheadattention;dimensions are (E, E), where S is the source sequence length,N is the batch size,E is the embedding dimension.</dd>
+<dt><tt>q_bias</tt> (optional, differentiable) : T</dt>
+<dd>query bias of the multiheadattention;dimensions are (1, 1, E),E is the embedding dimension.</dd>
+<dt><tt>k_bias</tt> (optional, differentiable) : T</dt>
+<dd>key bias of the multiheadattention;dimensions are (1, 1, E),where S is the source sequence length.</dd>
+<dt><tt>v_bias</tt> (optional, differentiable) : T</dt>
+<dd>value bias of the multiheadattention;dimensions are (1, 1, E),where S is the source sequence length.</dd>
+<dt><tt>out_bias</tt> (optional, differentiable) : T</dt>
+<dd>Feedforward tensor bias of the multiheadattention;dimensions are (1, 1, E),where S is the source sequence length,N is the batch size,E is the embedding dimension.</dd>
+<dt><tt>padding_mask</tt> (optional, non-differentiable) : B</dt>
+<dd>Mask is for padded sequence.If is provided, the non-zero positionswill be ignored while the positionwith the zero positions will be unchanged;dimensions are (N, S),where N is the batch size,S is the source sequence length.</dd>
+<dt><tt>attn_mask</tt> (optional, non-differentiable) : T</dt>
+<dd>Mask is to prevent leftward information flowin the decoder to preserve the auto-regressive property;dimensions are (N * num_heads, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>attn_out</tt> (non-differentiable) : T</dt>
+<dd>Operator output result,dimensions are (N, E, L),where N is the batch size,L is the target sequence length,E is the embedding dimension.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output type to float tensors</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain input and output type to int64</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrain input and output type to boolean</dd>
+</dl>
+
 ### <a name="NonMaxSuppression-11"></a>**NonMaxSuppression-11**</a>
 
   Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
