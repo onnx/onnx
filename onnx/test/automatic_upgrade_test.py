@@ -1203,8 +1203,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
         self._test_op_upgrade('MultiHeadAttention', 10,
                               [[4, 16, 16], [4, 20, 16], [4, 20, 16], [16, 16], [16, 16], [16, 16]],
                               [[4, 16, 16]],
-                              input_types=[TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, 
-                                           TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+                              input_types=[TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
                               output_types=[TensorProto.FLOAT],
                               attrs={'training_mode': 0})
 

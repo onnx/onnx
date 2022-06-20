@@ -4454,7 +4454,7 @@ class TestShapeInference(unittest.TestCase):
              ('q_weight', TensorProto.FLOAT, (16, 16)),
              ('k_weight', TensorProto.FLOAT, (16, 16)),
              ('v_weight', TensorProto.FLOAT, (16, 16)),
-             ('out_weight', TensorProto.FLOAT, (4, 16, 16)),],
+             ('out_weight', TensorProto.FLOAT, (4, 16, 16))],
             [make_node('MultiHeadAttention', ['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight', 'out_weight'], ['attn_output'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('attn_output', TensorProto.FLOAT, (4, 16, 16))])
