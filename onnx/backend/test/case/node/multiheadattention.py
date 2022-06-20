@@ -149,17 +149,15 @@ class MultiHeadAttention(Base):
         head_dim = embed_dim // num_heads
         scaling = float(head_dim) ** -0.5
         q = q * scaling
-        q = q.reshape(bsz*num_heads, tgt_len, head_dim)
-        k = k.reshape(bsz*num_heads, head_dim, src_len)
-        v = v.reshape(bsz*num_heads, src_len, head_dim)
+        q = q.reshape(bsz * num_heads, tgt_len, head_dim)
+        k = k.reshape(bsz * num_heads, head_dim, src_len)
+        v = v.reshape(bsz * num_heads, src_len, head_dim)
         attn_output_weights = np.matmul(q, k) / scaling
-        
         attn_output_weights = attn_output_weights.reshape(bsz, num_heads, tgt_len, src_len)
         mask = np.concatenate([padding_mask] * num_heads * tgt_len).reshape(bsz, num_heads, tgt_len, src_len)
         mask = np.ma.masked_where(mask, attn_output_weights)
         mask = np.ma.filled(np.array(mask), -np.inf)
         attn_output_weights = attn_output_weights.reshape(bsz * num_heads, tgt_len, src_len)
-
         t = np.exp(attn_output_weights)
         attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
         attention = dropout(attention)
