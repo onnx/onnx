@@ -3,11 +3,9 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-from torch.nn import functional as F
-import torch
 
 
-def dropout(X, drop_probability=0.5, training_mode=False):
+def dropout(X, drop_probability=0.5, training_mode=False):  # type: ignore
     if training_mode is False:
         return X
     mask = np.random.uniform(0, 1.0, X.shape) >= drop_probability
