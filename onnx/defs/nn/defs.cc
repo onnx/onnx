@@ -53,7 +53,7 @@ void convPoolShapeInference(
 
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have atleast 2 dimensions");
+    fail_shape_inference("Input tensor must have at least 2 dimensions");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -397,7 +397,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor X must have atleast 2 dimensions.");
+    fail_shape_inference("Input tensor X must have at least 2 dimensions.");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -477,7 +477,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
 
 static const char* MaxUnpool_ver9_doc = R"DOC(
 MaxUnpool essentially computes the partial inverse of the MaxPool op.
- The input information to this op is typically the the output information from a MaxPool op. The first
+ The input information to this op is typically the output information from a MaxPool op. The first
  input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
  from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
  to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
@@ -2949,6 +2949,85 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
+
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // LayerNormalization <axis, epsilon, stash_type> (X, Scale, B) => (Y, Mean?, InvStdDev?)
+          auto* tp = ctx.getInputType(0);
+          if ((tp == nullptr) || (!tp->has_tensor_type()))
+            return false;
+          int64_t T = tp->tensor_type().elem_type();
+
+          auto type_attr = ctx.getAttribute("stash_type");
+          int64_t U = (type_attr != nullptr) ? type_attr->i()
+                                             : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) && (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16))
+            return false; // Error
+
+          auto* axis_attr = ctx.getAttribute("axis");
+          int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
+          auto* epsilon_attr = ctx.getAttribute("epsilon");
+          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+
+          auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+            tp.add_dims(1);
+            return tp;
+          };
+          // The treatment of "axis" is different in "LayerNormalization" and in Reduction operations.
+          // This complicates the function definition, requiring reshaping inputs/outputs.
+          // Input X shape: [d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]
+          // This is treated as a 2D shape [d[0] * ... * d[axis-1], d[axis] * ... * d[rank-1]]
+          // Normalization is applied to the second dimension.
+          // Output Y has same shape as X
+          // Outputs Mean and InvStdDev have shape: [d[0], ..., d[axis-1], 1, ..., 1]
+          FunctionBuilder builder(functionProto);
+          builder.AddOpset("", 16)
+              .Const("FloatEpsilon", ToTensor<float>(epsilon))
+              .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+              .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
+              .Add("Rank = Size (XShape)") // rank of input tensor: scalar
+              .Add("Zero1D = Constant()", "value", mktensor(0)) // [0] : 1D tensor
+              .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
+              .Add("PrefixShape = Slice (XShape, Zero1D, Axis1D)") // [d[0], ..., d[axis-1]]
+              .Add(
+                  axis >= 0 // number of axes that are reduced =
+                      ? "NumReducedAxes = Sub (Rank, Axis1D)" // [rank - axis]: 1D tensor
+                      : "NumReducedAxes = Neg (Axis1D)") // [-axis] : 1D tensor
+              .Add(
+                  "SuffixShape = ConstantOfShape (NumReducedAxes)",
+                  "value",
+                  mktensor(1)) // [1, ..., 1] for reduced axes
+              .Add("ReducedShape = Concat <axis = 0> (PrefixShape, SuffixShape)") // [d[0], ..., d[axis-1], 1, ..., 1]
+              .Add("X2D = Flatten (X)", "axis", axis)
+              .Add("XU = Cast (X2D)", "to", U)
+              .Add("Mean2D = ReduceMean <axes = [1]> (XU)")
+              .Add("Square = Mul (XU, XU)")
+              .Add("MeanOfSquare = ReduceMean <axes = [1]> (Square)")
+              .Add("SquareOfMean = Mul (Mean2D, Mean2D)")
+              .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
+              .Add("VarPlusEpsilon = Add (Var, Epsilon)")
+              .Add("StdDev = Sqrt (VarPlusEpsilon)")
+              .Add("Deviation = Sub (XU, Mean2D)")
+              .Add("Normalized = Div (Deviation, StdDev)")
+              .Add("NormalizedT = Cast (Normalized)", "to", T)
+              .Add("Scale2D = Flatten <axis = 0> (Scale)")
+              .Add("Scaled = Mul (NormalizedT, Scale2D)");
+          if (ctx.hasInput(2)) {
+            builder.Add("B2D = Flatten <axis=0> (B)");
+            builder.Add("Biased = Add (Scaled, B2D)");
+          } else {
+            builder.Add("Biased = Identity (Scaled)");
+          }
+          builder.Add("Y = Reshape (Biased, XShape)");
+          builder.Add("InvStdDev2D = Reciprocal (StdDev)");
+          if (ctx.hasOutput(1))
+            builder.Add("Mean = Reshape (Mean2D, ReducedShape)");
+          if (ctx.hasOutput(2))
+            builder.Add("InvStdDev = Reshape (InvStdDev2D, ReducedShape)");
+          schema.BuildFunction(functionProto);
+          return true;
         }));
 
 } // namespace ONNX_NAMESPACE
