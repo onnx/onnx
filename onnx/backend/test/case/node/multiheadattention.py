@@ -102,7 +102,7 @@ class MultiHeadAttention(Base):
         v = v.reshape(bsz * num_heads, src_len, head_dim)
         attn_output_weights = np.matmul(q, k) / scaling
 
-        attn_mask = np.random.randn(bsz*num_heads, tgt_len, src_len)
+        attn_mask = np.random.randn(bsz * num_heads, tgt_len, src_len)
         attn_output_weights += attn_mask
 
         t = np.exp(attn_output_weights)
