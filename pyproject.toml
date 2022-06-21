@@ -8,6 +8,3 @@ profile = "black"
 extend_skip_glob = [
     "third_party/*",
 ]
-
-[tool.pylint.'MESSAGES CONTROL']
-disable = ["format", "line-too-long"]
