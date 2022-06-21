@@ -3,6 +3,7 @@ import onnx
 from onnx import parser, printer
 import unittest
 
+
 class TestBasicFunctions(unittest.TestCase):
     def check_graph(self, graph: onnx.GraphProto) -> None:
         self.assertTrue(len(graph.node) == 3)
