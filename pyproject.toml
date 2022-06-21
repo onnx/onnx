@@ -1,0 +1,8 @@
+[tool.black]
+target-version = ["py37", "py38", "py39", "py310"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = ["format", "line-too-long"]
