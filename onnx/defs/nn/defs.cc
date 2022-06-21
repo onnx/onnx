@@ -2422,7 +2422,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Input(
             0, // input num
-            "query", // input name
+            "X", // input name
             "Input query tensor of the multiheadattention;"
             "dimensions are (N, L, E), "
             "where L is the target sequence length, which is equal to embedding dimension number."
@@ -2585,7 +2585,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Output(
             0, // output num
-            "attn_out",
+            "Y",
             "Operator output result,"
             "dimensions are (N, E, L),"
             "where N is the batch size,"

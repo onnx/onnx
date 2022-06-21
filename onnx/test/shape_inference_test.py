@@ -4942,18 +4942,18 @@ class TestShapeInference(unittest.TestCase):
 
     def test_multiheadattention(self):  # type: () -> None
         graph = self._make_graph(
-            [('query', TensorProto.FLOAT, (4, 16, 16)),
+            [('x', TensorProto.FLOAT, (4, 16, 16)),
              ('key', TensorProto.FLOAT, (4, 20, 16)),
              ('value', TensorProto.FLOAT, (4, 20, 16)),
              ('q_weight', TensorProto.FLOAT, (16, 16)),
              ('k_weight', TensorProto.FLOAT, (16, 16)),
              ('v_weight', TensorProto.FLOAT, (16, 16)),
              ('out_weight', TensorProto.FLOAT, (16, 16))],
-            [make_node('MultiHeadAttention', ['query', 'key', 'value', 'q_weight', 'k_weight',
-                       'v_weight', 'out_weight'], ['attn_output'], num_heads=4, embedding_dim=16)],
+            [make_node('MultiHeadAttention', ['x', 'key', 'value', 'q_weight', 'k_weight',
+                       'v_weight', 'out_weight'], ['y'], num_heads=4, embedding_dim=16)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info(
-            'attn_output', TensorProto.FLOAT, (4, 16, 16))])  # type: ignore
+            'y', TensorProto.FLOAT, (4, 16, 16))])  # type: ignore
 
 
 if __name__ == '__main__':

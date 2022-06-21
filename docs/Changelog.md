@@ -11973,7 +11973,7 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs (7 - 13)
 
 <dl>
-<dt><tt>query</tt> (non-differentiable) : T</dt>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
 <dd>Input query tensor of the multiheadattention;dimensions are (N, L, E), where L is the target sequence length, which is equal to embedding dimension number.N is the batch size, E is the embedding dimension.</dd>
 <dt><tt>key</tt> (non-differentiable) : T</dt>
 <dd>Input key tensor of the multiheadattention;dimensions are (N, S, E),where S is the source sequence length,N is the batch size,E is the embedding dimension.</dd>
@@ -12004,7 +12004,7 @@ This version of the operator has been available since version 11 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>attn_out</tt> (non-differentiable) : T</dt>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>Operator output result,dimensions are (N, E, L),where N is the batch size,L is the target sequence length,E is the embedding dimension.</dd>
 </dl>
 

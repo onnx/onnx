@@ -17,7 +17,7 @@ class MultiHeadAttention(Base):
 
     @staticmethod
     def export() -> None:
-        query = np.random.randn(4, 16, 16)
+        x = np.random.randn(4, 16, 16)
         key = np.random.randn(4, 20, 16)
         value = np.random.randn(4, 20, 16)
 
@@ -32,11 +32,11 @@ class MultiHeadAttention(Base):
         out_weight = np.random.randn(16, 16)
         out_bias = np.random.randn(1, 1, 16)
 
-        q = query.dot(q_weight) + q_bias
+        q = x.dot(q_weight) + q_bias
         k = key.dot(k_weight) + k_bias
         v = value.dot(v_weight) + v_bias
 
-        bsz, tgt_len, embed_dim = query.shape
+        bsz, tgt_len, embed_dim = x.shape
         bsz, src_len, embed_dim = key.shape
 
         num_heads = 4
@@ -51,24 +51,24 @@ class MultiHeadAttention(Base):
         t = np.exp(attn_output_weights)
         attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
         attention = dropout(attention)
-        attn_output = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
+        y = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
 
         node = onnx.helper.make_node(
             'MultiHeadAttention',
-            inputs=['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
+            inputs=['x', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
                     'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias'],
-            outputs=['attn_out'],
+            outputs=['y'],
             embedding_dim=embed_dim,
             num_heads=num_heads,
         )
 
-        expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias],
-               outputs=[attn_output],
+        expect(node, inputs=[x, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias],
+               outputs=[y],
                name='test_multiheadattention')
 
     @staticmethod
     def export_with_attn_mask() -> None:
-        query = np.random.randn(4, 16, 16)
+        x = np.random.randn(4, 16, 16)
         key = np.random.randn(4, 20, 16)
         value = np.random.randn(4, 20, 16)
 
@@ -83,11 +83,11 @@ class MultiHeadAttention(Base):
         out_weight = np.random.randn(16, 16)
         out_bias = np.random.randn(1, 1, 16)
 
-        q = query.dot(q_weight) + q_bias
+        q = x.dot(q_weight) + q_bias
         k = key.dot(k_weight) + k_bias
         v = value.dot(v_weight) + v_bias
 
-        bsz, tgt_len, embed_dim = query.shape
+        bsz, tgt_len, embed_dim = x.shape
         bsz, src_len, embed_dim = key.shape
 
         num_heads = 4
@@ -105,24 +105,24 @@ class MultiHeadAttention(Base):
         t = np.exp(attn_output_weights)
         attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
         attention = dropout(attention)
-        attn_output = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
+        y = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
 
         node = onnx.helper.make_node(
             'MultiHeadAttention',
-            inputs=['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
+            inputs=['x', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
                     'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias', 'attn_mask'],
-            outputs=['attn_out'],
+            outputs=['y'],
             embedding_dim=embed_dim,
             num_heads=num_heads,
         )
 
-        expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias, attn_mask],
-               outputs=[attn_output],
+        expect(node, inputs=[x, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias, attn_mask],
+               outputs=[y],
                name='test_multiheadattention')
 
     @staticmethod
     def export_with_padding_mask() -> None:
-        query = np.random.randn(4, 16, 16)
+        x = np.random.randn(4, 16, 16)
         key = np.random.randn(4, 20, 16)
         value = np.random.randn(4, 20, 16)
 
@@ -139,11 +139,11 @@ class MultiHeadAttention(Base):
 
         padding_mask = np.random.randn(4, 20) > 0
 
-        q = query.dot(q_weight) + q_bias
+        q = x.dot(q_weight) + q_bias
         k = key.dot(k_weight) + k_bias
         v = value.dot(v_weight) + v_bias
 
-        bsz, tgt_len, embed_dim = query.shape
+        bsz, tgt_len, embed_dim = x.shape
         bsz, src_len, embed_dim = key.shape
 
         num_heads = 4
@@ -165,17 +165,17 @@ class MultiHeadAttention(Base):
         t = np.exp(attn_output_weights)
         attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
         attention = dropout(attention)
-        attn_output = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
+        y = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
 
         node = onnx.helper.make_node(
             'MultiHeadAttention',
-            inputs=['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
+            inputs=['x', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
                     'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias', 'padding_mask'],
-            outputs=['attn_out'],
+            outputs=['y'],
             embedding_dim=embed_dim,
             num_heads=num_heads,
         )
 
-        expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias, padding_mask],
-               outputs=[attn_output],
+        expect(node, inputs=[x, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias, padding_mask],
+               outputs=[y],
                name='test_multiheadattention')
