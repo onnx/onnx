@@ -737,7 +737,8 @@ class OpSchema final {
         "optional(tensor(uint64))",      "optional(tensor(int8))",           "optional(tensor(int16))",
         "optional(tensor(int32))",       "optional(tensor(int64))",          "optional(tensor(float16))",
         "optional(tensor(float))",       "optional(tensor(double))",         "optional(tensor(string))",
-        "optional(tensor(bool))",        "optional(tensor(complex64))",      "optional(tensor(complex128))"};
+        "optional(tensor(bool))",        "optional(tensor(complex64))",      "optional(tensor(complex128))",
+        "tensor(float)"};
     return all_optional_types;
   }
 
