@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 import onnx
-from onnx import helper, TensorProto
+from onnx import TensorProto, helper
 
 
 class TestUtilityFunctions(unittest.TestCase):

@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 import argparse
-import config
 import gc
-import onnx
 import os
-from pathlib import Path
 import subprocess
 import sys
 import time
+from pathlib import Path
+
+import config
+
+import onnx
 
 cwd_path = Path.cwd()
 

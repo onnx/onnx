@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import sys
+
 import numpy as np  # type: ignore
 
 import onnx
@@ -9,7 +11,6 @@ from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
 
 from ..base import Base
 from . import expect
-import sys
 
 
 class Cast(Base):

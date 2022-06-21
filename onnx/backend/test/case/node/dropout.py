@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
 import random
 
+import numpy as np  # type: ignore
+
 import onnx
+from onnx import helper
+
 from ..base import Base
 from . import expect
-from onnx import helper
 
 
 def dropout(X, drop_probability=0.5, seed=0, training_mode=False, return_mask=False):  # type: ignore

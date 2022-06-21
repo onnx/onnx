@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
+import glob
+import os
 import unittest
+from os.path import join
+
+import pytest  # type: ignore
+
 import onnx.hub as hub
 from onnx import ModelProto
-import glob
-from os.path import join
-import pytest  # type: ignore
-import os
 
 
 @pytest.mark.skipif(

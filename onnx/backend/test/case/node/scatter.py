@@ -3,9 +3,10 @@
 import numpy as np  # type: ignore
 
 import onnx
+from onnx import helper
+
 from ..base import Base
 from . import expect
-from onnx import helper
 
 
 # The below Scatter's numpy implementation is from https://stackoverflow.com/a/46204790/11767360

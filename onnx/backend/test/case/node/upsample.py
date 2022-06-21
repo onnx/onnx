@@ -3,9 +3,10 @@
 import numpy as np  # type: ignore
 
 import onnx
+from onnx import helper
+
 from ..base import Base
 from . import expect
-from onnx import helper
 
 
 class Upsample(Base):

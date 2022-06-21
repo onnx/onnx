@@ -6,8 +6,7 @@ from typing import List, Tuple
 import onnx.checker
 import onnx.helper
 import onnx.shape_inference
-
-from onnx import ModelProto, NodeProto, TensorProto, ValueInfoProto, FunctionProto
+from onnx import FunctionProto, ModelProto, NodeProto, TensorProto, ValueInfoProto
 
 
 class Extractor:

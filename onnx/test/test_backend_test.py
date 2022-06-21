@@ -4,16 +4,17 @@ import itertools
 import os
 import platform
 import unittest
+from typing import Any, Optional, Sequence, Tuple
+
+import numpy  # type: ignore
+
 import onnx.backend.base
 import onnx.backend.test
-
-from onnx.backend.base import Device, DeviceType
-from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 import onnx.shape_inference
 import onnx.version_converter
-from typing import Optional, Any, Tuple, Sequence
-from onnx import NodeProto, ModelProto, TensorProto
-import numpy  # type: ignore
+from onnx import ModelProto, NodeProto, TensorProto
+from onnx.backend.base import Device, DeviceType
+from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 
 # The following just executes the fake backend through the backend test
 # infrastructure. Since we don't have full reference implementation of all ops

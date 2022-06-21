@@ -2,14 +2,14 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 import io
+import os
+from typing import IO, Any, Dict, List, Sequence
 
-from onnx import defs, load, AttributeProto
+from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
-from onnx.backend.test.runner import Runner
 from onnx.backend.test.loader import load_model_tests
-from typing import Any, IO, Sequence, Dict, List
+from onnx.backend.test.runner import Runner
 
 
 def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:

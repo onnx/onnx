@@ -6,24 +6,24 @@ proto is legal.
 """
 
 import functools
-
-from onnx import (
-    ValueInfoProto,
-    AttributeProto,
-    TensorProto,
-    SparseTensorProto,
-    NodeProto,
-    ModelProto,
-    GraphProto,
-    IR_VERSION,
-)
-import onnx.onnx_cpp2py_export.checker as C
-import onnx.defs
-from google.protobuf.message import Message
-from typing import TypeVar, Callable, Any, Type, cast, Union
-import onnx.shape_inference
 import sys
+from typing import Any, Callable, Type, TypeVar, Union, cast
 
+from google.protobuf.message import Message
+
+import onnx.defs
+import onnx.onnx_cpp2py_export.checker as C
+import onnx.shape_inference
+from onnx import (
+    IR_VERSION,
+    AttributeProto,
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    SparseTensorProto,
+    TensorProto,
+    ValueInfoProto,
+)
 
 # Limitation of single protobuf file is 2GB
 MAXIMUM_PROTOBUF = 2000000000

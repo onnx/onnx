@@ -2,33 +2,35 @@
 
 from __future__ import annotations
 
+import os
+import unittest
+from typing import Any, List, Optional, Sequence, Tuple, Type, Union
+
+import numpy as np  # type: ignore
+
+import onnx.shape_inference
 from onnx import (
+    ONNX_ML,
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    SparseTensorProto,
+    TensorProto,
+    TypeProto,
+    ValueInfoProto,
     checker,
     helper,
     numpy_helper,
-    TensorProto,
-    NodeProto,
-    GraphProto,
-    ValueInfoProto,
-    ModelProto,
-    ONNX_ML,
-    SparseTensorProto,
-    TypeProto,
 )
-from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
+from onnx.defs import AI_ONNX_PREVIEW_TRAINING_DOMAIN, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.helper import (
-    make_node,
-    make_tensor,
-    make_tensor_value_info,
     make_empty_tensor_value_info,
+    make_node,
     make_opsetid,
+    make_tensor,
     make_tensor_sequence_value_info,
+    make_tensor_value_info,
 )
-from typing import Sequence, Union, Tuple, Type, List, Any, Optional
-import onnx.shape_inference
-import unittest
-import os
-import numpy as np  # type: ignore
 
 
 class TestShapeInference(unittest.TestCase):

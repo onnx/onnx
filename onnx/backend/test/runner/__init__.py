@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 import functools
 import glob
 import os
@@ -13,29 +12,31 @@ import tarfile
 import tempfile
 import time
 import unittest
+from collections import defaultdict
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Pattern,
+    Sequence,
+    Set,
+    Type,
+    Union,
+)
+from urllib.request import urlretrieve
 
 import numpy as np  # type: ignore
 
 import onnx
-from onnx import helper, numpy_helper, NodeProto, ModelProto, TypeProto
+from onnx import ModelProto, NodeProto, TypeProto, helper, numpy_helper
 from onnx.backend.base import Backend
-from urllib.request import urlretrieve
-from ..loader import load_model_tests
+
 from ..case.test_case import TestCase
+from ..loader import load_model_tests
 from .item import TestItem
-from typing import (
-    Optional,
-    Pattern,
-    Set,
-    Dict,
-    Type,
-    Sequence,
-    Any,
-    Callable,
-    Union,
-    Iterable,
-    List,
-)
 
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):

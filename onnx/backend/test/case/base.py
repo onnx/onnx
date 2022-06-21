@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from collections import defaultdict
 import inspect
+from collections import defaultdict
 from textwrap import dedent
-from typing import Dict, List, Tuple, Type, Sequence, Any
+from typing import Any, Dict, List, Sequence, Tuple, Type
 
 import numpy as np  # type: ignore
 

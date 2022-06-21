@@ -1,22 +1,22 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from onnx import (
-    checker,
-    helper,
-    ModelProto,
-    TensorProto,
-    GraphProto,
-    NodeProto,
-    OperatorSetIdProto,
-)
-from typing import Sequence, Tuple, List, Callable
-from onnx import numpy_helper
+import struct
+import unittest
+from typing import Callable, List, Sequence, Tuple
 
 import numpy as np  # type: ignore
-import struct
 
 import onnx.version_converter
-import unittest
+from onnx import (
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    OperatorSetIdProto,
+    TensorProto,
+    checker,
+    helper,
+    numpy_helper,
+)
 
 
 class TestVersionConverter(unittest.TestCase):

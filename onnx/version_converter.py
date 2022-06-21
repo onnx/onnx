@@ -6,7 +6,7 @@ default domain ("" or "ai.onnx").
 """
 
 import onnx.onnx_cpp2py_export.version_converter as C
-from onnx import load_from_string, ModelProto
+from onnx import ModelProto, load_from_string
 
 
 def convert_version(model: ModelProto, target_version: int) -> ModelProto:

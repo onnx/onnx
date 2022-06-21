@@ -1,29 +1,28 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import sys
 import re
+import sys
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
-from typing import Callable, List, Sequence, Any, Union, Optional, Dict
 import numpy as np  # type: ignore
 
 import onnx
 import onnx.mapping
 
-from ..utils import import_recursive
 from ..test_case import TestCase
-
+from ..utils import import_recursive
 
 _NodeTestCases = []
 _TargetOpType = None
 
 
 from onnx.onnx_pb import (
-    NodeProto,
     AttributeProto,
-    TypeProto,
     FunctionProto,
     GraphProto,
     ModelProto,
+    NodeProto,
+    TypeProto,
 )
 
 

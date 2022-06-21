@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
-import onnx
-from onnx import helper, TensorProto, shape_inference, version_converter, ValueInfoProto
-from typing import List, Dict, Any, Union, Callable, Optional, cast
 import string
-import numpy as np  # type: ignore
-import unittest
-
 import time
+import unittest
+from typing import Any, Callable, Dict, List, Optional, Union, cast
+
+import numpy as np  # type: ignore
+
+import onnx
+from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
 
 #####################################################################################
 # Every test creates a model containing a single operator from the lowest possible

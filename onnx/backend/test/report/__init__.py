@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import pytest  # type: ignore
+from typing import Any, Dict, List, Sequence
+
 import _pytest  # type: ignore
+import pytest  # type: ignore
 
 from .coverage import Coverage
-from typing import Dict, Sequence, Any, List
 
 _coverage = Coverage()
 _marks: Dict[str, Sequence[Any]] = {}

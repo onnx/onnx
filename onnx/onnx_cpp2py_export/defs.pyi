@@ -1,4 +1,5 @@
-from typing import Dict, Tuple, Sequence, Optional, Set, overload
+from typing import Dict, Optional, Sequence, Set, Tuple, overload
+
 from onnx import AttributeProto
 
 class SchemaError(Exception): ...

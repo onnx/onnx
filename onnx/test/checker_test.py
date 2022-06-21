@@ -1,13 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
-
 from typing import Sequence
+
 import numpy as np  # type: ignore
 
-from onnx import checker, helper, numpy_helper, shape_inference
-from onnx import TensorProto, GraphProto, SparseTensorProto
-import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
+import onnx.onnx_cpp2py_export.checker as C
+from onnx import (
+    GraphProto,
+    SparseTensorProto,
+    TensorProto,
+    checker,
+    helper,
+    numpy_helper,
+    shape_inference,
+)
 
 
 class TestChecker(unittest.TestCase):

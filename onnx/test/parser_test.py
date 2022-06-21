@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
-import onnx
 import unittest
-from onnx import helper, parser, GraphProto
+
+import onnx
+from onnx import GraphProto, helper, parser
 
 
 class TestBasicFunctions(unittest.TestCase):

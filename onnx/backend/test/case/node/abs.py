@@ -3,10 +3,10 @@
 import numpy as np  # type: ignore
 
 import onnx
+from onnx.backend.sample.ops.abs import abs
+
 from ..base import Base
 from . import expect
-
-from onnx.backend.sample.ops.abs import abs
 
 
 class Abs(Base):

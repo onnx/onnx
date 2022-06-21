@@ -2,8 +2,10 @@
 
 from dataclasses import dataclass
 from typing import Optional, Sequence, Tuple
-import onnx
+
 import numpy as np  # type: ignore
+
+import onnx
 
 
 @dataclass

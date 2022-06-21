@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np  # type: ignore
+
 import onnx
+
 from ..base import Base
 from . import expect
 

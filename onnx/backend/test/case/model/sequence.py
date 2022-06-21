@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import typing
+from typing import List, Optional, Union
+
 import numpy as np  # type: ignore
 
 import onnx
-import typing
+from onnx import TensorProto
+
 from ..base import Base
 from . import expect
-from onnx import TensorProto
-from typing import List, Optional, Union
 
 
 def SequenceEmptyImpl() -> List[Optional[np.ndarray]]:

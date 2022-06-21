@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
-import config
-import onnx
 import os
 import sys
+
+import config
+
+import onnx
 
 
 def main():

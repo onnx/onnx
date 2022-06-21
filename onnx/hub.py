@@ -3,16 +3,17 @@
 
 This implements the python client for the ONNX model hub.
 """
-from os.path import join
-from urllib.request import urlopen
-from urllib.error import HTTPError
+import hashlib
 import json
 import os
-import hashlib
-from io import BytesIO
-from typing import List, Optional, Dict, Any, Tuple, cast, Set, IO
-import onnx
 import sys
+from io import BytesIO
+from os.path import join
+from typing import IO, Any, Dict, List, Optional, Set, Tuple, cast
+from urllib.error import HTTPError
+from urllib.request import urlopen
+
+import onnx
 
 if "ONNX_HOME" in os.environ:
     _ONNX_HUB_DIR = join(os.environ["ONNX_HOME"], "hub")

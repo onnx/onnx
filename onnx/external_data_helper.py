@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-import uuid
 import os
 import re
 import sys
+import uuid
 from itertools import chain
 from typing import Callable, Iterable, Optional
 
-from .onnx_pb import TensorProto, ModelProto, AttributeProto, GraphProto
+from .onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
 
 
 class ExternalDataInfo:
