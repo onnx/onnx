@@ -8,15 +8,15 @@ from ..base import Base
 from . import expect
 
 
-class RNN_Helper():
+class RNN_Helper:
     def __init__(self, **params: Any) -> None:
         # RNN Input Names
-        X = 'X'
-        W = 'W'
-        R = 'R'
-        B = 'B'
-        H_0 = 'initial_h'
-        LAYOUT = 'layout'
+        X = "X"
+        W = "W"
+        R = "R"
+        B = "B"
+        H_0 = "initial_h"
+        LAYOUT = "layout"
 
         required_inputs = [X, W, R]
         for i in required_inputs:
@@ -35,8 +35,16 @@ class RNN_Helper():
             layout = params[LAYOUT] if LAYOUT in params else 0
             x = params[X]
             x = x if layout == 0 else np.swapaxes(x, 0, 1)
-            b = params[B] if B in params else np.zeros(2 * hidden_size, dtype=np.float32)
-            h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
+            b = (
+                params[B]
+                if B in params
+                else np.zeros(2 * hidden_size, dtype=np.float32)
+            )
+            h_0 = (
+                params[H_0]
+                if H_0 in params
+                else np.zeros((batch_size, hidden_size), dtype=np.float32)
+            )
 
             self.X = x
             self.W = params[W]
@@ -61,8 +69,11 @@ class RNN_Helper():
 
         H_t = self.H_0
         for x in np.split(self.X, self.X.shape[0], axis=0):
-            H = self.f(np.dot(x, np.transpose(self.W)) + np.dot(H_t, np.transpose(self.R)) + np.add(
-                *np.split(self.B, 2)))
+            H = self.f(
+                np.dot(x, np.transpose(self.W))
+                + np.dot(H_t, np.transpose(self.R))
+                + np.add(*np.split(self.B, 2))
+            )
             h_list.append(H)
             H_t = H
 
@@ -80,20 +91,16 @@ class RNN_Helper():
 
 
 class RNN(Base):
-
     @staticmethod
     def export_defaults() -> None:
-        input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+        input = np.array([[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]]).astype(np.float32)
 
         input_size = 2
         hidden_size = 4
         weight_scale = 0.1
 
         node = onnx.helper.make_node(
-            'RNN',
-            inputs=['X', 'W', 'R'],
-            outputs=['', 'Y_h'],
-            hidden_size=hidden_size
+            "RNN", inputs=["X", "W", "R"], outputs=["", "Y_h"], hidden_size=hidden_size
         )
 
         W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
@@ -101,11 +108,18 @@ class RNN(Base):
 
         rnn = RNN_Helper(X=input, W=W, R=R)
         _, Y_h = rnn.step()
-        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_simple_rnn_defaults')
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y_h.astype(np.float32)],
+            name="test_simple_rnn_defaults",
+        )
 
     @staticmethod
     def export_initial_bias() -> None:
-        input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
+        input = np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]).astype(
+            np.float32
+        )
 
         input_size = 3
         hidden_size = 5
@@ -113,10 +127,10 @@ class RNN(Base):
         weight_scale = 0.1
 
         node = onnx.helper.make_node(
-            'RNN',
-            inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y_h'],
-            hidden_size=hidden_size
+            "RNN",
+            inputs=["X", "W", "R", "B"],
+            outputs=["", "Y_h"],
+            hidden_size=hidden_size,
         )
 
         W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
@@ -129,22 +143,30 @@ class RNN(Base):
 
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = rnn.step()
-        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)],
-               name='test_simple_rnn_with_initial_bias')
+        expect(
+            node,
+            inputs=[input, W, R, B],
+            outputs=[Y_h.astype(np.float32)],
+            name="test_simple_rnn_with_initial_bias",
+        )
 
     @staticmethod
     def export_seq_length() -> None:
-        input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
-                          [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+        input = np.array(
+            [
+                [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+                [[10.0, 11.0, 12.0], [13.0, 14.0, 15.0], [16.0, 17.0, 18.0]],
+            ]
+        ).astype(np.float32)
 
         input_size = 3
         hidden_size = 5
 
         node = onnx.helper.make_node(
-            'RNN',
-            inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y_h'],
-            hidden_size=hidden_size
+            "RNN",
+            inputs=["X", "W", "R", "B"],
+            outputs=["", "Y_h"],
+            hidden_size=hidden_size,
         )
 
         W = np.random.randn(1, hidden_size, input_size).astype(np.float32)
@@ -157,11 +179,16 @@ class RNN(Base):
 
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = rnn.step()
-        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')
+        expect(
+            node,
+            inputs=[input, W, R, B],
+            outputs=[Y_h.astype(np.float32)],
+            name="test_rnn_seq_length",
+        )
 
     @staticmethod
     def export_batchwise() -> None:
-        input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+        input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
 
         input_size = 2
         hidden_size = 4
@@ -169,11 +196,11 @@ class RNN(Base):
         layout = 1
 
         node = onnx.helper.make_node(
-            'RNN',
-            inputs=['X', 'W', 'R'],
-            outputs=['Y', 'Y_h'],
+            "RNN",
+            inputs=["X", "W", "R"],
+            outputs=["Y", "Y_h"],
             hidden_size=hidden_size,
-            layout=layout
+            layout=layout,
         )
 
         W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
@@ -181,4 +208,9 @@ class RNN(Base):
 
         rnn = RNN_Helper(X=input, W=W, R=R, layout=layout)
         Y, Y_h = rnn.step()
-        expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_simple_rnn_batchwise')
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+            name="test_simple_rnn_batchwise",
+        )

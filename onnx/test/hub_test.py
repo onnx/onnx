@@ -9,8 +9,8 @@ import os
 
 
 @pytest.mark.skipif(
-    'TEST_HUB' not in os.environ or not os.environ['TEST_HUB'],
-    reason="Conserving Git LFS quota"
+    "TEST_HUB" not in os.environ or not os.environ["TEST_HUB"],
+    reason="Conserving Git LFS quota",
 )
 class TestModelHub(unittest.TestCase):
     def setUp(self) -> None:
@@ -22,7 +22,9 @@ class TestModelHub(unittest.TestCase):
         model = hub.load(self.name, self.repo, force_reload=True)
         self.assertIsInstance(model, ModelProto)
 
-        cached_files = list(glob.glob(join(hub.get_dir(), "**", "*.onnx"), recursive=True))
+        cached_files = list(
+            glob.glob(join(hub.get_dir(), "**", "*.onnx"), recursive=True)
+        )
         self.assertGreaterEqual(len(cached_files), 1)
 
     def test_listing_models(self) -> None:
@@ -38,7 +40,9 @@ class TestModelHub(unittest.TestCase):
         model = hub.load(self.name, self.repo)
         self.assertIsInstance(model, ModelProto)
 
-        cached_files = list(glob.glob(join(hub.get_dir(), "**", "*.onnx"), recursive=True))
+        cached_files = list(
+            glob.glob(join(hub.get_dir(), "**", "*.onnx"), recursive=True)
+        )
         self.assertGreaterEqual(len(cached_files), 1)
 
     def test_custom_cache(self) -> None:
@@ -59,10 +63,15 @@ class TestModelHub(unittest.TestCase):
         self.assertIsInstance(model, ModelProto)
 
     def test_opset_error(self) -> None:
-        self.assertRaises(AssertionError, lambda: hub.load(self.name, self.repo, opset=-1))
+        self.assertRaises(
+            AssertionError, lambda: hub.load(self.name, self.repo, opset=-1)
+        )
 
     def test_manifest_not_found(self) -> None:
-        self.assertRaises(AssertionError, lambda: hub.load(self.name, "onnx/models:unknown", silent=True))
+        self.assertRaises(
+            AssertionError,
+            lambda: hub.load(self.name, "onnx/models:unknown", silent=True),
+        )
 
     def test_verify_repo_ref(self) -> None:
         # Not trusted repo:
@@ -80,4 +89,6 @@ class TestModelHub(unittest.TestCase):
     def test_get_model_info(self) -> None:
         hub.get_model_info("mnist", self.repo, opset=8)
         hub.get_model_info("mnist", self.repo)
-        self.assertRaises(AssertionError, lambda: hub.get_model_info("mnist", self.repo, opset=-1))
+        self.assertRaises(
+            AssertionError, lambda: hub.get_model_info("mnist", self.repo, opset=-1)
+        )

@@ -131,7 +131,7 @@ def _download_file(url: str, file_name: str) -> None:
     :param file_name: a specified file name for the downloaded file
     """
     chunk_size = 16384  # 1024 * 16
-    with urlopen(url) as response, open(file_name, 'wb') as f:
+    with urlopen(url) as response, open(file_name, "wb") as f:
         # Loads processively with chuck_size for huge models
         while True:
             chunk = response.read(chunk_size)
@@ -141,7 +141,9 @@ def _download_file(url: str, file_name: str) -> None:
 
 
 def list_models(
-    repo: str = "onnx/models:main", model: Optional[str] = None, tags: Optional[List[str]] = None
+    repo: str = "onnx/models:main",
+    model: Optional[str] = None,
+    tags: Optional[List[str]] = None,
 ) -> List[ModelInfo]:
     """
     Gets the list of model info consistent with a given name and tags
@@ -156,12 +158,18 @@ def list_models(
     manifest_url = base_url + "ONNX_HUB_MANIFEST.json"
     try:
         with urlopen(manifest_url) as response:
-            manifest: List[ModelInfo] = [ModelInfo(info) for info in json.load(cast(IO[str], response))]
+            manifest: List[ModelInfo] = [
+                ModelInfo(info) for info in json.load(cast(IO[str], response))
+            ]
     except HTTPError as e:
         raise AssertionError(f"Could not find manifest at {manifest_url}", e)
 
     # Filter by model name first.
-    matching_models = manifest if model is None else [m for m in manifest if m.model.lower() == model.lower()]
+    matching_models = (
+        manifest
+        if model is None
+        else [m for m in manifest if m.model.lower() == model.lower()]
+    )
 
     # Filter by tags
     if tags is None:
@@ -176,7 +184,9 @@ def list_models(
         return matching_info_list
 
 
-def get_model_info(model: str, repo: str = "onnx/models:main", opset: Optional[int] = None) -> ModelInfo:
+def get_model_info(
+    model: str, repo: str = "onnx/models:main", opset: Optional[int] = None
+) -> ModelInfo:
     """
     Gets the model info matching the given name and opset.
 
@@ -196,7 +206,9 @@ def get_model_info(model: str, repo: str = "onnx/models:main", opset: Optional[i
         selected_models = [m for m in matching_models if m.opset == opset]
         if len(selected_models) == 0:
             valid_opsets = [m.opset for m in matching_models]
-            raise AssertionError(f"{model} has no version with opset {opset}. Valid opsets: {valid_opsets}")
+            raise AssertionError(
+                f"{model} has no version with opset {opset}. Valid opsets: {valid_opsets}"
+            )
     return selected_models[0]
 
 
@@ -221,7 +233,9 @@ def load(
     selected_model = get_model_info(model, repo, opset)
     local_model_path_arr = selected_model.model_path.split("/")
     if selected_model.model_sha is not None:
-        local_model_path_arr[-1] = f"{selected_model.model_sha}_{local_model_path_arr[-1]}"
+        local_model_path_arr[
+            -1
+        ] = f"{selected_model.model_sha}_{local_model_path_arr[-1]}"
     local_model_path = join(_ONNX_HUB_DIR, os.sep.join(local_model_path_arr))
 
     if force_reload or not os.path.exists(local_model_path):

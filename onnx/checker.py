@@ -7,14 +7,16 @@ proto is legal.
 
 import functools
 
-from onnx import (ValueInfoProto,
-                  AttributeProto,
-                  TensorProto,
-                  SparseTensorProto,
-                  NodeProto,
-                  ModelProto,
-                  GraphProto,
-                  IR_VERSION)
+from onnx import (
+    ValueInfoProto,
+    AttributeProto,
+    TensorProto,
+    SparseTensorProto,
+    NodeProto,
+    ModelProto,
+    GraphProto,
+    IR_VERSION,
+)
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
 from google.protobuf.message import Message
@@ -35,10 +37,10 @@ MAXIMUM_PROTOBUF = 2000000000
 DEFAULT_CONTEXT = C.CheckerContext()
 DEFAULT_CONTEXT.ir_version = IR_VERSION
 # TODO: Maybe ONNX-ML should also be defaulted?
-DEFAULT_CONTEXT.opset_imports = {'': onnx.defs.onnx_opset_version()}
+DEFAULT_CONTEXT.opset_imports = {"": onnx.defs.onnx_opset_version()}
 
 
-FuncType = TypeVar('FuncType', bound=Callable[..., Any])
+FuncType = TypeVar("FuncType", bound=Callable[..., Any])
 
 
 # TODO: This really doesn't seem worth the metaprogramming...
@@ -48,16 +50,21 @@ def _create_checker(proto_type: Type[Message]) -> Callable[[FuncType], FuncType]
         def checker(proto: Message, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> Any:
             if not isinstance(proto, proto_type):
                 raise RuntimeError(
-                    'You cannot pass an object that is not of type {}'.format(
-                        proto_type.__name__))
-            return getattr(C, py_func.__name__)(
-                proto.SerializeToString(), ctx)
+                    "You cannot pass an object that is not of type {}".format(
+                        proto_type.__name__
+                    )
+                )
+            return getattr(C, py_func.__name__)(proto.SerializeToString(), ctx)
+
         return cast(FuncType, checker)
+
     return decorator
 
 
 @_create_checker(ValueInfoProto)
-def check_value_info(value_info: ValueInfoProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
+def check_value_info(
+    value_info: ValueInfoProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+) -> None:
     pass
 
 
@@ -67,7 +74,9 @@ def check_tensor(tensor: TensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -
 
 
 @_create_checker(AttributeProto)
-def check_attribute(attr: AttributeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
+def check_attribute(
+    attr: AttributeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+) -> None:
     pass
 
 
@@ -81,7 +90,9 @@ def check_graph(graph: GraphProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> N
     pass
 
 
-def check_sparse_tensor(sparse: SparseTensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
+def check_sparse_tensor(
+    sparse: SparseTensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+) -> None:
     C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
@@ -96,13 +107,19 @@ def check_model(model: Union[ModelProto, str, bytes], full_check: bool = False) 
     if isinstance(model, str):
         C.check_model_path(model)
         if full_check:
-            onnx.shape_inference.infer_shapes_path(model, check_type=True, strict_mode=True)
+            onnx.shape_inference.infer_shapes_path(
+                model, check_type=True, strict_mode=True
+            )
     else:
-        protobuf_string = model if isinstance(model, bytes) else model.SerializeToString()
+        protobuf_string = (
+            model if isinstance(model, bytes) else model.SerializeToString()
+        )
         # If the protobuf is larger than 2GB,
         # remind users should use the model path to check
         if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
-            raise ValueError('This protobuf of onnx model is too large (>2GB). Call check_model with model path instead.')
+            raise ValueError(
+                "This protobuf of onnx model is too large (>2GB). Call check_model with model path instead."
+            )
         C.check_model(protobuf_string)
         if full_check:
             onnx.shape_inference.infer_shapes(model, check_type=True, strict_mode=True)

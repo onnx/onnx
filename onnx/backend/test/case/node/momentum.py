@@ -33,7 +33,6 @@ def apply_nesterov(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignor
 
 
 class Momentum(Base):
-
     @staticmethod
     def export_momentum() -> None:
         # Define operator attributes.
@@ -42,15 +41,16 @@ class Momentum(Base):
         beta = 0.1
 
         # Create operator.
-        node = onnx.helper.make_node('Momentum',
-                                     inputs=['R', 'T', 'X', 'G', 'V'],
-                                     outputs=['X_new', 'V_new'],
-                                     norm_coefficient=norm_coefficient,
-                                     alpha=alpha,
-                                     beta=beta,
-                                     mode='standard',
-                                     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
-                                     )
+        node = onnx.helper.make_node(
+            "Momentum",
+            inputs=["R", "T", "X", "G", "V"],
+            outputs=["X_new", "V_new"],
+            norm_coefficient=norm_coefficient,
+            alpha=alpha,
+            beta=beta,
+            mode="standard",
+            domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
+        )
 
         # Define operator inputs.
         r = np.array(0.1, dtype=np.float32)  # scalar
@@ -60,13 +60,18 @@ class Momentum(Base):
         v = np.array([1.7, 3.6], dtype=np.float32)
 
         # Compute expected outputs of Momentum.
-        x_new, v_new = apply_momentum(r, t, x, g, v,
-                                      norm_coefficient, alpha, beta)
+        x_new, v_new = apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta)
 
         # Check results.
-        expect(node, inputs=[r, t, x, g, v],
-               outputs=[x_new, v_new], name='test_momentum',
-               opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
+        expect(
+            node,
+            inputs=[r, t, x, g, v],
+            outputs=[x_new, v_new],
+            name="test_momentum",
+            opset_imports=[
+                onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)
+            ],
+        )
 
     @staticmethod
     def export_nesterov_momentum() -> None:
@@ -76,15 +81,16 @@ class Momentum(Base):
         beta = 1.0
 
         # Create operator.
-        node = onnx.helper.make_node('Momentum',
-                                     inputs=['R', 'T', 'X', 'G', 'V'],
-                                     outputs=['X_new', 'V_new'],
-                                     norm_coefficient=norm_coefficient,
-                                     alpha=alpha,
-                                     beta=beta,
-                                     mode='nesterov',
-                                     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
-                                     )
+        node = onnx.helper.make_node(
+            "Momentum",
+            inputs=["R", "T", "X", "G", "V"],
+            outputs=["X_new", "V_new"],
+            norm_coefficient=norm_coefficient,
+            alpha=alpha,
+            beta=beta,
+            mode="nesterov",
+            domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
+        )
 
         # Define operator inputs.
         r = np.array(0.1, dtype=np.float32)  # scalar
@@ -94,13 +100,18 @@ class Momentum(Base):
         v = np.array([1.7, 3.6], dtype=np.float32)
 
         # Compute expected outputs of Momentum.
-        x_new, v_new = apply_nesterov(r, t, x, g, v,
-                                      norm_coefficient, alpha, beta)
+        x_new, v_new = apply_nesterov(r, t, x, g, v, norm_coefficient, alpha, beta)
 
         # Check results.
-        expect(node, inputs=[r, t, x, g, v],
-               outputs=[x_new, v_new], name='test_nesterov_momentum',
-               opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
+        expect(
+            node,
+            inputs=[r, t, x, g, v],
+            outputs=[x_new, v_new],
+            name="test_nesterov_momentum",
+            opset_imports=[
+                onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)
+            ],
+        )
 
     @staticmethod
     def export_momentum_multiple() -> None:
@@ -109,17 +120,16 @@ class Momentum(Base):
         alpha = 0.95
         beta = 0.85
 
-        node = onnx.helper.make_node('Momentum',
-                                     inputs=['R', 'T', 'X1', 'X2',
-                                             'G1', 'G2', 'H1', 'H2'],
-                                     outputs=['X1_new', 'X2_new',
-                                              'V1_new', 'V2_new'],
-                                     norm_coefficient=norm_coefficient,
-                                     alpha=alpha,
-                                     beta=beta,
-                                     mode='standard',
-                                     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN
-                                     )
+        node = onnx.helper.make_node(
+            "Momentum",
+            inputs=["R", "T", "X1", "X2", "G1", "G2", "H1", "H2"],
+            outputs=["X1_new", "X2_new", "V1_new", "V2_new"],
+            norm_coefficient=norm_coefficient,
+            alpha=alpha,
+            beta=beta,
+            mode="standard",
+            domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
+        )
 
         # Define operator inputs.
         r = np.array(0.1, dtype=np.float32)  # scalar
@@ -134,12 +144,16 @@ class Momentum(Base):
         v2 = np.array([4.0, 1.0], dtype=np.float32)
 
         # Compute expected outputs of Momentum.
-        x1_new, v1_new = apply_momentum(r, t, x1, g1, v1,
-                                        norm_coefficient, alpha, beta)
-        x2_new, v2_new = apply_momentum(r, t, x2, g2, v2,
-                                        norm_coefficient, alpha, beta)
+        x1_new, v1_new = apply_momentum(r, t, x1, g1, v1, norm_coefficient, alpha, beta)
+        x2_new, v2_new = apply_momentum(r, t, x2, g2, v2, norm_coefficient, alpha, beta)
 
         # Check results.
-        expect(node, inputs=[r, t, x1, x2, g1, g2, v1, v2],
-               outputs=[x1_new, x2_new, v1_new, v2_new], name='test_momentum_multiple',
-               opset_imports=[onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)])
+        expect(
+            node,
+            inputs=[r, t, x1, x2, g1, g2, v1, v2],
+            outputs=[x1_new, x2_new, v1_new, v2_new],
+            name="test_momentum_multiple",
+            opset_imports=[
+                onnx.helper.make_opsetid(AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1)
+            ],
+        )
