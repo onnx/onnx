@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 import onnx
+from onnx import parser, printer
 import unittest
-from onnx import helper, parser, printer, GraphProto
-
 
 class TestBasicFunctions(unittest.TestCase):
-    def check_graph(self, graph: GraphProto) -> None:
+    def check_graph(self, graph: onnx.GraphProto) -> None:
         self.assertTrue(len(graph.node) == 3)
         self.assertTrue(graph.node[0].op_type == "MatMul")
         self.assertTrue(graph.node[1].op_type == "Add")
