@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from torch import embedding
+
 from onnx import checker, helper, numpy_helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
 from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
 from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
@@ -4454,8 +4456,8 @@ class TestShapeInference(unittest.TestCase):
              ('q_weight', TensorProto.FLOAT, (16, 16)),
              ('k_weight', TensorProto.FLOAT, (16, 16)),
              ('v_weight', TensorProto.FLOAT, (16, 16)),
-             ('out_weight', TensorProto.FLOAT, (4, 16, 16))],
-            [make_node('MultiHeadAttention', ['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight', 'out_weight'], ['attn_output'])],
+             ('out_weight', TensorProto.FLOAT, (16, 16))],
+            [make_node('MultiHeadAttention', ['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight', 'out_weight'], ['attn_output'], num_heads=4, embedding_dim=16)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('attn_output', TensorProto.FLOAT, (4, 16, 16))])  # type: ignore
 

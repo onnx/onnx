@@ -11960,14 +11960,14 @@ This version of the operator has been available since version 11 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>drop_probability</tt> : float (default is 0.0)</dt>
+<dt><tt>drop_probability</tt> : float (default is 0.2)</dt>
 <dd>the probability of dropout operator. Default is 0.0</dd>
 <dt><tt>embedding_dim</tt> : int (required)</dt>
 <dd>total dimension of the model, must be equal to target sequence length.</dd>
 <dt><tt>num_heads</tt> : int (required)</dt>
 <dd>number of the parallel attention heads.</dd>
 <dt><tt>training_mode</tt> : int (default is 0)</dt>
-<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
+<dd>If set to true, it indicates MultiHeadAttention is being used for training, and outputs 1.</dd>
 </dl>
 
 #### Inputs (7 - 13)

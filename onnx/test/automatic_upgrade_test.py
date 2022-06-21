@@ -1200,12 +1200,12 @@ class TestAutomaticUpgrade(unittest.TestCase):
         assert len(untested_ops) == 0
 
     def test_MultiHeadAttention(self) -> None:
-        self._test_op_upgrade('MultiHeadAttention', 10,
-                              [[4, 16, 16], [4, 20, 16], [4, 20, 16], [16, 16], [16, 16], [16, 16]],
-                              [[4, 16, 16]],
+        self._test_op_upgrade(op='MultiHeadAttention', from_opset=11,
+                              input_shapes=[[4, 16, 16], [4, 20, 16], [4, 20, 16], [16, 16], [16, 16], [16, 16], [16, 16]],
+                              output_shapes=[[4, 16, 16]],
                               input_types=[TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
                               output_types=[TensorProto.FLOAT],
-                              attrs={'training_mode': 0})
+                              attrs={'embedding_dim': 16, 'num_heads': 4})
 
 
 if __name__ == '__main__':

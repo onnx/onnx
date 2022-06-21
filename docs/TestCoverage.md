@@ -8054,11 +8054,6 @@ There are 3 test cases, listed as following:
 <summary>multiheadattention</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'MultiHeadAttention',
-    inputs=['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight', 'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias'],
-    outputs=['attn_out'],
-)
 query = np.random.randn(4, 16, 16)
 key = np.random.randn(4, 20, 16)
 value = np.random.randn(4, 20, 16)
@@ -8095,9 +8090,18 @@ attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
 attention = dropout(attention)
 attn_output = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
 
+node = onnx.helper.make_node(
+    'MultiHeadAttention',
+    inputs=['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
+            'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias'],
+    outputs=['attn_out'],
+    embedding_dim=embed_dim,
+    num_heads=num_heads,
+)
+
 expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias],
-    outputs=[attn_output],
-    name='test_multiheadattention')
+       outputs=[attn_output],
+       name='test_multiheadattention')
 ```
 
 </details>
@@ -8105,11 +8109,6 @@ expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, q_bias, k_
 <summary>with_attn_mask</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'MultiHeadAttention',
-    inputs=['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight', 'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias', 'attn_mask'],
-    outputs=['attn_out'],
-)
 query = np.random.randn(4, 16, 16)
 key = np.random.randn(4, 20, 16)
 value = np.random.randn(4, 20, 16)
@@ -8149,9 +8148,18 @@ attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
 attention = dropout(attention)
 attn_output = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
 
+node = onnx.helper.make_node(
+    'MultiHeadAttention',
+    inputs=['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
+            'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias', 'attn_mask'],
+    outputs=['attn_out'],
+    embedding_dim=embed_dim,
+    num_heads=num_heads,
+)
+
 expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias, attn_mask],
-    outputs=[attn_output],
-    name='test_multiheadattention')
+       outputs=[attn_output],
+       name='test_multiheadattention')
 ```
 
 </details>
@@ -8159,11 +8167,6 @@ expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, q_bias, k_
 <summary>with_padding_mask</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'MultiHeadAttention',
-    inputs=['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight', 'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias', 'padding_mask'],
-    outputs=['attn_out'],
-)
 query = np.random.randn(4, 16, 16)
 key = np.random.randn(4, 20, 16)
 value = np.random.randn(4, 20, 16)
@@ -8196,19 +8199,31 @@ q = q.reshape(bsz * num_heads, tgt_len, head_dim)
 k = k.reshape(bsz * num_heads, head_dim, src_len)
 v = v.reshape(bsz * num_heads, src_len, head_dim)
 attn_output_weights = np.matmul(q, k) / scaling
-attn_output_weights = attn_output_weights.reshape(bsz, num_heads, tgt_len, src_len)
-mask = np.concatenate([padding_mask] * num_heads * tgt_len).reshape(bsz, num_heads, tgt_len, src_len)
+attn_output_weights = attn_output_weights.reshape(
+    bsz, num_heads, tgt_len, src_len)
+mask = np.concatenate([padding_mask] * num_heads
+                      * tgt_len).reshape(bsz, num_heads, tgt_len, src_len)
 mask = np.ma.masked_where(mask, attn_output_weights)
 mask = np.ma.filled(np.array(mask), -np.inf)
-attn_output_weights = attn_output_weights.reshape(bsz * num_heads, tgt_len, src_len)
+attn_output_weights = attn_output_weights.reshape(
+    bsz * num_heads, tgt_len, src_len)
 t = np.exp(attn_output_weights)
 attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
 attention = dropout(attention)
 attn_output = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
 
+node = onnx.helper.make_node(
+    'MultiHeadAttention',
+    inputs=['query', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
+            'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias', 'padding_mask'],
+    outputs=['attn_out'],
+    embedding_dim=embed_dim,
+    num_heads=num_heads,
+)
+
 expect(node, inputs=[query, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias, padding_mask],
-    outputs=[attn_output],
-    name='test_multiheadattention')
+       outputs=[attn_output],
+       name='test_multiheadattention')
 ```
 
 </details>

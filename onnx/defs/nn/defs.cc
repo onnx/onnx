@@ -2414,11 +2414,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "total dimension of the model, must be equal to target sequence length.",
             AttributeProto::INT)
         .Attr("num_heads", "number of the parallel attention heads.", AttributeProto::INT)
-        .Attr("drop_probability", "the probability of dropout operator. Default is 0.0", AttributeProto::FLOAT, 0.0f)
+        .Attr("drop_probability", "the probability of dropout operator. Default is 0.0", AttributeProto::FLOAT, 0.2f)
         .Attr(
             "training_mode",
-            "If set to true, it indicates BatchNormalization is being used for training, and outputs 1, "
-            "2, 3, and 4 would be populated.",
+            "If set to true, it indicates MultiHeadAttention is being used for training, and outputs 1.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
