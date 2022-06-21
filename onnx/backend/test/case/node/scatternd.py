@@ -22,6 +22,10 @@ def scatter_nd_impl(data, indices, updates, reduction="none"):  # type: ignore
             output[indices[i]] += updates[i]
         elif reduction == "mul":
             output[indices[i]] *= updates[i]
+        elif reduction == 'max':
+            output[indices[i]] = np.max(output[indices[i]], updates[i])
+        elif reduction == 'min':
+            output[indices[i]] = np.max(output[indices[i]], updates[i])
         else:
             output[indices[i]] = updates[i]
     return output
