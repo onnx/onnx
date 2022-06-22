@@ -2145,7 +2145,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
-static const char* Resize_ver17_doc = R"DOC(
+static const char* Resize_ver18_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
 Each dimension value of the output tensor is: <br/>
   `output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)` <br/>
@@ -2197,7 +2197,7 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 
 ONNX_OPERATOR_SET_SCHEMA(
     Resize,
-    17,
+    18,
     OpSchema()
         .Attr(
             "mode",
@@ -2297,7 +2297,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
-        .SetDoc(Resize_ver17_doc)
+        .SetDoc(Resize_ver18_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference(ctx); }));
 
 static const char* GridSample_ver16_doc = R"DOC(
