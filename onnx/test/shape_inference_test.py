@@ -11,7 +11,6 @@ import unittest
 import os
 import numpy as np  # type: ignore
 
-
 class TestShapeInference(unittest.TestCase):
     def _make_graph(self,
                     seed_values: Sequence[Union[str, Tuple[str, TensorProto.DataType, Any]]],
@@ -408,9 +407,8 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
              ('roi', TensorProto.FLOAT, (8,)),
-             ('scales', TensorProto.FLOAT, (4,)),
              ('sizes', TensorProto.INT64, (4,))],
-            [make_node("Resize", ['x', 'roi', 'scales', 'sizes'], ['y'])],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'])],
             [],
             initializer=[make_tensor('sizes', TensorProto.INT64, (4,), (3, 5, 6, 7))])
         self._assert_inferred(
