@@ -64,9 +64,9 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
             elif reduction == "mul":
                 scattered[idx_set] *= updates[updates_idx[iter]]
             elif reduction == 'max':
-                scattered[idx_set] = np.max(scattered[idx_set], updates[updates_idx[iter]])
+                scattered[idx_set] = np.maximum(scattered[idx_set], updates[updates_idx[iter]])
             elif reduction == 'min':
-                scattered[idx_set] = np.min(scattered[idx_set], updates[updates_idx[iter]])
+                scattered[idx_set] = np.minimum(scattered[idx_set], updates[updates_idx[iter]])
     return scattered
 
 
