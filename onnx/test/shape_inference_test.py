@@ -4450,7 +4450,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('input_data', TensorProto.FLOAT, (20, 10, 3)),
              ('shape', TensorProto.INT64, (2, ))],
-            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'])],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[0, 1])],
             [],
             initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (10, 8))])
         self._assert_inferred(
@@ -4462,7 +4462,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('input_data', TensorProto.FLOAT, (3, 20, 10)),
              ('shape', TensorProto.INT64, (2, ))],
-            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], channel_first=1)],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[1, 2])],
             [],
             initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (10, 8))])
         self._assert_inferred(
@@ -4474,7 +4474,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('input_data', TensorProto.FLOAT, (10, 10, 3)),
              ('shape', TensorProto.INT64, (2, ))],
-            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'])],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[0, 1])],
             [],
             initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (20, 8))])
         self._assert_inferred(
@@ -4486,7 +4486,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('input_data', TensorProto.FLOAT, (3, 10, 10)),
              ('shape', TensorProto.INT64, (2, ))],
-            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], channel_first=1)],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[1, 2])],
             [],
             initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (20, 8))])
         self._assert_inferred(
@@ -4509,7 +4509,7 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('input_data', TensorProto.FLOAT, (20, 'W', 3)),
              ('shape', TensorProto.INT64, (2, ))],
-            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'])],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[0, 1])],
             [],
             initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (10, 8))])
         self._assert_inferred(
