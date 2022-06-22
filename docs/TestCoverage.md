@@ -2006,11 +2006,11 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
-# First two dims are even diff, third is uneven
-x = np.random.randn(10, 8, 3).astype(np.float32)
-shape = np.array([20, 10, 4], dtype=np.int64)
-y = np.zeros([20, 10, 4], dtype=np.float32)
-y[5:15, 1:9, 1:4] = x
+# First dim is even diff, second is uneven
+x = np.random.randn(10, 7, 3).astype(np.float32)
+shape = np.array([20, 10, 3], dtype=np.int64)
+y = np.zeros([20, 10, 3], dtype=np.float32)
+y[5:15, 1:8, :] = x
 
 expect(node, inputs=[x, shape], outputs=[y],
        name='test_center_crop_pad_pad')
