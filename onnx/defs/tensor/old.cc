@@ -1835,15 +1835,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "When coordinate_transformation_mode is \"tf_crop_and_resize\" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.",
             AttributeProto::FLOAT,
             static_cast<float>(0))
-        .Input(
-            0,
-            "X",
-            "N-D tensor",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "X", "N-D tensor", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "roi",
@@ -1874,15 +1866,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "Y",
-            "N-D tensor after resizing",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Output(0, "Y", "N-D tensor after resizing", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -1892,9 +1876,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
         .SetDoc(Resize_ver13_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          resizeShapeInference(ctx);
-        }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference(ctx); }));
 
 static const char* Resize_ver11_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.

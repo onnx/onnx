@@ -21,21 +21,20 @@ void resizeShapeInferenceHelper(
 }
 
 void KeepAspectRatioHelper(
-  KeepAspectRatioPolicy policy,
-  const TensorShapeProto& input_shape,
-  const std::vector<int64_t>& axes,
-  std::vector<int64_t>& sizes_data) {
-  if (policy != KeepAspectRatioPolicy::NOT_LARGER &&
-      policy != KeepAspectRatioPolicy::NOT_SMALLER) {
+    KeepAspectRatioPolicy policy,
+    const TensorShapeProto& input_shape,
+    const std::vector<int64_t>& axes,
+    std::vector<int64_t>& sizes_data) {
+  if (policy != KeepAspectRatioPolicy::NOT_LARGER && policy != KeepAspectRatioPolicy::NOT_SMALLER) {
     return;
   }
-  float scale = policy == KeepAspectRatioPolicy::NOT_LARGER ?
-    std::numeric_limits<float>::max() : std::numeric_limits<float>::min();
+  float scale = policy == KeepAspectRatioPolicy::NOT_LARGER ? std::numeric_limits<float>::max()
+                                                            : std::numeric_limits<float>::min();
   std::function<float(float, float)> reduce_f;
   if (policy == KeepAspectRatioPolicy::NOT_LARGER) {
-    reduce_f = [] (float a, float b) { return std::min(a, b); };
+    reduce_f = [](float a, float b) { return std::min(a, b); };
   } else {
-    reduce_f = [] (float a, float b) { return std::max(a, b); };
+    reduce_f = [](float a, float b) { return std::max(a, b); };
   }
 
   bool has_unknown_dim = false;
@@ -94,14 +93,14 @@ void resizeShapeInference(InferenceContext& ctx) {
   auto* output_shape = getOutputShape(ctx, 0);
 
   bool hasScalesInput = (2 < ctx.getNumInputs()) && (ctx.getInputType(2) != nullptr);
-  bool hasSizesInput  = (3 < ctx.getNumInputs()) && (ctx.getInputType(3) != nullptr);
+  bool hasSizesInput = (3 < ctx.getNumInputs()) && (ctx.getInputType(3) != nullptr);
 
   if (hasScalesInput + hasSizesInput != 1) {
     fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
   }
 
   const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
-  const TensorProto* sizes  = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
+  const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
 
   auto keep_aspect_ratio_policy_attr = ctx.getAttribute("keep_aspect_ratio_policy");
   KeepAspectRatioPolicy keep_aspect_ratio_policy = KeepAspectRatioPolicy::STRETCH;
@@ -151,14 +150,16 @@ void resizeShapeInference(InferenceContext& ctx) {
       if (!axes.empty()) {
         if (sizes_data.size() != axes.size()) {
           fail_shape_inference(
-              "Number of elements of input 'sizes' (", sizes_data.size(),
-              ") does not match the number of axes (", axes.size(),").");
+              "Number of elements of input 'sizes' (",
+              sizes_data.size(),
+              ") does not match the number of axes (",
+              axes.size(),
+              ").");
         }
       } else {
         // sizes_data contains scales for all axes
         if (sizes_data.size() != rank_x) {
-          fail_shape_inference(
-            "Number of elements of input 'sizes' must be same as rank of input 'X'");
+          fail_shape_inference("Number of elements of input 'sizes' must be same as rank of input 'X'");
         }
       }
 
@@ -191,8 +192,11 @@ void resizeShapeInference(InferenceContext& ctx) {
         // scales_data contains scales for a subset of axes. The rest should not be resized
         if (scales_data.size() != axes.size()) {
           fail_shape_inference(
-              "Number of elements of input 'scales' (", scales_data.size(),
-              ") does not match the number of axes (", axes.size(),").");
+              "Number of elements of input 'scales' (",
+              scales_data.size(),
+              ") does not match the number of axes (",
+              axes.size(),
+              ").");
         }
 
         std::vector<float> tmp(rank_x, 1.0f);
@@ -204,8 +208,7 @@ void resizeShapeInference(InferenceContext& ctx) {
       } else {
         // scales_data contains scales for all axes
         if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
-          fail_shape_inference(
-              "Number of elements of input 'scales' must be same as rank of input 'X'");
+          fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'");
         }
       }
       resizeShapeInferenceHelper(input_shape, scales_data, output_shape);
