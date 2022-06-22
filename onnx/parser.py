@@ -37,3 +37,20 @@ def parse_graph(graph_text: str) -> onnx.GraphProto:
         return G
     else:
         raise ParseError(msg)
+
+
+def parse_function(function_text: str) -> onnx.FunctionProto:
+    """Parse a string to build a FunctionProto.
+
+    Arguments:
+        function_text (string): formatted string
+    Returns:
+        FunctionProto
+    """
+    (success, msg, function_proto_str) = C.parse_function(function_text)
+    if success:
+        F = onnx.FunctionProto()
+        F.ParseFromString(function_proto_str)
+        return F
+    else:
+        raise ParseError(msg)
