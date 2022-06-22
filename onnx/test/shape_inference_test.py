@@ -4456,7 +4456,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, (10, 8, 3))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)])
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
 
     def test_center_crop_pad_chw_crop(self):  # type: () -> None
         graph = self._make_graph(
@@ -4468,7 +4468,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, (3, 10, 8))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)])
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
 
     def test_center_crop_pad_hwc_croppad(self):  # type: () -> None
         graph = self._make_graph(
@@ -4480,7 +4480,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, (20, 8, 3))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)])
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
 
     def test_center_crop_pad_chw_croppad(self):  # type: () -> None
         graph = self._make_graph(
@@ -4492,7 +4492,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, (3, 20, 8))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)])
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
 
     def test_center_crop_pad_without_input_shape(self):  # type: () -> None
         graph = self._make_graph(
@@ -4503,7 +4503,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, None)],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)])
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
 
     def test_center_crop_pad_with_input_shape_containing_dim_params(self):  # type: () -> None
         graph = self._make_graph(
@@ -4515,7 +4515,7 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.FLOAT, (10, 8, 3))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)])
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
 
 
 if __name__ == '__main__':
