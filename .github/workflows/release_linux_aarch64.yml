@@ -47,7 +47,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '${{ env.py }} -m pip install -q virtualenv && ${{ env.py }} -m venv .env && \
           source .env/bin/activate && \
-          ${{ env.py }} -m pip install -U numpy protobuf==3.16.0 && \
+          ${{ env.py }} -m pip install -U -q -r -r requirements-release.txt && \
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 
@@ -119,7 +119,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip uninstall -y onnx && python -m pip install protobuf==3.17 && \
+          python -m pip uninstall -y onnx && python -m pip install protobuf==4.21.1 && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
