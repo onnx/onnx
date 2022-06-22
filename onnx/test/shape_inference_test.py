@@ -11,6 +11,7 @@ import unittest
 import os
 import numpy as np  # type: ignore
 
+
 class TestShapeInference(unittest.TestCase):
     def _make_graph(self,
                     seed_values: Sequence[Union[str, Tuple[str, TensorProto.DataType, Any]]],
