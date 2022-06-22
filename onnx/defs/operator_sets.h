@@ -999,7 +999,6 @@ class OpSet_Onnx_ver17 {
   }
 };
 
-
 // Forward declarations for ai.onnx version 18
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Pad);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, CenterCropPad);
@@ -1012,7 +1011,6 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, CenterCropPad)>());
   }
 };
-
 
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();

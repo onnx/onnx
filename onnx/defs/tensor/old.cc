@@ -3953,15 +3953,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRING,
             std::string("constant"))
         .SetDoc(Pad_ver13_doc)
-        .Input(
-            0,
-            "data",
-            "Input tensor.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(0, "data", "Input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "pads",
@@ -3986,15 +3978,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "output",
-            "Tensor after padding.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Output(0, "output", "Tensor after padding.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
@@ -4012,9 +3996,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Infer output shape if 'pads' tensor is available
           const auto* pads_initializer = ctx.getInputData(1);
           if (nullptr != pads_initializer) {
-            if (pads_initializer->dims_size() != 1 ||
-                pads_initializer->data_type() != TensorProto::INT64) {
-                  fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+            if (pads_initializer->dims_size() != 1 || pads_initializer->data_type() != TensorProto::INT64) {
+              fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
             }
 
             const auto& pads_data = ParseData<int64_t>(pads_initializer);
@@ -4022,15 +4005,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Pads has incorrect number of values");
             }
 
-            auto* output_shape =
-                ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+            auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(
-                    input_dim.dim_value() + pads_data[i] +
-                    pads_data[i + input_rank]);
+                output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
               } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
                 *output_dim = input_dim;
               }
