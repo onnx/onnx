@@ -19,17 +19,6 @@ static void Parse(T& parsedData, const char* input) {
   auto status = parser.Parse(parsedData);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
-  // Extra checks for printer:
-  // Check we can convert data back to text form.
-  std::string text1 = ProtoToString(parsedData);
-  // Check that we can round-trip between the two representations.
-  // We cannot expect equality between text1 and input due to white-space and syntactic sugar,
-  // so, we convert it once more, and check for equality.
-  T temp;
-  status = OnnxParser::Parse(temp, text1.c_str());
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
-  std::string text2 = ProtoToString(temp);
-  EXPECT_EQ(text1, text2);
 }
 
 template <typename T>
@@ -43,18 +32,6 @@ static void CheckModel(const char* code) {
   Parse(model, code);
 
   checker::check_model(model);
-}
-
-TEST(ParserTest, EscapeStringLiteral) {
-  OnnxParser parser(R"(
-    "123\"56\\89"
-  )");
-
-  std::string s;
-  auto status = parser.ParserBase::Parse(s);
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
-  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
-  EXPECT_EQ(s, std::string("123\"56\\89"));
 }
 
 TEST(ParserTest, TypeTest) {
@@ -143,11 +120,6 @@ TEST(ParserTest, TensorProtoTest) {
   Parse(tensorProto, "float[5] {1e1, 2.0e-1, 3.1E-1, 4E+1, 5.5e-10}");
 
   Parse(tensorProto, "string[2] { \"Hello\", \"World\" }");
-
-  // String literals with escape character
-  Parse(tensorProto, R"(
-    string[2] { "Use a \"quoted\" word", "Use a backslash \\ like this." }
-  )");
 }
 
 TEST(ParserTest, AttributeTest) {

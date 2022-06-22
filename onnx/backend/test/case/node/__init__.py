@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
+from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, GraphProto, ModelProto
 import sys
 import re
 
@@ -15,9 +16,6 @@ from ..test_case import TestCase
 
 _NodeTestCases = []
 _TargetOpType = None
-
-
-from onnx.onnx_pb import NodeProto, AttributeProto, TypeProto, FunctionProto, GraphProto, ModelProto
 
 
 def _rename_edges_helper(internal_node: NodeProto,
@@ -37,7 +35,8 @@ def _rename_edges_helper(internal_node: NodeProto,
         if attr.HasField("ref_attr_name"):
             if attr.ref_attr_name in attribute_map:
                 new_attr = AttributeProto()
-                new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                new_attr.CopyFrom(
+                    attribute_map[attr.ref_attr_name])  # type: ignore
                 new_attr.name = attr.name
                 new_node.attribute.extend([new_attr])
         else:
@@ -47,11 +46,14 @@ def _rename_edges_helper(internal_node: NodeProto,
                 new_graph = new_attr.g
                 sg_rename = {}
                 for in_desc in new_graph.input:
-                    sg_rename[in_desc.name] = in_desc.name = prefix + in_desc.name
+                    sg_rename[in_desc.name] = in_desc.name = prefix + \
+                        in_desc.name
                 for out_desc in new_graph.output:
-                    sg_rename[out_desc.name] = out_desc.name = prefix + out_desc.name
+                    sg_rename[out_desc.name] = out_desc.name = prefix + \
+                        out_desc.name
                 for init_desc in new_graph.initializer:
-                    sg_rename[init_desc.name] = init_desc.name = prefix + init_desc.name
+                    sg_rename[init_desc.name] = init_desc.name = prefix + \
+                        init_desc.name
                 for sparse_init_desc in new_graph.sparse_initializer:
                     sg_rename[sparse_init_desc.values.name] = sparse_init_desc.values.name = prefix + \
                         sparse_init_desc.values.name
@@ -65,7 +67,8 @@ def _rename_edges_helper(internal_node: NodeProto,
                     else:
                         return rename_helper(name)
                 new_nodes = [
-                    _rename_edges_helper(node_desc, subgraph_rename_helper, attribute_map, prefix)
+                    _rename_edges_helper(
+                        node_desc, subgraph_rename_helper, attribute_map, prefix)
                     for node_desc in new_graph.node
                 ]
                 new_graph.ClearField("node")
@@ -105,7 +108,8 @@ def function_expand_helper(node: NodeProto,
             return op_prefix + internal_name
 
     new_node_list = [
-        _rename_edges_helper(internal_node, rename_helper, attribute_map, op_prefix)
+        _rename_edges_helper(internal_node, rename_helper,
+                             attribute_map, op_prefix)
         for internal_node in function_proto.node
     ]
     return new_node_list
@@ -119,7 +123,8 @@ def function_testcase_helper(node: NodeProto, input_types: List[TypeProto], name
     if schema.has_function:    # type: ignore
         function_proto = schema.function_body  # type: ignore
     elif schema.has_context_dependent_function:    # type: ignore
-        function_proto_str = schema.get_context_dependent_function(node.SerializeToString(), [t.SerializeToString() for t in input_types])  # type: ignore
+        function_proto_str = schema.get_context_dependent_function(
+            node.SerializeToString(), [t.SerializeToString() for t in input_types])  # type: ignore
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
     else:
@@ -139,11 +144,13 @@ def function_testcase_helper(node: NodeProto, input_types: List[TypeProto], name
 def _extract_value_info(input: Union[List[Any], np.ndarray, None], name: str, type_proto: Optional[TypeProto] = None) -> onnx.ValueInfoProto:
     if type_proto is None:
         if input is None:
-            raise NotImplementedError("_extract_value_info: both input and type_proto arguments cannot be None.")
+            raise NotImplementedError(
+                "_extract_value_info: both input and type_proto arguments cannot be None.")
         elif isinstance(input, list):
             elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype]
             shape = None
-            tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
+            tensor_type_proto = onnx.helper.make_tensor_type_proto(
+                elem_type, shape)
             type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
         else:
             elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype]
@@ -154,13 +161,15 @@ def _extract_value_info(input: Union[List[Any], np.ndarray, None], name: str, ty
 
 
 def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
-    latest_onnx_version, latest_ml_version, latest_training_version = onnx.helper.VERSION_TABLE[-1][2:5]  # type: ignore
+    # type: ignore
+    latest_onnx_version, latest_ml_version, latest_training_version = onnx.helper.VERSION_TABLE[-1][2:5]
     if "opset_imports" in kwargs:
         for opset in kwargs["opset_imports"]:
             # If the test model uses an unreleased opset version (latest_version+1),
             # directly use make_model to create a model with the latest ir version
             if (
-                ((opset.domain == "" or opset.domain == "ai.onnx") and opset.version == latest_onnx_version + 1)
+                ((opset.domain == "" or opset.domain == "ai.onnx")
+                 and opset.version == latest_onnx_version + 1)
                 or (opset.domain == "ai.onnx.ml" and opset.version == latest_ml_version + 1)
                 or ((opset.domain == "ai.onnx.training version" or opset.domain == "ai.onnx.preview.training") and opset.version == latest_training_version + 1)
             ):
@@ -212,8 +221,10 @@ def expect(node: onnx.NodeProto,
     if "opset_imports" not in kwargs:
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
-        produce_opset_version = onnx.defs.get_schema(node.op_type, node.domain).since_version
-        kwargs["opset_imports"] = [onnx.helper.make_operatorsetid(node.domain, produce_opset_version)]
+        produce_opset_version = onnx.defs.get_schema(
+            node.op_type, node.domain).since_version
+        kwargs["opset_imports"] = [onnx.helper.make_operatorsetid(
+            node.domain, produce_opset_version)]
 
     model = _make_test_model_gen_version(graph, **kwargs)
 

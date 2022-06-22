@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 162/177 (91.53%, 5 generators excluded) common operators.
+Node tests have covered 163/178 (91.57%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -8043,6 +8043,187 @@ y = np.random.randn(5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mul_bcast')
+```
+
+</details>
+
+
+### MultiHeadAttention
+There are 3 test cases, listed as following:
+<details>
+<summary>multiheadattention</summary>
+
+```python
+x = np.random.randn(4, 16, 16)
+key = np.random.randn(4, 20, 16)
+value = np.random.randn(4, 20, 16)
+
+q_weight = np.random.randn(16, 16)
+k_weight = np.random.randn(16, 16)
+v_weight = np.random.randn(16, 16)
+
+q_bias = np.random.randn(1, 1, 16)
+k_bias = np.random.randn(1, 1, 16)
+v_bias = np.random.randn(1, 1, 16)
+
+out_weight = np.random.randn(16, 16)
+out_bias = np.random.randn(1, 1, 16)
+
+q = x.dot(q_weight) + q_bias
+k = key.dot(k_weight) + k_bias
+v = value.dot(v_weight) + v_bias
+
+bsz, tgt_len, embed_dim = x.shape
+bsz, src_len, embed_dim = key.shape
+
+num_heads = 4
+head_dim = embed_dim // num_heads
+scaling = float(head_dim) ** -0.5
+q = q * scaling
+q = q.reshape(bsz * num_heads, tgt_len, head_dim)
+k = k.reshape(bsz * num_heads, head_dim, src_len)
+v = v.reshape(bsz * num_heads, src_len, head_dim)
+attn_output_weights = np.matmul(q, k) / scaling
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention)
+y = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
+
+node = onnx.helper.make_node(
+    'MultiHeadAttention',
+    inputs=['x', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
+            'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias'],
+    outputs=['y'],
+    embedding_dim=embed_dim,
+    num_heads=num_heads,
+)
+
+expect(node, inputs=[x, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias],
+       outputs=[y],
+       name='test_multiheadattention')
+```
+
+</details>
+<details>
+<summary>with_attn_mask</summary>
+
+```python
+x = np.random.randn(4, 16, 16)
+key = np.random.randn(4, 20, 16)
+value = np.random.randn(4, 20, 16)
+
+q_weight = np.random.randn(16, 16)
+k_weight = np.random.randn(16, 16)
+v_weight = np.random.randn(16, 16)
+
+q_bias = np.random.randn(1, 1, 16)
+k_bias = np.random.randn(1, 1, 16)
+v_bias = np.random.randn(1, 1, 16)
+
+out_weight = np.random.randn(16, 16)
+out_bias = np.random.randn(1, 1, 16)
+
+q = x.dot(q_weight) + q_bias
+k = key.dot(k_weight) + k_bias
+v = value.dot(v_weight) + v_bias
+
+bsz, tgt_len, embed_dim = x.shape
+bsz, src_len, embed_dim = key.shape
+
+num_heads = 4
+head_dim = embed_dim // num_heads
+scaling = float(head_dim) ** -0.5
+q = q * scaling
+q = q.reshape(bsz * num_heads, tgt_len, head_dim)
+k = k.reshape(bsz * num_heads, head_dim, src_len)
+v = v.reshape(bsz * num_heads, src_len, head_dim)
+attn_output_weights = np.matmul(q, k) / scaling
+
+attn_mask = np.random.randn(bsz * num_heads, tgt_len, src_len)
+attn_output_weights += attn_mask
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention)
+y = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
+
+node = onnx.helper.make_node(
+    'MultiHeadAttention',
+    inputs=['x', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
+            'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias', 'attn_mask'],
+    outputs=['y'],
+    embedding_dim=embed_dim,
+    num_heads=num_heads,
+)
+
+expect(node, inputs=[x, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias, attn_mask],
+       outputs=[y],
+       name='test_multiheadattention')
+```
+
+</details>
+<details>
+<summary>with_padding_mask</summary>
+
+```python
+x = np.random.randn(4, 16, 16)
+key = np.random.randn(4, 20, 16)
+value = np.random.randn(4, 20, 16)
+
+q_weight = np.random.randn(16, 16)
+k_weight = np.random.randn(16, 16)
+v_weight = np.random.randn(16, 16)
+
+q_bias = np.random.randn(1, 1, 16)
+k_bias = np.random.randn(1, 1, 16)
+v_bias = np.random.randn(1, 1, 16)
+
+out_weight = np.random.randn(16, 16)
+out_bias = np.random.randn(1, 1, 16)
+
+padding_mask = np.random.randn(4, 20) > 0
+
+q = x.dot(q_weight) + q_bias
+k = key.dot(k_weight) + k_bias
+v = value.dot(v_weight) + v_bias
+
+bsz, tgt_len, embed_dim = x.shape
+bsz, src_len, embed_dim = key.shape
+
+num_heads = 4
+head_dim = embed_dim // num_heads
+scaling = float(head_dim) ** -0.5
+q = q * scaling
+q = q.reshape(bsz * num_heads, tgt_len, head_dim)
+k = k.reshape(bsz * num_heads, head_dim, src_len)
+v = v.reshape(bsz * num_heads, src_len, head_dim)
+attn_output_weights = np.matmul(q, k) / scaling
+attn_output_weights = attn_output_weights.reshape(
+    bsz, num_heads, tgt_len, src_len)
+mask = np.concatenate([padding_mask] * num_heads
+                      * tgt_len).reshape(bsz, num_heads, tgt_len, src_len)
+mask = np.ma.masked_where(mask, attn_output_weights)
+mask = np.ma.filled(np.array(mask), -np.inf)
+attn_output_weights = attn_output_weights.reshape(
+    bsz * num_heads, tgt_len, src_len)
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention)
+y = np.matmul(attention, v).reshape(bsz, tgt_len, embed_dim)
+
+node = onnx.helper.make_node(
+    'MultiHeadAttention',
+    inputs=['x', 'key', 'value', 'q_weight', 'k_weight', 'v_weight',
+            'q_bias', 'k_bias', 'v_bias', 'out_weight', 'out_bias', 'padding_mask'],
+    outputs=['y'],
+    embedding_dim=embed_dim,
+    num_heads=num_heads,
+)
+
+expect(node, inputs=[x, key, value, q_weight, k_weight, v_weight, q_bias, k_bias, v_bias, out_weight, out_bias, padding_mask],
+       outputs=[y],
+       name='test_multiheadattention')
 ```
 
 </details>
