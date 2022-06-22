@@ -3202,7 +3202,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Pad_ver17_doc = R"DOC(
+static const char* Pad_ver18_doc = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
@@ -3282,14 +3282,14 @@ Example 3 (`edge` mode):
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
-    17,
+    18,
     OpSchema()
         .Attr(
             "mode",
             "Supported modes: `constant`(default), `reflect`, `edge`",
             AttributeProto::STRING,
             std::string("constant"))
-        .SetDoc(Pad_ver17_doc)
+        .SetDoc(Pad_ver18_doc)
         .Input(
             0,
             "data",
@@ -3495,7 +3495,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* CenterCropPad_ver17_doc = R"DOC(
+static const char* CenterCropPad_ver18_doc = R"DOC(
 Center crop or pad an input to given dimensions.
 
 The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
@@ -3508,9 +3508,9 @@ so that the input is centered in the output.
 
 ONNX_OPERATOR_SET_SCHEMA(
     CenterCropPad,
-    17,
+    18,
     OpSchema()
-        .SetDoc(CenterCropPad_ver17_doc)
+        .SetDoc(CenterCropPad_ver18_doc)
         .Input(
             0,
             "input_data",

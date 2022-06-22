@@ -515,7 +515,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("GreaterOrEqual", OpSetID(15), OpSetID(16)));
     registerAdapter(make_unique<CompatibleAdapter>("LeakyRelu", OpSetID(15), OpSetID(16)));
     registerAdapter(make_unique<CompatibleAdapter>("PRelu", OpSetID(15), OpSetID(16)));
-    registerAdapter(make_unique<CompatibleAdapter>("Pad", OpSetID(16), OpSetID(17)));
+
+    /******** 17 -> 18 ********/
+    registerAdapter(make_unique<CompatibleAdapter>("Pad", OpSetID(17), OpSetID(18)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
