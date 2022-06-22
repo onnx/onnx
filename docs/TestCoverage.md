@@ -1910,132 +1910,72 @@ expect(node, inputs=[input_data], outputs=[expected_output],
 
 
 ### CenterCropPad
-There are 7 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
-<summary>center_crop_pad_crop_chw_crop</summary>
+<summary>center_crop_pad_crop</summary>
 
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
-    axes=[1, 2],
 )
 
-x = np.random.randn(3, 20, 10).astype(np.float32)
-shape = np.array([10, 8], dtype=np.int64)
-y = x[:, 5:15, 1:9]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_chw_crop')
-```
-
-</details>
-<details>
-<summary>center_crop_pad_crop_chw_crop_and_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[1, 2],
-)
-
-x = np.random.randn(3, 20, 8).astype(np.float32)
-shape = np.array([10, 10], dtype=np.int64)
-y = np.zeros([3, 10, 10], dtype=np.float32)
-y[:, :, 1:9] = x[:, 5:15, :]
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_chw_crop_and_pad')
-```
-
-</details>
-<details>
-<summary>center_crop_pad_crop_chw_pad</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[1, 2],
-)
-
-x = np.random.randn(3, 10, 8).astype(np.float32)
-shape = np.array([20, 10], dtype=np.int64)
-y = np.zeros([3, 20, 10], dtype=np.float32)
-y[:, 5:15, 1:9] = x
-
-expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_chw_pad')
-```
-
-</details>
-<details>
-<summary>center_crop_pad_crop_hwc_crop</summary>
-
-```python
-node = onnx.helper.make_node(
-    'CenterCropPad',
-    inputs=['x', 'shape'],
-    outputs=['y'],
-    axes=[0, 1],
-)
-
+# First dim is even diff, second is uneven
 x = np.random.randn(20, 10, 3).astype(np.float32)
-shape = np.array([10, 8], dtype=np.int64)
-y = x[5:15, 1:9, :]
+shape = np.array([10, 7, 3], dtype=np.int64)
+y = x[5:15, 1:8, :]
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_hwc_crop')
+       name='test_center_crop_pad_crop')
 ```
 
 </details>
 <details>
-<summary>center_crop_pad_crop_hwc_crop_and_pad</summary>
+<summary>center_crop_pad_crop_and_pad</summary>
 
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
-    axes=[0, 1],
 )
 
+# Cropping on first dim, padding on second, third stays the same
 x = np.random.randn(20, 8, 3).astype(np.float32)
-shape = np.array([10, 10], dtype=np.int64)
+shape = np.array([10, 10, 3], dtype=np.int64)
 y = np.zeros([10, 10, 3], dtype=np.float32)
 y[:, 1:9, :] = x[5:15, :, :]
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_hwc_crop_and_pad')
+       name='test_center_crop_pad_crop_and_pad')
 ```
 
 </details>
 <details>
-<summary>center_crop_pad_crop_hwc_crop_uneven</summary>
+<summary>center_crop_pad_crop_axes_chw</summary>
 
 ```python
 node = onnx.helper.make_node(
     'CenterCropPad',
     inputs=['x', 'shape'],
     outputs=['y'],
-    axes=[0, 1],
+    axes=[1, 2],
 )
 
-x = np.random.randn(20, 10, 3).astype(np.float32)
-shape = np.array([10, 7], dtype=np.int64)
-y = x[5:15, 1:8, :]
+# Cropping on second dim, padding on third, first stays the same
+x = np.random.randn(3, 20, 8).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([3, 10, 9], dtype=np.float32)
+y[:, :, 1:] = x[:, 5:15, :]
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_hwc_crop')
+       name='test_center_crop_pad_crop_axes_chw')
 ```
 
 </details>
 <details>
-<summary>center_crop_pad_crop_hwc_pad</summary>
+<summary>center_crop_pad_crop_axes_hwc</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -2045,13 +1985,35 @@ node = onnx.helper.make_node(
     axes=[0, 1],
 )
 
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([10, 9, 3], dtype=np.float32)
+y[:, 1:, :] = x[5:15, :, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_axes_hwc')
+```
+
+</details>
+<details>
+<summary>center_crop_pad_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+# First two dims are even diff, third is uneven
 x = np.random.randn(10, 8, 3).astype(np.float32)
-shape = np.array([20, 10], dtype=np.int64)
-y = np.zeros([20, 10, 3], dtype=np.float32)
-y[5:15, 1:9, :] = x
+shape = np.array([20, 10, 4], dtype=np.int64)
+y = np.zeros([20, 10, 4], dtype=np.float32)
+y[5:15, 1:9, 1:4] = x
 
 expect(node, inputs=[x, shape], outputs=[y],
-       name='test_center_crop_pad_crop_hwc_pad')
+       name='test_center_crop_pad_pad')
 ```
 
 </details>
