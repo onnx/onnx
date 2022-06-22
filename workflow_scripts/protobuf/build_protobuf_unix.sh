@@ -25,7 +25,7 @@ wget https://github.com/protocolbuffers/protobuf/releases/download/v21.1/protobu
 tar -xvf protobuf-cpp-3.21.1.tar.gz
 cd protobuf-3.21.1
 mkdir build_source && cd build_source
-cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALL_PROTOBUF_PATH -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALL_PROTOBUF_PATH -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp
 make -j$CORE_NUMBER
 if [ "$INSTALL_PROTOBUF_PATH" == "/usr" ]; then
     # install protobuf on default system path so it needs sudo permission
