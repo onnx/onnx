@@ -2526,10 +2526,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           auto query_shape = getInputShape(ctx, 0);
           auto output_shape = getOutputShape(ctx, 0);
-
-          if (query_shape == output_shape) {
-            fail_shape_inference("ScaledDotProductAttention op must make sure query_shape be equal to output_shape.");
-          }
         }));
 
 } // namespace ONNX_NAMESPACE

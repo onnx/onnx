@@ -12769,6 +12769,58 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="ScaledDotProductAttention-11"></a>**ScaledDotProductAttention-11**</a>
+
+  Allows the model to jointly attend to information
+        from different representation subspaces.
+        See reference: Attention Is All You Need.
+        The computation can be described by the following equations.
+        ```
+        ScaledDotProductAttention(query, key, value) = matmul(softmax(matmul(query, key.transpose)/scale), value)
+        ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dropout</tt> : float (default is 0.0)</dt>
+<dd>the probability of dropout operator, Default is 0.0</dd>
+<dt><tt>training_mode</tt> : int (default is 0)</dt>
+<dd>If set to true, it indicates ScaledDotProductAttention is being used for training.</dd>
+</dl>
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>query</tt> (non-differentiable) : T</dt>
+<dd>Input query tensor of the scaleddotproductattention;dimensions are (N, L, H), where L is the target sequence length.N is the batch size, H is the head dimension.</dd>
+<dt><tt>key</tt> (non-differentiable) : T</dt>
+<dd>Input key tensor of the scaleddotproductattention;dimensions are (N, S, H),where S is the source sequence length,N is the batch size,H is the head dimension.</dd>
+<dt><tt>value</tt> (non-differentiable) : T</dt>
+<dd>Input value tensor of the scaleddotproductattentiondimensions are (N, S, H),where S is the source sequence length,N is the batch size,H is the head dimension.</dd>
+<dt><tt>attn_mask</tt> (optional, non-differentiable) : T</dt>
+<dd>Attn_mask ensures that position is allowed to attend the unmasked position;dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T</dt>
+<dd>Operator output result,dimensions are (N, L, H),where N is the batch size,L is the target sequence length,H is the head dimension.</dd>
+<dt><tt>attn</tt> (non-differentiable) : T</dt>
+<dd>Operator output mask,dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output type to float tensors</dd>
+</dl>
+
 ### <a name="Scan-11"></a>**Scan-11**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,

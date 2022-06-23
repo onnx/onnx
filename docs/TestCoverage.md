@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 162/177 (91.53%, 5 generators excluded) common operators.
+Node tests have covered 163/178 (91.57%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -12167,6 +12167,109 @@ for i in range(nstfts):
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 expect(node, inputs=[signal, step, window], outputs=[output],
        name='test_stft_with_window')
+```
+
+</details>
+
+
+### ScaledDotProductAttention
+There are 3 test cases, listed as following:
+<details>
+<summary>out_with_attention</summary>
+
+```python
+bsz, tgt_len, src_len, head_dim = 4, 16, 20, 4
+drop_probability, training_mode = 0.2, 0
+query = np.random.randn(bsz, tgt_len, head_dim)
+key = np.random.randn(bsz, src_len, head_dim)
+value = np.random.randn(bsz, src_len, head_dim)
+
+scaling = float(head_dim) ** -0.5
+attn_output_weights = np.matmul(query, key.transpose(0, 2, 1)) / scaling
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention, drop_probability, training_mode > 0)
+output = np.matmul(attention, value).reshape(bsz, tgt_len, head_dim)
+
+node = onnx.helper.make_node(
+    'ScaledDotProductAttention',
+    inputs=['query', 'key', 'value'],
+    outputs=['output', 'attn'],
+    training_mode=training_mode,
+    dropout=drop_probability
+)
+
+expect(node, inputs=[query, key, value],
+       outputs=[output, attention],
+       name='test_ScaledDotProductAttention')
+```
+
+</details>
+<details>
+<summary>scaleddotproductattention</summary>
+
+```python
+bsz, tgt_len, src_len, head_dim = 4, 16, 20, 4
+drop_probability, training_mode = 0.2, 0
+query = np.random.randn(bsz, tgt_len, head_dim)
+key = np.random.randn(bsz, src_len, head_dim)
+value = np.random.randn(bsz, src_len, head_dim)
+
+scaling = float(head_dim) ** -0.5
+attn_output_weights = np.matmul(query, key.transpose(0, 2, 1)) / scaling
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention, drop_probability, training_mode > 0)
+output = np.matmul(attention, value).reshape(bsz, tgt_len, head_dim)
+
+node = onnx.helper.make_node(
+    'ScaledDotProductAttention',
+    inputs=['query', 'key', 'value'],
+    outputs=['output'],
+    training_mode=training_mode,
+    dropout=drop_probability
+)
+
+expect(node, inputs=[query, key, value],
+       outputs=[output],
+       name='test_ScaledDotProductAttention')
+```
+
+</details>
+<details>
+<summary>with_attn_mask</summary>
+
+```python
+bsz, tgt_len, src_len, head_dim = 4, 16, 20, 4
+drop_probability, training_mode = 0.2, 0
+query = np.random.randn(bsz, tgt_len, head_dim)
+key = np.random.randn(bsz, src_len, head_dim)
+value = np.random.randn(bsz, src_len, head_dim)
+attn_mask = np.random.randn(bsz, tgt_len, src_len)
+
+scaling = float(head_dim) ** -0.5
+attn_output_weights = np.matmul(query, key.transpose(0, 2, 1)) / scaling
+mask = np.ma.masked_where(attn_mask > 0, attn_output_weights)
+attn_output_weights = np.ma.filled(np.array(mask), -np.inf)
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention, drop_probability, training_mode > 0)
+output = np.matmul(attention, value).reshape(bsz, tgt_len, head_dim)
+
+node = onnx.helper.make_node(
+    'ScaledDotProductAttention',
+    inputs=['query', 'key', 'value', 'attn_mask'],
+    outputs=['output'],
+    training_mode=training_mode,
+    dropout=drop_probability
+)
+
+expect(node, inputs=[query, key, value, attn_mask],
+       outputs=[output],
+       name='test_ScaledDotProductAttention')
 ```
 
 </details>

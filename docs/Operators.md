@@ -129,6 +129,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
+|<a href="#ScaledDotProductAttention">ScaledDotProductAttention</a>|<a href="Changelog.md#ScaledDotProductAttention-11">11</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
 |<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
@@ -19292,6 +19293,166 @@ for i in range(nstfts):
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 expect(node, inputs=[signal, step, window], outputs=[output],
        name='test_stft_with_window')
+```
+
+</details>
+
+
+### <a name="ScaledDotProductAttention"></a><a name="scaleddotproductattention">**ScaledDotProductAttention**</a>
+
+  Allows the model to jointly attend to information
+        from different representation subspaces.
+        See reference: Attention Is All You Need.
+        The computation can be described by the following equations.
+        ```
+        ScaledDotProductAttention(query, key, value) = matmul(softmax(matmul(query, key.transpose)/scale), value)
+        ```
+
+#### Version
+
+This version of the operator has been available since version 11 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dropout</tt> : float (default is 0.0)</dt>
+<dd>the probability of dropout operator, Default is 0.0</dd>
+<dt><tt>training_mode</tt> : int (default is 0)</dt>
+<dd>If set to true, it indicates ScaledDotProductAttention is being used for training.</dd>
+</dl>
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>query</tt> (non-differentiable) : T</dt>
+<dd>Input query tensor of the scaleddotproductattention;dimensions are (N, L, H), where L is the target sequence length.N is the batch size, H is the head dimension.</dd>
+<dt><tt>key</tt> (non-differentiable) : T</dt>
+<dd>Input key tensor of the scaleddotproductattention;dimensions are (N, S, H),where S is the source sequence length,N is the batch size,H is the head dimension.</dd>
+<dt><tt>value</tt> (non-differentiable) : T</dt>
+<dd>Input value tensor of the scaleddotproductattentiondimensions are (N, S, H),where S is the source sequence length,N is the batch size,H is the head dimension.</dd>
+<dt><tt>attn_mask</tt> (optional, non-differentiable) : T</dt>
+<dd>Attn_mask ensures that position is allowed to attend the unmasked position;dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T</dt>
+<dd>Operator output result,dimensions are (N, L, H),where N is the batch size,L is the target sequence length,H is the head dimension.</dd>
+<dt><tt>attn</tt> (non-differentiable) : T</dt>
+<dd>Operator output mask,dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output type to float tensors</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>out_with_attention</summary>
+
+```python
+bsz, tgt_len, src_len, head_dim = 4, 16, 20, 4
+drop_probability, training_mode = 0.2, 0
+query = np.random.randn(bsz, tgt_len, head_dim)
+key = np.random.randn(bsz, src_len, head_dim)
+value = np.random.randn(bsz, src_len, head_dim)
+
+scaling = float(head_dim) ** -0.5
+attn_output_weights = np.matmul(query, key.transpose(0, 2, 1)) / scaling
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention, drop_probability, training_mode > 0)
+output = np.matmul(attention, value).reshape(bsz, tgt_len, head_dim)
+
+node = onnx.helper.make_node(
+    'ScaledDotProductAttention',
+    inputs=['query', 'key', 'value'],
+    outputs=['output', 'attn'],
+    training_mode=training_mode,
+    dropout=drop_probability
+)
+
+expect(node, inputs=[query, key, value],
+       outputs=[output, attention],
+       name='test_ScaledDotProductAttention')
+```
+
+</details>
+
+
+<details>
+<summary>scaleddotproductattention</summary>
+
+```python
+bsz, tgt_len, src_len, head_dim = 4, 16, 20, 4
+drop_probability, training_mode = 0.2, 0
+query = np.random.randn(bsz, tgt_len, head_dim)
+key = np.random.randn(bsz, src_len, head_dim)
+value = np.random.randn(bsz, src_len, head_dim)
+
+scaling = float(head_dim) ** -0.5
+attn_output_weights = np.matmul(query, key.transpose(0, 2, 1)) / scaling
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention, drop_probability, training_mode > 0)
+output = np.matmul(attention, value).reshape(bsz, tgt_len, head_dim)
+
+node = onnx.helper.make_node(
+    'ScaledDotProductAttention',
+    inputs=['query', 'key', 'value'],
+    outputs=['output'],
+    training_mode=training_mode,
+    dropout=drop_probability
+)
+
+expect(node, inputs=[query, key, value],
+       outputs=[output],
+       name='test_ScaledDotProductAttention')
+```
+
+</details>
+
+
+<details>
+<summary>with_attn_mask</summary>
+
+```python
+bsz, tgt_len, src_len, head_dim = 4, 16, 20, 4
+drop_probability, training_mode = 0.2, 0
+query = np.random.randn(bsz, tgt_len, head_dim)
+key = np.random.randn(bsz, src_len, head_dim)
+value = np.random.randn(bsz, src_len, head_dim)
+attn_mask = np.random.randn(bsz, tgt_len, src_len)
+
+scaling = float(head_dim) ** -0.5
+attn_output_weights = np.matmul(query, key.transpose(0, 2, 1)) / scaling
+mask = np.ma.masked_where(attn_mask > 0, attn_output_weights)
+attn_output_weights = np.ma.filled(np.array(mask), -np.inf)
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention, drop_probability, training_mode > 0)
+output = np.matmul(attention, value).reshape(bsz, tgt_len, head_dim)
+
+node = onnx.helper.make_node(
+    'ScaledDotProductAttention',
+    inputs=['query', 'key', 'value', 'attn_mask'],
+    outputs=['output'],
+    training_mode=training_mode,
+    dropout=drop_probability
+)
+
+expect(node, inputs=[query, key, value, attn_mask],
+       outputs=[output],
+       name='test_ScaledDotProductAttention')
 ```
 
 </details>
