@@ -879,8 +879,6 @@ struct Graph final {
 
   std::vector<Tensor> initializers_;
   std::vector<std::string> initializer_names_;
-  // Store a name to offset map for erasing initializer node
-  std::map<std::string, int> initializer_to_offset_map_;
 
   bool has_name_;
   std::string name_;
@@ -959,7 +957,6 @@ struct Graph final {
     init_value->setUniqueName(initializer.name());
     init_value->setSizes(dim_sizes);
     init_value->setElemType(initializer.elem_type());
-    initializer_to_offset_map_[initializer.name()] = init_value->offset();
     return init_value;
   }
 
@@ -972,9 +969,11 @@ struct Graph final {
         initializers_.end());
     initializer_names_.erase(
         std::remove(initializer_names_.begin(), initializer_names_.end(), name), initializer_names_.end());
-    if (initializer_to_offset_map_.count(name) > 0) {
-      initializer_node_->eraseOutput(initializer_to_offset_map_[name]);
-      initializer_to_offset_map_.erase(name);
+    for (size_t i = 0; i < initializer_node_->outputs().size(); i++) {
+      if (initializer_node_->outputs()[i]->uniqueName() == name) {
+        initializer_node_->eraseOutput(i);
+        break;
+      }
     }
   }
   void clearInitializers() {
@@ -1137,7 +1136,9 @@ struct Graph final {
   // Must have no uses
   void eraseInitializerAndInput(Value* v) {
     eraseInitializer(v->uniqueName());
-    eraseInput(v->offset());
+    if (v->node() == input_) {
+      eraseInput(v->offset());
+    }
   }
 
   ~Graph() {
@@ -1248,17 +1249,27 @@ inline const Graph* Value::owningGraph() const {
 // `captured` nodes in subgraph determines which value it captures
 // by storing the value's unique name, so old unique names in `captured` nodes
 // should also be updated.
-inline Value* Value::setUniqueName(const std::string& name, bool rename_subgraph_captured_nodes) {
-  if (has_unique_name() && rename_subgraph_captured_nodes) {
+// Initializer names are also storaged in graph.initializer_names_, it should be
+// updated too.
+inline Value* Value::setUniqueName(const std::string& name, bool update_related_names) {
+  if (has_unique_name() && update_related_names) {
     auto* graph = owningGraph();
-    graph->forEachNode([this, &name](Node* node) {
+    auto old_name = unique_name_;
+    for (size_t i = 0; i < owningGraph()->initializer_names_.size(); i++) {
+      auto& initializer_name = owningGraph()->initializer_names_[i];
+      if (initializer_name == old_name) {
+        initializer_name = name;
+        owningGraph()->initializers_[i].setName(name);
+      }
+    }
+    graph->forEachNode([this, &name, &old_name](Node* node) {
       if (node->owningGraph() == this->owningGraph()) {
         // skip non-subgraph
         return;
       }
       if (node->kind() == kCaptured) {
         Value* output = node->output();
-        if (output->uniqueName() == this->uniqueName()) {
+        if (output->uniqueName() == old_name) {
           output->setUniqueName(name, false);
         }
       }

@@ -10,7 +10,7 @@ The ONNX GitHub organization contains a number of repositories. Every repository
 * Must be actively maintained
 * Must adopt the ONNX Code of Conduct
 * Must adopt the standard ONNX license(s)
-* Must adopt the ONNX CLA bot
+* Must adopt the ONNX DCO bot
 * Must adopt all ONNX automation (like LGTM)
 * Must have CI or other automation in place for repos containing code to ensure quality
 * All OWNERS must be members of standing as defined by ability to vote in Steering Committee elections.
@@ -22,9 +22,9 @@ We are happy to accept contributions as repos under the ONNX organization of new
 * Project is closely related to ONNX
 * Adds value to the ONNX ecosystem
 * Determined to need a new repo rather than a folder in an existing repo
-* All contributors must have signed the ONNX CLA
+* All contributors must have signed the ONNX DCO
 * Licenses of dependencies must be acceptable
-* Committment to maintain the repo
+* Commitment to maintain the repo
 * Approval of the SIG that will own the repo
 * Approval of the Steering Committee
 
