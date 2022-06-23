@@ -2523,9 +2523,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             unifyInputDim(ctx, 3, 1, tgt_len);
             unifyInputDim(ctx, 3, 2, src_len);
           }
-
-          auto query_shape = getInputShape(ctx, 0);
-          auto output_shape = getOutputShape(ctx, 0);
         }));
 
 } // namespace ONNX_NAMESPACE

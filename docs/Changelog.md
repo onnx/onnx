@@ -12805,12 +12805,12 @@ This version of the operator has been available since version 11 of the default 
 <dd>Attn_mask ensures that position is allowed to attend the unmasked position;dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
 </dl>
 
-#### Outputs
+#### Outputs (1 - 2)
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T</dt>
 <dd>Operator output result,dimensions are (N, L, H),where N is the batch size,L is the target sequence length,H is the head dimension.</dd>
-<dt><tt>attn</tt> (non-differentiable) : T</dt>
+<dt><tt>attn</tt> (optional, non-differentiable) : T</dt>
 <dd>Operator output mask,dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
 </dl>
 
