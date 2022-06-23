@@ -51,3 +51,10 @@ jobs:
           level: warning
           filter_mode: diff_context
           glob_pattern: "**/*.py"
+      - name: mypy
+        uses: tsuyoshicho/action-mypy@v3
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: warning
+          filter_mode: diff_context
