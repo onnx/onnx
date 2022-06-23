@@ -12,7 +12,8 @@ import os
 import numpy as np  # type: ignore
 
 
-class TestShapeInference(unittest.TestCase):
+class TestShapeInferenceHelper(unittest.TestCase):
+
     def _make_graph(self,
                     seed_values: Sequence[Union[str, Tuple[str, TensorProto.DataType, Any]]],
                     nodes: List[NodeProto],
@@ -91,6 +92,9 @@ class TestShapeInference(unittest.TestCase):
         else:
             raise NotImplementedError(
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type))
+
+
+class TestShapeInference(TestShapeInferenceHelper):
 
     def test_empty_graph(self) -> None:
         graph = self._make_graph(
