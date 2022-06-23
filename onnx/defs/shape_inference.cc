@@ -210,7 +210,7 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& targ
   }
 }
 
-template<typename TENSOR_TYPE>
+template <typename TENSOR_TYPE>
 void UnionShapeInfoForTensor(const TensorShapeProto& source_shape, TENSOR_TYPE& target_type) {
   if (target_type.has_shape()) {
     TensorShapeProto* target_shape = target_type.mutable_shape();
@@ -233,7 +233,6 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& targ
 void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor& target_type) {
   UnionShapeInfoForTensor(source_shape, target_type);
 }
-
 
 void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
   if (source_type.value_case() != target_type.value_case()) {
@@ -287,9 +286,11 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
     auto target_key_type = target_type.map_type().key_type();
     if (source_key_type != target_key_type) {
       fail_type_inference(
-          "Mismatched map tensor key type:", " source=", 
+          "Mismatched map tensor key type:",
+          " source=",
           Utils::DataTypeUtils::ToDataTypeString(source_key_type),
-          " target=", Utils::DataTypeUtils::ToDataTypeString(target_key_type));
+          " target=",
+          Utils::DataTypeUtils::ToDataTypeString(target_key_type));
     }
 
     if (!source_type.map_type().has_value_type()) {
@@ -399,8 +400,7 @@ void propagateMapElemTypeWithValidation(const TypeProto* input_type, TypeProto* 
     fail_type_inference("Value type of map input was unknown");
   }
   output_type->mutable_map_type()->set_key_type(input_map_type.key_type());
-  propagateElemTypeWithValidation(
-      &input_map_type.value_type(), output_type->mutable_map_type()->mutable_value_type());
+  propagateElemTypeWithValidation(&input_map_type.value_type(), output_type->mutable_map_type()->mutable_value_type());
 }
 
 // propagate the element type from an input type to an output type.
@@ -420,7 +420,8 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
   } else if (input_value_case == TypeProto::kMapType) {
     propagateMapElemTypeWithValidation(input_type, output_type);
   } else {
-    fail_type_inference("Input was expected to have either tensor, sequence, optional or map type. Got ", input_value_case);
+    fail_type_inference(
+        "Input was expected to have either tensor, sequence, optional or map type. Got ", input_value_case);
   }
 }
 
@@ -456,7 +457,7 @@ TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& 
       // Attempt rank inference using shape of shape input
       int64_t dim_value = shape_input_shape.dim(0).dim_value();
       for (int64_t i = 0; i < dim_value; ++i) {
-          shape_input.add_dim();
+        shape_input.add_dim();
       }
       found = true;
       return shape_input;

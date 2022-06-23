@@ -20,6 +20,69 @@
 
 namespace ONNX_NAMESPACE {
 
+Status ParserBase::Parse(Literal& result) {
+  bool decimal_point = false;
+  auto nextch = NextChar();
+  auto from = next_;
+  if (nextch == '"') {
+    ++next_;
+    bool has_escape = false;
+    while ((next_ < end_) && (*next_ != '"')) {
+      if (*next_ == '\\') {
+        has_escape = true;
+        ++next_;
+        if (next_ >= end_)
+          return ParseError("Incomplete string literal.");
+      }
+      ++next_;
+    }
+    if (next_ >= end_)
+      return ParseError("Incomplete string literal.");
+    ++next_;
+    result.type = LiteralType::STRING_LITERAL;
+    if (has_escape) {
+      std::string& target = result.value;
+      target.clear();
+      target.reserve(next_ - from - 2); // upper bound
+      // *from is the starting quote. *(next_-1) is the ending quote.
+      // Copy what is in-between, except for the escape character
+      while (++from < next_ - 1) {
+        // Copy current char, if not escape, or next char otherwise.
+        target.push_back(*from != '\\' ? (*from) : *(++from));
+      }
+    } else
+      result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
+  } else if ((isdigit(nextch) || (nextch == '-'))) {
+    ++next_;
+
+    while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
+      if (*next_ == '.') {
+        if (decimal_point)
+          break; // Only one decimal point allowed in numeric literal
+        decimal_point = true;
+      }
+      ++next_;
+    }
+
+    if (next_ == from)
+      return ParseError("Value expected but not found.");
+
+    // Optional exponent syntax: (e|E)(+|-)?[0-9]+
+    if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
+      decimal_point = true; // treat as float-literal
+      ++next_;
+      if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
+        ++next_;
+      while ((next_ < end_) && (isdigit(*next_)))
+        ++next_;
+    }
+
+    result.value = std::string(from, next_ - from);
+    result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
+  }
+  return Status::OK();
+}
+
 Status OnnxParser::Parse(IdList& idlist) {
   idlist.Clear();
   std::string id;
@@ -86,8 +149,71 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
       // Create shape with zero dimensions for scalar
       (void)(tensortype->mutable_shape());
     }
-  } else
-    return ParseError("Unexpected type.");
+  } else {
+    switch (KeyWordMap::Lookup(id)) {
+      case KeyWordMap::KeyWord::SEQ_TYPE: {
+        // Grammar: seq ( type )
+        MATCH('(');
+        auto* seqtype = typeProto.mutable_sequence_type();
+        PARSE(*seqtype->mutable_elem_type());
+        MATCH(')');
+        break;
+      }
+      case KeyWordMap::KeyWord::MAP_TYPE: {
+        // Grammar: map ( prim-type , type )
+        MATCH('(');
+        auto* maptype = typeProto.mutable_map_type();
+        CHECK_PARSER_STATUS(ParseIdentifier(id));
+        dtype = PrimitiveTypeNameMap::Lookup(id);
+        if (dtype == 0) {
+          return ParseError("Expecting primitive type as map key type.");
+        }
+        maptype->set_key_type(dtype);
+        MATCH(',');
+        PARSE(*maptype->mutable_value_type());
+        MATCH(')');
+        break;
+      }
+      case KeyWordMap::KeyWord::OPTIONAL_TYPE: {
+        // Grammar: optional ( type )
+        MATCH('(');
+        auto* opttype = typeProto.mutable_optional_type();
+        PARSE(*opttype->mutable_elem_type());
+        MATCH(')');
+        break;
+      }
+      case KeyWordMap::KeyWord::SPARSE_TENSOR_TYPE: {
+        // Grammar: sparse_tensor ( tensor-type )
+        MATCH('(');
+        CHECK_PARSER_STATUS(ParseIdentifier(id));
+        dtype = PrimitiveTypeNameMap::Lookup(id);
+        if (dtype != 0) {
+          auto* sparsetype = typeProto.mutable_sparse_tensor_type();
+          sparsetype->set_elem_type(dtype);
+          sparsetype->clear_shape();
+          // Grammar:
+          // float indicates scalar (rank 0)
+          // float [] indicates unknown rank tensor (not a zero rank tensor)
+          // float [one-or-more-dimensions] indicates tensor of known rank > 0.
+          if (Matches('[')) {
+            if (!Matches(']')) {
+              PARSE(*sparsetype->mutable_shape());
+              MATCH(']');
+            }
+          } else {
+            // Create shape with zero dimensions for scalar
+            (void)(sparsetype->mutable_shape());
+          }
+        } else {
+          return ParseError("Unexpected type in sparse-tensor element type.");
+        }
+        MATCH(')');
+        break;
+      }
+      default:
+        return ParseError("Unexpected type.");
+    }
+  }
   return Status::OK();
 }
 
@@ -285,6 +411,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
 }
 
 Status OnnxParser::Parse(AttributeProto& attr) {
+  attr.Clear();
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
   attr.set_name(name);

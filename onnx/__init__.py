@@ -18,31 +18,31 @@ import onnx.compose  # noqa
 
 import google.protobuf.message
 
-from typing import Union, Text, IO, Optional, cast, TypeVar, Any
+from typing import Union, IO, Optional, cast, TypeVar, Any
 
 
 # f should be either readable or a file path
-def _load_bytes(f: Union[IO[bytes], Text]) -> bytes:
+def _load_bytes(f: Union[IO[bytes], str]) -> bytes:
     if hasattr(f, 'read') and callable(cast(IO[bytes], f).read):
         s = cast(IO[bytes], f).read()
     else:
-        with open(cast(Text, f), 'rb') as readable:
+        with open(cast(str, f), 'rb') as readable:
             s = readable.read()
     return s
 
 
-# str should be bytes,
+# content should be bytes,
 # f should be either writable or a file path
-def _save_bytes(str: bytes, f: Union[IO[bytes], Text]) -> None:
+def _save_bytes(content: bytes, f: Union[IO[bytes], str]) -> None:
     if hasattr(f, 'write') and callable(cast(IO[bytes], f).write):
-        cast(IO[bytes], f).write(str)
+        cast(IO[bytes], f).write(content)
     else:
-        with open(cast(Text, f), 'wb') as writable:
-            writable.write(str)
+        with open(cast(str, f), 'wb') as writable:
+            writable.write(content)
 
 
 # f should be either a readable file or a file path
-def _get_file_path(f: Union[IO[bytes], Text]) -> Optional[Text]:
+def _get_file_path(f: Union[IO[bytes], str]) -> Optional[str]:
     if isinstance(f, str):
         return os.path.abspath(f)
     if hasattr(f, 'name'):
@@ -85,7 +85,7 @@ def _deserialize(s: bytes, proto: _Proto) -> _Proto:
         The proto instance filled in by s
     '''
     if not isinstance(s, bytes):
-        raise ValueError('Parameter s must be bytes, but got type: {}'.format(type(s)))
+        raise ValueError(f'Parameter s must be bytes, but got type: {type(s)}')
 
     if not (hasattr(proto, 'ParseFromString') and callable(proto.ParseFromString)):
         raise ValueError('No ParseFromString method is detected. '
@@ -99,7 +99,7 @@ def _deserialize(s: bytes, proto: _Proto) -> _Proto:
     return proto
 
 
-def load_model(f: Union[IO[bytes], Text], format: Optional[Any] = None, load_external_data: bool = True) -> ModelProto:
+def load_model(f: Union[IO[bytes], str], format: Optional[Any] = None, load_external_data: bool = True) -> ModelProto:
     '''
     Loads a serialized ModelProto into memory
     load_external_data is true if the external data under the same directory of the model and load the external data
@@ -124,7 +124,7 @@ def load_model(f: Union[IO[bytes], Text], format: Optional[Any] = None, load_ext
     return model
 
 
-def load_tensor(f: Union[IO[bytes], Text], format: Optional[Any] = None) -> TensorProto:
+def load_tensor(f: Union[IO[bytes], str], format: Optional[Any] = None) -> TensorProto:
     '''
     Loads a serialized TensorProto into memory
 
@@ -167,7 +167,7 @@ def load_tensor_from_string(s: bytes, format: Optional[Any] = None) -> TensorPro
     return _deserialize(s, TensorProto())
 
 
-def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], Text], format: Optional[Any] = None, save_as_external_data: bool = False, all_tensors_to_one_file: bool = True, location: Optional[Text] = None, size_threshold: int = 1024, convert_attribute: bool = False) -> None:
+def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], str], format: Optional[Any] = None, save_as_external_data: bool = False, all_tensors_to_one_file: bool = True, location: Optional[str] = None, size_threshold: int = 1024, convert_attribute: bool = False) -> None:
     '''
     Saves the ModelProto to the specified path and optionally, serialize tensors with raw data as external data before saving.
 
@@ -198,7 +198,7 @@ def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], Text], forma
     _save_bytes(s, f)
 
 
-def save_tensor(proto: TensorProto, f: Union[IO[bytes], Text]) -> None:
+def save_tensor(proto: TensorProto, f: Union[IO[bytes], str]) -> None:
     '''
     Saves the TensorProto to the specified path.
 

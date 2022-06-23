@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
@@ -31,33 +30,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Default value is uint8 typed 0 if it's not specified.",
             "T2",
             OpSchema::Optional)
-        .Output(
-            0,
-            "y",
-            "N-D quantized output tensor. It has same shape as input 'x'.",
-            "T2")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float)", "tensor(int32)"},
-            "Constrain 'x' to float or int32 tensor.")
+        .Output(0, "y", "N-D quantized output tensor. It has same shape as input 'x'.", "T2")
+        .TypeConstraint("T1", {"tensor(float)", "tensor(int32)"}, "Constrain 'x' to float or int32 tensor.")
         .TypeConstraint(
             "T2",
             {"tensor(int8)", "tensor(uint8)"},
             "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
         .SetDoc(QuantizeLinear_ver10_doc)
-        .TypeAndShapeInferenceFunction(
-            [](ONNX_NAMESPACE::InferenceContext& ctx) {
-              if (ctx.getNumInputs() == 3 && ctx.getInputType(2) != nullptr) {
-                propagateElemTypeFromInputToOutput(ctx, 2, 0);
-              } else {
-                updateOutputElemType(ctx, 0, TensorProto::UINT8);
-              }
-              if (!hasInputShape(ctx, 0)) {
-                return;
-              }
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          if (ctx.getNumInputs() == 3 && ctx.getInputType(2) != nullptr) {
+            propagateElemTypeFromInputToOutput(ctx, 2, 0);
+          } else {
+            updateOutputElemType(ctx, 0, TensorProto::UINT8);
+          }
+          if (!hasInputShape(ctx, 0)) {
+            return;
+          }
 
-              auto& input_shape = getInputShape(ctx, 0);
-              updateOutputShape(ctx, 0, input_shape);
+          auto& input_shape = getInputShape(ctx, 0);
+          updateOutputShape(ctx, 0, input_shape);
         }));
 
 static const char* DequantizeLinear_ver10_doc = R"DOC(
@@ -84,28 +75,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "It's optional. 0 is the default value when it's not specified.",
             "T",
             OpSchema::Optional)
-        .Output(
-            0,
-            "y",
-            "N-D full precision output tensor. It has same shape as input 'x'.",
-            "tensor(float)")
+        .Output(0, "y", "N-D full precision output tensor. It has same shape as input 'x'.", "tensor(float)")
         .TypeConstraint(
             "T",
             {"tensor(int8)", "tensor(uint8)", "tensor(int32)"},
             "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
         .SetDoc(DequantizeLinear_ver10_doc)
-        .TypeAndShapeInferenceFunction(
-            [](ONNX_NAMESPACE::InferenceContext& ctx) {
-              auto y_type = ctx.getOutputType(0);
-              // only float is supported
-              y_type->mutable_tensor_type()->set_elem_type(
-                  ONNX_NAMESPACE::TensorProto::FLOAT);
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          auto y_type = ctx.getOutputType(0);
+          // only float is supported
+          y_type->mutable_tensor_type()->set_elem_type(ONNX_NAMESPACE::TensorProto::FLOAT);
 
-              if (!hasInputShape(ctx, 0))
-                return;
+          if (!hasInputShape(ctx, 0))
+            return;
 
-              auto& input_shape = getInputShape(ctx, 0);
-              updateOutputShape(ctx, 0, input_shape);
-            }));
+          auto& input_shape = getInputShape(ctx, 0);
+          updateOutputShape(ctx, 0, input_shape);
+        }));
 
 } // namespace ONNX_NAMESPACE

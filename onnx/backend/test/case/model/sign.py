@@ -27,6 +27,6 @@ class SingleSign(Base):
             outputs=[onnx.helper.make_tensor_value_info('y',
                                                         onnx.TensorProto.FLOAT,
                                                         [7])])
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model_gen_version(graph, producer_name='backend-test', opset_imports=[onnx.helper.make_opsetid("", 9)])
         expect(model, inputs=[x], outputs=[y],
                name='test_sign_model')

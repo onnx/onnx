@@ -31,7 +31,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
   * Use GitHub Action (`.github/workflows/release_win.yml`) under onnx repo to produce wheels for Windows.
 
 * Linux
-  * Use GitHub Action (`.github/workflows/release_linux_x86_64.yml`) and (`.github/workflows/release_linux_i686.yml`) under onnx repo to produce x64/i686 wheels for Linux.
+  * Use GitHub Action (`.github/workflows/release_linux_x86_64.yml`) and (`.github/workflows/release_linux_aarch64.yml`) under onnx repo to produce x64/aarch64 wheels for Linux.
 
 * Mac
   * Use GitHub Action (`.github/workflows/release_mac.yml`) under onnx repo to produce wheels for Mac.
@@ -59,7 +59,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
   * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
   * Utilize the following matrix to check:
 
-    |   | 3.5 | 3.6 | 3.7 | 3.8 |
+    |   | 3.7 | 3.8 | 3.9 | 3.10 |
     -- | -- | -- | -- | -- |
     Linux |   |   |   |   |
     Windows |   |   |   |   |
@@ -113,8 +113,11 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Conda builds of ONNX are done via conda-forge, which runs infrastructure for building packages and uploading them to conda-forge. If it does not happen automatically, you need to submit a PR to https://github.com/conda-forge/onnx-feedstock (see https://github.com/conda-forge/onnx-feedstock/pull/1/files or https://github.com/conda-forge/onnx-feedstock/pull/50/files for example PRs) You will need to have uploaded to PyPI already, and update the version number and tarball hash of the PyPI uploaded tarball.
 
 **Merge into main branch**
-* After everything above is done, merge the release branch into the main branch to make it consistent.
+* After everything above is done, merge the release branch into the main branch to make it consistent. This step is needed only when there are urgent changes that are made directly into the release branch. The main branch does not have these needed changes. In all other circumstances, the merge PR shall show as empty so nothing needs to be merged.
 
 **Remove old onnx-weekly packages on TestPyPI**
 * Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://test.pypi.org/project/onnx-weekly/#history) on TestPyPI to save space.
 * Steps: Login and go [here](https://test.pypi.org/manage/project/onnx-weekly/releases/) -> Choose target package -> Options -> Delete.
+
+**Bump opset version for ai.onnx**
+* Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes. For example, this [demo PR](https://github.com/onnx/onnx/pull/4134/files).

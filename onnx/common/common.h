@@ -12,7 +12,7 @@
   do {                                                    \
     std::cerr << ONNX_NAMESPACE::MakeString(__VA_ARGS__); \
     abort();                                              \
-  } while(false)
+  } while (false)
 
 #define ONNX_THROW_EX(ex)                \
   do {                                   \

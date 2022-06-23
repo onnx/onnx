@@ -1,4 +1,3 @@
-
 import numpy as np  # type: ignore
 
 import onnx

@@ -19,6 +19,17 @@ static void Parse(T& parsedData, const char* input) {
   auto status = parser.Parse(parsedData);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+  // Extra checks for printer:
+  // Check we can convert data back to text form.
+  std::string text1 = ProtoToString(parsedData);
+  // Check that we can round-trip between the two representations.
+  // We cannot expect equality between text1 and input due to white-space and syntactic sugar,
+  // so, we convert it once more, and check for equality.
+  T temp;
+  status = OnnxParser::Parse(temp, text1.c_str());
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  std::string text2 = ProtoToString(temp);
+  EXPECT_EQ(text1, text2);
 }
 
 template <typename T>
@@ -34,6 +45,18 @@ static void CheckModel(const char* code) {
   checker::check_model(model);
 }
 
+TEST(ParserTest, EscapeStringLiteral) {
+  OnnxParser parser(R"(
+    "123\"56\\89"
+  )");
+
+  std::string s;
+  auto status = parser.ParserBase::Parse(s);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+  EXPECT_EQ(s, std::string("123\"56\\89"));
+}
+
 TEST(ParserTest, TypeTest) {
   TypeProto type;
 
@@ -41,6 +64,7 @@ TEST(ParserTest, TypeTest) {
   Parse(type, "float[N]");
   EXPECT_TRUE(type.has_tensor_type());
   int float_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_FLOAT);
+  int int32_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_INT32);
   EXPECT_EQ(type.tensor_type().elem_type(), float_type);
   EXPECT_TRUE(type.tensor_type().has_shape());
   EXPECT_EQ(type.tensor_type().shape().dim_size(), 1);
@@ -67,6 +91,37 @@ TEST(ParserTest, TypeTest) {
   Parse(type, "float[N,?,K]");
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_param());
   EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_value());
+
+  // sequence type:
+  Parse(type, "seq(float[])");
+  EXPECT_TRUE(type.has_sequence_type());
+  auto& elttype = type.sequence_type().elem_type();
+  EXPECT_TRUE(elttype.has_tensor_type());
+  EXPECT_EQ(elttype.tensor_type().elem_type(), float_type);
+  EXPECT_FALSE(elttype.tensor_type().has_shape());
+
+  // optional type:
+  Parse(type, "optional(float)");
+  EXPECT_TRUE(type.has_optional_type());
+  auto& optelttype = type.optional_type().elem_type();
+  EXPECT_TRUE(optelttype.has_tensor_type());
+  EXPECT_EQ(optelttype.tensor_type().elem_type(), float_type);
+  EXPECT_TRUE(optelttype.tensor_type().has_shape());
+
+  // optional type:
+  Parse(type, "sparse_tensor(float[1000])");
+  EXPECT_TRUE(type.has_sparse_tensor_type());
+  EXPECT_EQ(type.sparse_tensor_type().elem_type(), float_type);
+  EXPECT_EQ(type.sparse_tensor_type().shape().dim_size(), 1);
+
+  // map type:
+  Parse(type, "map(int32, float[N])");
+  EXPECT_TRUE(type.has_map_type());
+  EXPECT_EQ(type.map_type().key_type(), int32_type);
+  auto& valtype = type.map_type().value_type();
+  EXPECT_TRUE(valtype.has_tensor_type());
+  EXPECT_EQ(valtype.tensor_type().elem_type(), float_type);
+  EXPECT_EQ(valtype.tensor_type().shape().dim_size(), 1);
 }
 
 TEST(ParserTest, TensorProtoTest) {
@@ -88,6 +143,11 @@ TEST(ParserTest, TensorProtoTest) {
   Parse(tensorProto, "float[5] {1e1, 2.0e-1, 3.1E-1, 4E+1, 5.5e-10}");
 
   Parse(tensorProto, "string[2] { \"Hello\", \"World\" }");
+
+  // String literals with escape character
+  Parse(tensorProto, R"(
+    string[2] { "Use a \"quoted\" word", "Use a backslash \\ like this." }
+  )");
 }
 
 TEST(ParserTest, AttributeTest) {
@@ -109,6 +169,9 @@ TEST(ParserTest, AttributeTest) {
   Parse(attr, "x = [0.125, 0.625]");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS);
   EXPECT_EQ(attr.floats_size(), 2);
+
+  Parse(attr, "x = float[3] {2.1, 4.1, 6.1}");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_TENSOR);
 
   Parse(attr, "x = \"astring\"");
   EXPECT_EQ(attr.name(), "x");

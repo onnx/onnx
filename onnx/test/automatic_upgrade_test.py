@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 import onnx
 from onnx import helper, TensorProto, shape_inference, version_converter, ValueInfoProto
-from typing import Text, List, Dict, Any, Union, Callable, Optional, cast
+from typing import List, Dict, Any, Union, Callable, Optional, cast
 import string
 import numpy as np  # type: ignore
 import unittest
+
+import time
 
 #####################################################################################
 # Every test creates a model containing a single operator from the lowest possible
@@ -20,14 +22,14 @@ class TestAutomaticUpgrade(unittest.TestCase):
 
     def _test_op_upgrade(
         self,
-        op: Text,
+        op: str,
         from_opset: int,
-        input_shapes: List[Union[List[Optional[int]], Text]] = [[3, 4, 5]],
+        input_shapes: List[Union[List[Optional[int]], str]] = [[3, 4, 5]],
         output_shapes: List[List[Optional[int]]] = [[3, 4, 5]],
         input_types: Union[List[Any], None] = None,
         output_types: Union[List[Any], None] = None,
         initializer: List[Any] = [],
-        attrs: Dict[Text, Any] = {},
+        attrs: Dict[str, Any] = {},
         seq_inputs: List[int] = [],
         seq_outputs: List[int] = [],
         optional_inputs: List[int] = [],
@@ -1059,6 +1061,119 @@ class TestAutomaticUpgrade(unittest.TestCase):
             input_types=[TensorProto.FLOAT, TensorProto.FLOAT16],
             output_types=[TensorProto.FLOAT16])
 
+    def test_LayerNormalization(self) -> None:
+        self._test_op_upgrade('LayerNormalization', 17,
+                              [[2, 3, 4, 5], [4, 5], [4, 5]],
+                              [[2, 3, 4, 5]],
+                              input_types=[TensorProto.FLOAT,
+                                           TensorProto.FLOAT, TensorProto.FLOAT],
+                              output_types=[TensorProto.FLOAT],
+                              attrs={'axis': 2})
+
+    def _test_window_function(self, window_function_name: str) -> None:
+        size = helper.make_tensor('a', TensorProto.INT64, dims=[], vals=np.array([10]))
+        self._test_op_upgrade(window_function_name,
+                              17,
+                              [[]],
+                              [[10]],
+                              [TensorProto.INT64],
+                              initializer=[size])
+
+    def test_BlackmanWindow(self) -> None:
+        self._test_window_function('BlackmanWindow')
+
+    def test_HannWindow(self) -> None:
+        self._test_window_function('HannWindow')
+
+    def test_HammingWindow(self) -> None:
+        self._test_window_function('HammingWindow')
+
+    def test_DFT(self) -> None:
+        self._test_op_upgrade('DFT', 17, [[2, 16, 1], []], [[2, 16, 2]])
+        self._test_op_upgrade('DFT', 17, [[2, 16, 2], []], [[2, 16, 2]])
+        self._test_op_upgrade('DFT', 17, [[2, 16, 1], []], [[2, 9, 2]], attrs={'onesided': 1})
+        self._test_op_upgrade('DFT', 17, [[2, 16, 2], []], [[2, 9, 2]], attrs={'onesided': 1})
+        self._test_op_upgrade('DFT', 17, [[2, 16, 1], []], [[2, 16, 2]], attrs={'inverse': 1})
+        self._test_op_upgrade('DFT', 17, [[2, 16, 2], []], [[2, 16, 2]], attrs={'inverse': 1})
+
+    def _test_short_time_fourier_transform(self, operator_name: str) -> None:
+        # Real
+        signal = helper.make_tensor('a', TensorProto.FLOAT, dims=[2, 64], vals=np.random.rand(2, 64).astype(np.float32))
+        frame_step = helper.make_tensor('b', TensorProto.INT64, dims=[1], vals=np.array([8]))
+        window = helper.make_tensor('c', TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32))
+        self._test_op_upgrade(operator_name,
+                              17,
+                              [[2, 64], [1], [16]],
+                              [[2, 7, 16, 2]],
+                              [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT, TensorProto.INT64],
+                              initializer=[signal, frame_step, window])
+
+        # Real Onesided
+        signal = helper.make_tensor('a', TensorProto.FLOAT, dims=[2, 64], vals=np.random.rand(2, 64).astype(np.float32))
+        frame_step = helper.make_tensor('b', TensorProto.INT64, dims=[1], vals=np.array([8]))
+        window = helper.make_tensor('c', TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32))
+        self._test_op_upgrade(operator_name,
+                              17,
+                              [[2, 64], [1], [16]],
+                              [[2, 7, 9, 2]],
+                              [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT, TensorProto.INT64],
+                              attrs={'onesided': 1},
+                              initializer=[signal, frame_step, window])
+
+        # Complex
+        signal = helper.make_tensor('a', TensorProto.FLOAT, dims=[2, 64, 2], vals=np.random.rand(2, 64, 2).astype(np.float32))
+        frame_step = helper.make_tensor('b', TensorProto.INT64, dims=[1], vals=np.array([8]))
+        window = helper.make_tensor('c', TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32))
+        self._test_op_upgrade(operator_name,
+                              17,
+                              [[2, 64, 2], [1], [16]],
+                              [[2, 7, 16, 2]],
+                              [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT, TensorProto.INT64],
+                              initializer=[signal, frame_step, window])
+
+        # Complex Onesided
+        signal = helper.make_tensor('a', TensorProto.FLOAT, dims=[2, 64, 2], vals=np.random.rand(2, 64, 2).astype(np.float32))
+        frame_step = helper.make_tensor('b', TensorProto.INT64, dims=[1], vals=np.array([8]))
+        window = helper.make_tensor('c', TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32))
+        frame_length = helper.make_tensor('e', TensorProto.INT64, dims=[1], vals=np.array([16]))
+        self._test_op_upgrade(operator_name,
+                              17,
+                              [[2, 64, 2], [1], [16]],
+                              [[2, 7, 9, 2]],
+                              [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT, TensorProto.INT64],
+                              attrs={'onesided': 1},
+                              initializer=[signal, frame_step, window, frame_length])
+
+    def test_STFT(self) -> None:
+        self._test_short_time_fourier_transform('STFT')
+
+    def test_MelWeightMatrix(self) -> None:
+        num_mel_bins = helper.make_tensor('a', TensorProto.INT64, dims=[], vals=np.array([10]))
+        dft_length = helper.make_tensor('b', TensorProto.INT64, dims=[], vals=np.array([64]))
+        sample_rate = helper.make_tensor('c', TensorProto.INT64, dims=[], vals=np.array([0]))
+        lower_edge_hertz = helper.make_tensor('d', TensorProto.FLOAT, dims=[], vals=np.array([0]))
+        upper_edge_hertz = helper.make_tensor('e', TensorProto.FLOAT, dims=[], vals=np.array([1]))
+
+        self._test_op_upgrade('MelWeightMatrix',
+                              17,
+                              [[], [], [], [], []],
+                              [[33, 10]],
+                              [TensorProto.INT64, TensorProto.INT64, TensorProto.INT64, TensorProto.FLOAT, TensorProto.FLOAT],
+                              initializer=[num_mel_bins, dft_length, sample_rate, lower_edge_hertz, upper_edge_hertz])
+
+        num_mel_bins = helper.make_tensor('a', TensorProto.INT64, dims=[], vals=np.array([20]))
+        dft_length = helper.make_tensor('b', TensorProto.INT64, dims=[], vals=np.array([31]))
+        sample_rate = helper.make_tensor('c', TensorProto.INT64, dims=[], vals=np.array([0]))
+        lower_edge_hertz = helper.make_tensor('d', TensorProto.FLOAT, dims=[], vals=np.array([0]))
+        upper_edge_hertz = helper.make_tensor('e', TensorProto.FLOAT, dims=[], vals=np.array([1]))
+
+        self._test_op_upgrade('MelWeightMatrix',
+                              17,
+                              [[], [], [], [], []],
+                              [[16, 20]],
+                              [TensorProto.INT64, TensorProto.INT64, TensorProto.INT64, TensorProto.FLOAT, TensorProto.FLOAT],
+                              initializer=[num_mel_bins, dft_length, sample_rate, lower_edge_hertz, upper_edge_hertz])
+
     def test_ops_tested(self) -> None:
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
@@ -1072,14 +1187,16 @@ class TestAutomaticUpgrade(unittest.TestCase):
             'SequenceErase',
             'SequenceInsert',
             'SequenceLength',
+            'SequenceMap',
             'SplitToSequence',
             'Optional',
             'OptionalGetElement',
-            "OptionalHasElement"
+            'OptionalHasElement',
         ]
         all_op_names = [op for op in all_op_names if op not in excluded_ops]
 
         untested_ops = set(all_op_names) - set(tested_ops)
+        print(untested_ops)
         assert len(untested_ops) == 0
 
 
