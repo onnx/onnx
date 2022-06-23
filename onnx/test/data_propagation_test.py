@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from onnx import TensorProto, ONNX_ML
-from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
+from onnx import TensorProto
 from onnx.helper import make_node, make_tensor, make_tensor_value_info
 from shape_inference_test import TestShapeInferenceHelper  # type: ignore
 import unittest
-import numpy as np  # type: ignore
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
