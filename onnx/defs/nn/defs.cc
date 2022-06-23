@@ -2487,7 +2487,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "L is the target sequence length,"
             "S is the source sequence length.",
             "T",
-            OpSchema::Single,
+            OpSchema::Optional,
             true,
             1,
             OpSchema::NonDifferentiable)
