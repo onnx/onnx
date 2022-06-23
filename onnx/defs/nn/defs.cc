@@ -2392,4 +2392,144 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
+static const char* ScaledDotProductAttention_ver11_doc = R"DOC(
+      Allows the model to jointly attend to information
+      from different representation subspaces.
+      See reference: Attention Is All You Need.
+      The computation can be described by the following equations.
+      ```
+      ScaledDotProductAttention(query, key, value) = matmul(softmax(matmul(query, key.transpose)/scale), value) 
+      ```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScaledDotProductAttention,
+    11,
+    OpSchema()
+        .SetDoc(ScaledDotProductAttention_ver11_doc)
+        .Attr("dropout", "the probability of dropout operator, Default is 0.0", AttributeProto::FLOAT, 0.0f)
+        .Attr(
+            "training_mode",
+            "If set to true, it indicates ScaledDotProductAttention is being used for training.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            0,
+            "query",
+            "Input query tensor of the scaleddotproductattention;"
+            "dimensions are (N, L, H), "
+            "where L is the target sequence length."
+            "N is the batch size, "
+            "H is the head dimension.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "key",
+            "Input key tensor of the scaleddotproductattention;"
+            "dimensions are (N, S, H),"
+            "where S is the source sequence length,"
+            "N is the batch size,"
+            "H is the head dimension.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "value",
+            "Input value tensor of the scaleddotproductattention"
+            "dimensions are (N, S, H),"
+            "where S is the source sequence length,"
+            "N is the batch size,"
+            "H is the head dimension.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            3,
+            "attn_mask",
+            "Attn_mask ensures that position is allowed to attend the unmasked position;"
+            "dimensions are (N, L, S),"
+            "where N is the batch size,"
+            "L is the target sequence length,"
+            "S is the source sequence length.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Operator output result,"
+            "dimensions are (N, L, H),"
+            "where N is the batch size,"
+            "L is the target sequence length,"
+            "H is the head dimension.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            1,
+            "attn",
+            "Operator output mask,"
+            "dimensions are (N, L, S),"
+            "where N is the batch size,"
+            "L is the target sequence length,"
+            "S is the source sequence length.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output type to float tensors")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (ctx.getNumInputs() < 3) {
+            fail_shape_inference("ScaledDotProductAttention op must have at lease three inputs.");
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          checkInputRank(ctx, 0, 3);
+          checkInputRank(ctx, 1, 3);
+          checkInputRank(ctx, 2, 3);
+
+          Dim batch, tgt_len, src_len, head_dim;
+          unifyInputDim(ctx, 0, 0, batch);
+          unifyInputDim(ctx, 0, 1, tgt_len);
+          unifyInputDim(ctx, 0, 2, head_dim);
+          unifyInputDim(ctx, 1, 0, batch);
+          unifyInputDim(ctx, 1, 1, src_len);
+          unifyInputDim(ctx, 1, 2, head_dim);
+          unifyInputDim(ctx, 2, 0, batch);
+          unifyInputDim(ctx, 2, 1, src_len);
+          unifyInputDim(ctx, 2, 2, head_dim);
+
+          if (ctx.getNumInputs() == 4) {
+            checkInputRank(ctx, 3, 3);
+            unifyInputDim(ctx, 3, 0, batch);
+            unifyInputDim(ctx, 3, 1, tgt_len);
+            unifyInputDim(ctx, 3, 2, src_len);
+          }
+
+          auto query_shape = getInputShape(ctx, 0);
+          auto output_shape = getOutputShape(ctx, 0);
+
+          if (query_shape == output_shape) {
+            fail_shape_inference("ScaledDotProductAttention op must make sure query_shape be equal to output_shape.");
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
