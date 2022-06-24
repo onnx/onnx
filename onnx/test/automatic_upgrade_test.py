@@ -1336,6 +1336,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             # Sequence-based and Optional-based ops disabled because
             # the version converter doesn't play nicely with sequences
             'ConcatFromSequence',
+            'ScaledDotProductAttention',
             'SequenceAt',
             'SequenceConstruct',
             'SequenceEmpty',
