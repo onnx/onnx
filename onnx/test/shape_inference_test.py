@@ -4685,7 +4685,7 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
     # type: ignore
-    def prepare_input_initializer_tensors(self, initializer_shape, input_shape) -> ModelProto:
+    def prepare_input_initializer_tensors(self, initializer_shape: Any, input_shape: Any) -> Any:
         nodes = [make_node('Add', ['x', 'y'], 'z')]
         if initializer_shape is None:
             initializer = []  # type: ignore
