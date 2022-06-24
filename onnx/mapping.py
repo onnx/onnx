@@ -27,7 +27,8 @@ TENSOR_TYPE_TO_NP_TYPE = {
 # Numpy float32 array is only reversed to TensorProto.FLOAT
 NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16}
 
-# This map indicates what storage-type is used in the protobuf (serialized) representation for TensorProto
+# This is only used to get keys into STORAGE_TENSOR_TYPE_TO_FIELD.
+# TODO(https://github.com/onnx/onnx/issues/4261): Remove this.
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.FLOAT): int(TensorProto.FLOAT),
     int(TensorProto.UINT8): int(TensorProto.INT32),
