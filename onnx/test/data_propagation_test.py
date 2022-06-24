@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from onnx import TensorProto
 from onnx.helper import make_node, make_tensor, make_tensor_value_info
-from shape_inference_test import TestShapeInferenceHelper  # type: ignore
+from onnx.test.shape_inference_test import TestShapeInferenceHelper
 import unittest
 
 
