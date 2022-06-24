@@ -4685,8 +4685,7 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
     # type: ignore
-    def prepare_input_initializer_tensors(self, initializer_shape,
-                                          input_shape) -> None:
+    def prepare_input_initializer_tensors(self, initializer_shape, input_shape) -> ModelProto:
         nodes = [make_node('Add', ['x', 'y'], 'z')]
         if initializer_shape is None:
             initializer = []  # type: ignore
@@ -4722,8 +4721,7 @@ class TestShapeInference(unittest.TestCase):
         # This is for testing IR>=4: some tensors can only exist in initializer and not in input
         # So shape_inference should make use of initializer shapes
         initializer_shape = (8, 7)
-        original_model = self.prepare_input_initializer_tensors(
-            initializer_shape, None)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, None)
         inferred_model = onnx.shape_inference.infer_shapes(original_model,
                                                            strict_mode=True)
 
@@ -4739,8 +4737,7 @@ class TestShapeInference(unittest.TestCase):
         # Use (None, None) as empty input
         initializer_shape = (8, 7)
         input_shape = (None, None)
-        original_model = self.prepare_input_initializer_tensors(
-            initializer_shape, input_shape)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
         original_model.ir_version = 3  # test ir_version < 4
 
         inferred_model = onnx.shape_inference.infer_shapes(original_model,
@@ -4755,8 +4752,7 @@ class TestShapeInference(unittest.TestCase):
         # Catch error if initializer and input mismatch
         initializer_shape = (8, 7)
         input_shape = (4, 3)
-        original_model = self.prepare_input_initializer_tensors(
-            initializer_shape, input_shape)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
         # Inferred shape and existing shape differ in dimension 0
         self.assertRaises(onnx.shape_inference.InferenceError,
                           onnx.shape_inference.infer_shapes,
@@ -4766,24 +4762,21 @@ class TestShapeInference(unittest.TestCase):
     def test_infer_initializer_input_consistency_all_none(self) -> None:
         initializer_shape = (8, 7)
         input_shape = (None, None)  # accepatble
-        original_model = self.prepare_input_initializer_tensors(
-            initializer_shape, input_shape)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
 
         onnx.shape_inference.infer_shapes(original_model, strict_mode=True)
 
     def test_infer_initializer_input_consistency_single_none(self) -> None:
         initializer_shape = (8, 7)
         input_shape = (None, 7)  # accepatble
-        original_model = self.prepare_input_initializer_tensors(
-            initializer_shape, input_shape)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
 
         onnx.shape_inference.infer_shapes(original_model, strict_mode=True)
 
     def test_infer_initializer_input_consistency_differnt_rank(self) -> None:
         initializer_shape = (8, 7, 9)
         input_shape = (None, 7)  # accepatble
-        original_model = self.prepare_input_initializer_tensors(
-            initializer_shape, input_shape)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
         # Inferred shape and existing shape differ in rank: (3) vs (2)
         self.assertRaises(onnx.shape_inference.InferenceError,
                           onnx.shape_inference.infer_shapes,
@@ -4796,8 +4789,7 @@ class TestShapeInference(unittest.TestCase):
         # Serialized model
         initializer_shape = (8, 7)
         input_shape = (None, None)  # accepatble
-        original_model = self.prepare_input_initializer_tensors(
-            initializer_shape, input_shape)
+        original_model = self.prepare_input_initializer_tensors(initializer_shape, input_shape)
 
         onnx.shape_inference.infer_shapes(original_model.SerializeToString(),
                                           strict_mode=True)
