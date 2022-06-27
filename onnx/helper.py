@@ -12,7 +12,7 @@ import numpy as np  # type: ignore
 from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
     TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
     TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto, \
-    FunctionProto
+    FunctionProto, LibProto
 from onnx import defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
@@ -220,6 +220,27 @@ def make_function(
     if doc_string:
         f.doc_string = doc_string
     return f
+
+
+def make_lib_proto(functions, **kwargs: Any) -> ModelProto:
+    """Construct a ModelProto
+
+    Arguments:
+        graph (GraphProto): *make_graph* returns
+        **kwargs: any attribute to add to the returned instance
+    Returns:
+        ModelProto
+    """
+    lib_proto = LibProto()
+    # Touch model.ir_version so it is stored as the version from which it is
+    # generated.
+    lib_proto.ir_version = IR_VERSION
+    lib_proto.functions.extend(functions)
+
+    for k, v in kwargs.items():
+        # TODO: Does this work with repeated fields?
+        setattr(lib_proto, k, v)
+    return lib_proto
 
 
 def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
