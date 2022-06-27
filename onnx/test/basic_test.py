@@ -91,8 +91,7 @@ class TestBasicFunctions(unittest.TestCase):
             ModelProto
         except Exception as e:
             self.fail(
-                'Did not find proper onnx protobufs. Error is: {}'
-                .format(e))
+                f'Did not find proper onnx protobufs. Error is: {e}')
 
     def test_version_exists(self) -> None:
         model = ModelProto()

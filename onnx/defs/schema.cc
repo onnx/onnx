@@ -186,7 +186,10 @@ void OpSchema::Verify(const NodeProto& node) const {
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
     if (in_idx >= static_cast<int>(inputs_.size())) {
-      if (inputs_.empty() || Variadic != inputs_.back().GetOption()) {
+      if (!inputs_.empty() && Variadic == inputs_.back().GetOption()) {
+        // The last input formal parameter should be variadic.
+        break;
+      } else {
         fail_check(
             "Node (",
             node.name(),
@@ -197,22 +200,17 @@ void OpSchema::Verify(const NodeProto& node) const {
             ") in op definition.");
       }
     }
-    if ((in_idx >= static_cast<int>(inputs_.size()) && Variadic == inputs_.back().GetOption()) ||
-      Variadic == inputs_[in_idx].GetOption()) {
-      do {
-        if (node.input(in_idx).empty()) {
-          fail_check(
-              "Node (", node.name(), ")'s input ", in_idx, " is marked Variadic but has an empty string in the graph");
-        }
-      } while (++in_idx < node.input_size());
-    } else if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
+    if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
       fail_check("Node (", node.name(), ")'s input ", in_idx, " is marked single but has an empty string in the graph");
     }
   }
 
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
     if (out_idx >= static_cast<int>(outputs_.size())) {
-      if (outputs_.empty() || Variadic != outputs_.back().GetOption()) {
+      if (!outputs_.empty() && Variadic == outputs_.back().GetOption()) {
+        // The last output formal parameter should be variadic.
+        break;
+      } else {
         fail_check(
             "Node (",
             node.name(),
@@ -223,15 +221,8 @@ void OpSchema::Verify(const NodeProto& node) const {
             ") in op definition.");
       }
     }
-    if ((out_idx >= static_cast<int>(outputs_.size()) && Variadic == outputs_.back().GetOption()) ||
-      Variadic == outputs_[out_idx].GetOption()) {
-      do {
-        if (node.output(out_idx).empty()) {
-          fail_check(
-              "Node (", node.name(), ")'s output ", out_idx, " is marked Variadic but has an empty string in the graph");
-        }
-      } while (++out_idx < node.output_size());
-    } else if (node.output(out_idx).empty() && (Single == outputs_[out_idx].GetOption())) {
+
+    if (node.output(out_idx).empty() && (Single == outputs_[out_idx].GetOption())) {
       fail_check(
           "Node (", node.name(), ")'s output ", out_idx, " is marked single but has an empty string in the graph");
     }

@@ -22,13 +22,13 @@ def main():
 
                 except Exception as e:
                     failed_count += 1
-                    print("{} failed: {}".format(test_dir_name, e))
+                    print(f"{test_dir_name} failed: {e}")
                 count += 1
     print('-----------------------------')
     if failed_count == 0:
-        print("{} backend models passed.".format(count))
+        print(f"{count} backend models passed.")
     else:
-        print("{} failed in {} backend models.".format(failed_count, count))
+        print(f"{failed_count} failed in {count} backend models.")
         sys.exit(1)
 
 

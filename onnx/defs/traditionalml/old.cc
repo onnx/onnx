@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include "onnx/defs/schema.h"
 
 #ifdef ONNX_ML
@@ -35,11 +34,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(string)", "tensor(int64)"},
             "The output type will be a tensor of strings or integers, and will have the same shape as the input.")
-        .Attr(
-            "classes_strings",
-            "A list of labels.",
-            AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+        .Attr("classes_strings", "A list of labels.", AttributeProto::STRINGS, OPTIONAL_VALUE)
         .Attr(
             "default_int64",
             "An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.",
@@ -79,37 +74,22 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .SetDoc(TreeEnsembleClassifier_ver1_doc)
         .Input(0, "X", "Input of shape [N,F]", "T1")
         .Output(0, "Y", "N, Top class for each point", "T2")
-        .Output(
-            1,
-            "Z",
-            "The class score for each class, for each point, a tensor of shape [N,E].",
-            "tensor(float)")
+        .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
         .TypeConstraint(
             "T1",
-            {"tensor(float)",
-             "tensor(double)",
-             "tensor(int64)",
-             "tensor(int32)"},
+            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
             "The input type must be a tensor of a numeric type.")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.")
-        .Attr(
-            "nodes_treeids",
-            "Tree id for each node.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
+            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used.")
+        .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_nodeids",
             "Node id for each node. Ids may restart at zero for each tree, but it not required to.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .Attr(
-            "nodes_featureids",
-            "Feature id for each node.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
+        .Attr("nodes_featureids", "Feature id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_values",
             "Thresholds to do the splitting on for each node.",
@@ -125,41 +105,17 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
-        .Attr(
-            "nodes_truenodeids",
-            "Child node if expression is true.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "nodes_falsenodeids",
-            "Child node if expression is false.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
+        .Attr("nodes_truenodeids", "Child node if expression is true.", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Attr("nodes_falsenodeids", "Child node if expression is false.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_missing_value_tracks_true",
             "For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .Attr(
-            "class_treeids",
-            "The id of the tree that this node is in.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "class_nodeids",
-            "node id that this weight is for.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "class_ids",
-            "The index of the class list that each weight is for.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "class_weights",
-            "The weight for the class in class_id.",
-            AttributeProto::FLOATS,
-            OPTIONAL_VALUE)
+        .Attr("class_treeids", "The id of the tree that this node is in.", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Attr("class_nodeids", "node id that this weight is for.", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Attr("class_ids", "The index of the class list that each weight is for.", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Attr("class_weights", "The weight for the class in class_id.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr(
             "classlabels_strings",
             "Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be defined.",
@@ -182,8 +138,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           std::vector<std::string> label_strs;
-          auto result =
-              getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
+          auto result = getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
           bool using_strings = (result && !label_strs.empty());
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           if (using_strings) {
@@ -215,26 +170,15 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)",
-             "tensor(double)",
-             "tensor(int64)",
-             "tensor(int32)"},
+            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
             "The input type must be a tensor of a numeric type.")
-        .Attr(
-            "nodes_treeids",
-            "Tree id for each node.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
+        .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_nodeids",
             "Node id for each node. Node ids must restart at zero for each tree and increase sequentially.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .Attr(
-            "nodes_featureids",
-            "Feature id for each node.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
+        .Attr("nodes_featureids", "Feature id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_values",
             "Thresholds to do the splitting on for each node.",
@@ -250,46 +194,18 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
-        .Attr(
-            "nodes_truenodeids",
-            "Child node if expression is true",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "nodes_falsenodeids",
-            "Child node if expression is false",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
+        .Attr("nodes_truenodeids", "Child node if expression is true", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Attr("nodes_falsenodeids", "Child node if expression is false", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_missing_value_tracks_true",
             "For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .Attr(
-            "target_treeids",
-            "The id of the tree that each node is in.",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "target_nodeids",
-            "The node id of each weight",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "target_ids",
-            "The index of the target that each weight is for",
-            AttributeProto::INTS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "target_weights",
-            "The weight for each target",
-            AttributeProto::FLOATS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "n_targets",
-            "The total number of targets.",
-            AttributeProto::INT,
-            OPTIONAL_VALUE)
+        .Attr("target_treeids", "The id of the tree that each node is in.", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Attr("target_nodeids", "The node id of each weight", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Attr("target_ids", "The index of the target that each weight is for", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Attr("target_weights", "The weight for each target", AttributeProto::FLOATS, OPTIONAL_VALUE)
+        .Attr("n_targets", "The total number of targets.", AttributeProto::INT, OPTIONAL_VALUE)
         .Attr(
             "post_transform",
             "Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'",
