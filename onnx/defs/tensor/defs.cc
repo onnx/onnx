@@ -3348,7 +3348,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 3)) { //'axes' input
             auto axes_initializer = ctx.getInputData(3);
             if (axes_initializer == nullptr)
-              return;  // can't do shape inference then
+              return; // can't do shape inference then
 
             axes = ParseData<int64_t>(axes_initializer);
 
