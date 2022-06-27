@@ -3347,17 +3347,27 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> axes;
           if (hasInputShape(ctx, 3)) { //'axes' input
             auto axes_initializer = ctx.getInputData(3);
-            if (axes_initializer != nullptr) // is initializer
-              axes = ParseData<int64_t>(axes_initializer);
+            if (axes_initializer == nullptr)
+              return;  // can't do shape inference then
+
+            axes = ParseData<int64_t>(axes_initializer);
+
+            std::vector<bool> tmp(input_rank, false);
+            for (auto axis : axes) {
+              if (tmp[axis]) {
+                fail_shape_inference("Repeated axis: ", axis);
+              }
+              tmp[axis] = true;
+            }
           } else {
             axes.resize(input_rank);
             std::iota(axes.begin(), axes.end(), 0);
           }
 
-          if (static_cast<int>(axes.size()) > input_rank) {
+          int num_axes = axes.size();
+          if (num_axes > input_rank) {
             fail_shape_inference("Too many axes provided");
           }
-          int num_axes = axes.size();
 
           auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -3564,6 +3574,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> axes;
           if (axes_attr) {
             axes = RetrieveValues<int64_t>(*axes_attr);
+
+            std::vector<bool> tmp(input_rank, false);
+            for (auto axis : axes) {
+              if (tmp[axis]) {
+                fail_shape_inference("Repeated axis: ", axis);
+              }
+              tmp[axis] = true;
+            }
           } else {
             axes.resize(input_rank);
             std::iota(axes.begin(), axes.end(), 0);
