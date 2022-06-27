@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from onnx import TensorProto
 from onnx.helper import make_node, make_tensor, make_tensor_value_info
-from onnx.test.shape_inference_test import TestShapeInferenceHelper
+# TODO: remove the following ignore after mypy upgrade in ONNX
+from shape_inference_test import TestShapeInferenceHelper  # type: ignore
 import unittest
 
 
