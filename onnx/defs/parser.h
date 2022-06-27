@@ -160,6 +160,15 @@ class KeyWordMap {
     return KeyWord::NONE;
   }
 
+  static const std::string& ToString(KeyWord kw) {
+    static std::string undefined("undefined");
+    for (const auto& pair : Instance()) {
+      if (pair.second == kw)
+        return pair.first;
+    }
+    return undefined;
+  }
+
  private:
   std::unordered_map<std::string, KeyWord> map_;
 };
@@ -263,49 +272,7 @@ class ParserBase {
     std::string value;
   };
 
-  Status Parse(Literal& result) {
-    bool decimal_point = false;
-    auto nextch = NextChar();
-    auto from = next_;
-    if (nextch == '"') {
-      ++next_;
-      // TODO: Handle escape characters
-      while ((next_ < end_) && (*next_ != '"')) {
-        ++next_;
-      }
-      ++next_;
-      result.type = LiteralType::STRING_LITERAL;
-      result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
-    } else if ((isdigit(nextch) || (nextch == '-'))) {
-      ++next_;
-
-      while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
-        if (*next_ == '.') {
-          if (decimal_point)
-            break; // Only one decimal point allowed in numeric literal
-          decimal_point = true;
-        }
-        ++next_;
-      }
-
-      if (next_ == from)
-        return ParseError("Value expected but not found.");
-
-      // Optional exponent syntax: (e|E)(+|-)?[0-9]+
-      if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
-        decimal_point = true; // treat as float-literal
-        ++next_;
-        if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
-          ++next_;
-        while ((next_ < end_) && (isdigit(*next_)))
-          ++next_;
-      }
-
-      result.value = std::string(from, next_ - from);
-      result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
-    }
-    return Status::OK();
-  }
+  Status Parse(Literal& result);
 
   Status Parse(int64_t& val) {
     Literal literal;

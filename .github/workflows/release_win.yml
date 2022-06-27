@@ -109,6 +109,14 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
+    - name: Verify ONNX with the minimum supported numpy  (from requirements.txt)
+      if: ${{ always() }}
+      run: |
+        cd onnx
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest
+
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |

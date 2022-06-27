@@ -128,11 +128,11 @@ class TestHelperAttributeFunctions(unittest.TestCase):
                                         dims=[len(sparse_values)],
                                         vals=np.array(sparse_values).astype(np.float32), raw=False)
 
-        linear_indicies = [2, 3, 5]
-        indicies_tensor = helper.make_tensor(name='indicies', data_type=TensorProto.INT64,
-                                        dims=[len(linear_indicies)],
-                                        vals=np.array(linear_indicies).astype(np.int64), raw=False)
-        sparse_tensor = helper.make_sparse_tensor(values_tensor, indicies_tensor, dense_shape)
+        linear_indices = [2, 3, 5]
+        indices_tensor = helper.make_tensor(name='indices', data_type=TensorProto.INT64,
+                                        dims=[len(linear_indices)],
+                                        vals=np.array(linear_indices).astype(np.int64), raw=False)
+        sparse_tensor = helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
 
         attr = helper.make_attribute("sparse_attr", sparse_tensor)
         self.assertEqual(attr.name, "sparse_attr")
@@ -146,11 +146,11 @@ class TestHelperAttributeFunctions(unittest.TestCase):
                                         dims=[len(sparse_values)],
                                         vals=np.array(sparse_values).astype(np.float32), raw=False)
 
-        linear_indicies = [2, 3, 5]
-        indicies_tensor = helper.make_tensor(name='indicies', data_type=TensorProto.INT64,
-                                        dims=[len(linear_indicies)],
-                                        vals=np.array(linear_indicies).astype(np.int64), raw=False)
-        sparse_tensor = helper.make_sparse_tensor(values_tensor, indicies_tensor, dense_shape)
+        linear_indices = [2, 3, 5]
+        indices_tensor = helper.make_tensor(name='indices', data_type=TensorProto.INT64,
+                                        dims=[len(linear_indices)],
+                                        vals=np.array(linear_indices).astype(np.int64), raw=False)
+        sparse_tensor = helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
 
         repeated_sparse = [sparse_tensor, sparse_tensor]
         attr = helper.make_attribute("sparse_attrs", repeated_sparse)
@@ -392,6 +392,28 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(string_list, list(tensor.string_data))
 
+    def test_make_int8_tensor(self) -> None:
+        np_array = np.random.randn(2, 3).astype(np.int8)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.INT8,
+            dims=(2, 3),
+            vals=np_array
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+        # use raw_data field to store the data
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.INT8,
+            dims=(2, 3),
+            vals=np_array.tobytes(),
+            raw=True,
+        )
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
     def test_make_float16_tensor(self) -> None:
         np_array = np.random.randn(2, 3).astype(np.float16)
 
@@ -404,7 +426,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         self.assertEqual(tensor.name, 'test')
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
-    def test_make_float16_tensor_with_raw(self) -> None:
+    def test_make_float16_tensor_raw(self) -> None:
         np_array = np.random.randn(2, 3).astype(np.float16)
 
         tensor = helper.make_tensor(
@@ -443,7 +465,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         self.assertEqual(tensor.name, 'test')
         np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
-    def test_make_bfloat16_tensor_with_raw(self) -> None:
+    def test_make_bfloat16_tensor_raw(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
         np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]],
             dtype=np.float32)

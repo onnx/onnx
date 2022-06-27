@@ -5,14 +5,14 @@ from __future__ import annotations
 from onnx import checker, helper, numpy_helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
 from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
 from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
-from typing import Sequence, Union, Tuple, Type, List, Any, Optional
+from typing import Sequence, Union, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
-import os
 import numpy as np  # type: ignore
 
 
-class TestShapeInference(unittest.TestCase):
+class TestShapeInferenceHelper(unittest.TestCase):
+
     def _make_graph(self,
                     seed_values: Sequence[Union[str, Tuple[str, TensorProto.DataType, Any]]],
                     nodes: List[NodeProto],
@@ -91,6 +91,9 @@ class TestShapeInference(unittest.TestCase):
         else:
             raise NotImplementedError(
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type))
+
+
+class TestShapeInference(TestShapeInferenceHelper):
 
     def test_empty_graph(self) -> None:
         graph = self._make_graph(
@@ -368,18 +371,6 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (3, 4))])
-
-    def test_expand_symbolic_input(self) -> None:
-        graph = self._make_graph(
-            [('x', TensorProto.INT32, (3, 1, 2)),
-             ('y', TensorProto.INT32, (1, 4, 2))],
-            [make_node("Shape", ['y'], ['shape']),
-             make_node("Expand", ['x', 'shape'], ['z'])],
-            [])
-        self._assert_inferred(graph, [
-            make_tensor_value_info('shape', TensorProto.INT64, (3,)),
-            make_tensor_value_info('z', TensorProto.INT32, (3, 4, 2))],
-            data_prop=True)
 
     def test_expand_dynamic_shape(self) -> None:
         graph = self._make_graph(
@@ -2259,16 +2250,6 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.UINT8, (None, None, None))])  # type: ignore
-
-    def test_constantofshape_with_symbolic_shape(self) -> None:
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 5))],
-            [make_node("Shape", ['x'], ['shape']),
-             make_node("ConstantOfShape", ['shape'], ['y'], value=make_tensor('value', TensorProto.INT32, (1, ), (2, )))],
-            [])
-        self._assert_inferred(graph,
-            [make_tensor_value_info('shape', TensorProto.INT64, (3,)),
-             make_tensor_value_info('y', TensorProto.INT32, (3, 4, 5))], data_prop=True)  # type: ignore
 
     def test_constantofshape_without_input_shape_scalar(self) -> None:
         graph = self._make_graph([('shape', TensorProto.INT64, (0, ))],
@@ -4202,6 +4183,15 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('shape', TensorProto.INT64, ()),
              make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
 
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (), (10,))),
+             make_node("HammingWindow", ['shape'], ['y'], periodic=0)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, ()),
+             make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
+
     def test_hannwindow(self):  # type: () -> None
         graph = self._make_graph([],
             [make_node("Constant", [], ['shape'],
@@ -4212,11 +4202,29 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('shape', TensorProto.INT64, ()),
              make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
 
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (), (10,))),
+             make_node("HannWindow", ['shape'], ['y'], periodic=0)],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, ()),
+             make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
+
     def test_blackmanwindow(self):  # type: () -> None
         graph = self._make_graph([],
             [make_node("Constant", [], ['shape'],
                        value=make_tensor('shape', TensorProto.INT64, (), (10,))),
              make_node("BlackmanWindow", ['shape'], ['y'])],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, ()),
+             make_tensor_value_info('y', TensorProto.FLOAT, (10,))])  # type: ignore
+
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (), (10,))),
+             make_node("BlackmanWindow", ['shape'], ['y'], periodic=0)],
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('shape', TensorProto.INT64, ()),
