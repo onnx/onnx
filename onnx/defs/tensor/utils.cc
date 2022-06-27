@@ -156,6 +156,14 @@ void resizeShapeInference(InferenceContext& ctx) {
               axes.size(),
               ").");
         }
+
+        std::vector<bool> tmp(rank_x, false);
+        for (auto axis : axes) {
+          if (tmp[axis]) {
+            fail_shape_inference("Repeated axis: ", axis);
+          }
+          tmp[axis] = true;
+        }
       } else {
         // sizes_data contains scales for all axes
         if (sizes_data.size() != rank_x) {
