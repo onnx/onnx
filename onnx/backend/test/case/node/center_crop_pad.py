@@ -59,7 +59,6 @@ class CenterCropPad(Base):
         expect(node, inputs=[x, shape], outputs=[y],
                name='test_center_crop_pad_crop_and_pad')
 
-
     @staticmethod
     def export_center_crop_pad_crop_axes_hwc() -> None:
         node = onnx.helper.make_node(
@@ -95,4 +94,3 @@ class CenterCropPad(Base):
 
         expect(node, inputs=[x, shape], outputs=[y],
                name='test_center_crop_pad_crop_axes_chw')
-
