@@ -596,7 +596,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Pad);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Gemm);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, If);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, NonMaxSuppression);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ScaledDotProductAttention);
 
 // Iterate over schema from ai.onnx version 11
 class OpSet_Onnx_ver11 {
@@ -664,7 +663,6 @@ class OpSet_Onnx_ver11 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Gemm)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, If)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, NonMaxSuppression)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, ScaledDotProductAttention)>());
   }
 };
 
@@ -985,6 +983,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, HammingWindow);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, BlackmanWindow);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, MelWeightMatrix);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, STFT);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, ScaledDotProductAttention);
 
 // Iterate over schema from ai.onnx version 17
 class OpSet_Onnx_ver17 {
@@ -998,6 +997,7 @@ class OpSet_Onnx_ver17 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, BlackmanWindow)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, MelWeightMatrix)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, STFT)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, ScaledDotProductAttention)>());
   }
 };
 

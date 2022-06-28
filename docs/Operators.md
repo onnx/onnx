@@ -129,7 +129,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
-|<a href="#ScaledDotProductAttention">ScaledDotProductAttention</a>|<a href="Changelog.md#ScaledDotProductAttention-11">11</a>|
+|<a href="#ScaledDotProductAttention">ScaledDotProductAttention</a>|<a href="Changelog.md#ScaledDotProductAttention-17">17</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
 |<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
@@ -19310,7 +19310,7 @@ expect(node, inputs=[signal, step, window], outputs=[output],
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 17 of the default ONNX operator set.
 
 #### Attributes
 
