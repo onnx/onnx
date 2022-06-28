@@ -427,7 +427,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph, [make_tensor_value_info('y', TensorProto.INT32, (3, 4))])
 
-
     def test_expand_dynamic_shape(self) -> None:
         graph = self._make_graph([('x', TensorProto.INT32, (1, 2, None)),
                                   ('shape', TensorProto.INT64, (3, ))],
