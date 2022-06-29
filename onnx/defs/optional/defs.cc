@@ -25,7 +25,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "The optional output enclosing the input element.", "O")
         .TypeConstraint(
             "V",
-            [](){
+            []() {
               auto t = OpSchema::all_tensor_types();
               auto s = OpSchema::all_tensor_sequence_types();
               t.insert(t.end(), s.begin(), s.end());
@@ -114,7 +114,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input type to optional tensor and optional sequence types.")
         .TypeConstraint(
             "V",
-            [](){
+            []() {
               auto t = OpSchema::all_tensor_types();
               auto s = OpSchema::all_tensor_sequence_types();
               t.insert(t.end(), s.begin(), s.end());

@@ -459,7 +459,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd>The input must be a tensor of a numeric type, and of of shape [N,C] or [C]. In the latter case, it will be treated as [1,C]</dd>
+<dd>The input must be a tensor of a numeric type, and of shape [N,C] or [C]. In the latter case, it will be treated as [1,C]</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
 <dd>The output will be a tensor of strings or integers.</dd>
 </dl>
@@ -664,7 +664,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
 <dd>The input must be a tensor of a numeric type, either [C] or [N,C].</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd>The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used. Its size will match the bactch size of the input.</dd>
+<dd>The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used. Its size will match the bactch size of the input.</dd>
 </dl>
 
 
@@ -847,7 +847,7 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembl
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
 <dd>The input type must be a tensor of a numeric type.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd>The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.</dd>
+<dd>The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used.</dd>
 </dl>
 
 

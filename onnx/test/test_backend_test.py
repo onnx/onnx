@@ -11,7 +11,7 @@ from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 import onnx.shape_inference
 import onnx.version_converter
-from typing import Optional, Text, Any, Tuple, Sequence
+from typing import Optional, Any, Tuple, Sequence
 from onnx import NodeProto, ModelProto, TensorProto
 import numpy  # type: ignore
 
@@ -31,10 +31,10 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def prepare(cls,
                 model: ModelProto,
-                device: Text = 'CPU',
+                device: str = 'CPU',
                 **kwargs: Any
                 ) -> Optional[onnx.backend.base.BackendRep]:
-        super(DummyBackend, cls).prepare(model, device, **kwargs)
+        super().prepare(model, device, **kwargs)
 
         # test strict shape inference
         onnx.checker.check_model(model)
@@ -60,32 +60,32 @@ class DummyBackend(onnx.backend.base.Backend):
     def run_node(cls,
                  node: NodeProto,
                  inputs: Any,
-                 device: Text = 'CPU',
+                 device: str = 'CPU',
                  outputs_info: Optional[Sequence[Tuple[numpy.dtype, Tuple[int, ...]]]] = None,
                  **kwargs: Any
                  ) -> Optional[Tuple[Any, ...]]:
-        super(DummyBackend, cls).run_node(node, inputs, device=device, outputs_info=outputs_info)
+        super().run_node(node, inputs, device=device, outputs_info=outputs_info)
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker")
 
     @classmethod
-    def supports_device(cls, device: Text) -> bool:
+    def supports_device(cls, device: str) -> bool:
         d = Device(device)
         if d.type == DeviceType.CPU:
             return True
         return False
 
 
-test_coverage_safelist = set(
-    ['bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
-     'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'])
+test_coverage_safelist = {
+    'bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
+    'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'}
 
 
 def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
     if model.graph.name not in test_coverage_safelist:
         return False
     for node in model.graph.node:
-        if node.op_type in set(['RNN', 'LSTM', 'GRU']):
+        if node.op_type in {'RNN', 'LSTM', 'GRU'}:
             return False
     return True
 

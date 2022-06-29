@@ -9,8 +9,8 @@ namespace ONNX_NAMESPACE {
 inline void appendDimToTensorShapeProto(TensorShapeProto& tsp, const TensorShapeProto* input_data, int index) {
   if (index >= input_data->dim_size() || index < -input_data->dim_size()) {
     fail_shape_inference("indices must be in [-rank, rank-1].");
-  } else { 
-    *tsp.add_dim() = input_data->dim((index < 0)? input_data->dim_size() + index : index);
+  } else {
+    *tsp.add_dim() = input_data->dim((index < 0) ? input_data->dim_size() + index : index);
   }
 }
 
@@ -78,4 +78,4 @@ inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
   }
 }
 
-}
+} // namespace ONNX_NAMESPACE

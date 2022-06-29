@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from onnx import checker, helper, ModelProto, TensorProto, GraphProto, NodeProto, OperatorSetIdProto
-from typing import Sequence, Text, Tuple, List, Callable
+from typing import Sequence, Tuple, List, Callable
 from onnx import numpy_helper
 
 import numpy as np  # type: ignore

@@ -10,7 +10,7 @@
 
 // Capture context by copying values; the graph is unused by these transformers.
 
-#define NODE_TRANSFORMER(node) [=](std::shared_ptr<Graph>, Node* node)
+#define NODE_TRANSFORMER(node) [=](std::shared_ptr<Graph>, Node * node)
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {

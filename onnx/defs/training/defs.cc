@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include <algorithm>
 #include <cmath>
 #include "onnx/defs/function.h"
@@ -187,15 +186,10 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "\"zs\" are the minimal independent variable set that determines "
             "the value of \"y\".",
             AttributeProto::STRING)
-        .TypeConstraint(
-            "T1",
-            OpSchema::all_tensor_types(),
-            "Allow outputs to be any kind of tensor.")
+        .TypeConstraint("T1", OpSchema::all_tensor_types(), "Allow outputs to be any kind of tensor.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Allow inputs to be any kind of floating-point tensor."));
 
 static const char* Adagrad_ver1_doc = R"DOC(
@@ -263,7 +257,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "inputs",
             "The current values of optimized tensors, followed by their "
             "respective gradients, followed by their respective accumulated squared gradients."
-            "For example, if two tensor \"X_1\" and \"X_2\" " "are optimized, "
+            "For example, if two tensor \"X_1\" and \"X_2\" "
+            "are optimized, "
             "The input list would be "
             "[\"X_1\", \"X_2\", "
             "gradient of \"X_1\", "
@@ -284,11 +279,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "T3",
             OpSchema::Variadic,
             false)
-        .Attr(
-            "epsilon",
-            "Small scalar to avoid dividing by zero.",
-            AttributeProto::FLOAT,
-            1e-6f)
+        .Attr("epsilon", "Small scalar to avoid dividing by zero.", AttributeProto::FLOAT, 1e-6f)
         .Attr(
             "decay_factor",
             "The decay factor of learning rate after one update."
@@ -302,38 +293,30 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "which means no regularization.",
             AttributeProto::FLOAT,
             0.0f)
-        .TypeConstraint(
-            "T1",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float scalars.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(int64)"},
-            "Constrain input types to 64-bit integer scalars.")
-        .TypeConstraint(
-            "T3",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+        .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float scalars.")
+        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain input types to 64-bit integer scalars.")
+        .TypeConstraint("T3", {"tensor(float)", "tensor(double)"}, "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            // In comments below, we assume that the input list is
-            // [R, T, X1, X2, G1, G2, H1, H2] and the output list is
-            // [X1_new, X2_new, H1_new, H2_new].
+          // In comments below, we assume that the input list is
+          // [R, T, X1, X2, G1, G2, H1, H2] and the output list is
+          // [X1_new, X2_new, H1_new, H2_new].
 
-            // Compute the number of tuples (X, G, H).
-            auto num_optimized_tensors = (ctx.getNumInputs() - 2) / 3;
-            for (size_t i = 0; i < num_optimized_tensors; ++i) {
-              // Pass X1's and X2's shapes to X1_new and X2_new, respectively.
-              size_t i_in = 2 + i;
-              size_t i_out = i;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
-              propagateShapeFromInputToOutput(ctx, i_in, i_out);
+          // Compute the number of tuples (X, G, H).
+          auto num_optimized_tensors = (ctx.getNumInputs() - 2) / 3;
+          for (size_t i = 0; i < num_optimized_tensors; ++i) {
+            // Pass X1's and X2's shapes to X1_new and X2_new, respectively.
+            size_t i_in = 2 + i;
+            size_t i_out = i;
+            propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+            propagateShapeFromInputToOutput(ctx, i_in, i_out);
 
-              // Pass H1's and H2's shapes to H1_new and H2_new, respectively.
-              i_in = 2 + 2 * num_optimized_tensors + i;
-              i_out = i + num_optimized_tensors;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
-              propagateShapeFromInputToOutput(ctx, i_in, i_out);
-            }}));
+            // Pass H1's and H2's shapes to H1_new and H2_new, respectively.
+            i_in = 2 + 2 * num_optimized_tensors + i;
+            i_out = i + num_optimized_tensors;
+            propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+            propagateShapeFromInputToOutput(ctx, i_in, i_out);
+          }
+        }));
 
 static const char* Momentum_ver1_doc = R"DOC(
     Compute one iteration of stochastic gradient update with momentum.
@@ -425,65 +408,50 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "T3",
             OpSchema::Variadic,
             false)
-        .Attr(
-            "alpha",
-            "The decay factor of momentum. It should be a scalar.",
-            AttributeProto::FLOAT)
+        .Attr("alpha", "The decay factor of momentum. It should be a scalar.", AttributeProto::FLOAT)
         .Attr(
             "beta",
             "The coefficient of gradient in computing new momentum. It should be a scalar.",
             AttributeProto::FLOAT)
-        .Attr(
-            "norm_coefficient",
-            "Coefficient of 0.5 * norm_coefficient * ||X||^2.",
-            AttributeProto::FLOAT)
+        .Attr("norm_coefficient", "Coefficient of 0.5 * norm_coefficient * ||X||^2.", AttributeProto::FLOAT)
         .Attr(
             "mode",
             "Its value should be either \"nesterov\" or \"standard\". The value \"nesterov\" leads "
             "to the use of Nesterov's momentum while \"standard\" invokes stochastic gradient method "
             "using standard momentum",
             AttributeProto::STRING)
-        .TypeConstraint(
-            "T1",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float scalars.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(int64)"},
-            "Constrain input types to 64-bit integer scalars.")
-        .TypeConstraint(
-            "T3",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
+        .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float scalars.")
+        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain input types to 64-bit integer scalars.")
+        .TypeConstraint("T3", {"tensor(float)", "tensor(double)"}, "Constrain input types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2] and
-            // output list is [X1_new, X2_new, V1_new, V2_new] for explaining
-            // the code below in a simpler way.
+          // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2] and
+          // output list is [X1_new, X2_new, V1_new, V2_new] for explaining
+          // the code below in a simpler way.
 
-            // The count of input tensors excluding "R" and "T".
-            auto num_adjustable_tensors = ctx.getNumInputs() - 2;
+          // The count of input tensors excluding "R" and "T".
+          auto num_adjustable_tensors = ctx.getNumInputs() - 2;
 
-            // Check number of (optimized tensor, gradient, momentum) tuples.
-            if (num_adjustable_tensors % 3 != 0) {
-                fail_shape_inference(
-                  "The sum of optimized tensor count and momentum tensor count ",
-                  "should be a multiple of 2 in the input list of Momentum operator");
-            }
+          // Check number of (optimized tensor, gradient, momentum) tuples.
+          if (num_adjustable_tensors % 3 != 0) {
+            fail_shape_inference(
+                "The sum of optimized tensor count and momentum tensor count ",
+                "should be a multiple of 2 in the input list of Momentum operator");
+          }
 
-            // The count of "X1" and "X2".
-            auto num_optimized_tensors = num_adjustable_tensors / 3;
-            for (size_t i = 0; i < num_optimized_tensors; ++i){
-              // Pass X1's/X2's shapes to X1_new/X2_new.
-              size_t i_in = 2 + i;
-              size_t i_out = i;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
-              propagateShapeFromInputToOutput(ctx, i_in, i_out);
-              // Pass V1's/V2's shapes to V1_new/V2_new.
-              i_in = 2 + 2 * num_optimized_tensors + i;
-              i_out = i + num_optimized_tensors;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
-              propagateShapeFromInputToOutput(ctx, i_in, i_out);
-            }
+          // The count of "X1" and "X2".
+          auto num_optimized_tensors = num_adjustable_tensors / 3;
+          for (size_t i = 0; i < num_optimized_tensors; ++i) {
+            // Pass X1's/X2's shapes to X1_new/X2_new.
+            size_t i_in = 2 + i;
+            size_t i_out = i;
+            propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+            propagateShapeFromInputToOutput(ctx, i_in, i_out);
+            // Pass V1's/V2's shapes to V1_new/V2_new.
+            i_in = 2 + 2 * num_optimized_tensors + i;
+            i_out = i + num_optimized_tensors;
+            propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+            propagateShapeFromInputToOutput(ctx, i_in, i_out);
+          }
         }));
 
 static const char* Adam_ver1_doc = R"DOC(
@@ -609,59 +577,47 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "which means no regularization.",
             AttributeProto::FLOAT,
             0.0f)
-        .Attr(
-            "epsilon",
-            "Small scalar to avoid dividing by zero.",
-            AttributeProto::FLOAT,
-            1e-6f)
-        .TypeConstraint(
-            "T1",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain input types to float scalars.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(int64)"},
-            "Constrain input types to 64-bit integer scalars.")
-        .TypeConstraint(
-            "T3",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext &ctx) {
-            // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2, H1, H2] and
-            // output list is [X1_new, X2_new, V1_new, V2_new, H1_new, H2_new] for explaining
-            // the code below in a simpler way.
+        .Attr("epsilon", "Small scalar to avoid dividing by zero.", AttributeProto::FLOAT, 1e-6f)
+        .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float scalars.")
+        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain input types to 64-bit integer scalars.")
+        .TypeConstraint("T3", {"tensor(float)", "tensor(double)"}, "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2, H1, H2] and
+          // output list is [X1_new, X2_new, V1_new, V2_new, H1_new, H2_new] for explaining
+          // the code below in a simpler way.
 
-            // The count of input tensors excluding "R" and "T".
-            auto num_adjustable_tensors = ctx.getNumInputs() - 2;
+          // The count of input tensors excluding "R" and "T".
+          auto num_adjustable_tensors = ctx.getNumInputs() - 2;
 
-            // Check number of (optimized tensor, gradient, momentum) tuples.
-            if (num_adjustable_tensors % 4 != 0) {
-                fail_shape_inference(
-                  "The sum of optimized tensor count, gradient tensor count, momentum tensor count, ",
-                  "accumulated squared-gradient tensor count should be a multiple of 4 in the ",
-                  "\"inputs\" of Adam operator.");
-            }
+          // Check number of (optimized tensor, gradient, momentum) tuples.
+          if (num_adjustable_tensors % 4 != 0) {
+            fail_shape_inference(
+                "The sum of optimized tensor count, gradient tensor count, momentum tensor count, ",
+                "accumulated squared-gradient tensor count should be a multiple of 4 in the ",
+                "\"inputs\" of Adam operator.");
+          }
 
-            // The count of "X1" and "X2".
-            auto num_optimized_tensors = num_adjustable_tensors / 4;
-            for (size_t i = 0; i < num_optimized_tensors; ++i){
-              // Pass X1's/X2's shapes to X1_new/X2_new.
-              size_t i_in = 2 + i;
-              size_t i_out = i;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
-              propagateShapeFromInputToOutput(ctx, i_in, i_out);
+          // The count of "X1" and "X2".
+          auto num_optimized_tensors = num_adjustable_tensors / 4;
+          for (size_t i = 0; i < num_optimized_tensors; ++i) {
+            // Pass X1's/X2's shapes to X1_new/X2_new.
+            size_t i_in = 2 + i;
+            size_t i_out = i;
+            propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+            propagateShapeFromInputToOutput(ctx, i_in, i_out);
 
-              // Pass V1's/V2's shapes to V1_new/V2_new.
-              i_in = 2 + 2 * num_optimized_tensors + i;
-              i_out = num_optimized_tensors + i;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
-              propagateShapeFromInputToOutput(ctx, i_in, i_out);
+            // Pass V1's/V2's shapes to V1_new/V2_new.
+            i_in = 2 + 2 * num_optimized_tensors + i;
+            i_out = num_optimized_tensors + i;
+            propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+            propagateShapeFromInputToOutput(ctx, i_in, i_out);
 
-              // Pass H1's/H2's shapes to H1_new/H2_new.
-              i_in = 2 + 3 * num_optimized_tensors + i;
-              i_out = 2 * num_optimized_tensors + i;
-              propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
-              propagateShapeFromInputToOutput(ctx, i_in, i_out);
-        }}));
+            // Pass H1's/H2's shapes to H1_new/H2_new.
+            i_in = 2 + 3 * num_optimized_tensors + i;
+            i_out = 2 * num_optimized_tensors + i;
+            propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
+            propagateShapeFromInputToOutput(ctx, i_in, i_out);
+          }
+        }));
 
 } // namespace ONNX_NAMESPACE

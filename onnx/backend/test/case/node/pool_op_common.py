@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 import numpy as np  # type: ignore
 import itertools
-from typing import Text, Sequence
+from typing import Sequence
 
 
-def get_pad_shape(auto_pad: Text,
+def get_pad_shape(auto_pad: str,
                   input_spatial_shape: Sequence[int],
                   kernel_spatial_shape: Sequence[int],
                   strides_spatial: Sequence[int],
@@ -20,7 +20,7 @@ def get_pad_shape(auto_pad: Text,
     return pad_shape
 
 
-def get_output_shape(auto_pad: Text,
+def get_output_shape(auto_pad: str,
                      input_spatial_shape: Sequence[int],
                      kernel_spatial_shape: Sequence[int],
                      strides_spatial: Sequence[int]
@@ -46,7 +46,7 @@ def pool(padded: np.ndarray,
          strides_shape: Sequence[int],
          out_shape: Sequence[int],
          pad_shape: Sequence[int],
-         pooling_type: Text,
+         pooling_type: str,
          count_include_pad: int = 0
          ) -> np.ndarray:
     spatial_size = len(x_shape) - 2
@@ -66,7 +66,7 @@ def pool(padded: np.ndarray,
             f = np.max
         else:
             raise NotImplementedError(
-                'Pooling type {} does not support. Should be AVG, MAX'.format(pooling_type))
+                f'Pooling type {pooling_type} does not support. Should be AVG, MAX')
 
         if count_include_pad == 1 and pooling_type == 'AVG':
             y[shape] = f(window_vals)

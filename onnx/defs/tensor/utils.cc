@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include "onnx/defs/tensor/utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -28,8 +27,8 @@ void resizeShapeInferenceHelper(
     // If input_shape has dim_value, we calculate the scaled result
     // If input_shape doesn's have one, we leave it here
     if (input_shape.dim(i).has_dim_value()) {
-      int64_t dim_value = static_cast<int64_t>(std::floor(
-          static_cast<float>(input_shape.dim(i).dim_value()) * scales_data[i]));
+      int64_t dim_value =
+          static_cast<int64_t>(std::floor(static_cast<float>(input_shape.dim(i).dim_value()) * scales_data[i]));
       // If output_shape has dim_value, we validate the caculated result
       // If output_shape doesn's have one, we set it to the scaled result
       if (dim->has_dim_value()) {
@@ -78,8 +77,7 @@ void resizeShapeInference(InferenceContext& ctx) {
       if (sizes->data_type() == TensorProto::INT64) {
         const auto sizes_data = ParseData<int64_t>(sizes);
         if (sizes_data.size() != static_cast<size_t>(input_shape.dim_size())) {
-          fail_shape_inference(
-              "Number of elements of input 'sizes' must be same as rank of input 'X'");
+          fail_shape_inference("Number of elements of input 'sizes' must be same as rank of input 'X'");
         }
         resizeShapeInferenceHelper(input_shape, sizes_data, output_shape);
       } else {
@@ -91,8 +89,7 @@ void resizeShapeInference(InferenceContext& ctx) {
     if (scales->data_type() == TensorProto::FLOAT) {
       const auto& scales_data = ParseData<float>(scales);
       if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
-        fail_shape_inference(
-            "Number of elements of input 'scales' must be same as rank of input 'X'");
+        fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'");
       }
       resizeShapeInferenceHelper(input_shape, scales_data, output_shape);
     } else {
@@ -110,8 +107,8 @@ void resizeShapeInferenceHelper_opset7_to_10(
     // If input_shape has dim_value, we caculate the scaled result
     // If input_shape doesn's have one, we leave it here
     if (input_shape.dim(i).has_dim_value()) {
-      int64_t dim_value = static_cast<int64_t>(std::floor(
-          static_cast<float>(input_shape.dim(i).dim_value()) * scales_data[i]));
+      int64_t dim_value =
+          static_cast<int64_t>(std::floor(static_cast<float>(input_shape.dim(i).dim_value()) * scales_data[i]));
       // If output_shape has dim_value, we validate the caculated result
       // If output_shape doesn's have one, we set it to the scaled result
       if (dim->has_dim_value()) {
@@ -159,8 +156,7 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
     if (scales->data_type() == TensorProto::FLOAT) {
       const auto& scales_data = ParseData<float>(scales);
       if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
-        fail_shape_inference(
-            "Number of elements of input 'scales' must be same as rank of input 'X'");
+        fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'");
       }
       resizeShapeInferenceHelper_opset7_to_10(input_shape, scales_data, output_shape);
     } else {

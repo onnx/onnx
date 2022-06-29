@@ -22,7 +22,7 @@ else:
     _ONNX_HUB_DIR = join(os.path.expanduser("~"), ".cache", "onnx", "hub")
 
 
-class ModelInfo(object):
+class ModelInfo:
     """
     A class to represent a model's property and metadata in the ONNX Hub.
     It extracts model name, path, sha, tags, etc. from the passed in raw_model_info dict.
@@ -118,9 +118,9 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
     repo_owner, repo_name, repo_ref = _parse_repo_info(repo)
 
     if lfs:
-        return "https://media.githubusercontent.com/media/{}/{}/{}/".format(repo_owner, repo_name, repo_ref)
+        return f"https://media.githubusercontent.com/media/{repo_owner}/{repo_name}/{repo_ref}/"
     else:
-        return "https://raw.githubusercontent.com/{}/{}/{}/".format(repo_owner, repo_name, repo_ref)
+        return f"https://raw.githubusercontent.com/{repo_owner}/{repo_name}/{repo_ref}/"
 
 
 def _download_file(url: str, file_name: str) -> None:
@@ -158,7 +158,7 @@ def list_models(
         with urlopen(manifest_url) as response:
             manifest: List[ModelInfo] = [ModelInfo(info) for info in json.load(cast(IO[str], response))]
     except HTTPError as e:
-        raise AssertionError("Could not find manifest at {}".format(manifest_url), e)
+        raise AssertionError(f"Could not find manifest at {manifest_url}", e)
 
     # Filter by model name first.
     matching_models = manifest if model is None else [m for m in manifest if m.model.lower() == model.lower()]
@@ -188,7 +188,7 @@ def get_model_info(model: str, repo: str = "onnx/models:main", opset: Optional[i
     """
     matching_models = list_models(repo, model)
     if not matching_models:
-        raise AssertionError("No models found with name {}".format(model))
+        raise AssertionError(f"No models found with name {model}")
 
     if opset is None:
         selected_models = sorted(matching_models, key=lambda m: -m.opset)
@@ -196,7 +196,7 @@ def get_model_info(model: str, repo: str = "onnx/models:main", opset: Optional[i
         selected_models = [m for m in matching_models if m.opset == opset]
         if len(selected_models) == 0:
             valid_opsets = [m.opset for m in matching_models]
-            raise AssertionError("{} has no version with opset {}. Valid opsets: {}".format(model, opset, valid_opsets))
+            raise AssertionError(f"{model} has no version with opset {opset}. Valid opsets: {valid_opsets}")
     return selected_models[0]
 
 
@@ -221,7 +221,7 @@ def load(
     selected_model = get_model_info(model, repo, opset)
     local_model_path_arr = selected_model.model_path.split("/")
     if selected_model.model_sha is not None:
-        local_model_path_arr[-1] = "{}_{}".format(selected_model.model_sha, local_model_path_arr[-1])
+        local_model_path_arr[-1] = f"{selected_model.model_sha}_{local_model_path_arr[-1]}"
     local_model_path = join(_ONNX_HUB_DIR, os.sep.join(local_model_path_arr))
 
     if force_reload or not os.path.exists(local_model_path):
@@ -238,10 +238,10 @@ def load(
 
         os.makedirs(os.path.dirname(local_model_path), exist_ok=True)
         lfs_url = _get_base_url(repo, True)
-        print("Downloading {} to local path {}".format(model, local_model_path))
+        print(f"Downloading {model} to local path {local_model_path}")
         _download_file(lfs_url + selected_model.model_path, local_model_path)
     else:
-        print("Using cached {} model from {}".format(model, local_model_path))
+        print(f"Using cached {model} model from {local_model_path}")
 
     with open(local_model_path, "rb") as f:
         model_bytes = f.read()
