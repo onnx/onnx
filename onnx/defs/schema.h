@@ -1154,7 +1154,7 @@ OpSchema GetOpSchema();
 // based on a convention using name, domain, and version.  Operator schema are
 // normally included in operator sets and registered in OpSchemaRegistry::map().
 // In this case, callers should set dbg_included_in_static_opset to true.  This
-// assists with runtime validation in in DEBUG builds ensuring the intended set
+// assists with runtime validation in DEBUG builds ensuring the intended set
 // of operator schema is registered.
 #define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)  \
   class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                         \
