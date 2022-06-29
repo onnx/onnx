@@ -2992,7 +2992,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 20, 8).astype(np.float32)
 shape = np.array([10, 9], dtype=np.int64)
 y = np.zeros([3, 10, 9], dtype=np.float32)
-y[:, :, 1:] = x[:, 5:15, :]
+y[:, :, :8] = x[:, 5:15, :]
 
 expect(node, inputs=[x, shape], outputs=[y],
        name='test_center_crop_pad_crop_axes_chw')
@@ -3016,7 +3016,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(20, 8, 3).astype(np.float32)
 shape = np.array([10, 9], dtype=np.int64)
 y = np.zeros([10, 9, 3], dtype=np.float32)
-y[:, 1:, :] = x[5:15, :, :]
+y[:, :8, :] = x[5:15, :, :]
 
 expect(node, inputs=[x, shape], outputs=[y],
        name='test_center_crop_pad_crop_axes_hwc')
