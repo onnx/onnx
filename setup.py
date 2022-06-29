@@ -71,7 +71,7 @@ with open(os.path.join(TOP_DIR, "VERSION_NUMBER")) as version_file:
     # Following code change is for onnx-function-experiment only.
     # DOT NOT merge this code to the main branch.
     today_number = date.today().strftime("%Y%m%d")
-    VERSION_NUMBER = version_file.read().strip() +".dev" + today_number
+    VERSION_NUMBER = version_file.read().strip() + ".dev" + today_number
     if "--weekly_build" in sys.argv:
         PACKAGE_NAME = "onnx-weekly"
         sys.argv.remove("--weekly_build")
