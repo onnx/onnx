@@ -62,8 +62,10 @@ void TestDriver::FetchSingleTestCase(const std::string& case_dir, const std::str
       }
 
       for (int data_count = 0;; data_count++) {
-        input_name = case_dirname + k_preferred_path_separator + "input_" + ONNX_NAMESPACE::to_string(data_count) + ".pb";
-        output_name = case_dirname + k_preferred_path_separator + "output_" + ONNX_NAMESPACE::to_string(data_count) + ".pb";
+        input_name =
+            case_dirname + k_preferred_path_separator + "input_" + ONNX_NAMESPACE::to_string(data_count) + ".pb";
+        output_name =
+            case_dirname + k_preferred_path_separator + "output_" + ONNX_NAMESPACE::to_string(data_count) + ".pb";
         const bool input_exists = FileExists(input_name);
         const bool output_exists = FileExists(output_name);
         if (!output_exists && !input_exists) {
@@ -88,7 +90,8 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
   if (target_dir == "") {
     target_dir = default_dir_;
   }
-  if (target_dir.substr(target_dir.size() - k_preferred_path_separator.size(), target_dir.size()) == k_preferred_path_separator) {
+  if (target_dir.substr(target_dir.size() - k_preferred_path_separator.size(), target_dir.size()) ==
+      k_preferred_path_separator) {
     target_dir.erase(target_dir.size() - k_preferred_path_separator.size(), k_preferred_path_separator.size());
   }
 #ifdef _WIN32
@@ -104,7 +107,8 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
       do {
         std::string entry_dname = file.name;
         if (entry_dname != "." && entry_dname != "..") {
-          std::string full_entry_dname = target_dir + k_preferred_path_separator + entry_dname + k_preferred_path_separator;
+          std::string full_entry_dname =
+              target_dir + k_preferred_path_separator + entry_dname + k_preferred_path_separator;
           FetchSingleTestCase(full_entry_dname, entry_dname);
         }
       } while (_findnext(lf, &file) == 0);
@@ -195,8 +199,8 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       ONNX_NAMESPACE::ValueInfoProto input_info;
       LoadSingleFile(input_file, input_data);
       if (test_data_counter >= st.model_.graph().input().size()) {
-        std::cerr << "Input index " << test_data_counter << "for " << t.model_filename_ << " is out of the size " << st.model_.graph().input().size()
-        << std::endl;
+        std::cerr << "Input index " << test_data_counter << "for " << t.model_filename_ << " is out of the size "
+                  << st.model_.graph().input().size() << std::endl;
         break;
       }
       input_info = st.model_.graph().input(test_data_counter);
@@ -224,8 +228,8 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
       std::string output_data;
       ONNX_NAMESPACE::ValueInfoProto output_info;
       if (test_data_counter >= st.model_.graph().output().size()) {
-        std::cerr << "Output index " << test_data_counter << "for " << t.model_filename_ << " is out of the size " << st.model_.graph().output().size()
-        << std::endl;
+        std::cerr << "Output index " << test_data_counter << "for " << t.model_filename_ << " is out of the size "
+                  << st.model_.graph().output().size() << std::endl;
         break;
       }
       output_info = st.model_.graph().output(test_data_counter);
