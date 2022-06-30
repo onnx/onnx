@@ -1311,19 +1311,19 @@ class TestAutomaticUpgrade(unittest.TestCase):
                               initializer=[num_mel_bins, dft_length, sample_rate, lower_edge_hertz, upper_edge_hertz])
 
     def test_scaleddotproductattention(self) -> None:
-        self._test_op_upgrade('ScaledDotProductAttention', 17,
+        self._test_op_upgrade('ScaledDotProductAttention', 18,
                               [[4, 16, 4], [4, 20, 4], [4, 20, 4]],
                               [[4, 16, 4]],
                               attrs={'training_mode': 0, 'dropout': 0.1})
 
     def test_scaleddotproductattention_with_attn_mask(self) -> None:
-        self._test_op_upgrade('ScaledDotProductAttention', 17,
+        self._test_op_upgrade('ScaledDotProductAttention', 18,
                               [[4, 16, 4], [4, 20, 4], [4, 20, 4], [4, 16, 20]],
                               [[4, 16, 4]],
                               attrs={'training_mode': 0, 'dropout': 0.1})
 
     def test_scaleddotproductattention_out_with_attention(self) -> None:
-        self._test_op_upgrade('ScaledDotProductAttention', 17,
+        self._test_op_upgrade('ScaledDotProductAttention', 18,
                               [[4, 16, 4], [4, 20, 4], [4, 20, 4]],
                               [[4, 16, 4], [4, 16, 20]],
                               attrs={'training_mode': 0, 'dropout': 0.1})

@@ -19458,6 +19458,43 @@ expect(node, inputs=[query, key, value, attn_mask],
 </details>
 
 
+<details>
+<summary>with_attn_mask_and_out_with_attention</summary>
+
+```python
+bsz, tgt_len, src_len, head_dim = 4, 16, 20, 4
+drop_probability, training_mode = 0.2, 0
+query = np.random.randn(bsz, tgt_len, head_dim)
+key = np.random.randn(bsz, src_len, head_dim)
+value = np.random.randn(bsz, src_len, head_dim)
+attn_mask = np.random.randn(bsz, tgt_len, src_len)
+
+scaling = float(head_dim) ** -0.5
+attn_output_weights = np.matmul(query, key.transpose(0, 2, 1)) / scaling
+mask = np.ma.masked_where(attn_mask > 0, attn_output_weights)
+attn_output_weights = np.ma.filled(np.array(mask), -np.inf)
+
+t = np.exp(attn_output_weights)
+attention = t / np.expand_dims(np.sum(t, axis=-1), -1)
+attention = dropout(attention, drop_probability, training_mode > 0)
+output = np.matmul(attention, value).reshape(bsz, tgt_len, head_dim)
+
+node = onnx.helper.make_node(
+    'ScaledDotProductAttention',
+    inputs=['query', 'key', 'value', 'attn_mask'],
+    outputs=['output', 'attn'],
+    training_mode=training_mode,
+    dropout=drop_probability
+)
+
+expect(node, inputs=[query, key, value, attn_mask],
+       outputs=[output, attention],
+       name='test_ScaledDotProductAttention')
+```
+
+</details>
+
+
 ### <a name="Scan"></a><a name="scan">**Scan**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
