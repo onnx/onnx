@@ -102,7 +102,7 @@ python setup.py typecheck
 ```
 # CI Pipelines
 
-Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipelines.md).
+Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipelines.md). Passing [Lint Python CI](https://github.com/onnx/onnx/blob/main/.github/workflows/lint.yaml) is not required but recommended.
 
 # Other developer documentation
 
