@@ -221,18 +221,16 @@ def make_function(
     return f
 
 
-def make_lib_proto(functions, **kwargs: Any) -> ModelProto:
-    """Construct a ModelProto
+def make_lib_proto(functions, **kwargs: Any) -> LibProto:
+    """Construct a LibProto
 
     Arguments:
-        graph (GraphProto): *make_graph* returns
+        functions (FunctionProto): list of functions
         **kwargs: any attribute to add to the returned instance
     Returns:
-        ModelProto
+        LibProto
     """
     lib_proto = LibProto()
-    # Touch model.ir_version so it is stored as the version from which it is
-    # generated.
     lib_proto.ir_version = IR_VERSION
     lib_proto.functions.extend(functions)
 
