@@ -2,7 +2,7 @@
 
 from onnx import TensorProto, SequenceProto, OptionalProto
 import numpy as np  # type: ignore
-from typing import Any
+from typing import Union
 import warnings
 
 # tensor_type: (numpy type, storage type, string name)
@@ -31,8 +31,16 @@ TENSOR_TYPE_MAP = {
 TENSOR_TYPE_TO_NP_TYPE = {tensor_type: value[0] for tensor_type, value in TENSOR_TYPE_MAP.items()}
 # This is only used to get keys into STORAGE_TENSOR_TYPE_TO_FIELD.
 # TODO(https://github.com/onnx/onnx/issues/4261): Remove this.
-warnings.warn(str("`mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE` is deprecated in ONNX 1.13 and will be removed in next release. To silence this warning, please use `to_storage_tensor_type` instead."), DeprecationWarning, stacklevel=2)
-TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {tensor_type: value[1] for tensor_type, value in TENSOR_TYPE_MAP.items()}
+
+
+class WarningDict(dict):
+    def __getitem__(self, key):
+        warnings.warn(str("`mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE` is deprecated in ONNX 1.13 and will "
+            + "be removed in next release. To silence this warning, please use `to_storage_tensor_type` instead."), DeprecationWarning, stacklevel=2)
+        return super().__getitem__(key)
+
+
+TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = WarningDict({tensor_type: value[1] for tensor_type, value in TENSOR_TYPE_MAP.items()})
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
 # Numpy float32 array is only reversed to TensorProto.FLOAT
@@ -70,20 +78,20 @@ OPTIONAL_ELEMENT_TYPE_TO_FIELD = {
 }
 
 
-def to_np_type(tensor_type: Union[TensorProto]) -> int:
+def to_np_type(tensor_type: Union[TensorProto, int]) -> int:
     return TENSOR_TYPE_MAP[int(tensor_type)][0]
 
 
-def to_storage_tensor_type(tensor_type: TensorProto) -> int:
-    return TENSOR_TYPE_MAP[int(tensor_type)][1]
+def to_storage_tensor_type(tensor_type: Union[TensorProto, int]) -> int:
+    return TENSOR_TYPE_MAP[tensor_type][1]
 
 
-def to_string(tensor_type: TensorProto) -> str:
+def to_string(tensor_type: Union[TensorProto, int]) -> str:
     return TENSOR_TYPE_MAP[int(tensor_type)][2]
 
 
-def to_storage_numpy_type(tensor_type: TensorProto) -> int:
-    return to_np_type(to_storage_tensor_type(int(tensor_type)))
+def to_storage_numpy_type(tensor_type: Union[TensorProto, int]) -> int:
+    return to_np_type(to_storage_tensor_type(tensor_type))
 
 
 # This map is used to get storage field for certain tensor type
