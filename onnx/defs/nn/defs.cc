@@ -2392,7 +2392,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static const char* ScaledDotProductAttention_ver17_doc = R"DOC(
+static const char* ScaledDotProductAttention_ver18_doc = R"DOC(
       Allows the model to jointly attend to information
       from different representation subspaces.
       See reference: Attention Is All You Need.
@@ -2404,9 +2404,9 @@ static const char* ScaledDotProductAttention_ver17_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScaledDotProductAttention,
-    17,
+    18,
     OpSchema()
-        .SetDoc(ScaledDotProductAttention_ver17_doc)
+        .SetDoc(ScaledDotProductAttention_ver18_doc)
         .Attr("dropout", "the probability of dropout operator, Default is 0.0", AttributeProto::FLOAT, 0.0f)
         .Attr(
             "training_mode",

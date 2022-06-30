@@ -21168,58 +21168,6 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain scalar length types to int64_t.</dd>
 </dl>
 
-### <a name="ScaledDotProductAttention-17"></a>**ScaledDotProductAttention-17**</a>
-
-  Allows the model to jointly attend to information
-        from different representation subspaces.
-        See reference: Attention Is All You Need.
-        The computation can be described by the following equations.
-        ```
-        ScaledDotProductAttention(query, key, value) = matmul(softmax(matmul(query, key.transpose)/scale), value)
-        ```
-
-#### Version
-
-This version of the operator has been available since version 17 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>dropout</tt> : float (default is 0.0)</dt>
-<dd>the probability of dropout operator, Default is 0.0</dd>
-<dt><tt>training_mode</tt> : int (default is 0)</dt>
-<dd>If set to true, it indicates ScaledDotProductAttention is being used for training.</dd>
-</dl>
-
-#### Inputs (3 - 4)
-
-<dl>
-<dt><tt>query</tt> (non-differentiable) : T</dt>
-<dd>Input query tensor of the scaleddotproductattention;dimensions are (N, L, H), where L is the target sequence length.N is the batch size, H is the head dimension.</dd>
-<dt><tt>key</tt> (non-differentiable) : T</dt>
-<dd>Input key tensor of the scaleddotproductattention;dimensions are (N, S, H),where S is the source sequence length,N is the batch size,H is the head dimension.</dd>
-<dt><tt>value</tt> (non-differentiable) : T</dt>
-<dd>Input value tensor of the scaleddotproductattentiondimensions are (N, S, H),where S is the source sequence length,N is the batch size,H is the head dimension.</dd>
-<dt><tt>attn_mask</tt> (optional, non-differentiable) : T</dt>
-<dd>Attn_mask ensures that position is allowed to attend the unmasked position;dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
-</dl>
-
-#### Outputs (1 - 2)
-
-<dl>
-<dt><tt>output</tt> (non-differentiable) : T</dt>
-<dd>Operator output result,dimensions are (N, L, H),where N is the batch size,L is the target sequence length,H is the head dimension.</dd>
-<dt><tt>attn</tt> (optional, non-differentiable) : T</dt>
-<dd>Operator output mask,dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output type to float tensors</dd>
-</dl>
-
 ### <a name="SequenceMap-17"></a>**SequenceMap-17**</a>
 
   Applies a sub-graph to each sample in the input sequence(s).
@@ -21271,6 +21219,59 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain input types to any sequence type.</dd>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain to any tensor or sequence type.</dd>
+</dl>
+
+## Version 18 of the default ONNX operator set
+### <a name="ScaledDotProductAttention-18"></a>**ScaledDotProductAttention-18**</a>
+
+  Allows the model to jointly attend to information
+        from different representation subspaces.
+        See reference: Attention Is All You Need.
+        The computation can be described by the following equations.
+        ```
+        ScaledDotProductAttention(query, key, value) = matmul(softmax(matmul(query, key.transpose)/scale), value)
+        ```
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dropout</tt> : float (default is 0.0)</dt>
+<dd>the probability of dropout operator, Default is 0.0</dd>
+<dt><tt>training_mode</tt> : int (default is 0)</dt>
+<dd>If set to true, it indicates ScaledDotProductAttention is being used for training.</dd>
+</dl>
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>query</tt> (non-differentiable) : T</dt>
+<dd>Input query tensor of the scaleddotproductattention;dimensions are (N, L, H), where L is the target sequence length.N is the batch size, H is the head dimension.</dd>
+<dt><tt>key</tt> (non-differentiable) : T</dt>
+<dd>Input key tensor of the scaleddotproductattention;dimensions are (N, S, H),where S is the source sequence length,N is the batch size,H is the head dimension.</dd>
+<dt><tt>value</tt> (non-differentiable) : T</dt>
+<dd>Input value tensor of the scaleddotproductattentiondimensions are (N, S, H),where S is the source sequence length,N is the batch size,H is the head dimension.</dd>
+<dt><tt>attn_mask</tt> (optional, non-differentiable) : T</dt>
+<dd>Attn_mask ensures that position is allowed to attend the unmasked position;dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T</dt>
+<dd>Operator output result,dimensions are (N, L, H),where N is the batch size,L is the target sequence length,H is the head dimension.</dd>
+<dt><tt>attn</tt> (optional, non-differentiable) : T</dt>
+<dd>Operator output mask,dimensions are (N, L, S),where N is the batch size,L is the target sequence length,S is the source sequence length.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output type to float tensors</dd>
 </dl>
 
 # ai.onnx.preview.training
