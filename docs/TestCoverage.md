@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 162/177 (91.53%, 5 generators excluded) common operators.
+Node tests have covered 163/178 (91.57%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -7615,6 +7615,38 @@ for op_dtype in all_numeric_dtypes:
     )
     expect(node, inputs=[data_0, data_1], outputs=[result],
            name=f'test_min_{np.dtype(op_dtype).name}')
+```
+
+</details>
+
+
+### Mish
+There are 1 test cases, listed as following:
+<details>
+<summary>mish</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mish',
+    inputs=['X'],
+    outputs=['Y']
+)
+
+input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
+    [[0.02916367], [0.12964272], [0.5060197]],
+    [[0.79538304], [0.9411346], [0.9546573]]],
+    [[[0.17730942], [0.46192095], [0.26480448]],
+    [[0.6746842], [0.01665257], [0.62473077]],
+    [[0.9240844], [0.9722341], [0.11965699]]],
+    [[[0.41356155], [0.9129373], [0.59330076]],
+    [[0.81929934], [0.7862604], [0.11799799]],
+    [[0.69248444], [0.54119414], [0.07513223]]]], dtype=np.float32)
+
+# Calculate expected output data
+expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_mish')
 ```
 
 </details>

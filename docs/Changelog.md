@@ -21124,6 +21124,41 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain to any numerical types.</dd>
 </dl>
 
+### <a name="Mish-17"></a>**Mish-17**</a>
+
+  Mish: A Self Regularized Non-Monotonic Neural Activation Function.
+
+  Perform the linear unit element-wise on the input tensor X using formula:
+
+  ```
+  mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
+  ```
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input X and output types to float tensors.</dd>
+</dl>
+
 ### <a name="STFT-17"></a>**STFT-17**</a>
 
   Computes the Short-time Fourier Transform of the signal.

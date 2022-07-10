@@ -456,6 +456,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* mish_ver17_doc = R"DOC(
+Mish: A Self Regularized Non-Monotonic Neural Activation Function.
+
+Perform the linear unit element-wise on the input tensor X using formula:
+
+```
+mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
+```
+)DOC";
+
 static const char* celu_ver12_doc = R"DOC(
 Continuously Differentiable Exponential Linear Units:
 Perform the linear unit element-wise on the input tensor X
@@ -522,6 +532,26 @@ ONNX_OPERATOR_SET_SCHEMA(
             celu_default_alpha)
         .TypeConstraint("T", {"tensor(float)"}, "Constrain input and output types to float32 tensors.")
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Mish,
+    17,
+    OpSchema()
+        .SetDoc(mish_ver17_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input X and output types to float tensors.")
+        .FunctionBody(R"ONNX(
+          {
+			Softplus_X = Softplus (X)
+			TanHSoftplusX = Tanh (Softplus_X)
+			Y = Mul (X, TanHSoftplusX)
+		   }
+        )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Exp_ver13_doc = R"DOC(
