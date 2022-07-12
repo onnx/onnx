@@ -1174,6 +1174,16 @@ class TestAutomaticUpgrade(unittest.TestCase):
                               [TensorProto.INT64, TensorProto.INT64, TensorProto.INT64, TensorProto.FLOAT, TensorProto.FLOAT],
                               initializer=[num_mel_bins, dft_length, sample_rate, lower_edge_hertz, upper_edge_hertz])
 
+    def test_CenterCropPad(self) -> None:
+        input = helper.make_tensor('input', TensorProto.FLOAT, dims=[2, 4], vals=np.array([1, 2, 3, 4, 5, 6, 7, 8]))
+        shape = helper.make_tensor('shape', TensorProto.INT64, dims=[2], vals=np.array([3, 3]))
+        self._test_op_upgrade('CenterCropPad',
+                              18,
+                              [[], []],
+                              [[3, 3]],
+                              [TensorProto.FLOAT, TensorProto.INT64],
+                              initializer=[input, shape])
+
     def test_ops_tested(self) -> None:
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == '']
