@@ -54,7 +54,7 @@ Once the criteria of proposing new operator/function has been satisfied, you wil
     1. The testing examples will be extracted to the doc.
     2. We also generate binary data for it.
     3. Example: [onnx/backend/test/case/node/abs.py](/onnx/backend/test/case/node/abs.py)
-5. Add at least one automatic upgrade test for your operator in [onnx/test/automatic_upgrade_test.py](/onnx/test/automatic_upgrade_test.py) using `_test_op_upgrade`. These tests create a given operator at a given opset version (usually the version the operator was introduced in) and test that the version converter is able to convert them to the highest available version. So for a new operator `_test_op_upgrade` will not test anything, but as soon as the operator gets updated in a future opset the test will autoamtically become nontrivial.
+5. Add at least one automatic upgrade test for your operator in [onnx/test/automatic_upgrade_test.py](/onnx/test/automatic_upgrade_test.py) using `_test_op_upgrade`. These tests create a given operator at a given opset version (usually the version the operator was introduced in) and test that the version converter is able to convert them to the highest available version. So for a new operator `_test_op_upgrade` will not test anything, but as soon as the operator gets updated in a future opset the test will automatically become nontrivial.
 6. Update the documentation and generate the test data.
     1. Running [the script](/tools/update_doc.sh)
 to update the doc and generate the test data.

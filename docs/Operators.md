@@ -101,7 +101,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
-|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
+|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
@@ -124,7 +124,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|
 |<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
-|<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
+|<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
@@ -176,6 +176,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|
+|<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|
@@ -2877,6 +2878,172 @@ expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output],
        name='test_celu')
+```
+
+</details>
+
+
+### <a name="CenterCropPad"></a><a name="centercroppad">**CenterCropPad**</a>
+
+  Center crop or pad an input to given dimensions.
+
+  The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
+  cropped or padded.
+
+  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
+  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
+  so that the input is centered in the output.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>If provided, it specifies a subset of axes that 'shape' refer to. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input_data</tt> (differentiable) : T</dt>
+<dd>Input to extract the centered crop from.</dd>
+<dt><tt>shape</tt> (non-differentiable) : Tind</dt>
+<dd>1-D tensor representing the cropping window dimensions.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_data</tt> (differentiable) : T</dt>
+<dd>Output data.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>center_crop_pad_crop</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+# First dim is even diff, second is uneven
+x = np.random.randn(20, 10, 3).astype(np.float32)
+shape = np.array([10, 7, 3], dtype=np.int64)
+y = x[5:15, 1:8, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_and_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 10, 3], dtype=np.int64)
+y = np.zeros([10, 10, 3], dtype=np.float32)
+y[:, 1:9, :] = x[5:15, :, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_and_pad')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_axes_chw</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[1, 2],
+)
+
+# Cropping on second dim, padding on third, first stays the same
+x = np.random.randn(3, 20, 8).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([3, 10, 9], dtype=np.float32)
+y[:, :, :8] = x[:, 5:15, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_axes_chw')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_axes_hwc</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[0, 1],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([10, 9, 3], dtype=np.float32)
+y[:, :8, :] = x[5:15, :, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_axes_hwc')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+# First dim is even diff, second is uneven
+x = np.random.randn(10, 7, 3).astype(np.float32)
+shape = np.array([20, 10, 3], dtype=np.int64)
+y = np.zeros([20, 10, 3], dtype=np.float32)
+y[5:15, 1:8, :] = x
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_pad')
 ```
 
 </details>
@@ -14723,9 +14890,9 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>
 
 #### Attributes
 
@@ -14734,15 +14901,17 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 <dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
 </dl>
 
-#### Inputs (2 - 3)
+#### Inputs (2 - 4)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Input tensor.</dd>
 <dt><tt>pads</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number of elements in the `axes` input or the input rank if `axes` are not provided explicitly. `pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and xi_end, the number of pad values added at the end of axis `axes[i]`.</dd>
 <dt><tt>constant_value</tt> (optional, non-differentiable) : T</dt>
 <dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, empty string or False).</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
+<dd>1-D tensor of axes that `pads` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).</dd>
 </dl>
 
 #### Outputs
@@ -14757,6 +14926,8 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
 </dl>
 
 
@@ -14784,6 +14955,35 @@ y = pad_impl(
 
 expect(node, inputs=[x, pads, value], outputs=[y],
        name='test_constant_pad')
+```
+
+</details>
+
+
+<details>
+<summary>constant_pad_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x', 'pads', 'value', 'axes'],
+    outputs=['y'],
+    mode='constant'
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([1, 3], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    'constant',
+    1.2,
+    [1, 3],
+)
+
+expect(node, inputs=[x, pads, value, axes], outputs=[y],
+       name='test_constant_pad_axes')
 ```
 
 </details>
@@ -17961,49 +18161,76 @@ for test_name, shape in test_cases.items():
 ### <a name="Resize"></a><a name="resize">**Resize**</a>
 
   Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
-  Each dimension value of the output tensor is:
-    output_dimension = floor(input_dimension * (roi_end - roi_start) * scale) if input \"sizes\" is not specified.
+  Each dimension value of the output tensor is: <br/>
+    `output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)` <br/>
+  if input \"sizes\" is not specified.
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Resize-10">10</a>, <a href="Changelog.md#Resize-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Resize-10">10</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-13">13</a>
 
 #### Attributes
 
 <dl>
+<dt><tt>antialias</tt> : int (default is 0)</dt>
+<dd>If set to 1, "linear" and "cubic" interpolation modes will use an antialiasing filter when downscaling. Antialiasing is achieved by stretching the resampling filter by a factor max(1, 1 / scale), which means that when downsampling, more input pixels contribute to an output pixel.</dd>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>If provided, it specifies a subset of axes that 'roi', 'scales' and 'sizes' refer to. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Non-specified dimensions are interpreted as non-resizable. Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
 <dt><tt>coordinate_transformation_mode</tt> : string (default is half_pixel)</dt>
 <dd>
 This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
 
 The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example.
-Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, length_original as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", scale = length_resized / length_original, <br/>
+Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, `length_original` as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", `scale = length_resized / length_original`, <br/>
 
-if coordinate_transformation_mode is "half_pixel", <br/>
-x_original = (x_resized + 0.5) / scale - 0.5, <br/>
+if coordinate_transformation_mode is `"half_pixel"`, <br/>
+`x_original = (x_resized + 0.5) / scale - 0.5` <br/>
 
-if coordinate_transformation_mode is "pytorch_half_pixel", <br/>
-x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, <br/>
+if coordinate_transformation_mode is `"pytorch_half_pixel"`, <br/>
+`x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0` <br/>
 
-if coordinate_transformation_mode is "align_corners", <br/>
-x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
+if coordinate_transformation_mode is `"align_corners"`, <br/>
+`x_original = x_resized * (length_original - 1) / (length_resized - 1)` <br/>
 
-if coordinate_transformation_mode is "asymmetric", <br/>
-x_original = x_resized / scale, <br/>
+if coordinate_transformation_mode is `"asymmetric"`, <br/>
+`x_original = x_resized / scale` <br/>
 
-if coordinate_transformation_mode is "tf_crop_and_resize", <br/>
-x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1).</dd>
+if coordinate_transformation_mode is `"tf_crop_and_resize"`, <br/>
+`x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1)`
+.</dd>
 <dt><tt>cubic_coeff_a</tt> : float (default is -0.75)</dt>
-<dd>The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in some cases of TensorFlow) and -0.75 (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details. This attribute is valid only if "mode" is "cubic".</dd>
+<dd>The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in some cases of TensorFlow) and -0.75 (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details. This attribute is valid only if mode is "cubic".</dd>
 <dt><tt>exclude_outside</tt> : int (default is 0)</dt>
 <dd>If set to 1, the weight of sampling locations outside the tensor will be set to 0 and the weight will be renormalized so that their sum is 1.0. The default value is 0.</dd>
 <dt><tt>extrapolation_value</tt> : float (default is 0.0)</dt>
 <dd>When coordinate_transformation_mode is "tf_crop_and_resize" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.</dd>
+<dt><tt>keep_aspect_ratio_policy</tt> : string (default is stretch)</dt>
+<dd>
+This attribute describes how to interpret the `sizes` input with regard to keeping the original aspect ratio of the input, and it is not applicable when
+the `scales` input is used. <br/>
+
+Given a set of `sizes`, associated with a subset of `axes` (explicitly provided or default), and assuming `d = axes[i]`, with `i` being the index of the provided `sizes`. <br/>
+
+If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disregarded, and the input is resized to the specified size: <br/>
+`out_size[d] = sizes[i]` <br/>
+
+If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio: <br/>
+`scale = Min(sizes[i] / in_size[d])` <br/>
+`out_size[d] = round_int(scale * in_size[i])` <br/>
+
+If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio: <br/>
+`scale = Max(sizes[i] / in_size[d])` <br/>
+`out_size[d] = round_int(scale * in_size[i])` <br/>
+
+For non-resizable axes (those not specified in `axes`), the output size will be equal to the input size.
+
+Note: `round_int` stands for computing the nearest integer value, rounding halfway cases up.</dd>
 <dt><tt>mode</tt> : string (default is nearest)</dt>
-<dd>Three interpolation modes: nearest (default), linear and cubic. The "linear" mode includes linear interpolation for 1D tensor and N-linear interpolation for N-D tensor (for example, bilinear interpolation for 2D tensor). The "cubic" mode includes cubic interpolation for 1D tensor and N-cubic interpolation for N-D tensor (for example, bicubic interpolation for 2D tensor).</dd>
+<dd>Three interpolation modes: "nearest" (default), "linear" and "cubic". The "linear" mode includes linear interpolation for 1D tensor and N-linear interpolation for N-D tensor (for example, bilinear interpolation for 2D tensor). The "cubic" mode includes cubic interpolation for 1D tensor and N-cubic interpolation for N-D tensor (for example, bicubic interpolation for 2D tensor).</dd>
 <dt><tt>nearest_mode</tt> : string (default is round_prefer_floor)</dt>
-<dd>Four modes: round_prefer_floor (default, as known as round half down), round_prefer_ceil (as known as round half up), floor, ceil. Only used by nearest interpolation. It indicates how to get "nearest" pixel in input tensor from x_original, so this attribute is valid only if "mode" is "nearest".</dd>
+<dd>Four modes: "round_prefer_floor" (default, as known as round half down), "round_prefer_ceil" (as known as round half up), "floor", "ceil". Only used by nearest interpolation. It indicates how to get "nearest" pixel in input tensor from x_original, so this attribute is valid only if "mode" is "nearest".</dd>
 </dl>
 
 #### Inputs (1 - 4)
@@ -18012,11 +18239,11 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 <dt><tt>X</tt> (differentiable) : T1</dt>
 <dd>N-D tensor</dd>
 <dt><tt>roi</tt> (optional, non-differentiable) : T2</dt>
-<dd>1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is "tf_crop_and_resize"</dd>
+<dd>1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X or the length of axes, if provided. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is "tf_crop_and_resize"</dd>
 <dt><tt>scales</tt> (optional, non-differentiable) : tensor(float)</dt>
-<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X'. One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.</dd>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X' or the length of 'axes', if provided. One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.</dd>
 <dt><tt>sizes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>The size of the output tensor. The number of elements of 'sizes' should be the same as the rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.</dd>
+<dd>Target size of the output tensor. Its interpretation depends on the 'keep_aspect_ratio_policy' value.The number of elements of 'sizes' should be the same as the rank of input 'X', or the length of 'axes', if provided. Only one of 'scales' and 'sizes' can be specified. </dd>
 </dl>
 
 #### Outputs
@@ -18062,7 +18289,7 @@ scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 #    [ 6.71142578  8.02148438  9.32275391]
 #    [11.91650391 13.2265625  14.52783203]]]]
 output = interpolate_nd(
-    data, cubic_coeffs, scale_factors=scales).astype(np.float32)
+    data, lambda x, _: cubic_coeffs(x), scale_factors=scales).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_downsample_scales_cubic')
@@ -18096,7 +18323,7 @@ scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 # [[[[ 1.36812675  2.6695014   4.0133367 ]
 #    [ 6.57362535  7.875       9.2188353 ]
 #    [11.94896657 13.25034122 14.59417652]]]]
-output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
+output = interpolate_nd(data, lambda x, _: cubic_coeffs(x, A=-0.5), scale_factors=scales,
                         exclude_outside=True).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
@@ -18131,10 +18358,43 @@ scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 #    [ 6.58076634  7.97595793  9.37114951]
 #    [12.16153268 13.55672427 14.95191585]]]]
 output = interpolate_nd(
-    data, cubic_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+    data, lambda x, _: cubic_coeffs(x), scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_downsample_scales_cubic_align_corners')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_scales_cubic_antialias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', 'scales'],
+    outputs=['Y'],
+    mode='cubic',
+    antialias=1,
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+# [[[[ 2.5180721  4.2858863]
+#    [ 9.589329  11.357142 ]]]]
+output = interpolate_nd(
+    data, cubic_coeffs_antialias, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_downsample_scales_cubic_antialias')
 ```
 
 </details>
@@ -18160,7 +18420,7 @@ scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
 # [[[[2.6666665 4.3333331]]]]
 output = interpolate_nd(
-    data, linear_coeffs, scale_factors=scales).astype(np.float32)
+    data, lambda x, _: linear_coeffs(x), scale_factors=scales).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_downsample_scales_linear')
@@ -18190,10 +18450,43 @@ scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
 # [[[[1.       3.142857]]]]
 output = interpolate_nd(
-    data, linear_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+    data, lambda x, _: linear_coeffs(x), scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_downsample_scales_linear_align_corners')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_scales_linear_antialias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', 'scales'],
+    outputs=['Y'],
+    mode='linear',
+    antialias=1,
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
+
+# [[[[ 2.875  4.5  ]
+#    [ 9.375 11.   ]]]]
+output = interpolate_nd(
+    data, linear_coeffs_antialias, scale_factors=scales).astype(np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_downsample_scales_linear_antialias')
 ```
 
 </details>
@@ -18219,7 +18512,7 @@ scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
 # [[[[1. 3.]]]]
 output = interpolate_nd(
-    data, nearest_coeffs, scale_factors=scales).astype(np.float32)
+    data, lambda x, _: nearest_coeffs(x), scale_factors=scales).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_downsample_scales_nearest')
@@ -18252,10 +18545,78 @@ sizes = np.array([1, 1, 3, 3], dtype=np.int64)
 #    [ 7.12615741  8.5         9.87384259]
 #    [12.62152778 13.99537037 15.36921296]]]]
 output = interpolate_nd(
-    data, cubic_coeffs, output_size=sizes).astype(np.float32)
+    data, lambda x, _: cubic_coeffs(x), output_size=sizes).astype(np.float32)
 
 expect(node, inputs=[data, sizes], outputs=[output],
        name='test_resize_downsample_sizes_cubic')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_sizes_cubic_antialias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='cubic',
+    antialias=1,
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+# [[[[ 1.7750092  3.1200073  4.4650054]
+#    [ 7.1550016  8.5        9.844998 ]
+#    [12.534994  13.8799925 15.224991 ]]]]
+output = interpolate_nd(
+    data, cubic_coeffs_antialias, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_cubic_antialias')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_sizes_linear_antialias</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    antialias=1,
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+sizes = np.array([1, 1, 3, 3], dtype=np.int64)
+
+# [[[[ 2.3636363  3.590909   4.818182 ]
+#    [ 7.2727275  8.5        9.727273 ]
+#    [12.181818  13.409091  14.636364 ]]]]
+output = interpolate_nd(
+    data, linear_coeffs_antialias, output_size=sizes).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_linear_antialias')
 ```
 
 </details>
@@ -18286,7 +18647,7 @@ sizes = np.array([1, 1, 3, 1], dtype=np.int64)
 #    [ 7.       ]
 #    [12.333333 ]]]]
 output = interpolate_nd(
-    data, linear_coeffs, output_size=sizes, coordinate_transformation_mode='pytorch_half_pixel').astype(np.float32)
+    data, lambda x, _: linear_coeffs(x), output_size=sizes, coordinate_transformation_mode='pytorch_half_pixel').astype(np.float32)
 
 expect(node, inputs=[data, sizes], outputs=[output],
        name='test_resize_downsample_sizes_linear_pytorch_half_pixel')
@@ -18313,12 +18674,81 @@ data = np.array([[[
 
 sizes = np.array([1, 1, 1, 3], dtype=np.int64)
 
-# [[[[1. 3.]]]]
+# [[[[1. 2. 4.]]]]
 output = interpolate_nd(
-    data, nearest_coeffs, output_size=sizes).astype(np.float32)
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes).astype(np.float32)
 
 expect(node, inputs=[data, sizes], outputs=[output],
        name='test_resize_downsample_sizes_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_sizes_nearest_not_larger</summary>
+
+```python
+keep_aspect_ratio_policy = 'not_larger'
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+sizes = np.array([1, 3], dtype=np.int64)  # Results in 1x2
+
+# [[[[1. 3.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_nearest_not_larger')
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_sizes_nearest_not_smaller</summary>
+
+```python
+keep_aspect_ratio_policy = 'not_smaller'
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]]], dtype=np.float32)
+
+sizes = np.array([1, 3], dtype=np.int64)  # Results in 2x3
+
+# [[[[1. 2. 4.]
+#    [5. 6. 8.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_downsample_sizes_nearest_not_smaller')
 ```
 
 </details>
@@ -18350,11 +18780,85 @@ sizes = np.array([1, 1, 3, 3], dtype=np.int64)
 # [[[[ 7.6000004  7.9        8.2      ]
 #    [ 8.8        9.1        9.400001 ]
 #    [10.        10.3       10.6      ]]]]
-output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
+output = interpolate_nd(data, lambda x, _: linear_coeffs(x), output_size=sizes, roi=roi,
                         coordinate_transformation_mode='tf_crop_and_resize').astype(np.float32)
 
 expect(node, inputs=[data, roi, sizes], outputs=[output],
        name='test_resize_tf_crop_and_resize')
+```
+
+</details>
+
+
+<details>
+<summary>resize_tf_crop_and_resize_axes_2_3</summary>
+
+```python
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', '', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='tf_crop_and_resize'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+# Note: for some rois, the result may be different with that of TF for inaccurate floating point
+roi = np.array([0.4, 0.6, 0.6, 0.8], dtype=np.float32)
+sizes = np.array([3, 3], dtype=np.int64)
+
+# [[[[ 7.6000004  7.9        8.2      ]
+#    [ 8.8        9.1        9.400001 ]
+#    [10.        10.3       10.6      ]]]]
+output = interpolate_nd(data, lambda x, _: linear_coeffs(x), output_size=sizes, roi=roi, axes=axes,
+                        coordinate_transformation_mode='tf_crop_and_resize').astype(np.float32)
+
+expect(node, inputs=[data, roi, sizes], outputs=[output],
+       name='test_resize_tf_crop_and_resize_axes_2_3')
+```
+
+</details>
+
+
+<details>
+<summary>resize_tf_crop_and_resize_axes_3_2</summary>
+
+```python
+axes = [3, 2]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', 'roi', '', 'sizes'],
+    outputs=['Y'],
+    mode='linear',
+    coordinate_transformation_mode='tf_crop_and_resize'
+)
+
+data = np.array([[[
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 16],
+]]], dtype=np.float32)
+
+# Note: for some rois, the result may be different with that of TF for inaccurate floating point
+roi = np.array([0.6, 0.4, 0.8, 0.6], dtype=np.float32)
+sizes = np.array([3, 3], dtype=np.int64)
+
+# [[[[ 7.6000004  7.9        8.2      ]
+#    [ 8.8        9.1        9.400001 ]
+#    [10.        10.3       10.6      ]]]]
+output = interpolate_nd(data, lambda x, _: linear_coeffs(x), output_size=sizes, roi=roi, axes=axes,
+                        coordinate_transformation_mode='tf_crop_and_resize').astype(np.float32)
+
+expect(node, inputs=[data, roi, sizes], outputs=[output],
+       name='test_resize_tf_crop_and_resize_axes_3_2')
 ```
 
 </details>
@@ -18387,7 +18891,7 @@ sizes = np.array([1, 1, 3, 3], dtype=np.int64)
 # [[[[ 7.6000004 10.        10.       ]
 #    [12.400001  10.        10.       ]
 #    [10.        10.        10.       ]]]]
-output = interpolate_nd(data, linear_coeffs, output_size=sizes, roi=roi,
+output = interpolate_nd(data, lambda x, _: linear_coeffs(x), output_size=sizes, roi=roi,
                         coordinate_transformation_mode='tf_crop_and_resize', extrapolation_value=10.0).astype(np.float32)
 
 expect(node, inputs=[data, roi, sizes], outputs=[output],
@@ -18434,7 +18938,7 @@ scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 #    [13.31640625 13.61328125 14.08984375 14.71875    15.125
 #     15.75390625 16.23046875 16.52734375]]]]
 output = interpolate_nd(
-    data, cubic_coeffs, scale_factors=scales).astype(np.float32)
+    data, lambda x, _: cubic_coeffs(x), scale_factors=scales).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_scales_cubic')
@@ -18481,7 +18985,7 @@ scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 #     14.61854349 15.16058394 15.41670245]
 #    [13.26470588 13.52082439 14.06286484 14.60294118 15.10294118
 #     15.64301751 16.18505796 16.44117647]]]]
-output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.5), scale_factors=scales,
+output = interpolate_nd(data, lambda x, _: cubic_coeffs(x, A=-0.5), scale_factors=scales,
                         exclude_outside=True).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
@@ -18529,7 +19033,7 @@ scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 #    [13.         13.34110787 13.80029155 14.32944606 14.67055394
 #     15.19970845 15.65889213 16.        ]]]]
 output = interpolate_nd(
-    data, cubic_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+    data, lambda x, _: cubic_coeffs(x), scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_scales_cubic_align_corners')
@@ -18575,7 +19079,7 @@ scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 #     16.09375]
 #    [13.375   13.78125 14.375   14.875   15.375   15.96875 16.375
 #     16.46875]]]]
-output = interpolate_nd(data, lambda x: cubic_coeffs(x, A=-0.75), scale_factors=scales,
+output = interpolate_nd(data, lambda x, _: cubic_coeffs(x, A=-0.75), scale_factors=scales,
                         coordinate_transformation_mode='asymmetric').astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
@@ -18608,7 +19112,7 @@ scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 #    [2.5  2.75 3.25 3.5 ]
 #    [3.   3.25 3.75 4.  ]]]]
 output = interpolate_nd(
-    data, linear_coeffs, scale_factors=scales).astype(np.float32)
+    data, lambda x, _: linear_coeffs(x), scale_factors=scales).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_scales_linear')
@@ -18641,7 +19145,7 @@ scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
 #    [2.33333333 2.66666667 3.         3.33333333]
 #    [3.         3.33333333 3.66666667 4.        ]]]]
 output = interpolate_nd(
-    data, linear_coeffs, scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
+    data, lambda x, _: linear_coeffs(x), scale_factors=scales, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_scales_linear_align_corners')
@@ -18673,10 +19177,78 @@ scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
 #    [3. 3. 3. 4. 4. 4.]
 #    [3. 3. 3. 4. 4. 4.]]]]
 output = interpolate_nd(
-    data, nearest_coeffs, scale_factors=scales).astype(np.float32)
+    data, lambda x, _: nearest_coeffs(x), scale_factors=scales).astype(np.float32)
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_resize_upsample_scales_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_nearest_axes_2_3</summary>
+
+```python
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([2.0, 3.0], dtype=np.float32)
+
+# [[[[1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 2. 2. 2.]
+#    [3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), scale_factors=scales, axes=axes).astype(np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_upsample_scales_nearest_axes_2_3')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_nearest_axes_3_2</summary>
+
+```python
+axes = [3, 2]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', 'scales'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+scales = np.array([3.0, 2.0], dtype=np.float32)
+
+# [[[[1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 2. 2. 2.]
+#    [3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), scale_factors=scales, axes=axes).astype(np.float32)
+
+expect(node, inputs=[data, scales], outputs=[output],
+       name='test_resize_upsample_scales_nearest_axes_3_2')
 ```
 
 </details>
@@ -18721,7 +19293,7 @@ sizes = np.array([1, 1, 9, 10], dtype=np.int64)
 #    [13.32442078 13.50992078 13.84092078 14.29192078 14.77667078
 #     15.09267078 15.57742078 16.02842078 16.35942078 16.54492078]]]]
 output = interpolate_nd(
-    data, cubic_coeffs, output_size=sizes).astype(np.float32)
+    data, lambda x, _: cubic_coeffs(x), output_size=sizes).astype(np.float32)
 
 expect(node, inputs=[data, sizes], outputs=[output],
        name='test_resize_upsample_sizes_cubic')
@@ -18756,10 +19328,84 @@ sizes = np.array([1, 1, 7, 8], dtype=np.int64)
 #    [3. 3. 3. 3. 4. 4. 4. 4.]
 #    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
 output = interpolate_nd(
-    data, nearest_coeffs, output_size=sizes).astype(np.float32)
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes).astype(np.float32)
 
 expect(node, inputs=[data, sizes], outputs=[output],
        name='test_resize_upsample_sizes_nearest')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_sizes_nearest_axes_2_3</summary>
+
+```python
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+sizes = np.array([7, 8], dtype=np.int64)
+
+# [[[[1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_axes_2_3')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_sizes_nearest_axes_3_2</summary>
+
+```python
+axes = [3, 2]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+sizes = np.array([8, 7], dtype=np.int64)
+
+# [[[[1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_axes_3_2')
 ```
 
 </details>
@@ -18796,7 +19442,7 @@ sizes = np.array([1, 1, 8, 8], dtype=np.int64)
 #    [13. 14. 14. 15. 15. 16. 16. 16.]
 #    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
 output = interpolate_nd(
-    data, lambda x: nearest_coeffs(x, mode='ceil'), output_size=sizes).astype(np.float32)
+    data, lambda x, _: nearest_coeffs(x, mode='ceil'), output_size=sizes).astype(np.float32)
 
 expect(node, inputs=[data, sizes], outputs=[output],
        name='test_resize_upsample_sizes_nearest_ceil_half_pixel')
@@ -18836,10 +19482,90 @@ sizes = np.array([1, 1, 8, 8], dtype=np.int64)
 #    [ 9.  9.  9. 10. 10. 11. 11. 12.]
 #    [13. 13. 13. 14. 14. 15. 15. 16.]]]]
 output = interpolate_nd(
-    data, lambda x: nearest_coeffs(x, mode='floor'), output_size=sizes, coordinate_transformation_mode='align_corners').astype(np.float32)
+    data, lambda x, _: nearest_coeffs(x, mode='floor'), output_size=sizes, coordinate_transformation_mode='align_corners').astype(np.float32)
 
 expect(node, inputs=[data, sizes], outputs=[output],
        name='test_resize_upsample_sizes_nearest_floor_align_corners')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_sizes_nearest_not_larger</summary>
+
+```python
+keep_aspect_ratio_policy = 'not_larger'
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+sizes = np.array([7, 8], dtype=np.int64)  # Results in 7x7
+
+# [[[[1. 1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_not_larger')
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_sizes_nearest_not_smaller</summary>
+
+```python
+keep_aspect_ratio_policy = 'not_smaller'
+axes = [2, 3]
+node = onnx.helper.make_node(
+    'Resize',
+    inputs=['X', '', '', 'sizes'],
+    outputs=['Y'],
+    mode='nearest',
+    axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+sizes = np.array([7, 8], dtype=np.int64)  # Results in 8x8
+
+# [[[[1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [1. 1. 1. 1. 2. 2. 2. 2.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]
+#    [3. 3. 3. 3. 4. 4. 4. 4.]]]]
+output = interpolate_nd(
+    data, lambda x, _: nearest_coeffs(x), output_size=sizes, axes=axes,
+    keep_aspect_ratio_policy=keep_aspect_ratio_policy).astype(np.float32)
+
+expect(node, inputs=[data, sizes], outputs=[output],
+       name='test_resize_upsample_sizes_nearest_not_larger')
 ```
 
 </details>
@@ -18876,7 +19602,7 @@ sizes = np.array([1, 1, 8, 8], dtype=np.int64)
 #    [13. 14. 14. 15. 15. 16. 16. 16.]
 #    [13. 14. 14. 15. 15. 16. 16. 16.]]]]
 output = interpolate_nd(
-    data, lambda x: nearest_coeffs(x, mode='round_prefer_ceil'),
+    data, lambda x, _: nearest_coeffs(x, mode='round_prefer_ceil'),
     output_size=sizes, coordinate_transformation_mode='asymmetric').astype(np.float32)
 
 expect(node, inputs=[data, sizes], outputs=[output],
