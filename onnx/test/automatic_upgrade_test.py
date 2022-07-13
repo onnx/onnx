@@ -647,7 +647,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
         )
 
     def test_Mish(self) -> None:
-        self._test_op_upgrade('Mish', 17)
+        self._test_op_upgrade('Mish', 18)
 
     def test_Mod_1(self) -> None:
         self._test_op_upgrade('Mod', 10, [[2, 3], [2, 3]], [[2, 3]])
