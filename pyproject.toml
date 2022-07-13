@@ -7,4 +7,22 @@ disable = [
   "line-too-long",
   "fixme",
   "too-few-public-methods",
+  "no-name-in-module",
+]
+
+[tool.pylint.basic]
+
+good-names = [
+  "_",
+  "e",
+  "ex",
+  "f",
+  "i",
+  "j",
+  "k",
+  "Run",
+  "s",
+  "x",
+  "y",
+  "z",
 ]
