@@ -1,0 +1,10 @@
+[tool.pylint.messages_control]
+
+disable = [
+  "missing-docstring",
+  "import-error",
+  "no-member",
+  "line-too-long",
+  "fixme",
+  "too-few-public-methods",
+]
