@@ -73,6 +73,7 @@ jobs:
     displayName: 'Install ONNX and dependencies'
 
   - script: |
+      source py$(python.version)/bin/activate
       # style check (flake8, mypy, and clang-format)
       python -m pip install .[lint]
       bash tools/style.sh
@@ -133,6 +134,7 @@ jobs:
     displayName: 'Run ONNX tests'
 
   - script: |
+      source py$(python.version)/bin/activate
       # onnx.checker all existing backend data
       python workflow_scripts/test_generated_backend.py
       # onnx.checker all generated backend data
