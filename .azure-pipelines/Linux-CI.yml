@@ -66,6 +66,7 @@ jobs:
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py install
       pytest
+      pip install .[lint]
       bash tools/style.sh
 
 
