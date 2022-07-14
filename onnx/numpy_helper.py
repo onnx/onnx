@@ -7,14 +7,14 @@ import numpy.typing as nptyping  # type: ignore
 from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
 from onnx import mapping, helper
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
-from typing import Sequence, Any, Optional, List, Dict
+from typing import Sequence, Any, Optional, List, Dict, Union
 
 
 def combine_pairs_to_complex(fa: Sequence[int]) -> Sequence[np.complex64]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def bfloat16_to_float32(data: np.ndarray, dims: nptyping._ShapeLike) -> np.ndarray:
+def bfloat16_to_float32(data: np.ndarray, dims: Union[int, Sequence[int]]) -> np.ndarray:
     """Converts ndarray of bf16 (as uint32) to f32 (as uint32)."""
     shift = lambda x: x << 16  # noqa: E731
     return shift(data.astype(np.int32)).reshape(dims).view(np.float32)
@@ -36,9 +36,9 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         raise TypeError("The element type in the input tensor is not defined.")
 
     tensor_dtype = tensor.data_type
-    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
-    storage_np_dtype = mapping.to_storage_numpy_type(tensor_dtype)
-    storage_field = mapping.to_field(tensor_dtype)
+    np_dtype = helper.tensor_dtype_to_np_type(tensor_dtype)
+    storage_np_dtype = helper.tensor_dtype_to_storage_numpy_type(tensor_dtype)
+    storage_field = helper.tensor_dtype_to_field(tensor_dtype)
     dims = tensor.dims
 
     if tensor.data_type == TensorProto.STRING:
@@ -109,7 +109,7 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
 
     if arr.dtype == object:
         # Special care for strings.
-        tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
+        tensor.data_type = helper.np_type_to_tensor_dtype(arr.dtype)
         # TODO: Introduce full string support.
         # We flatten the array in case there are 2-D arrays are specified
         # We throw the error below if we have a 3-D array or some kind of other
@@ -138,7 +138,7 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
 
     # For numerical types, directly use numpy raw bytes.
     try:
-        dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
+        dtype = helper.np_type_to_tensor_dtype(arr.dtype)
     except KeyError:
         raise RuntimeError(
             f"Numpy data type not understood yet: {str(arr.dtype)}")
@@ -262,7 +262,7 @@ def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
         map.name = name
     keys = list(dict.keys())
     raw_key_type = np.array(keys[0]).dtype
-    key_type = mapping.NP_TYPE_TO_TENSOR_TYPE[raw_key_type]
+    key_type = helper.np_type_to_tensor_dtype(raw_key_type)
 
     valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32,
                            TensorProto.INT64, TensorProto.UINT8, TensorProto.UINT16,
@@ -375,5 +375,5 @@ def convert_endian(tensor: TensorProto) -> None:
         tensor (TensorProto): TensorProto to be converted.
     """
     tensor_dtype = tensor.data_type
-    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
+    np_dtype = helper.tensor_dtype_to_np_type(tensor_dtype)
     tensor.raw_data = np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()

@@ -14,7 +14,6 @@ from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto,
     FunctionProto
 from onnx import defs
 from onnx import mapping
-from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
 VersionTableType = List[VersionRowType]
@@ -332,7 +331,7 @@ def make_tensor(
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
 
-    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[data_type]
+    np_dtype = tensor_dtype_to_np_type(data_type)
 
     # Check number of vals specified equals tensor size
     expected_size = 1
@@ -362,7 +361,7 @@ def make_tensor(
             vals = np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
         elif data_type == TensorProto.BFLOAT16:
             vals = list(map(float32_to_bfloat16, np.array(vals).astype(np_dtype).flatten().tolist()))
-        field = mapping.to_field(data_type)
+        field = tensor_dtype_to_field(data_type)
         getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)
     return tensor
@@ -813,7 +812,7 @@ def printable_attribute(attr: AttributeProto, subgraphs: bool = False) -> Union[
             content.append("<Tensor>")
         else:
             # special case to print scalars
-            field = STORAGE_TENSOR_TYPE_TO_FIELD[attr.t.data_type]
+            field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[attr.t.data_type]
             content.append(f'<Scalar Tensor {str(getattr(attr.t, field))}>')
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
@@ -1028,3 +1027,27 @@ def make_training_info(algorithm: GraphProto, algorithm_bindings: AssignmentBind
             binding.value = v
 
     return training_info
+
+def tensor_dtype_to_np_type(tensor_dtype: int) -> Any:
+    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][0]
+
+
+def tensor_dtype_to_storage_tensor_type(tensor_dtype: int) -> int:
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype][1]
+
+
+def tensor_dtype_to_string(tensor_dtype: int) -> str:
+    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][2]
+
+
+def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> Any:
+    return tensor_dtype_to_np_type(tensor_dtype_to_storage_tensor_type(tensor_dtype))
+
+
+# This map is used to get storage field for certain tensor type
+def tensor_dtype_to_field(tensor_dtype: int) -> str:
+    return mapping.STORAGE_TENSOR_TYPE_TO_FIELD[mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][1]]
+
+
+def np_type_to_tensor_dtype(np_type: Any) -> int:
+    return mapping.NP_TYPE_TO_TENSOR_TYPE[np_type]
