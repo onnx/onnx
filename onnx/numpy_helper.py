@@ -1,20 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np  # type: ignore
-import numpy.typing as nptyping  # type: ignore
-from onnx import TensorProto, MapProto, SequenceProto, OptionalProto
-from onnx import mapping, helper
+
+from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, mapping
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
-from typing import Sequence, Any, Optional, List, Dict
 
 
-def combine_pairs_to_complex(fa: Sequence[int]) -> Sequence[np.complex64]:
+def combine_pairs_to_complex(fa: Sequence[int]) -> List[complex]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def bfloat16_to_float32(data: np.ndarray, dims: nptyping._ShapeLike) -> np.ndarray:
+def bfloat16_to_float32(data: np.ndarray, dims: Union[int, Sequence[int]]) -> np.ndarray:
     """Converts ndarray of bf16 (as uint32) to f32 (as uint32)."""
     shift = lambda x: x << 16  # noqa: E731
     return shift(data.astype(np.int32)).reshape(dims).view(np.float32)
