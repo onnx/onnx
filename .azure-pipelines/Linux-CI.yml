@@ -65,6 +65,10 @@ jobs:
       fi
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py install
+      pytest
+      bash tools/style.sh
+
+
     displayName: 'Install ONNX and dependencies'
 
   - script: |
