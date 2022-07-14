@@ -1,0 +1,10 @@
+[tool.black]
+# extend-exclude needs to be a regular expression
+extend-exclude = "third_party/"
+target-version = ["py37", "py38", "py39", "py310"]
+
+[tool.isort]
+profile = "black"
+extend_skip_glob = [
+    "third_party/*",
+]

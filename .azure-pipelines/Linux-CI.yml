@@ -47,7 +47,7 @@ jobs:
 
       source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
-      python -m pip install -q --upgrade pip
+      python -m pip install -q --upgrade pip setuptools wheel
       python -m pip install -q -r requirements-release.txt
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
@@ -64,7 +64,7 @@ jobs:
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py --quiet install
+      python setup.py install
     displayName: 'Install ONNX and dependencies'
 
   - script: |
