@@ -3,7 +3,7 @@
 import random
 import struct
 
-import numpy as np  # type: ignore
+import numpy as np # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto, SequenceProto
@@ -594,7 +594,7 @@ class TestPrintableGraph(unittest.TestCase):
   %Y_Initializer[FLOAT, 1]''' in graph_str, graph_str)
 
 
-@pytest.mark.parametrize("tensor_type",  # type: ignore
+@pytest.mark.parametrize("tensor_type",
     [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING, TensorProto.COMPLEX64, TensorProto.COMPLEX128}],
     ids=lambda tensor_type: to_string(tensor_type)
 )
@@ -609,7 +609,7 @@ def test_make_tensor_vals(tensor_type: int) -> None:
     np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
 
-@pytest.mark.parametrize("tensor_type",  # type: ignore
+@pytest.mark.parametrize("tensor_type",
     [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING}],
     ids=lambda tensor_type: to_string(tensor_type)
 )

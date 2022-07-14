@@ -2,7 +2,7 @@
 
 from onnx import TensorProto, SequenceProto, OptionalProto
 import numpy as np  # type: ignore
-from typing import Union
+from typing import Any, Dict
 import warnings
 
 # tensor_type: (numpy type, storage type, string name)
@@ -33,8 +33,8 @@ TENSOR_TYPE_TO_NP_TYPE = {tensor_type: value[0] for tensor_type, value in TENSOR
 # TODO(https://github.com/onnx/onnx/issues/4261): Remove this.
 
 
-class WarningDict(dict):
-    def __getitem__(self, key):
+class WarningDict(dict):  # type: ignore
+    def __getitem__(self, key: str) -> Any:
         warnings.warn(str("`mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE` is deprecated in ONNX 1.13 and will "
             + "be removed in next release. To silence this warning, please use `to_storage_tensor_type` instead."), DeprecationWarning, stacklevel=2)
         return super().__getitem__(key)
@@ -78,22 +78,22 @@ OPTIONAL_ELEMENT_TYPE_TO_FIELD = {
 }
 
 
-def to_np_type(tensor_type: Union[TensorProto, int]) -> int:
+def to_np_type(tensor_type: int) -> Any:
     return TENSOR_TYPE_MAP[int(tensor_type)][0]
 
 
-def to_storage_tensor_type(tensor_type: Union[TensorProto, int]) -> int:
+def to_storage_tensor_type(tensor_type: int) -> int:
     return TENSOR_TYPE_MAP[tensor_type][1]
 
 
-def to_string(tensor_type: Union[TensorProto, int]) -> str:
+def to_string(tensor_type: int) -> str:
     return TENSOR_TYPE_MAP[int(tensor_type)][2]
 
 
-def to_storage_numpy_type(tensor_type: Union[TensorProto, int]) -> int:
+def to_storage_numpy_type(tensor_type: int) -> Any:
     return to_np_type(to_storage_tensor_type(tensor_type))
 
 
 # This map is used to get storage field for certain tensor type
-def to_field(tensor_type: TensorProto) -> str:
+def to_field(tensor_type: int) -> str:
     return STORAGE_TENSOR_TYPE_TO_FIELD[TENSOR_TYPE_MAP[int(tensor_type)][1]]
