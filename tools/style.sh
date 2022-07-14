@@ -17,7 +17,7 @@ flake8 onnx tools workflow_scripts
 echo -e "::endgroup::"
 
 echo -e "\n::group:: ===> check mypy"
-mypy . --no-site-packages
+python setup.py typecheck
 echo -e "::endgroup::"
 
 echo -e "\n::group:: ===> run clang-format"
