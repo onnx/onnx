@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np  # type: ignore
 
-from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, mapping
+from onnx import helper, mapping, MapProto, OptionalProto, SequenceProto, TensorProto
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 
 

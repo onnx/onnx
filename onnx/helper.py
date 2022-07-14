@@ -1028,6 +1028,7 @@ def make_training_info(algorithm: GraphProto, algorithm_bindings: AssignmentBind
 
     return training_info
 
+
 def tensor_dtype_to_np_type(tensor_dtype: int) -> Any:
     return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][0]
 
