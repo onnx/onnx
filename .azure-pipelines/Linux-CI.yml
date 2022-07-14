@@ -47,7 +47,7 @@ jobs:
 
       source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
-      python -m pip install -q --upgrade pip
+      python -m pip install -q --upgrade pip setuptools wheel
       python -m pip install -q -r requirements-release.txt
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
@@ -71,7 +71,7 @@ jobs:
       source py$(python.version)/bin/activate
 
       # style check (flake8, mypy, and clang-format)
-      pip install .[lint]
+      python -m pip install -q -r requirements-dev.txt
       bash tools/style.sh
       if [ $? -ne 0 ]; then
         echo "style check failed"
