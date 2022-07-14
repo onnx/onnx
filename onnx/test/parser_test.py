@@ -50,7 +50,8 @@ class TestBasicFunctions(unittest.TestCase):
               C = Softmax(S)
            }
            '''
-        self.assertRaises(onnx.parser.ParseError, lambda: onnx.parser.parse_graph(input))
+        self.assertRaises(onnx.parser.ParseError,
+                          lambda: onnx.parser.parse_graph(input))
 
     def test_parse_model_error(self) -> None:
         input = '''
@@ -65,8 +66,5 @@ class TestBasicFunctions(unittest.TestCase):
               C = Softmax(S)
            }
            '''
-        self.assertRaises(onnx.parser.ParseError, lambda: onnx.parser.parse_model(input))
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
