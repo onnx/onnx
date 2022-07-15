@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from collections import namedtuple
-from typing import Sequence, Any, Type, Tuple, NewType, Optional, Dict
+from typing import Any, Dict, NewType, Optional, Sequence, Tuple, Type
 
 import numpy  # type: ignore
 
 import onnx.checker
 import onnx.onnx_cpp2py_export.checker as c_checker
-from onnx import ModelProto, NodeProto, IR_VERSION
+from onnx import IR_VERSION, ModelProto, NodeProto
 
 
 class DeviceType:

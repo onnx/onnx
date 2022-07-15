@@ -4,10 +4,11 @@ complete.
 
 """
 
+from typing import Union
+
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C
 from onnx import ModelProto
-from typing import Union
 
 
 def infer_shapes(

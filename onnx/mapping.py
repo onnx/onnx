@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from onnx import TensorProto, SequenceProto, OptionalProto
 import numpy as np  # type: ignore
+
+from onnx import OptionalProto, SequenceProto, TensorProto
 
 # This map is used for converting TensorProto values into Numpy arrays
 TENSOR_TYPE_TO_NP_TYPE = {

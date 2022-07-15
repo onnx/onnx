@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from collections import defaultdict, OrderedDict
-import os
 import csv
 import datetime
+import os
+from collections import OrderedDict, defaultdict
+from typing import IO, Any, Dict, List, Optional, Set
 
 from tabulate import tabulate  # type: ignore
 
 import onnx
-from onnx import defs, helper, GraphProto
-from typing import Optional, Set, Dict, IO, List, Any
+from onnx import GraphProto, defs, helper
 
 _all_schemas = defs.get_all_schemas()
 

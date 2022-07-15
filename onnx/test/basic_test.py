@@ -1,21 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from onnx import (
-    AttributeProto,
-    NodeProto,
-    GraphProto,
-    ModelProto,
-    TensorProto,
-    IR_VERSION,
-)
-
 import io
-import onnx
 import os
 import tempfile
 import unittest
 
-from onnx import helper
+import onnx
+from onnx import (
+    IR_VERSION,
+    AttributeProto,
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    TensorProto,
+    helper,
+)
 
 
 class TestBasicFunctions(unittest.TestCase):

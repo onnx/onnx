@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
+from typing import List, Optional, Sequence
+
+import numpy as np  # type: ignore
 
 import onnx.defs
-import numpy as np  # type: ignore
 from onnx import ModelProto
-from typing import List, Optional, Sequence
-from ..utils import import_recursive
+
 from ..test_case import TestCase
+from ..utils import import_recursive
 
 _SimpleModelTestCases = []
 

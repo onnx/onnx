@@ -1,23 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
 import unittest
+from typing import Callable, List, Optional, Tuple
 
-from typing import List, Optional, Tuple, Callable
+import numpy as np  # type: ignore
 
 from onnx import (
-    helper,
-    parser,
+    FunctionProto,
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    SparseTensorProto,
+    TensorProto,
+    ValueInfoProto,
     checker,
     compose,
+    helper,
+    parser,
     version_converter,
-    ModelProto,
-    GraphProto,
-    ValueInfoProto,
-    TensorProto,
-    SparseTensorProto,
-    FunctionProto,
-    NodeProto,
 )
 
 

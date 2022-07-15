@@ -3,9 +3,10 @@
 import numpy as np  # type: ignore
 
 import onnx
+
 from ..base import Base
-from . import expect
 from ..utils import all_numeric_dtypes
+from . import expect
 
 
 class Min(Base):

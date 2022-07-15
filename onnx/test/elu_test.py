@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 
-from onnx import defs, checker, helper
+from onnx import checker, defs, helper
 
 
 class TestRelu(unittest.TestCase):

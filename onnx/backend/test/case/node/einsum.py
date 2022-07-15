@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from typing import Tuple
+
 import numpy as np  # type: ignore
 
 import onnx
+
 from ..base import Base
 from . import expect
-from typing import Tuple
 
 
 def einsum_reference_implementation(

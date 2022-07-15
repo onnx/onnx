@@ -13,12 +13,13 @@
 #   $ dot -Tsvg my_output.dot -o my_output.svg
 
 import argparse
-from collections import defaultdict
 import json
-from onnx import ModelProto, GraphProto, NodeProto
-import pydot  # type: ignore
-from typing import Any, Callable, Optional, Dict
+from collections import defaultdict
+from typing import Any, Callable, Dict, Optional
 
+import pydot  # type: ignore
+
+from onnx import GraphProto, ModelProto, NodeProto
 
 OP_STYLE = {
     "shape": "box",

@@ -2,7 +2,7 @@
 
 import argparse
 
-from onnx import load, checker, NodeProto
+from onnx import NodeProto, checker, load
 
 
 def check_model() -> None:

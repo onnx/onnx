@@ -2,9 +2,9 @@
 
 import json
 import os
+from typing import List, Optional
 
 from ..case.test_case import TestCase
-from typing import List, Optional
 
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.realpath(os.path.dirname(__file__))), "data"

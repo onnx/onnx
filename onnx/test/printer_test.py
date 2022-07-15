@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
+import unittest
+
 import onnx
 from onnx import parser, printer
-import unittest
 
 
 class TestBasicFunctions(unittest.TestCase):

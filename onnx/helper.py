@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 import collections.abc  # type: ignore
 import numbers
-from cmath import isnan
 import struct
+from cmath import isnan
 from typing import (
-    Sequence,
     Any,
-    Optional,
-    Dict,
-    Union,
-    TypeVar,
     Callable,
-    Tuple,
+    Dict,
     List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
     cast,
 )
 
@@ -20,25 +20,25 @@ import google.protobuf.message
 import numpy as np  # type: ignore
 
 from onnx import (
-    TensorProto,
-    SparseTensorProto,
-    AttributeProto,
-    ValueInfoProto,
-    TensorShapeProto,
-    NodeProto,
-    ModelProto,
-    GraphProto,
-    OperatorSetIdProto,
-    TypeProto,
-    SequenceProto,
-    MapProto,
     IR_VERSION,
-    TrainingInfoProto,
-    OptionalProto,
+    AttributeProto,
     FunctionProto,
+    GraphProto,
+    MapProto,
+    ModelProto,
+    NodeProto,
+    OperatorSetIdProto,
+    OptionalProto,
+    SequenceProto,
+    SparseTensorProto,
+    TensorProto,
+    TensorShapeProto,
+    TrainingInfoProto,
+    TypeProto,
+    ValueInfoProto,
+    defs,
+    mapping,
 )
-from onnx import defs
-from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]

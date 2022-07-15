@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
+import unittest
+
 import numpy as np  # type: ignore
 
 from onnx import numpy_helper
-
-import unittest
 
 
 class TestNumpyHelper(unittest.TestCase):

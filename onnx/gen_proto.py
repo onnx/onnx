@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
+import glob
 import os
 import re
-import glob
 import subprocess
 from textwrap import dedent
 from typing import Iterable

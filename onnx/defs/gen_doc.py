@@ -2,17 +2,16 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-from collections import defaultdict
 import os
+from collections import defaultdict
+from typing import Any, Dict, List, NamedTuple, Sequence, Set, Tuple
 
 import numpy as np  # type: ignore
 
-from onnx import defs, FunctionProto, helper
-from onnx.defs import OpSchema, ONNX_ML_DOMAIN
-from onnx.backend.test.case import collect_snippets
+from onnx import FunctionProto, defs, helper
 from onnx.backend.sample.ops import collect_sample_implementations
-from typing import Any, Sequence, Dict, List, NamedTuple, Set, Tuple
-
+from onnx.backend.test.case import collect_snippets
+from onnx.defs import ONNX_ML_DOMAIN, OpSchema
 
 SNIPPETS = collect_snippets()
 SAMPLE_IMPLEMENTATIONS = collect_sample_implementations()

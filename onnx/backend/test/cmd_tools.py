@@ -5,10 +5,9 @@ import json
 import os
 import shutil
 
-import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
+import onnx.backend.test.case.node as node_test
 from onnx import numpy_helper
-
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(TOP_DIR, "data")

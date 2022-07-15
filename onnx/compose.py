@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, Set, Tuple, Optional, MutableMapping
-from onnx import ModelProto, GraphProto, helper, checker
+from typing import List, MutableMapping, Optional, Set, Tuple
+
+from onnx import GraphProto, ModelProto
 from onnx import TensorProto as tp
-from onnx import utils
+from onnx import checker, helper, utils
 
 
 def check_overlapping_names(

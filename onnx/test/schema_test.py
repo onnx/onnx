@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 
-from onnx import defs, AttributeProto
+from onnx import AttributeProto, defs
 
 
 class TestSchema(unittest.TestCase):

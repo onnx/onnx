@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
+
 import onnx
+from onnx import TensorProto, helper
 from onnx.tools import update_model_dims
-from onnx import helper, TensorProto
 
 
 class TestToolsFunctions(unittest.TestCase):

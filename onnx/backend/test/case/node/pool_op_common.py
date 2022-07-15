@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
-import numpy as np  # type: ignore
 import itertools
 from typing import Sequence
+
+import numpy as np  # type: ignore
 
 
 def get_pad_shape(

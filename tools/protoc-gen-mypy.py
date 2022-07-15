@@ -18,7 +18,7 @@
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Generator, List, Set, cast, Optional
+from typing import Any, Callable, Dict, Generator, List, Optional, Set, cast
 
 try:
     import google.protobuf.descriptor_pb2 as d_typed

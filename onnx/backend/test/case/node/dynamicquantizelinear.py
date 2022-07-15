@@ -4,6 +4,7 @@ import numpy as np  # type: ignore
 
 import onnx
 from onnx import TensorProto
+
 from ..base import Base
 from . import expect
 

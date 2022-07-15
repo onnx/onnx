@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
-import onnx
+
 import numpy as np  # type: ignore
+
+import onnx
+from onnx import TensorProto, helper, numpy_helper, shape_inference
 from onnx.tools import update_model_dims
-from onnx import helper, numpy_helper, shape_inference, TensorProto
 
 
 class TestTrainingTool(unittest.TestCase):

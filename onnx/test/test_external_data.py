@@ -1,28 +1,26 @@
 # SPDX-License-Identifier: Apache-2.0
+import os
+import os.path as Path
+import shutil
+import sys
 import tempfile
 import unittest
 import uuid
+from typing import Any, List, Tuple
 
 import numpy as np  # type: ignore
-import shutil
-
-import os
-import os.path as Path
+import pytest  # type: ignore
 
 import onnx
-from onnx import checker, helper, shape_inference
-from onnx import ModelProto, TensorProto
-from onnx.external_data_helper import set_external_data
-from onnx.external_data_helper import convert_model_to_external_data
-from onnx.external_data_helper import convert_model_from_external_data
+from onnx import ModelProto, TensorProto, checker, helper, shape_inference
 from onnx.external_data_helper import (
+    convert_model_from_external_data,
+    convert_model_to_external_data,
     load_external_data_for_model,
     load_external_data_for_tensor,
+    set_external_data,
 )
-from onnx.numpy_helper import to_array, from_array
-from typing import Any, Tuple, List
-import pytest  # type: ignore
-import sys
+from onnx.numpy_helper import from_array, to_array
 
 
 class TestLoadExternalDataBase(unittest.TestCase):

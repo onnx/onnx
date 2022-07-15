@@ -2,22 +2,24 @@
 
 import random
 import struct
+import unittest
+from typing import Any, List, Tuple
 
 import numpy as np  # type: ignore
 
-from onnx import helper, defs, numpy_helper, checker
 from onnx import (
     AttributeProto,
-    TensorProto,
     GraphProto,
     ModelProto,
     OptionalProto,
-    TypeProto,
     SequenceProto,
+    TensorProto,
+    TypeProto,
+    checker,
+    defs,
+    helper,
+    numpy_helper,
 )
-from typing import Any, List, Tuple
-
-import unittest
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):

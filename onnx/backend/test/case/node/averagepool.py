@@ -3,9 +3,10 @@
 import numpy as np  # type: ignore
 
 import onnx
+
 from ..base import Base
 from . import expect
-from .pool_op_common import get_pad_shape, get_output_shape, pool
+from .pool_op_common import get_output_shape, get_pad_shape, pool
 
 
 class AveragePool(Base):

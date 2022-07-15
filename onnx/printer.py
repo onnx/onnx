@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Text, Union
+
 import onnx
 import onnx.onnx_cpp2py_export.printer as C
-from typing import Text, Union
 
 
 def to_text(proto: Union[onnx.ModelProto, onnx.FunctionProto, onnx.GraphProto]) -> Text:
