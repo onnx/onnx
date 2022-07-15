@@ -3248,7 +3248,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Pad_ver13_doc = R"DOC(
+static const char* Pad_ver18_doc = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
@@ -3328,24 +3328,25 @@ Example 3 (`edge` mode):
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
-    13,
+    18,
     OpSchema()
         .Attr(
             "mode",
             "Supported modes: `constant`(default), `reflect`, `edge`",
             AttributeProto::STRING,
             std::string("constant"))
-        .SetDoc(Pad_ver13_doc)
+        .SetDoc(Pad_ver18_doc)
         .Input(0, "data", "Input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "pads",
             "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
             "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
-            "`pads` should be a 1D tensor of shape [2 * input_rank]. "
-            "`pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], "
-            "where xi_begin is the number of pad values added at the beginning of axis `i` and "
-            "xi_end, the number of pad values added at the end of axis `i`.",
+            "`pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number "
+            "of elements in the `axes` input or the input rank if `axes` are not provided explicitly. "
+            "`pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], "
+            "where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and "
+            "xi_end, the number of pad values added at the end of axis `axes[i]`.",
             "tensor(int64)",
             OpSchema::Single,
             true,
@@ -3361,11 +3362,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
+        .Input(
+            3,
+            "axes",
+            "1-D tensor of axes that `pads` apply to. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an "
+            "axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).",
+            "Tind",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+
         .Output(0, "output", "Tensor after padding.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -3376,36 +3390,78 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_rank = input_shape.dim_size();
 
-          // Infer output shape if 'pads' tensor is available
-          const auto* pads_initializer = ctx.getInputData(1);
-          if (nullptr != pads_initializer) {
+          std::vector<int64_t> axes;
+          if (hasInputShape(ctx, 3)) { //'axes' input
+            auto axes_initializer = ctx.getInputData(3);
+            if (axes_initializer == nullptr)
+              return; // can't do shape inference then
+
+            axes = ParseData<int64_t>(axes_initializer);
+
+            std::vector<bool> tmp(input_rank, false);
+            for (auto axis : axes) {
+              if (tmp[axis]) {
+                fail_shape_inference("Repeated axis: ", axis);
+              }
+              tmp[axis] = true;
+            }
+          } else {
+            axes.resize(input_rank);
+            std::iota(axes.begin(), axes.end(), 0);
+          }
+
+          int num_axes = axes.size();
+          if (num_axes > input_rank) {
+            fail_shape_inference("Too many axes provided");
+          }
+
+          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+          // Populating default dims
+          std::vector<TensorShapeProto_Dimension*> out_dims(input_rank);
+          for (int i = 0; i < input_rank; ++i) {
+            out_dims[i] = output_shape->add_dim();
+          }
+
+          // Shape Inference if
+          //     1. 'pads' are available.
+          // and 2. 'axes' are available, or default.
+          const TensorProto* pads_initializer = ctx.getInputData(1);
+          if (nullptr != pads_initializer && !axes.empty()) {
             if (pads_initializer->dims_size() != 1 || pads_initializer->data_type() != TensorProto::INT64) {
-              fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+              fail_shape_inference("'pads' input must be a 1D (shape: [2 * num_axes]) tensor of type int64");
             }
 
             const auto& pads_data = ParseData<int64_t>(pads_initializer);
-            if (pads_data.size() != static_cast<size_t>(2 * input_rank)) {
-              fail_shape_inference("Pads has incorrect number of values");
+            if (pads_data.size() != static_cast<size_t>(2 * num_axes)) {
+              fail_shape_inference(
+                  "Pads has incorrect number of values. Expected 2 * ",
+                  num_axes,
+                  " values. Got ",
+                  pads_data.size(),
+                  " values.");
             }
 
-            auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
-              const auto& input_dim = input_shape.dim((int)i);
-              auto* output_dim = output_shape->add_dim();
+            // Set default dim values
+            for (int i = 0; i < input_rank; ++i) {
+              const auto& input_dim = input_shape.dim(i);
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
-              } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
-                *output_dim = input_dim;
+                out_dims[i]->set_dim_value(input_dim.dim_value());
               }
             }
-          } else {
-            // Infer output shapes' rank in any case
-            auto* output_shape_0 = getOutputShape(ctx, 0);
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
-              output_shape_0->add_dim();
+
+            for (int i = 0; i < num_axes; ++i) {
+              auto axis = axes[i];
+              const auto& input_dim = input_shape.dim(axis);
+              auto& out_dim = *out_dims[axis];
+              auto total_pad = pads_data[i] + pads_data[num_axes + i];
+              if (input_dim.has_dim_value()) {
+                out_dim.set_dim_value(input_dim.dim_value() + total_pad);
+              } else if (total_pad == 0) {
+                out_dim = input_dim;
+              }
             }
           }
-          return;
         }));
 
 static const char* Trilu_ver14_doc = R"DOC(
@@ -3477,6 +3533,175 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
+        }));
+
+static const char* CenterCropPad_ver18_doc = R"DOC(
+Center crop or pad an input to given dimensions.
+
+The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
+cropped or padded.
+
+If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
+If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
+so that the input is centered in the output.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    CenterCropPad,
+    18,
+    OpSchema()
+        .SetDoc(CenterCropPad_ver18_doc)
+        .Input(
+            0,
+            "input_data",
+            "Input to extract the centered crop from.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "shape",
+            "1-D tensor representing the cropping window dimensions.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(0, "output_data", "Output data.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Attr(
+            "axes",
+            "If provided, it specifies a subset of axes that 'shape' refer to. "
+            "If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). "
+            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). "
+            "Behavior is undefined if an axis is repeated.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types.")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (ctx.getNumInputs() != 2) {
+            fail_type_inference("CenterCropPad op must have 2 inputs.");
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          // Shape Inference if shape is initializer
+          const TensorProto* cropShapeInitializer = ctx.getInputData(1);
+          if (!cropShapeInitializer) {
+            return;
+          }
+
+          // don't know data_type - can't proceed
+          if (!cropShapeInitializer->has_data_type())
+            return;
+
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const int64_t input_rank = input_shape.dim_size();
+
+          std::vector<int64_t> shape;
+          if (cropShapeInitializer->data_type() == TensorProto::INT64) {
+            const auto& data = ParseData<int64_t>(cropShapeInitializer);
+            shape.insert(shape.end(), data.begin(), data.end());
+          } else if (cropShapeInitializer->data_type() == TensorProto::INT32) {
+            const auto& data = ParseData<int32_t>(cropShapeInitializer);
+            shape.insert(shape.end(), data.begin(), data.end());
+          } else {
+            // unaccepted data type
+            fail_shape_inference("`shape` only supports `int32_t` or `int64_t` inputs");
+          }
+
+          auto axes_attr = ctx.getAttribute("axes");
+          std::vector<int64_t> axes;
+          if (axes_attr) {
+            axes = RetrieveValues<int64_t>(*axes_attr);
+
+            std::vector<bool> tmp(input_rank, false);
+            for (auto axis : axes) {
+              if (tmp[axis]) {
+                fail_shape_inference("Repeated axis: ", axis);
+              }
+              tmp[axis] = true;
+            }
+          } else {
+            axes.resize(input_rank);
+            std::iota(axes.begin(), axes.end(), 0);
+          }
+
+          if (shape.size() != axes.size()) {
+            fail_shape_inference(
+                "Number of elements of input 'shape' (",
+                shape.size(),
+                ") does not match the number of axes (",
+                axes.size(),
+                ").");
+          }
+
+          // Populating default dims
+          std::vector<TensorShapeProto_Dimension*> out_dims(input_rank);
+          auto* output_shape = getOutputShape(ctx, 0);
+          for (int i = 0; i < input_rank; ++i) {
+            out_dims[i] = output_shape->add_dim();
+            const auto& input_dim = input_shape.dim(i);
+            if (input_dim.has_dim_value()) {
+              out_dims[i]->set_dim_value(input_dim.dim_value());
+            } else if (input_dim.has_dim_param()) {
+              out_dims[i]->set_dim_param(input_dim.dim_param());
+            }
+          }
+          int j = 0;
+          for (int axis : axes) {
+            out_dims[axis]->set_dim_value(shape[j++]);
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          FunctionBuilder builder(functionProto);
+          builder.Const("k2", std::vector<int64_t>{2});
+
+          auto axes_attr = ctx.getAttribute("axes");
+          if (axes_attr) { // axes provided, need to work on a subset of dimensions
+            builder.Add("axes_input = Constant <value_ints : ints = @axes>()");
+            builder.Add("x_shape_alldims = Shape (input_data)").Add("x_shape = Gather (x_shape_alldims, axes_input)");
+          } else { // axes not provided, assuming all dims
+            builder.Add("x_shape = Shape (input_data)");
+          }
+
+          // First: Pad step
+          builder.Add("padded_sh = Max(x_shape, shape)")
+              .Add("pad_amount = Sub(padded_sh, x_shape)")
+              .Add("pad_amount_left = Div(pad_amount, k2)")
+              .Add("pad_amount_right = Sub(pad_amount, pad_amount_left)")
+              .Add("pads = Concat <axis = 0> (pad_amount_left, pad_amount_right)");
+          if (axes_attr)
+            builder.Add("padded_input = Pad (input_data, pads, , axes_input)");
+          else
+            builder.Add("padded_input = Pad (input_data, pads)");
+
+          // Second: Slice step
+          if (axes_attr) {
+            builder.Add("x_shape_alldims2 = Shape (padded_input)")
+                .Add("x_shape2 = Gather (x_shape_alldims2, axes_input)");
+          } else {
+            builder.Add("x_shape2 = Shape (padded_input)");
+          }
+
+          builder.Add("sh_diff = Sub (x_shape2, shape)")
+              .Add("start_dims = Div (sh_diff, k2)")
+              .Add("end_dims = Add (start_dims, shape)");
+          if (axes_attr)
+            builder.Add("output_data = Slice (padded_input, start_dims, end_dims, axes_input)");
+          else
+            builder.Add("output_data = Slice (padded_input, start_dims, end_dims)");
+
+          schema.BuildFunction(functionProto);
+          return true;
         }));
 
 } // namespace ONNX_NAMESPACE

@@ -101,7 +101,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
-|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
+|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
@@ -176,6 +176,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|
+|<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|
@@ -2876,6 +2877,172 @@ expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output],
        name='test_celu')
+```
+
+</details>
+
+
+### <a name="CenterCropPad"></a><a name="centercroppad">**CenterCropPad**</a>
+
+  Center crop or pad an input to given dimensions.
+
+  The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
+  cropped or padded.
+
+  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
+  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
+  so that the input is centered in the output.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>If provided, it specifies a subset of axes that 'shape' refer to. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input_data</tt> (differentiable) : T</dt>
+<dd>Input to extract the centered crop from.</dd>
+<dt><tt>shape</tt> (non-differentiable) : Tind</dt>
+<dd>1-D tensor representing the cropping window dimensions.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_data</tt> (differentiable) : T</dt>
+<dd>Output data.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>center_crop_pad_crop</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+# First dim is even diff, second is uneven
+x = np.random.randn(20, 10, 3).astype(np.float32)
+shape = np.array([10, 7, 3], dtype=np.int64)
+y = x[5:15, 1:8, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_and_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 10, 3], dtype=np.int64)
+y = np.zeros([10, 10, 3], dtype=np.float32)
+y[:, 1:9, :] = x[5:15, :, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_and_pad')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_axes_chw</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[1, 2],
+)
+
+# Cropping on second dim, padding on third, first stays the same
+x = np.random.randn(3, 20, 8).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([3, 10, 9], dtype=np.float32)
+y[:, :, :8] = x[:, 5:15, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_axes_chw')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_axes_hwc</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+    axes=[0, 1],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([10, 9, 3], dtype=np.float32)
+y[:, :8, :] = x[5:15, :, :]
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_crop_axes_hwc')
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'CenterCropPad',
+    inputs=['x', 'shape'],
+    outputs=['y'],
+)
+
+# First dim is even diff, second is uneven
+x = np.random.randn(10, 7, 3).astype(np.float32)
+shape = np.array([20, 10, 3], dtype=np.int64)
+y = np.zeros([20, 10, 3], dtype=np.float32)
+y[5:15, 1:8, :] = x
+
+expect(node, inputs=[x, shape], outputs=[y],
+       name='test_center_crop_pad_pad')
 ```
 
 </details>
@@ -14654,9 +14821,9 @@ expect(node, inputs=[x, slope], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>
 
 #### Attributes
 
@@ -14665,15 +14832,17 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 <dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
 </dl>
 
-#### Inputs (2 - 3)
+#### Inputs (2 - 4)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Input tensor.</dd>
 <dt><tt>pads</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * input_rank]. `pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `i` and xi_end, the number of pad values added at the end of axis `i`.</dd>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number of elements in the `axes` input or the input rank if `axes` are not provided explicitly. `pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and xi_end, the number of pad values added at the end of axis `axes[i]`.</dd>
 <dt><tt>constant_value</tt> (optional, non-differentiable) : T</dt>
 <dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, empty string or False).</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
+<dd>1-D tensor of axes that `pads` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).</dd>
 </dl>
 
 #### Outputs
@@ -14688,6 +14857,8 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
 </dl>
 
 
@@ -14715,6 +14886,35 @@ y = pad_impl(
 
 expect(node, inputs=[x, pads, value], outputs=[y],
        name='test_constant_pad')
+```
+
+</details>
+
+
+<details>
+<summary>constant_pad_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x', 'pads', 'value', 'axes'],
+    outputs=['y'],
+    mode='constant'
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([1, 3], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    'constant',
+    1.2,
+    [1, 3],
+)
+
+expect(node, inputs=[x, pads, value, axes], outputs=[y],
+       name='test_constant_pad_axes')
 ```
 
 </details>
