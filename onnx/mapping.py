@@ -20,7 +20,11 @@ TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.COMPLEX128): np.dtype('complex128'),
     int(TensorProto.UINT32): np.dtype('uint32'),
     int(TensorProto.UINT64): np.dtype('uint64'),
-    int(TensorProto.STRING): np.dtype('object')
+    int(TensorProto.STRING): np.dtype('object'),
+    int(TensorProto.UINT4): np.dtype('uint4'),
+    int(TensorProto.INT4): np.dtype('int4'),
+    int(TensorProto.UINT2): np.dtype('uint2'),
+    int(TensorProto.INT2): np.dtype('int2')
 }
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
@@ -46,6 +50,10 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.UINT32): int(TensorProto.UINT32),
     int(TensorProto.UINT64): int(TensorProto.UINT64),
     int(TensorProto.STRING): int(TensorProto.STRING),
+    int(TensorProto.UINT4): int(TensorProto.UINT4),
+    int(TensorProto.INT4): int(TensorProto.INT4),
+    int(TensorProto.UINT2): int(TensorProto.UINT2),
+    int(TensorProto.INT2): int(TensorProto.INT2),
 }
 
 STORAGE_TENSOR_TYPE_TO_FIELD = {
@@ -60,6 +68,10 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
     int(TensorProto.UINT64): 'uint64_data',
     int(TensorProto.STRING): 'string_data',
     int(TensorProto.BOOL): 'int32_data',
+    int(TensorProto.UINT4): 'int32_data',
+    int(TensorProto.INT4): 'int32_data',
+    int(TensorProto.UINT2): 'int32_data',
+    int(TensorProto.INT2): 'int32_data',
 }
 
 STORAGE_ELEMENT_TYPE_TO_FIELD = {
