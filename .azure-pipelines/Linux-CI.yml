@@ -42,8 +42,8 @@ jobs:
 
   - script: |
       python -m pip -q install virtualenv
-      python -m virtualenv py$(python.version)
-      source py$(python.version)/bin/activate
+      python -m virtualenv venv
+      source venv/bin/activate
 
       source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
@@ -68,7 +68,7 @@ jobs:
     displayName: 'Install ONNX and dependencies'
 
   - script: |
-      source py$(python.version)/bin/activate
+      source venv/bin/activate
 
       # style check (flake8, mypy, and clang-format)
       python -m pip install -q -r requirements-dev.txt
@@ -130,7 +130,7 @@ jobs:
     displayName: 'Run ONNX tests'
 
   - script: |
-      source py$(python.version)/bin/activate
+      source venv/bin/activate
       # onnx.checker all existing backend data
       python workflow_scripts/test_generated_backend.py
       # onnx.checker all generated backend data
