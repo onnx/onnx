@@ -56,14 +56,13 @@ jobs:
       fi
       export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py --quiet install
+      python -m pip install --quiet .[lint]
     displayName: 'Install ONNX and dependencies'
 
   - script: |
       source py$(python.version)/bin/activate
 
       # style check (flake8, mypy, and clang-format)
-      python -m pip install -q -r requirements-dev.txt
       bash tools/style.sh
       if [ $? -ne 0 ]; then
         echo "style check failed"

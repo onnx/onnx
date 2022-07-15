@@ -7,4 +7,6 @@ target-version = ["py37", "py38", "py39", "py310"]
 profile = "black"
 extend_skip_glob = [
     "third_party/*",
+    "*_pb2*",
+    ".setuptools-cmake-build/*",
 ]

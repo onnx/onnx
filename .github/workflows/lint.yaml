@@ -79,11 +79,10 @@ jobs:
           export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
           export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
-          python setup.py install
+          python -m pip install --quiet .[lint]
       - name: Run style.sh
         run: |
           # style check (flake8, mypy, and clang-format)
-          python -m pip install -q -r requirements-dev.txt
           bash tools/style.sh
           if [ $? -ne 0 ]; then
             echo "style check failed"
