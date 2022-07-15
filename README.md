@@ -126,7 +126,7 @@ pip install -e .
 
 ### Linux
 
-First, you need to install protobuf. The minimum Protobuf version required by ONNX is 3.12.2.
+First, you need to install protobuf. The minimum Protobuf version required by ONNX is 3.0.0.
 
 Ubuntu 22.04 (and newer) users may choose to install protobuf via
 ```bash
