@@ -594,30 +594,30 @@ class TestPrintableGraph(unittest.TestCase):
   %Y_Initializer[FLOAT, 1]''' in graph_str, graph_str)
 
 
-@pytest.mark.parametrize("tensor_type",
+@pytest.mark.parametrize("tensor_dtype",
     [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING, TensorProto.COMPLEX64, TensorProto.COMPLEX128}],
-    ids=lambda tensor_type: helper.tensor_dtype_to_string(tensor_type)
+    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype)
 )
-def test_make_tensor_vals(tensor_type: int) -> None:
-    np_array = np.random.randn(2, 3).astype(helper.tensor_dtype_to_np_type(tensor_type))
+def test_make_tensor_vals(tensor_dtype: int) -> None:
+    np_array = np.random.randn(2, 3).astype(helper.tensor_dtype_to_np_type(tensor_dtype))
     tensor = helper.make_tensor(
         name="test",
-        data_type=tensor_type,
+        data_type=tensor_dtype,
         dims=np_array.shape,
         vals=np_array
     )
     np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
 
-@pytest.mark.parametrize("tensor_type",
+@pytest.mark.parametrize("tensor_dtype",
     [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING}],
-    ids=lambda tensor_type: helper.tensor_dtype_to_string(tensor_type)
+    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype)
 )
-def test_make_tensor_raw(tensor_type: int) -> None:
-    np_array = np.random.randn(2, 3).astype(helper.tensor_dtype_to_np_type(tensor_type))
+def test_make_tensor_raw(tensor_dtype: int) -> None:
+    np_array = np.random.randn(2, 3).astype(helper.tensor_dtype_to_np_type(tensor_dtype))
     tensor = helper.make_tensor(
         name="test",
-        data_type=tensor_type,
+        data_type=tensor_dtype,
         dims=np_array.shape,
         vals=np_array.tobytes(),
         raw=True,

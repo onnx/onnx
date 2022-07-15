@@ -361,6 +361,8 @@ def make_tensor(
             vals = np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
         elif data_type == TensorProto.BFLOAT16:
             vals = list(map(float32_to_bfloat16, np.array(vals).astype(np_dtype).flatten().tolist()))
+        elif data_type == TensorProto.BOOL:
+            vals = np.array(vals).astype(int)
         field = tensor_dtype_to_field(data_type)
         getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)

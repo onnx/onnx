@@ -2,7 +2,7 @@
 
 from onnx import TensorProto, SequenceProto, OptionalProto
 import numpy as np  # type: ignore
-from typing import Any, Dict
+from typing import Any
 import warnings
 
 # tensor_dtype: (numpy type, storage type, string name)
