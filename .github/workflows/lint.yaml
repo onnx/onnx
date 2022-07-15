@@ -85,7 +85,7 @@ jobs:
           export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
           export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
-          python setup.py develop
+          python setup.py install
       - name: Run style.sh
         run: |
           # style check (flake8, mypy, and clang-format)
