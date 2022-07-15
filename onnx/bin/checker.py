@@ -6,8 +6,8 @@ from onnx import load, checker, NodeProto
 
 
 def check_model() -> None:
-    parser = argparse.ArgumentParser('check-model')
-    parser.add_argument('model_pb', type=argparse.FileType('rb'))
+    parser = argparse.ArgumentParser("check-model")
+    parser.add_argument("model_pb", type=argparse.FileType("rb"))
     args = parser.parse_args()
 
     model = load(args.model_pb)
@@ -15,8 +15,8 @@ def check_model() -> None:
 
 
 def check_node() -> None:
-    parser = argparse.ArgumentParser('check-node')
-    parser.add_argument('node_pb', type=argparse.FileType('rb'))
+    parser = argparse.ArgumentParser("check-node")
+    parser.add_argument("node_pb", type=argparse.FileType("rb"))
     args = parser.parse_args()
 
     node = NodeProto()

@@ -8,7 +8,9 @@ import os
 
 def main() -> None:
     try:
-        root_folder = os.path.realpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        root_folder = os.path.realpath(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
         os.chdir(root_folder)
         # Use --no-site-packages to prevent mypy catching other typecheck errors which are not related to ONNX itself
         subprocess.check_call(["mypy", ".", "--no-site-packages"])
@@ -19,5 +21,5 @@ def main() -> None:
         exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
