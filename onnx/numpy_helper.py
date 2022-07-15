@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Sequence, Union
 
 import numpy as np  # type: ignore
 
-from onnx import helper, mapping, MapProto, OptionalProto, SequenceProto, TensorProto
+from onnx import helper, MapProto, OptionalProto, SequenceProto, TensorProto
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 
 
@@ -160,7 +160,7 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     """
     lst: List[Any] = []
     elem_type = sequence.elem_type
-    value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+    value_field = helper.storage_type_to_field(elem_type)
     values = getattr(sequence, value_field)
     for value in values:
         if elem_type == SequenceProto.TENSOR or elem_type == SequenceProto.SPARSE_TENSOR:
@@ -300,7 +300,7 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
     elem_type = optional.elem_type
     if elem_type == OptionalProto.UNDEFINED:
         return opt
-    value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
+    value_field = helper.optional_type_to_field(elem_type)
     value = getattr(optional, value_field)
     # TODO: create a map and replace conditional branches
     if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:

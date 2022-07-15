@@ -3,15 +3,13 @@
 import random
 import struct
 
+from typing import Any, List, Tuple
+import unittest
 import numpy as np  # type: ignore
+import pytest  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto, SequenceProto
-from onnx.mapping import TENSOR_TYPE_MAP
-import pytest  # type: ignore
-from typing import Any, List, Tuple, Union
-
-import unittest
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -202,13 +200,13 @@ class TestHelperAttributeFunctions(unittest.TestCase):
 
     def test_is_attr_legal_verbose(self) -> None:
 
-        def _set(attr: AttributeProto, type: AttributeProto.AttributeType, var: str, value: Any) -> None:
+        def _set(attr: AttributeProto, attribute_type: AttributeProto.AttributeType, var: str, value: Any) -> None:
             setattr(attr, var, value)
-            setattr(attr, "type", type)
+            setattr(attr, "type", attribute_type)
 
-        def _extend(attr: AttributeProto, type: AttributeProto.AttributeType, var: List[Any], value: Any) -> None:
+        def _extend(attr: AttributeProto, attribute_type: AttributeProto.AttributeType, var: List[Any], value: Any) -> None:
             var.extend(value)
-            setattr(attr, "type", type)
+            setattr(attr, "type", attribute_type)
 
         SET_ATTR = [
             (lambda attr: _set(attr, AttributeProto.FLOAT, "f", 1.0)),
@@ -595,7 +593,7 @@ class TestPrintableGraph(unittest.TestCase):
 
 
 @pytest.mark.parametrize("tensor_dtype",
-    [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING, TensorProto.COMPLEX64, TensorProto.COMPLEX128}],
+    [t for t in helper.get_all_tensor_types() if t not in {TensorProto.BFLOAT16, TensorProto.STRING, TensorProto.COMPLEX64, TensorProto.COMPLEX128}],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype)
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
@@ -610,7 +608,7 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
 
 
 @pytest.mark.parametrize("tensor_dtype",
-    [t for t in TENSOR_TYPE_MAP if t not in {TensorProto.BFLOAT16, TensorProto.STRING}],
+    [t for t in helper.get_all_tensor_types() if t not in {TensorProto.BFLOAT16, TensorProto.STRING}],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype)
 )
 def test_make_tensor_raw(tensor_dtype: int) -> None:

@@ -402,7 +402,7 @@ def make_sequence(
     sequence = SequenceProto()
     sequence.name = name
     sequence.elem_type = elem_type
-    values_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+    values_field = storage_type_to_field(elem_type)
     getattr(sequence, values_field).extend(values)
     return sequence
 
@@ -447,7 +447,7 @@ def make_optional(
     optional.name = name
     optional.elem_type = elem_type
     if elem_type != 0:
-        values_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
+        values_field = optional_type_to_field(elem_type)
         getattr(optional, values_field).CopyFrom(value)
     return optional
 
@@ -814,7 +814,7 @@ def printable_attribute(attr: AttributeProto, subgraphs: bool = False) -> Union[
             content.append("<Tensor>")
         else:
             # special case to print scalars
-            field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[attr.t.data_type]
+            field = storage_type_to_field(attr.t.data_type)
             content.append(f'<Scalar Tensor {str(getattr(attr.t, field))}>')
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
@@ -1054,3 +1054,15 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
 
 def np_type_to_tensor_dtype(np_type: Any) -> int:
     return mapping.NP_TYPE_TO_TENSOR_TYPE[np_type]
+
+
+def storage_type_to_field(elem_type: int) -> int:
+    return mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+
+
+def optional_type_to_field(elem_type: int) -> int:
+    return mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
+
+
+def get_all_tensor_types() -> List[int]:
+    return mapping.TENSOR_TYPE_MAP.keys()
