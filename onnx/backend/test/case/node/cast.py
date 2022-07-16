@@ -71,12 +71,12 @@ class Cast(Base):
 
                     output = np.array(ss).astype(object).reshape([3, 4])
                 else:
-                    output = input.astype(helper.tensor_dtype_to_np_type(getattr(TensorProto, getattr(TensorProto, to_type))))
+                    output = input.astype(helper.tensor_dtype_to_np_type(getattr(TensorProto, to_type)))
             else:
                 input = np.array(['0.47892547', '0.48033667', '0.49968487', '0.81910545',
                     '0.47031248', '0.816468', '0.21087195', '0.7229038',
                     'NaN', 'INF', '+INF', '-INF'], dtype=np.dtype(object)).reshape([3, 4])
-                output = input.astype(helper.tensor_dtype_to_np_type(getattr(TensorProto, getattr(TensorProto, to_type))))
+                output = input.astype(helper.tensor_dtype_to_np_type(getattr(TensorProto, to_type)))
             node = onnx.helper.make_node(
                 'Cast',
                 inputs=['input'],
