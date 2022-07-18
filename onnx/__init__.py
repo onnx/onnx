@@ -63,7 +63,12 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
     if isinstance(proto, bytes):
         return proto
     elif hasattr(proto, 'SerializeToString') and callable(proto.SerializeToString):
-        result = proto.SerializeToString()
+        try:
+            result = proto.SerializeToString()
+        except:
+            if proto.ByteSize() >= 2147483648:
+                print("The single proto is larger than 2GB. Please use save_as_external_data to save proto separately.")
+            raise
         return result
     else:
         raise TypeError('No SerializeToString method is detected. '
