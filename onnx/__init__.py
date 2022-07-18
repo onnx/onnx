@@ -62,7 +62,7 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
     '''
     if isinstance(proto, bytes):
         return proto
-    elif hasattr(proto, 'SerializeToString') and callable(proto.SerializeToString):
+    if hasattr(proto, 'SerializeToString') and callable(proto.SerializeToString):
         try:
             result = proto.SerializeToString()
         except:
@@ -70,9 +70,8 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
                 print("The single proto is larger than 2GB. Please use save_as_external_data to save proto separately.")
             raise
         return result
-    else:
-        raise TypeError('No SerializeToString method is detected. '
-                         'neither proto is a str.\ntype is {}'.format(type(proto)))
+    raise TypeError(f'No SerializeToString method is detected. '
+                        'neither proto is a str.\ntype is {}'.format(type(proto)))
 
 
 _Proto = TypeVar('_Proto', bound=google.protobuf.message.Message)
