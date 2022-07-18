@@ -70,8 +70,7 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
                 print("The single proto is larger than 2GB. Please use save_as_external_data to save proto separately.")
             raise
         return result
-    raise TypeError(f'No SerializeToString method is detected. '
-                        'neither proto is a str.\ntype is {}'.format(type(proto)))
+    raise TypeError(f'No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}')
 
 
 _Proto = TypeVar('_Proto', bound=google.protobuf.message.Message)
