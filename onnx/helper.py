@@ -3,7 +3,7 @@ import collections.abc  # type: ignore
 import numbers
 from cmath import isnan
 import struct
-from typing import Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
+from typing import Any, Callable, cast, Dict, KeysView, List, Optional, Sequence, Tuple, TypeVar, Union
 
 import google.protobuf.message
 import numpy as np  # type: ignore
@@ -12,8 +12,7 @@ from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto,
     TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
     TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto, \
     FunctionProto
-from onnx import defs
-from onnx import mapping
+from onnx import defs, mapping
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
 VersionTableType = List[VersionRowType]
@@ -1056,13 +1055,13 @@ def np_type_to_tensor_dtype(np_type: Any) -> int:
     return mapping.NP_TYPE_TO_TENSOR_TYPE[np_type]
 
 
-def storage_type_to_field(elem_type: int) -> int:
+def storage_type_to_field(elem_type: int) -> str:
     return mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
 
 
-def optional_type_to_field(elem_type: int) -> int:
+def optional_type_to_field(elem_type: int) -> str:
     return mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
 
 
-def get_all_tensor_types() -> List[int]:
+def get_all_tensor_types() -> KeysView[int]:
     return mapping.TENSOR_TYPE_MAP.keys()

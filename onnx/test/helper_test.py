@@ -310,7 +310,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
     def test_model_docstring(self) -> None:
         graph = helper.make_graph([], "my graph", [], [])
         model_def = helper.make_model(graph, doc_string="test")
-        # models may have their own documentation, but don"t have a name
+        # models may have their own documentation, but don't have a name
         # their name is the domain-qualified name of the underlying graph.
         self.assertFalse(hasattr(model_def, "name"))
         self.assertEqual(model_def.doc_string, "test")
@@ -372,7 +372,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         self.assertEqual(string_list, list(tensor.string_data))
 
     def test_make_bfloat16_tensor(self) -> None:
-        # numpy doesn"t support bf16, so we have to compute the correct result manually
+        # numpy doesn't support bf16, so we have to compute the correct result manually
         np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]],
             dtype=np.float32)
         np_results = np.array([
