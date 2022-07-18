@@ -45,11 +45,12 @@ jobs:
       python -m virtualenv py$(python.version)
       source py$(python.version)/bin/activate
 
-      python -m pip install -q --upgrade pip setuptools wheel
+      sudo apt-get install libprotobuf-dev protobuf-compiler
+      python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
-      sudo apt-get install libprotobuf-dev protobuf-compiler
+
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
       if [ '$(onnx_debug)' == '1' ]; then
