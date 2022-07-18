@@ -994,6 +994,9 @@ struct Graph final {
     }
     return initializers_.end();
   }
+  bool is_constant_initializer(const Value* value) const {
+    return value->node() == initializer_node_;
+  }
   ArrayRef<Value*> inputs() {
     return input_->outputs();
   }
