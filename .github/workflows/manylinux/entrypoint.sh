@@ -11,7 +11,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
 # Compile wheels
 # Need to be updated if there is a new Python Version
-if [ $(uname -m) == 'aarch64' ]; then
+if [ "$(uname -m)" == "aarch64" ]; then
  PIP_INSTALL_COMMAND="$PY_VERSION -m pip install --no-cache-dir -q"
  PYTHON_COMMAND="$PY_VERSION"
 else
@@ -48,7 +48,7 @@ fi
 # find -exec does not preserve failed exit codes, so use an output file for failures
 failed_wheels=$PWD/failed-wheels
 rm -f "$failed_wheels"
-find . -type f -iname "*-linux*.whl" -exec sh -c "auditwheel repair '{}' -w \$(dirname '{}') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '{}' >> ""$failed_wheels""; }" \;
+find . -type f -iname "*-linux*.whl" -exec sh -c "auditwheel repair '$1' -w \$(dirname '$1') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '$1' >> ""$failed_wheels""; }" shell {} \;
 
 if [[ -f "$failed_wheels" ]]; then
     echo "Repairing wheels failed:"
