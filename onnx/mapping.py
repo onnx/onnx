@@ -21,10 +21,10 @@ TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.UINT32): np.dtype('uint32'),
     int(TensorProto.UINT64): np.dtype('uint64'),
     int(TensorProto.STRING): np.dtype('object'),
-    int(TensorProto.UINT4): np.dtype('uint4'),
-    int(TensorProto.INT4): np.dtype('int4'),
-    int(TensorProto.UINT2): np.dtype('uint2'),
-    int(TensorProto.INT2): np.dtype('int2')
+    int(TensorProto.UINT4): np.dtype('uint8'), # Native numpy does not support bfloat16 so now use uint8 for uint4 values
+    int(TensorProto.INT4): np.dtype('int8'), # Native numpy does not support bfloat16 so now use int8 for int4 values
+    int(TensorProto.UINT2): np.dtype('uint8'), # Native numpy does not support bfloat16 so now use uint8 for uint2 values
+    int(TensorProto.INT2): np.dtype('int8') # Native numpy does not support bfloat16 so now use int8 for int2 values
 }
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
