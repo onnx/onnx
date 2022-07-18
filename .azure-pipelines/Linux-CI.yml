@@ -114,11 +114,6 @@ jobs:
         exit 1
       fi
 
-      # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
-      python -m pip uninstall -y onnx
-      rm -rf .setuptools-cmake-build
-      python -m pip install -q .
-
     displayName: 'Run ONNX tests'
 
   - script: |
