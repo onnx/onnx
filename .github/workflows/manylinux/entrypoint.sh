@@ -48,7 +48,7 @@ fi
 # find -exec does not preserve failed exit codes, so use an output file for failures
 failed_wheels=$PWD/failed-wheels
 rm -f "$failed_wheels"
-find . -type f -iname "*-linux*.whl" -exec sh -c "auditwheel repair '$1' -w \$(dirname '$1') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '{}' >> '$failed_wheels'; }" sh {} \;
+find . -type f -iname "*-linux*.whl" -exec sh -c "auditwheel repair '$1' -w \$(dirname '$1') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '{}' >> '$failed_wheels'; }" shell {} \;
 
 if [[ -f "$failed_wheels" ]]; then
     echo "Repairing wheels failed:"
