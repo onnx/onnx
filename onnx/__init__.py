@@ -65,9 +65,12 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
     if hasattr(proto, 'SerializeToString') and callable(proto.SerializeToString):
         try:
             result = proto.SerializeToString()
+        except ValueError as e:
+            if proto.ByteSize() >= onnx.checker.MAXIMUM_PROTOBUF:
+                raise ValueError("The single proto is larger than 2GB. Please use save_as_external_data to save proto separately.") from e
+            else:
+                raise
         except:
-            if proto.ByteSize() >= 2147483648:
-                print("The single proto is larger than 2GB. Please use save_as_external_data to save proto separately.")
             raise
         return result
     raise TypeError(f'No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}')
@@ -91,14 +94,11 @@ def _deserialize(s: bytes, proto: _Proto) -> _Proto:
         raise ValueError(f'Parameter s must be bytes, but got type: {type(s)}')
 
     if not (hasattr(proto, 'ParseFromString') and callable(proto.ParseFromString)):
-        raise ValueError('No ParseFromString method is detected. '
-                         '\ntype is {}'.format(type(proto)))
+        raise ValueError(f'No ParseFromString method is detected. Type is {type(proto)}')
 
     decoded = cast(Optional[int], proto.ParseFromString(s))
     if decoded is not None and decoded != len(s):
-        raise google.protobuf.message.DecodeError(
-            "Protobuf decoding consumed too few bytes: {} out of {}".format(
-                decoded, len(s)))
+        raise google.protobuf.message.DecodeError(f"Protobuf decoding consumed too few bytes: {decoded} out of {len(s)}")
     return proto
 
 
