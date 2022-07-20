@@ -160,8 +160,7 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     """
     lst: List[Any] = []
     elem_type = sequence.elem_type
-    value_field = helper.storage_type_to_field(elem_type)
-    values = getattr(sequence, value_field)
+    values = helper.get_attr_from_sequence_elem_type(sequence, elem_type)
     for value in values:
         if elem_type in (SequenceProto.TENSOR, SequenceProto.SPARSE_TENSOR):
             lst.append(to_array(value))
@@ -300,8 +299,7 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
     elem_type = optional.elem_type
     if elem_type == OptionalProto.UNDEFINED:
         return opt
-    value_field = helper.optional_type_to_field(elem_type)
-    value = getattr(optional, value_field)
+    value = helper.get_attr_from_optional_elem_type(optional, elem_type)
     # TODO: create a map and replace conditional branches
     if elem_type in (OptionalProto.TENSOR, OptionalProto.SPARSE_TENSOR):
         opt = to_array(value)

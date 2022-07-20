@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
-import collections.abc  # type: ignore
+import collections.abc
+from email import message  # type: ignore
 import numbers
 from cmath import isnan
 import struct
@@ -401,8 +402,7 @@ def make_sequence(
     sequence = SequenceProto()
     sequence.name = name
     sequence.elem_type = elem_type
-    values_field = storage_type_to_field(elem_type)
-    getattr(sequence, values_field).extend(values)
+    get_attr_from_sequence_elem_type(sequence, elem_type).extend(values)
     return sequence
 
 
@@ -446,8 +446,7 @@ def make_optional(
     optional.name = name
     optional.elem_type = elem_type
     if elem_type != 0:
-        values_field = optional_type_to_field(elem_type)
-        getattr(optional, values_field).CopyFrom(value)
+        get_attr_from_optional_elem_type(optional, elem_type).CopyFrom(value)
     return optional
 
 
@@ -813,8 +812,7 @@ def printable_attribute(attr: AttributeProto, subgraphs: bool = False) -> Union[
             content.append("<Tensor>")
         else:
             # special case to print scalars
-            field = storage_type_to_field(attr.t.data_type)
-            content.append(f'<Scalar Tensor {str(getattr(attr.t, field))}>')
+            content.append('<Scalar Tensor>')
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)
@@ -1030,7 +1028,7 @@ def make_training_info(algorithm: GraphProto, algorithm_bindings: AssignmentBind
     return training_info
 
 
-def tensor_dtype_to_np_type(tensor_dtype: int) -> Any:
+def tensor_dtype_to_np_type(tensor_dtype: int) -> np.dtype:
     return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][0]
 
 
@@ -1042,7 +1040,7 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][2]
 
 
-def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> Any:
+def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> np.dtype:
     return tensor_dtype_to_np_type(tensor_dtype_to_storage_tensor_type(tensor_dtype))
 
 
@@ -1051,7 +1049,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     return mapping.STORAGE_TENSOR_TYPE_TO_FIELD[mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][1]]
 
 
-def np_type_to_tensor_dtype(np_type: Any) -> int:
+def np_type_to_tensor_dtype(np_type: np.dtype) -> int:
     return mapping.NP_TYPE_TO_TENSOR_TYPE[np_type]
 
 
@@ -1059,8 +1057,16 @@ def storage_type_to_field(elem_type: int) -> str:
     return mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
 
 
+def get_attr_from_sequence_elem_type(tensor: SequenceProto, elem_type: int) -> Any:
+    return getattr(tensor, storage_type_to_field(elem_type))
+
+
 def optional_type_to_field(elem_type: int) -> str:
     return mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
+
+
+def get_attr_from_optional_elem_type(tensor: OptionalProto, elem_type: int) -> Any:
+    return getattr(tensor, optional_type_to_field(elem_type))
 
 
 def get_all_tensor_types() -> KeysView[int]:
