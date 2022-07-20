@@ -68,8 +68,7 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
         except ValueError as e:
             if proto.ByteSize() >= onnx.checker.MAXIMUM_PROTOBUF:
                 raise ValueError("The single proto is larger than 2GB. Please use save_as_external_data to save proto separately.") from e
-            else:
-                raise
+            raise
         return result
     raise TypeError(f"No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}")
 
