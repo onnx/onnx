@@ -138,9 +138,9 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
     # For numerical types, directly use numpy raw bytes.
     try:
         dtype = helper.np_type_to_tensor_dtype(arr.dtype)
-    except KeyError:
+    except KeyError as e:
         raise RuntimeError(
-            f"Numpy data type not understood yet: {str(arr.dtype)}")
+            f"Numpy data type not understood yet: {str(arr.dtype)}") from e
     tensor.data_type = dtype
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
     if sys.byteorder == 'big':
@@ -163,7 +163,7 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     value_field = helper.storage_type_to_field(elem_type)
     values = getattr(sequence, value_field)
     for value in values:
-        if elem_type == SequenceProto.TENSOR or elem_type == SequenceProto.SPARSE_TENSOR:
+        if elem_type in (SequenceProto.TENSOR, SequenceProto.SPARSE_TENSOR):
             lst.append(to_array(value))
         elif elem_type == SequenceProto.SEQUENCE:
             lst.append(to_list(value))
@@ -303,7 +303,7 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
     value_field = helper.optional_type_to_field(elem_type)
     value = getattr(optional, value_field)
     # TODO: create a map and replace conditional branches
-    if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:
+    if elem_type in (OptionalProto.TENSOR, OptionalProto.SPARSE_TENSOR):
         opt = to_array(value)
     elif elem_type == OptionalProto.SEQUENCE:
         opt = to_list(value)

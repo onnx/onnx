@@ -139,7 +139,7 @@ def _extract_value_info(input: Union[List[Any], np.ndarray, None], name: str, ty
     if type_proto is None:
         if input is None:
             raise NotImplementedError("_extract_value_info: both input and type_proto arguments cannot be None.")
-        elif isinstance(input, list):
+        if isinstance(input, list):
             elem_type = onnx.helper.np_type_to_tensor_dtype(input[0].dtype)
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)

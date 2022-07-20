@@ -1725,7 +1725,7 @@ for from_type, to_type in test_cases:
     elif 'STRING' != from_type:
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_type(getattr(TensorProto, from_type)))
-        if ('STRING' == to_type):
+        if 'STRING' == to_type:
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -1812,7 +1812,7 @@ for from_type, to_type in test_cases:
     elif 'STRING' != from_type:
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_type(getattr(TensorProto, from_type)))
-        if ('STRING' == to_type):
+        if 'STRING' == to_type:
             # Converting input to str, then give it np.object dtype for generating script
             ss = []
             for i in input.flatten():
