@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 import collections.abc
-from email import message  # type: ignore
 import numbers
 from cmath import isnan
 import struct
