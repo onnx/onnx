@@ -137,7 +137,7 @@ In this case, it is required to add `-DONNX_USE_PROTOBUF_SHARED_LIBS=ON` to CMAK
 A more general way is to build and install it from source. See the instructions below for more details.
 
 <details>
-  <summary>Installing Protobuf from source</summary>
+  <summary> Installing Protobuf from source </summary>
 
   Debian/Ubuntu:
   ```bash
@@ -163,9 +163,9 @@ A more general way is to build and install it from source. See the instructions 
     make install
   ```
 
-Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
+  Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
 
-Once build is successful, update PATH to include protobuf paths.
+  Once build is successful, update PATH to include protobuf paths.
 
 </details>
 
@@ -180,7 +180,8 @@ set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
 
-* **Mac**
+### Mac
+
 ```
 export NUM_CORES=`sysctl -n hw.ncpu`
 brew update
