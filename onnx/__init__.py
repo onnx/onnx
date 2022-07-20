@@ -73,7 +73,7 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
         except:
             raise
         return result
-    raise TypeError(f'No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}')
+    raise TypeError(f"No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}")
 
 
 _Proto = TypeVar('_Proto', bound=google.protobuf.message.Message)
@@ -91,10 +91,10 @@ def _deserialize(s: bytes, proto: _Proto) -> _Proto:
         The proto instance filled in by s
     '''
     if not isinstance(s, bytes):
-        raise ValueError(f'Parameter s must be bytes, but got type: {type(s)}')
+        raise ValueError(f"Parameter s must be bytes, but got type: {type(s)}")
 
     if not (hasattr(proto, 'ParseFromString') and callable(proto.ParseFromString)):
-        raise ValueError(f'No ParseFromString method is detected. Type is {type(proto)}')
+        raise ValueError(f"No ParseFromString method is detected. Type is {type(proto)}")
 
     decoded = cast(Optional[int], proto.ParseFromString(s))
     if decoded is not None and decoded != len(s):
