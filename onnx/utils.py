@@ -54,9 +54,10 @@ class Extractor:
         if node_output_name in graph_input_names:
             return
         for node in self.graph.node:
-            if node in reachable_nodes:
-                continue
+            # check output_name first to reduce run time
             if node_output_name not in node.output:
+                continue
+            if node in reachable_nodes:
                 continue
             reachable_nodes.append(node)
             for name in node.input:
