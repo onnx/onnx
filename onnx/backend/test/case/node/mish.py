@@ -17,7 +17,7 @@ class Mish(Base):
             outputs=['Y']
         )
 
-        input_data = np.linspace(-10,10,10000,dtype=np.float32)
+        input_data = np.linspace(-10, 10, 10000,dtype=np.float32)
 
         # Calculate expected output data
         expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
