@@ -124,6 +124,13 @@ def load_model(f: Union[IO[bytes], str], format: Optional[Any] = None, load_exte
     return model
 
 
+def load_lib_proto(f: Union[IO[bytes], str]) -> LibProto:
+    '''
+    '''
+    s = _load_bytes(f)
+    return _deserialize(s, LibProto())
+
+
 def load_tensor(f: Union[IO[bytes], str], format: Optional[Any] = None) -> TensorProto:
     '''
     Loads a serialized TensorProto into memory
@@ -193,6 +200,23 @@ def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], str], format
     if model_filepath:
         basepath = os.path.dirname(model_filepath)
         proto = write_external_data_tensors(proto, basepath)
+
+    s = _serialize(proto)
+    _save_bytes(s, f)
+
+
+def save_lib_proto(proto: Union[LibProto, bytes], f: Union[IO[bytes], str]) -> None:
+    '''
+    '''
+    # TODO: once my branch is ready
+    # if isinstance(proto, bytes):
+    #     _save_bytes(proto, f)
+    # else:
+    #     s = _serialize(proto)
+    #     _save_bytes(s, f)
+
+    if isinstance(proto, bytes):
+        proto = _deserialize(proto, LibProto())
 
     s = _serialize(proto)
     _save_bytes(s, f)
