@@ -208,6 +208,13 @@ def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], str], format
 def save_lib_proto(proto: Union[LibProto, bytes], f: Union[IO[bytes], str]) -> None:
     '''
     '''
+    # TODO: once my branch is ready
+    # if isinstance(proto, bytes):
+    #     _save_bytes(proto, f)
+    # else:
+    #     s = _serialize(proto)
+    #     _save_bytes(s, f)
+
     if isinstance(proto, bytes):
         proto = _deserialize(proto, LibProto())
 

@@ -476,6 +476,7 @@ message GraphProto {
 }
 
 message LibProto {
+  // TODO: add comments
   optional int64 ir_version = 1;
 
   optional string producer_name = 2;
@@ -484,7 +485,7 @@ message LibProto {
 
   optional string domain = 4;
 
-  optional int64 model_version = 5;
+  optional int64 lib_version = 5;
 
   optional string doc_string = 6;
 
