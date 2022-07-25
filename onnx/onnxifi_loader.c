@@ -96,7 +96,7 @@ int ONNXIFI_ABI onnxifi_load(
     GetModuleFileNameW(NULL, module, sizeof (module));
     wchar_t* location = wcsrchr(module, L'\\');
     module[location-module+1] = '\0';
-    wcsncat_s(module, MAX_PATH, ONNXIFI_LIBRARY_NAME, wcslen(ONNXIFI_LIBRARY_NAME));
+    wcsncat_s(module, MAX_PATH, path, wcslen(path));
     path = module;
     onnx->handle = (void*) LoadLibraryExW(path, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 #else
