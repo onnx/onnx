@@ -93,9 +93,9 @@ int ONNXIFI_ABI onnxifi_load(
 #ifdef _WIN32
     /* Use a fully qualified pathname when loading DLL to prevent loading DLL from an unexpected place */
     wchar_t module[MAX_PATH];
-    GetModuleFileNameW(NULL, module, sizeof (module));
+    GetModuleFileNameW(NULL, module, sizeof(module));
     wchar_t* location = wcsrchr(module, L'\\');
-    module[location-module+1] = '\0';
+    module[location - module + 1] = '\0';
     wcsncat_s(module, MAX_PATH, path, wcslen(path));
     path = module;
     onnx->handle = (void*) LoadLibraryExW(path, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
