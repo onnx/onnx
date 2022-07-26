@@ -677,7 +677,9 @@ include(GNUInstallDirs)
 install(DIRECTORY ${ONNX_ROOT}/onnx
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING
-        PATTERN "*.h")
+        PATTERN "*.h"
+        PATTERN "backend/test/case" EXCLUDE
+        PATTERN "backend/test/data" EXCLUDE)
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING

@@ -5,14 +5,14 @@ from __future__ import annotations
 from onnx import checker, helper, numpy_helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto, ONNX_ML, SparseTensorProto, TypeProto
 from onnx.defs import ONNX_DOMAIN, ONNX_ML_DOMAIN, AI_ONNX_PREVIEW_TRAINING_DOMAIN
 from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info, make_opsetid, make_tensor_sequence_value_info
-from typing import Sequence, Union, Tuple, Type, List, Any, Optional
+from typing import Sequence, Union, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
-import os
 import numpy as np  # type: ignore
 
 
-class TestShapeInference(unittest.TestCase):
+class TestShapeInferenceHelper(unittest.TestCase):
+
     def _make_graph(self,
                     seed_values: Sequence[Union[str, Tuple[str, TensorProto.DataType, Any]]],
                     nodes: List[NodeProto],
@@ -91,6 +91,9 @@ class TestShapeInference(unittest.TestCase):
         else:
             raise NotImplementedError(
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type))
+
+
+class TestShapeInference(TestShapeInferenceHelper):
 
     def test_empty_graph(self) -> None:
         graph = self._make_graph(
@@ -369,18 +372,6 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (3, 4))])
 
-    def test_expand_symbolic_input(self) -> None:
-        graph = self._make_graph(
-            [('x', TensorProto.INT32, (3, 1, 2)),
-             ('y', TensorProto.INT32, (1, 4, 2))],
-            [make_node("Shape", ['y'], ['shape']),
-             make_node("Expand", ['x', 'shape'], ['z'])],
-            [])
-        self._assert_inferred(graph, [
-            make_tensor_value_info('shape', TensorProto.INT64, (3,)),
-            make_tensor_value_info('z', TensorProto.INT32, (3, 4, 2))],
-            data_prop=True)
-
     def test_expand_dynamic_shape(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.INT32, (1, 2, None)),
@@ -408,14 +399,85 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
              ('roi', TensorProto.FLOAT, (8,)),
-             ('scales', TensorProto.FLOAT, (4,)),
              ('sizes', TensorProto.INT64, (4,))],
-            [make_node("Resize", ['x', 'roi', 'scales', 'sizes'], ['y'])],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'])],
             [],
             initializer=[make_tensor('sizes', TensorProto.INT64, (4,), (3, 5, 6, 7))])
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (3, 5, 6, 7))])
+
+    def test_resize_size_axes_2_3(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], axes=(2, 3))],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 7))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 6, 7))])
+
+    def test_resize_size_axes_3_2(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], axes=(3, 2))],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 7))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 7, 6))])
+
+    def test_resize_size_not_larger(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], keep_aspect_ratio_policy='not_larger')],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 6))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (4, 6))])
+
+    def test_resize_size_axes_2_3_not_larger(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], axes=(2, 3), keep_aspect_ratio_policy='not_larger')],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 6))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 4, 6))])
+
+    def test_resize_size_not_smaller(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], keep_aspect_ratio_policy='not_smaller')],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 6))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (6, 10))])
+
+    def test_resize_size_axes_2_3_not_smaller(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (2,))],
+            [make_node("Resize", ['x', 'roi', '', 'sizes'], ['y'], axes=(2, 3), keep_aspect_ratio_policy='not_smaller')],
+            [],
+            initializer=[make_tensor('sizes', TensorProto.INT64, (2,), (6, 6))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 6, 10))])
 
     def test_resize_scale(self) -> None:
         graph = self._make_graph(
@@ -425,6 +487,30 @@ class TestShapeInference(unittest.TestCase):
             [make_node("Resize", ['x', 'roi', 'scales'], ['y'])],
             [],
             initializer=[make_tensor('scales', TensorProto.FLOAT, (4,), (1.0, 1.1, 1.3, 1.9))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
+
+    def test_resize_scale_axes_2_3(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (8,)),
+             ('scales', TensorProto.FLOAT, (2,))],
+            [make_node("Resize", ['x', 'roi', 'scales'], ['y'], axes=(2, 3))],
+            [],
+            initializer=[make_tensor('scales', TensorProto.FLOAT, (2,), (1.3, 1.9))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
+
+    def test_resize_scale_axes_3_2(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('roi', TensorProto.FLOAT, (8,)),
+             ('scales', TensorProto.FLOAT, (2,))],
+            [make_node("Resize", ['x', 'roi', 'scales'], ['y'], axes=(3, 2))],
+            [],
+            initializer=[make_tensor('scales', TensorProto.FLOAT, (2,), (1.9, 1.3))])
         self._assert_inferred(
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
@@ -2259,16 +2345,6 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph,
             [make_tensor_value_info('y', TensorProto.UINT8, (None, None, None))])  # type: ignore
-
-    def test_constantofshape_with_symbolic_shape(self) -> None:
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 5))],
-            [make_node("Shape", ['x'], ['shape']),
-             make_node("ConstantOfShape", ['shape'], ['y'], value=make_tensor('value', TensorProto.INT32, (1, ), (2, )))],
-            [])
-        self._assert_inferred(graph,
-            [make_tensor_value_info('shape', TensorProto.INT64, (3,)),
-             make_tensor_value_info('y', TensorProto.INT32, (3, 4, 5))], data_prop=True)  # type: ignore
 
     def test_constantofshape_without_input_shape_scalar(self) -> None:
         graph = self._make_graph([('shape', TensorProto.INT64, (0, ))],
@@ -4445,6 +4521,77 @@ class TestShapeInference(unittest.TestCase):
                 make_tensor_value_info('upper_edge_hertz', TensorProto.FLOAT, ()),
                 make_tensor_value_info('output', TensorProto.DOUBLE, (65, 10))
             ])  # type: ignore
+
+    def test_center_crop_pad_hwc_crop(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (20, 10, 3)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[0, 1])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (10, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (10, 8, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
+
+    def test_center_crop_pad_chw_crop(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (3, 20, 10)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[1, 2])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (10, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (3, 10, 8))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
+
+    def test_center_crop_pad_hwc_croppad(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (10, 10, 3)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[0, 1])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (20, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (20, 8, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
+
+    def test_center_crop_pad_chw_croppad(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (3, 10, 10)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[1, 2])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (20, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (3, 20, 8))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
+
+    def test_center_crop_pad_without_input_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (3, 2)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'])],
+            [])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, None)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
+
+    def test_center_crop_pad_with_input_shape_containing_dim_params(self):  # type: () -> None
+        graph = self._make_graph(
+            [('input_data', TensorProto.FLOAT, (20, 'W', 3)),
+             ('shape', TensorProto.INT64, (2, ))],
+            [make_node('CenterCropPad', ['input_data', 'shape'], ['y'], axes=[0, 1])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2, ), (10, 8))])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.FLOAT, (10, 8, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)])
 
 
 if __name__ == '__main__':

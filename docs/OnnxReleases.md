@@ -13,7 +13,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Before creating the release branch, increase `VERSION_NUMBER` in the main branch. The following files will be updated: [VERSION_NUMBER file](/VERSION_NUMBER) and
 [version.h](/onnx/common/version.h)
 
-* Please use a VERSION_NUMBER smaller than the target (release VERSION_NUMBER) and larger than the previous one to test TestPyPI before using the target VERSION_NUMBER. 
+* Please use target VERSION_NUMBER with `rc` (e.g., `1.x.0rc1`) to test TestPyPI in advance before using target VERSION_NUMBER (e.g., `1.x.0`) for final release.
 
 * Make sure that the IR version number and opset version numbers are up-to-date in
 [ONNX proto files](/onnx/onnx.in.proto),
@@ -113,7 +113,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Conda builds of ONNX are done via conda-forge, which runs infrastructure for building packages and uploading them to conda-forge. If it does not happen automatically, you need to submit a PR to https://github.com/conda-forge/onnx-feedstock (see https://github.com/conda-forge/onnx-feedstock/pull/1/files or https://github.com/conda-forge/onnx-feedstock/pull/50/files for example PRs) You will need to have uploaded to PyPI already, and update the version number and tarball hash of the PyPI uploaded tarball.
 
 **Merge into main branch**
-* After everything above is done, merge the release branch into the main branch to make it consistent.
+* After everything above is done, merge the release branch into the main branch to make it consistent. This step is needed only when there are urgent changes that are made directly into the release branch. The main branch does not have these needed changes. In all other circumstances, the merge PR shall show as empty so nothing needs to be merged.
 
 **Remove old onnx-weekly packages on TestPyPI**
 * Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://test.pypi.org/project/onnx-weekly/#history) on TestPyPI to save space.

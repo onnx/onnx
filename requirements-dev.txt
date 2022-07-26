@@ -9,3 +9,8 @@ jupyter
 pyzmq
 setuptools
 twine
+# Dependencies for linting. Versions match those in setup.py.
+flake8
+clang-format==13.0.0
+mypy==0.782
+types-protobuf==3.18.4

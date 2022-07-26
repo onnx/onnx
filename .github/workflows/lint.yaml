@@ -1,0 +1,124 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: flake8
+        uses: reviewdog/action-flake8@v3
+        with:
+          github_token: ${{ secrets.github_token }}
+          # Change reviewdog reporter if you need [github-pr-check, github-check, github-pr-review].
+          reporter: github-pr-check
+          # Change reporter level if you need.
+          # GitHub Status Check won't become failure with a warning.
+          level: error
+          filter_mode: diff_context
+      - name: misspell # Check spellings as well
+        uses: reviewdog/action-misspell@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          locale: "US"
+          reporter: github-pr-check
+          level: info
+          filter_mode: diff_context
+      - name: shellcheck # Static check shell scripts
+        uses: reviewdog/action-shellcheck@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: info
+          filter_mode: diff_context
+      - name: pylint
+        uses: dciborow/action-pylint@0.0.7
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: warning
+          filter_mode: diff_context
+          glob_pattern: "**/*.py"
+      - name: mypy
+        uses: tsuyoshicho/action-mypy@v3
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: warning
+          filter_mode: diff_context
+
+  enforce-style:
+    name: Enforce style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v4.1.0
+        with:
+          # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
+          python-version: "3.10"
+      - name: Install ONNX
+        run: |
+          source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
+
+          python -m pip install --quiet --upgrade pip setuptools wheel
+          python -m pip install --quiet -r requirements-release.txt
+
+          sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
+          git submodule update --init --recursive
+          export ONNX_BUILD_TESTS=0
+          export ONNX_ML=1
+          export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+          # ONNX lite
+          export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
+          export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+
+          python setup.py install
+      - name: Run style.sh
+        run: |
+          # style check (flake8, mypy, and clang-format)
+          python -m pip install -q -r requirements-dev.txt
+          bash tools/style.sh
+          if [ $? -ne 0 ]; then
+            echo "style check failed"
+            exit 1
+          fi
+
+          # check line endings to be UNIX
+          echo -e "\n::group:: ===> check line endings to be UNIX..."
+          find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
+          git status
+          git diff --exit-code
+          echo -e "::endgroup::"
+
+          # check auto-gen files are up-to-date
+          echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
+          python onnx/defs/gen_doc.py
+          python onnx/gen_proto.py -l
+          python onnx/gen_proto.py -l --ml
+          python onnx/backend/test/stat_coverage.py
+
+          git status
+          git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
+          if [ $? -ne 0 ]; then
+            echo "git diff returned failures"
+            exit 1
+          fi
+          echo -e "::endgroup::"
+
+          # Do not hardcode onnx's namespace in the c++ source code, so that
+          # other libraries that statically link with onnx can hide onnx symbols
+          # in a private namespace.
+          echo -e "\n::group:: ===> check namespace in c++ source code..."
+          echo "Do not hardcode onnx's namespace in the c++ source code, so that"
+          echo "other libraries that statically link with onnx can hide onnx symbols"
+          echo "in a private namespace."
+          ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
+          ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
+          echo -e "::endgroup::"
