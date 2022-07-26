@@ -11,27 +11,22 @@ jobs:
         python.version: '3.9'
         onnx_ml: 1
         onnx_debug: 1
-        onnx_lite: 0
       py38:
         python.version: '3.8'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 1
       py38-ml:
         python.version: '3.8'
         onnx_ml: 1
         onnx_debug: 0
-        onnx_lite: 1
       py37:
         python.version: '3.7'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 1
       py37-ml:
         python.version: '3.7'
         onnx_ml: 1
         onnx_debug: 0
-        onnx_lite: 1
     maxParallel: 6
 
   steps:
@@ -45,12 +40,12 @@ jobs:
       python -m virtualenv py$(python.version)
       source py$(python.version)/bin/activate
 
-      source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
-
-      python -m pip install -q --upgrade pip setuptools wheel
+      sudo apt-get install libprotobuf-dev protobuf-compiler
+      python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
+
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
       if [ '$(onnx_debug)' == '1' ]; then
@@ -59,10 +54,7 @@ jobs:
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
       fi
-      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
-      if [ '$(onnx_lite)' == '1' ]; then
-        export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
-      fi
+      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py --quiet install
     displayName: 'Install ONNX and dependencies'
@@ -121,11 +113,6 @@ jobs:
         echo "onnxifi_test_driver_gtests failed"
         exit 1
       fi
-
-      # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
-      python -m pip uninstall -y onnx
-      rm -rf .setuptools-cmake-build
-      python -m pip install -q .
 
     displayName: 'Run ONNX tests'
 
