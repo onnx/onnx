@@ -9,6 +9,7 @@
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
+#include "onnx/shape_inference/implementation.h"
 
 #include <fstream>
 #include <iterator>
@@ -870,7 +871,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   }
 }
 
-void check_model(const ModelProto& model, CheckerContext& ctx) {
+void check_model(ModelProto& model, CheckerContext& ctx, bool full_check) {
   if (!model.ir_version()) {
     fail_check("The model does not have an ir_version set properly.");
   }
@@ -910,9 +911,14 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   if (ctx.get_ir_version() >= 0x00000008) {
     check_model_local_functions(model, ctx, lex_ctx);
   }
+
+  if (full_check) {
+    ShapeInferenceOptions options{true, 1, true};
+    ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
+  }
 }
 
-void check_model(const std::string& model_path) {
+void check_model(const std::string& model_path, bool full_check) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -923,13 +929,14 @@ void check_model(const std::string& model_path) {
     model_dir = model_path.substr(0, pos + 1);
   }
   ctx.set_model_dir(model_dir);
-  check_model(model, ctx);
+  check_model(model, ctx, full_check);
 }
 
-void check_model(const ModelProto& model) {
+void check_model(ModelProto& model, bool full_check) {
   CheckerContext ctx;
-  check_model(model, ctx);
+  check_model(model, ctx, full_check);
 }
+
 
 std::set<std::string> experimental_ops = {
     "ATen",

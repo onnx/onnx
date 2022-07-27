@@ -255,13 +255,18 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     checker::check_graph(proto, ctx, lex_ctx);
   });
 
-  checker.def("check_model", [](const py::bytes& bytes) -> void {
+  checker.def("check_model", [](const py::bytes& bytes, bool full_check) -> void {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
-    checker::check_model(proto);
-  });
+    checker::check_model(proto, full_check);
+  },
+  "bytes"_a,
+  "full_check"_a = false);
 
-  checker.def("check_model_path", (void (*)(const std::string&)) & checker::check_model);
+  checker.def("check_model_path", (
+    void (*)(const std::string& path, bool full_check)) & checker::check_model,
+    "path"_a,
+    "full_check"_a = false);
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
