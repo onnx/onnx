@@ -39,22 +39,10 @@ For Windows:
 ```
 # Windows
 set ONNX_ML=0
-<<<<<<< HEAD
-```
-
-For Unix-like:
-```
-export ONNX_ML=0
-```
-
-Then run `setup.py` and generate the operator docs:
-```
-=======
 
 # UNIX
 # export ONNX_ML=0
 
->>>>>>> 7bb7684ad5538b5a1d6e8cea7d2550523adf936f
 pip install setup.py
 python onnx/defs/gen_doc.py
 ```
