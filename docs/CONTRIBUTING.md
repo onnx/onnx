@@ -31,10 +31,30 @@ from onnx root dir should work.
 
 ## Generated operator documentation
 
-[Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh these docs, run the following commands from the repo root and commit the results. Note `ONNX_ML=0` updates Operators.md whereas `ONNX_ML=1` updates Operators-ml.md:
+[Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh these docs, run the following commands from the repo root and commit the results. 
 
+First, set `ONNX_ML` environment variable. `ONNX_ML=0` updates Operators.md whereas `ONNX_ML=1` updates Operators-ml.md:
+
+For Windows:
 ```
+# Windows
 set ONNX_ML=0
+<<<<<<< HEAD
+```
+
+For Unix-like:
+```
+export ONNX_ML=0
+```
+
+Then run `setup.py` and generate the operator docs:
+```
+=======
+
+# UNIX
+# export ONNX_ML=0
+
+>>>>>>> 7bb7684ad5538b5a1d6e8cea7d2550523adf936f
 pip install setup.py
 python onnx/defs/gen_doc.py
 ```

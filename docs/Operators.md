@@ -151,7 +151,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|
 |<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
-|<a href="#Split">Split</a>|<a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
+|<a href="#Split">Split</a>|<a href="Changelog.md#Split-18">18</a>, <a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
 |<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
 |<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
@@ -186,6 +186,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
+|<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-18">18</a>|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|
@@ -12557,6 +12558,66 @@ for op_dtype in all_numeric_dtypes:
 </details>
 
 
+### <a name="Mish"></a><a name="mish">**Mish**</a>
+
+  Mish: A Self Regularized Non-Monotonic Neural Activation Function.
+
+  Perform the linear unit element-wise on the input tensor X using formula:
+
+  ```
+  mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
+  ```
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input X and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>mish</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mish',
+    inputs=['X'],
+    outputs=['Y']
+)
+
+input_data = np.linspace(-10, 10, 10000, dtype=np.float32)
+
+# Calculate expected output data
+expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_mish')
+```
+
+</details>
+
+
 ### <a name="Mod"></a><a name="mod">**Mod**</a>
 
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
@@ -23743,21 +23804,23 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Split"></a><a name="split">**Split**</a>
 
-  Split a tensor into a list of tensors, along the specified
-  'axis'. Lengths of the parts can be specified using input 'split'.
-  Otherwise, the tensor is split to equal sized parts.
+  Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
+  If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
+  If the input 'split' is specified, it indicates the sizes of each output in the split.
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Split-1">1</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Split-1">1</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
+<dt><tt>num_outputs</tt> : int</dt>
+<dd>Number of outputs to split equal parts of the tensor into. Can be overridden by input 'split'.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -23796,11 +23859,14 @@ node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
     outputs=['output_1', 'output_2', 'output_3'],
-    axis=0
+    axis=0,
+    num_outputs=3,
 )
 
-expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
-expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_1d')
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array(
+    [3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[
+       y for y in expected_outputs], name='test_split_equal_parts_1d')
 
 split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
@@ -23810,8 +23876,10 @@ node = onnx.helper.make_node(
     axis=0,
 )
 
-expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
-expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
+expected_outputs = [np.array([1., 2.]).astype(
+    np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
+expect(node, inputs=[input, split], outputs=[
+       y for y in expected_outputs], name='test_split_variable_parts_1d')
 ```
 
 </details>
@@ -23828,13 +23896,15 @@ node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
     outputs=['output_1', 'output_2'],
-    axis=1
+    axis=1,
+    num_outputs=2,
 )
 
 expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]).astype(np.float32),
                     np.array([[4., 5., 6.], [10., 11., 12.]]).astype(np.float32)]
 
-expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
+expect(node, inputs=[input], outputs=[
+       y for y in expected_outputs], name='test_split_equal_parts_2d')
 
 split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
@@ -23847,7 +23917,8 @@ node = onnx.helper.make_node(
 expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
                     np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]]).astype(np.float32)]
 
-expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
+expect(node, inputs=[input, split], outputs=[
+       y for y in expected_outputs], name='test_split_variable_parts_2d')
 ```
 
 </details>
@@ -23863,21 +23934,26 @@ input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
-    outputs=['output_1', 'output_2', 'output_3']
+    outputs=['output_1', 'output_2', 'output_3'],
+    num_outputs=3,
 )
 
-expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
-expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_default_axis')
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array(
+    [3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[
+       y for y in expected_outputs], name='test_split_equal_parts_default_axis')
 
 split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
-    outputs=['output_1', 'output_2']
+    outputs=['output_1', 'output_2'],
 )
 
-expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
-expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_default_axis')
+expected_outputs = [np.array([1., 2.]).astype(
+    np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
+expect(node, inputs=[input, split], outputs=[
+       y for y in expected_outputs], name='test_split_variable_parts_default_axis')
 ```
 
 </details>
@@ -23894,11 +23970,13 @@ split = np.array([0, 0, 0]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
-    outputs=['output_1', 'output_2', 'output_3']
+    outputs=['output_1', 'output_2', 'output_3'],
 )
 
-expected_outputs = [np.array([]).astype(np.float32), np.array([]).astype(np.float32), np.array([]).astype(np.float32)]
-expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_zero_size_splits')
+expected_outputs = [np.array([]).astype(np.float32), np.array(
+    []).astype(np.float32), np.array([]).astype(np.float32)]
+expect(node, inputs=[input, split], outputs=[
+       y for y in expected_outputs], name='test_split_zero_size_splits')
 ```
 
 </details>

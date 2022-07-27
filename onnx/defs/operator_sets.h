@@ -1003,6 +1003,8 @@ class OpSet_Onnx_ver17 {
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Pad);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, CenterCropPad);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Resize);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Split);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Mish);
 
 // Iterate over schema from ai.onnx version 18
 class OpSet_Onnx_ver18 {
@@ -1011,6 +1013,8 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Pad)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, CenterCropPad)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Resize)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Split)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Mish)>());
   }
 };
 
