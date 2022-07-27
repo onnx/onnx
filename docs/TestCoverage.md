@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 163/178 (91.57%, 5 generators excluded) common operators.
+Node tests have covered 164/179 (91.62%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -7725,6 +7725,30 @@ for op_dtype in all_numeric_dtypes:
     )
     expect(node, inputs=[data_0, data_1], outputs=[result],
            name=f'test_min_{np.dtype(op_dtype).name}')
+```
+
+</details>
+
+
+### Mish
+There are 1 test cases, listed as following:
+<details>
+<summary>mish</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mish',
+    inputs=['X'],
+    outputs=['Y']
+)
+
+input_data = np.linspace(-10, 10, 10000, dtype=np.float32)
+
+# Calculate expected output data
+expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
+
+expect(node, inputs=[input_data], outputs=[expected_output],
+       name='test_mish')
 ```
 
 </details>
