@@ -168,13 +168,15 @@ def load_tensor_from_string(s: bytes, format: Optional[Any] = None) -> TensorPro
     return _deserialize(s, TensorProto())
 
 
-def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], str], format: Optional[Any] = None, save_as_external_data: bool = False, all_tensors_to_one_file: bool = True, location: Optional[str] = None, size_threshold: int = 1024, convert_attribute: bool = False) -> None:
+def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], str], format: Optional[Any] = None, save_as_external_data: Optional[bool] = None, all_tensors_to_one_file: bool = True, location: Optional[str] = None, size_threshold: int = 1024, convert_attribute: bool = False) -> None:
     '''
     Saves the ModelProto to the specified path and optionally, serialize tensors with raw data as external data before saving.
 
     Arguments:
         proto: should be a in-memory ModelProto
         f: can be a file-like object (has "write" function) or a string containing a file name format for future use
+        save_as_external_data: If true, serialize tensors with raw data as external data before saving.
+            If not specified, serialize tensors with raw data as external data before saving if model size is larger than 2GB.
         all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
             If false, save each tensor to a file named with the tensor name.
         location: specify the external file that all tensors to save to.
@@ -186,6 +188,9 @@ def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], str], format
     '''
     if isinstance(proto, bytes):
         proto = _deserialize(proto, ModelProto())
+    if save_as_external_data is None:
+        # Save to external data automatically if the model is larger than 2GB
+        save_as_external_data = proto.ByteSize() > 2 ** 31
 
     if save_as_external_data:
         convert_model_to_external_data(proto, all_tensors_to_one_file, location, size_threshold, convert_attribute)
