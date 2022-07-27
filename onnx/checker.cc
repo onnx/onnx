@@ -8,8 +8,8 @@
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
-#include "onnx/string_utils.h"
 #include "onnx/shape_inference/implementation.h"
+#include "onnx/string_utils.h"
 
 #include <fstream>
 #include <iterator>
@@ -936,7 +936,6 @@ void check_model(ModelProto& model, bool full_check) {
   CheckerContext ctx;
   check_model(model, ctx, full_check);
 }
-
 
 std::set<std::string> experimental_ops = {
     "ATen",
