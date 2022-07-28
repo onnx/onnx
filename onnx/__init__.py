@@ -62,16 +62,12 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
     '''
     if isinstance(proto, bytes):
         return proto
-    if hasattr(proto, 'SerializeToString') and callable(proto.SerializeToString):
-        try:
-            result = proto.SerializeToString()
-        except ValueError as e:
-            if proto.ByteSize() >= onnx.checker.MAXIMUM_PROTOBUF:
-                raise ValueError("The proto size is larger than the 2 GB limit. "
-                    "Please use save_as_external_data to save tensors separately from the model file.") from e
-            raise
+    elif hasattr(proto, 'SerializeToString') and callable(proto.SerializeToString):
+        result = proto.SerializeToString()
         return result
-    raise TypeError(f"No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}")
+    else:
+        raise TypeError('No SerializeToString method is detected. '
+                         'neither proto is a str.\ntype is {}'.format(type(proto)))
 
 
 _Proto = TypeVar('_Proto', bound=google.protobuf.message.Message)
@@ -89,14 +85,17 @@ def _deserialize(s: bytes, proto: _Proto) -> _Proto:
         The proto instance filled in by s
     '''
     if not isinstance(s, bytes):
-        raise ValueError(f"Parameter s must be bytes, but got type: {type(s)}")
+        raise ValueError(f'Parameter s must be bytes, but got type: {type(s)}')
 
     if not (hasattr(proto, 'ParseFromString') and callable(proto.ParseFromString)):
-        raise ValueError(f"No ParseFromString method is detected. Type is {type(proto)}")
+        raise ValueError('No ParseFromString method is detected. '
+                         '\ntype is {}'.format(type(proto)))
 
     decoded = cast(Optional[int], proto.ParseFromString(s))
     if decoded is not None and decoded != len(s):
-        raise google.protobuf.message.DecodeError(f"Protobuf decoding consumed too few bytes: {decoded} out of {len(s)}")
+        raise google.protobuf.message.DecodeError(
+            "Protobuf decoding consumed too few bytes: {} out of {}".format(
+                decoded, len(s)))
     return proto
 
 

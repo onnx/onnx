@@ -1519,7 +1519,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_split_negative_axis(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 4))],
-            [make_node('Split', ['x'], ['y', 'z'], axis=-1, num_outputs=2)],
+            [make_node('Split', ['x'], ['y', 'z'], axis=-1)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2)),
                                       make_tensor_value_info('z', TensorProto.FLOAT, (2, 2))])
@@ -1547,7 +1547,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_split_from_GLU(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 6, 7))],
-            [make_node('Split', ['x'], ['y', 'z'], axis=1, num_outputs=2)],
+            [make_node('Split', ['x'], ['y', 'z'], axis=1)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3, 7)),
                                       make_tensor_value_info('z', TensorProto.FLOAT, (5, 3, 7))])
@@ -1555,7 +1555,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_GLU_partial(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 6, 7))],
-            [make_node('Split', ['x'], ['y', 'z'], axis=1, num_outputs=2),
+            [make_node('Split', ['x'], ['y', 'z'], axis=1),
              make_node('Sigmoid', ['z'], ['a'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3, 7)),
@@ -1565,7 +1565,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_GLU(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 6, 7))],
-            [make_node('Split', ['x'], ['y', 'z'], axis=1, num_outputs=2),
+            [make_node('Split', ['x'], ['y', 'z'], axis=1),
              make_node('Sigmoid', ['z'], ['a']),
              make_node('Mul', ['y', 'a'], ['b'])],
             [])

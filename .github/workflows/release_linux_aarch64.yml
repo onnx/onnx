@@ -76,6 +76,19 @@ jobs:
           pytest && \
           deactivate'
 
+    - name: Test backend test data
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          # onnx.checker all existing backend data
+          python workflow_scripts/test_generated_backend.py && \
+          # onnx.checker all generated backend data && \
+          python onnx/backend/test/cmd_tools.py generate-data && \
+          python workflow_scripts/test_generated_backend.py && \
+          deactivate'
+
     - uses: actions/upload-artifact@v1
       with:
         name: wheels

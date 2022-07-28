@@ -513,7 +513,7 @@ void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShap
   ShapeInferenceOptions options{true, 1, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
 
-  const auto inferredShape = model.graph().output(0).type().tensor_type().shape();
+  const auto inferredShape = model.graph().output()[0].type().tensor_type().shape();
   EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size());
 
   for (int i = 0; i < inferredShape.dim_size(); i++) {

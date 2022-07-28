@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 164/179 (91.62%, 5 generators excluded) common operators.
+Node tests have covered 163/178 (91.57%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -7730,30 +7730,6 @@ for op_dtype in all_numeric_dtypes:
 </details>
 
 
-### Mish
-There are 1 test cases, listed as following:
-<details>
-<summary>mish</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Mish',
-    inputs=['X'],
-    outputs=['Y']
-)
-
-input_data = np.linspace(-10, 10, 10000, dtype=np.float32)
-
-# Calculate expected output data
-expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
-
-expect(node, inputs=[input_data], outputs=[expected_output],
-       name='test_mish')
-```
-
-</details>
-
-
 ### Mod
 There are 13 test cases, listed as following:
 <details>
@@ -15050,14 +15026,11 @@ node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
     outputs=['output_1', 'output_2', 'output_3'],
-    axis=0,
-    num_outputs=3,
+    axis=0
 )
 
-expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array(
-    [3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
-expect(node, inputs=[input], outputs=[
-       y for y in expected_outputs], name='test_split_equal_parts_1d')
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_1d')
 
 split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
@@ -15067,10 +15040,8 @@ node = onnx.helper.make_node(
     axis=0,
 )
 
-expected_outputs = [np.array([1., 2.]).astype(
-    np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
-expect(node, inputs=[input, split], outputs=[
-       y for y in expected_outputs], name='test_split_variable_parts_1d')
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
+expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
 ```
 
 </details>
@@ -15085,15 +15056,13 @@ node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
     outputs=['output_1', 'output_2'],
-    axis=1,
-    num_outputs=2,
+    axis=1
 )
 
 expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]).astype(np.float32),
                     np.array([[4., 5., 6.], [10., 11., 12.]]).astype(np.float32)]
 
-expect(node, inputs=[input], outputs=[
-       y for y in expected_outputs], name='test_split_equal_parts_2d')
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
 
 split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
@@ -15106,8 +15075,7 @@ node = onnx.helper.make_node(
 expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
                     np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]]).astype(np.float32)]
 
-expect(node, inputs=[input, split], outputs=[
-       y for y in expected_outputs], name='test_split_variable_parts_2d')
+expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
 ```
 
 </details>
@@ -15121,26 +15089,21 @@ input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
-    outputs=['output_1', 'output_2', 'output_3'],
-    num_outputs=3,
+    outputs=['output_1', 'output_2', 'output_3']
 )
 
-expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array(
-    [3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
-expect(node, inputs=[input], outputs=[
-       y for y in expected_outputs], name='test_split_equal_parts_default_axis')
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_default_axis')
 
 split = np.array([2, 4]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
-    outputs=['output_1', 'output_2'],
+    outputs=['output_1', 'output_2']
 )
 
-expected_outputs = [np.array([1., 2.]).astype(
-    np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
-expect(node, inputs=[input, split], outputs=[
-       y for y in expected_outputs], name='test_split_variable_parts_default_axis')
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
+expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_variable_parts_default_axis')
 ```
 
 </details>
@@ -15155,13 +15118,11 @@ split = np.array([0, 0, 0]).astype(np.int64)
 node = onnx.helper.make_node(
     'Split',
     inputs=['input', 'split'],
-    outputs=['output_1', 'output_2', 'output_3'],
+    outputs=['output_1', 'output_2', 'output_3']
 )
 
-expected_outputs = [np.array([]).astype(np.float32), np.array(
-    []).astype(np.float32), np.array([]).astype(np.float32)]
-expect(node, inputs=[input, split], outputs=[
-       y for y in expected_outputs], name='test_split_zero_size_splits')
+expected_outputs = [np.array([]).astype(np.float32), np.array([]).astype(np.float32), np.array([]).astype(np.float32)]
+expect(node, inputs=[input, split], outputs=[y for y in expected_outputs], name='test_split_zero_size_splits')
 ```
 
 </details>

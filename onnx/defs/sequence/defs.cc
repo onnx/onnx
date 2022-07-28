@@ -672,7 +672,7 @@ bool BuildSequenceMapBodyFunc(
         seq_at_node.set_op_type("SequenceAt");
         seq_at_node.add_input(functionProto.input(inputIndex));
         seq_at_node.add_input(iter_count_name);
-        seq_at_node.add_output(g_inputs.Get(inputIndex).name());
+        seq_at_node.add_output(g_inputs[inputIndex].name());
         *loopbody_graph.add_node() = seq_at_node;
       } else {
         // If not a sequence, simply connect
@@ -680,7 +680,7 @@ bool BuildSequenceMapBodyFunc(
         identity.set_domain(ONNX_DOMAIN);
         identity.set_op_type("Identity");
         identity.add_input(functionProto.input(inputIndex));
-        identity.add_output(g_inputs.Get(inputIndex).name());
+        identity.add_output(g_inputs[inputIndex].name());
         *loopbody_graph.add_node() = identity;
       }
     }
@@ -738,7 +738,7 @@ bool BuildSequenceMapBodyFunc(
     std::string out_prefix = MakeString("SequenceMap_", output_name);
 
     std::string seqempty_name = MakeString(out_prefix, "_seqempty");
-    int64_t dtype = g_outputs.Get(outputIndex).type().tensor_type().elem_type();
+    int64_t dtype = g_outputs[outputIndex].type().tensor_type().elem_type();
     nodes.push_back({{seqempty_name}, "SequenceEmpty", {}, {MakeAttribute("dtype", dtype)}});
     loop_node_inputs.push_back(seqempty_name);
     loop_node_outputs.push_back(output_name);

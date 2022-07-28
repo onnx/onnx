@@ -587,15 +587,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Split_ver18_doc =
-    R"DOC(Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
-If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
-If the input 'split' is specified, it indicates the sizes of each output in the split.
+static const char* Split_ver13_doc =
+    R"DOC(Split a tensor into a list of tensors, along the specified
+'axis'. Lengths of the parts can be specified using input 'split'.
+Otherwise, the tensor is split to equal sized parts.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Split,
-    18,
+    13,
     OpSchema()
         .Input(0, "input", "The tensor to split", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
@@ -628,12 +628,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr(
-            "num_outputs",
-            "Number of outputs to split equal parts of the tensor into. "
-            AttributeProto::INT,
-            false)
-        .SetDoc(Split_ver18_doc)
+        .SetDoc(Split_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
@@ -687,22 +682,14 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ")");
             }
           } else { // no value available for 'split'
-            const auto num_outputs_attr = ctx.getAttribute("num_outputs");
-            if (num_outputs_attr) {
-              const auto num_outputs = num_outputs_attr->i();
-              if (num_outputs < 1) {
-                fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
-              }
-              if (split_dim_value % num_outputs != 0) {
-                fail_shape_inference("The input is not evenly splittable");
-              }
-              int chunk_size = split_dim_value / num_outputs;
-              split.reserve(ctx.getNumOutputs());
-              for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
-                split.push_back(chunk_size);
-              }
-            } else {
-              fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute were given");
+            int num_outputs = static_cast<int>(ctx.getNumOutputs());
+            if (split_dim_value % num_outputs != 0) {
+              fail_shape_inference("The input is not evenly splittable");
+            }
+            int chunk_size = split_dim_value / num_outputs;
+            split.reserve(ctx.getNumOutputs());
+            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
+              split.push_back(chunk_size);
             }
           }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
