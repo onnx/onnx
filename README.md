@@ -126,7 +126,7 @@ pip install -e .
 
 ### Linux
 
-First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.0.0.
+First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.0.0. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
 Ubuntu 18.04 (and newer) users may choose to install protobuf via
 ```bash
@@ -175,8 +175,8 @@ Then you can build ONNX as:
 git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
-# prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+# Optional: prefer lite proto
+export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
 
@@ -201,7 +201,7 @@ Then you can build ONNX as:
 ```
 git clone --recursive https://github.com/onnx/onnx.git
 cd onnx
-# prefer lite proto
+# Optional: prefer lite proto
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
