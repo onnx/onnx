@@ -98,7 +98,7 @@ int ONNXIFI_ABI onnxifi_load(
     module[location - module + 1] = '\0';
     wcsncat_s(module, MAX_PATH, path, wcslen(path));
     path = module;
-    onnx->handle = (void*) LoadLibraryExW(path, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    onnx->handle = (void*) LoadLibraryExW(path, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 #else
   /* Clear libdl error state */
   dlerror();
