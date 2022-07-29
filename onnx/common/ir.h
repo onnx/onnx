@@ -69,8 +69,8 @@ class ResourceGuard final {
 
 struct Dimension final {
   Dimension() : is_unknown(true), is_int(false), dim(-1) {}
-  explicit Dimension(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {}
-  explicit Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {}
+  Dimension(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {} // NOLINT
+  Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {} // NOLINT
 
   bool is_unknown;
   bool is_int;
