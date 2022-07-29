@@ -52,8 +52,8 @@ jobs:
         # Install protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-
-        # Currently GitHub Action agent is using 10.14 Python, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
+        export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
+        # Currently GitHub Action agent is using MacOS 10.15, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
         if [ '${{ github.event_name }}' == 'schedule' ]; then
           python setup.py bdist_wheel -p macosx_10_12_x86_64 --weekly_build
@@ -65,14 +65,6 @@ jobs:
     - name: Test the installed wheel
       run: |
         pytest
-
-    - name: Test backend test data
-      run: |
-        # onnx.checker all existing backend data
-        python workflow_scripts/test_generated_backend.py
-        # onnx.checker all generated backend data
-        python onnx/backend/test/cmd_tools.py generate-data
-        python workflow_scripts/test_generated_backend.py
 
     - uses: actions/upload-artifact@v1
       with:
