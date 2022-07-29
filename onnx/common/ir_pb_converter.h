@@ -16,7 +16,7 @@ class ConvertError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
 
-  ConvertError(const std::string& message) : std::runtime_error(message) {}
+  explicit ConvertError(const std::string& message) : std::runtime_error(message) {}
 
   const char* what() const noexcept override {
     if (!expanded_message_.empty()) {

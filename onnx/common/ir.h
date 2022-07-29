@@ -52,7 +52,10 @@ class ResourceGuard final {
   bool released_;
 
  public:
-  ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)), released_(false) {}
+  ONNX_DISALLOW_COPY_AND_ASSIGN(ResourceGuard);
+  explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)), released_(false) {}
+  ResourceGuard(ResourceGuard&& other) = default;
+  ResourceGuard& operator=(ResourceGuard&& other) = default;
 
   ~ResourceGuard() {
     if (!released_)
@@ -65,9 +68,9 @@ class ResourceGuard final {
 };
 
 struct Dimension final {
-  Dimension() : is_unknown(true) {}
-  Dimension(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {}
-  Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {}
+  Dimension() : is_unknown(true), is_int(false), dim(-1) {}
+  explicit Dimension(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {}
+  explicit Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {}
 
   bool is_unknown;
   bool is_int;
@@ -99,7 +102,7 @@ static inline const char* toString(AttributeKind kind) {
 }
 
 struct AttributeValue {
-  AttributeValue(Symbol name) : name(name) {}
+  explicit AttributeValue(Symbol name) : name(name) {}
   using Ptr = std::unique_ptr<AttributeValue>;
   Symbol name;
   virtual AttributeKind kind() const = 0;
@@ -286,6 +289,9 @@ using NodeKind = Symbol;
 struct Value final {
   ONNX_DISALLOW_COPY_AND_ASSIGN(Value);
   Value(Node* node_, size_t offset_);
+  Value(Value&&) = default;
+  Value& operator=(Value&&) = default;
+  ~Value() = default;
 
  private:
   friend struct Node;
@@ -820,7 +826,7 @@ class OpSetID final {
     ONNX_TRY {
       std::string new_domain = target.substr(0, target.find("$"));
       int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
-      return OpSetID(std::move(new_domain), new_version);
+      return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
       ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: %s", e.what()); });
@@ -1119,7 +1125,7 @@ struct Graph final {
   // Adds to graph initializer list, initializer names list, and as a graph input
   // Also syncs the initializer name, tensor name, and value name
   // Create an initializer whose value is stored in input
-  Value* addInitializerAndInput(const Tensor& initializer, std::string name) {
+  Value* addInitializerAndInput(const Tensor& initializer, const std::string& name) {
     Tensor initializerCopy = initializer;
     std::vector<Dimension> dim_sizes{initializerCopy.sizes().cbegin(), initializerCopy.sizes().cend()};
     Value* new_init = addInput();
@@ -1172,7 +1178,7 @@ struct Graph final {
 
   friend std::ostream& operator<<(std::ostream& out, const Graph& g);
 
-  void forSelfAndEachSubGraph(std::function<void(Graph*)> fn) {
+  void forSelfAndEachSubGraph(const std::function<void(Graph*)>& fn) {
     fn(this);
 
     for (const Node* node : all_nodes) {
@@ -1189,12 +1195,12 @@ struct Graph final {
     }
   }
 
-  void forSelfAndEachSubGraph(std::function<void(const Graph*)> fn) const {
+  void forSelfAndEachSubGraph(const std::function<void(const Graph*)>& fn) const {
     std::function<void(Graph*)> tmp_fn = [fn](Graph* graph) { fn(graph); };
     const_cast<Graph*>(this)->forSelfAndEachSubGraph(tmp_fn);
   }
 
-  void forEachNode(std::function<void(Node*)> fn) {
+  void forEachNode(const std::function<void(Node*)>& fn) {
     forSelfAndEachSubGraph([fn](Graph* graph) {
       for (Node* node : graph->nodes()) {
         fn(node);
@@ -1202,7 +1208,7 @@ struct Graph final {
     });
   }
 
-  void forEachNode(std::function<void(const Node*)> fn) const {
+  void forEachNode(const std::function<void(const Node*)>& fn) const {
     std::function<void(Node*)> tmp_fn = [fn](Node* node) { fn(node); };
     const_cast<Graph*>(this)->forEachNode(tmp_fn);
   }
