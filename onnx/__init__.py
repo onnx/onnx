@@ -189,8 +189,10 @@ def save_model(proto: Union[ModelProto, bytes], f: Union[IO[bytes], str], format
     if isinstance(proto, bytes):
         proto = _deserialize(proto, ModelProto())
     if save_as_external_data is None:
-        # Save to external data automatically if the model is larger than 2GB
-        save_as_external_data = proto.ByteSize() > 2 ** 31
+        # Save to external data automatically if the model is larger than
+        # ONNX_SAVING_AS_EXTERNAL_DATA_THRESHOLD (default 2GB)
+        threshold = int(os.getenv("ONNX_SAVING_AS_EXTERNAL_DATA_THRESHOLD", 2 ** 31))
+        save_as_external_data = proto.ByteSize() > threshold
 
     if save_as_external_data:
         convert_model_to_external_data(proto, all_tensors_to_one_file, location, size_threshold, convert_attribute)

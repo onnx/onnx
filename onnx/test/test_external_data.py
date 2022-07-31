@@ -371,7 +371,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
     def test_save_model_as_external_data_automatically(self) -> None:
         X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 4, 5])
         Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [3, 4, 5])
-        W_np = np.ones(512 * 1024 * 1024).astype(np.float32)
+        # 40MB
+        W_np = np.ones(10 * 1024 * 1024).astype(np.float32)
         W = helper.make_tensor("W", TensorProto.FLOAT, W_np.shape, W_np.tobytes(), raw=True)
         node_def = helper.make_node(
             "Add",
@@ -388,12 +389,28 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         model = helper.make_model(graph)
 
         model_file_path = self.get_temp_model_filename()
+        os.environ["ONNX_SAVING_AS_EXTERNAL_DATA_THRESHOLD"] = str(40 * 1024 * 1024)
+        # saved as external data
         onnx.save_model(model, model_file_path)
+        del os.environ["ONNX_SAVING_AS_EXTERNAL_DATA_THRESHOLD"]
 
-        model = onnx.load_model(model_file_path)
+        model = onnx.load_model(model_file_path, load_external_data=False)
+        initializer_tensor = model.graph.initializer[0]
+
+        self.assertTrue(initializer_tensor.HasField("data_location"))
+        self.assertEqual(initializer_tensor.data_location, onnx.TensorProto.EXTERNAL)
+
+        model = onnx.load_model(model_file_path, load_external_data=True)
+        initializer_tensor = model.graph.initializer[0]
+        self.assertTrue(np.array_equal(to_array(initializer_tensor), W_np))
+
+        # not saved as external data
+        onnx.save_model(model, model_file_path)
+        model = onnx.load_model(model_file_path, load_external_data=False)
 
         initializer_tensor = model.graph.initializer[0]
         self.assertTrue(initializer_tensor.HasField("data_location"))
+        self.assertEqual(initializer_tensor.data_location, onnx.TensorProto.DEFAULT)
         self.assertTrue(np.array_equal(to_array(initializer_tensor), W_np))
 
     def test_save_model_with_existing_raw_data_should_override(self) -> None:
