@@ -126,7 +126,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        std::string relative_path  = clean_relative_path(entry.value());
+        std::string relative_path = clean_relative_path(entry.value());
         // Check that normalized relative path starts with "../" or "..\" on windows.
         if (relative_path.rfind(".." + k_preferred_path_separator, 0) == 0) {
           fail_check(
