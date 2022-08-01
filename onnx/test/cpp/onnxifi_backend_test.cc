@@ -18,7 +18,7 @@
 
 namespace ONNX_NAMESPACE {
 namespace Test {
-TEST(OnnxifiLoadTest, OnnxifiDummyBackend) {
+TEST(DISABLED_OnnxifiLoadTest, OnnxifiDummyBackend) {
 #define EXPECT_EQ_OSS(X) EXPECT_EQ(X, ONNXIFI_STATUS_SUCCESS)
   onnxifi_library dummy_backend;
   EXPECT_TRUE(onnxifi_load(1, ONNXIFI_DUMMY_LIBRARY, &dummy_backend));
