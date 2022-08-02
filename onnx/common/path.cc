@@ -70,7 +70,8 @@ std::string clean_relative_path(const std::string& path) {
         while (out.size() > dotdot && !is_path_separator(out.back())) {
           out.pop_back();
         }
-        if (!out.empty()) out.pop_back();
+        if (!out.empty())
+          out.pop_back();
       } else {
         if (!out.empty()) {
           out.push_back(sep);
