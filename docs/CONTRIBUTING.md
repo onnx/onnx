@@ -86,7 +86,21 @@ python onnx\backend\test\stat_coverage.py
 
 Some functionalities are tested with googletest. Those tests are listed in `test/cpp`, and include tests for shape inference, data propagation, parser, and others.
 
-To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e .` and then run `.setuptools-cmake-build/onnx_gtests`.
+To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e .`.
+
+### Linux and MacOS
+The cpp tests require dynamically linking to built libraries.
+
+```bash
+export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+.setuptools-cmake-build/onnx_gtests
+```
+
+### Windows
+```bat
+# If you set DEBUG=1, use `.setuptools-cmake-build\Debug\onnx_gtests.exe` instead
+.setuptools-cmake-build\Release\onnx_gtests.exe
+```
 
 # Static typing (mypy)
 
