@@ -327,8 +327,11 @@ ints|int64[]|A list of 64-bit integer values.
 strings|byte[][]|A list of UTF-8 strings.
 tensors|Tensor[]|A list of tensor values.
 graphs|Graph[]|A list of graphs.
+ref_attr_name|string|The name of a parent function's attribute.
 
 The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
+
+In case ‘ref_attr_name’ is set, this attribute does not contain data, and instead it's a reference to the parent function's attribute of the given name. Can only be used within the function body.
 
 
 #### Variadic Inputs and Outputs
