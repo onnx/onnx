@@ -124,6 +124,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
+|<a href="#SVD">SVD</a>|<a href="Changelog.md#SVD-18">18</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
 |<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
@@ -22711,6 +22712,95 @@ expect(
 ```
 
 </details>
+
+
+### <a name="SVD"></a><a name="svd">**SVD**</a>
+
+  Singular Value Decomposition
+
+  Factorizes A using SVD. Both full and partial SVD compute the standard SVD factorization `A = U * diag(S) * Vh`.
+  Computes the full SVD by default. Partial SVD is also known as [thin SVD](https://en.wikipedia.org/wiki/Singular_value_decomposition#Thin_SVD)
+
+  Setting compute_uv to false (0) will only compute the singular values. For the singular values, full vs partial SVD does not apply as the singular values
+  will always have the same dimensions.
+
+  A must have at least 2 dimensions.
+
+  All dimensions higher than 2 are used for broadcasting, and SVD is only applied to the lowest two dimensions.
+  See [numpy](https://numpy.org/doc/stable/reference/generated/numpy.linalg.svd.html).
+
+  Dimensions:
+
+  A: (M, N)
+
+  K: Min(M, N)
+
+  Full SVD:
+
+  U: (M, M)
+
+  S: (K)
+
+  Vh: (N, N)
+
+  Partial SVD:
+
+  U: (M, K)
+
+  S: (K)
+
+  Vh: (K, N)
+
+  Numerical stability of derivative:
+  There is no numerical instability in the derivative when only computing the singular values.
+
+  The derivative of the full factorization is dependent on the reciprocal of each singular value and the
+  reciprocal of the differences of the squares each pair of singular values.
+
+  This causes numerical instability when,
+  1. Any singular value is 0.
+  2. Any two singular values are the same.
+  3. Any two singular values are sufficiently close.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>compute_uv</tt> : int</dt>
+<dd>If true (1), compute U and Vh. If false (0), only compute S. Defaults to true (1).</dd>
+<dt><tt>full_matrices</tt> : int</dt>
+<dd>If true (1), compute the full SVD. If false (0), compute the reduced SVD. Defaults to true (1).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Input tensor to factor. Must have at least 2 dimensions.</dd>
+</dl>
+
+#### Outputs (1 - 3)
+
+<dl>
+<dt><tt>S</tt> (differentiable) : S</dt>
+<dd>Vector of singular values. See operator doc for dimension information.</dd>
+<dt><tt>U</tt> (optional, differentiable) : T</dt>
+<dd>Left singular vectors as matrix. See operator doc for dimension information. Only computed if compute_uv is true (1).</dd>
+<dt><tt>Vh</tt> (optional, differentiable) : T</dt>
+<dd>Right singular vectors as matrix. See operator doc for dimension information. Only computed if compute_uv is true (1).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input to factorable numeric tensors (including complex numbers). U and Vh will have the same type as the input.</dd>
+<dt><tt>S</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>The singular values will always be real numbers</dd>
+</dl>
 
 
 ### <a name="Scan"></a><a name="scan">**Scan**</a>

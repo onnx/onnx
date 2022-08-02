@@ -8395,6 +8395,204 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)],
         )
 
+    def test_svd_1d(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (3,))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes,
+            helper.make_model(graph),
+            strict_mode=True,
+        )
+
+    def test_svd_2d(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (3, 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (3,)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (3, 3)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (4, 4)),
+            ],
+        )
+
+    def test_svd_2d_flipped(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (4, 3))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (3,)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (4, 4)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (3, 3)),
+            ],
+        )
+
+    def test_svd_3d(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (2, 3)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (2, 3, 3)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (2, 4, 4)),
+            ],
+        )
+
+    def test_svd_7d(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3, 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3, 3)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (5, 4, 3, 2, 1, 4, 4)),
+            ],
+        )
+
+    def test_svd_2d_full_manually_set(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (3, 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"], full_matrices=1)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (3,)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (3, 3)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (4, 4)),
+            ],
+        )
+
+    def test_svd_2d_partial(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (3, 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"], full_matrices=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (3,)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (3, 3)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (3, 4)),
+            ],
+        )
+
+    def test_svd_3d_partial(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"], full_matrices=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (2, 3)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (2, 3, 3)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (2, 3, 4)),
+            ],
+        )
+
+    def test_svd_7d_partial(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3, 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"], full_matrices=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3, 3)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3, 4)),
+            ],
+        )
+
+    def test_svd_compute_uv_false_1d(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (3,))],
+            [make_node("SVD", ["A"], ["S"], compute_uv=0)],
+            [],
+        )
+
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes,
+            helper.make_model(graph),
+            strict_mode=True,
+        )
+
+    def test_svd_compute_uv_false_2d(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (3, 4))],
+            [make_node("SVD", ["A"], ["S"], compute_uv=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (3,)),
+            ],
+        )
+
+    def test_svd_compute_uv_false_3d(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("SVD", ["A"], ["S"], compute_uv=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (2, 3)),
+            ],
+        )
+
+    def test_svd_compute_uv_false_7d(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3, 4))],
+            [make_node("SVD", ["A"], ["S"], compute_uv=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3)),
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
