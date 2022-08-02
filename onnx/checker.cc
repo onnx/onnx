@@ -150,7 +150,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               data_path,
               ", but it doesn't exist or is not accessible.");
         }
-        // Do not allow symlinks or directories.
+#ifdef _WIN32
+#else // POSIX
+      //  Do not allow symlinks or directories.
         if (!S_ISREG(buffer.st_mode)) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
@@ -159,6 +161,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               data_path,
               ", but it is not regular file.");
         }
+#endif
       }
     }
     if (!has_location) {
