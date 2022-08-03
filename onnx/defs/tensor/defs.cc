@@ -1325,8 +1325,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Type of reduction to apply: none (default), add, mul, max, min. "
             "'none': no reduction applied. "
             "'add':  reduction using the addition operation. "
-            "'mul':  reduction using the addition operation. ",
-            "'max': reduction using the maximum operation.",
+            "'mul':  reduction using the addition operation. "
+            "'max': reduction using the maximum operation."
             "'min': reduction using the minimum operation.",
             AttributeProto::STRING,
             std::string("none"))
@@ -1453,8 +1453,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Type of reduction to apply: none (default), add, mul, max, min. "
             "'none': no reduction applied. "
             "'add':  reduction using the addition operation. "
-            "'mul': reduction using the multiplication operation.",
-            "'max': reduction using the maximum operation.",
+            "'mul': reduction using the multiplication operation."
+            "'max': reduction using the maximum operation."
             "'min': reduction using the minimum operation.",
             AttributeProto::STRING,
             std::string("none"))
