@@ -169,7 +169,7 @@ class ScatterElements(Base):
         )
 
     @staticmethod
-    def export_scatter_elements_with_duplicate_indices_max() -> None:
+    def export_scatter_elements_with_reduction_max() -> None:
         axis = 1
         node = onnx.helper.make_node(
             'ScatterElements',
@@ -187,10 +187,10 @@ class ScatterElements(Base):
         # [[1.0, 2.1, 3.0, 4.0, 5.0]]
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-                name='test_scatter_elements_with_duplicate_indices_max')
+                name='test_scatter_elements_with_reduction_max')
 
     @staticmethod
-    def export_scatter_elements_with_duplicate_indices_min() -> None:
+    def export_scatter_elements_with_reduction_min() -> None:
         axis = 1
         node = onnx.helper.make_node(
             'ScatterElements',
@@ -208,5 +208,4 @@ class ScatterElements(Base):
         # [[1.0, 1.1, 3.0, 4.0, 5.0]]
 
         expect(node, inputs=[data, indices, updates], outputs=[y],
-                name='test_scatter_elements_with_duplicate_indices_min')
->>>>>>> Add scatterElements test case
+                name='test_scatter_elements_with_reduction_min')
