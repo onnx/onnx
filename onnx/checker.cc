@@ -927,7 +927,7 @@ void check_model(const std::string& model_path, bool full_check) {
   check_model(model, ctx);
 
   if (full_check) {
-    ShapeInferenceOptions options{true, 1, true};
+    ShapeInferenceOptions options{true, 1, false};
     ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
   }
 }
@@ -942,7 +942,7 @@ void check_model(ModelProto& model, bool full_check) {
   check_model(model, ctx);
 
   if (full_check) {
-    ShapeInferenceOptions options{true, 1, true};
+    ShapeInferenceOptions options{true, 1, false};
     ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
   }
 }
