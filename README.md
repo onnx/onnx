@@ -126,7 +126,7 @@ pip install -e .
 
 ### Linux
 
-First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.0.0.
+First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.0.0. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
 Ubuntu 18.04 (and newer) users may choose to install protobuf via
 ```bash
@@ -175,8 +175,8 @@ Then you can build ONNX as:
 git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
-# prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+# Optional: prefer lite proto
+export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
 
@@ -201,7 +201,7 @@ Then you can build ONNX as:
 ```
 git clone --recursive https://github.com/onnx/onnx.git
 cd onnx
-# prefer lite proto
+# Optional: prefer lite proto
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
@@ -242,8 +242,6 @@ For full list refer to CMakeLists.txt
 
 ## Common Errors
 * Note: the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
-
-* Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
 
 * If you run into any issues while building Protobuf as a static library, please ensure that shared Protobuf libraries, like libprotobuf, are not installed on your device or in the conda environment. If these shared libraries exist, either remove them to build Protobuf from source as a static library, or skip the Protobuf build from source to use the shared version directly.
 
