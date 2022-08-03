@@ -55,13 +55,13 @@ std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> ParseProto
 }
 
 std::vector<py::bytes> CallInferenceFunction(
-  OpSchema* op, const py::bytes& node_bytes,
+  OpSchema* op, const py::bytes& nodeBytes,
   std::unordered_map<std::string, py::bytes> valueTypesByNameBytes,
   std::unordered_map<std::string, py::bytes> inputDataByNameBytes,
   std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes)
 {
   NodeProto node{};
-  ParseProtoFromPyBytes(&node, node_bytes);
+  ParseProtoFromPyBytes(&node, nodeBytes);
 
   const auto& valueTypes = ParseProtoFromBytesMap<TypeProto>(valueTypesByNameBytes);
   const auto& inputData = ParseProtoFromBytesMap<const TensorProto>(inputDataByNameBytes);
