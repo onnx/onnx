@@ -55,3 +55,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
                 onnx.helper.make_tensor_type_proto(1, (2,)),
                 onnx.helper.make_tensor_type_proto(1, (3,))
             ], 1)
+
+
+if __name__ == '__main__':
+    unittest.main()
