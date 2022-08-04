@@ -212,6 +212,83 @@ void createDummyValue(
   value_by_name_of[name] = undef->outputs()[0];
 }
 
+std::shared_ptr<Graph> functionProtoToGraph(const ONNX_NAMESPACE::FunctionProto& fp, bool nested, const int ir_version) {
+  std::unique_ptr<Graph> g(new Graph());
+  g->setName(fp.name());
+
+  std::unordered_map<std::string, Value*> value_by_name_of;
+  std::unordered_map<Node*, std::vector<std::string>> inputs_by_node;
+  for (int i = 0; i < fp.input_size(); i++) {
+    auto f_i = fp.input(i);
+    auto v = g->addInput();
+    v->setUniqueName(f_i);
+    value_by_name_of[f_i] = v;
+  }
+
+  for (int i = 0; i < fp.node_size(); i++) {
+    auto np = fp.node(i);
+    auto* n = g->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
+    g->appendNode(n);
+    for (int j = 0; j < np.output_size(); j++) {
+      auto out = n->outputs()[j];
+      // we don't know the real type here, so that's done in a later pass
+      out->setElemType(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED);
+      out->setUniqueName(np.output(j));
+      value_by_name_of[np.output(j)] = out;
+    }
+    convertAttributes(np, n, ir_version);
+    std::vector<std::string> inputs;
+    inputs.reserve(np.input_size());
+    for (int j = 0; j < np.input_size(); j++) {
+      inputs.push_back(np.input(j));
+    }
+    inputs_by_node[n] = inputs;
+    if (np.has_doc_string()) {
+      n->setDocString(np.doc_string());
+    }
+    if (np.has_name()) {
+      n->setName(np.name());
+    }
+    if (np.has_domain()) {
+      n->setDomain(np.domain());
+    }
+  }
+
+  for (auto n : g->nodes()) {
+    auto search = inputs_by_node.find(n);
+    if (search == inputs_by_node.end()) {
+      continue;
+    }
+    for (auto input : search->second) {
+      if (!value_by_name_of.count(input) && nested) {
+        // Undefined reference to an input in a nested block. This may be a
+        // captured value. Create a dummy node that we ignore later.
+        createDummyValue(g, input, value_by_name_of);
+      }
+
+      if (!value_by_name_of.count(input)) {
+        std::ostringstream msg;
+        msg << "Input " << input << " is undefined!";
+        ONNX_THROW_EX(std::out_of_range(msg.str()));
+      }
+      n->addInput(value_by_name_of.at(input));
+    }
+  }
+
+  for (int i = 0; i < fp.output_size(); i++) {
+    if (!value_by_name_of.count(fp.output(i)) && nested) {
+      // Same captured value logic as above. We can consider outputs of a
+      // graph to be "inputs" of a dummy "output" node. The same lexical
+      // scoping rules are valid here, thus we need to add a dummy node
+      // in the case of an undefined reference
+      createDummyValue(g, fp.output(i), value_by_name_of);
+    }
+    g->registerOutput(value_by_name_of[fp.output(i)]);
+  }
+
+  return g;
+}
+
 std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int ir_version) {
   std::unique_ptr<Graph> g(new Graph());
 
@@ -369,6 +446,28 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   }
 
   return g;
+}
+
+std::vector<std::shared_ptr<Graph>> ImportFunctionProto(const ModelProto& mp) {
+  std::vector<std::shared_ptr<Graph>> function_graphs;
+
+  if (!mp.has_ir_version()) {
+    return function_graphs;
+  } else if (mp.ir_version() == 1) {
+    return function_graphs;
+  }
+
+  function_graphs.reserve(mp.functions_size());
+  for (auto fp : mp.functions()) {
+    std::shared_ptr<Graph> g(functionProtoToGraph(fp, true, mp.ir_version()));
+    for (int i = 0; i < mp.opset_import_size(); i++) {
+      OpSetID new_opset_version(mp.opset_import(i).domain(), mp.opset_import(i).version());
+      g->forSelfAndEachSubGraph(
+          [&new_opset_version](Graph* graph) { graph->opset_versions_mutable().emplace_back(new_opset_version); });
+    }
+    function_graphs.emplace_back(g);
+  }
+  return function_graphs;
 }
 
 std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
@@ -634,13 +733,64 @@ void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
   }
 }
 
-void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g) {
-  GraphProto* p_g = p_m->mutable_graph();
-  encodeGraph(p_g, g);
-  // Add new opset_versions
-  p_m->clear_opset_import();
+void UpdateFunctionWithGraph(GraphProto* g_p, const std::shared_ptr<Graph>& g, FunctionProto* function_proto) {
+  // graph.name -> name
+  // graph.input.name -> input
+  // graph.output.name -> output
+  // old_function_proto.attribute -> attribute
+  // graph.node -> node
+  // keep -> doc_string
+  // graph.opset_import -> opset_import
+  function_proto->set_name(g_p->name());
+
+  function_proto->clear_input();
+  for (auto input : g_p->input()) {
+    std::string name = input.name();
+    function_proto->mutable_input()->Add(std::move(name));
+  }
+
+  function_proto->clear_output();
+  for (auto output : g_p->output()) {
+    std::string name = output.name();
+    function_proto->mutable_output()->Add(std::move(name));
+  }
+
+  function_proto->clear_node();
+  for (auto n : g_p->node()) {
+    *function_proto->add_node() = n;
+  }
+  
+  function_proto->clear_opset_import();
   for (const OpSetID& opset : g->opset_versions_mutable()) {
-    OperatorSetIdProto* opset_version_output = p_m->add_opset_import();
+    OperatorSetIdProto* opset_version_output = function_proto->add_opset_import();
+    opset_version_output->set_domain(opset.domain());
+    opset_version_output->set_version(opset.version());
+  }
+}
+
+void ExportModelProto(
+    ModelProto* mp_out,
+    const std::shared_ptr<Graph>& g,
+    const ModelProto& mp_in,
+    std::vector<std::shared_ptr<Graph>>& function_graphs) {
+  GraphProto* p_g = mp_out->mutable_graph();
+  encodeGraph(p_g, g);
+
+  if (mp_in.functions_size() != function_graphs.size())
+    fail_convert("mismatch local function count.");
+
+  for (int i = 0; i < function_graphs.size(); i++) {
+    std::shared_ptr<Graph> g = function_graphs[i];
+    GraphProto g_p;
+    encodeGraph(&g_p, g);
+    *mp_out->add_functions() = mp_in.functions(i);
+    UpdateFunctionWithGraph(&g_p, g, mp_out->mutable_functions(i));
+  }
+
+  // Add new opset_versions
+  mp_out->clear_opset_import();
+  for (const OpSetID& opset : g->opset_versions_mutable()) {
+    OperatorSetIdProto* opset_version_output = mp_out->add_opset_import();
     opset_version_output->set_domain(opset.domain());
     opset_version_output->set_version(opset.version());
   }

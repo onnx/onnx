@@ -35,9 +35,15 @@ class ConvertError final : public std::runtime_error {
 
 #define fail_convert(...) ONNX_THROW_EX(ConvertError(MakeString(__VA_ARGS__)));
 
-void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g);
+void ExportModelProto(
+    ModelProto* p_m,
+    const std::shared_ptr<Graph>& g,
+    const ModelProto& mp_in,
+    std::vector<std::shared_ptr<Graph>>& function_graphs);
 
 std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp);
+
+std::vector<std::shared_ptr<Graph>> ImportFunctionProto(const ModelProto& mp);
 
 ModelProto PrepareOutput(const ModelProto& mp_in);
 
