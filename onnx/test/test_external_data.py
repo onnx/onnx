@@ -517,6 +517,7 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
             checker.check_model(self.model_filename)
 
 
+@pytest.mark.skipif(os.name != 'nt', reason='Skip Windows test')
 class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(TestLoadExternalDataBase):
     """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
     directory. """
@@ -531,7 +532,6 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(TestLoadExter
         tensor.data_location = onnx.TensorProto.EXTERNAL
         return tensor
 
-    @pytest.mark.skipif(os.name != 'nt', reason='Skip Windows test')
     def test_check_model(self) -> None:
         """We only test the model validation as onnxruntime uses this to load the model. """
         with self.assertRaises(onnx.checker.ValidationError):
