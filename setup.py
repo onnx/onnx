@@ -340,6 +340,7 @@ setuptools.setup(
     packages=packages,
     license="Apache License v2.0",
     include_package_data=True,
+    package_data={"onnx": ["py.typed"]},
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
