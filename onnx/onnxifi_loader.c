@@ -3,6 +3,7 @@
  */
 
 #ifdef _WIN32
+#include <wchar.h>
 #include <windows.h>
 #else
 #include <stdlib.h>
@@ -88,8 +89,16 @@ int ONNXIFI_ABI onnxifi_load(
     path = ONNXIFI_LIBRARY_NAME;
   }
 
+
 #ifdef _WIN32
-  onnx->handle = (void*) LoadLibraryExW(path, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    /* Use a fully qualified pathname when loading DLL to prevent loading DLL from an unexpected place */
+    wchar_t module[MAX_PATH];
+    GetModuleFileNameW(NULL, module, sizeof(module));
+    wchar_t* location = wcsrchr(module, L'\\');
+    module[location - module + 1] = '\0';
+    wcsncat_s(module, MAX_PATH, path, wcslen(path));
+    path = module;
+    onnx->handle = (void*) LoadLibraryExW(path, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
 #else
   /* Clear libdl error state */
   dlerror();
