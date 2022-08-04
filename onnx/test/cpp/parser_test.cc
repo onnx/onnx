@@ -211,6 +211,12 @@ TEST(ParserTest, AttrListTest) {
   EXPECT_EQ(attributes.Get(1).name(), "w");
 }
 
+TEST(ParserTest, DomainOpCallTest) {
+  const char* code = "x = somedomain.foo(y, z)";
+  NodeProto n;
+  Parse(n, code);
+}
+
 TEST(ParserTest, NodeTest) {
   const char* code = "x = foo(y, z)";
   NodeProto n;
