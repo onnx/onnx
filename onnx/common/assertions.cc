@@ -5,11 +5,11 @@
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
+#include "onnx/common/assertions.h"
 #include <assert.h>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
-#include "onnx/common/assertions.h"
 #include "onnx/common/common.h"
 #define BUFFER_MAX_SIZE 2048
 
