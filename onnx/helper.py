@@ -545,7 +545,23 @@ def make_attribute(
     return attr
 
 
+def make_attribute_ref(
+        name: str,
+        attr_type: AttributeProto.AttributeType,
+        doc_string: Optional[str] = None
+) -> AttributeProto:
+    """Make an AttributeProto holding a reference to the parent function's attribute of given name and type."""
+    attr = AttributeProto()
+    attr.name = name
+    attr.type = attr_type
+    if doc_string:
+        attr.doc_string = doc_string
+    return attr
+
+
 def get_attribute_value(attr: AttributeProto) -> Any:
+    if attr.ref_attr_name:
+        raise ValueError(f"Cannot get value of reference attribute: {attr}")
     if attr.type == AttributeProto.FLOAT:
         return attr.f
     if attr.type == AttributeProto.INT:

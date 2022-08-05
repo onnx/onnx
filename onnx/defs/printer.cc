@@ -319,7 +319,10 @@ void ProtoPrinter::print(const AttrList& attrlist) {
 void ProtoPrinter::print(const NodeProto& node) {
   output_ << std::setw(indent_level) << ' ';
   printSet("", ", ", "", node.output());
-  output_ << " = " << node.op_type();
+  output_ << " = ";
+  if (node.domain() != "")
+    output_ << node.domain() << ".";
+  output_ << node.op_type();
   bool has_subgraph = false;
   for (auto attr : node.attribute())
     if (attr.has_g() || (attr.graphs_size() > 0))
