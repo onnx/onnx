@@ -16,7 +16,7 @@ class ConvertError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
 
-  ConvertError(const std::string& message) : std::runtime_error(message) {}
+  explicit ConvertError(const std::string& message) : std::runtime_error(message) {}
 
   const char* what() const noexcept override {
     if (!expanded_message_.empty()) {
@@ -47,5 +47,5 @@ std::vector<std::shared_ptr<Graph>> ImportFunctionProto(const ModelProto& mp);
 
 ModelProto PrepareOutput(const ModelProto& mp_in);
 
-void assertNonNull(std::shared_ptr<Graph> g);
+void assertNonNull(const std::shared_ptr<Graph>& g);
 } // namespace ONNX_NAMESPACE

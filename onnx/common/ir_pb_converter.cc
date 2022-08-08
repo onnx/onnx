@@ -190,13 +190,13 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
   dims.reserve(tsp.dim_size());
   for (int i = 0; i < tsp.dim_size(); i++) {
     if (tsp.dim(i).has_dim_value()) {
-      dims.push_back(Dimension(static_cast<int>(tsp.dim(i).dim_value())));
+      dims.emplace_back(static_cast<int>(tsp.dim(i).dim_value()));
     } else if (tsp.dim(i).has_dim_param()) {
-      dims.push_back(Dimension(tsp.dim(i).dim_param()));
+      dims.emplace_back(tsp.dim(i).dim_param());
     } else {
       // a dimension that has neither dim_value nor dim_param set
       // represents an unknown dimension unrelated to other unknown dimensions.
-      dims.push_back(Dimension());
+      dims.emplace_back();
     }
   }
   return dims;
@@ -333,7 +333,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   }
 
   for (int i = 0; i < gp.input_size(); i++) {
-    auto vip = gp.input(i);
+    const auto& vip = gp.input(i);
     auto v = g->addInput();
     const auto& tensor_type = vip.type().tensor_type();
     if (tensor_type.has_elem_type()) {
@@ -397,7 +397,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     if (search == inputs_by_node.end()) {
       continue;
     }
-    for (auto input : search->second) {
+    for (const auto& input : search->second) {
       if (!value_by_name_of.count(input) && nested) {
         // Undefined reference to an input in a nested block. This may be a
         // captured value. Create a dummy node that we ignore later.
@@ -841,7 +841,7 @@ ModelProto PrepareOutput(const ModelProto& mp_in) {
   return mp_out;
 }
 
-void assertNonNull(std::shared_ptr<Graph> g) {
+void assertNonNull(const std::shared_ptr<Graph>& g) {
   ONNX_ASSERTM(
       g.get() != nullptr,
       "Warning: onnx version converter is unable to parse input model. "

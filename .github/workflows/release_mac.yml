@@ -17,7 +17,7 @@ env:
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    runs-on: macos-10.15
+    runs-on: macos-11
     strategy:
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10']
@@ -53,7 +53,7 @@ jobs:
         export NUM_CORES=`sysctl -n hw.logicalcpu`
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
-        # Currently GitHub Action agent is using MacOS 10.15, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
+        # Currently GitHub Action agent is using macos-11, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
         if [ '${{ github.event_name }}' == 'schedule' ]; then
           python setup.py bdist_wheel -p macosx_10_12_x86_64 --weekly_build

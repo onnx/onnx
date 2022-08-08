@@ -528,6 +528,22 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info('y', TensorProto.INT32, (2, 3, 9, 9))])
 
+    def test_resize_scale_and_size_but_one_is_empty(self) -> None:
+        graph = self._make_graph(
+            [('x', TensorProto.INT32, (1, 3, 4, 5)),
+             ('roi', TensorProto.FLOAT, (8,)),
+             ('scales', TensorProto.FLOAT, (4,)),
+             ('sizes', TensorProto.INT64, (0,))],
+            [make_node("Resize", ['x', 'roi', 'scales', 'sizes'], ['y'])],
+            [],
+            initializer=[make_tensor('scales', TensorProto.FLOAT, (4,),
+                                     vals=np.array([2.0, 1.1, 2.3, 1.9], dtype='<f4').tobytes(), raw=True),
+                         make_tensor('sizes', TensorProto.INT64, (0,),
+                                     vals=np.array([], dtype='<i8').tobytes(), raw=True)])
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('y', TensorProto.INT32, (2, 3, 9, 9))])
+
     def test_shape(self) -> None:
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (2, 4, 3))],
@@ -1298,7 +1314,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
                 layout=1, direction=direction)],
             [])
-        if(direction == 'bidirectional'):
+        if direction == 'bidirectional':
             num_directions = 2
         else:
             num_directions = 1

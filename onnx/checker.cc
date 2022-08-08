@@ -8,6 +8,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
+#include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
 #include <fstream>
@@ -912,7 +913,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   }
 }
 
-void check_model(const std::string& model_path) {
+void check_model(const std::string& model_path, bool full_check) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -924,11 +925,26 @@ void check_model(const std::string& model_path) {
   }
   ctx.set_model_dir(model_dir);
   check_model(model, ctx);
+
+  if (full_check) {
+    ShapeInferenceOptions options{true, 1, false};
+    ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
+  }
 }
 
 void check_model(const ModelProto& model) {
   CheckerContext ctx;
   check_model(model, ctx);
+}
+
+void check_model(ModelProto& model, bool full_check) {
+  CheckerContext ctx;
+  check_model(model, ctx);
+
+  if (full_check) {
+    ShapeInferenceOptions options{true, 1, false};
+    ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
+  }
 }
 
 std::set<std::string> experimental_ops = {
