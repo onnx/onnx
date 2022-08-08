@@ -5,24 +5,21 @@
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
-#include <assert.h>
+#include "onnx/common/assertions.h"
 #include <cstdarg>
 #include <cstdio>
-#include <cstring>
-#include "onnx/common/assertions.h"
 #include "onnx/common/common.h"
-#define BUFFER_MAX_SIZE 2048
 
 namespace ONNX_NAMESPACE {
 
 std::string barf(const char* fmt, ...) {
-  char msg[BUFFER_MAX_SIZE];
+  char msg[2048];
   va_list args;
-  // To resolve potential vulnerability issue for vsnprintf, add an assert to make sure the quantity is reasonable.
-  assert(strlen(fmt) <= BUFFER_MAX_SIZE && "The string length for vsnprintf is larger than the buffer size 2048.");
+
   va_start(args, fmt);
-  vsnprintf(msg, BUFFER_MAX_SIZE, fmt, args);
+  vsnprintf(msg, 2048, fmt, args);
   va_end(args);
+
   return std::string(msg);
 }
 
