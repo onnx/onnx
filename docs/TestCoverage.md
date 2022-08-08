@@ -9099,7 +9099,7 @@ expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_wit
 
 
 ### OptionalHasElement
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>empty</summary>
 
@@ -9176,6 +9176,25 @@ output = optional_has_element_reference_implementation(optional)
 expect(node, inputs=[optional], outputs=[output],
        input_type_protos=[input_type_proto],
        name='test_optional_has_element')
+```
+
+</details>
+<details>
+<summary>tensor</summary>
+
+```python
+tensor = np.array([1, 2, 3, 4]).astype(np.float32)
+tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
+input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+node = onnx.helper.make_node(
+    'OptionalHasElement',
+    inputs=['optional_input'],
+    outputs=['output']
+)
+output = optional_has_element_reference_implementation(tensor)
+expect(node, inputs=[tensor], outputs=[output],
+       input_type_protos=[input_type_proto],
+       name='test_optional_has_element_tensor')
 ```
 
 </details>
