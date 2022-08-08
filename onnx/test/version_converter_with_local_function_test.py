@@ -10,7 +10,7 @@ class TestVersionConverterLocalFunction(unittest.TestCase):
         input = '''
             <
                 ir_version: 8,
-                opset_import: [ "" : 15, "custom_domain" : 1],
+                opset_import: [ "" : 2, "custom_domain" : 1],
                 producer_name: "FunctionProtoTest",
                 producer_version: "1.0",
                 model_version: 1,
@@ -22,7 +22,7 @@ class TestVersionConverterLocalFunction(unittest.TestCase):
                 }
             <
                 domain: "custom_domain",
-                opset_import: [ "" : 15],
+                opset_import: [ "" : 2],
                 doc_string: "Test function proto"
             >
             Square(X) => (C)
@@ -32,9 +32,9 @@ class TestVersionConverterLocalFunction(unittest.TestCase):
         '''
 
         model = onnx.parser.parse_model(input)
-        checker.check_model(model)
+        checker.check_model(model, True)
         model_converted = onnx.version_converter.convert_version(model=model, target_version=16)
-        checker.check_model(model_converted)
+        checker.check_model(model_converted, True)
 
     def test_local_function_with_attributes(self) -> None:
         input = '''
@@ -77,9 +77,9 @@ class TestVersionConverterLocalFunction(unittest.TestCase):
          '''
 
         model = onnx.parser.parse_model(input)
-        checker.check_model(model)
+        checker.check_model(model, True)
         model_converted = onnx.version_converter.convert_version(model=model, target_version=16)
-        checker.check_model(model_converted)
+        checker.check_model(model_converted, True)
 
 
 if __name__ == '__main__':

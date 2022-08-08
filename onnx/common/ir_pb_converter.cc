@@ -776,10 +776,10 @@ void ExportModelProto(
   GraphProto* p_g = mp_out->mutable_graph();
   encodeGraph(p_g, g);
 
-  if (mp_in.functions_size() != function_graphs.size())
+  if (mp_in.functions_size() != (int)function_graphs.size())
     fail_convert("mismatch local function count.");
 
-  for (int i = 0; i < function_graphs.size(); i++) {
+  for (auto i = 0; i < function_graphs.size(); i++) {
     std::shared_ptr<Graph> g = function_graphs[i];
     GraphProto g_p;
     encodeGraph(&g_p, g);

@@ -1,17 +1,103 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from onnx import checker, helper, ModelProto, TensorProto, GraphProto, NodeProto, OperatorSetIdProto
+from onnx import checker, helper, ModelProto, TensorProto,\
+    GraphProto, NodeProto, OperatorSetIdProto, FunctionProto
 from typing import Sequence, Tuple, List, Callable
-from onnx import numpy_helper
+from onnx import numpy_helper, mapping
 
 import numpy as np  # type: ignore
 import struct
 
 import onnx.version_converter
+import pytest
 import unittest
+
+has_ort = True
+try:
+    import onnxruntime as ort  # type: ignore
+except:
+    has_ort = False
+
+def skipIfUnsupportedOpsetVersion(unsupported_opset_versions):
+    def test(func):
+        def wrapper(self):
+            return func(self, unsupported_opset_versions)
+        return wrapper
+    return test
 
 
 class TestVersionConverter(unittest.TestCase):
+    def _generate_data(self, type_proto):
+        dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[type_proto.tensor_type.elem_type]
+        size = [d.dim_value for d in type_proto.tensor_type.shape.dim]
+        x = np.random.random(size).astype(dtype)
+        return x
+
+    def test_with_ort(self, orig_model, converted_model):
+        self.assertTrue(has_ort)
+        self.assertEqual(len(orig_model.graph.input), len(converted_model.graph.input))
+        for vi1, vi2 in zip(orig_model.graph.input, converted_model.graph.input):
+            self.assertEqual(vi1.name, vi2.name)
+            self.assertEqual(vi1.type, vi2.type)
+
+        self.assertEqual(len(orig_model.graph.output), len(converted_model.graph.output))
+        for vi1, vi2 in zip(orig_model.graph.output, converted_model.graph.output):
+            self.assertEqual(vi1.name, vi2.name)
+            self.assertEqual(vi1.type, vi2.type)
+
+        feed = {}
+        for vi in orig_model.graph.input:
+            feed[vi.name] = self._generate_data(vi.type)
+
+        orig_sess = ort.InferenceSession(orig_model.SerializeToString(), providers=['CPUExecutionProvider'])
+        orig_results = orig_sess.run(None, feed)
+        converted_sess = ort.InferenceSession(converted_model.SerializeToString(), providers=['CPUExecutionProvider'])
+        converted_results = converted_sess.run(None, feed)
+        np.testing.assert_allclose(orig_results, converted_results)
+
+    def _to_local_function(
+            self,
+            graph: GraphProto,
+            initial_version: OperatorSetIdProto,
+    ) -> FunctionProto:
+        domain = "custom_domain"
+        fname = "custom_local_function_op"
+        inputs = [vi.name for vi in graph.input]
+        outputs = [vi.name for vi in graph.output]
+        nodes = graph.node
+        opset_imports = [initial_version]
+        attributes = []
+        doc_string = graph.doc_string
+        f = helper.make_function(
+            domain,
+            fname,
+            inputs,
+            outputs,
+            nodes,
+            opset_imports,
+            attributes,
+            doc_string)
+        nodes = [
+            helper.make_node(fname, inputs, outputs, "local_funcion_node", "dummy doc string",
+                domain=domain)]
+        g = helper.make_graph(nodes, "graph_with_local_functions", graph.input, graph.output)
+        model = helper.make_model(g, producer_name='onnx-test', opset_imports=[initial_version, onnx.helper.make_opsetid(domain, 1)],
+            functions=[f])
+        return model
+
+    def _converted_with_local_function(
+            self,
+            graph: GraphProto,
+            initial_version: OperatorSetIdProto,
+            target_version: int
+    ) -> ModelProto:
+        orig_function_model = self._to_local_function(graph, initial_version)
+        checker.check_model(orig_function_model)
+        converted_function_model = onnx.version_converter.convert_version(
+            orig_function_model,
+            target_version)
+        checker.check_model(converted_function_model)
+        return converted_function_model, orig_function_model
 
     def _converted(
             self,
@@ -24,11 +110,11 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = onnx.version_converter.convert_version(orig_model,
                 target_version)
         checker.check_model(converted_model)
-        return converted_model
+        return converted_model, orig_model
 
     # Test 1: Backwards Incompatible Conversion: Reshape: 8 -> 2
     def test_backwards_incompatible(self) -> None:
-        def test() -> None:
+        def test(test_local_function) -> None:
             nodes = [helper.make_node('Add', ["W", "Z"], ["shape"]),
                         helper.make_node('Reshape', ["X", "shape"], ["A"]),
                         helper.make_node('Add', ["A", "W"], ["Y"])]
@@ -39,8 +125,12 @@ class TestVersionConverter(unittest.TestCase):
                     helper.make_tensor_value_info("W", TensorProto.FLOAT, (1,)),
                     helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1,))],
                 [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-            self._converted(graph, helper.make_operatorsetid("", 8), 2)
-        self.assertRaises(RuntimeError, test)
+            if test_local_function:
+                self._converted_with_local_function(graph, helper.make_operatorsetid("", 8), 2)
+            else:
+                self._converted(graph, helper.make_operatorsetid("", 8), 2)
+        self.assertRaises(RuntimeError, test, test_local_function=False)
+        self.assertRaises(RuntimeError, test, test_local_function=True)
 
     # Test 2: Backwards Compatible Conversion (No Adaptations): Add: 3 -> 2
     def test_backwards_compatible(self) -> None:
@@ -51,11 +141,15 @@ class TestVersionConverter(unittest.TestCase):
             [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-        converted_model = self._converted(graph, helper.make_operatorsetid(
-            "", 3), 2)
+        converted_model, orig_model = self._converted(graph, helper.make_operatorsetid(
+            "", 15), 16)
+        self.test_with_ort(converted_model, orig_model)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Add"
-        assert converted_model.opset_import[0].version == 2
+        assert converted_model.opset_import[0].version == 16
+        converted_function_model, orig_function_model = self._converted_with_local_function(graph, helper.make_operatorsetid(
+            "", 15), 16)
+        self.test_with_ort(converted_function_model, orig_function_model)
 
     # Test 3: Non-Existent Op Conversion: Cos: 8 -> 6
     def test_non_existent_op(self) -> None:
@@ -70,7 +164,7 @@ class TestVersionConverter(unittest.TestCase):
         self.assertRaises(RuntimeError, test)
 
     # Test Add Adapter: 8 -> 5
-    def test_add_8_5(self) -> None:
+    def test_add_16_15(self) -> None:
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -78,14 +172,24 @@ class TestVersionConverter(unittest.TestCase):
             [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-        converted_model = self._converted(graph, helper.make_operatorsetid(
-            "", 8), 5)
+        converted_model, orig_model = self._converted(graph, helper.make_operatorsetid(
+            "", 16), 13)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Add"
-        assert converted_model.opset_import[0].version == 5
+        assert converted_model.opset_import[0].version == 13
 
-    # Test Add Adapter: 5 -> 8
-    def test_add_5_8(self) -> None:
+        self.test_with_ort(converted_model, orig_model)
+
+        converted_function_model, orig_function_model = self._converted_with_local_function(graph, helper.make_operatorsetid(
+            "", 16), 13)
+        self.test_with_ort(converted_function_model, orig_function_model)
+
+    # Test Add Adapter: 5 -> 16
+    # check out how:
+    # https://github.com/pytest-dev/pytest/blob/f43ddd8acd74a2c3242a3874420072836e0614aa/src/_pytest/mark/structures.py#L151
+    # @pytest.mark.parametrize("original_version, target_version", [(5, 16), (7, 16)])
+    @skipIfUnsupportedOpsetVersion([7, 8])
+    def test_add_forward(self, original_versions) -> None:
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -93,11 +197,15 @@ class TestVersionConverter(unittest.TestCase):
             [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-        converted_model = self._converted(graph, helper.make_operatorsetid(
-            "", 5), 8)
+        converted_model, origin_model = self._converted(graph, helper.make_operatorsetid(
+            "", original_version), target_version)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Add"
-        assert converted_model.opset_import[0].version == 8
+        assert converted_model.opset_import[0].version == target_version
+
+        ort_minimal_opset_version_add = 7
+        if has_ort and original_version >= ort_minimal_opset_version_add:
+            self.test_with_ort(converted_model, origin_model)
 
     # Test Add Adapter: 5 -> 8, requiring insertion of an Unsqueeze node
     def test_add_5_8_with_unsqueeze(self) -> None:

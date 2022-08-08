@@ -2,7 +2,6 @@ import unittest
 
 import onnx
 from onnx import checker, parser, utils
-import onnx.version_converter
 
 class TestFunction(unittest.TestCase):
     def _verify_function_set(self, extracted_model, function_set, func_domain):  # type: ignore
