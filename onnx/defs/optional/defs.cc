@@ -9,7 +9,7 @@
 #include <numeric>
 
 namespace ONNX_NAMESPACE {
-  static std::vector<std::string> optional_and_tensor_types() {
+static std::vector<std::string> optional_and_tensor_types() {
   auto optional_types = OpSchema::all_optional_types();
   auto tensor_types = OpSchema::all_tensor_types();
   auto sequence_types = OpSchema::all_tensor_sequence_types();
