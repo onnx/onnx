@@ -46,3 +46,18 @@ class OptionalHasElement(Base):
         expect(node, inputs=[optional], outputs=[output],
                input_type_protos=[input_type_proto],
                name='test_optional_has_element_empty')
+
+    @staticmethod
+    def export_tensor() -> None:
+        tensor = np.array([1, 2, 3, 4]).astype(np.float32)
+        tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
+        input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+        node = onnx.helper.make_node(
+            'OptionalHasElement',
+            inputs=['optional_input'],
+            outputs=['output']
+        )
+        output = optional_has_element_reference_implementation(tensor)
+        expect(node, inputs=[tensor], outputs=[output],
+               input_type_protos=[input_type_proto],
+               name='test_optional_has_element_tensor')
