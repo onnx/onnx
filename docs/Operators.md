@@ -2497,6 +2497,22 @@ expect(node, inputs=[size], outputs=[y],
   For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
   an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 
+  In more detail, the conversion among numerical types should follow these rules:
+
+  * Casting from floating point to:
+    * floating point: +/- infinity if OOR (out of range).
+    * fixed point: undefined if OOR.
+    * bool: +/- 0.0 to False; all else to True.
+  * Casting from fixed point to:
+    * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
+    * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
+  signed types). For example, 200 (int16) -> -56 (int8).
+    * bool: zero to False; nonzero to True.
+  * Casting from bool to:
+    * floating point: `{1.0, 0.0}`.
+    * fixed point: `{1, 0}`.
+    * bool: no change.
+
 #### Version
 
 This version of the operator has been available since version 13 of the default ONNX operator set.
