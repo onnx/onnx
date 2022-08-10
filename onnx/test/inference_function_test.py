@@ -1,7 +1,7 @@
 import unittest
 from typing import List, Dict, Tuple, Union, Optional
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 import onnx.numpy_helper
@@ -49,7 +49,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
             ({'A': (1, ('x', 2)), 'B': (1, ('y', 2))}, {'C': (1, (None, 2))})
         ]
         for ins, outs in cases:
-            assert _run_case(ADD_SCHEMA, ['A', 'B'], ['C'], _to_tensor_types(ins)) == _to_tensor_types(outs)
+            assert _run_case(ADD_SCHEMA, ['A', 'B'], ['C'], _to_tensor_types(ins)) == _to_tensor_types(outs)  # type: ignore
 
     def test_add_inference_raises_errors(self) -> None:
         with self.assertRaises(onnx.checker.ValidationError):
