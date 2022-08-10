@@ -818,10 +818,6 @@ class OpSchema final {
     return tensor_inference_function_ ? true : false;
   }
 
-  InferenceFunction get_type_and_shape_inference_function() const {
-    return tensor_inference_function_;
-  }
-
   bool has_data_propagation_function() const {
     return data_propagation_function_ ? true : false;
   }

@@ -69,7 +69,7 @@ std::vector<py::bytes> CallInferenceFunction(
 
   shape_inference::InferenceContextImpl impl(
     node, valueTypes.second, inputData.second, inputSparseData.second);
-  op->get_type_and_shape_inference_function()(impl);
+  op->GetTypeAndShapeInferenceFunction()(impl);
   std::vector<py::bytes> type_proto_bytes;
   for(auto proto : impl.allOutputTypes_) {
     std::string s;
