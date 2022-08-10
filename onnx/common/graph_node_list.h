@@ -50,8 +50,6 @@ template <typename T>
 struct generic_graph_node_list_iterator final {
   generic_graph_node_list_iterator() : cur(nullptr), d(kNextDirection) {}
   generic_graph_node_list_iterator(T* cur, size_t d) : cur(cur), d(d) {}
-  generic_graph_node_list_iterator(const generic_graph_node_list_iterator& rhs) : cur(rhs.cur), d(rhs.d) {}
-  generic_graph_node_list_iterator& operator=(const generic_graph_node_list_iterator&) = default;
   T* operator*() const {
     return cur;
   }

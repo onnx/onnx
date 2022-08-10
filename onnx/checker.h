@@ -143,7 +143,8 @@ void check_model_local_functions(
     const LexicalScopeContext& parent_lex);
 
 void check_model(const ModelProto& model);
-void check_model(const std::string& model_path);
+void check_model(ModelProto& model, bool full_check);
+void check_model(const std::string& model_path, bool full_check = false);
 
 bool check_is_experimental_op(std::string node_op_type);
 
