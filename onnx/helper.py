@@ -1028,15 +1028,15 @@ def make_training_info(algorithm: GraphProto, algorithm_bindings: AssignmentBind
 
 
 def tensor_dtype_to_np_type(tensor_dtype: int) -> np.dtype:
-    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][0]
+    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].np_type
 
 
 def tensor_dtype_to_storage_tensor_type(tensor_dtype: int) -> int:
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype][1]
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_type
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
-    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][2]
+    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].name
 
 
 def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> np.dtype:
@@ -1045,10 +1045,12 @@ def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> np.dtype:
 
 # This map is used to get storage field for certain tensor type
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
-    return mapping.STORAGE_TENSOR_TYPE_TO_FIELD[mapping.TENSOR_TYPE_MAP[int(tensor_dtype)][1]]
+    """Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensors"""
+    return mapping.STORAGE_TENSOR_TYPE_TO_FIELD[mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].storage_type]
 
 
 def np_type_to_tensor_dtype(np_type: np.dtype) -> int:
+    """Convert a TensorProto's data_type to corresponding tensor type for storage. It can be used while converting numpy arrays to tensors"""
     return mapping.NP_TYPE_TO_TENSOR_TYPE[np_type]
 
 
