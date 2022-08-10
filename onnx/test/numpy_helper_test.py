@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
+import unittest
+
 import numpy as np  # type: ignore
 
 from onnx import numpy_helper
 
-import unittest
-
 
 class TestNumpyHelper(unittest.TestCase):
-
     def _test_numpy_helper_float_type(self, dtype: np.number) -> None:
         a = np.random.rand(13, 37).astype(dtype)
         tensor_def = numpy_helper.from_array(a, "test")
@@ -18,10 +17,8 @@ class TestNumpyHelper(unittest.TestCase):
 
     def _test_numpy_helper_int_type(self, dtype: np.number) -> None:
         a = np.random.randint(
-            np.iinfo(dtype).min,
-            np.iinfo(dtype).max,
-            dtype=dtype,
-            size=(13, 37))
+            np.iinfo(dtype).min, np.iinfo(dtype).max, dtype=dtype, size=(13, 37)
+        )
         tensor_def = numpy_helper.from_array(a, "test")
         self.assertEqual(tensor_def.name, "test")
         a_recover = numpy_helper.to_array(tensor_def)
@@ -49,7 +46,7 @@ class TestNumpyHelper(unittest.TestCase):
         self._test_numpy_helper_int_type(np.int64)
 
     def test_string(self) -> None:
-        a = np.array(['Amy', 'Billy', 'Cindy', 'David']).astype(object)
+        a = np.array(["Amy", "Billy", "Cindy", "David"]).astype(object)
         tensor_def = numpy_helper.from_array(a, "test")
         self.assertEqual(tensor_def.name, "test")
         a_recover = numpy_helper.to_array(tensor_def)
@@ -72,5 +69,5 @@ class TestNumpyHelper(unittest.TestCase):
         self._test_numpy_helper_float_type(np.complex128)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
