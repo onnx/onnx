@@ -2,10 +2,10 @@
 
 import importlib
 import inspect
-import sys
 import pkgutil
-from typing import Dict
+import sys
 from types import ModuleType
+from typing import Dict
 
 
 def collect_sample_implementations() -> Dict[str, str]:
