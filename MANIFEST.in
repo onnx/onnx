@@ -8,4 +8,3 @@ recursive-include tools *
 include VERSION_NUMBER
 include CMakeLists.txt
 include requirements.txt
-include onnx/py.typed
