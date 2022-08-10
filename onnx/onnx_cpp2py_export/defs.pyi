@@ -44,6 +44,9 @@ class OpSchema:
     @staticmethod
     def is_infinite(v: int) -> bool: ...
     def consumed(self, schema: OpSchema, i: int) -> Tuple[UseType, int]: ...
+    def infer_node_outputs(self, node_proto: bytes, value_types: Dict[str, bytes],
+                           input_data: Dict[str, bytes], input_sparse_data: Dict[str, bytes]
+                           ) -> Dict[str, bytes]: ...
 
     class TypeConstraintParam:
         @property
