@@ -39,14 +39,13 @@ static std::string ProtoBytesToText(const py::bytes& bytes) {
   return ProtoToString(proto);
 }
 
-template<typename T, typename Ts = typename std::remove_const<T>::type>
+template <typename T, typename Ts = typename std::remove_const<T>::type>
 std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> ParseProtoFromBytesMap(
-  std::unordered_map<std::string, py::bytes> bytesMap)
-{
+    std::unordered_map<std::string, py::bytes> bytesMap) {
   std::unique_ptr<Ts[]> values(new Ts[bytesMap.size()]);
   std::unordered_map<std::string, T*> result;
   size_t i = 0;
-  for(auto kv : bytesMap) {
+  for (auto kv : bytesMap) {
     ParseProtoFromPyBytes(&values[i], kv.second);
     result[kv.first] = &values[i];
     i++;
@@ -55,11 +54,11 @@ std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> ParseProto
 }
 
 std::vector<py::bytes> CallInferenceFunction(
-  OpSchema* op, const py::bytes& nodeBytes,
-  std::unordered_map<std::string, py::bytes> valueTypesByNameBytes,
-  std::unordered_map<std::string, py::bytes> inputDataByNameBytes,
-  std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes)
-{
+    OpSchema* op,
+    const py::bytes& nodeBytes,
+    std::unordered_map<std::string, py::bytes> valueTypesByNameBytes,
+    std::unordered_map<std::string, py::bytes> inputDataByNameBytes,
+    std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes) {
   NodeProto node{};
   ParseProtoFromPyBytes(&node, nodeBytes);
 
@@ -67,11 +66,10 @@ std::vector<py::bytes> CallInferenceFunction(
   const auto& inputData = ParseProtoFromBytesMap<const TensorProto>(inputDataByNameBytes);
   const auto& inputSparseData = ParseProtoFromBytesMap<const SparseTensorProto>(inputSparseDataByNameBytes);
 
-  shape_inference::InferenceContextImpl impl(
-    node, valueTypes.second, inputData.second, inputSparseData.second);
+  shape_inference::InferenceContextImpl impl(node, valueTypes.second, inputData.second, inputSparseData.second);
   op->GetTypeAndShapeInferenceFunction()(impl);
   std::vector<py::bytes> type_proto_bytes;
-  for(auto proto : impl.allOutputTypes_) {
+  for (auto proto : impl.allOutputTypes_) {
     std::string s;
     proto.SerializeToString(&s);
     type_proto_bytes.push_back(py::bytes(s));
