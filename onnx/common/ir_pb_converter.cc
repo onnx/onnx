@@ -231,7 +231,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   // 3) initialize inputs of all Nodes
   // 4) initialize inputs of the Return sentinel node
   // 5) fill in type info for graph outputs, and register them as outputs
-  // 5) fill in type info for Values from the value_info list in the graph
+  // 6) fill in type info for Values from the value_info list in the graph
 
   // In ONNX proto land, Values are just strings. We are going to make
   // objects out of them, and equal strings must be mapped to the same
@@ -374,7 +374,8 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   if (!mp.has_ir_version()) {
     return nullptr;
-  } else if (mp.ir_version() == 1) {
+  } else if (mp.ir_version() <= 1) {
+    // ir_version=1 is not supported and ir_version=0 is illegal
     return nullptr;
   }
 
