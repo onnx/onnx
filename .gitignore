@@ -55,6 +55,7 @@ onnx/*_pb.pyi
 
 # Visual Studio Code files
 .vscode
+!/.vscode/settings.json
 
 # OSX dir files
 .DS_Store

@@ -4,18 +4,24 @@
 import numpy as np  # type: ignore
 
 import onnx
+
 from ..base import Base
 from . import expect
 
 
 class MelWeightMatrix(Base):
-
     @staticmethod
     def export() -> None:
         node = onnx.helper.make_node(
             "MelWeightMatrix",
-            inputs=['num_mel_bins', 'dft_length', 'sample_rate', 'lower_edge_hertz', 'upper_edge_hertz'],
-            outputs=['output'],
+            inputs=[
+                "num_mel_bins",
+                "dft_length",
+                "sample_rate",
+                "lower_edge_hertz",
+                "upper_edge_hertz",
+            ],
+            outputs=["output"],
         )
 
         num_mel_bins = np.int32(8)
@@ -40,7 +46,7 @@ class MelWeightMatrix(Base):
         output.flags.writeable = True
 
         for i in range(num_mel_bins):
-            lower_frequency_value = frequency_bins[i]     # left
+            lower_frequency_value = frequency_bins[i]  # left
             center_frequency_point = frequency_bins[i + 1]  # center
             higher_frequency_point = frequency_bins[i + 2]  # right
             low_to_center = center_frequency_point - lower_frequency_value
@@ -48,11 +54,15 @@ class MelWeightMatrix(Base):
                 output[center_frequency_point, i] = 1
             else:
                 for j in range(lower_frequency_value, center_frequency_point + 1):
-                    output[j, i] = float(j - lower_frequency_value) / float(low_to_center)
+                    output[j, i] = float(j - lower_frequency_value) / float(
+                        low_to_center
+                    )
             center_to_high = higher_frequency_point - center_frequency_point
             if center_to_high > 0:
                 for j in range(center_frequency_point, higher_frequency_point):
-                    output[j, i] = float(higher_frequency_point - j) / float(center_to_high)
+                    output[j, i] = float(higher_frequency_point - j) / float(
+                        center_to_high
+                    )
 
         # Expected output
         # 1.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
@@ -65,5 +75,15 @@ class MelWeightMatrix(Base):
         # 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
         # 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000,
         output = output.astype(np.float32)
-        expect(node, inputs=[num_mel_bins, dft_length, sample_rate, lower_edge_hertz, upper_edge_hertz], outputs=[output],
-                name='test_melweightmatrix')
+        expect(
+            node,
+            inputs=[
+                num_mel_bins,
+                dft_length,
+                sample_rate,
+                lower_edge_hertz,
+                upper_edge_hertz,
+            ],
+            outputs=[output],
+            name="test_melweightmatrix",
+        )

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np  # type: ignore
+
 import onnx
 
 from ..base import Base
@@ -14,7 +15,7 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ign
     num_axes = len(axes)
 
     if num_axes * 2 != raw_pads.size:
-        raise Exception('The number of elements in raw_pads should be 2 * num_axes')
+        raise Exception("The number of elements in raw_pads should be 2 * num_axes")
 
     pad_width = []
     for i in range(input_rank):
@@ -25,7 +26,7 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ign
         axis = axes[i]
         pad_width[axis] = [raw_pads[i], raw_pads[i + num_axes]]
 
-    if mode == 'constant':
+    if mode == "constant":
         y = np.pad(
             data,
             pad_width=pad_width,
@@ -44,67 +45,56 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ign
 
 
 class Pad(Base):
-
     @staticmethod
     def export_constant_pad() -> None:
         node = onnx.helper.make_node(
-            'Pad',
-            inputs=['x', 'pads', 'value'],
-            outputs=['y'],
-            mode='constant'
+            "Pad", inputs=["x", "pads", "value"], outputs=["y"], mode="constant"
         )
         x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-        pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+        pads = np.array([0, 0, 1, 3, 0, 0, 2, 4]).astype(
+            np.int64
+        )  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
         value = np.float32(1.2)
-        y = pad_impl(
-            x,
-            pads,
-            'constant',
-            1.2
-        )
+        y = pad_impl(x, pads, "constant", 1.2)
 
-        expect(node, inputs=[x, pads, value], outputs=[y],
-               name='test_constant_pad')
+        expect(node, inputs=[x, pads, value], outputs=[y], name="test_constant_pad")
 
     @staticmethod
     def export_reflection_and_edge_pad() -> None:
-        for mode in ['edge', 'reflect']:
+        for mode in ["edge", "reflect"]:
             node = onnx.helper.make_node(
-                'Pad',
-                inputs=['x', 'pads'],
-                outputs=['y'],
-                mode=mode
+                "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
             )
             x = np.random.randn(1, 3, 4, 5).astype(np.int32)
-            pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
-            y = pad_impl(
-                x,
-                pads,
-                mode
-            )
+            pads = np.array([0, 0, 1, 1, 0, 0, 1, 1]).astype(
+                np.int64
+            )  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+            y = pad_impl(x, pads, mode)
 
-            expect(node, inputs=[x, pads], outputs=[y],
-                   name=f'test_{mode}_pad')
+            expect(node, inputs=[x, pads], outputs=[y], name=f"test_{mode}_pad")
 
     @staticmethod
     def export_constant_pad_axes() -> None:
         node = onnx.helper.make_node(
-            'Pad',
-            inputs=['x', 'pads', 'value', 'axes'],
-            outputs=['y'],
-            mode='constant'
+            "Pad", inputs=["x", "pads", "value", "axes"], outputs=["y"], mode="constant"
         )
         x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-        pads = np.array([0, 3, 0, 4]).astype(np.int64)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+        pads = np.array([0, 3, 0, 4]).astype(
+            np.int64
+        )  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
         value = np.float32(1.2)
         axes = np.array([1, 3], dtype=np.int64)
         y = pad_impl(
             x,
             pads,
-            'constant',
+            "constant",
             1.2,
             [1, 3],
         )
 
-        expect(node, inputs=[x, pads, value, axes], outputs=[y],
-               name='test_constant_pad_axes')
+        expect(
+            node,
+            inputs=[x, pads, value, axes],
+            outputs=[y],
+            name="test_constant_pad_axes",
+        )
