@@ -374,7 +374,8 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   if (!mp.has_ir_version()) {
     return nullptr;
-  } else if (mp.ir_version() == 1) {
+  } else if (mp.ir_version() <= 1) {
+    // ir_version=1 is not supported and ir_version=0 is illegal
     return nullptr;
   }
 
