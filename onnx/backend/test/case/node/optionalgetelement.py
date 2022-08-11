@@ -20,7 +20,7 @@ class OptionalHasElement(Base):
         optional = np.array([1, 2, 3, 4]).astype(np.float32)
         tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.FLOAT, shape=[4, ])
         optional_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
-        
+
         node = onnx.helper.make_node(
             'OptionalGetElement',
             inputs=['optional_input'],

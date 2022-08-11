@@ -43,14 +43,14 @@ class OptionalHasElement(Base):
 
         tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type=onnx.TensorProto.INT32, shape=[])
         optional_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
-        
+
         # OptionalHasElement takes a tensor or optional as input
         for input_type_proto in [tensor_type_proto, optional_type_proto]:
             input_name_options = {
                 'empty': 'optional_input',
                 'empty_no_input_name': '',
                 'empty_no_input': None,
-                }
+            }
             for test_name_surfix, input_name in input_name_options.items():
                 node = onnx.helper.make_node(
                     'OptionalHasElement',
@@ -58,7 +58,7 @@ class OptionalHasElement(Base):
                     outputs=['output']
                 )
                 output = optional_has_element_reference_implementation(optional)
-                test_name = name='test_optional_has_element_' + test_name_surfix\
+                test_name = 'test_optional_has_element_' + test_name_surfix \
                     + ('_optional_input' if input_type_proto == optional_type_proto else '_tensor_input')
                 expect(node, inputs=[optional] if input_name else [], outputs=[output],
                     input_type_protos=[input_type_proto] if input_name else [],

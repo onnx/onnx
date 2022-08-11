@@ -21357,16 +21357,16 @@ This version of the operator has been available since version 18 of the default 
 
   Returns true if (1) the input is an optional-type and contains an element,
   or, (2) the input is a tensor or sequence type.
-  If the input is an empty optional-type, this op returns false.
+  If the input is not provided or is an empty optional-type, this op returns false.
 
 #### Version
 
 This version of the operator has been available since version 18 of the default ONNX operator set.
 
-#### Inputs
+#### Inputs (0 - 1)
 
 <dl>
-<dt><tt>input</tt> : O</dt>
+<dt><tt>input</tt> (optional) : O</dt>
 <dd>The optional input.</dd>
 </dl>
 
