@@ -1,23 +1,25 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
 from typing import Any, Tuple
 
+import numpy as np  # type: ignore
+
 import onnx
+
 from ..base import Base
 from . import expect
 
 
-class GRU_Helper():
+class GRU_Helper:
     def __init__(self, **params: Any) -> None:
         # GRU Input Names
-        X = 'X'
-        W = 'W'
-        R = 'R'
-        B = 'B'
-        H_0 = 'initial_h'
-        LBR = 'linear_before_reset'
-        LAYOUT = 'layout'
+        X = "X"
+        W = "W"
+        R = "R"
+        B = "B"
+        H_0 = "initial_h"
+        LBR = "linear_before_reset"
+        LAYOUT = "layout"
         number_of_gates = 3
 
         required_inputs = [X, W, R]
@@ -37,7 +39,11 @@ class GRU_Helper():
             layout = params[LAYOUT] if LAYOUT in params else 0
             x = params[X]
             x = x if layout == 0 else np.swapaxes(x, 0, 1)
-            b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size)
+            b = (
+                params[B]
+                if B in params
+                else np.zeros(2 * number_of_gates * hidden_size)
+            )
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
             lbr = params[LBR] if LBR in params else 0
 
@@ -79,8 +85,17 @@ class GRU_Helper():
             z, r = np.split(gates, 2, -1)
             z = self.f(z)
             r = self.f(r)
-            h_default = self.g(np.dot(x, np.transpose(w_h)) + np.dot(r * H_t, np.transpose(r_h)) + w_bh + r_bh)
-            h_linear = self.g(np.dot(x, np.transpose(w_h)) + r * (np.dot(H_t, np.transpose(r_h)) + r_bh) + w_bh)
+            h_default = self.g(
+                np.dot(x, np.transpose(w_h))
+                + np.dot(r * H_t, np.transpose(r_h))
+                + w_bh
+                + r_bh
+            )
+            h_linear = self.g(
+                np.dot(x, np.transpose(w_h))
+                + r * (np.dot(H_t, np.transpose(r_h)) + r_bh)
+                + w_bh
+            )
             h = h_linear if self.LBR else h_default
             H = (1 - z) * h + z * H_t
             h_list.append(H)
@@ -100,10 +115,9 @@ class GRU_Helper():
 
 
 class GRU(Base):
-
     @staticmethod
     def export_defaults() -> None:
-        input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+        input = np.array([[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]]).astype(np.float32)
 
         input_size = 2
         hidden_size = 5
@@ -111,22 +125,30 @@ class GRU(Base):
         number_of_gates = 3
 
         node = onnx.helper.make_node(
-            'GRU',
-            inputs=['X', 'W', 'R'],
-            outputs=['', 'Y_h'],
-            hidden_size=hidden_size
+            "GRU", inputs=["X", "W", "R"], outputs=["", "Y_h"], hidden_size=hidden_size
         )
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, input_size)
+        ).astype(np.float32)
+        R = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, hidden_size)
+        ).astype(np.float32)
 
         gru = GRU_Helper(X=input, W=W, R=R)
         _, Y_h = gru.step()
-        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_defaults')
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y_h.astype(np.float32)],
+            name="test_gru_defaults",
+        )
 
     @staticmethod
     def export_initial_bias() -> None:
-        input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
+        input = np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]).astype(
+            np.float32
+        )
 
         input_size = 3
         hidden_size = 3
@@ -135,42 +157,61 @@ class GRU(Base):
         number_of_gates = 3
 
         node = onnx.helper.make_node(
-            'GRU',
-            inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y_h'],
-            hidden_size=hidden_size
+            "GRU",
+            inputs=["X", "W", "R", "B"],
+            outputs=["", "Y_h"],
+            hidden_size=hidden_size,
         )
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, input_size)
+        ).astype(np.float32)
+        R = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, hidden_size)
+        ).astype(np.float32)
 
         # Adding custom bias
-        W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+        W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(
+            np.float32
+        )
         R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
         B = np.concatenate((W_B, R_B), axis=1)
 
         gru = GRU_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = gru.step()
-        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_with_initial_bias')
+        expect(
+            node,
+            inputs=[input, W, R, B],
+            outputs=[Y_h.astype(np.float32)],
+            name="test_gru_with_initial_bias",
+        )
 
     @staticmethod
     def export_seq_length() -> None:
-        input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
-                          [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+        input = np.array(
+            [
+                [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+                [[10.0, 11.0, 12.0], [13.0, 14.0, 15.0], [16.0, 17.0, 18.0]],
+            ]
+        ).astype(np.float32)
 
         input_size = 3
         hidden_size = 5
         number_of_gates = 3
 
         node = onnx.helper.make_node(
-            'GRU',
-            inputs=['X', 'W', 'R', 'B'],
-            outputs=['', 'Y_h'],
-            hidden_size=hidden_size
+            "GRU",
+            inputs=["X", "W", "R", "B"],
+            outputs=["", "Y_h"],
+            hidden_size=hidden_size,
         )
 
-        W = np.random.randn(1, number_of_gates * hidden_size, input_size).astype(np.float32)
-        R = np.random.randn(1, number_of_gates * hidden_size, hidden_size).astype(np.float32)
+        W = np.random.randn(1, number_of_gates * hidden_size, input_size).astype(
+            np.float32
+        )
+        R = np.random.randn(1, number_of_gates * hidden_size, hidden_size).astype(
+            np.float32
+        )
 
         # Adding custom bias
         W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
@@ -179,11 +220,16 @@ class GRU(Base):
 
         gru = GRU_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = gru.step()
-        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_seq_length')
+        expect(
+            node,
+            inputs=[input, W, R, B],
+            outputs=[Y_h.astype(np.float32)],
+            name="test_gru_seq_length",
+        )
 
     @staticmethod
     def export_batchwise() -> None:
-        input = np.array([[[1., 2.]], [[3., 4.]], [[5., 6.]]]).astype(np.float32)
+        input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
 
         input_size = 2
         hidden_size = 6
@@ -192,16 +238,25 @@ class GRU(Base):
         layout = 1
 
         node = onnx.helper.make_node(
-            'GRU',
-            inputs=['X', 'W', 'R'],
-            outputs=['Y', 'Y_h'],
+            "GRU",
+            inputs=["X", "W", "R"],
+            outputs=["Y", "Y_h"],
             hidden_size=hidden_size,
-            layout=layout
+            layout=layout,
         )
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, input_size)
+        ).astype(np.float32)
+        R = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, hidden_size)
+        ).astype(np.float32)
 
         gru = GRU_Helper(X=input, W=W, R=R, layout=layout)
         Y, Y_h = gru.step()
-        expect(node, inputs=[input, W, R], outputs=[Y.astype(np.float32), Y_h.astype(np.float32)], name='test_gru_batchwise')
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+            name="test_gru_batchwise",
+        )
