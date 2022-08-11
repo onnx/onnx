@@ -137,7 +137,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           })
       .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
       .def(
-          "infer_node_outputs",
+          "_infer_node_outputs",
           CallNodeInferenceFunction,
           py::arg("nodeBytes"),
           py::arg("valueTypesByNameBytes"),

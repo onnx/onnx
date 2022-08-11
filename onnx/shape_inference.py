@@ -111,7 +111,7 @@ def infer_node_outputs(
         if key in input_sparse_data
     }
 
-    outputs = schema.infer_node_outputs(
+    outputs = schema._infer_node_outputs(
         node.SerializeToString(),
         passed_input_types,
         passed_input_data,
