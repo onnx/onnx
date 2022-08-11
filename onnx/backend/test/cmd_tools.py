@@ -48,6 +48,8 @@ def generate_data(args: argparse.Namespace) -> None:
                     output_dir, f'test_data_set_{i}')
                 prepare_dir(data_set_dir)
                 for j, input in enumerate(inputs):
+                    if input is None:
+                        continue
                     with open(os.path.join(
                             data_set_dir, f'input_{j}.pb'), 'wb') as f:
                         if case.model.graph.input[j].type.HasField('map_type'):
@@ -60,10 +62,11 @@ def generate_data(args: argparse.Namespace) -> None:
                             f.write(numpy_helper.from_optional(
                                 input, case.model.graph.input[j].name).SerializeToString())
                         else:
-                            assert case.model.graph.input[j].type.HasField('tensor_type')
                             f.write(numpy_helper.from_array(
                                 input, case.model.graph.input[j].name).SerializeToString())
                 for j, output in enumerate(outputs):
+                    if output is None:
+                        continue
                     with open(os.path.join(
                             data_set_dir, f'output_{j}.pb'), 'wb') as f:
                         if case.model.graph.output[j].type.HasField('map_type'):
