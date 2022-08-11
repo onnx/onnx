@@ -142,7 +142,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
                     "t": (onnx.TensorProto.INT64, (3,)),
                 }
             ),
-            {"t": np.array([2, 2, 5])},
+            {"t": np.array([2, 2, 5], dtype=np.int64)},
         ) == _to_tensor_types({"y": (onnx.TensorProto.FLOAT, (2, 2, 5))})
 
 
