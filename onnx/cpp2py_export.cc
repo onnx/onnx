@@ -136,8 +136,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             return py::bytes(bytes);
           })
       .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
-      .def("infer_node_outputs", CallNodeInferenceFunction,
-          py::arg("nodeBytes"), py::arg("valueTypesByNameBytes"),
+      .def(
+          "infer_node_outputs",
+          CallNodeInferenceFunction,
+          py::arg("nodeBytes"),
+          py::arg("valueTypesByNameBytes"),
           py::arg("inputDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
           py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{})
       .def(
