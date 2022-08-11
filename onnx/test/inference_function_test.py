@@ -42,32 +42,43 @@ def _run_case(
 class TestInferenceFunctionCall(unittest.TestCase):
     def test_add_inference(self) -> None:
         cases = [
-            ({'A': (1, ()), 'B': (1, ())}, {'C': (1, ())}),
-            ({'A': (1, (None, 2)), 'B': (1, (2,))}, {'C': (1, (None, 2))}),
-            ({'A': (1, (None, 2)), 'B': (1, (1, 2))}, {'C': (1, (None, 2))}),
-            ({'A': (2, ('n', 'm')), 'B': (2, (1, 'n', 'm'))}, {'C': (2, (1, 'n', 'm'))}),
-            ({'A': (1, ('x', 2)), 'B': (1, ('y', 2))}, {'C': (1, (None, 2))})
+            (
+                {'A': (onnx.TensorProto.FLOAT, ()), 'B': (onnx.TensorProto.FLOAT, ())},
+                {'C': (onnx.TensorProto.FLOAT, ())}
+            ), (
+                {'A': (onnx.TensorProto.FLOAT, (None, 2)), 'B': (onnx.TensorProto.FLOAT, (2,))},
+                {'C': (onnx.TensorProto.FLOAT, (None, 2))}
+            ), (
+                {'A': (onnx.TensorProto.FLOAT, (None, 2)), 'B': (onnx.TensorProto.FLOAT, (1, 2))},
+                {'C': (onnx.TensorProto.FLOAT, (None, 2))}
+            ), (
+                {'A': (onnx.TensorProto.DOUBLE, ('n', 'm')), 'B': (onnx.TensorProto.DOUBLE, (1, 'n', 'm'))},
+                {'C': (onnx.TensorProto.DOUBLE, (1, 'n', 'm'))}
+            ), (
+                {'A': (onnx.TensorProto.FLOAT, ('x', 2)), 'B': (onnx.TensorProto.FLOAT, ('y', 2))},
+                {'C': (onnx.TensorProto.FLOAT, (None, 2))}
+            )
         ]
         for ins, outs in cases:
             assert _run_case(ADD_SCHEMA, ['A', 'B'], ['C'], _to_tensor_types(ins)) == _to_tensor_types(outs)  # type: ignore
 
     def test_add_inference_raises_errors(self) -> None:
         with self.assertRaises(onnx.checker.ValidationError):
-            _run_case(ADD_SCHEMA, ['A'], ['C'], _to_tensor_types({'A': (1, (3, 4))}))
+            _run_case(ADD_SCHEMA, ['A'], ['C'], _to_tensor_types({'A': (onnx.TensorProto.FLOAT, (3, 4))}))
         with self.assertRaises(onnx.checker.ValidationError):
-            _run_case(ADD_SCHEMA, ['A', 'B'], ['C'], _to_tensor_types({'A': (1, (3, 4)), 'B': (2, (3, 4))}))
+            _run_case(ADD_SCHEMA, ['A', 'B'], ['C'], _to_tensor_types({'A': (onnx.TensorProto.FLOAT, (3, 4)), 'B': (2, (3, 4))}))
         with self.assertRaises(onnx.shape_inference.InferenceError):
-            _run_case(ADD_SCHEMA, ['A', 'B'], ['C'], _to_tensor_types({'A': (1, (2, 4)), 'B': (1, (3, 4))}))
+            _run_case(ADD_SCHEMA, ['A', 'B'], ['C'], _to_tensor_types({'A': (onnx.TensorProto.FLOAT, (2, 4)), 'B': (onnx.TensorProto.FLOAT, (3, 4))}))
         with self.assertRaises(KeyError):
-            _run_case(ADD_SCHEMA, ['A', 'B'], ['C'], _to_tensor_types({'A': (1, (3, 4))}))
+            _run_case(ADD_SCHEMA, ['A', 'B'], ['C'], _to_tensor_types({'A': (onnx.TensorProto.FLOAT, (3, 4))}))
 
     def test_reshape_inference(self) -> None:
         assert _run_case(
             RESHAPE_SCHEMA,
             ['x', 't'], ['y'],
-            _to_tensor_types({'x': (1, (5, 4)), 't': (onnx.TensorProto.INT64, (3,))}),
+            _to_tensor_types({'x': (onnx.TensorProto.FLOAT, (5, 4)), 't': (onnx.TensorProto.INT64, (3,))}),
             {'t': np.array([2, 2, 5])}
-        ) == _to_tensor_types({'y': (1, (2, 2, 5))})
+        ) == _to_tensor_types({'y': (onnx.TensorProto.FLOAT, (2, 2, 5))})
 
 
 if __name__ == '__main__':
