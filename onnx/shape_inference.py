@@ -83,9 +83,11 @@ def infer_shapes_path(
 
 
 def infer_node_outputs(
-    schema: onnx.defs.OpSchema, node: onnx.NodeProto, input_types: Dict[str, onnx.TypeProto],
+    schema: onnx.defs.OpSchema,
+    node: onnx.NodeProto,
+    input_types: Dict[str, onnx.TypeProto],
     input_data: Optional[Dict[str, onnx.TensorProto]] = None,
-    input_sparse_data: Optional[Dict[str, onnx.SparseTensorProto]] = None
+    input_sparse_data: Optional[Dict[str, onnx.SparseTensorProto]] = None,
 ) -> Dict[str, onnx.TypeProto]:
     if not schema.has_type_and_shape_inference_function:  # type: ignore
         return {}
@@ -95,15 +97,25 @@ def infer_node_outputs(
         input_sparse_data = {}
 
     # To avoid copying on C++ side, pass only what is needed for this inference call
-    passed_input_types = {key: input_types[key].SerializeToString() for key in node.input}
-    passed_input_data = {key: input_data[key].SerializeToString()
-                         for key in node.input if key in input_data}
-    passed_sparse_input_data = {key: input_sparse_data[key].SerializeToString()
-                                for key in node.input if key in input_sparse_data}
+    passed_input_types = {
+        key: input_types[key].SerializeToString() for key in node.input
+    }
+    passed_input_data = {
+        key: input_data[key].SerializeToString()
+        for key in node.input
+        if key in input_data
+    }
+    passed_sparse_input_data = {
+        key: input_sparse_data[key].SerializeToString()
+        for key in node.input
+        if key in input_sparse_data
+    }
 
     outputs = schema.infer_node_outputs(
         node.SerializeToString(),
-        passed_input_types, passed_input_data, passed_sparse_input_data
+        passed_input_types,
+        passed_input_data,
+        passed_sparse_input_data,
     )
     return {key: onnx.TypeProto.FromString(out) for key, out in outputs.items()}
 
