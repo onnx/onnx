@@ -32,15 +32,17 @@ jobs:
          git submodule sync --recursive
          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}    
-          
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+      with:
+        msbuild-architecture: ${{ matrix.architecture }}
+
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
@@ -117,7 +119,6 @@ jobs:
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if:
       run: |
         python -m pip install -q onnxruntime
         python onnx\onnx\test\test_with_ort.py
