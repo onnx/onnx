@@ -33,7 +33,7 @@ jobs:
          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
+      uses: microsoft/setup-msbuild@v1.1
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
