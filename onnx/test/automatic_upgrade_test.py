@@ -257,10 +257,10 @@ class TestAutomaticUpgrade(unittest.TestCase):
         )
 
     def test_Col2Im_4D(self) -> None:
-        self._test_op_upgrade('Col2Im', 17, [[1, 5, 5], [2], [2]], [[1, 1, 5, 5]])
+        self._test_op_upgrade("Col2Im", 17, [[1, 5, 5], [2], [2]], [[1, 1, 5, 5]])
 
     def test_Col2Im_5D(self) -> None:
-        self._test_op_upgrade('Col2Im', 17, [[1, 10, 12], [3], [3]], [[1, 2, 3, 4, 5]])
+        self._test_op_upgrade("Col2Im", 17, [[1, 10, 12], [3], [3]], [[1, 2, 3, 4, 5]])
 
     def test_Compress(self) -> None:
         self._test_op_upgrade(
