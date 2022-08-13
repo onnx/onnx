@@ -48,14 +48,6 @@ jobs:
         python -m pip install -q --upgrade pip
         cd onnx
         python -m pip install -q -r requirements-release.txt
-        python -m pip install numpy == 1.21.5
-protobuf == 3.16.0
-pytest
-nbval
-ipython
-wheel
-setuptools
-twine
 
     - name: Build ONNX wheel
       run: |
