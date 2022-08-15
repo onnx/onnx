@@ -118,29 +118,30 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
             flat_array = arr.flatten()
             for e in flat_array:
                 if isinstance(e, str):
-                    tensor.string_data.append(e.encode('utf-8'))
+                    tensor.string_data.append(e.encode("utf-8"))
                 elif isinstance(e, np.ndarray):
                     for s in e:
                         if isinstance(s, str):
-                            tensor.string_data.append(s.encode('utf-8'))
+                            tensor.string_data.append(s.encode("utf-8"))
                         elif isinstance(s, bytes):
                             tensor.string_data.append(s)
                 elif isinstance(e, bytes):
                     tensor.string_data.append(e)
                 else:
                     raise NotImplementedError(
-                        "Unrecognized object in the object array, expect a string, or array of bytes: ", str(type(e)))
+                        "Unrecognized object in the object array, expect a string, or array of bytes: ",
+                        str(type(e)),
+                    )
             return tensor
 
         # For numerical types, directly use numpy raw bytes.
         try:
             dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
         except KeyError:
-            raise RuntimeError(
-                f"Numpy data type not understood yet: {str(arr.dtype)}")
+            raise RuntimeError(f"Numpy data type not understood yet: {str(arr.dtype)}")
         tensor.data_type = dtype
         tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
-        if sys.byteorder == 'big':
+        if sys.byteorder == "big":
             # Convert endian from big to little
             convert_endian(tensor)
 
