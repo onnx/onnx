@@ -190,7 +190,7 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
   dims.reserve(tsp.dim_size());
   for (int i = 0; i < tsp.dim_size(); i++) {
     if (tsp.dim(i).has_dim_value()) {
-      dims.emplace_back(static_cast<int>(tsp.dim(i).dim_value()));
+      dims.emplace_back(tsp.dim(i).dim_value());
     } else if (tsp.dim(i).has_dim_param()) {
       dims.emplace_back(tsp.dim(i).dim_param());
     } else {
@@ -374,7 +374,8 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   if (!mp.has_ir_version()) {
     return nullptr;
-  } else if (mp.ir_version() == 1) {
+  } else if (mp.ir_version() <= 1) {
+    // ir_version=1 is not supported and ir_version=0 is illegal
     return nullptr;
   }
 

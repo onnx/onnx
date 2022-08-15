@@ -37,8 +37,8 @@ jobs:
 
   - script: |
       python -m pip -q install virtualenv
-      python -m virtualenv py$(python.version)
-      source py$(python.version)/bin/activate
+      python -m virtualenv venv
+      source venv/bin/activate
 
       sudo apt-get install libprotobuf-dev protobuf-compiler
       python -m pip install -q --upgrade pip
@@ -60,7 +60,7 @@ jobs:
     displayName: 'Install ONNX and dependencies'
 
   - script: |
-      source py$(python.version)/bin/activate
+      source venv/bin/activate
 
       # style check (flake8, mypy, and clang-format)
       python -m pip install -q -r requirements-dev.txt
@@ -111,7 +111,7 @@ jobs:
     displayName: 'Run ONNX tests'
 
   - script: |
-      source py$(python.version)/bin/activate
+      source venv/bin/activate
       python onnx/backend/test/cmd_tools.py generate-data
       git status
       # Skip *output_*.pb because NumPy functions might behave differently on different platforms
