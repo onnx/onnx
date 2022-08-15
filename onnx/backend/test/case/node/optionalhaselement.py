@@ -1,14 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
 from typing import Optional
 
+import numpy as np  # type: ignore
+
 import onnx
+
 from ..base import Base
 from . import expect
 
 
-def optional_has_element_reference_implementation(optional: Optional[np.ndarray]) -> np.ndarray:
+def optional_has_element_reference_implementation(
+    optional: Optional[np.ndarray],
+) -> np.ndarray:
     if optional is None:
         return np.array(False)
     else:
@@ -16,7 +20,6 @@ def optional_has_element_reference_implementation(optional: Optional[np.ndarray]
 
 
 class OptionalHasElement(Base):
-
     @staticmethod
     def export() -> None:
         optional = np.array([1, 2, 3, 4]).astype(np.float32)

@@ -16,6 +16,14 @@ echo -e "\n::group:: ===> check flake8..."
 flake8 onnx tools workflow_scripts
 echo -e "::endgroup::"
 
+echo -e "\n::group:: ===> check isort..."
+isort . --color --diff --check
+echo -e "::endgroup::"
+
+echo -e "\n::group:: ===> check black format..."
+black . --color --diff --check
+echo -e "::endgroup::"
+
 echo -e "\n::group:: ===> check mypy"
 mypy . --no-site-packages
 echo -e "::endgroup::"
