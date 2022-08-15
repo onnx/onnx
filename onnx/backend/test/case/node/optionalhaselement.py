@@ -52,6 +52,9 @@ class OptionalHasElement(Base):
                 'empty_no_input': None,
             }
             for test_name_surfix, input_name in input_name_options.items():
+                if input_type_proto == tensor_type_proto and input_name:
+                    # the input tensor cannot be empty if input name is provided.
+                    continue
                 node = onnx.helper.make_node(
                     'OptionalHasElement',
                     inputs=[] if input_name is None else [input_name],
