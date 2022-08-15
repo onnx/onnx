@@ -100,50 +100,49 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
     if name:
         tensor.name = name
 
-    if arr is not None:
-        tensor.dims.extend(arr.shape)
+    tensor.dims.extend(arr.shape)
 
-        if arr.dtype == object:
-            # Special care for strings.
-            tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
-            # TODO: Introduce full string support.
-            # We flatten the array in case there are 2-D arrays are specified
-            # We throw the error below if we have a 3-D array or some kind of other
-            # object. If you want more complex shapes then follow the below instructions.
-            # Unlike other types where the shape is automatically inferred from
-            # nested arrays of values, the only reliable way now to feed strings
-            # is to put them into a flat array then specify type astype(object)
-            # (otherwise all strings may have different types depending on their length)
-            # and then specify shape .reshape([x, y, z])
-            flat_array = arr.flatten()
-            for e in flat_array:
-                if isinstance(e, str):
-                    tensor.string_data.append(e.encode("utf-8"))
-                elif isinstance(e, np.ndarray):
-                    for s in e:
-                        if isinstance(s, str):
-                            tensor.string_data.append(s.encode("utf-8"))
-                        elif isinstance(s, bytes):
-                            tensor.string_data.append(s)
-                elif isinstance(e, bytes):
-                    tensor.string_data.append(e)
-                else:
-                    raise NotImplementedError(
-                        "Unrecognized object in the object array, expect a string, or array of bytes: ",
-                        str(type(e)),
-                    )
-            return tensor
+    if arr.dtype == object:
+        # Special care for strings.
+        tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
+        # TODO: Introduce full string support.
+        # We flatten the array in case there are 2-D arrays are specified
+        # We throw the error below if we have a 3-D array or some kind of other
+        # object. If you want more complex shapes then follow the below instructions.
+        # Unlike other types where the shape is automatically inferred from
+        # nested arrays of values, the only reliable way now to feed strings
+        # is to put them into a flat array then specify type astype(object)
+        # (otherwise all strings may have different types depending on their length)
+        # and then specify shape .reshape([x, y, z])
+        flat_array = arr.flatten()
+        for e in flat_array:
+            if isinstance(e, str):
+                tensor.string_data.append(e.encode("utf-8"))
+            elif isinstance(e, np.ndarray):
+                for s in e:
+                    if isinstance(s, str):
+                        tensor.string_data.append(s.encode("utf-8"))
+                    elif isinstance(s, bytes):
+                        tensor.string_data.append(s)
+            elif isinstance(e, bytes):
+                tensor.string_data.append(e)
+            else:
+                raise NotImplementedError(
+                    "Unrecognized object in the object array, expect a string, or array of bytes: ",
+                    str(type(e)),
+                )
+        return tensor
 
-        # For numerical types, directly use numpy raw bytes.
-        try:
-            dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
-        except KeyError:
-            raise RuntimeError(f"Numpy data type not understood yet: {str(arr.dtype)}")
-        tensor.data_type = dtype
-        tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
-        if sys.byteorder == "big":
-            # Convert endian from big to little
-            convert_endian(tensor)
+    # For numerical types, directly use numpy raw bytes.
+    try:
+        dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
+    except KeyError:
+        raise RuntimeError(f"Numpy data type not understood yet: {str(arr.dtype)}")
+    tensor.data_type = dtype
+    tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
+    if sys.byteorder == "big":
+        # Convert endian from big to little
+        convert_endian(tensor)
 
     return tensor
 
