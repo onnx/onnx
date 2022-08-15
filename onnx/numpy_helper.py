@@ -97,10 +97,9 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
         TensorProto: the converted tensor def.
     """
     tensor = TensorProto()
+    tensor.dims.extend(arr.shape)
     if name:
         tensor.name = name
-
-    tensor.dims.extend(arr.shape)
 
     if arr.dtype == object:
         # Special care for strings.
