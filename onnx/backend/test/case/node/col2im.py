@@ -11,6 +11,11 @@ from . import expect
 
 
 class Col2Im(Base):
+    """Col2Im operator with N-dimension support
+
+    The tests below can be reproduced in Python using https://github.com/f-dangel/unfoldNd/
+    """
+
     @staticmethod
     def export() -> None:
         input = np.array(

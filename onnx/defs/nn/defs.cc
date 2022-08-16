@@ -2289,11 +2289,12 @@ void col2imShapeInference(InferenceContext& ctx) {
   return;
 }
 
-static const char* Col2Im_ver17_doc = R"DOC(
+static const char* Col2Im_ver18_doc = R"DOC(
 The operator rearranges column blocks back into a multidimensional image
 
 Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/generated/torch.nn.Fold.html,
 but it only supports *batched* multi-dimensional image tensors.
+Another implementation in Python with N-dimension support can be found at https://github.com/f-dangel/unfoldNd/.
 
 NOTE: Although specifying image_shape looks redundant because it could be calculated from
       convolution formulas, it is required as input for more advanced scenarios as explained
@@ -2303,7 +2304,7 @@ NOTE: Although specifying image_shape looks redundant because it could be calcul
 
 ONNX_OPERATOR_SET_SCHEMA(
     Col2Im,
-    17,
+    18,
     OpSchema()
         .Attr(
             "dilations",
@@ -2328,13 +2329,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If not present, the stride defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .SetDoc(Col2Im_ver17_doc)
+        .SetDoc(Col2Im_ver18_doc)
         .Input(
             0,
             "input",
             "Input data tensor to be rearranged from column blocks back into an image."
             " This is a 3-dimensional tensor containing [N, C * n-ary-product(block_shape), L],"
-            " where N is batch dimension, C is image channel dimension and L is number of blocks.",
+            " where N is batch dimension, C is image channel dimension and L is number of blocks."
+            "The blocks are enumerated in increasing lexicographic-order of their indices."
+            "For example, with an image-size 10*20 and block-size 9*18, there would be 2*3 blocks,"
+            " enumerated in the order block(0, 0), block(0, 1), block(0, 2), block(1, 0), block(1, 1), block(1, 2).",
             "T",
             OpSchema::Single,
             true,
@@ -2356,7 +2360,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "block_shape",
             "The shape of the block to apply on the input."
             "This is a 1-dimensional tensor of size of at least 2, containing the value [H_block, W_block] "
-            " for a 2-D image or [dim_b1, dim_b2, ..., dim_bN] for a N-D block.",
+            " for a 2-D image or [dim_b1, dim_b2, ..., dim_bN] for a N-D block."
+            "This is the block-shape before dilation is applied to it.",
             "tensor(int64)",
             OpSchema::Single,
             true,
