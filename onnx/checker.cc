@@ -8,6 +8,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
+#include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
 #include <fstream>
@@ -126,7 +127,20 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        std::string data_path = path_join(ctx.get_model_dir(), entry.value());
+        std::string relative_path = clean_relative_path(entry.value());
+        // Check that normalized relative path starts with "../" or "..\" on windows.
+        if (relative_path.rfind(".." + k_preferred_path_separator, 0) == 0) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be file inside the ",
+              ctx.get_model_dir(),
+              ", but the '",
+              entry.value(),
+              "' points outside the directory");
+        }
+
+        std::string data_path = path_join(ctx.get_model_dir(), relative_path);
         // use stat to check whether the file exists
         struct stat buffer;
         if (stat((data_path).c_str(), &buffer) != 0) {
@@ -137,6 +151,18 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               data_path,
               ", but it doesn't exist or is not accessible.");
         }
+#ifdef _WIN32
+#else // POSIX
+      //  Do not allow symlinks or directories.
+        if (!S_ISREG(buffer.st_mode)) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be stored in ",
+              data_path,
+              ", but it is not regular file.");
+        }
+#endif
       }
     }
     if (!has_location) {
@@ -912,7 +938,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   }
 }
 
-void check_model(const std::string& model_path) {
+void check_model(const std::string& model_path, bool full_check) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -924,11 +950,26 @@ void check_model(const std::string& model_path) {
   }
   ctx.set_model_dir(model_dir);
   check_model(model, ctx);
+
+  if (full_check) {
+    ShapeInferenceOptions options{true, 1, false};
+    ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
+  }
 }
 
 void check_model(const ModelProto& model) {
   CheckerContext ctx;
   check_model(model, ctx);
+}
+
+void check_model(ModelProto& model, bool full_check) {
+  CheckerContext ctx;
+  check_model(model, ctx);
+
+  if (full_check) {
+    ShapeInferenceOptions options{true, 1, false};
+    ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
+  }
 }
 
 std::set<std::string> experimental_ops = {

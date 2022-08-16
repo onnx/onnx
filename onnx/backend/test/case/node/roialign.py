@@ -3,6 +3,7 @@
 import numpy as np  # type: ignore
 
 import onnx
+
 from ..base import Base
 from . import expect
 
@@ -191,7 +192,12 @@ class RoiAlign(Base):
             dtype=np.float32,
         )
 
-        expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign_aligned_false")
+        expect(
+            node,
+            inputs=[X, rois, batch_indices],
+            outputs=[Y],
+            name="test_roialign_aligned_false",
+        )
 
     @staticmethod
     def export_roialign_aligned_true() -> None:
@@ -241,4 +247,9 @@ class RoiAlign(Base):
             dtype=np.float32,
         )
 
-        expect(node, inputs=[X, rois, batch_indices], outputs=[Y], name="test_roialign_aligned_true")
+        expect(
+            node,
+            inputs=[X, rois, batch_indices],
+            outputs=[Y],
+            name="test_roialign_aligned_true",
+        )

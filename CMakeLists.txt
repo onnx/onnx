@@ -63,6 +63,8 @@ if(NOT MSVC)
   set(CMAKE_CXX_STANDARD 11)
 endif(NOT MSVC)
 
+include(GNUInstallDirs)
+
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
 # Read ONNX version
@@ -156,17 +158,17 @@ else()
                            ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
     find_library(Protobuf_PROTOC_LIBRARY
                  NAMES protoc
-                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
                  NO_DEFAULT_PATH)
     if(ONNX_USE_LITE_PROTO)
       find_library(Protobuf_LITE_LIBRARY
         NAMES protobuf-lite
-        PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
         NO_DEFAULT_PATH)
     else()
       find_library(Protobuf_LIBRARY
         NAMES protobuf
-        PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
         NO_DEFAULT_PATH)
     endif(ONNX_USE_LITE_PROTO)
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
@@ -663,8 +665,6 @@ if(MSVC)
                                          # lists from 'identifier2'
                         )
 endif()
-
-include(GNUInstallDirs)
 
 install(DIRECTORY ${ONNX_ROOT}/onnx
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}

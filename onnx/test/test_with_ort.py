@@ -4,11 +4,12 @@
 
 
 def example_test_with_ort() -> None:
-    import onnx
     import numpy  # type: ignore
+    import numpy.random  # type: ignore
     import onnxruntime as rt  # type: ignore
     from onnxruntime.datasets import get_example  # type: ignore
-    import numpy.random  # type: ignore
+
+    import onnx
 
     # get certain example model from ORT
     example1 = get_example("sigmoid.onnx")
