@@ -1116,7 +1116,12 @@ def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> np.dtype:
 # This map is used to get storage field for certain tensor type
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
     """Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensors"""
-    return cast(str, mapping.STORAGE_TENSOR_TYPE_TO_FIELD[mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].storage_type])
+    return cast(
+        str,
+        mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
+            mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].storage_type
+        ],
+    )
 
 
 def np_type_to_tensor_dtype(np_type: np.dtype) -> int:

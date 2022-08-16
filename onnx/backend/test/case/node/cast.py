@@ -6,7 +6,7 @@ import sys
 import numpy as np  # type: ignore
 
 import onnx
-from onnx import helper, TensorProto
+from onnx import TensorProto, helper
 
 from ..base import Base
 from . import expect

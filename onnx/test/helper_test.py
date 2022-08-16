@@ -398,7 +398,9 @@ class TestHelperNodeFunctions(unittest.TestCase):
 
 class TestHelperTensorFunctions(unittest.TestCase):
     def test_make_string_tensor(self) -> None:
-        string_list = list(s.encode("utf-8") for s in ["Amy", "Billy", "Cindy", "David"])
+        string_list = list(
+            s.encode("utf-8") for s in ["Amy", "Billy", "Cindy", "David"]
+        )
         tensor = helper.make_tensor(
             name="test",
             data_type=TensorProto.STRING,
@@ -674,27 +676,44 @@ class TestPrintableGraph(unittest.TestCase):
         )
 
 
-@pytest.mark.parametrize("tensor_dtype",
-    [t for t in helper.get_all_tensor_types() if t not in {TensorProto.BFLOAT16, TensorProto.STRING, TensorProto.COMPLEX64, TensorProto.COMPLEX128}],
-    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype)
+@pytest.mark.parametrize(
+    "tensor_dtype",
+    [
+        t
+        for t in helper.get_all_tensor_types()
+        if t
+        not in {
+            TensorProto.BFLOAT16,
+            TensorProto.STRING,
+            TensorProto.COMPLEX64,
+            TensorProto.COMPLEX128,
+        }
+    ],
+    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
-    np_array = np.random.randn(2, 3).astype(helper.tensor_dtype_to_np_type(tensor_dtype))
+    np_array = np.random.randn(2, 3).astype(
+        helper.tensor_dtype_to_np_type(tensor_dtype)
+    )
     tensor = helper.make_tensor(
-        name="test",
-        data_type=tensor_dtype,
-        dims=np_array.shape,
-        vals=np_array
+        name="test", data_type=tensor_dtype, dims=np_array.shape, vals=np_array
     )
     np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
 
-@pytest.mark.parametrize("tensor_dtype",
-    [t for t in helper.get_all_tensor_types() if t not in {TensorProto.BFLOAT16, TensorProto.STRING}],
-    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype)
+@pytest.mark.parametrize(
+    "tensor_dtype",
+    [
+        t
+        for t in helper.get_all_tensor_types()
+        if t not in {TensorProto.BFLOAT16, TensorProto.STRING}
+    ],
+    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_raw(tensor_dtype: int) -> None:
-    np_array = np.random.randn(2, 3).astype(helper.tensor_dtype_to_np_type(tensor_dtype))
+    np_array = np.random.randn(2, 3).astype(
+        helper.tensor_dtype_to_np_type(tensor_dtype)
+    )
     tensor = helper.make_tensor(
         name="test",
         data_type=tensor_dtype,
