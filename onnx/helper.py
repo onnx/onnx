@@ -3,11 +3,11 @@ import collections.abc  # type: ignore
 import numbers
 import struct
 from cmath import isnan
-from collections import KeysView
 from typing import (
     Any,
     Callable,
     Dict,
+    KeysView,
     List,
     Optional,
     Sequence,
