@@ -2198,40 +2198,37 @@ void col2imShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  // TODO: Assume image_shape has correct spatial dimensions for next validations
-  //       An alternative is get the the number of spatial dimensions as an input
-  if (ctx.getInputType(1)->tensor_type().shape().dim_size() != 1) {
-    fail_shape_inference("image_shape tensor must have rank 1.");
-  }
-  size_t n_input_dims = ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value();
+  // We assume image_shape has correct spatial dimensions for next validations
+  // An alternative is get the the number of spatial dimensions as an input argument
+  Dim n_input_dims;
+  unifyInputDim(ctx, 1, 0, n_input_dims);
+
+  unifyInputDim(ctx, 2, 0, n_input_dims);
+  checkInputRank(ctx, 1, 1);
+  checkInputRank(ctx, 2, 1);
   std::vector<int64_t> image_shape = {};
   const TensorProto* image_shape_data = ctx.getInputData(1);
   if (image_shape_data) {
     image_shape = ParseData<int64_t>(image_shape_data);
-    if (image_shape.size() != n_input_dims) {
-      fail_shape_inference("image_shape tensor must have ", n_input_dims, " spatial dimensions.");
-    }
+    unifyDim(n_input_dims, image_shape.size());
   }
 
   std::vector<int64_t> pads = {};
   if (getRepeatedAttribute(ctx, "pads", pads)) {
-    if ((pads.size() != 0) && (pads.size() != n_input_dims * 2)) {
-      fail_shape_inference("Attribute pads has incorrect size");
+    if (pads.size() % 2) {
+      fail_shape_inference("Attribute pads must have an even size");
     }
+    unifyDim(n_input_dims, pads.size() / 2);
   }
 
   std::vector<int64_t> dilations = {};
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-    if ((dilations.size() != 0) && (dilations.size() != n_input_dims)) {
-      fail_shape_inference("Attribute dilations has incorrect size");
-    }
+    unifyDim(n_input_dims, dilations.size());
   }
 
   std::vector<int64_t> strides = {};
   if (getRepeatedAttribute(ctx, "strides", strides)) {
-    if ((strides.size() != 0) && (strides.size() != n_input_dims)) {
-      fail_shape_inference("Attribute strides has incorrect size");
-    }
+    unifyDim(n_input_dims, strides.size());
   }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
@@ -2243,17 +2240,9 @@ void col2imShapeInference(InferenceContext& ctx) {
   const TensorProto* block_shape_data = ctx.getInputData(2);
   if (block_shape_data) {
     block_shape = ParseData<int64_t>(block_shape_data);
-    if (block_shape.size() != n_input_dims) {
-      fail_shape_inference("block_shape tensor must have ", n_input_dims, " spatial dimensions.");
-    }
+    unifyDim(n_input_dims, block_shape.size());
   }
-  if (ctx.getInputType(2)->tensor_type().shape().dim_size() != 1) {
-    fail_shape_inference("block_shape tensor must have rank 1.");
-  } else if (
-      (ctx.getInputType(2)->tensor_type().shape().dim(0).has_dim_value()) &&
-      (ctx.getInputType(2)->tensor_type().shape().dim(0).dim_value() != static_cast<int>(n_input_dims))) {
-    fail_shape_inference("block_shape tensor must have ", n_input_dims, " spatial dimensions.");
-  }
+  unifyInputDim(ctx, 2, 0, n_input_dims);
 
   int block_shape_size = 0;
   if (static_cast<int>(block_shape.size()) > 0) {
@@ -2261,6 +2250,10 @@ void col2imShapeInference(InferenceContext& ctx) {
     for (const auto& dim : block_shape) {
       block_shape_size *= dim;
     }
+  }
+  // If we haven't inferred the number of image dimensions, we can't set inferred shape.
+  if (!n_input_dims.has_dim_value()) {
+    return;
   }
 
   // Final shape will be (N, C, dim_1, ..., dim_N)
@@ -2279,7 +2272,7 @@ void col2imShapeInference(InferenceContext& ctx) {
   *final_image_shape->add_dim() = C;
 
   // Image dimensions are dynamic
-  for (size_t i = 0; i < n_input_dims; ++i) {
+  for (auto i = 0; i < n_input_dims.dim_value(); ++i) {
     Dim image_dim_i;
     if (image_shape.size() > 0) {
       image_dim_i.set_dim_value(image_shape[i]); // Otherwise, spatial dimensions are unknown
