@@ -40,7 +40,6 @@ from onnx import (
     defs,
     mapping,
 )
-from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
 VersionTableType = List[VersionRowType]
@@ -1117,16 +1116,16 @@ def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> np.dtype:
 # This map is used to get storage field for certain tensor type
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
     """Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensors"""
-    return mapping.STORAGE_TENSOR_TYPE_TO_FIELD[mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].storage_type]
+    return cast(str, mapping.STORAGE_TENSOR_TYPE_TO_FIELD[mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].storage_type])
 
 
 def np_type_to_tensor_dtype(np_type: np.dtype) -> int:
     """Convert a TensorProto's data_type to corresponding tensor type for storage. It can be used while converting numpy arrays to tensors"""
-    return mapping.NP_TYPE_TO_TENSOR_TYPE[np_type]
+    return cast(int, mapping.NP_TYPE_TO_TENSOR_TYPE[np_type])
 
 
 def storage_type_to_field(elem_type: int) -> str:
-    return mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
+    return cast(str, mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type])
 
 
 def get_attr_from_sequence_elem_type(tensor: SequenceProto, elem_type: int) -> Any:
@@ -1134,7 +1133,7 @@ def get_attr_from_sequence_elem_type(tensor: SequenceProto, elem_type: int) -> A
 
 
 def optional_type_to_field(elem_type: int) -> str:
-    return mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
+    return cast(str, mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type])
 
 
 def get_attr_from_optional_elem_type(tensor: OptionalProto, elem_type: int) -> Any:

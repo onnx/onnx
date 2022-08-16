@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import warnings
-from collections import namedtuple
-from typing import Any
+from typing import Any, Dict, NamedTuple, Union
 
 import numpy as np  # type: ignore
 
 from onnx import OptionalProto, SequenceProto, TensorProto
 
-TensorDtypeMap = namedtuple("TensorDtypeMap", ["np_type", "storage_type", "name"])
+TensorDtypeMap =  NamedTuple("TensorDtypeMap", [("np_type", np.dtype), ("storage_type", int), ("name", str)])
 
 # tensor_dtype: (numpy type, storage type, string name)
 TENSOR_TYPE_MAP = {
@@ -34,17 +33,17 @@ TENSOR_TYPE_MAP = {
 
 
 class DeprecatedWarningDict(dict):  # type: ignore
-    def __init__(self, dictionary: dict, original_function: str, future_function: str) -> None:
+    def __init__(self, dictionary: Dict[int, Union[int, str]], original_function: str, future_function: str) -> None:
         super().__init__(dictionary)
         self._origin_function = original_function
         self._future_function = future_function
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, DeprecatedWarningDict):
             return False
         return self._origin_function == other._origin_function and self._future_function == other._future_function
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: Union[int, str]) -> Any:
         warnings.warn(str(f"`mapping.{self._origin_function}` is deprecated in ONNX 1.13 and will "
             + "be removed in next release. To silence this warning, please use `helper.{_self.future_function}` instead."), DeprecationWarning, stacklevel=2)
         return super().__getitem__(key)
