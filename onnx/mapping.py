@@ -1,45 +1,52 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import warnings
-from typing import Any
-import numpy as np  # type: ignore
-from onnx import TensorProto, SequenceProto, OptionalProto
 from collections import namedtuple
+from typing import Any
+
+import numpy as np  # type: ignore
+
+from onnx import OptionalProto, SequenceProto, TensorProto
 
 TensorDtypeMap = namedtuple("TensorDtypeMap", ["np_type", "storage_type", "name"])
 
 # tensor_dtype: (numpy type, storage type, string name)
 TENSOR_TYPE_MAP = {
-    int(TensorProto.FLOAT): TensorDtypeMap(np.dtype('float32'), int(TensorProto.FLOAT), 'TensorProto.FLOAT'),
-    int(TensorProto.UINT8): TensorDtypeMap(np.dtype('uint8'), int(TensorProto.INT32), 'TensorProto.UINT8'),
-    int(TensorProto.INT8): TensorDtypeMap(np.dtype('int8'), int(TensorProto.INT32), 'TensorProto.INT8'),
-    int(TensorProto.UINT16): TensorDtypeMap(np.dtype('uint16'), int(TensorProto.INT32), 'TensorProto.UINT16'),
-    int(TensorProto.INT16): TensorDtypeMap(np.dtype('int16'), int(TensorProto.INT32), 'TensorProto.INT16'),
-    int(TensorProto.INT32): TensorDtypeMap(np.dtype('int32'), int(TensorProto.INT32), 'TensorProto.INT32'),
-    int(TensorProto.INT64): TensorDtypeMap(np.dtype('int64'), int(TensorProto.INT64), 'TensorProto.INT64'),
-    int(TensorProto.BOOL): TensorDtypeMap(np.dtype('bool'), int(TensorProto.INT32), 'TensorProto.BOOL'),
-    int(TensorProto.FLOAT16): TensorDtypeMap(np.dtype('float16'), int(TensorProto.UINT16), 'TensorProto.FLOAT16'),
+    int(TensorProto.FLOAT): TensorDtypeMap(np.dtype("float32"), int(TensorProto.FLOAT), "TensorProto.FLOAT"),
+    int(TensorProto.UINT8): TensorDtypeMap(np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.UINT8"),
+    int(TensorProto.INT8): TensorDtypeMap(np.dtype("int8"), int(TensorProto.INT32), "TensorProto.INT8"),
+    int(TensorProto.UINT16): TensorDtypeMap(np.dtype("uint16"), int(TensorProto.INT32), "TensorProto.UINT16"),
+    int(TensorProto.INT16): TensorDtypeMap(np.dtype("int16"), int(TensorProto.INT32), "TensorProto.INT16"),
+    int(TensorProto.INT32): TensorDtypeMap(np.dtype("int32"), int(TensorProto.INT32), "TensorProto.INT32"),
+    int(TensorProto.INT64): TensorDtypeMap(np.dtype("int64"), int(TensorProto.INT64), "TensorProto.INT64"),
+    int(TensorProto.BOOL): TensorDtypeMap(np.dtype("bool"), int(TensorProto.INT32), "TensorProto.BOOL"),
+    int(TensorProto.FLOAT16): TensorDtypeMap(np.dtype("float16"), int(TensorProto.UINT16), "TensorProto.FLOAT16"),
     # Native numpy does not support bfloat16 so now use float32 for bf16 values
     # TODO ONNX should dirtectly use bfloat16 for bf16 values after numpy has supported bfloat16 type
-    int(TensorProto.BFLOAT16): TensorDtypeMap(np.dtype('float32'), int(TensorProto.UINT16), 'TensorProto.BFLOAT16'),
-    int(TensorProto.DOUBLE): TensorDtypeMap(np.dtype('float64'), int(TensorProto.DOUBLE), 'TensorProto.DOUBLE'),
-    int(TensorProto.COMPLEX64): TensorDtypeMap(np.dtype('complex64'), int(TensorProto.FLOAT), 'TensorProto.COMPLEX64'),
-    int(TensorProto.COMPLEX128): TensorDtypeMap(np.dtype('complex128'), int(TensorProto.DOUBLE), 'TensorProto.COMPLEX128'),
-    int(TensorProto.UINT32): TensorDtypeMap(np.dtype('uint32'), int(TensorProto.UINT32), 'TensorProto.UINT32'),
-    int(TensorProto.UINT64): TensorDtypeMap(np.dtype('uint64'), int(TensorProto.UINT64), 'TensorProto.UINT64'),
-    int(TensorProto.STRING): TensorDtypeMap(np.dtype('object'), int(TensorProto.STRING), 'TensorProto.STRING'),
+    int(TensorProto.BFLOAT16): TensorDtypeMap(np.dtype("float32"), int(TensorProto.UINT16), "TensorProto.BFLOAT16"),
+    int(TensorProto.DOUBLE): TensorDtypeMap(np.dtype("float64"), int(TensorProto.DOUBLE), "TensorProto.DOUBLE"),
+    int(TensorProto.COMPLEX64): TensorDtypeMap(np.dtype("complex64"), int(TensorProto.FLOAT), "TensorProto.COMPLEX64"),
+    int(TensorProto.COMPLEX128): TensorDtypeMap(np.dtype("complex128"), int(TensorProto.DOUBLE), "TensorProto.COMPLEX128"),
+    int(TensorProto.UINT32): TensorDtypeMap(np.dtype("uint32"), int(TensorProto.UINT32), "TensorProto.UINT32"),
+    int(TensorProto.UINT64): TensorDtypeMap(np.dtype("uint64"), int(TensorProto.UINT64), "TensorProto.UINT64"),
+    int(TensorProto.STRING): TensorDtypeMap(np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"),
 }
 
 
 class DeprecatedWarningDict(dict):  # type: ignore
     def __init__(self, dictionary: dict, original_function: str, future_function: str) -> None:
         super().__init__(dictionary)
-        self.origin_function = original_function
-        self.future_function = future_function
+        self._origin_function = original_function
+        self._future_function = future_function
+
+    def __eq__(self, other):
+        if not isinstance(other, DeprecatedWarningDict):
+            return False
+        return self._origin_function == other._origin_function and self._future_function == other._future_function
 
     def __getitem__(self, key: str) -> Any:
-        warnings.warn(str(f"`mapping.{self.origin_function}` is deprecated in ONNX 1.13 and will "
-            + "be removed in next release. To silence this warning, please use `helper.{self.future_function}` instead."), DeprecationWarning, stacklevel=2)
+        warnings.warn(str(f"`mapping.{self._origin_function}` is deprecated in ONNX 1.13 and will "
+            + "be removed in next release. To silence this warning, please use `helper.{_self.future_function}` instead."), DeprecationWarning, stacklevel=2)
         return super().__getitem__(key)
 
 
@@ -58,32 +65,32 @@ NP_TYPE_TO_TENSOR_TYPE = DeprecatedWarningDict({v: k for k, v in TENSOR_TYPE_TO_
     "NP_TYPE_TO_TENSOR_TYPE", "np_type_to_tensor_dtype")
 
 STORAGE_TENSOR_TYPE_TO_FIELD = DeprecatedWarningDict({
-    int(TensorProto.FLOAT): 'float_data',
-    int(TensorProto.INT32): 'int32_data',
-    int(TensorProto.INT64): 'int64_data',
-    int(TensorProto.UINT16): 'int32_data',
-    int(TensorProto.DOUBLE): 'double_data',
-    int(TensorProto.COMPLEX64): 'float_data',
-    int(TensorProto.COMPLEX128): 'double_data',
-    int(TensorProto.UINT32): 'uint64_data',
-    int(TensorProto.UINT64): 'uint64_data',
-    int(TensorProto.STRING): 'string_data',
-    int(TensorProto.BOOL): 'int32_data',
+    int(TensorProto.FLOAT): "float_data",
+    int(TensorProto.INT32): "int32_data",
+    int(TensorProto.INT64): "int64_data",
+    int(TensorProto.UINT16): "int32_data",
+    int(TensorProto.DOUBLE): "double_data",
+    int(TensorProto.COMPLEX64): "float_data",
+    int(TensorProto.COMPLEX128): "double_data",
+    int(TensorProto.UINT32): "uint64_data",
+    int(TensorProto.UINT64): "uint64_data",
+    int(TensorProto.STRING): "string_data",
+    int(TensorProto.BOOL): "int32_data",
 }, "STORAGE_TENSOR_TYPE_TO_FIELD", "tensor_dtype_to_field")
 
 
 STORAGE_ELEMENT_TYPE_TO_FIELD = DeprecatedWarningDict({
-    int(SequenceProto.TENSOR): 'tensor_values',
-    int(SequenceProto.SPARSE_TENSOR): 'sparse_tensor_values',
-    int(SequenceProto.SEQUENCE): 'sequence_values',
-    int(SequenceProto.MAP): 'map_values',
-    int(OptionalProto.OPTIONAL): 'optional_value'
+    int(SequenceProto.TENSOR): "tensor_values",
+    int(SequenceProto.SPARSE_TENSOR): "sparse_tensor_values",
+    int(SequenceProto.SEQUENCE): "sequence_values",
+    int(SequenceProto.MAP): "map_values",
+    int(OptionalProto.OPTIONAL): "optional_value"
 }, "STORAGE_ELEMENT_TYPE_TO_FIELD", "storage_type_to_field")
 
 OPTIONAL_ELEMENT_TYPE_TO_FIELD = DeprecatedWarningDict({
-    int(OptionalProto.TENSOR): 'tensor_value',
-    int(OptionalProto.SPARSE_TENSOR): 'sparse_tensor_value',
-    int(OptionalProto.SEQUENCE): 'sequence_value',
-    int(OptionalProto.MAP): 'map_value',
-    int(OptionalProto.OPTIONAL): 'optional_value'
+    int(OptionalProto.TENSOR): "tensor_value",
+    int(OptionalProto.SPARSE_TENSOR): "sparse_tensor_value",
+    int(OptionalProto.SEQUENCE): "sequence_value",
+    int(OptionalProto.MAP): "map_value",
+    int(OptionalProto.OPTIONAL): "optional_value"
 }, "OPTIONAL_ELEMENT_TYPE_TO_FIELD", "optional_type_to_field")

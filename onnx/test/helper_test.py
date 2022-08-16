@@ -6,6 +6,7 @@ import unittest
 from typing import Any, List, Tuple
 
 import numpy as np  # type: ignore
+import pytest  # type: ignore
 
 from onnx import (
     AttributeProto,
@@ -403,10 +404,9 @@ class TestHelperTensorFunctions(unittest.TestCase):
             data_type=TensorProto.STRING,
             dims=(2, 2),
             vals=string_list,
-            raw=False
+            raw=False,
         )
         self.assertEqual(string_list, list(tensor.string_data))
-
 
     def test_make_bfloat16_tensor(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually

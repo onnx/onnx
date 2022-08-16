@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-import collections.abc
+import collections.abc  # type: ignore
 import numbers
 import struct
 from cmath import isnan
+from collections import KeysView
 from typing import (
     Any,
     Callable,
@@ -871,7 +872,7 @@ def printable_attribute(
             content.append("<Tensor>")
         else:
             # special case to print scalars
-            content.append('<Scalar Tensor>')
+            content.append("<Scalar Tensor>")
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)
