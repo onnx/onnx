@@ -4,7 +4,7 @@ complete.
 
 """
 
-from typing import Union
+from typing import Dict, Optional, Union
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C
@@ -80,6 +80,44 @@ def infer_shapes_path(
             "infer_shapes_path only accepts model path (String), "
             "incorrect type: {}".format(type(model_path))
         )
+
+
+def infer_node_outputs(
+    schema: onnx.defs.OpSchema,
+    node: onnx.NodeProto,
+    input_types: Dict[str, onnx.TypeProto],
+    input_data: Optional[Dict[str, onnx.TensorProto]] = None,
+    input_sparse_data: Optional[Dict[str, onnx.SparseTensorProto]] = None,
+) -> Dict[str, onnx.TypeProto]:
+    if not schema.has_type_and_shape_inference_function:  # type: ignore
+        return {}
+    if input_data is None:
+        input_data = {}
+    if input_sparse_data is None:
+        input_sparse_data = {}
+
+    # To avoid copying on C++ side, pass only what is needed for this inference call
+    passed_input_types = {
+        key: input_types[key].SerializeToString() for key in node.input
+    }
+    passed_input_data = {
+        key: input_data[key].SerializeToString()
+        for key in node.input
+        if key in input_data
+    }
+    passed_sparse_input_data = {
+        key: input_sparse_data[key].SerializeToString()
+        for key in node.input
+        if key in input_sparse_data
+    }
+
+    outputs = schema._infer_node_outputs(
+        node.SerializeToString(),
+        passed_input_types,
+        passed_input_data,
+        passed_sparse_input_data,
+    )
+    return {key: onnx.TypeProto.FromString(out) for key, out in outputs.items()}
 
 
 InferenceError = C.InferenceError

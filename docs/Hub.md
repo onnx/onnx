@@ -7,12 +7,7 @@ ONNX models from the [ONNX Model Zoo](https://github.com/onnx/models). Furthermo
 developers the opportunity to share their pre-trained models with the broader community.
 
 ## Install
- The ONNX Model hub will be included in the `onnx` package from version 1.11 onwards. 
- To use the hub before the 1.11 release please install from the weekly build:
- 
-```shell script
-pip install -i https://test.pypi.org/simple/ onnx-weekly 
-```
+The ONNX Model hub is available after ONNX 1.11.0.
 
 ## Basic usage
 The ONNX Model Hub is capable of downloading, listing, and querying trained models from any git repository,
@@ -233,3 +228,7 @@ To host your own model hub, add an `ONNX_HUB_MANIFEST.json` to the top level of 
  the [Architecture Section](Hub.md#Architecture) of this document.
  Once committed, check that you can download models 
  using the "Downloading from custom repositories" section of this doc.
+
+## Raise issue if any
+- For ONNX model problem or SHA mismatch issue, please raise issue in [Model Zoo]/(https://github.com/onnx/models/issues).
+- Other questions/issues regarding the usage of ONNX Model Hub, please raise issue in [this repo](https://github.com/onnx/onnx/issues).
