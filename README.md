@@ -126,65 +126,62 @@ pip install -e .
 
 ### Linux
 
-First, you need to install protobuf.
+First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.0.0. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
-Ubuntu users: the quickest way to install protobuf is to run
-
+Ubuntu 18.04 (and newer) users may choose to install protobuf via
 ```bash
 apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler
 ```
+In this case, it is required to add `-DONNX_USE_PROTOBUF_SHARED_LIBS=ON` to CMAKE_ARGS in the ONNX build step.
 
-Then you can build ONNX as:
-```
-export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-git clone --recursive https://github.com/onnx/onnx.git
-cd onnx
-# prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
-```
+A more general way is to build and install it from source. See the instructions below for more details.
 
-Otherwise, you may need to install it from source. You can use the following commands to do it:
+<details>
+  <summary> Installing Protobuf from source </summary>
 
-Debian/Ubuntu:
-```
-git clone https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git checkout v3.16.0
-git submodule update --init --recursive
-mkdir build_source && cd build_source
-cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-make install
-```
+  Debian/Ubuntu:
+  ```bash
+    git clone https://github.com/protocolbuffers/protobuf.git
+    cd protobuf
+    git checkout v3.16.0
+    git submodule update --init --recursive
+    mkdir build_source && cd build_source
+    cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
+    make install
+  ```
 
-CentOS/RHEL/Fedora:
-```
-git clone https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git checkout v3.16.0
-git submodule update --init --recursive
-mkdir build_source && cd build_source
-cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-make install
-```
+  CentOS/RHEL/Fedora:
+  ```bash
+    git clone https://github.com/protocolbuffers/protobuf.git
+    cd protobuf
+    git checkout v3.16.0
+    git submodule update --init --recursive
+    mkdir build_source && cd build_source
+    cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
+    make install
+  ```
 
-Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
+  Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
 
-Once build is successful, update PATH to include protobuf paths.
+  Once build is successful, update PATH to include protobuf paths.
+
+</details>
+
 
 Then you can build ONNX as:
 ```
 git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
-# prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+# Optional: prefer lite proto
+export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
 
-* **Mac**
+### Mac
+
 ```
 export NUM_CORES=`sysctl -n hw.ncpu`
 brew update
@@ -204,7 +201,7 @@ Then you can build ONNX as:
 ```
 git clone --recursive https://github.com/onnx/onnx.git
 cd onnx
-# prefer lite proto
+# Optional: prefer lite proto
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
@@ -245,8 +242,6 @@ For full list refer to CMakeLists.txt
 
 ## Common Errors
 * Note: the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
-
-* Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
 
 * If you run into any issues while building Protobuf as a static library, please ensure that shared Protobuf libraries, like libprotobuf, are not installed on your device or in the conda environment. If these shared libraries exist, either remove them to build Protobuf from source as a static library, or skip the Protobuf build from source to use the shared version directly.
 

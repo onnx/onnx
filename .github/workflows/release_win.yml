@@ -16,7 +16,8 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        # TODO: Freeze as 3.10.5 for now; Follow-up this issue by https://github.com/actions/setup-python/issues/481
+        python-version: ['3.7', '3.8', '3.9', '3.10.5']
         architecture: ['x64', 'x86']
     steps:        
     - name: Checkout ONNX
@@ -32,15 +33,17 @@ jobs:
          git submodule sync --recursive
          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
-
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}    
-          
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+      with:
+        msbuild-architecture: ${{ matrix.architecture }}
+
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
@@ -73,15 +76,6 @@ jobs:
       run: |
         cd onnx
         pytest
-
-    - name: Test the uploaded backend test data
-      run: |
-        cd onnx
-        # onnx.checker all existing backend data
-        python workflow_scripts\test_generated_backend.py
-        # onnx.checker all generated backend data
-        python onnx\backend\test\cmd_tools.py generate-data
-        python workflow_scripts\test_generated_backend.py
 
     - uses: actions/upload-artifact@v1
       with:
@@ -126,7 +120,6 @@ jobs:
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.10' && matrix.architecture != 'x86' # TODO update once onnxruntime has supported Python 3.10
       run: |
         python -m pip install -q onnxruntime
         python onnx\onnx\test\test_with_ort.py
