@@ -151,7 +151,7 @@ STORAGE_ELEMENT_TYPE_TO_FIELD = DeprecatedWarningDict(
         int(OptionalProto.OPTIONAL): "optional_value",
     },
     "STORAGE_ELEMENT_TYPE_TO_FIELD",
-    "storage_type_to_field",
+    "sequence_type_to_field",
 )
 
 OPTIONAL_ELEMENT_TYPE_TO_FIELD = DeprecatedWarningDict(

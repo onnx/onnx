@@ -1097,25 +1097,55 @@ def make_training_info(
     return training_info
 
 
+# Following functions are used for mapping
 def tensor_dtype_to_np_type(tensor_dtype: int) -> np.dtype:
+    """
+    Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: numpy's data_type
+    """
     return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].np_type
 
 
 def tensor_dtype_to_storage_tensor_type(tensor_dtype: int) -> int:
+    """
+    Convert a TensorProto's data_type to corresponding data_type for storage. It can be used for tensor_dtype_to_storage_numpy_type.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: data_type for storage
+    """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_type
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
+    """
+    Get the name of given TensorProto's data_type.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: the name of data_type
+    """
     return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].name
 
 
 def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> np.dtype:
+    """
+    Convert a TensorProto's data_type to the data_type for storage.
+    Then further convert such a data_type for storage to corresponding numpy dtype. It can be used while to_array.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: numpy's data_type
+    """
     return tensor_dtype_to_np_type(tensor_dtype_to_storage_tensor_type(tensor_dtype))
 
 
-# This map is used to get storage field for certain tensor type
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
-    """Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensors"""
+    """
+    Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: field name
+    """
     return cast(
         str,
         mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
@@ -1125,25 +1155,61 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
 
 
 def np_type_to_tensor_dtype(np_type: np.dtype) -> int:
-    """Convert a TensorProto's data_type to corresponding tensor type for storage. It can be used while converting numpy arrays to tensors"""
+    """
+    Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
+    
+    :param np_type: numpy's data_type
+    :return: TensorsProto's data_type
+    """
     return cast(int, mapping.NP_TYPE_TO_TENSOR_TYPE[np_type])
 
 
-def storage_type_to_field(elem_type: int) -> str:
+def sequence_type_to_field(elem_type: int) -> str:
+    """
+    Convert a SequenceProto's elem_type to corresponding field name.
+
+    :param tensor_dtype: SequenceProto's elem_type
+    :return: field name
+    """
     return cast(str, mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type])
 
 
 def get_attr_from_sequence_elem_type(tensor: SequenceProto, elem_type: int) -> Any:
-    return getattr(tensor, storage_type_to_field(elem_type))
+    """
+    Get the attribute from SequenceProto based on the given elem_type. It can be used while making SequenceProto.
+
+    :param tensor: target SequenceProto
+    :param elem_type: SequenceProto's elem_type
+    :return: the target attribute from SequenceProto
+    """
+    return getattr(tensor, sequence_type_to_field(elem_type))
 
 
 def optional_type_to_field(elem_type: int) -> str:
+    """
+    Convert a OptionalProto's data_type to corresponding field name.
+    
+    param elem_type: OptionalProto's data_type
+    return field name
+    """
     return cast(str, mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type])
 
 
 def get_attr_from_optional_elem_type(tensor: OptionalProto, elem_type: int) -> Any:
+    """
+    Get the attribute from OptionalProto based on the given element type. It can be used while making OptionalProto.
+
+    :param tensor: target OptionalProto
+    :param elem_type: OptionalProto's elem_type
+    :return: the target attribute from OptionalProto
+    """
     return getattr(tensor, optional_type_to_field(elem_type))
 
 
 def get_all_tensor_types() -> KeysView[int]:
+    """
+    Get all tensor types from TensorProto.
+
+    :return: all tensor types from TensorProto
+    """
     return mapping.TENSOR_TYPE_MAP.keys()
