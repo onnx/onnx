@@ -1157,7 +1157,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
 def np_type_to_tensor_dtype(np_type: np.dtype) -> int:
     """
     Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
-    
+
     :param np_type: numpy's data_type
     :return: TensorsProto's data_type
     """
@@ -1188,7 +1188,7 @@ def get_attr_from_sequence_elem_type(tensor: SequenceProto, elem_type: int) -> A
 def optional_type_to_field(elem_type: int) -> str:
     """
     Convert a OptionalProto's data_type to corresponding field name.
-    
+
     param elem_type: OptionalProto's data_type
     return field name
     """
