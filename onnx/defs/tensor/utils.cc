@@ -95,7 +95,7 @@ bool isScalesInputAnEmptyTensor(InferenceContext& ctx) {
   return false;
 }
 
-void resizeShapeInference(InferenceContext& ctx) {
+void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
     return;
@@ -109,14 +109,27 @@ void resizeShapeInference(InferenceContext& ctx) {
   const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
   const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
 
-  // specific to opset11 where scales input is not optional but can be a empty tensor
-  bool scales_input_is_empty = isScalesInputAnEmptyTensor(ctx);
-
-  // If scales or sizes are an empty constant, assume it's not provided
-  if (scales_input_is_empty || (scales && ParseData<float>(scales).empty())) {
-    hasScalesInput = false;
-    scales = nullptr;
+  if (opset_version >= 13) {
+    // If scales or sizes are an empty constant, assume it's not provided
+    if (scales && ParseData<float>(scales).empty()) {
+      hasScalesInput = false;
+      scales = nullptr;
+    }
   }
+  else if (opset_version == 11 || opset_version == 12) {
+    // specific to opset11 where scales input is not optional but can be a empty tensor
+    bool scales_input_is_empty = isScalesInputAnEmptyTensor(ctx);
+
+    // If scales or sizes are an empty constant, assume it's not provided
+    if (scales_input_is_empty || (scales && ParseData<float>(scales).empty())) {
+      hasScalesInput = false;
+      scales = nullptr;
+    }
+  } else {
+    // for version before opset11, it is handled in resizeShapeInference_opset7_to_10.
+    fail_shape_inference("incorrect opset_version");
+  }
+
   if (sizes && ParseData<int64_t>(sizes).empty()) {
     hasSizesInput = false;
     sizes = nullptr;
@@ -248,6 +261,14 @@ void resizeShapeInference(InferenceContext& ctx) {
       fail_shape_inference("Input 'scales' must have float element type.");
     }
   } // nullptr != scales
+}
+
+void resizeShapeInference_opset13_to_18(InferenceContext& ctx) {
+  resizeShapeInferenceVersioned(ctx, 18);
+}
+
+void resizeShapeInference_opset11_to_12(InferenceContext& ctx) {
+  resizeShapeInferenceVersioned(ctx, 12);
 }
 
 void resizeShapeInferenceHelper_opset7_to_10(
