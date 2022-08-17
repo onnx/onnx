@@ -96,10 +96,12 @@ void resizeShapeInference(InferenceContext& ctx) {
   const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
 
   // If scales or sizes are an empty constant, assume it's not provided
-  if (scales && ParseData<float>(scales).empty())
+  if (scales && ParseData<float>(scales).empty()) {
     scales = nullptr;
-  if (sizes && ParseData<int64_t>(sizes).empty())
+  }
+  if (sizes && ParseData<int64_t>(sizes).empty()) {
     sizes = nullptr;
+  }
 
   if ((bool)scales == (bool)sizes) {
     fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
