@@ -798,15 +798,18 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "sizes",
                     TensorProto.INT64,
                     (4,),
-                    vals=np.array([2, 6, 8, 10], dtype="<i8").tobytes(),    # double in all dimensions
+                    vals=np.array(
+                        [2, 6, 8, 10], dtype="<i8"
+                    ).tobytes(),  # double in all dimensions
                     raw=True,
                 ),
             ],
         )
 
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 6, 8, 10))],
-            opset_imports=[helper.make_opsetid("", 11)]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 6, 8, 10))],
+            opset_imports=[helper.make_opsetid("", 11)],
         )
 
     def test_shape(self) -> None:
