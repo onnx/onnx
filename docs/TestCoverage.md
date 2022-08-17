@@ -10194,21 +10194,45 @@ There are 4 test cases, listed as following:
 
 ```python
 optional = None
+
 tensor_type_proto = onnx.helper.make_tensor_type_proto(
     elem_type=onnx.TensorProto.INT32, shape=[]
 )
-input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
-node = onnx.helper.make_node(
-    "OptionalHasElement", inputs=["optional_input"], outputs=["output"]
-)
-output = optional_has_element_reference_implementation(optional)
-expect(
-    node,
-    inputs=[optional],
-    outputs=[output],
-    input_type_protos=[input_type_proto],
-    name="test_optional_has_element_empty",
-)
+optional_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+
+# OptionalHasElement takes a tensor or optional as input
+for input_type_proto in [tensor_type_proto, optional_type_proto]:
+    input_name_options = {
+        "empty": "optional_input",
+        "empty_no_input_name": "",
+        "empty_no_input": None,
+    }
+    for test_name_surfix, input_name in input_name_options.items():
+        if input_type_proto == tensor_type_proto and input_name:
+            # the input tensor cannot be empty if input name is provided.
+            continue
+        node = onnx.helper.make_node(
+            "OptionalHasElement",
+            inputs=[] if input_name is None else [input_name],
+            outputs=["output"],
+        )
+        output = optional_has_element_reference_implementation(optional)
+        test_name = (
+            "test_optional_has_element_"
+            + test_name_surfix
+            + (
+                "_optional_input"
+                if input_type_proto == optional_type_proto
+                else "_tensor_input"
+            )
+        )
+        expect(
+            node,
+            inputs=[optional] if input_name else [],
+            outputs=[output],
+            input_type_protos=[input_type_proto] if input_name else [],
+            name=test_name,
+        )
 ```
 
 </details>
@@ -10224,7 +10248,7 @@ tensor_type_proto = onnx.helper.make_tensor_type_proto(
     ],
 )
 seq_type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
-input_type_proto = onnx.helper.make_optional_type_proto(seq_type_proto)
+optional_type_proto = onnx.helper.make_optional_type_proto(seq_type_proto)
 
 node = onnx.helper.make_node(
     "OptionalGetElement", inputs=["optional_input"], outputs=["output"]
@@ -10234,7 +10258,14 @@ expect(
     node,
     inputs=[optional],
     outputs=[output],
-    input_type_protos=[input_type_proto],
+    input_type_protos=[optional_type_proto],
+    name="test_optional_get_element_optional_sequence",
+)
+expect(
+    node,
+    inputs=[optional],
+    outputs=[output],
+    input_type_protos=[seq_type_proto],
     name="test_optional_get_element_sequence",
 )
 ```
@@ -10251,7 +10282,7 @@ tensor_type_proto = onnx.helper.make_tensor_type_proto(
         4,
     ],
 )
-input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+optional_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
 
 node = onnx.helper.make_node(
     "OptionalGetElement", inputs=["optional_input"], outputs=["output"]
@@ -10261,8 +10292,15 @@ expect(
     node,
     inputs=[optional],
     outputs=[output],
-    input_type_protos=[input_type_proto],
-    name="test_optional_get_element",
+    input_type_protos=[optional_type_proto],
+    name="test_optional_get_element_optional_tensor",
+)
+expect(
+    node,
+    inputs=[optional],
+    outputs=[output],
+    input_type_protos=[tensor_type_proto],
+    name="test_optional_get_element_tensor",
 )
 ```
 
@@ -10278,18 +10316,26 @@ tensor_type_proto = onnx.helper.make_tensor_type_proto(
         4,
     ],
 )
-input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
-node = onnx.helper.make_node(
-    "OptionalHasElement", inputs=["optional_input"], outputs=["output"]
-)
-output = optional_has_element_reference_implementation(optional)
-expect(
-    node,
-    inputs=[optional],
-    outputs=[output],
-    input_type_protos=[input_type_proto],
-    name="test_optional_has_element",
-)
+optional_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+
+# OptionalHasElement takes a tensor or optional as input
+for input_type_protos in [tensor_type_proto, optional_type_proto]:
+    node = onnx.helper.make_node(
+        "OptionalHasElement", inputs=["optional_input"], outputs=["output"]
+    )
+    output = optional_has_element_reference_implementation(optional)
+    test_name = "test_optional_has_element_" + (
+        "optional_input"
+        if input_type_protos == optional_type_proto
+        else "tensor_input"
+    )
+    expect(
+        node,
+        inputs=[optional],
+        outputs=[output],
+        input_type_protos=[optional_type_proto],
+        name=test_name,
+    )
 ```
 
 </details>
