@@ -92,23 +92,16 @@ void resizeShapeInference(InferenceContext& ctx) {
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
 
-  bool hasScalesInput = (2 < ctx.getNumInputs()) && (ctx.getInputType(2) != nullptr);
-  bool hasSizesInput = (3 < ctx.getNumInputs()) && (ctx.getInputType(3) != nullptr);
-
   const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
   const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
 
   // If scales or sizes are an empty constant, assume it's not provided
-  if (scales && ParseData<float>(scales).empty()) {
-    hasScalesInput = false;
+  if (scales && ParseData<float>(scales).empty())
     scales = nullptr;
-  }
-  if (sizes && ParseData<int64_t>(sizes).empty()) {
-    hasSizesInput = false;
+  if (sizes && ParseData<float>(sizes).empty())
     sizes = nullptr;
-  }
 
-  if (hasScalesInput + hasSizesInput != 1) {
+  if ((bool)scales == (bool)sizes) {
     fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
   }
 
@@ -127,7 +120,7 @@ void resizeShapeInference(InferenceContext& ctx) {
     }
   }
 
-  if (hasScalesInput && keep_aspect_ratio_policy != KeepAspectRatioPolicy::STRETCH) {
+  if (scales && keep_aspect_ratio_policy != KeepAspectRatioPolicy::STRETCH) {
     fail_shape_inference(
         "Providing `scales` is incompatible with a `keep_aspect_ratio_policy` other than \"stretch\".");
   }
