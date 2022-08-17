@@ -80,7 +80,7 @@ struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
-  virtual const bool hasInput(size_t index) {
+  virtual bool hasInput(size_t index) const {
     // The default implementation below is used for backward-compatibility
     // for implementations of InferenceContext that don't provide an explicit
     // implementation. This works for normal usage, but may be imprecise in
