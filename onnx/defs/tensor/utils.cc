@@ -84,6 +84,17 @@ void resizeShapeInferenceHelper(
   }
 }
 
+bool isScalesInputAnEmptyTensor(InferenceContext& ctx) {
+  const TypeProto* scales_input_type_proto = 2 < ctx.getNumInputs() ? ctx.getInputType(2) : nullptr;
+  if (scales_input_type_proto) {
+    const TensorShapeProto& scales_input_shape = scales_input_type_proto->tensor_type().shape();
+    if (scales_input_shape.dim_size() == 1 && scales_input_shape.dim(0).has_dim_value()) {
+      return scales_input_shape.dim(0).dim_value() == 0;
+    }
+  }
+  return false;
+}
+
 void resizeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
@@ -92,18 +103,26 @@ void resizeShapeInference(InferenceContext& ctx) {
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
 
+  bool hasScalesInput = (2 < ctx.getNumInputs()) && (ctx.getInputType(2) != nullptr);
+  bool hasSizesInput = (3 < ctx.getNumInputs()) && (ctx.getInputType(3) != nullptr);
+
   const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
   const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
 
+  // specific to opset11 where scales input is not optional but can be a empty tensor
+  bool scales_input_is_empty = isScalesInputAnEmptyTensor(ctx);
+
   // If scales or sizes are an empty constant, assume it's not provided
-  if (scales && ParseData<float>(scales).empty()) {
+  if (scales_input_is_empty || (scales && ParseData<float>(scales).empty())) {
+    hasScalesInput = false;
     scales = nullptr;
   }
   if (sizes && ParseData<int64_t>(sizes).empty()) {
+    hasSizesInput = false;
     sizes = nullptr;
   }
 
-  if ((bool)scales == (bool)sizes) {
+  if (hasScalesInput + hasSizesInput != 1) {
     fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
   }
 
@@ -122,7 +141,7 @@ void resizeShapeInference(InferenceContext& ctx) {
     }
   }
 
-  if (scales && keep_aspect_ratio_policy != KeepAspectRatioPolicy::STRETCH) {
+  if (hasScalesInput && keep_aspect_ratio_policy != KeepAspectRatioPolicy::STRETCH) {
     fail_shape_inference(
         "Providing `scales` is incompatible with a `keep_aspect_ratio_policy` other than \"stretch\".");
   }
