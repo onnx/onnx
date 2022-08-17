@@ -98,7 +98,7 @@ void resizeShapeInference(InferenceContext& ctx) {
   // If scales or sizes are an empty constant, assume it's not provided
   if (scales && ParseData<float>(scales).empty())
     scales = nullptr;
-  if (sizes && ParseData<float>(sizes).empty())
+  if (sizes && ParseData<int64_t>(sizes).empty())
     sizes = nullptr;
 
   if ((bool)scales == (bool)sizes) {
