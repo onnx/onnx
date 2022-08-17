@@ -110,17 +110,16 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
 
   if (opset_version >= 13) {
-    // If scales or sizes are an empty constant, assume it's not provided
+    // If scales is an empty constant, assume it's not provided
     if (scales && ParseData<float>(scales).empty()) {
       hasScalesInput = false;
       scales = nullptr;
     }
-  }
-  else if (opset_version == 11 || opset_version == 12) {
+  } else if (opset_version == 11 || opset_version == 12) {
     // specific to opset11 where scales input is not optional but can be a empty tensor
     bool scales_input_is_empty = isScalesInputAnEmptyTensor(ctx);
 
-    // If scales or sizes are an empty constant, assume it's not provided
+    // If scales is an empty tensor or constant, assume it's not provided
     if (scales_input_is_empty || (scales && ParseData<float>(scales).empty())) {
       hasScalesInput = false;
       scales = nullptr;
@@ -130,6 +129,7 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
     fail_shape_inference("incorrect opset_version");
   }
 
+  // If sizes is an empty constant, assume it's not provided
   if (sizes && ParseData<int64_t>(sizes).empty()) {
     hasSizesInput = false;
     sizes = nullptr;
