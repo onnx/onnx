@@ -6,6 +6,7 @@
 #include <fstream>
 #include <list>
 #include "onnx/checker.h"
+#include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/string_utils.h"
 
@@ -691,15 +692,7 @@ void InferShapes(
     const ShapeInferenceOptions& options,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
   ModelProto model;
-  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if (!model_stream.good()) {
-    fail_check("Unable to open model file:", model_path, ". Please check if it is a valid file.");
-  }
-  std::string data{std::istreambuf_iterator<char>{model_stream}, std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
-    fail_check(
-        "Unable to parse model from file:", model_path, ". Please check if it is a valid protobuf file of model.");
-  }
+  LoadProtoFromPath(model_path, model);
   InferShapes(model, schema_registry, options, generated_shape_data_by_name);
   // Save the inferred model to the original model path
   // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
