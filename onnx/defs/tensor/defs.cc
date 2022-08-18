@@ -1261,35 +1261,18 @@ This ensures that the output value does not depend on the iteration order.
 tensor into `output` at the specified `indices`.
 In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
 then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
-When `reduction` is set to "add", `output` is calculated as follows:
+When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
 
     output = np.copy(data)
     update_indices = indices.shape[:-1]
     for idx in np.ndindex(update_indices):
-        output[indices[idx]] += updates[idx]
+        output[indices[idx]] = f(output[indices[idx]], updates[idx])
 
-When `reduction` is set to "mul", `output` is calculated as follows:
-
-    output = np.copy(data)
-    update_indices = indices.shape[:-1]
-    for idx in np.ndindex(update_indices):
-        output[indices[idx]] *= updates[idx]
-
-When `reduction` is set to "max", `output` is calculated as follows:
-
-    output = np.copy(data)
-    update_indices = indices.shape[:-1]
-    for idx in np.ndindex(update_indices):
-        output[indices[idx]] = max(output[indices[idx]], updates[idx])
-
-When `reduction` is set to "min", `output` is calculated as follows:
-
-    output = np.copy(data)
-    update_indices = indices.shape[:-1]
-    for idx in np.ndindex(update_indices):
-        output[indices[idx]] = min(output[indices[idx]], updates[idx])
+where the `f` is +/*/max/min as specified.
 
 This operator is the inverse of GatherND.
+
+(Opset 18 change): Adds max/min to the set of allowed reduction ops.
 
 Example 1:
 ```
@@ -1384,27 +1367,17 @@ corresponding to the [i][j] entry is performed as below:
   output[indices[i][j]][j] = updates[i][j] if axis = 0,
   output[i][indices[i][j]] = updates[i][j] if axis = 1,
 ```
-When `reduction` is set to "add", the update corresponding to the [i][j] entry is performed as below:
+When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
 ```
-  output[indices[i][j]][j] += updates[i][j] if axis = 0,
-  output[i][indices[i][j]] += updates[i][j] if axis = 1,
+  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
 ```
-When `reduction` is set to "mul", the update corresponding to the [i][j] entry is performed as below:
-```
-  output[indices[i][j]][j] *= updates[i][j] if axis = 0,
-  output[i][indices[i][j]] *= updates[i][j] if axis = 1,
-```
-When `reduction` is set to "max", the update corresponding to the [i][j] entry is performed as below:
-```
-  output[indices[i][j]][j] = max(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] = max(output[i][indices[i][j]], updates[i][j]) if axis = 1,
-```
-When `reduction` is set to "min", the update corresponding to the [i][j] entry is performed as below:
-```
-  output[indices[i][j]][j] = min(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] = min(output[i][indices[i][j]], updates[i][j]) if axis = 1,
-```
+where the `f` is +/*/max/min as specified.
+
+
 This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+
+(Opset 18 change): Adds max/min to the set of allowed reduction ops.
 
 Example 1:
 ```
