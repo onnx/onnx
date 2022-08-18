@@ -121,7 +121,7 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
     sizes = nullptr;
   }
 
-  if (opset_version >= 13) {  
+  if (opset_version >= 13) {
     if (hasScalesInput + hasSizesInput != 1) {
       fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
     }
