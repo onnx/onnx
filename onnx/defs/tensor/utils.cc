@@ -241,11 +241,11 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
 }
 
 void resizeShapeInference_opset13_to_18(InferenceContext& ctx) {
-  resizeShapeInferenceVersioned(ctx, 18);
+  resizeShapeInferenceVersioned(ctx, 13);
 }
 
 void resizeShapeInference_opset11_to_12(InferenceContext& ctx) {
-  resizeShapeInferenceVersioned(ctx, 12);
+  resizeShapeInferenceVersioned(ctx, 11);
 }
 
 void resizeShapeInferenceHelper_opset7_to_10(
