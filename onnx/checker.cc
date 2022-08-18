@@ -962,8 +962,9 @@ void check_model(const ModelProto& model, bool full_check) {
   check_model(model, ctx);
   if (full_check) {
     ShapeInferenceOptions options{true, 1, false};
-    // Do not update the model in place by shape inference, because checker should not modify the original model
-    auto copy = model;
+    // Do not update the model in place by the check from shape inference
+    // because checker should not modify the original model
+    ModelProto copy = model;
     ONNX_NAMESPACE::shape_inference::InferShapes(copy, ctx.get_schema_registry(), options);
   }
 }
