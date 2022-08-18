@@ -38,7 +38,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
         .SetDoc(QuantizeLinear_ver10_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          if (ctx.getNumInputs() == 3 && ctx.getInputType(2) != nullptr) {
+          if (ctx.hasInput(2)) {
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else {
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
