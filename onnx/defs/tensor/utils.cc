@@ -84,17 +84,6 @@ void resizeShapeInferenceHelper(
   }
 }
 
-bool isScalesInputAnEmptyTensor(InferenceContext& ctx) {
-  const TypeProto* scales_input_type_proto = 2 < ctx.getNumInputs() ? ctx.getInputType(2) : nullptr;
-  if (scales_input_type_proto) {
-    const TensorShapeProto& scales_input_shape = scales_input_type_proto->tensor_type().shape();
-    if (scales_input_shape.dim_size() == 1 && scales_input_shape.dim(0).has_dim_value()) {
-      return scales_input_shape.dim(0).dim_value() == 0;
-    }
-  }
-  return false;
-}
-
 void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
