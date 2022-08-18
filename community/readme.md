@@ -103,7 +103,7 @@ The ONNX project is organized primarily into Special Interest Groups, or SIGs. E
 Our goal is to enable a distributed decision structure and code ownership, as well as providing focused forums for getting work done, making decisions, and on-boarding new contributors. Every identifiable part of the project (e.g., repository, subdirectory, API, test, issue, PR, Slack channel) is intended to be owned by some SIG. At the time of inception of this organizational structure, the following SIGs will be present:
 
 * Architecture & Infra
-    * This SIG is responsible for defining and maintaining the core ONNX format, the build and CI/CD systems for ONNX repositories, publishing release packages for ONNX, the onnx-docker repository, and creating tools to help integrate with and test against the ONNX standard. This SIG is also the defacto owner of files in the main ONNX repository unless explicitly owned by another SIG.
+    * This SIG is responsible for defining and maintaining the core ONNX format, the build and CI/CD systems for ONNX repositories, publishing release packages for ONNX, and creating tools to help integrate with and test against the ONNX standard. This SIG is also the defacto owner of files in the main ONNX repository unless explicitly owned by another SIG.
 * Operator Standardization
     * This SIG is responsible for determining the operators that are part of the ONNX spec (ONNX and ONNX-ML domains), ensuring high quality operator definitions and documentation, establishing criteria for adding new operators, managing ops domains and compliance tiers, and enforcing versioning mechanisms.
 * Converters
