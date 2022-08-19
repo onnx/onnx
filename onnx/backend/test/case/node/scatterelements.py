@@ -63,10 +63,14 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
                 scattered[idx_set] += updates[updates_idx[iter]]
             elif reduction == "mul":
                 scattered[idx_set] *= updates[updates_idx[iter]]
-            elif reduction == 'max':
-                scattered[idx_set] = np.maximum(scattered[idx_set], updates[updates_idx[iter]])
-            elif reduction == 'min':
-                scattered[idx_set] = np.minimum(scattered[idx_set], updates[updates_idx[iter]])
+            elif reduction == "max":
+                scattered[idx_set] = np.maximum(
+                    scattered[idx_set], updates[updates_idx[iter]]
+                )
+            elif reduction == "min":
+                scattered[idx_set] = np.minimum(
+                    scattered[idx_set], updates[updates_idx[iter]]
+                )
     return scattered
 
 
@@ -172,40 +176,48 @@ class ScatterElements(Base):
     def export_scatter_elements_with_reduction_max() -> None:
         axis = 1
         node = onnx.helper.make_node(
-            'ScatterElements',
-            inputs=['data', 'indices', 'updates'],
-            outputs=['y'],
+            "ScatterElements",
+            inputs=["data", "indices", "updates"],
+            outputs=["y"],
             axis=axis,
-            reduction='max',
+            reduction="max",
         )
         data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
         indices = np.array([[1, 1]], dtype=np.int64)
         updates = np.array([[1.1, 2.1]], dtype=np.float32)
 
-        y = scatter_elements(data, indices, updates, axis, reduction='max')
+        y = scatter_elements(data, indices, updates, axis, reduction="max")
         # print(y) produces
         # [[1.0, 2.1, 3.0, 4.0, 5.0]]
 
-        expect(node, inputs=[data, indices, updates], outputs=[y],
-                name='test_scatter_elements_with_reduction_max')
+        expect(
+            node,
+            inputs=[data, indices, updates],
+            outputs=[y],
+            name="test_scatter_elements_with_reduction_max",
+        )
 
     @staticmethod
     def export_scatter_elements_with_reduction_min() -> None:
         axis = 1
         node = onnx.helper.make_node(
-            'ScatterElements',
-            inputs=['data', 'indices', 'updates'],
-            outputs=['y'],
+            "ScatterElements",
+            inputs=["data", "indices", "updates"],
+            outputs=["y"],
             axis=axis,
-            reduction='min',
+            reduction="min",
         )
         data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
         indices = np.array([[1, 1]], dtype=np.int64)
         updates = np.array([[1.1, 2.1]], dtype=np.float32)
 
-        y = scatter_elements(data, indices, updates, axis, reduction='min')
+        y = scatter_elements(data, indices, updates, axis, reduction="min")
         # print(y) produces
         # [[1.0, 1.1, 3.0, 4.0, 5.0]]
 
-        expect(node, inputs=[data, indices, updates], outputs=[y],
-                name='test_scatter_elements_with_reduction_min')
+        expect(
+            node,
+            inputs=[data, indices, updates],
+            outputs=[y],
+            name="test_scatter_elements_with_reduction_min",
+        )
