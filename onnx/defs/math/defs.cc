@@ -376,7 +376,7 @@ output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 - Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
-static float leaky_relu_default_alpha = 0.01;
+static float leaky_relu_default_alpha = 0.01f;
 bool BuildContextDependentFunctionBodyLeakyRelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
@@ -861,8 +861,8 @@ HardSigmoid takes one input data (Tensor<T>) and produces one output data
 is applied to the tensor elementwise.
 )DOC";
 
-static float hard_sigmoid_default_alpha = 0.2;
-static float hard_sigmoid_default_beta = 0.5;
+static float hard_sigmoid_default_alpha = 0.2f;
+static float hard_sigmoid_default_beta = 0.5f;
 bool BuildContextDependentFunctionBodyHardSigmoid(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
