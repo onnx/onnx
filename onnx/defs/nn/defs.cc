@@ -1829,6 +1829,36 @@ bias. The formula of this operator is: If x < -lambd, y = x + bias;
 If x > lambd, y = x - bias; Otherwise, y = 0.
 )DOC";
 
+static float shrink_default_lambd = 0.5f;
+static float shrink_default_bias = 0.0f;
+
+bool BuildContextDependentFunctionBodyShrink(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  float lambd = ctx.getAttribute("lambd") != nullptr ? ctx.getAttribute("lambd")->f() : shrink_default_lambd;
+  float bias = ctx.getAttribute("bias") != nullptr ? ctx.getAttribute("bias")->f() : shrink_default_bias;
+  FunctionBuilder builder(functionProto);
+  builder
+  .Const("lambd", std::vector<float>{lambd})
+  .Const("bias", std::vector<float>{bias})
+  .Add(R"(
+    LambdCastInput = CastLike(lambd, input)
+    NegLsmbda = Neg (LambdCastInput)
+    BiasCastInput = CastLike(bias, input)
+    Zero = Constant <value = float {0.0}>()
+    ZeroCastInput = CastLike(Zero, input)
+    InputLessThanNegLambda = Less (input, NegLsmbda)
+    InputAddBias = Add (input, BiasCastInput)
+    InputSubBias = Sub (input, BiasCastInput)
+    LambdaLessThanInput = Less (LambdCastInput, input)
+    InputSubBiasOrZero = Where (LambdaLessThanInput, InputSubBias, ZeroCastInput)
+    output = Where(InputLessThanNegLambda, InputAddBias, InputSubBiasOrZero)
+  )");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Shrink,
     9,
@@ -1839,6 +1869,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyShrink)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Flatten_ver13_doc = R"DOC(
