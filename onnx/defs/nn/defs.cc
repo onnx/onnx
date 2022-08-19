@@ -1839,10 +1839,7 @@ bool BuildContextDependentFunctionBodyShrink(
   float lambd = ctx.getAttribute("lambd") != nullptr ? ctx.getAttribute("lambd")->f() : shrink_default_lambd;
   float bias = ctx.getAttribute("bias") != nullptr ? ctx.getAttribute("bias")->f() : shrink_default_bias;
   FunctionBuilder builder(functionProto);
-  builder
-  .Const("lambd", std::vector<float>{lambd})
-  .Const("bias", std::vector<float>{bias})
-  .Add(R"(
+  builder.Const("lambd", std::vector<float>{lambd}).Const("bias", std::vector<float>{bias}).Add(R"(
     LambdCastInput = CastLike(lambd, input)
     NegLsmbda = Neg (LambdCastInput)
     BiasCastInput = CastLike(bias, input)

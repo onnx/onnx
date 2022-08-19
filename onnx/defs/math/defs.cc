@@ -465,22 +465,19 @@ bool BuildContextDependentFunctionBodySelu(
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : selu_default_alpha;
   float gamma = ctx.getAttribute("gamma") != nullptr ? ctx.getAttribute("gamma")->f() : selu_default_gamma;
   FunctionBuilder builder(functionProto);
-  builder
-  .Const("alpha", std::vector<float>{alpha})
-  .Const("gamma", std::vector<float>{gamma})
-  .Add(R"(
-        AlphaCastX = CastLike(alpha, X)
-        GammaCastX = CastLike(gamma, X)
-        ExpX = Exp (X)
-        AlphaMulExpX = Mul(AlphaCastX, ExpX)
-        AlphaMulExpXSubAlpha = Sub (AlphaMulExpX, AlphaCastX)
-        Neg = Mul (GammaCastX, AlphaMulExpXSubAlpha)
-        Pos = Mul (GammaCastX, X)
-        Zero = Constant <value = float {0.0}>()
-        ZeroCast = CastLike(Zero, X)
-        XLessThanZero = Less (X, ZeroCastX)
-        Y = Where(XLessThanZero, Neg, Pos)
-      )");
+  builder.Const("alpha", std::vector<float>{alpha}).Const("gamma", std::vector<float>{gamma}).Add(R"(
+    AlphaCastX = CastLike(alpha, X)
+    GammaCastX = CastLike(gamma, X)
+    ExpX = Exp (X)
+    AlphaMulExpX = Mul(AlphaCastX, ExpX)
+    AlphaMulExpXSubAlpha = Sub (AlphaMulExpX, AlphaCastX)
+    Neg = Mul (GammaCastX, AlphaMulExpXSubAlpha)
+    Pos = Mul (GammaCastX, X)
+    Zero = Constant <value = float {0.0}>()
+    ZeroCast = CastLike(Zero, X)
+    XLessThanZero = Less (X, ZeroCastX)
+    Y = Where(XLessThanZero, Neg, Pos)
+  )");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -870,10 +867,7 @@ bool BuildContextDependentFunctionBodyHardSigmoid(
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : hard_sigmoid_default_alpha;
   float beta = ctx.getAttribute("beta") != nullptr ? ctx.getAttribute("beta")->f() : hard_sigmoid_default_beta;
   FunctionBuilder builder(functionProto);
-  builder
-  .Const("alpha", std::vector<float>{alpha})
-  .Const("beta", std::vector<float>{beta})
-  .Add(R"(
+  builder.Const("alpha", std::vector<float>{alpha}).Const("beta", std::vector<float>{beta}).Add(R"(
     Zero = Constant <value = float {0.0}>()
     ZeroCast = CastLike(Zero, X)    
     One = Constant <value = float {1.0}>()
