@@ -306,7 +306,7 @@ ext_modules = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
 ################################################################################
 
 # no need to do fancy stuff so far
-packages = setuptools.find_namespace_packages()
+packages = setuptools.find_packages()
 
 requirements_file = "requirements.txt"
 requirements_path = os.path.join(os.getcwd(), requirements_file)
@@ -351,7 +351,7 @@ setuptools.setup(
     packages=packages,
     license="Apache License v2.0",
     include_package_data=True,
-    package_data={"onnx": ["py.typed", "*.pyi"]},
+    package_data={"onnx": ["py.typed", "*.pyi"], "onnx.backend.test": ["data/*"],  "onnx.examples": ["*"]},
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
