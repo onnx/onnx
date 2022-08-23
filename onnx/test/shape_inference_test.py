@@ -781,6 +781,37 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 9, 9))]
         )
 
+    def test_resize_opset11_scales_is_empty(self) -> None:
+        # "scales" input in Resize in opset11 is not optional. It must be an empty tensor
+        # if sizes is needed. Shape inference for Resize shall handle this case.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.INT32, (1, 3, 4, 5)),
+                ("roi", TensorProto.FLOAT, (8,)),
+                ("scales", TensorProto.FLOAT, (0,)),
+                ("sizes", TensorProto.INT64, (4,)),
+            ],
+            [make_node("Resize", ["x", "roi", "scales", "sizes"], ["y"])],
+            [],
+            initializer=[
+                make_tensor(
+                    "sizes",
+                    TensorProto.INT64,
+                    (4,),
+                    vals=np.array(
+                        [2, 6, 8, 10], dtype="<i8"
+                    ).tobytes(),  # double in all dimensions
+                    raw=True,
+                ),
+            ],
+        )
+
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 6, 8, 10))],
+            opset_imports=[helper.make_opsetid("", 11)],
+        )
+
     def test_shape(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],

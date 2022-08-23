@@ -1876,7 +1876,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
         .SetDoc(Resize_ver13_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference(ctx); }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset13_to_18(ctx); }));
 
 static const char* Resize_ver11_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
@@ -1974,7 +1974,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
         .SetDoc(Resize_ver11_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference(ctx); }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset11_to_12(ctx); }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
