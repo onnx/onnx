@@ -45,10 +45,6 @@ We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [
 Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
 
 
-
-
-
-
 # Installation
 
 ## Official Python packages
@@ -65,8 +61,6 @@ A binary build of ONNX is available from [Conda](https://conda.io), in [conda-fo
 ```
 conda install -c conda-forge onnx
 ```
-
-You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-dev) for a Linux-based installation without having to worry about dependency versioning.
 
 
 ## Build ONNX from Source
