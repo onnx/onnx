@@ -957,18 +957,15 @@ void check_model(const std::string& model_path, bool full_check) {
   }
 }
 
-void check_model(const ModelProto& model) {
+void check_model(const ModelProto& model, bool full_check) {
   CheckerContext ctx;
   check_model(model, ctx);
-}
-
-void check_model(ModelProto& model, bool full_check) {
-  CheckerContext ctx;
-  check_model(model, ctx);
-
   if (full_check) {
     ShapeInferenceOptions options{true, 1, false};
-    ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
+    // Do not update the model in place by the check from shape inference
+    // because checker should not modify the original model
+    ModelProto copy = model;
+    ONNX_NAMESPACE::shape_inference::InferShapes(copy, ctx.get_schema_registry(), options);
   }
 }
 

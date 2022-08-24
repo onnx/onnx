@@ -3022,7 +3022,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Set the output dimension to match the dft_length on the axis.
           // If onesided this will be adjusted later on...
           const TensorProto* dft_length = nullptr;
-          if (ctx.getNumInputs() >= 2 && ctx.getInputType(1) != nullptr) {
+          if (ctx.hasInput(1)) {
             dft_length = ctx.getInputData(1);
             if (dft_length == nullptr) {
               // If we cannot read the dft_length, we cannot infer shape
@@ -3471,7 +3471,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // One must be set.
           int64_t dft_size = -1;
           const TensorProto* frame_length = nullptr;
-          if (ctx.getNumInputs() >= 4 && ctx.getInputType(3) != nullptr) {
+          if (ctx.hasInput(3)) {
             frame_length = ctx.getInputData(3);
             if (frame_length == nullptr) {
               // If we cannot read the frame_length, we cannot infer shape
