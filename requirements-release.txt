@@ -4,5 +4,5 @@ pytest
 nbval
 ipython
 wheel
-setuptools
+setuptools == 64.0.0
 twine
