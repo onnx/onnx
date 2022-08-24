@@ -317,7 +317,7 @@ include_dirs = [
     "onnx.version_converter*",
 ]
 
-packages = list(set(setuptools.find_packages() + setuptools.find_namespace_packages(include=include_dirs)))
+packages = setuptools.find_packages() + setuptools.find_namespace_packages(include=include_dirs)
 
 requirements_file = "requirements.txt"
 requirements_path = os.path.join(os.getcwd(), requirements_file)
