@@ -142,7 +142,7 @@ def function_testcase_helper(
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
     else:
-        return []
+        return [], None
 
     for attr in schema.attributes:
         if attr in [a.name for a in node.attribute]:
@@ -152,7 +152,7 @@ def function_testcase_helper(
 
     # function_proto.attributes
     node_list = function_expand_helper(node, function_proto, op_prefix)
-    return node_list
+    return node_list, function_proto.opset_import
 
 
 def _extract_value_info(
@@ -292,7 +292,7 @@ def expect(
         return []
 
     merged_types = merge(list(node.input), inputs_vi)
-    expanded_function_nodes = function_testcase_helper(node, merged_types, name)
+    expanded_function_nodes, func_opset_import = function_testcase_helper(node, merged_types, name)
     if expanded_function_nodes:
         function_test_name = name + "_expanded"
         graph = onnx.helper.make_graph(
@@ -302,6 +302,18 @@ def expect(
             outputs=outputs_vi,
         )
         kwargs["producer_name"] = "backend-test"
+
+        # replace opset versions with what are specified in funtion proto
+        for opset_import in func_opset_import:
+            if 'opset_imports' in kwargs:
+                matches = [opset for opset in kwargs['opset_imports'] if opset.domain == opset_import.domain]
+                if matches:
+                    matches[0].version = opset_import.version
+                else:
+                    kwargs['opset_imports'].append(opset_import)
+            else:
+                kwargs['opset_imports'] = [opset_import]
+
         model = _make_test_model_gen_version(graph, **kwargs)
         _NodeTestCases.append(
             TestCase(

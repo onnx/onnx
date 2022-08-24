@@ -7,6 +7,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
+#include "onnx/defs/data_type_utils.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -340,6 +341,20 @@ Relu takes one input data (Tensor<T>) and produces one output data
 the tensor elementwise.
 )DOC";
 
+bool BuildContextDependentFunctionBodyRelu(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  int64_t x_type = getTensorElementType(*ctx.getInputType(0));
+  FunctionBuilder builder(functionProto);
+  builder
+    .Add("Zero = Constant <value = float {0.0}>()")
+    .Add("ZeroCast = Cast (Zero)", "to", x_type)
+    .Add("Y = Max (X, ZeroCast)");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Relu,
     14,
@@ -358,14 +373,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to signed numeric tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
-        {
-          Zero = Constant <value = float {0.0}>()
-          ZeroCast = CastLike(Zero, X)
-          Y = Max(X, ZeroCast)
-        }
-        )ONNX"));
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyRelu)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* LeakyRelu_ver16_doc = R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
@@ -377,20 +386,24 @@ output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 )DOC";
 
 static float leaky_relu_default_alpha = 0.01f;
+
 bool BuildContextDependentFunctionBodyLeakyRelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
+  int64_t x_type = getTensorElementType(*ctx.getInputType(0));
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : leaky_relu_default_alpha;
   FunctionBuilder builder(functionProto);
-  builder.Const("alpha", std::vector<float>{alpha}).Add(R"(
-    Zero = Constant <value = float {0.0}>()
-    ZeroCast = CastLike(Zero, X)
-    XLessThanZero = Less(X, ZeroCast)
-    AlphaCastX = CastLike(alpha, X)
-    AlphaMulX = Mul (AlphaCastX, X)
-    Y = Where (XLessThanZero, AlphaMulX, X)
-  )");
+  builder
+    .Const("Alpha", ToTensor(alpha))
+    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
+    .Add(R"(
+      Zero = Constant <value = float {0.0}>()
+      ZeroCast = CastLike(Zero, X)
+      XLessThanZero = Less(X, ZeroCast)
+      AlphaMulX = Mul (AlphaCastX, X)
+      Y = Where (XLessThanZero, AlphaMulX, X)
+    )");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -421,15 +434,18 @@ bool BuildContextDependentFunctionBodyThresholdedRelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
+  int64_t x_type = getTensorElementType(*ctx.getInputType(0));
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : thresholded_relu_default_alpha;
   FunctionBuilder builder(functionProto);
-  builder.Const("alpha", std::vector<float>{alpha}).Add(R"(
-    Zero = Constant <value = float {0.0}>()
-    ZeroCast = CastLike(Zero, X)
-    AlphaCastX = CastLike(alpha, X)
-    AlphaThanXLess = Less(AlphaCastX, X)
-    Y = Where(AlphaThanXLess, X, ZeroCast)
-  )");
+  builder
+    .Const("Alpha", ToTensor(alpha))
+    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
+    .Add("Zero = Constant <value = float {0.0}>()")
+    .Add("ZeroCast = Cast (Zero)", "to", x_type)
+    .Add(R"(
+      AlphaThanXLess = Less(AlphaCastX, X)
+      Y = Where(AlphaThanXLess, X, ZeroCast)
+    )");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -439,7 +455,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     10,
     OpSchema()
         .SetDoc(ThresholdedRelu_ver10_doc)
-        .Attr("alpha", "Threshold value", AttributeProto::FLOAT, 1.0f)
+        .Attr("alpha", "Threshold value", AttributeProto::FLOAT, thresholded_relu_default_alpha)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
@@ -458,26 +474,32 @@ is applied to the tensor elementwise.
 
 static float selu_default_alpha = 1.67326319217681884765625f;
 static float selu_default_gamma = 1.05070102214813232421875f;
+
 bool BuildContextDependentFunctionBodySelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
+  int64_t x_type = getTensorElementType(*ctx.getInputType(0));
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : selu_default_alpha;
   float gamma = ctx.getAttribute("gamma") != nullptr ? ctx.getAttribute("gamma")->f() : selu_default_gamma;
   FunctionBuilder builder(functionProto);
-  builder.Const("alpha", std::vector<float>{alpha}).Const("gamma", std::vector<float>{gamma}).Add(R"(
-    AlphaCastX = CastLike(alpha, X)
-    GammaCastX = CastLike(gamma, X)
-    ExpX = Exp (X)
-    AlphaMulExpX = Mul(AlphaCastX, ExpX)
-    AlphaMulExpXSubAlpha = Sub (AlphaMulExpX, AlphaCastX)
-    Neg = Mul (GammaCastX, AlphaMulExpXSubAlpha)
-    Pos = Mul (GammaCastX, X)
-    Zero = Constant <value = float {0.0}>()
-    ZeroCast = CastLike(Zero, X)
-    XLessThanZero = Less (X, ZeroCastX)
-    Y = Where(XLessThanZero, Neg, Pos)
-  )");
+  builder
+    .AddOpset("", 18)
+    .Const("Alpha", ToTensor(alpha))
+    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
+    .Const("Gamma", ToTensor(gamma))
+    .Add("GammaCastX = Cast (Gamma)", "to", x_type)
+    .Add("Zero = Constant <value = float {0.0}>()")
+    .Add("ZeroCastX = Cast (Zero)", "to", x_type)
+    .Add(R"(
+      ExpX = Exp (X)
+      AlphaMulExpX = Mul(AlphaCastX, ExpX)
+      AlphaMulExpXSubAlpha = Sub (AlphaMulExpX, AlphaCastX)
+      Neg = Mul (GammaCastX, AlphaMulExpXSubAlpha)
+      Pos = Mul (GammaCastX, X)
+      XLessThanZero = Less (X, ZeroCastX)
+      Y = Where(XLessThanZero, Neg, Pos)
+    )");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -520,20 +542,24 @@ bool BuildContextDependentFunctionBodyElu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
-  float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : elu_default_alpha;
+  int64_t x_type = getTensorElementType(*ctx.getInputType(0));
   FunctionBuilder builder(functionProto);
-  builder.Const("alpha", std::vector<float>{alpha}).Add(R"(
-    AlphaCastX = CastLike(alpha, X)
-    Zero = Constant <value = float {0.0}>()
-    ZeroCast = CastLike(Zero, X)
-    One = Constant <value = float {1.0}>()
-    OneCast = CastLike(One, X)    
-    XLessThanZero = Less (X, ZeroCast)
-    ExpX = Exp (X)
-    ExpXSubOne = Sub (ExpX, OneCast)
-    AlphaMulExpXSubOne = Mul (AlphaCastX, ExpXSubOne)
-    Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
-  )");
+  float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : elu_default_alpha;
+  builder
+    .AddOpset("", 18)
+    .Const("Alpha", ToTensor(alpha))
+    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
+    .Add("Zero = Constant <value = float {0.0}>()")
+    .Add("ZeroCast = Cast (Zero)", "to", x_type)
+    .Add("One = Constant <value = float {1.0}>()")
+    .Add("OneCast = Cast (One)", "to", x_type)
+    .Add(R"(
+      XLessThanZero = Less (X, ZeroCast)
+      ExpX = Exp (X)
+      ExpXSubOne = Sub (ExpX, OneCast)
+      AlphaMulExpXSubOne = Mul (AlphaCastX, ExpXSubOne)
+      Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
+    )");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -542,7 +568,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Elu,
     6,
     OpSchema()
-        .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, 1.0f)
+        .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, elu_default_alpha)
         .SetDoc(Elu_ver6_doc)
         .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "1D output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -828,8 +854,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           Zero = Constant <value = float {0.0}>()
           ZeroCast = CastLike(Zero, X)    
           XLessThan = Less (X, ZeroCast)
-          SlopMulX = Mul (slop, X)
-          Y = Where(XLessThan, SlopMulX, X)
+          SlopeMulX = Mul (slope, X)
+          Y = Where(XLessThan, SlopeMulX, X)
         }
         )ONNX"));
 
@@ -864,21 +890,25 @@ bool BuildContextDependentFunctionBodyHardSigmoid(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
+  int64_t x_type = getTensorElementType(*ctx.getInputType(0));
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : hard_sigmoid_default_alpha;
   float beta = ctx.getAttribute("beta") != nullptr ? ctx.getAttribute("beta")->f() : hard_sigmoid_default_beta;
   FunctionBuilder builder(functionProto);
-  builder.Const("alpha", std::vector<float>{alpha}).Const("beta", std::vector<float>{beta}).Add(R"(
-    Zero = Constant <value = float {0.0}>()
-    ZeroCast = CastLike(Zero, X)    
-    One = Constant <value = float {1.0}>()
-    OneCast = CastLike(One, X)    
-    AlphaCastX = CastLike(alpha, X)
-    BetaCastX = CastLike(beta, X)
-    AlphaMulX = Mul (AlphaCastX, X)
-    AlphaMulXAddBeta = Add (AlphaMulX, BetaCastX)
-    MinOneOrAlphaMulXAddBeta = Min (OneCast, AlphaMulXAddBeta)    
-    Y = Max(ZeroCast, MinOneOrAlphaMulXAddBeta)
-  )");
+  builder
+    .Const("Alpha", ToTensor(alpha))
+    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
+    .Const("Beta", ToTensor(beta))
+    .Add("BetaCastX = Cast (Beta)", "to", x_type)
+    .Add("Zero = Constant <value = float {0.0}>()")
+    .Add("ZeroCast = Cast (Zero)", "to", x_type)
+    .Add("One = Constant <value = float {1.0}>()")
+    .Add("OneCast = Cast (One)", "to", x_type)
+    .Add(R"(
+      AlphaMulX = Mul (X, AlphaCastX)
+      AlphaMulXAddBeta = Add (AlphaMulX, BetaCastX)
+      MinOneOrAlphaMulXAddBeta = Min (AlphaMulXAddBeta, OneCast)
+      Y = Max(MinOneOrAlphaMulXAddBeta, ZeroCast)
+    )");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -1011,6 +1041,33 @@ specified by the inputs 'min' and 'max'. They default to
 numeric_limits::lowest() and numeric_limits::max(), respectively.
 )DOC";
 
+bool BuildContextDependentFunctionBodyClip(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  bool has_min = ctx.getInputType(1);
+  bool has_max = ctx.getInputType(2);
+
+  FunctionBuilder builder(functionProto);
+  if (!has_min && !has_max) {
+    builder.Add("output = Identity (input)");
+  } else if (has_min && !has_max) {
+    builder.Add("input_less_than_min = Less (input, min)");
+    builder.Add("output = Where (input_less_than_min, min, input)");
+  } else if (!has_min && has_max) {
+    builder.Add("input_large_than_max = Less (max, input)");
+    builder.Add("output = Where (input_large_than_max, max, input)");
+  } else {
+    builder.Add("input_less_than_min = Less (input, min)");
+    builder.Add("tmp = Where (input_less_than_min, min, input)");
+    builder.Add("output_large_than_max = Less (max, tmp)");
+    builder.Add("output = Where (output_large_than_max, max, tmp)");
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
     13,
@@ -1058,15 +1115,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_numeric_types_with_bfloat(),
             "Constrain input and output types to all numeric tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
-        {
-          input_less_than_min = Less(input, min)
-          input_large_than_max = Less(max, input)
-          input_max = Where(input_large_than_max, max, input)
-          output = Where(input_less_than_min, min, input_max)
-        }
-        )ONNX"));
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyClip)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softmax,
@@ -1131,6 +1181,25 @@ static const char* Softsign_ver1_doc = R"DOC(
 Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 )DOC";
 
+bool BuildContextDependentFunctionBodySoftsign(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  std::string x_type = Utils::DataTypeUtils::ToDataTypeString(getTensorElementType(*ctx.getInputType(0)));
+  FunctionBuilder builder(functionProto);
+  builder
+    .Add("One = Constant <value = float {1.0}>()")
+    .Add("OneCast = Cast (One)", "to", x_type)
+    .Add(R"(
+      AbsInput = Abs(input)
+      OneAddAbsInput = Add (OneCast, AbsInput)
+      output = Div(input, OneAddAbsInput)
+    )");
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Softsign,
     1,
@@ -1150,16 +1219,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
-        {
-          one = Constant <value = float {1.0}>()
-          one_cast = CastLike(one, input)
-          abs_input = Abs(input)
-          one_add_abs_input = Add (one_cast, abs_input)
-          output = Div(input, one_add_abs_input)
-        }
-        )ONNX"));
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySoftsign)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Softplus_ver1_doc = R"DOC(
 Softplus takes one input data (Tensor<T>) and produces one output data
