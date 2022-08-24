@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         # TODO: Freeze as 3.10.5 for now; Follow-up this issue by https://github.com/actions/setup-python/issues/481
-        python-version: ['3.7', '3.8', '3.9', '3.10.5']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
         architecture: ['x64', 'x86']
     steps:        
     - name: Checkout ONNX
