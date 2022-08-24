@@ -14,4 +14,4 @@ path_classifiers:
     test:
         - exclude: / # ignore our default classification for test code
 queries:
-  - Exclude: py/import-and-import-from
+  - exclude: py/import-and-import-from
