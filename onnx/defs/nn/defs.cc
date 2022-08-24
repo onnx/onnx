@@ -1841,14 +1841,13 @@ bool BuildContextDependentFunctionBodyShrink(
   float bias = ctx.getAttribute("bias") != nullptr ? ctx.getAttribute("bias")->f() : shrink_default_bias;
 
   FunctionBuilder builder(functionProto);
-  builder
-    .Const("Lambd", ToTensor(lambd))
-    .Add("LambdCastX = Cast (Lambd)", "to", x_type)
-    .Const("Bias", ToTensor(bias))
-    .Add("BiasCastX = Cast (Bias)", "to", x_type)
-    .Add("Zero = Constant <value = float {0.0}>()")
-    .Add("ZeroCast = Cast (Zero)", "to", x_type)
-    .Add(R"(
+  builder.Const("Lambd", ToTensor(lambd))
+      .Add("LambdCastX = Cast (Lambd)", "to", x_type)
+      .Const("Bias", ToTensor(bias))
+      .Add("BiasCastX = Cast (Bias)", "to", x_type)
+      .Add("Zero = Constant <value = float {0.0}>()")
+      .Add("ZeroCast = Cast (Zero)", "to", x_type)
+      .Add(R"(
       NegLmbda = Neg (LambdCastX)
       InputLessThanNegLambda = Less (input, NegLmbda)
       InputAddBias = Add (input, BiasCastX)
@@ -1866,7 +1865,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .SetDoc(Shrink_ver9_doc)
-        .Attr("lambd", "The lambd value for the Shrink formulation. Default is 0.5.", AttributeProto::FLOAT, shrink_default_lambd)
+        .Attr(
+            "lambd",
+            "The lambd value for the Shrink formulation. Default is 0.5.",
+            AttributeProto::FLOAT,
+            shrink_default_lambd)
         .Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, shrink_default_bias)
         .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)

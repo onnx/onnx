@@ -2,12 +2,13 @@
 
 import re
 import sys
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np  # type: ignore
 
 import onnx
 import onnx.mapping
+from onnx.onnx_pb2 import OperatorSetIdProto
 
 from ..test_case import TestCase
 from ..utils import import_recursive
@@ -130,7 +131,7 @@ def function_expand_helper(
 
 def function_testcase_helper(
     node: NodeProto, input_types: List[TypeProto], name: str
-) -> List[NodeProto]:
+) -> Tuple[List[NodeProto], List[OperatorSetIdProto]]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
     schema = onnx.defs.get_schema(test_op, node.domain)
@@ -292,7 +293,9 @@ def expect(
         return []
 
     merged_types = merge(list(node.input), inputs_vi)
-    expanded_function_nodes, func_opset_import = function_testcase_helper(node, merged_types, name)
+    expanded_function_nodes, func_opset_import = function_testcase_helper(
+        node, merged_types, name
+    )
     if expanded_function_nodes:
         function_test_name = name + "_expanded"
         graph = onnx.helper.make_graph(
@@ -305,14 +308,18 @@ def expect(
 
         # replace opset versions with what are specified in funtion proto
         for opset_import in func_opset_import:
-            if 'opset_imports' in kwargs:
-                matches = [opset for opset in kwargs['opset_imports'] if opset.domain == opset_import.domain]
+            if "opset_imports" in kwargs:
+                matches = [
+                    opset
+                    for opset in kwargs["opset_imports"]
+                    if opset.domain == opset_import.domain
+                ]
                 if matches:
                     matches[0].version = opset_import.version
                 else:
-                    kwargs['opset_imports'].append(opset_import)
+                    kwargs["opset_imports"].append(opset_import)
             else:
-                kwargs['opset_imports'] = [opset_import]
+                kwargs["opset_imports"] = [opset_import]
 
         model = _make_test_model_gen_version(graph, **kwargs)
         _NodeTestCases.append(

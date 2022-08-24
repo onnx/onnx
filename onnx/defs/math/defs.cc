@@ -347,10 +347,9 @@ bool BuildContextDependentFunctionBodyRelu(
     FunctionProto& functionProto) {
   int64_t x_type = getTensorElementType(*ctx.getInputType(0));
   FunctionBuilder builder(functionProto);
-  builder
-    .Add("Zero = Constant <value = float {0.0}>()")
-    .Add("ZeroCast = Cast (Zero)", "to", x_type)
-    .Add("Y = Max (X, ZeroCast)");
+  builder.Add("Zero = Constant <value = float {0.0}>()")
+      .Add("ZeroCast = Cast (Zero)", "to", x_type)
+      .Add("Y = Max (X, ZeroCast)");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -394,10 +393,7 @@ bool BuildContextDependentFunctionBodyLeakyRelu(
   int64_t x_type = getTensorElementType(*ctx.getInputType(0));
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : leaky_relu_default_alpha;
   FunctionBuilder builder(functionProto);
-  builder
-    .Const("Alpha", ToTensor(alpha))
-    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
-    .Add(R"(
+  builder.Const("Alpha", ToTensor(alpha)).Add("AlphaCastX = Cast (Alpha)", "to", x_type).Add(R"(
       Zero = Constant <value = float {0.0}>()
       ZeroCast = CastLike(Zero, X)
       XLessThanZero = Less(X, ZeroCast)
@@ -437,12 +433,11 @@ bool BuildContextDependentFunctionBodyThresholdedRelu(
   int64_t x_type = getTensorElementType(*ctx.getInputType(0));
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : thresholded_relu_default_alpha;
   FunctionBuilder builder(functionProto);
-  builder
-    .Const("Alpha", ToTensor(alpha))
-    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
-    .Add("Zero = Constant <value = float {0.0}>()")
-    .Add("ZeroCast = Cast (Zero)", "to", x_type)
-    .Add(R"(
+  builder.Const("Alpha", ToTensor(alpha))
+      .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
+      .Add("Zero = Constant <value = float {0.0}>()")
+      .Add("ZeroCast = Cast (Zero)", "to", x_type)
+      .Add(R"(
       AlphaThanXLess = Less(AlphaCastX, X)
       Y = Where(AlphaThanXLess, X, ZeroCast)
     )");
@@ -483,15 +478,14 @@ bool BuildContextDependentFunctionBodySelu(
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : selu_default_alpha;
   float gamma = ctx.getAttribute("gamma") != nullptr ? ctx.getAttribute("gamma")->f() : selu_default_gamma;
   FunctionBuilder builder(functionProto);
-  builder
-    .AddOpset("", 18)
-    .Const("Alpha", ToTensor(alpha))
-    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
-    .Const("Gamma", ToTensor(gamma))
-    .Add("GammaCastX = Cast (Gamma)", "to", x_type)
-    .Add("Zero = Constant <value = float {0.0}>()")
-    .Add("ZeroCastX = Cast (Zero)", "to", x_type)
-    .Add(R"(
+  builder.AddOpset("", 18)
+      .Const("Alpha", ToTensor(alpha))
+      .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
+      .Const("Gamma", ToTensor(gamma))
+      .Add("GammaCastX = Cast (Gamma)", "to", x_type)
+      .Add("Zero = Constant <value = float {0.0}>()")
+      .Add("ZeroCastX = Cast (Zero)", "to", x_type)
+      .Add(R"(
       ExpX = Exp (X)
       AlphaMulExpX = Mul(AlphaCastX, ExpX)
       AlphaMulExpXSubAlpha = Sub (AlphaMulExpX, AlphaCastX)
@@ -545,15 +539,14 @@ bool BuildContextDependentFunctionBodyElu(
   int64_t x_type = getTensorElementType(*ctx.getInputType(0));
   FunctionBuilder builder(functionProto);
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : elu_default_alpha;
-  builder
-    .AddOpset("", 18)
-    .Const("Alpha", ToTensor(alpha))
-    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
-    .Add("Zero = Constant <value = float {0.0}>()")
-    .Add("ZeroCast = Cast (Zero)", "to", x_type)
-    .Add("One = Constant <value = float {1.0}>()")
-    .Add("OneCast = Cast (One)", "to", x_type)
-    .Add(R"(
+  builder.AddOpset("", 18)
+      .Const("Alpha", ToTensor(alpha))
+      .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
+      .Add("Zero = Constant <value = float {0.0}>()")
+      .Add("ZeroCast = Cast (Zero)", "to", x_type)
+      .Add("One = Constant <value = float {1.0}>()")
+      .Add("OneCast = Cast (One)", "to", x_type)
+      .Add(R"(
       XLessThanZero = Less (X, ZeroCast)
       ExpX = Exp (X)
       ExpXSubOne = Sub (ExpX, OneCast)
@@ -894,16 +887,15 @@ bool BuildContextDependentFunctionBodyHardSigmoid(
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : hard_sigmoid_default_alpha;
   float beta = ctx.getAttribute("beta") != nullptr ? ctx.getAttribute("beta")->f() : hard_sigmoid_default_beta;
   FunctionBuilder builder(functionProto);
-  builder
-    .Const("Alpha", ToTensor(alpha))
-    .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
-    .Const("Beta", ToTensor(beta))
-    .Add("BetaCastX = Cast (Beta)", "to", x_type)
-    .Add("Zero = Constant <value = float {0.0}>()")
-    .Add("ZeroCast = Cast (Zero)", "to", x_type)
-    .Add("One = Constant <value = float {1.0}>()")
-    .Add("OneCast = Cast (One)", "to", x_type)
-    .Add(R"(
+  builder.Const("Alpha", ToTensor(alpha))
+      .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
+      .Const("Beta", ToTensor(beta))
+      .Add("BetaCastX = Cast (Beta)", "to", x_type)
+      .Add("Zero = Constant <value = float {0.0}>()")
+      .Add("ZeroCast = Cast (Zero)", "to", x_type)
+      .Add("One = Constant <value = float {1.0}>()")
+      .Add("OneCast = Cast (One)", "to", x_type)
+      .Add(R"(
       AlphaMulX = Mul (X, AlphaCastX)
       AlphaMulXAddBeta = Add (AlphaMulX, BetaCastX)
       MinOneOrAlphaMulXAddBeta = Min (AlphaMulXAddBeta, OneCast)
@@ -1187,10 +1179,7 @@ bool BuildContextDependentFunctionBodySoftsign(
     FunctionProto& functionProto) {
   std::string x_type = Utils::DataTypeUtils::ToDataTypeString(getTensorElementType(*ctx.getInputType(0)));
   FunctionBuilder builder(functionProto);
-  builder
-    .Add("One = Constant <value = float {1.0}>()")
-    .Add("OneCast = Cast (One)", "to", x_type)
-    .Add(R"(
+  builder.Add("One = Constant <value = float {1.0}>()").Add("OneCast = Cast (One)", "to", x_type).Add(R"(
       AbsInput = Abs(input)
       OneAddAbsInput = Add (OneCast, AbsInput)
       output = Div(input, OneAddAbsInput)
