@@ -48,7 +48,6 @@ jobs:
       run: |
         python -m pip install -q --upgrade pip
         cd onnx
-        python -m pip install --no-binary numpy numpy
         python -m pip install -q -r requirements-release.txt
 
     - name: Build ONNX wheel
