@@ -8,7 +8,6 @@ import numpy as np  # type: ignore
 
 import onnx
 import onnx.mapping
-from onnx.onnx_pb2 import OperatorSetIdProto
 
 from ..test_case import TestCase
 from ..utils import import_recursive
@@ -23,6 +22,7 @@ from onnx.onnx_pb import (
     GraphProto,
     ModelProto,
     NodeProto,
+    OperatorSetIdProto,
     TypeProto,
 )
 
