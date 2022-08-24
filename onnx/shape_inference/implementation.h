@@ -472,7 +472,7 @@ void InferShapeForFunctionNode(
     SymbolTable* symbolTable = nullptr,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr);
 
-std::string GetErrorWithNodeInfo(NodeProto n, std::runtime_error err);
+std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err);
 
 void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable);
 
