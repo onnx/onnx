@@ -131,7 +131,7 @@ def function_expand_helper(
 
 def function_testcase_helper(
     node: NodeProto, input_types: List[TypeProto], name: str
-) -> Tuple[List[NodeProto], Union[List[OperatorSetIdProto], None]]:
+) -> Tuple[List[NodeProto], List[OperatorSetIdProto]]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
     schema = onnx.defs.get_schema(test_op, node.domain)
@@ -143,7 +143,7 @@ def function_testcase_helper(
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
     else:
-        return [], None
+        return [], []
 
     for attr in schema.attributes:
         if attr in [a.name for a in node.attribute]:
