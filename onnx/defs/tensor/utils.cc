@@ -92,8 +92,8 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
 
-  bool hasScalesInput = (2 < ctx.getNumInputs()) && (ctx.getInputType(2) != nullptr);
-  bool hasSizesInput = (3 < ctx.getNumInputs()) && (ctx.getInputType(3) != nullptr);
+  bool hasScalesInput = ctx.hasInput(2);
+  bool hasSizesInput = ctx.hasInput(3);
 
   const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
   const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
