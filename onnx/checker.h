@@ -95,7 +95,7 @@ class LexicalScopeContext final {
   // values from the parent scope so the values are copied instead.
   LexicalScopeContext(const LexicalScopeContext& parent_context) : parent_context_{&parent_context} {}
   LexicalScopeContext& operator=(const LexicalScopeContext& parent_context) {
-    parent_context_ = &LexicalScopeContext(parent_context);
+    parent_context_ = &parent_context;
     return *this;
   }
 

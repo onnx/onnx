@@ -41,14 +41,14 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input is string
         loaded_proto = onnx.load_model_from_string(proto_string)
-        self.assertTrue(proto == loaded_proto)
+        self.assertEqual(proto, loaded_proto)
 
         # Test if input has a read function
         f = io.BytesIO()
         onnx.save_model(proto_string, f)
         f = io.BytesIO(f.getvalue())
         loaded_proto = onnx.load_model(f, cls)
-        self.assertTrue(proto == loaded_proto)
+        self.assertEqual(proto, loaded_proto)
 
         # Test if input is a file name
         try:
@@ -57,7 +57,7 @@ class TestBasicFunctions(unittest.TestCase):
             fi.close()
 
             loaded_proto = onnx.load_model(fi.name, cls)
-            self.assertTrue(proto == loaded_proto)
+            self.assertEqual(proto, loaded_proto)
         finally:
             os.remove(fi.name)
 
@@ -68,14 +68,14 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input is string
         loaded_proto = onnx.load_tensor_from_string(proto_string)
-        self.assertTrue(proto == loaded_proto)
+        self.assertEqual(proto, loaded_proto)
 
         # Test if input has a read function
         f = io.BytesIO()
         onnx.save_tensor(loaded_proto, f)
         f = io.BytesIO(f.getvalue())
         loaded_proto = onnx.load_tensor(f, cls)
-        self.assertTrue(proto == loaded_proto)
+        self.assertEqual(proto, loaded_proto)
 
         # Test if input is a file name
         try:
@@ -84,7 +84,7 @@ class TestBasicFunctions(unittest.TestCase):
             tfile.close()
 
             loaded_proto = onnx.load_tensor(tfile.name, cls)
-            self.assertTrue(proto == loaded_proto)
+            self.assertEqual(proto, loaded_proto)
         finally:
             os.remove(tfile.name)
 

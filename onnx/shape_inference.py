@@ -8,15 +8,16 @@ from typing import Dict, Optional, Union
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C
+from onnx import ModelProto
 
 
 def infer_shapes(
-    model: Union[onnx.ModelProto, bytes],
+    model: Union[ModelProto, bytes],
     check_type: bool = False,
     strict_mode: bool = False,
     data_prop: bool = False,
-) -> onnx.ModelProto:
-    """Apply shape inference to the provided onnx.ModelProto.
+) -> ModelProto:
+    """Apply shape inference to the provided ModelProto.
 
     Inferred shapes are added to the value_info field of the graph.
 
@@ -25,16 +26,16 @@ def infer_shapes(
     bug in shape inference), and the result is unspecified.
 
     Arguments:
-        model (Union[onnx.ModelProto, bytes], bool, bool, bool) -> onnx.ModelProto
+        model (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
         check_type (bool): Checks the type-equality for input and output
         strict_mode (bool): Stricter shape inference, it will throw errors if any;
             Otherwise, simply stop if any error
         data_prop (bool): Enables data propagation for limited operators to perform shape computation
 
     Returns:
-        (onnx.ModelProto) model with inferred shape information
+        (ModelProto) model with inferred shape information
     """
-    if isinstance(model, (onnx.ModelProto, bytes)):
+    if isinstance(model, (ModelProto, bytes)):
         model_str = model if isinstance(model, bytes) else model.SerializeToString()
         inferred_model_str = C.infer_shapes(
             model_str, check_type, strict_mode, data_prop
@@ -42,12 +43,12 @@ def infer_shapes(
         return onnx.load_from_string(inferred_model_str)
     elif isinstance(model, str):
         raise TypeError(
-            "infer_shapes only accepts onnx.ModelProto or bytes,"
+            "infer_shapes only accepts ModelProto or bytes,"
             "you can use infer_shapes_path for the model path (String)."
         )
     else:
         raise TypeError(
-            "infer_shapes only accepts onnx.ModelProto or bytes, "
+            "infer_shapes only accepts ModelProto or bytes, "
             "incorrect type: {}".format(type(model))
         )
 
@@ -63,10 +64,10 @@ def infer_shapes_path(
     Take model path for shape_inference same as infer_shape; it support >2GB models
     Directly output the inferred model to the output_path; Default is the original model path
     """
-    if isinstance(model_path, onnx.ModelProto):
+    if isinstance(model_path, ModelProto):
         raise TypeError(
             "infer_shapes_path only accepts model Path (String),"
-            "you can use infer_shapes for the onnx.ModelProto."
+            "you can use infer_shapes for the ModelProto."
         )
     # Directly output the inferred model into the specified path, return nothing
     elif isinstance(model_path, str):

@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import string
-import time
 import unittest
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 import numpy as np  # type: ignore
 
