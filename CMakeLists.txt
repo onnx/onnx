@@ -58,7 +58,7 @@ else()
   set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
-# Recommend to use /std:c++14 or higher on Windows
+# Required to use /std:c++14 or higher on Windows
 # For other platforms, set C++11 as standard for the whole project
 if(NOT MSVC)
   set(CMAKE_CXX_STANDARD 11)

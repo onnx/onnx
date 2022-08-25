@@ -26,6 +26,8 @@ namespace fs = std::filesystem;
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING  // required by VS 2019
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
+#else
+#error "No filesystem support available for compiler versions < c++14"
 #endif
 
 #else // POSIX
