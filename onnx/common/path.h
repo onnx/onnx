@@ -9,7 +9,7 @@
 
 #include <string>
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 namespace ONNX_NAMESPACE {
