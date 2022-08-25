@@ -23,7 +23,7 @@
 namespace fs = std::filesystem;
 #elif __cpp_lib_experimental_filesystem
 // C++14
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING  // required by VS 2019
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING // required by VS 2019
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 #else
@@ -155,11 +155,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "' points outside the directory");
         }
 
-
         std::string relative_path;
-        std::transform(w_relative_path.begin(), w_relative_path.end(), std::back_inserter(relative_path), [] (wchar_t c) {
-            return (char)c;
-        });
+        std::transform(
+            w_relative_path.begin(), w_relative_path.end(), std::back_inserter(relative_path), [](wchar_t c) {
+              return (char)c;
+            });
 #else // POSIX
         std::string relative_path = clean_relative_path(entry.value());
         // Check that normalized relative path starts with "../" or "..\" on windows.
