@@ -18,8 +18,8 @@ const std::string k_preferred_path_separator = "/";
 #endif
 
 std::string path_join(const std::string& origin, const std::string& append);
-void normalize_separator(const std::string& path);
-void normalize_separator(const std::wstring& path);
+void normalize_separator(std::string& path);
+void normalize_separator(std::wstring& path);
 std::string clean_relative_path(const std::string& path);
 std::wstring clean_relative_path(const std::wstring& path);
 
