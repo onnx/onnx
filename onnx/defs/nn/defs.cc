@@ -2380,8 +2380,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Output Y has same shape as X
           // Outputs Mean and InvStdDev have shape: [d[0], ..., d[axis-1], 1, ..., 1]
           FunctionBuilder builder(functionProto);
-          builder.AddOpset("", 16)
-              .Const("FloatEpsilon", ToTensor<float>(epsilon))
+          builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
               .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
               .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
               .Add("Rank = Size (XShape)") // rank of input tensor: scalar
