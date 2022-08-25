@@ -887,7 +887,8 @@ bool BuildContextDependentFunctionBodyHardSigmoid(
   float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : hard_sigmoid_default_alpha;
   float beta = ctx.getAttribute("beta") != nullptr ? ctx.getAttribute("beta")->f() : hard_sigmoid_default_beta;
   FunctionBuilder builder(functionProto);
-  builder.AddOpset("", 18).Const("Alpha", ToTensor(alpha))
+  builder.AddOpset("", 18)
+      .Const("Alpha", ToTensor(alpha))
       .Add("AlphaCastX = Cast (Alpha)", "to", x_type)
       .Const("Beta", ToTensor(beta))
       .Add("BetaCastX = Cast (Beta)", "to", x_type)
@@ -1181,7 +1182,10 @@ bool BuildContextDependentFunctionBodySoftsign(
   FunctionBuilder builder(functionProto);
 
   // runtime no longer support version 1 Cast op.
-  builder.AddOpset("", 18).Add("One = Constant <value = float {1.0}>()").Add("OneCast = Cast (One)", "to", x_type).Add(R"(
+  builder.AddOpset("", 18)
+      .Add("One = Constant <value = float {1.0}>()")
+      .Add("OneCast = Cast (One)", "to", x_type)
+      .Add(R"(
       AbsInput = Abs(input)
       OneAddAbsInput = Add (OneCast, AbsInput)
       output = Div(input, OneAddAbsInput)
