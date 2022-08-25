@@ -58,7 +58,8 @@ else()
   set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
-# Set C++11 as standard for the whole project
+# Recommend to use /std:c++14 or higher on Windows
+# For other platforms, set C++11 as standard for the whole project
 if(NOT MSVC)
   set(CMAKE_CXX_STANDARD 11)
 endif(NOT MSVC)
@@ -87,7 +88,7 @@ endif()
 
 if(MSVC)
   if(NOT ONNX_DISABLE_EXCEPTIONS)
-    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812 /std:c++17 ")
+    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
 endif()

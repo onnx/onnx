@@ -22,6 +22,7 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 #elif __cpp_lib_experimental_filesystem
+// C++14
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING  // required by VS 2019
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
