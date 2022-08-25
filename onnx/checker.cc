@@ -142,9 +142,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         has_location = true;
 #ifdef _WIN32
         const fs::path windows_path(entry.value());
-        std::wstring w_relative_path = clean_relative_path(windows_path.wstring());
+        std::wstring relative_path = clean_relative_path(windows_path.wstring());
         // Check that normalized relative path starts with "../" or "..\" on windows.
-        if (w_relative_path.rfind(L"..\\", 0) == 0) {
+        if (relative_path.rfind(L"..\\", 0) == 0) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -154,12 +154,16 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               entry.value(),
               "' points outside the directory");
         }
-
-        std::string relative_path;
-        std::transform(
-            w_relative_path.begin(), w_relative_path.end(), std::back_inserter(relative_path), [](wchar_t c) {
-              return (char)c;
-            });
+        std::wstring data_path = utf8str_to_wstring(ctx.get_model_dir()) + L"\\" + relative_path;
+        struct _stat buff;
+        if (_wstat(data_path.c_str(), &buff) != 0) {
+            fail_check(
+                "Data of TensorProto ( tensor name: ",
+                tensor.name(),
+                ") should be stored in ",
+                path_join(ctx.get_model_dir(), entry.value()),
+                ", but it doesn't exist or is not accessible.");
+        }
 #else // POSIX
         std::string relative_path = clean_relative_path(entry.value());
         // Check that normalized relative path starts with "../" or "..\" on windows.
@@ -173,7 +177,6 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               entry.value(),
               "' points outside the directory");
         }
-#endif
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
         // use stat to check whether the file exists
         struct stat buffer;
@@ -185,9 +188,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               data_path,
               ", but it doesn't exist or is not accessible.");
         }
-#ifdef _WIN32
-#else // POSIX
-      //  Do not allow symlinks or directories.
+        //  Do not allow symlinks or directories.
         if (!S_ISREG(buffer.st_mode)) {
           fail_check(
               "Data of TensorProto ( tensor name: ",

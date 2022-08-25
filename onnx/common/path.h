@@ -8,6 +8,9 @@
 #pragma once
 
 #include <string>
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
 namespace ONNX_NAMESPACE {
 
@@ -45,5 +48,16 @@ void normalize_separator(STRING& path) {
 std::string path_join(const std::string& origin, const std::string& append);
 std::string clean_relative_path(const std::string& path);
 std::wstring clean_relative_path(const std::wstring& path);
+
+#ifdef _WIN32
+inline std::wstring utf8str_to_wstring(const std::string& utf8str) {
+  int size_required = MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(),
+                                          (int)utf8str.size(), NULL, 0);
+  std::wstring ws_str(size_required, 0);
+  MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), (int)utf8str.size(),
+                      &ws_str[0], size_required);
+  return ws_str;
+}
+#endif
 
 } // namespace ONNX_NAMESPACE
