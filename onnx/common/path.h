@@ -18,7 +18,9 @@ const std::string k_preferred_path_separator = "/";
 #endif
 
 std::string path_join(const std::string& origin, const std::string& append);
+template <typename S>
 void normalize_separator(std::string& path);
 std::string clean_relative_path(const std::string& path);
+std::wstring clean_relative_path(const std::wstring& path);
 
 } // namespace ONNX_NAMESPACE

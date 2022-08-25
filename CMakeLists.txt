@@ -87,7 +87,7 @@ endif()
 
 if(MSVC)
   if(NOT ONNX_DISABLE_EXCEPTIONS)
-    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
+    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812 /std:c++17 ")
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
 endif()

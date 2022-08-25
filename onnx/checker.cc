@@ -17,6 +17,16 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#ifdef __cpp_lib_filesystem
+// TODO use filesystem on all platforms after ONNX globally supports C++17
+#include <filesystem>
+namespace fs = std::filesystem;
+#elif __cpp_lib_experimental_filesystem
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING  // required by VS 2019
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
+
 #else // POSIX
 #include <sys/stat.h>
 #endif
@@ -127,6 +137,27 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
+#ifdef _WIN32
+        const fs::path windows_path(entry.value());
+        std::wstring w_relative_path = clean_relative_path(windows_path.wstring());
+        // Check that normalized relative path starts with "../" or "..\" on windows.
+        if (w_relative_path.rfind(L"..\\", 0) == 0) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be file inside the ",
+              ctx.get_model_dir(),
+              ", but the '",
+              entry.value(),
+              "' points outside the directory");
+        }
+
+
+        std::string relative_path;
+        std::transform(w_relative_path.begin(), w_relative_path.end(), std::back_inserter(relative_path), [] (wchar_t c) {
+            return (char)c;
+        });
+#else // POSIX
         std::string relative_path = clean_relative_path(entry.value());
         // Check that normalized relative path starts with "../" or "..\" on windows.
         if (relative_path.rfind(".." + k_preferred_path_separator, 0) == 0) {
@@ -139,7 +170,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               entry.value(),
               "' points outside the directory");
         }
-
+#endif
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
         // use stat to check whether the file exists
         struct stat buffer;
