@@ -51,9 +51,9 @@ void normalize_separator(STRING& path) {
 template <typename STRING>
 STRING clean_relative_path(const STRING& path);
 std::string clean_relative_path(const char* path);
-std::wstring clean_relative_path(const wchar_t* path);
 
 #ifdef _WIN32
+std::wstring clean_relative_path(const wchar_t* path);
 inline std::wstring utf8str_to_wstring(const std::string& utf8str) {
   int size_required = MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), (int)utf8str.size(), NULL, 0);
   std::wstring ws_str(size_required, 0);
