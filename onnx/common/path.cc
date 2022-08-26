@@ -82,7 +82,6 @@ std::string clean_relative_path(const char* path) {
   return clean_relative_path(std::string(path));
 }
 
-
 #ifdef _WIN32
 PATH_JOIN(std::wstring, w_k_preferred_path_separator);
 CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".");

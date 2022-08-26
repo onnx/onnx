@@ -144,7 +144,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         const fs::path windows_path(entry.value());
         std::wstring relative_path = clean_relative_path(windows_path.wstring());
         // Check that normalized relative path starts with "../" or "..\" on windows.
-        if (relative_path.rfind(L"..\\", 0) == 0) {
+        if (relative_path.rfind(L".." + w_k_preferred_path_separator, 0) == 0) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
