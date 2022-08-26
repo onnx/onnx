@@ -474,7 +474,7 @@ if(BUILD_ONNX_PYTHON)
   elseif(MSVC)
     # In MSVC, we will add whole archive in default
     target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -WHOLEARCHIVE:"$<TARGET_FILE:onnx>")
+                          PRIVATE -WHOLEARCHIVE:$<TARGET_FILE:onnx>)
   elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
     target_sources(onnx_cpp2py_export
@@ -482,7 +482,7 @@ if(BUILD_ONNX_PYTHON)
   else()
     # Assume everything else is like gcc
     target_link_libraries(onnx_cpp2py_export
-                          PRIVATE "-Wl,--whole-archive" "$<TARGET_FILE:onnx>"
+                          PRIVATE "-Wl,--whole-archive" $<TARGET_FILE:onnx>
                                   "-Wl,--no-whole-archive")
     set_target_properties(onnx_cpp2py_export
                           PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
