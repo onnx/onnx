@@ -1834,11 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema()
         .SetDoc(Shrink_ver18_doc)
-        .Attr(
-            "lambd",
-            "The lambd value for the Shrink formulation. Default is 0.5.",
-            AttributeProto::FLOAT,
-            0.5f)
+        .Attr("lambd", "The lambd value for the Shrink formulation. Default is 0.5.", AttributeProto::FLOAT, 0.5f)
         .Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, 0.0f)
         .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
