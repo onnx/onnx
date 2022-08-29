@@ -521,6 +521,13 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("Resize", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("OptionalGetElement", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("OptionalHasElement", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("Relu", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("ThresholdedRelu", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("Selu", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("Elu", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("HardSigmoid", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("Softsign", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("Shrink", OpSetID(17), OpSetID(18)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

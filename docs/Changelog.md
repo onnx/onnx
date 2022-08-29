@@ -5355,7 +5355,6 @@ This version of the operator has been available since version 6 of the default O
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
 
-
 #### Version
 
 This version of the operator has been available since version 6 of the default ONNX operator set.
@@ -21285,6 +21284,85 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
+### <a name="Elu-18"></a>**Elu-18**</a>
+
+  Elu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
+  0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
+
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient of ELU.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>1D output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="HardSigmoid-18"></a>**HardSigmoid-18**</a>
+
+  HardSigmoid takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
+  is applied to the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 0.2)</dt>
+<dd>Value of alpha.</dd>
+<dt><tt>beta</tt> : float (default is 0.5)</dt>
+<dd>Value of beta.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Mish-18"></a>**Mish-18**</a>
 
   Mish: A Self Regularized Non-Monotonic Neural Activation Function.
@@ -21504,6 +21582,37 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
+### <a name="Relu-18"></a>**Relu-18**</a>
+
+  Relu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
+  the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to signed numeric tensors.</dd>
+</dl>
+
 ### <a name="Resize-18"></a>**Resize-18**</a>
 
   Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
@@ -21604,6 +21713,155 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain roi type to float or double.</dd>
+</dl>
+
+### <a name="Selu-18"></a>**Selu-18**</a>
+
+  Selu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the scaled exponential linear unit function,
+  `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
+  is applied to the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.67326)</dt>
+<dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
+<dt><tt>gamma</tt> : float (default is 1.0507)</dt>
+<dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Shrink-18"></a>**Shrink-18**</a>
+
+  Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+  having same datatype and shape with input. It has two attributes, lambd and
+  bias. The formula of this operator is: If x < -lambd, y = x + bias;
+  If x > lambd, y = x - bias; Otherwise, y = 0.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>bias</tt> : float (default is 0.0)</dt>
+<dd>The bias value added to output. Default is 0.</dd>
+<dt><tt>lambd</tt> : float (default is 0.5)</dt>
+<dd>The lambd value for the Shrink formulation. Default is 0.5.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>The input data as Tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The output.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input to only numeric types.</dd>
+</dl>
+
+### <a name="Softsign-18"></a>**Softsign-18**</a>
+
+  Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The softsign (x/(1+|x|)) values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="ThresholdedRelu-18"></a>**ThresholdedRelu-18**</a>
+
+  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
+  is applied to the tensor elementwise.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Threshold value</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 # ai.onnx.preview.training

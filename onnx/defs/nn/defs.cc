@@ -1822,60 +1822,45 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shrink_ver9_doc = R"DOC(
+static const char* Shrink_ver18_doc = R"DOC(
 Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
 having same datatype and shape with input. It has two attributes, lambd and
 bias. The formula of this operator is: If x < -lambd, y = x + bias;
 If x > lambd, y = x - bias; Otherwise, y = 0.
 )DOC";
 
-static float shrink_default_lambd = 0.5f;
-static float shrink_default_bias = 0.0f;
-
-bool BuildContextDependentFunctionBodyShrink(
-    const FunctionBodyBuildContext& ctx,
-    const OpSchema& schema,
-    FunctionProto& functionProto) {
-  int64_t x_type = getTensorElementType(*ctx.getInputType(0));
-  float lambd = ctx.getAttribute("lambd") != nullptr ? ctx.getAttribute("lambd")->f() : shrink_default_lambd;
-  float bias = ctx.getAttribute("bias") != nullptr ? ctx.getAttribute("bias")->f() : shrink_default_bias;
-
-  FunctionBuilder builder(functionProto);
-  builder.Const("Lambd", ToTensor(lambd))
-      .Add("LambdCastX = Cast (Lambd)", "to", x_type)
-      .Const("Bias", ToTensor(bias))
-      .Add("BiasCastX = Cast (Bias)", "to", x_type)
-      .Add("Zero = Constant <value = float {0.0}>()")
-      .Add("ZeroCast = Cast (Zero)", "to", x_type)
-      .Add(R"(
-      NegLmbda = Neg (LambdCastX)
-      InputLessThanNegLambda = Less (input, NegLmbda)
-      InputAddBias = Add (input, BiasCastX)
-      InputSubBias = Sub (input, BiasCastX)
-      LambdaLessThanInput = Less (LambdCastX, input)
-      InputSubBiasOrZero = Where (LambdaLessThanInput, InputSubBias, ZeroCast)
-      output = Where(InputLessThanNegLambda, InputAddBias, InputSubBiasOrZero)
-    )");
-  schema.BuildFunction(functionProto);
-  return true;
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shrink,
-    9,
+    18,
     OpSchema()
-        .SetDoc(Shrink_ver9_doc)
+        .SetDoc(Shrink_ver18_doc)
         .Attr(
             "lambd",
             "The lambd value for the Shrink formulation. Default is 0.5.",
             AttributeProto::FLOAT,
-            shrink_default_lambd)
-        .Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, shrink_default_bias)
+            0.5f)
+        .Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, 0.0f)
         .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyShrink)
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+          {
+            Lambd = Constant <value_float: float = @lambd>()
+            LambdCast = CastLike (Lambd, input)
+            Bias = Constant <value_float: float = @bias>()
+            BiasCast = CastLike (Bias, input)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, input)
+            NegLmbda = Neg (LambdCast)
+            InputLessThanNegLambda = Less (input, NegLmbda)
+            InputAddBias = Add (input, BiasCast)
+            InputSubBias = Sub (input, BiasCast)
+            LambdaLessThanInput = Less (LambdCast, input)
+            InputSubBiasOrZero = Where (LambdaLessThanInput, InputSubBias, ZeroCast)
+            output = Where(InputLessThanNegLambda, InputAddBias, InputSubBiasOrZero)
+		      }
+        )ONNX"));
 
 static const char* Flatten_ver13_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape

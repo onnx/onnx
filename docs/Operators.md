@@ -168,11 +168,11 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
-|<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|
+|<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-18">18</a>, <a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|
-|<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
+|<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-18">18</a>, <a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
@@ -183,15 +183,15 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|
-|<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
-|<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|
+|<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-18">18</a>, <a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
+|<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-18">18</a>, <a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|
-|<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
+|<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-18">18</a>, <a href="Changelog.md#Shrink-9">9</a>|
 |<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|
-|<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|
-|<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-10">10</a>|
+|<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-18">18</a>, <a href="Changelog.md#Softsign-1">1</a>|
+|<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-18">18</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|
 
 ### ai.onnx.preview.training
 |**Operator**|**Since version**|
@@ -6388,9 +6388,9 @@ expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose")
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Elu-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Elu-1">1</a>, <a href="Changelog.md#Elu-6">6</a>
 
 #### Attributes
 
@@ -9088,9 +9088,9 @@ expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">1</a>
+Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">1</a>, <a href="Changelog.md#HardSigmoid-6">6</a>
 
 #### Attributes
 
@@ -19611,9 +19611,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 14 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Relu-1">1</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Relu-1">1</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-14">14</a>
 
 #### Inputs
 
@@ -23196,9 +23196,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Selu-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Selu-1">1</a>, <a href="Changelog.md#Selu-6">6</a>
 
 #### Attributes
 
@@ -24052,7 +24052,9 @@ test_shape("_clip_end", x, end=10)
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Shrink-9">9</a>
 
 #### Attributes
 
@@ -26266,7 +26268,9 @@ expect(node, inputs=[x], outputs=[y], name="test_softplus")
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Softsign-1">1</a>
 
 #### Inputs
 
@@ -27658,7 +27662,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ThresholdedRelu-10">10</a>
 
 #### Attributes
 
