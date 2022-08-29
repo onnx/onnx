@@ -2211,6 +2211,191 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
+void col2imShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // All inputs shapes are required
+  if (!hasNInputShapes(ctx, 3)) {
+    return;
+  }
+
+  // We assume image_shape has correct spatial dimensions for next validations
+  // An alternative is get the the number of spatial dimensions as an input argument
+  Dim n_input_dims;
+  unifyInputDim(ctx, 1, 0, n_input_dims);
+
+  unifyInputDim(ctx, 2, 0, n_input_dims);
+  checkInputRank(ctx, 1, 1);
+  checkInputRank(ctx, 2, 1);
+  std::vector<int64_t> image_shape = {};
+  const TensorProto* image_shape_data = ctx.getInputData(1);
+  if (image_shape_data) {
+    image_shape = ParseData<int64_t>(image_shape_data);
+    unifyDim(n_input_dims, image_shape.size());
+  }
+
+  std::vector<int64_t> pads = {};
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() % 2) {
+      fail_shape_inference("Attribute pads must have an even size");
+    }
+    unifyDim(n_input_dims, pads.size() / 2);
+  }
+
+  std::vector<int64_t> dilations = {};
+  if (getRepeatedAttribute(ctx, "dilations", dilations)) {
+    unifyDim(n_input_dims, dilations.size());
+  }
+
+  std::vector<int64_t> strides = {};
+  if (getRepeatedAttribute(ctx, "strides", strides)) {
+    unifyDim(n_input_dims, strides.size());
+  }
+
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (input_shape.dim_size() != 3) {
+    fail_shape_inference("input must have rank 3.");
+  }
+
+  std::vector<int64_t> block_shape = {};
+  const TensorProto* block_shape_data = ctx.getInputData(2);
+  if (block_shape_data) {
+    block_shape = ParseData<int64_t>(block_shape_data);
+    unifyDim(n_input_dims, block_shape.size());
+  }
+  unifyInputDim(ctx, 2, 0, n_input_dims);
+
+  int block_shape_size = 0;
+  if (static_cast<int>(block_shape.size()) > 0) {
+    block_shape_size = 1;
+    for (const auto& dim : block_shape) {
+      block_shape_size *= dim;
+    }
+  }
+  // If we haven't inferred the number of image dimensions, we can't set inferred shape.
+  if (!n_input_dims.has_dim_value()) {
+    return;
+  }
+
+  // Final shape will be (N, C, dim_1, ..., dim_N)
+  auto final_image_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+  // Dimensions N and C are always present
+  Dim N, C;
+  if (ctx.getInputType(0)->tensor_type().shape().dim(0).has_dim_value()) {
+    N = input_shape.dim(0); // Otherwise, N is unknown.
+  }
+  *final_image_shape->add_dim() = N;
+
+  if (block_shape_size > 0) {
+    C = input_shape.dim(1) / block_shape_size; // Otherwise, C is unknown.
+  }
+  *final_image_shape->add_dim() = C;
+
+  // Image dimensions are dynamic
+  for (auto i = 0; i < n_input_dims.dim_value(); ++i) {
+    Dim image_dim_i;
+    if (image_shape.size() > 0) {
+      image_dim_i.set_dim_value(image_shape[i]); // Otherwise, spatial dimensions are unknown
+    }
+    *final_image_shape->add_dim() = image_dim_i;
+  }
+  return;
+}
+
+static const char* Col2Im_ver18_doc = R"DOC(
+The operator rearranges column blocks back into a multidimensional image
+
+Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/generated/torch.nn.Fold.html,
+but it only supports *batched* multi-dimensional image tensors.
+Another implementation in Python with N-dimension support can be found at https://github.com/f-dangel/unfoldNd/.
+
+NOTE: Although specifying image_shape looks redundant because it could be calculated from
+      convolution formulas, it is required as input for more advanced scenarios as explained
+      at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Col2Im,
+    18,
+    OpSchema()
+        .Attr(
+            "dilations",
+            "1-dimensional tensor with dilation value along each spatial axis of the image. "
+            "If not present, the dilation defaults to 1 along each spatial axis of the image.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "pads",
+            "1-dimensional tensor with padding value for the beginning and ending along each spatial axis, "
+            "it can take any value greater than or equal to 0. "
+            "The value represent the number of pixels added to the beginning "
+            "and end part of the corresponding axis. `pads` format should be as follow "
+            "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin is the number of pixels "
+            "added at the beginning of axis `i` and xi_end is the number of pixels added at the end of axis `i`. "
+            "If not present, the padding defaults to 0 along start and end of each spatial axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "strides",
+            "1-dimensional tensor with stride value along each spatial axis. "
+            "If not present, the stride defaults to 1 along each spatial axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .SetDoc(Col2Im_ver18_doc)
+        .Input(
+            0,
+            "input",
+            "Input data tensor to be rearranged from column blocks back into an image."
+            " This is a 3-dimensional tensor containing [N, C * n-ary-product(block_shape), L],"
+            " where N is batch dimension, C is image channel dimension and L is number of blocks."
+            "The blocks are enumerated in increasing lexicographic-order of their indices."
+            "For example, with an image-size 10*20 and block-size 9*18, there would be 2*3 blocks,"
+            " enumerated in the order block(0, 0), block(0, 1), block(0, 2), block(1, 0), block(1, 1), block(1, 2).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "image_shape",
+            "The shape of the spatial dimensions of the image after rearranging the column blocks."
+            "This is a 1-dimensional tensor with size of at least 2, containing the value [H_img, W_img] "
+            " for a 2-D image or [dim_i1, dim_i2, ..., dim_iN] for a N-D image.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "block_shape",
+            "The shape of the block to apply on the input."
+            "This is a 1-dimensional tensor of size of at least 2, containing the value [H_block, W_block] "
+            " for a 2-D image or [dim_b1, dim_b2, ..., dim_bN] for a N-D block."
+            "This is the block-shape before dilation is applied to it.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor produced by rearranging blocks into an image.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all numeric tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { col2imShapeInference(ctx); }));
+
 static const char* LayerNormalization_ver17_doc = R"DOC(
       This is layer normalization defined in ONNX as function.
       The overall computation can be split into two stages.
@@ -2411,5 +2596,4 @@ ONNX_OPERATOR_SET_SCHEMA(
           schema.BuildFunction(functionProto);
           return true;
         }));
-
 } // namespace ONNX_NAMESPACE
