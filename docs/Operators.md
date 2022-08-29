@@ -28,6 +28,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|
+|<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
 |<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
@@ -3542,6 +3543,424 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.int8)
 y = np.array([-1, 0, 1]).astype(np.int8)
 expect(node, inputs=[x], outputs=[y], name="test_clip_default_int8_inbounds")
+```
+
+</details>
+
+
+### <a name="Col2Im"></a><a name="col2im">**Col2Im**</a>
+
+  The operator rearranges column blocks back into a multidimensional image
+
+  Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/generated/torch.nn.Fold.html,
+  but it only supports *batched* multi-dimensional image tensors.
+  Another implementation in Python with N-dimension support can be found at https://github.com/f-dangel/unfoldNd/.
+
+  NOTE: Although specifying image_shape looks redundant because it could be calculated from
+        convolution formulas, it is required as input for more advanced scenarios as explained
+        at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
+
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>1-dimensional tensor with dilation value along each spatial axis of the image. If not present, the dilation defaults to 1 along each spatial axis of the image.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>1-dimensional tensor with padding value for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin is the number of pixels added at the beginning of axis `i` and xi_end is the number of pixels added at the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>1-dimensional tensor with stride value along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input data tensor to be rearranged from column blocks back into an image. This is a 3-dimensional tensor containing [N, C * n-ary-product(block_shape), L], where N is batch dimension, C is image channel dimension and L is number of blocks.The blocks are enumerated in increasing lexicographic-order of their indices.For example, with an image-size 10*20 and block-size 9*18, there would be 2*3 blocks, enumerated in the order block(0, 0), block(0, 1), block(0, 2), block(1, 0), block(1, 1), block(1, 2).</dd>
+<dt><tt>image_shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>The shape of the spatial dimensions of the image after rearranging the column blocks.This is a 1-dimensional tensor with size of at least 2, containing the value [H_img, W_img]  for a 2-D image or [dim_i1, dim_i2, ..., dim_iN] for a N-D image.</dd>
+<dt><tt>block_shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>The shape of the block to apply on the input.This is a 1-dimensional tensor of size of at least 2, containing the value [H_block, W_block]  for a 2-D image or [dim_b1, dim_b2, ..., dim_bN] for a N-D block.This is the block-shape before dilation is applied to it.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Output tensor produced by rearranging blocks into an image.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all numeric tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>col2im</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [1.0, 6.0, 11.0, 16.0, 21.0],  # (1, 5, 5)
+            [2.0, 7.0, 12.0, 17.0, 22.0],
+            [3.0, 8.0, 13.0, 18.0, 23.0],
+            [4.0, 9.0, 14.0, 19.0, 24.0],
+            [5.0, 0.0, 15.0, 20.0, 25.0],
+        ]
+    ]
+).astype(np.float32)
+
+image_shape = np.array([5, 5]).astype(np.int64)
+block_shape = np.array([1, 5]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Col2Im", ["input", "image_shape", "block_shape"], ["output"]
+)
+
+output = np.array(
+    [
+        [
+            [
+                [1.0, 2.0, 3.0, 4.0, 5.0],  # (1, 1, 5, 5)
+                [6.0, 7.0, 8.0, 9.0, 0.0],
+                [11.0, 12.0, 13.0, 14.0, 15.0],
+                [16.0, 17.0, 18.0, 19.0, 20.0],
+                [21.0, 22.0, 23.0, 24.0, 25.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im",
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_5d</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56],  # (1, 10, 12)
+            [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57],
+            [3, 8, 13, 18, 23, 28, 33, 38, 43, 48, 53, 58],
+            [4, 9, 14, 19, 24, 29, 34, 39, 44, 49, 54, 59],
+            [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
+            [61, 66, 71, 76, 81, 86, 91, 96, 101, 106, 111, 116],
+            [62, 67, 72, 77, 82, 87, 92, 97, 102, 107, 112, 117],
+            [63, 68, 73, 78, 83, 88, 93, 98, 103, 108, 113, 118],
+            [64, 69, 74, 79, 84, 89, 94, 99, 104, 109, 114, 119],
+            [65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120],
+        ]
+    ]
+).astype(np.float32)
+image_shape = np.array([3, 4, 5]).astype(np.int64)
+block_shape = np.array([1, 1, 5]).astype(np.int64)
+
+output = np.array(
+    [
+        [
+            [
+                [
+                    [1, 2, 3, 4, 5],  # (1, 2, 3, 4, 5)
+                    [6, 7, 8, 9, 10],
+                    [11, 12, 13, 14, 15],
+                    [16, 17, 18, 19, 20],
+                ],
+                [
+                    [21, 22, 23, 24, 25],
+                    [26, 27, 28, 29, 30],
+                    [31, 32, 33, 34, 35],
+                    [36, 37, 38, 39, 40],
+                ],
+                [
+                    [41, 42, 43, 44, 45],
+                    [46, 47, 48, 49, 50],
+                    [51, 52, 53, 54, 55],
+                    [56, 57, 58, 59, 60],
+                ],
+            ],
+            [
+                [
+                    [61, 62, 63, 64, 65],
+                    [66, 67, 68, 69, 70],
+                    [71, 72, 73, 74, 75],
+                    [76, 77, 78, 79, 80],
+                ],
+                [
+                    [81, 82, 83, 84, 85],
+                    [86, 87, 88, 89, 90],
+                    [91, 92, 93, 94, 95],
+                    [96, 97, 98, 99, 100],
+                ],
+                [
+                    [101, 102, 103, 104, 105],
+                    [106, 107, 108, 109, 110],
+                    [111, 112, 113, 114, 115],
+                    [116, 117, 118, 119, 120],
+                ],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im", ["input", "image_shape", "block_shape"], ["output"]
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im_5d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_dilations</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [1.0, 5.0, 9.0, 13.0, 17],  # (1, 4, 5)
+            [2.0, 6.0, 10.0, 14.0, 18],
+            [3.0, 7.0, 11.0, 15.0, 19],
+            [4.0, 8.0, 12.0, 16.0, 20],
+        ]
+    ]
+).astype(np.float32)
+image_shape = np.array([6, 6]).astype(np.int64)
+block_shape = np.array([2, 2]).astype(np.int64)
+
+output = np.array(
+    [
+        [
+            [
+                [1.0, 0.0, 0.0, 0.0, 0.0, 2.0],  # (1, 1, 6, 6)
+                [8.0, 0.0, 0.0, 0.0, 0.0, 10.0],
+                [16.0, 0.0, 0.0, 0.0, 0.0, 18.0],
+                [24.0, 0.0, 0.0, 0.0, 0.0, 26.0],
+                [32.0, 0.0, 0.0, 0.0, 0.0, 34.0],
+                [19.0, 0.0, 0.0, 0.0, 0.0, 20.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"],
+    dilations=[1, 5],
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im_dilations",
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_pads</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [
+                1.0,
+                6.0,
+                11.0,
+                16.0,
+                21.0,
+                26,
+                31,
+                36,
+                41,
+                46,
+                51,
+                56,
+                61,
+                66,
+                71,
+            ],  # (1, 5, 15)
+            [
+                2.0,
+                7.0,
+                12.0,
+                17.0,
+                22.0,
+                27,
+                32,
+                37,
+                42,
+                47,
+                52,
+                57,
+                62,
+                67,
+                72,
+            ],
+            [
+                3.0,
+                8.0,
+                13.0,
+                18.0,
+                23.0,
+                28,
+                33,
+                38,
+                43,
+                48,
+                53,
+                58,
+                63,
+                68,
+                73,
+            ],
+            [
+                4.0,
+                9.0,
+                14.0,
+                19.0,
+                24.0,
+                29,
+                34,
+                39,
+                44,
+                49,
+                54,
+                59,
+                64,
+                69,
+                74,
+            ],
+            [
+                5.0,
+                10.0,
+                15.0,
+                20.0,
+                25.0,
+                30,
+                35,
+                40,
+                45,
+                50,
+                55,
+                60,
+                65,
+                70,
+                75,
+            ],
+        ]
+    ]
+).astype(np.float32)
+image_shape = np.array([5, 5]).astype(np.int64)
+block_shape = np.array([1, 5]).astype(np.int64)
+
+output = np.array(
+    [
+        [
+            [
+                [8.0, 21.0, 24.0, 27.0, 14.0],  # (1, 1, 5, 5)
+                [38.0, 66.0, 69.0, 72.0, 54.0],
+                [68.0, 111.0, 114.0, 117.0, 84.0],
+                [98.0, 156.0, 159.0, 162.0, 114.0],
+                [128.0, 201.0, 204.0, 207.0, 144.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"],
+    pads=[0, 1, 0, 1],
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im_pads",
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_strides</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [0.0, 0.0, 0.0, 0.0],  # (1, 9, 4)
+            [1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 0.0],
+        ]
+    ]
+).astype(np.float32)
+image_shape = np.array([5, 5]).astype(np.int64)
+block_shape = np.array([3, 3]).astype(np.int64)
+
+output = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 1.0, 1.0, 1.0],  # (1, 1, 5, 5)
+                [1.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 2.0, 1.0, 2.0, 1.0],
+                [1.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 1.0, 0.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"],
+    strides=[2, 2],
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im_strides",
+)
 ```
 
 </details>
