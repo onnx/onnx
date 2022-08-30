@@ -141,7 +141,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
 #ifdef _WIN32
-        const fs::path windows_path(entry.value());
+        std::wstring w_path = utf8str_to_wstring(entry.value());
+        const fs::path windows_path(w_path);
         std::wstring relative_path = clean_relative_path(windows_path.wstring());
         // Check that normalized relative path starts with "../" or "..\" on windows.
         if (relative_path.rfind(L".." + w_k_preferred_path_separator, 0) == 0) {

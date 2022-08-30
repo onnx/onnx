@@ -18,9 +18,10 @@ namespace ONNX_NAMESPACE {
     return origin + append;                                                       \
   }
 
-#define CLEAN_RELATIVE_PATH(string_type, char_type, separator, dot)                                           \
+#define CLEAN_RELATIVE_PATH(string_type, char_type, separator, dot, input_type)                               \
   template <>                                                                                                 \
-  string_type clean_relative_path(const string_type& path) {                                                  \
+  string_type clean_relative_path(const input_type input_path) {                                              \
+    string_type path = string_type(input_path);                                                               \
     if (path.empty()) {                                                                                       \
       return dot;                                                                                             \
     }                                                                                                         \
@@ -77,17 +78,14 @@ namespace ONNX_NAMESPACE {
   }
 
 PATH_JOIN(std::string, k_preferred_path_separator);
-CLEAN_RELATIVE_PATH(std::string, char, k_preferred_path_separator, ".");
-std::string clean_relative_path(const char* path) {
-  return clean_relative_path(std::string(path));
-}
+CLEAN_RELATIVE_PATH(std::string, char, k_preferred_path_separator, ".", const std::string&);
+CLEAN_RELATIVE_PATH(std::string, char, k_preferred_path_separator, ".", char*);
 
 #ifdef _WIN32
 PATH_JOIN(std::wstring, w_k_preferred_path_separator);
-CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".");
-std::wstring clean_relative_path(const wchar_t* path) {
-  return clean_relative_path(std::wstring(path));
-}
+CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".", const std::wstring&);
+CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".", wchar_t*);
+
 #endif
 
 } // namespace ONNX_NAMESPACE
