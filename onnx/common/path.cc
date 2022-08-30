@@ -78,12 +78,12 @@ namespace ONNX_NAMESPACE {
   }
 
 PATH_JOIN(std::string, k_preferred_path_separator);
-CLEAN_RELATIVE_PATH(std::string, char, k_preferred_path_separator, ".", const std::string&);
+CLEAN_RELATIVE_PATH(std::string, char, k_preferred_path_separator, ".", std::string&);
 CLEAN_RELATIVE_PATH(std::string, char, k_preferred_path_separator, ".", char*);
 
 #ifdef _WIN32
 PATH_JOIN(std::wstring, w_k_preferred_path_separator);
-CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".", const std::wstring&);
+CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".", std::wstring&);
 CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".", wchar_t*);
 
 #endif
