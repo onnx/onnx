@@ -18,9 +18,9 @@ namespace ONNX_NAMESPACE {
     return origin + append;                                                       \
   }
 
-#define CLEAN_RELATIVE_PATH(string_type, char_type, separator, dot, input_type)                               \
+#define CLEAN_RELATIVE_PATH(string_type, char_type, separator, dot)                                           \
   template <>                                                                                                 \
-  string_type clean_relative_path(const input_type input_path) {                                              \
+  string_type clean_relative_path(const string_type& input_path) {                                            \
     string_type path = string_type(input_path);                                                               \
     if (path.empty()) {                                                                                       \
       return dot;                                                                                             \
@@ -78,14 +78,11 @@ namespace ONNX_NAMESPACE {
   }
 
 PATH_JOIN(std::string, k_preferred_path_separator);
-CLEAN_RELATIVE_PATH(std::string, char, k_preferred_path_separator, ".", std::string&);
-CLEAN_RELATIVE_PATH(std::string, char, k_preferred_path_separator, ".", char*);
+CLEAN_RELATIVE_PATH(std::string, char, k_preferred_path_separator, ".");
 
 #ifdef _WIN32
 PATH_JOIN(std::wstring, w_k_preferred_path_separator);
-CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".", std::wstring&);
-CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".", wchar_t*);
-
+CLEAN_RELATIVE_PATH(std::wstring, wchar_t, w_k_preferred_path_separator, L".");
 #endif
 
 } // namespace ONNX_NAMESPACE
