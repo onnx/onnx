@@ -469,8 +469,10 @@ if(BUILD_ONNX_PYTHON)
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
                           PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+    # Only put double quotes around $<TARGET_FILE:onnx> for Mac
+    # Other platforms like Windows and Ubuntu originally work fine without double quotes
     target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -Wl,-force_load,$<TARGET_FILE:onnx>)
+                          PRIVATE -Wl,-force_load,"$<TARGET_FILE:onnx>")
   elseif(MSVC)
     # In MSVC, we will add whole archive in default
     target_link_libraries(onnx_cpp2py_export
