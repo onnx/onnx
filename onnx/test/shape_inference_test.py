@@ -293,6 +293,126 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT16, (2, 4, 3))]
         )
 
+    def test_col2im(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (1, 5, 5)),
+                ("output_shape", TensorProto.INT64, (2,)),
+                ("kernel_shape", TensorProto.INT64, (2,)),
+            ],
+            [
+                make_node(
+                    "Col2Im", ["input", "output_shape", "kernel_shape"], ["output"]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("output_shape", TensorProto.INT64, (2,), (5, 5)),
+                make_tensor("kernel_shape", TensorProto.INT64, (2,), (1, 5)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 5, 5))]
+        )
+
+    def test_col2im_strides(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (1, 9, 4)),
+                ("output_shape", TensorProto.INT64, (2,)),
+                ("kernel_shape", TensorProto.INT64, (2,)),
+            ],
+            [
+                make_node(
+                    "Col2Im",
+                    ["input", "output_shape", "kernel_shape"],
+                    ["output"],
+                    strides=[2, 2],
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("output_shape", TensorProto.INT64, (2,), (5, 5)),
+                make_tensor("kernel_shape", TensorProto.INT64, (2,), (3, 3)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 5, 5))]
+        )
+
+    def test_col2im_pads(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (1, 5, 15)),
+                ("output_shape", TensorProto.INT64, (2,)),
+                ("kernel_shape", TensorProto.INT64, (2,)),
+            ],
+            [
+                make_node(
+                    "Col2Im",
+                    ["input", "output_shape", "kernel_shape"],
+                    ["output"],
+                    pads=[0, 1, 0, 1],
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("output_shape", TensorProto.INT64, (2,), (5, 5)),
+                make_tensor("kernel_shape", TensorProto.INT64, (2,), (1, 5)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 5, 5))]
+        )
+
+    def test_col2im_dilations(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (1, 4, 5)),
+                ("output_shape", TensorProto.INT64, (2,)),
+                ("kernel_shape", TensorProto.INT64, (2,)),
+            ],
+            [
+                make_node(
+                    "Col2Im",
+                    ["input", "output_shape", "kernel_shape"],
+                    ["output"],
+                    dilations=[1, 5],
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("output_shape", TensorProto.INT64, (2,), (6, 6)),
+                make_tensor("kernel_shape", TensorProto.INT64, (2,), (2, 2)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 6, 6))]
+        )
+
+    def test_col2im_5d(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (1, 10, 12)),
+                ("output_shape", TensorProto.INT64, (3,)),
+                ("kernel_shape", TensorProto.INT64, (3,)),
+            ],
+            [
+                make_node(
+                    "Col2Im", ["input", "output_shape", "kernel_shape"], ["output"]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("output_shape", TensorProto.INT64, (3,), (3, 4, 5)),
+                make_tensor("kernel_shape", TensorProto.INT64, (3,), (1, 1, 5)),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, (1, 2, 3, 4, 5))],
+        )
+
     def test_concat(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3)), ("y", TensorProto.FLOAT, (7, 4, 3))],
