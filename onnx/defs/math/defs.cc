@@ -377,13 +377,11 @@ output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 - Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
-static float leaky_relu_default_alpha = 0.01f;
-
 ONNX_OPERATOR_SET_SCHEMA(
     LeakyRelu,
     16,
     OpSchema()
-        .Attr("alpha", "Coefficient of leakage.", AttributeProto::FLOAT, leaky_relu_default_alpha)
+        .Attr("alpha", "Coefficient of leakage.", AttributeProto::FLOAT, 0.01f)
         .SetDoc(LeakyRelu_ver16_doc)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -429,8 +427,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AlphaCast = CastLike (Alpha, X)
             Zero = Constant <value = float {0.0}>()
             ZeroCast = CastLike (Zero, X)
-            AlphaThanXLess = Less(AlphaCast, X)
-            Y = Where(AlphaThanXLess, X, ZeroCast)
+            AlphaLessThanX = Less(AlphaCast, X)
+            Y = Where(AlphaLessThanX, X, ZeroCast)
 		      }
         )ONNX"));
 
@@ -793,9 +791,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         {
           Zero = Constant <value = float {0.0}>()
           ZeroCast = CastLike(Zero, X)    
-          XLessThan = Less (X, ZeroCast)
+          XLessThanZero = Less (X, ZeroCast)
           SlopeMulX = Mul (slope, X)
-          Y = Where(XLessThan, SlopeMulX, X)
+          Y = Where(XLessThanZero, SlopeMulX, X)
         }
         )ONNX"));
 
@@ -971,8 +969,8 @@ bool BuildContextDependentFunctionBodyClip(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
-  bool has_min = ctx.getInputType(1);
-  bool has_max = ctx.getInputType(2);
+  bool has_min = ctx.hasInput(1);
+  bool has_max = ctx.hasInput(2);
 
   FunctionBuilder builder(functionProto);
   if (!has_min && !has_max) {
