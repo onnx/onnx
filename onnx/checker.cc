@@ -144,7 +144,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         std::wstring w_path = utf8str_to_wstring(entry.value());
         const fs::path windows_path(w_path);
         std::wstring relative_path = clean_relative_path(windows_path.wstring());
-        // Check that normalized relative path starts with "../" or "..\" on windows.
+        // Check that normalized relative path starts with "../" or "..\" on Windows.
         if (relative_path.find(L".." + w_k_preferred_path_separator, 0) != std::string::npos) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
@@ -189,7 +189,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               data_path,
               ", but it doesn't exist or is not accessible.");
         }
-        //  Do not allow symlinks or directories.
+        // Do not allow symlinks or directories.
         if (!S_ISREG(buffer.st_mode)) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
