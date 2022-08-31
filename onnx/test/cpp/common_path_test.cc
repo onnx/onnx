@@ -31,7 +31,7 @@ void expect_string_and_wstring(const std::string& actual, const std::string& exp
 #ifdef _WIN32
   // Test wstring with utf8str_to_wstring
   expect(utf8str_to_wstring(actual), utf8str_to_wstring(expected), "wstring path mismatch.");
-#endif _WIN32
+#endif
 }
 } // namespace
 
