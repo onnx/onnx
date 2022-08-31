@@ -34,6 +34,7 @@ bool is_path_separator(CHAR c) {
   return c == k_preferred_path_separator[0];
 }
 
+// To always use backward slash as path separator on Windows
 template <typename STRING>
 void normalize_separator(STRING& path) {
   char preferred_sep = k_preferred_path_separator[0];
@@ -49,12 +50,16 @@ void normalize_separator(STRING& path) {
   }
 }
 
+// Clean up relative path when there is ".." in the path, e.g.: a/b/../c -> a/c
+// std::string or std::wstring
 template <typename STRING>
 STRING clean_relative_path(const STRING& path);
 
+// std::string in template cannot be recognized as char[]
+// Therefore explicitly define char[] to handle char[] input
 template <typename CHAR, typename std::size_t N>
 std::basic_string<CHAR> clean_relative_path(const CHAR (&path)[N]) {
-  return clean_relative_path(std::string(path));
+  return clean_relative_path(std::basic_string<CHAR>(path));
 }
 
 #ifdef _WIN32

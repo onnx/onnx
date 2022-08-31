@@ -20,8 +20,7 @@ namespace ONNX_NAMESPACE {
 
 #define CLEAN_RELATIVE_PATH(string_type, char_type, separator, dot)                                           \
   template <>                                                                                                 \
-  string_type clean_relative_path(const string_type& input_path) {                                            \
-    string_type path = string_type(input_path);                                                               \
+  string_type clean_relative_path(const string_type& path) {                                                  \
     if (path.empty()) {                                                                                       \
       return dot;                                                                                             \
     }                                                                                                         \
