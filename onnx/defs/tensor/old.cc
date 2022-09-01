@@ -871,6 +871,115 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* ScatterND_ver16_doc = R"DOC(
+ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
+and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
+is produced by creating a copy of the input `data`, and then updating its value to values
+specified by `updates` at specific index positions specified by `indices`. Its output shape
+is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
+That is, two or more `updates` for the same index-location is not supported.
+`indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
+ `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
+Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
+update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
+update to a slice of the tensor.
+`updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
+first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
+The remaining dimensions of `updates` correspond to the dimensions of the
+replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
+corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
+must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+of shapes.
+The `output` is calculated via the following equation:
+    output = np.copy(data)
+    update_indices = indices.shape[:-1]
+    for idx in np.ndindex(update_indices):
+        output[indices[idx]] = updates[idx]
+The order of iteration in the above loop is not specified.
+In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
+This ensures that the output value does not depend on the iteration order.
+`reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
+tensor into `output` at the specified `indices`.
+In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
+then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
+When `reduction` is set to "add", `output` is calculated as follows:
+    output = np.copy(data)
+    update_indices = indices.shape[:-1]
+    for idx in np.ndindex(update_indices):
+        output[indices[idx]] += updates[idx]
+When `reduction` is set to "mul", `output` is calculated as follows:
+    output = np.copy(data)
+    update_indices = indices.shape[:-1]
+    for idx in np.ndindex(update_indices):
+        output[indices[idx]] *= updates[idx]
+This operator is the inverse of GatherND.
+Example 1:
+```
+  data    = [1, 2, 3, 4, 5, 6, 7, 8]
+  indices = [[4], [3], [1], [7]]
+  updates = [9, 10, 11, 12]
+  output  = [1, 11, 3, 10, 9, 6, 7, 12]
+```
+Example 2:
+```
+  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  indices = [[0], [2]]
+  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
+  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterND,
+    16,
+    OpSchema()
+        .SetDoc(ScatterND_ver16_doc)
+        .Attr(
+            "reduction",
+            "Type of reduction to apply: none (default), add, mul. "
+            "'none': no reduction applied. "
+            "'add':  reduction using the addition operation. "
+            "'mul': reduction using the multiplication operation.",
+            AttributeProto::STRING,
+            std::string("none"))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of rank q >= 1.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank q + r - indices_shape[-1] - 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 static const char* ScatterND_ver13_doc = R"DOC(
 ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
 and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
@@ -1035,6 +1144,129 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(2, "updates", "Tensor of rank q + r - indices_shape[-1] - 1.", "T")
         .Output(0, "output", "Tensor of rank r >= 1.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+static const char* ScatterElements_ver16_doc = R"DOC(
+ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
+rank r >= 1 and an optional attribute axis that identifies an axis of `data`
+(by default, the outer-most axis, that is axis 0). The output of the operation
+is produced by creating a copy of the input `data`, and then updating its value
+to values specified by `updates` at specific index positions specified by
+`indices`. Its output shape is the same as the shape of `data`.
+For each entry in `updates`, the target index in `data` is obtained by combining
+the corresponding entry in `indices` with the index of the entry itself: the
+index-value for dimension = axis is obtained from the value of the corresponding
+entry in `indices` and the index-value for dimension != axis is obtained from the
+index of the entry itself.
+`reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
+tensor into `output` at the specified `indices`.
+In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
+then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
+corresponding to the [i][j] entry is performed as below:
+```
+  output[indices[i][j]][j] = updates[i][j] if axis = 0,
+  output[i][indices[i][j]] = updates[i][j] if axis = 1,
+```
+When `reduction` is set to "add", the update corresponding to the [i][j] entry is performed as below:
+```
+  output[indices[i][j]][j] += updates[i][j] if axis = 0,
+  output[i][indices[i][j]] += updates[i][j] if axis = 1,
+```
+When `reduction` is set to "mul", the update corresponding to the [i][j] entry is performed as below:
+```
+  output[indices[i][j]][j] *= updates[i][j] if axis = 0,
+  output[i][indices[i][j]] *= updates[i][j] if axis = 1,
+```
+This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+Example 1:
+```
+  data = [
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+  ]
+  indices = [
+      [1, 0, 2],
+      [0, 2, 1],
+  ]
+  updates = [
+      [1.0, 1.1, 1.2],
+      [2.0, 2.1, 2.2],
+  ]
+  output = [
+      [2.0, 1.1, 0.0]
+      [1.0, 0.0, 2.2]
+      [0.0, 2.1, 1.2]
+  ]
+```
+Example 2:
+```
+  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+  indices = [[1, 3]]
+  updates = [[1.1, 2.1]]
+  axis = 1
+  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterElements,
+    16,
+    OpSchema()
+        .SetDoc(ScatterElements_ver16_doc)
+        .Attr(
+            "axis",
+            "Which axis to scatter on. Negative value means "
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "reduction",
+            "Type of reduction to apply: none (default), add, mul. "
+            "'none': no reduction applied. "
+            "'add':  reduction using the addition operation. "
+            "'mul': reduction using the multiplication operation.",
+            AttributeProto::STRING,
+            std::string("none"))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank r >=1 (same rank and shape as indices)",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank r >= 1 (same rank as input).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Input and output types can be of any tensor type.")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 1)) {
