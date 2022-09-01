@@ -645,9 +645,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("num_outputs", "Number of outputs to split parts of the tensor into. "
-              "If the tensor is not evenly splittable the last chunk will be smaller.",
-            AttributeProto::INT, false)
+        .Attr(
+            "num_outputs",
+            "Number of outputs to split parts of the tensor into. "
+            "If the tensor is not evenly splittable the last chunk will be smaller.",
+            AttributeProto::INT,
+            false)
         .SetDoc(Split_ver18_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
@@ -712,15 +715,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
                 int chunk_size = split_dim_value / num_outputs;
                 split.resize(num_outputs, chunk_size);
-              }
-              else { // tensor needs to be split unevenly
+              } else { // tensor needs to be split unevenly
                 int chunk_size = (split_dim_value / num_outputs) + 1;
                 int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
-                split.resize(num_outputs-1, chunk_size);
+                split.resize(num_outputs - 1, chunk_size);
                 split.push_back(last_chunk_size);
               }
-            }
-            else {
+            } else {
               fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");
             }
           }
