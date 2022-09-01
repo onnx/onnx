@@ -132,8 +132,8 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
-|<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
-|<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
+|<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
+|<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-18">18</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
 |<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|
 |<a href="#SequenceAt">SequenceAt</a>|<a href="Changelog.md#SequenceAt-11">11</a>|
 |<a href="#SequenceConstruct">SequenceConstruct</a>|<a href="Changelog.md#SequenceConstruct-11">11</a>|
@@ -23148,18 +23148,17 @@ expect(
     output[indices[i][j]][j] = updates[i][j] if axis = 0,
     output[i][indices[i][j]] = updates[i][j] if axis = 1,
   ```
-  When `reduction` is set to "add", the update corresponding to the [i][j] entry is performed as below:
+  When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
   ```
-    output[indices[i][j]][j] += updates[i][j] if axis = 0,
-    output[i][indices[i][j]] += updates[i][j] if axis = 1,
+    output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+    output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
   ```
-  When `reduction` is set to "mul", the update corresponding to the [i][j] entry is performed as below:
-  ```
-    output[indices[i][j]][j] *= updates[i][j] if axis = 0,
-    output[i][indices[i][j]] *= updates[i][j] if axis = 1,
-  ```
+  where the `f` is +/*/max/min as specified.
+
 
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+
+  (Opset 18 change): Adds max/min to the set of allowed reduction ops.
 
   Example 1:
   ```
@@ -23193,9 +23192,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 16 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a>, <a href="Changelog.md#ScatterElements-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-16">16</a>
 
 #### Attributes
 
@@ -23203,7 +23202,7 @@ Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.'max': reduction using the maximum operation.'min': reduction using the minimum operation.</dd>
 </dl>
 
 #### Inputs
@@ -23328,6 +23327,68 @@ expect(
 
 
 <details>
+<summary>scatter_elements_with_reduction_max</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="max",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="max")
+# print(y) produces
+# [[1.0, 2.1, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_max",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatter_elements_with_reduction_min</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="min",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="min")
+# print(y) produces
+# [[1.0, 1.1, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_min",
+)
+```
+
+</details>
+
+
+<details>
 <summary>scatter_elements_without_axis</summary>
 
 ```python
@@ -23395,21 +23456,18 @@ expect(
   tensor into `output` at the specified `indices`.
   In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
   then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
-  When `reduction` is set to "add", `output` is calculated as follows:
+  When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] += updates[idx]
+          output[indices[idx]] = f(output[indices[idx]], updates[idx])
 
-  When `reduction` is set to "mul", `output` is calculated as follows:
-
-      output = np.copy(data)
-      update_indices = indices.shape[:-1]
-      for idx in np.ndindex(update_indices):
-          output[indices[idx]] *= updates[idx]
+  where the `f` is +/*/max/min as specified.
 
   This operator is the inverse of GatherND.
+
+  (Opset 18 change): Adds max/min to the set of allowed reduction ops.
 
   Example 1:
   ```
@@ -23436,15 +23494,15 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 16 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a href="Changelog.md#ScatterND-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-16">16</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul':  reduction using the addition operation. 'max': reduction using the maximum operation.'min': reduction using the minimum operation.</dd>
 </dl>
 
 #### Inputs
@@ -23556,6 +23614,94 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_add",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_max</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="max",
+)
+data = np.array(
+    [
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+    ],
+    dtype=np.float32,
+)
+indices = np.array([[0], [0]], dtype=np.int64)
+updates = np.array(
+    [
+        [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+        [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+    ],
+    dtype=np.float32,
+)
+# Expecting output as np.array(
+#    [[[5, 5, 5, 5], [6, 6, 7, 8], [8, 7, 7, 7], [8, 8 ,8, 8]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="max")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_max",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_min</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="min",
+)
+data = np.array(
+    [
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+    ],
+    dtype=np.float32,
+)
+indices = np.array([[0], [0]], dtype=np.int64)
+updates = np.array(
+    [
+        [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+        [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+    ],
+    dtype=np.float32,
+)
+# Expecting output as np.array(
+#    [[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 3, 2, 1]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="min")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_min",
 )
 ```
 
