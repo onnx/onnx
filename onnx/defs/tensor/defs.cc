@@ -645,7 +645,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Attr("num_outputs", "Number of outputs to split equal parts of the tensor into.", AttributeProto::INT, false)
+        .Attr("num_outputs", "Number of outputs to split parts of the tensor into. "
+              "If the tensor is not evenly splittable the last chunk will be smaller.",
+            AttributeProto::INT, false)
         .SetDoc(Split_ver18_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
@@ -674,7 +676,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           int split_dim_value = static_cast<int>(split_dim.dim_value());
 
           std::vector<int64_t> split;
-          // size_t num_inputs = ctx.getNumInputs();
           const auto num_outputs_attr = ctx.getAttribute("num_outputs");
           if (ctx.hasInput(1) && num_outputs_attr) {
             fail_shape_inference("Both 'split' input and 'num_outputs' attribute were given");
@@ -708,13 +709,26 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (num_outputs < 1) {
                 fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
               }
-              if (split_dim_value % num_outputs != 0) {
-                fail_shape_inference("The input is not evenly splittable");
+              std::cout << std::endl << "split_dim_value=" << split_dim_value << std::endl;
+              if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
+                int chunk_size = split_dim_value / num_outputs;
+                if (chunk_size == 0 || chunk_size > split_dim_value) {
+                fail_shape_inference("Tensor cannot be split into ", num_outputs, " outputs");
+                }
+                split.resize(num_outputs, chunk_size);
+                std::cout << std::endl << "chunk_size=" << chunk_size << std::endl;
               }
-              int chunk_size = split_dim_value / num_outputs;
-              split.resize(ctx.getNumOutputs(), chunk_size);
-            } else {
-              fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute were given");
+              else { // tensor needs to be split unevenly
+                //int chunk_size = (split_dim_value - (split_dim_value % num_outputs)) / (num_outputs - 1);
+                int chunk_size = (split_dim_value) / (num_outputs - 1); // WORKS FOR 1D
+                int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
+                split.resize(num_outputs-1, chunk_size);
+                split.push_back(last_chunk_size);
+                std::cout << std::endl << "chunk_size=" << chunk_size << " last_chunk_size=" << last_chunk_size << std::endl;
+              }
+            }
+            else {
+              fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");
             }
           }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
