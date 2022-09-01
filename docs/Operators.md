@@ -26861,7 +26861,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">1</a>, <a href="
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
 <dt><tt>num_outputs</tt> : int</dt>
-<dd>Number of outputs to split equal parts of the tensor into.</dd>
+<dd>Number of outputs to split parts of the tensor into. If the tensor is not evenly splittable the last chunk will be smaller.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -26912,7 +26912,7 @@ expect(
     node,
     inputs=[input],
     outputs=[y for y in expected_outputs],
-    name="test_split_equal_parts_1d",
+    name="test_split_equal_parts_1d_opset13",
     opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 
@@ -26932,7 +26932,7 @@ expect(
     node,
     inputs=[input, split],
     outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_1d",
+    name="test_split_variable_parts_1d_opset13",
     opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 ```
@@ -26963,7 +26963,7 @@ expect(
     node,
     inputs=[input],
     outputs=[y for y in expected_outputs],
-    name="test_split_equal_parts_1d",
+    name="test_split_equal_parts_1d_opset18",
 )
 
 split = np.array([2, 4]).astype(np.int64)
@@ -26982,7 +26982,38 @@ expect(
     node,
     inputs=[input, split],
     outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_1d",
+    name="test_split_variable_parts_1d_opset18",
+)
+```
+
+</details>
+
+
+<details>
+<summary>1d_uneven_split_opset18</summary>
+
+```python
+input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]).astype(np.float32)
+
+# If axis is not specified, split is applied on default axis 0
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3", "output_4"],
+    num_outputs=4,
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0]).astype(np.float32),
+    np.array([5.0, 6.0]).astype(np.float32),
+    np.array([7.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[input],
+    outputs=[y for y in expected_outputs],
+    name="test_1d_uneven_split_opset18",
 )
 ```
 
@@ -27010,7 +27041,7 @@ expect(
     node,
     inputs=[input],
     outputs=[y for y in expected_outputs],
-    name="test_split_equal_parts_2d",
+    name="test_split_equal_parts_2d_opset13",
     opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 
@@ -27033,7 +27064,7 @@ expect(
     node,
     inputs=[input, split],
     outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_2d",
+    name="test_split_variable_parts_2d_opset13",
     opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 ```
@@ -27088,7 +27119,40 @@ expect(
     node,
     inputs=[input, split],
     outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_2d",
+    name="test_split_variable_parts_2d_opset18",
+)
+```
+
+</details>
+
+
+<details>
+<summary>2d_uneven_split_opset18</summary>
+
+```python
+input = np.array(
+    [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0], [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0]]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3"],
+    axis=1,
+    num_outputs=3,
+)
+
+expected_outputs = [
+    np.array([[1.0, 2.0, 3.0], [9.0, 10.0, 11.0]]).astype(np.float32),
+    np.array([[4.0, 5.0, 6.0], [12.0, 13.0, 14.0]]).astype(np.float32),
+    np.array([[7.0, 8.0], [15.0, 16.0]]).astype(np.float32),
+]
+
+expect(
+    node,
+    inputs=[input],
+    outputs=[y for y in expected_outputs],
+    name="test_2d_uneven_split_opset18",
 )
 ```
 
@@ -27115,7 +27179,7 @@ expect(
     node,
     inputs=[input],
     outputs=[y for y in expected_outputs],
-    name="test_split_equal_parts_default_axis",
+    name="test_split_equal_parts_default_axis_opset13",
     opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 
@@ -27132,7 +27196,7 @@ expect(
     node,
     inputs=[input, split],
     outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_default_axis",
+    name="test_split_variable_parts_default_axis_opset13",
     opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 ```
@@ -27163,7 +27227,7 @@ expect(
     node,
     inputs=[input],
     outputs=[y for y in expected_outputs],
-    name="test_split_equal_parts_default_axis",
+    name="test_split_equal_parts_default_axis_opset18",
 )
 
 split = np.array([2, 4]).astype(np.int64)
@@ -27179,7 +27243,7 @@ expect(
     node,
     inputs=[input, split],
     outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_default_axis",
+    name="test_split_variable_parts_default_axis_opset18",
 )
 ```
 
@@ -27209,7 +27273,7 @@ expect(
     node,
     inputs=[input, split],
     outputs=[y for y in expected_outputs],
-    name="test_split_zero_size_splits",
+    name="test_split_zero_size_splits_opset13",
     opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 ```
@@ -27240,7 +27304,7 @@ expect(
     node,
     inputs=[input, split],
     outputs=[y for y in expected_outputs],
-    name="test_split_zero_size_splits",
+    name="test_split_zero_size_splits_opset18",
 )
 ```
 

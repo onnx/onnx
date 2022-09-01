@@ -709,22 +709,16 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (num_outputs < 1) {
                 fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
               }
-              std::cout << std::endl << "split_dim_value=" << split_dim_value << std::endl;
-              if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
+              int remaining_dims = split_dim_value % num_outputs;
+              if (remaining_dims == 0) { // tensor is evenly splittable
                 int chunk_size = split_dim_value / num_outputs;
-                if (chunk_size == 0 || chunk_size > split_dim_value) {
-                fail_shape_inference("Tensor cannot be split into ", num_outputs, " outputs");
-                }
                 split.resize(num_outputs, chunk_size);
-                std::cout << std::endl << "chunk_size=" << chunk_size << std::endl;
               }
               else { // tensor needs to be split unevenly
-                //int chunk_size = (split_dim_value - (split_dim_value % num_outputs)) / (num_outputs - 1);
-                int chunk_size = (split_dim_value) / (num_outputs - 1); // WORKS FOR 1D
+                int chunk_size = (split_dim_value / num_outputs) + 1;
                 int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
                 split.resize(num_outputs-1, chunk_size);
                 split.push_back(last_chunk_size);
-                std::cout << std::endl << "chunk_size=" << chunk_size << " last_chunk_size=" << last_chunk_size << std::endl;
               }
             }
             else {
