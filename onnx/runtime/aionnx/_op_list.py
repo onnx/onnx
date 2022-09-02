@@ -201,7 +201,7 @@ for class_name, class_type in clo.items():
     try:
         issub = issubclass(class_type, OpRun)
     except TypeError as e:
-        raise TypeError(f"Unexpected variable type {cl!r} and class_name={class_name!r}.") from e
+        raise TypeError(f"Unexpected variable type {class_type!r} and class_name={class_name!r}.") from e
     if issub:
         op_type, op_version = _split_class_namme(class_name)
         if op_type not in _registered_operators:
