@@ -4,7 +4,7 @@ import numpy as np
 
 from onnx.defs import onnx_opset_version
 
-from ._op import OpRunUnaryNum, OpRun
+from ._op import OpRun, OpRunUnaryNum
 
 
 class Clip_6(OpRunUnaryNum):
@@ -18,7 +18,7 @@ class Clip_6(OpRunUnaryNum):
 
 class Clip_11(OpRun):
     def __init__(self, onnx_node, log_function):
-        OpRunUnaryNum.__init__(self, onnx_node, log_function)
+        OpRun.__init__(self, onnx_node, log_function)
 
     def _run(self, data, *minmax, attributes=None):
         le = len(minmax)

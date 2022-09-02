@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
+import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from textwrap import dedent
-import unittest
 
 import numpy as np  # type: ignore
 from numpy.testing import assert_almost_equal
 
-from onnx import parser, checker, ModelProto, TensorProto
+from onnx import ModelProto, TensorProto, checker, parser
 from onnx.checker import check_model
 from onnx.helper import (
     make_graph,

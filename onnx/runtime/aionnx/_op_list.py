@@ -10,7 +10,7 @@ did not change the implementation.
 """
 import textwrap
 
-from ._op import OpRun, OpFunction
+from ._op import OpFunction, OpRun
 
 # from .op_abs import Abs
 # from .op_acos import Acos
