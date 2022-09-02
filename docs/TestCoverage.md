@@ -15569,7 +15569,7 @@ expect(
 
 
 ### ScatterElements
-There are 4 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>scatter_elements_with_axis</summary>
 
@@ -15656,6 +15656,64 @@ expect(
 
 </details>
 <details>
+<summary>scatter_elements_with_reduction_max</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="max",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="max")
+# print(y) produces
+# [[1.0, 2.1, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_max",
+)
+```
+
+</details>
+<details>
+<summary>scatter_elements_with_reduction_min</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="min",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="min")
+# print(y) produces
+# [[1.0, 1.1, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_min",
+)
+```
+
+</details>
+<details>
 <summary>scatter_elements_without_axis</summary>
 
 ```python
@@ -15686,7 +15744,7 @@ expect(
 
 
 ### ScatterND
-There are 3 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>scatternd</summary>
 
@@ -15766,6 +15824,90 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_add",
+)
+```
+
+</details>
+<details>
+<summary>scatternd_max</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="max",
+)
+data = np.array(
+    [
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+    ],
+    dtype=np.float32,
+)
+indices = np.array([[0], [0]], dtype=np.int64)
+updates = np.array(
+    [
+        [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+        [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+    ],
+    dtype=np.float32,
+)
+# Expecting output as np.array(
+#    [[[5, 5, 5, 5], [6, 6, 7, 8], [8, 7, 7, 7], [8, 8 ,8, 8]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="max")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_max",
+)
+```
+
+</details>
+<details>
+<summary>scatternd_min</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="min",
+)
+data = np.array(
+    [
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+    ],
+    dtype=np.float32,
+)
+indices = np.array([[0], [0]], dtype=np.int64)
+updates = np.array(
+    [
+        [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+        [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+    ],
+    dtype=np.float32,
+)
+# Expecting output as np.array(
+#    [[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 3, 2, 1]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="min")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_min",
 )
 ```
 
