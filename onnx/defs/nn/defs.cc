@@ -1822,7 +1822,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shrink_ver18_doc = R"DOC(
+static const char* Shrink_ver9_doc = R"DOC(
 Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
 having same datatype and shape with input. It has two attributes, lambd and
 bias. The formula of this operator is: If x < -lambd, y = x + bias;
@@ -1831,9 +1831,9 @@ If x > lambd, y = x - bias; Otherwise, y = 0.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Shrink,
-    18,
+    9,
     OpSchema()
-        .SetDoc(Shrink_ver18_doc)
+        .SetDoc(Shrink_ver9_doc)
         .Attr("lambd", "The lambd value for the Shrink formulation. Default is 0.5.", AttributeProto::FLOAT, 0.5f)
         .Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, 0.0f)
         .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -1856,7 +1856,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             InputSubBiasOrZero = Where (LambdaLessThanInput, InputSubBias, ZeroCast)
             output = Where(InputLessThanNegLambda, InputAddBias, InputSubBiasOrZero)
 		      }
-        )ONNX"));
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* Flatten_ver13_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape

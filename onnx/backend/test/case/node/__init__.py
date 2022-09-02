@@ -306,7 +306,7 @@ def expect(
         )
         kwargs["producer_name"] = "backend-test"
 
-        # replace opset versions with what are specified in funtion proto
+        # replace opset versions with what are specified in function proto
         for opset_import in func_opset_import:
             if "opset_imports" in kwargs:
                 matches = [

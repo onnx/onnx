@@ -2158,23 +2158,4 @@ ONNX_OPERATOR_SET_SCHEMA(
           // TODO in training mode, it may be possible to infer some of
           // the other outputs as well.
         }));
-
-static const char* Shrink_ver9_doc = R"DOC(
-Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
-having same datatype and shape with input. It has two attributes, lambd and
-bias. The formula of this operator is: If x < -lambd, y = x + bias;
-If x > lambd, y = x - bias; Otherwise, y = 0.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Shrink,
-    9,
-    OpSchema()
-        .SetDoc(Shrink_ver9_doc)
-        .Attr("lambd", "The lambd value for the Shrink formulation. Default is 0.5.", AttributeProto::FLOAT, 0.5f)
-        .Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, 0.0f)
-        .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 } // namespace ONNX_NAMESPACE

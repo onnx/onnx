@@ -335,7 +335,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Relu_ver18_doc = R"DOC(
+static const char* Relu_ver14_doc = R"DOC(
 Relu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
 the tensor elementwise.
@@ -343,9 +343,9 @@ the tensor elementwise.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Relu,
-    18,
+    14,
     OpSchema()
-        .SetDoc(Relu_ver18_doc)
+        .SetDoc(Relu_ver14_doc)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
@@ -364,8 +364,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             Zero = Constant <value = float {0.0}>()
             ZeroCast = CastLike (Zero, X)
             Y = Max (X, ZeroCast)
-		      }
+          }
         )ONNX")
+        .FunctionAddOpset("", 18)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* LeakyRelu_ver16_doc = R"DOC(
@@ -402,7 +403,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 		      }
         )ONNX"));
 
-static const char* ThresholdedRelu_ver18_doc = R"DOC(
+static const char* ThresholdedRelu_ver10_doc = R"DOC(
 ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
 is applied to the tensor elementwise.
@@ -410,9 +411,9 @@ is applied to the tensor elementwise.
 
 ONNX_OPERATOR_SET_SCHEMA(
     ThresholdedRelu,
-    18,
+    10,
     OpSchema()
-        .SetDoc(ThresholdedRelu_ver18_doc)
+        .SetDoc(ThresholdedRelu_ver10_doc)
         .Attr("alpha", "Threshold value", AttributeProto::FLOAT, 1.0f)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -430,9 +431,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             AlphaLessThanX = Less(AlphaCast, X)
             Y = Where(AlphaLessThanX, X, ZeroCast)
 		      }
-        )ONNX"));
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
-static const char* Selu_ver18_doc = R"DOC(
+static const char* Selu_ver6_doc = R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the scaled exponential linear unit function,
 `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
@@ -441,7 +443,7 @@ is applied to the tensor elementwise.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Selu,
-    18,
+    6,
     OpSchema()
         .Attr(
             "alpha",
@@ -455,7 +457,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(i.e., float32 approximation of 1.0507009873554804934193349852946).",
             AttributeProto::FLOAT,
             1.05070102214813232421875f)
-        .SetDoc(Selu_ver18_doc)
+        .SetDoc(Selu_ver6_doc)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
@@ -479,9 +481,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             XLessThanZero = Less (X, ZeroCast)
             Y = Where(XLessThanZero, Neg, Pos)
 		      }
-        )ONNX"));
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
-static const char* Elu_ver18_doc = R"DOC(
+static const char* Elu_ver6_doc = R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
 0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
@@ -490,10 +493,10 @@ Elu takes one input data (Tensor<T>) and produces one output data
 
 ONNX_OPERATOR_SET_SCHEMA(
     Elu,
-    18,
+    6,
     OpSchema()
         .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, 1.0f)
-        .SetDoc(Elu_ver18_doc)
+        .SetDoc(Elu_ver6_doc)
         .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "1D output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
@@ -515,7 +518,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AlphaMulExpXSubOne = Mul (AlphaCast, ExpXSubOne)
             Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
 		      }
-        )ONNX"));
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* mish_ver18_doc = R"DOC(
 Mish: A Self Regularized Non-Monotonic Neural Activation Function.
@@ -816,7 +820,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* HardSigmoid_ver18_doc = R"DOC(
+static const char* HardSigmoid_ver6_doc = R"DOC(
 HardSigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
 is applied to the tensor elementwise.
@@ -824,11 +828,11 @@ is applied to the tensor elementwise.
 
 ONNX_OPERATOR_SET_SCHEMA(
     HardSigmoid,
-    18,
+    6,
     OpSchema()
         .Attr("alpha", "Value of alpha.", AttributeProto::FLOAT, 0.2f)
         .Attr("beta", "Value of beta.", AttributeProto::FLOAT, 0.5f)
-        .SetDoc(HardSigmoid_ver18_doc)
+        .SetDoc(HardSigmoid_ver6_doc)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
@@ -851,7 +855,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             MinOneOrAlphaMulXAddBeta = Min (AlphaMulXAddBeta, OneCast)
             Y = Max(MinOneOrAlphaMulXAddBeta, ZeroCast)
 		      }
-        )ONNX"));
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* HardSwish_ver14_doc = R"DOC(
 HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
@@ -1101,15 +1106,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         "hardmax",
         "Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise")));
 
-static const char* Softsign_ver18_doc = R"DOC(
+static const char* Softsign_ver1_doc = R"DOC(
 Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softsign,
-    18,
+    1,
     OpSchema()
-        .SetDoc(Softsign_ver18_doc)
+        .SetDoc(Softsign_ver1_doc)
         .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -1133,7 +1138,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OneAddAbsInput = Add (OneCast, AbsInput)
             output = Div(input, OneAddAbsInput)
 		      }
-        )ONNX"));
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* Softplus_ver1_doc = R"DOC(
 Softplus takes one input data (Tensor<T>) and produces one output data

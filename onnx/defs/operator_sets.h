@@ -1006,13 +1006,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Resize);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Mish);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalGetElement);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalHasElement);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Relu);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ThresholdedRelu);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Selu);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Elu);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, HardSigmoid);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Softsign);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Shrink);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im);
 
 // Iterate over schema from ai.onnx version 18
@@ -1025,13 +1018,6 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Mish)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalGetElement)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalHasElement)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Relu)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ThresholdedRelu)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Selu)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Elu)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, HardSigmoid)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Softsign)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Shrink)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im)>());
   }
 };
