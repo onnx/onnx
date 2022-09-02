@@ -123,7 +123,7 @@ class Inference:
             return load_op(node.domain, node.op_type, version)
         if node.domain == 'ai.onnx.ml':
             raise NotImplementedError(
-                f"No implemented for domain {domain!r} is available yet.")
+                f"No implemented for domain {node.domain!r} is available yet.")
         # It has to be a function.
         key = node.domain, node.op_type
         if key in self.functions_:

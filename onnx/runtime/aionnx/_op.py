@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import pprint
 import numpy as np
 from onnx import TensorProto, GraphProto
 from onnx.defs import get_all_schemas_with_history
@@ -102,8 +101,7 @@ class OpRun:
                 if not hasattr(self, k) and getattr(v, 'required', True):
                     raise RuntimeError(
                         "Attribute '{}' is expected based on ONNX specifications "
-                        "for node '{}' and options {}.".format(
-                            k, onnx_node.op_type, pprint.pformat(options)))
+                        "for node '{}'.".format(k, self.onnx_node.op_type))
 
     @staticmethod
     def local_inputs(graph):
@@ -260,6 +258,7 @@ class OpRun:
             return {k: getattr(self, k)
                     for k in self.atts}  # pylint: disable=E1101
         return None
+
 
 class OpFunction(OpRun):
     """
@@ -482,17 +481,6 @@ class OpRunReduceNumpy(OpRunUnaryNum):
     """
 
     def __init__(self, onnx_node, logging_function):
-        if ('noop_with_empty_axes' not in expected_attributes and
-                'axes' not in expected_attributes):
-            raise RuntimeError(
-                "Parameter 'axes' is expected but not found in {} "
-                "from class {}".format(expected_attributes, type(self)))
-        if (expected_attributes.get('noop_with_empty_axes', 0) and
-                (expected_attributes['axes'] is None or
-                    len(expected_attributes['axes']) == 0)):
-            raise RuntimeError(
-                "Parameter 'axes' cannot be empty as {} (noop_with_empty_axes=1) "
-                "from class {}".format(expected_attributes, type(self)))
         OpRunUnaryNum.__init__(self, onnx_node, logging_function)
         if isinstance(self.axes, np.ndarray):  # pylint: disable=E0203
             if (len(self.axes.shape) == 0 or  # pylint: disable=E0203,E1101

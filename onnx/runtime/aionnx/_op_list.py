@@ -241,7 +241,7 @@ def load_op(domain, op_type, version, custom=None):
         if best == -1:
             raise RuntimeError(
                 f"No implementation for operator {op_type!r} "
-                f"domain {node.domain!r} and version {version!r}, found "
+                f"domain {domain!r} and version {version!r}, found "
                 f"{', '.join(map(str, impl))}.")
         cl = impl[best]
     if cl is None:
