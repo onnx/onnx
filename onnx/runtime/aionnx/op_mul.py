@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy
+
 from ._op import OpRunBinaryNumpy
 
 

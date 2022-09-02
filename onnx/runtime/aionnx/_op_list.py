@@ -9,6 +9,7 @@ The operator may have been updated to support more types but that
 did not change the implementation.
 """
 import textwrap
+
 from ._op import OpRun, OpFunction
 
 # from .op_abs import Abs
@@ -34,7 +35,7 @@ from .op_add import Add
 # from .op_cdist import CDist
 # from .op_ceil import Ceil
 # from .op_celu import Celu
-from .op_clip import Clip_6, Clip_11, Clip
+from .op_clip import Clip, Clip_6, Clip_11
 
 # from .op_compress import Compress
 # from .op_concat import Concat

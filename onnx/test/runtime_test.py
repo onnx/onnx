@@ -4,18 +4,20 @@ from contextlib import redirect_stdout
 from io import StringIO
 from textwrap import dedent
 import unittest
+
 import numpy as np  # type: ignore
 from numpy.testing import assert_almost_equal
+
 from onnx import parser, checker, ModelProto, TensorProto
-from onnx.numpy_helper import from_array
+from onnx.checker import check_model
 from onnx.helper import (
+    make_graph,
     make_model,
     make_node,
-    make_graph,
-    make_tensor_value_info,
     make_opsetid,
+    make_tensor_value_info,
 )
-from onnx.checker import check_model
+from onnx.numpy_helper import from_array
 
 try:
     import onnx.runtime as rt

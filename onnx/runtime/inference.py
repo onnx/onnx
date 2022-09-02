@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from io import BytesIO
+
 import numpy as np
+
 from onnx import load, ModelProto, GraphProto, FunctionProto, numpy_helper
 from onnx.defs import onnx_opset_version
 

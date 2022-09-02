@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
-from onnx import TensorProto, GraphProto
+from onnx import GraphProto, TensorProto
 from onnx.defs import get_all_schemas_with_history
 
 

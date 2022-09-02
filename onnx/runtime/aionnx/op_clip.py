@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
+
 from onnx.defs import onnx_opset_version
+
 from ._op import OpRunUnaryNum, OpRun
 
 
