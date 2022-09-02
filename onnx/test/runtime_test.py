@@ -1,0 +1,212 @@
+# SPDX-License-Identifier: Apache-2.0
+
+import unittest
+from typing import Callable, List, Optional, Tuple
+import numpy as np  # type: ignore
+from numpy.testing import assert_almost_equal
+from onnx import parser, checker, ModelProto, TensorProto
+from onnx.numpy_helper import from_array
+from onnx.helper import (
+    make_model, make_node, make_graph,
+    make_tensor_value_info, make_opsetid)
+from onnx.checker import check_model
+
+try:
+    import onnx.runtime as rt
+except ImportError:
+    # will disappear in the final version of the PR.
+    import os
+    import sys
+    sys.path.insert(0, os.path.normpath(os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "..", "..", "onnx")))
+    import runtime as rt
+
+
+class TestRuntimeInference(unittest.TestCase):
+    m2_def = """
+        <
+            ir_version: 7,
+            opset_import: [ "": 10, "com.microsoft": 1]
+        >
+        agraph (float[N, M] B01, float[N, M] B11, float[N, M] B21) => (float[N, M] D0)
+        {
+            C0 = Add(B01, B11)
+            C1 = Sub(B11, B21)
+            D0 = Mul(C0, C1)
+        }
+        """
+
+    @staticmethod
+    def _load_model(m_def: str) -> ModelProto:
+        """
+        Parses a model from a string representation, including checking
+        the model for correctness
+        """
+        m = parser.parse_model(m_def)
+        checker.check_model(m)
+        return m
+
+    @staticmethod
+    def _linear_regression(clip=False, opset=None, min_value=-1., max_value=1.):
+        X = make_tensor_value_info('X', TensorProto.FLOAT, [None, None])
+        A = make_tensor_value_info('A', TensorProto.FLOAT, [None, None])
+        B = make_tensor_value_info('B', TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info('Y', TensorProto.FLOAT, [None])
+        node1 = make_node('MatMul', ['X', 'A'], ['XA'])
+        if clip:
+            node2 = make_node('Add', ['XA', 'B'], ['Y_clip'])
+            if opset is not None and opset < 11:
+                if min_value:
+                    if max_value:
+                        node3 = make_node('Clip', ['Y_clip'], ['Y'],
+                                          min=min_value, max=max_value)
+                    else:
+                        node3 = make_node('Clip', ['Y_clip'], ['Y'], min=min_value)
+                elif max_value:
+                    node3 = make_node('Clip', ['Y_clip'], ['Y'], max=max_value)
+                else:
+                    node3 = make_node('Clip', ['Y_clip'], ['Y'])
+                graph = make_graph([node1, node2, node3], 'lr', [X, A, B], [Y])
+            else:
+                mi = (from_array(np.array([min_value], dtype=np.float32), name='mi')
+                      if min_value else None)
+                ma = (from_array(np.array([max_value], dtype=np.float32), name='ma')
+                      if max_value else None)
+                inputs = ['Y_clip', 'mi' if mi else '', 'ma' if ma else '']
+                node3 = make_node('Clip', inputs, ['Y'])
+                initializer = [_ for _ in [mi, ma] if _]
+                graph = make_graph([node1, node2, node3], 'lr', [X, A, B], [Y],
+                                   initializer=initializer)
+            f = lambda x, a, b: np.clip(a @ a + b, min_value, max_value)
+        else:
+            node2 = make_node('Add', ['XA', 'B'], ['Y'])
+            graph = make_graph([node1, node2], 'lr', [X, A, B], [Y])
+            f = lambda x, a, b: a @ a + b
+        if opset is None:
+            onnx_model = make_model(graph)
+        else:
+            onnx_model = make_model(
+                graph, opset_imports=[make_opsetid("", opset)])
+        try:
+            check_model(onnx_model)
+        except Exception as e:
+            raise AssertionError(f"checker fails for\n{str(onnx_model)}") from e
+        return onnx_model, f
+
+    def test_inference_exceptions(self):
+        X = make_tensor_value_info('X', TensorProto.FLOAT, [None, None])
+        with self.assertRaises(TypeError):
+            rt.Inference(X)
+
+    def test_inference_no_attribute(self):
+        m = TestRuntimeInference._load_model(TestRuntimeInference.m2_def)
+        checker.check_model(m)
+        sess = rt.Inference(m)
+        self.assertEqual(sess.input_names, ['B01', 'B11', 'B21'])
+        self.assertEqual(sess.output_names, ['D0'])
+        self.assertEqual(sess.opsets, {'': 10, 'com.microsoft': 1})
+        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+        y = np.array([[4, 5], [6, 7]], dtype=np.float32)
+        z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
+        res = sess.run(None, {'B01': x, 'B11': y, 'B21': z})[0]
+        expected = (x + y) * (y - z)
+        assert_almost_equal(expected, res)
+
+    def test_inference_lr(self):
+        lr, f = TestRuntimeInference._linear_regression()
+        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+        a = np.array([1, 1], dtype=np.float32)
+        b = np.array([11], dtype=np.float32)
+        expected = f(x, a, b)
+        sess = rt.Inference(lr)
+        got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
+        assert_almost_equal(expected, got)
+
+    def test_inference_lr_clip(self):
+        with self.subTest(opt="min+max"):
+            lr, f = TestRuntimeInference._linear_regression(clip=True)
+            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+            a = np.array([1, 1], dtype=np.float32)
+            b = np.array([11], dtype=np.float32)
+            expected = f(x, a, b)
+            sess = rt.Inference(lr)
+            last_node = sess.rt_nodes_[-1]
+            self.assertEqual(last_node.__class__.__name__, "Clip_11")
+            got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
+            assert_almost_equal(expected, got)    
+
+        with self.subTest(opt="max"):
+            lr, f = TestRuntimeInference._linear_regression(
+                clip=True, min_value=None)
+            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+            a = np.array([1, 1], dtype=np.float32)
+            b = np.array([11], dtype=np.float32)
+            expected = f(x, a, b)
+            sess = rt.Inference(lr)
+            last_node = sess.rt_nodes_[-1]
+            self.assertEqual(last_node.__class__.__name__, "Clip_11")
+            got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
+            assert_almost_equal(expected, got)    
+
+        with self.subTest(opt="min"):
+            lr, f = TestRuntimeInference._linear_regression(
+                clip=True, max_value=None)
+            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+            a = np.array([1, 1], dtype=np.float32)
+            b = np.array([11], dtype=np.float32)
+            expected = f(x, a, b)
+            sess = rt.Inference(lr)
+            last_node = sess.rt_nodes_[-1]
+            self.assertEqual(last_node.__class__.__name__, "Clip_11")
+            got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
+            assert_almost_equal(expected, got)    
+
+    def test_inference_lr_clip_6(self):
+        with self.subTest(opt="min+max"):
+            lr, f = TestRuntimeInference._linear_regression(clip=True, opset=10)
+            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+            a = np.array([1, 1], dtype=np.float32)
+            b = np.array([11], dtype=np.float32)
+            expected = f(x, a, b)
+            sess = rt.Inference(lr)
+            last_node = sess.rt_nodes_[-1]
+            self.assertEqual(last_node.__class__.__name__, "Clip_6")
+            self.assertEqual(last_node.min, -1)
+            self.assertEqual(last_node.max, 1)
+            got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
+            assert_almost_equal(expected, got)        
+
+        with self.subTest(opt="max"):
+            lr, f = TestRuntimeInference._linear_regression(
+                clip=True, opset=10, min_value=None)
+            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+            a = np.array([1, 1], dtype=np.float32)
+            b = np.array([11], dtype=np.float32)
+            expected = f(x, a, b)
+            sess = rt.Inference(lr)
+            last_node = sess.rt_nodes_[-1]
+            self.assertEqual(last_node.__class__.__name__, "Clip_6")
+            self.assertEqual(last_node.max, 1)
+            self.assertFalse('min' in last_node.__dict__)
+            got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
+            assert_almost_equal(expected, got)        
+
+        with self.subTest(opt="max"):
+            lr, f = TestRuntimeInference._linear_regression(
+                clip=True, opset=10, max_value=None)
+            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+            a = np.array([1, 1], dtype=np.float32)
+            b = np.array([11], dtype=np.float32)
+            expected = f(x, a, b)
+            sess = rt.Inference(lr)
+            last_node = sess.rt_nodes_[-1]
+            self.assertEqual(last_node.__class__.__name__, "Clip_6")
+            self.assertEqual(last_node.min, -1)
+            self.assertFalse('max' in last_node.__dict__)
+            got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
+            assert_almost_equal(expected, got)        
+
+
+if __name__ == "__main__":
+    # TestRuntimeInference().test_inference_lr_clip_11()
+    unittest.main()
