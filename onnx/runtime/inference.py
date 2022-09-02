@@ -53,8 +53,7 @@ class Inference:
         if self.onnx_graph_:
             self.input_names_ = [i.name for i in self.onnx_graph_.input]
             self.output_names_ = [o.name for o in self.onnx_graph_.output]
-            self.inits_ = (list(self.onnx_graph_.initializer) +
-                           list(self.onnx_graph_.sparse_initializer))
+            self.inits_ = (list(self.onnx_graph_.initializer) + list(self.onnx_graph_.sparse_initializer))
             self.nodes_ = self.onnx_graph_.node
         else:
             self.input_names_ = list(proto.input)

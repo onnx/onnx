@@ -176,7 +176,7 @@ class OpRun:
             "Method '_run' or 'to_python' should be overwritten for operator %s."
             "" % self.__class__.__name__)
 
-    def run(self, *args, **kwargs):  # pylint: disable=E0202
+    def run(self, *args, **kwargs):
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -204,7 +204,7 @@ class OpRun:
         """
         inps = []
         if hasattr(self, 'atts'):
-            for k, v in self.atts.items():  # pylint: disable=E1101
+            for k, v in self.atts.items():
                 if isinstance(v, (list, tuple, dict)) and len(v) == 0:
                     v = None
                 inps.append(f'{k}={v!r}')
@@ -219,7 +219,7 @@ class OpRun:
             return None
 
         inps = []
-        for k, v in self.atts.items():  # pylint: disable=E1101
+        for k, v in self.atts.items():
             val = getattr(self, k, None)
             if isinstance(val, np.ndarray) and isinstance(v, list):
                 val = list(val)
@@ -238,7 +238,7 @@ class OpRun:
         """
         inps = []
         if hasattr(self, 'optional_inputs'):
-            for k, v in self.optional_inputs.items():  # pylint: disable=E1101
+            for k, v in self.optional_inputs.items():
                 inps.append(f'{k}={v!r}')
         return inps
 
@@ -248,7 +248,7 @@ class OpRun:
         Returns the list of optional arguments.
         """
         if hasattr(self, 'mandatory_inputs'):
-            return self.mandatory_inputs  # pylint:  disable=E1101
+            return self.mandatory_inputs
         return None
 
     @property
@@ -256,7 +256,7 @@ class OpRun:
         "Returns all parameters in a dictionary."
         if hasattr(self, 'atts'):
             return {k: getattr(self, k)
-                    for k in self.atts}  # pylint: disable=E1101
+                    for k in self.atts}
         return None
 
 
@@ -297,7 +297,7 @@ class OpRunUnary(OpRun):
     def __init__(self, onnx_node, logging_function):
         OpRun.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, attributes=None):  # pylint: disable=E0202,W0221
+    def run(self, x, attributes=None):
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -330,7 +330,7 @@ class OpRunArg(OpRunUnary):
             raise AttributeError(
                 "Attribute 'axis' is missing.")
 
-    def run(self, x, attributes=None):  # pylint: disable=E0202
+    def run(self, x, attributes=None):
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
@@ -343,7 +343,7 @@ class OpRunArg(OpRunUnary):
                     np.int64, res[0].dtype, self.__class__.__name__))
         return res
 
-    def _run_no_checks_(self, x, attributes=None):  # pylint: disable=W0221
+    def _run_no_checks_(self, x, attributes=None):
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
@@ -357,7 +357,7 @@ class OpRunUnaryNum(OpRunUnary):
     def __init__(self, onnx_node, logging_function):
         OpRunUnary.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, attributes=None):  # pylint: disable=E0202
+    def run(self, x, attributes=None):
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
@@ -373,7 +373,7 @@ class OpRunUnaryNum(OpRunUnary):
                     x.dtype, res[0].dtype, self.__class__.__name__))
         return res
 
-    def _run_no_checks_(self, x, attributes=None):  # pylint: disable=W0221
+    def _run_no_checks_(self, x, attributes=None):
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
@@ -386,7 +386,7 @@ class OpRunBinary(OpRun):
     def __init__(self, onnx_node, logging_function):
         OpRun.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, y, attributes=None):  # pylint: disable=E0202,W0221
+    def run(self, x, y, attributes=None):
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -409,7 +409,7 @@ class OpRunBinary(OpRun):
                     self.__class__.__name__)) from e
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):  # pylint: disable=W0221
+    def _run_no_checks_(self, x, y, attributes=None):
         """
         Calls method ``_run``.
         """
@@ -442,7 +442,7 @@ class OpRunBinaryNum(OpRunBinary):
     def __init__(self, onnx_node, logging_function):
         OpRunBinary.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, y, attributes=None):  # pylint: disable=E0202
+    def run(self, x, y, attributes=None):
         """
         Calls method ``OpRunBinary.run``, catches exceptions,
         displays a longer error message.
@@ -456,7 +456,7 @@ class OpRunBinaryNum(OpRunBinary):
                     self.__class__.__name__, type(x), type(y)))
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):  # pylint: disable=W0221
+    def _run_no_checks_(self, x, y, attributes=None):
         return OpRunBinary._run_no_checks_(self, x, y, attributes=attributes)
 
 
@@ -470,7 +470,7 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         OpRunBinaryNum.__init__(self, onnx_node, logging_function)
         self.numpy_fct = numpy_fct
 
-    def _run(self, a, b, attributes=None):  # pylint: disable=W0221
+    def _run(self, a, b, attributes=None):
         return (self.numpy_fct(a, b), )
 
 
@@ -482,13 +482,12 @@ class OpRunReduceNumpy(OpRunUnaryNum):
 
     def __init__(self, onnx_node, logging_function):
         OpRunUnaryNum.__init__(self, onnx_node, logging_function)
-        if isinstance(self.axes, np.ndarray):  # pylint: disable=E0203
-            if (len(self.axes.shape) == 0 or  # pylint: disable=E0203,E1101
-                    self.axes.shape[0] == 0):  # pylint: disable=E0203,E1101
+        if isinstance(self.axes, np.ndarray):
+            if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:
                 self.axes = None
             else:
                 self.axes = tuple(self.axes)
-        elif self.axes in [[], tuple()]:  # pylint: disable=E0203
+        elif self.axes in [[], tuple()]:
             self.axes = None
-        elif isinstance(self.axes, list):  # pylint: disable=E0203
+        elif isinstance(self.axes, list):
             self.axes = tuple(self.axes)
