@@ -135,9 +135,9 @@ def function_testcase_helper(
     if schema.has_function:  # type: ignore
         function_proto = schema.function_body  # type: ignore
     elif schema.has_context_dependent_function:  # type: ignore
-        function_proto_str = schema.get_context_dependent_function(
+        function_proto_str = schema.get_context_dependent_function(  # type: ignore
             node.SerializeToString(), [t.SerializeToString() for t in input_types]
-        )  # type: ignore
+        )
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
     else:
