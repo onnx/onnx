@@ -23,9 +23,6 @@ _NodeTestCases = []
 _TargetOpType = None
 
 
-
-
-
 def _rename_edges_helper(
     internal_node: NodeProto,
     rename_helper: Callable[[str], str],
