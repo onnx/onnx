@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
-from typing import Callable, List, Optional, Tuple
 import numpy as np  # type: ignore
 from numpy.testing import assert_almost_equal
 from onnx import parser, checker, ModelProto, TensorProto
@@ -77,11 +76,11 @@ class TestRuntimeInference(unittest.TestCase):
                 initializer = [_ for _ in [mi, ma] if _]
                 graph = make_graph([node1, node2, node3], 'lr', [X, A, B], [Y],
                                    initializer=initializer)
-            f = lambda x, a, b: np.clip(a @ a + b, min_value, max_value)
+            f = lambda x, a, b: np.clip(a @ a + b, min_value, max_value)  # noqa: E731
         else:
             node2 = make_node('Add', ['XA', 'B'], ['Y'])
             graph = make_graph([node1, node2], 'lr', [X, A, B], [Y])
-            f = lambda x, a, b: a @ a + b
+            f = lambda x, a, b: a @ a + b  # noqa: E731
         if opset is None:
             onnx_model = make_model(graph)
         else:
@@ -133,7 +132,7 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
-            assert_almost_equal(expected, got)    
+            assert_almost_equal(expected, got)
 
         with self.subTest(opt="max"):
             lr, f = TestRuntimeInference._linear_regression(
@@ -146,7 +145,7 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
-            assert_almost_equal(expected, got)    
+            assert_almost_equal(expected, got)
 
         with self.subTest(opt="min"):
             lr, f = TestRuntimeInference._linear_regression(
@@ -159,7 +158,7 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
-            assert_almost_equal(expected, got)    
+            assert_almost_equal(expected, got)
 
     def test_inference_lr_clip_6(self):
         with self.subTest(opt="min+max"):
@@ -174,7 +173,7 @@ class TestRuntimeInference(unittest.TestCase):
             self.assertEqual(last_node.min, -1)
             self.assertEqual(last_node.max, 1)
             got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
-            assert_almost_equal(expected, got)        
+            assert_almost_equal(expected, got)
 
         with self.subTest(opt="max"):
             lr, f = TestRuntimeInference._linear_regression(
@@ -189,7 +188,7 @@ class TestRuntimeInference(unittest.TestCase):
             self.assertEqual(last_node.max, 1)
             self.assertFalse('min' in last_node.__dict__)
             got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
-            assert_almost_equal(expected, got)        
+            assert_almost_equal(expected, got)
 
         with self.subTest(opt="max"):
             lr, f = TestRuntimeInference._linear_regression(
@@ -204,7 +203,7 @@ class TestRuntimeInference(unittest.TestCase):
             self.assertEqual(last_node.min, -1)
             self.assertFalse('max' in last_node.__dict__)
             got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
-            assert_almost_equal(expected, got)        
+            assert_almost_equal(expected, got)
 
     def test_nested_local_functions(self):
         m = parser.parse_model('''
