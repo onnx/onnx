@@ -8,5 +8,5 @@ class MatMul(OpRunBinaryNum):
     def __init__(self, onnx_node, log_function):
         OpRunBinaryNum.__init__(self, onnx_node, log_function)
 
-    def _run(self, a, b, attributes=None):
+    def _run(self, a, b, attributes=None):  # noqa: W0221
         return (numpy_matmul(a, b),)

@@ -283,14 +283,14 @@ class OpFunction(OpRun):
         OpRun.__init__(self, onnx_node, log_function)
         self.impl_ = impl
 
-    def _run(self, *inputs):
+    def _run(self, *inputs):  # noqa: W0221
         if len(self.impl_.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
                 f"and the expected number of inputs {len(self.impl_.inputs)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
-        feeds = {name: value for name, value in zip(self.impl_.input_names, inputs)}
+        feeds = dict(zip(self.impl_.input_names, inputs))
         results = self.impl_.run(None, feeds)
         if len(self.impl_.output_names) != len(results):
             raise RuntimeError(
@@ -301,7 +301,7 @@ class OpFunction(OpRun):
         return tuple(results)
 
 
-class OpRunUnary(OpRun):
+class OpRunUnary(OpRun):  # noqa: W0223
     """
     Ancestor to all unary operators in this subfolder.
     Checks that inputs type are the same.
@@ -310,7 +310,7 @@ class OpRunUnary(OpRun):
     def __init__(self, onnx_node, logging_function):
         OpRun.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, attributes=None):
+    def run(self, x, attributes=None):  # noqa: W0221
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -331,7 +331,7 @@ class OpRunUnary(OpRun):
         return res
 
 
-class OpRunArg(OpRunUnary):
+class OpRunArg(OpRunUnary):  # noqa: W0223
     """
     Ancestor to all unary operators in this subfolder
     and which produces position of extremas (ArgMax, ...).
@@ -346,7 +346,7 @@ class OpRunArg(OpRunUnary):
         if not hasattr(self, "axis"):
             raise AttributeError("Attribute 'axis' is missing.")
 
-    def run(self, x, attributes=None):
+    def run(self, x, attributes=None):  # noqa: W0221
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
@@ -365,7 +365,7 @@ class OpRunArg(OpRunUnary):
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
-class OpRunUnaryNum(OpRunUnary):
+class OpRunUnaryNum(OpRunUnary):  # noqa: W0223
     """
     Ancestor to all unary and numerical operators
     in this subfolder. Checks that inputs type
@@ -375,7 +375,7 @@ class OpRunUnaryNum(OpRunUnary):
     def __init__(self, onnx_node, logging_function):
         OpRunUnary.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, attributes=None):
+    def run(self, x, attributes=None):  # noqa: W0221
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
@@ -391,11 +391,11 @@ class OpRunUnaryNum(OpRunUnary):
             )
         return res
 
-    def _run_no_checks_(self, x, attributes=None):
+    def _run_no_checks_(self, x, attributes=None):  # noqa: W0221
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
-class OpRunBinary(OpRun):
+class OpRunBinary(OpRun):  # noqa: W0223
     """
     Ancestor to all binary operators in this subfolder.
     Checks that inputs type are the same.
@@ -404,7 +404,7 @@ class OpRunBinary(OpRun):
     def __init__(self, onnx_node, logging_function):
         OpRun.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, y, attributes=None):
+    def run(self, x, y, attributes=None):  # noqa: W0221
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -434,7 +434,7 @@ class OpRunBinary(OpRun):
         )
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):
+    def _run_no_checks_(self, x, y, attributes=None):  # noqa: W0221
         """
         Calls method ``_run``.
         """
@@ -449,7 +449,7 @@ class OpRunBinary(OpRun):
         return res
 
 
-class OpRunBinaryComparison(OpRunBinary):
+class OpRunBinaryComparison(OpRunBinary):  # noqa: W0223
     """
     Ancestor to all binary operators in this subfolder
     comparing tensors.
@@ -459,7 +459,7 @@ class OpRunBinaryComparison(OpRunBinary):
         OpRunBinary.__init__(self, onnx_node, logging_function)
 
 
-class OpRunBinaryNum(OpRunBinary):
+class OpRunBinaryNum(OpRunBinary):  # noqa: W0223
     """
     Ancestor to all binary operators in this subfolder.
     Checks that inputs type are the same.
@@ -468,7 +468,7 @@ class OpRunBinaryNum(OpRunBinary):
     def __init__(self, onnx_node, logging_function):
         OpRunBinary.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, y, attributes=None):
+    def run(self, x, y, attributes=None):  # noqa: W0221
         """
         Calls method ``OpRunBinary.run``, catches exceptions,
         displays a longer error message.
@@ -488,11 +488,11 @@ class OpRunBinaryNum(OpRunBinary):
             )
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):
+    def _run_no_checks_(self, x, y, attributes=None):  # noqa: W0221
         return OpRunBinary._run_no_checks_(self, x, y, attributes=attributes)
 
 
-class OpRunBinaryNumpy(OpRunBinaryNum):
+class OpRunBinaryNumpy(OpRunBinaryNum):  # noqa: W0223
     """
     *numpy_fct* is a binary numpy function which
     takes two matrices.
@@ -502,11 +502,11 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         OpRunBinaryNum.__init__(self, onnx_node, logging_function)
         self.numpy_fct = numpy_fct
 
-    def _run(self, a, b, attributes=None):
+    def _run(self, a, b, attributes=None):  # noqa: W0221
         return (self.numpy_fct(a, b),)
 
 
-class OpRunReduceNumpy(OpRunUnaryNum):
+class OpRunReduceNumpy(OpRunUnaryNum):  # noqa: W0223
     """
     Implements the reduce logic.
     It must have a parameter *axes*.

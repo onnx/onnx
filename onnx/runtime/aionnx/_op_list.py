@@ -17,7 +17,7 @@ from ._op import OpFunction, OpRun
 # from .op_acosh import Acosh
 # from .op_adagrad import Adagrad
 # from .op_adam import Adam
-from .op_add import Add
+from .op_add import Add  # noqa: W0611
 
 # from .op_and import And
 # from .op_argmax import ArgMax
@@ -35,7 +35,7 @@ from .op_add import Add
 # from .op_cdist import CDist
 # from .op_ceil import Ceil
 # from .op_celu import Celu
-from .op_clip import Clip, Clip_6, Clip_11
+from .op_clip import Clip, Clip_6, Clip_11  # noqa: W0611
 
 # from .op_compress import Compress
 # from .op_concat import Concat
@@ -75,7 +75,7 @@ from .op_clip import Clip, Clip_6, Clip_11
 # from .op_hardmax import Hardmax
 # from .op_hard_sigmoid import HardSigmoid
 # from .op_floor import Floor
-from .op_identity import Identity
+from .op_identity import Identity  # noqa: W0611
 
 # from .op_if import If
 # from .op_imputer import Imputer
@@ -91,7 +91,7 @@ from .op_identity import Identity
 # from .op_lp_normalization import LpNormalization
 # from .op_lrn import LRN
 # from .op_lstm import LSTM
-from .op_matmul import MatMul
+from .op_matmul import MatMul  # noqa: W0611
 
 # from .op_max import Max
 # from .op_max_pool import MaxPool
@@ -99,7 +99,7 @@ from .op_matmul import MatMul
 # from .op_min import Min
 # from .op_mod import Mod
 # from .op_momentum import Momentum
-from .op_mul import Mul
+from .op_mul import Mul  # noqa: W0611
 
 # from .op_neg import Neg
 # from .op_negative_log_likelihood_loss import NegativeLogLikelihoodLoss
@@ -164,7 +164,7 @@ from .op_mul import Mul
 # from .op_squeeze import Squeeze, Squeeze_1, Squeeze_11, Squeeze_13
 # from .op_stft import STFT
 # from .op_string_normalizer import StringNormalizer
-from .op_sub import Sub
+from .op_sub import Sub  # noqa: W0611
 
 # from .op_sum import Sum
 # from .op_tan import Tan
@@ -182,7 +182,7 @@ from .op_sub import Sub
 # from .op_zipmap import ZipMap
 
 
-def _split_name(name):
+def _split_class_namme(name):
     if "_" in name:
         prefix, vers = name.rsplit("_", maxsplit=1)
         try:
@@ -195,18 +195,18 @@ def _split_name(name):
 
 _registered_operators = {}
 clo = locals().copy()
-for name, cl in clo.items():
-    if name[0] == "_" or name in {"cl", "clo", "name", "textwrap"}:
+for class_name, class_type in clo.items():
+    if class_name[0] == "_" or class_name in {"cl", "clo", "class_name", "textwrap"}:
         continue  # pragma: no cover
     try:
-        issub = issubclass(cl, OpRun)
+        issub = issubclass(class_type, OpRun)
     except TypeError as e:
-        raise TypeError(f"Unexpected variable type {cl!r} and name={name!r}.") from e
+        raise TypeError(f"Unexpected variable type {cl!r} and class_name={class_name!r}.") from e
     if issub:
-        op, v = _split_name(name)
-        if op not in _registered_operators:
-            _registered_operators[op] = {}
-        _registered_operators[op][v] = cl
+        op_type, op_version = _split_class_namme(class_name)
+        if op_type not in _registered_operators:
+            _registered_operators[op_type] = {}
+        _registered_operators[op_type][op_version] = class_type
 
 
 def load_op(domain, op_type, version, custom=None):
@@ -243,7 +243,7 @@ def load_op(domain, op_type, version, custom=None):
         for v, cl in impl.items():
             if v is None:
                 continue
-            if v > best and v <= version:
+            if best < v <= version:
                 best = v
         if best == -1:
             raise RuntimeError(
