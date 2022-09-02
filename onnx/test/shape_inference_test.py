@@ -5992,7 +5992,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (3, None, 4))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 10)]
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 10)],
         )  # type: ignore
 
     def test_constant_pad_2d_opset10(self) -> None:
