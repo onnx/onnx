@@ -12,7 +12,7 @@ def scatter_nd_impl(data, indices, updates, reduction="none"):  # type: ignore
 
     # Check tensor shapes
     assert indices.shape[-1] <= len(data.shape)
-    assert updates.shape == indices.shape[:-1] + data.shape[indices.shape[-1] :]
+    assert updates.shape == indices.shape[:-1] + data.shape[indices.shape[-1]:]
 
     # Compute output
     output = np.copy(data)

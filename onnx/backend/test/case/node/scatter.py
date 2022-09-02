@@ -14,7 +14,7 @@ def scatter(data, indices, updates, axis=0):  # type: ignore
     if axis < 0:
         axis = data.ndim + axis
 
-    idx_xsection_shape = indices.shape[:axis] + indices.shape[axis + 1 :]
+    idx_xsection_shape = indices.shape[:axis] + indices.shape[axis + 1:]
 
     def make_slice(arr, axis, i):  # type: ignore
         slc = [slice(None)] * arr.ndim

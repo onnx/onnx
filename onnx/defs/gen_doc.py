@@ -8,7 +8,7 @@ from typing import Any, Dict, List, NamedTuple, Sequence, Set, Tuple
 
 import numpy as np  # type: ignore
 
-from onnx import FunctionProto, defs, helper
+from onnx import defs, helper
 from onnx.backend.sample.ops import collect_sample_implementations
 from onnx.backend.test.case import collect_snippets
 from onnx.defs import ONNX_ML_DOMAIN, OpSchema
@@ -55,7 +55,7 @@ def format_versions(versions: Sequence[OpSchema]) -> str:
 def display_attr_type(v: OpSchema.AttrType) -> str:
     assert isinstance(v, OpSchema.AttrType)
     s = str(v)
-    s = s[s.rfind(".") + 1 :].lower()
+    s = s[s.rfind(".") + 1:].lower()
     if s[-1] == "s":
         s = "list of " + s
     return s

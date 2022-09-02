@@ -2,7 +2,6 @@
 import unittest
 
 import onnx
-from onnx import parser, printer
 
 
 class TestBasicFunctions(unittest.TestCase):

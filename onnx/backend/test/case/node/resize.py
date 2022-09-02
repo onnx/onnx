@@ -54,7 +54,7 @@ def cartesian(arrays: List[np.ndarray], out: np.ndarray = None) -> np.ndarray:
     if arrays[1:]:
         cartesian(arrays[1:], out=out[0:m, 1:])
         for j in range(1, arrays[0].size):
-            out[j * m : (j + 1) * m, 1:] = out[0:m, 1:]
+            out[j * m: (j + 1) * m, 1:] = out[0:m, 1:]
     return out
 
 
@@ -179,7 +179,7 @@ def interpolate_nd_with_x(
                 scale_factors[1:],
                 x[1:],
                 get_coeffs,
-                roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
+                roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1:]]),
                 **kwargs,
             )
             for i in range(data.shape[0])
