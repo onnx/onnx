@@ -27,16 +27,12 @@ class RuntimeTypeError(RuntimeError):
     Raised when a type of a variable is unexpected.
     """
 
-    pass
-
 
 class DefaultNone:
     """
     Default value for parameters when the parameter is not set
     but the operator has a default behaviour for it.
     """
-
-    pass
 
 
 class RefAttrName:
@@ -185,6 +181,9 @@ class OpRun:
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
         """
+        self.log_function(
+            "-- begin %s.run(%d inputs)", self.__class__.__name__, len(args)
+        )
         try:
             res = self._run(*args, **kwargs)
         except TypeError as e:
@@ -199,6 +198,9 @@ class OpRun:
                     ", ".join(str(type(_)) for _ in args), self.__class__.__name__
                 )
             ) from e
+        self.log_function(
+            "-- done %s.run -> %d outputs", self.__class__.__name__, len(res)
+        )
         return res
 
     @property
@@ -313,6 +315,7 @@ class OpRunUnary(OpRun):
         displays a longer error message.
         Supports only unary operators.
         """
+        self.log_function("-- begin %s.run(1 input)", self.__class__.__name__)
         try:
             res = self._run(x, attributes=attributes)
         except TypeError as e:
@@ -321,6 +324,9 @@ class OpRunUnary(OpRun):
                     ", ".join(str(type(_)) for _ in [x]), self.__class__.__name__
                 )
             ) from e
+        self.log_function(
+            "-- done %s.run -> %d outputs", self.__class__.__name__, len(res)
+        )
         return res
 
 
@@ -403,6 +409,7 @@ class OpRunBinary(OpRun):
         displays a longer error message.
         Supports only binary operators.
         """
+        self.log_function("-- begin %s.run(2 inputs)", self.__class__.__name__)
         if x is None or y is None:
             raise RuntimeError(
                 f"x and y have different dtype: {type(x)} != {type(y)} ({type(self)})"
@@ -421,6 +428,9 @@ class OpRunBinary(OpRun):
                     ", ".join(str(type(_)) for _ in [x, y]), self.__class__.__name__
                 )
             ) from e
+        self.log_function(
+            "-- done %s.run -> %d outputs", self.__class__.__name__, len(res)
+        )
         return res
 
     def _run_no_checks_(self, x, y, attributes=None):

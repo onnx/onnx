@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
+from contextlib import redirect_stdout
+from io import StringIO
+from textwrap import dedent
 import unittest
 import numpy as np  # type: ignore
 from numpy.testing import assert_almost_equal
@@ -126,6 +129,81 @@ class TestRuntimeInference(unittest.TestCase):
         res = sess.run(None, {"B01": x, "B11": y, "B21": z})[0]
         expected = (x + y) * (y - z)
         assert_almost_equal(expected, res)
+
+    def test_inference_no_attribute_verbose(self):
+        m = TestRuntimeInference._load_model(TestRuntimeInference.m2_def)
+        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+        y = np.array([[4, 5], [6, 7]], dtype=np.float32)
+        z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
+
+        with self.subTest(level=2):
+            sess = rt.Inference(m, verbose=2)
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                sess.run(None, {"B01": x, "B11": y, "B21": z})
+            out = stdout.getvalue()
+            log = "Add(B01, B11) -> C0\nSub(B11, B21) -> C1\nMul(C0, C1) -> D0\n"
+            self.assertEqual(log, out)
+
+        with self.subTest(level=3):
+            sess = rt.Inference(m, verbose=3)
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                sess.run(None, {"B01": x, "B11": y, "B21": z})
+            out = stdout.getvalue()
+            log = dedent(
+                """
+                Add(B01, B11) -> C0
+                 + C0: float32:(2, 2) in [4.0, 10.0]
+                Sub(B11, B21) -> C1
+                 + C1: float32:(2, 2) in [8.0, 14.0]
+                Mul(C0, C1) -> D0
+                 + D0: float32:(2, 2) in [32.0, 140.0]
+                """
+            ).lstrip("\n")
+            self.assertEqual(log, out)
+
+        with self.subTest(level=4):
+            sess = rt.Inference(m, verbose=4)
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                sess.run(None, {"B01": x, "B11": y, "B21": z})
+            out = stdout.getvalue()
+            log = dedent(
+                """
+                Add(B01, B11) -> C0
+                 + C0: float32:(2, 2):[4.0, 6.0, 8.0, 10.0]
+                Sub(B11, B21) -> C1
+                 + C1: float32:(2, 2):[8.0, 10.0, 12.0, 14.0]
+                Mul(C0, C1) -> D0
+                 + D0: float32:(2, 2):[32.0, 60.0, 96.0, 140.0]
+                """
+            ).lstrip("\n")
+            self.assertEqual(log, out)
+
+        with self.subTest(level=15):
+            sess = rt.Inference(m, verbose=15)
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                sess.run(None, {"B01": x, "B11": y, "B21": z})
+            out = stdout.getvalue()
+            log = dedent(
+                """
+                Add(B01, B11) -> C0
+                -- begin Add.run(2 inputs)
+                -- done Add.run -> 1 outputs
+                 + C0: float32:(2, 2):[4.0, 6.0, 8.0, 10.0]
+                Sub(B11, B21) -> C1
+                -- begin Sub.run(2 inputs)
+                -- done Sub.run -> 1 outputs
+                 + C1: float32:(2, 2):[8.0, 10.0, 12.0, 14.0]
+                Mul(C0, C1) -> D0
+                -- begin Mul.run(2 inputs)
+                -- done Mul.run -> 1 outputs
+                 + D0: float32:(2, 2):[32.0, 60.0, 96.0, 140.0]
+                """
+            ).lstrip("\n")
+            self.assertEqual(log, out)
 
     def test_inference_lr(self):
         lr, f = TestRuntimeInference._linear_regression()

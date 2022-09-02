@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from io import BytesIO
+import numpy as np
 from onnx import load, ModelProto, GraphProto, FunctionProto, numpy_helper
 from onnx.defs import onnx_opset_version
 
@@ -79,9 +80,25 @@ class Inference:
         self.verbose = verbose
         self._init()
 
-    def _log(self, pattern, *args):
-        if self.verbose:
-            print(pattern % tuple(args))
+    def _log_arg(self, a):
+        if isinstance(a, (str, int, float)):
+            return a
+        if isinstance(a, np.ndarray):
+            if self.verbose < 4:
+                return f"{a.dtype}:{a.shape} in [{a.min()}, {a.max()}]"
+            elements = a.ravel().tolist()
+            if len(elements) > 5:
+                elements = elements[:5]
+                return f"{a.dtype}:{a.shape}:{','.join(map(str, elements))}..."
+            return f"{a.dtype}:{a.shape}:{elements}"
+        if isinstance(a, list) or a.__class__.__name__ == "RepeatedScalarContainer":
+            return ", ".join(map(self._log_arg, a))
+        return a
+
+    def _log(self, level, pattern, *args):
+        if level < self.verbose:
+            new_args = [self._log_arg(a) for a in args]
+            print(pattern % tuple(new_args))
 
     @property
     def input_names(self):
@@ -108,7 +125,7 @@ class Inference:
             self.rt_inits_[init.name] = numpy_helper.to_array(init)
         for node in self.nodes_:
             cl = self._load_impl(node)
-            inst = cl(node, self._log)
+            inst = cl(node, lambda pattern, *args: self._log(10, pattern, *args))
             self.rt_nodes_.append(inst)
 
     def _load_impl(self, node):
@@ -160,9 +177,11 @@ class Inference:
 
         # step 2: execute nodes
         for node in self.rt_nodes_:
+            self._log(1, "%s(%s) -> %s", node.op_type, node.input, node.output)
             inputs = [results[i] for i in node.input]
             outputs = node.run(*inputs)
             for name, value in zip(node.output, outputs):
+                self._log(2, " + %s: %s", name, value)
                 results[name] = value
 
         # return the results
