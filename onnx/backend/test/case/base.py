@@ -9,7 +9,7 @@ import numpy as np  # type: ignore
 
 
 def process_snippet(op_name: str, name: str, export: Any) -> Tuple[str, str]:
-    snippet_name = name[len("export_"):] or op_name.lower()
+    snippet_name = name[len("export_") :] or op_name.lower()
     source_code = dedent(inspect.getsource(export))
     # remove the function signature line
     lines = source_code.splitlines()

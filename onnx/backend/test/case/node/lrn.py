@@ -32,7 +32,7 @@ class LRN(Base):
             square_sum[n, c, h, w] = sum(
                 x[
                     n,
-                    max(0, c - int(math.floor((nsize - 1) / 2))): min(
+                    max(0, c - int(math.floor((nsize - 1) / 2))) : min(
                         5, c + int(math.ceil((nsize - 1) / 2)) + 1
                     ),
                     h,
@@ -56,7 +56,7 @@ class LRN(Base):
             square_sum[n, c, h, w] = sum(
                 x[
                     n,
-                    max(0, c - int(math.floor((nsize - 1) / 2))): min(
+                    max(0, c - int(math.floor((nsize - 1) / 2))) : min(
                         5, c + int(math.ceil((nsize - 1) / 2)) + 1
                     ),
                     h,

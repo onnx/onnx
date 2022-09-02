@@ -4,13 +4,7 @@ import unittest
 from typing import List, Optional
 
 import onnx.shape_inference
-from onnx import (
-    ModelProto,
-    TensorProto,
-    TensorShapeProto,
-    ValueInfoProto,
-    helper,
-)
+from onnx import ModelProto, TensorProto, TensorShapeProto, ValueInfoProto, helper
 from onnx.helper import make_model, make_tensor_value_info
 
 

@@ -70,7 +70,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
                     inputs += [helper.make_tensor_value_info(name, ttype, shape)]
 
         n_outputs = len(output_shapes)
-        output_names = list(string.ascii_lowercase)[n_inputs: n_inputs + n_outputs]
+        output_names = list(string.ascii_lowercase)[n_inputs : n_inputs + n_outputs]
         if output_types is None:
             output_types = [TensorProto.FLOAT] * n_outputs
         is_sequence = [0 if id not in seq_outputs else 1 for id in range(n_outputs)]

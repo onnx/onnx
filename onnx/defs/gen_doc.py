@@ -55,7 +55,7 @@ def format_versions(versions: Sequence[OpSchema]) -> str:
 def display_attr_type(v: OpSchema.AttrType) -> str:
     assert isinstance(v, OpSchema.AttrType)
     s = str(v)
-    s = s[s.rfind(".") + 1:].lower()
+    s = s[s.rfind(".") + 1 :].lower()
     if s[-1] == "s":
         s = "list of " + s
     return s
