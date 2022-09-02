@@ -6,17 +6,15 @@ from ._op import OpRunUnaryNum, OpRun
 
 
 class Clip_6(OpRunUnaryNum):
-
     def __init__(self, onnx_node, log_function):
         OpRunUnaryNum.__init__(self, onnx_node, log_function)
 
     def _run(self, data, attributes=None):
-        res = np.clip(data, getattr(self, 'min', None), getattr(self, 'max', None))
-        return (res, ) if res.dtype == data.dtype else (res.astype(data.dtype), )
+        res = np.clip(data, getattr(self, "min", None), getattr(self, "max", None))
+        return (res,) if res.dtype == data.dtype else (res.astype(data.dtype),)
 
 
 class Clip_11(OpRun):
-
     def __init__(self, onnx_node, log_function):
         OpRunUnaryNum.__init__(self, onnx_node, log_function)
 
@@ -25,7 +23,7 @@ class Clip_11(OpRun):
         amin = minmax[0] if le > 0 else None
         amax = minmax[1] if le > 1 else None
         res = np.clip(data, amin, amax)
-        return (res, ) if res.dtype == data.dtype else (res.astype(data.dtype), )
+        return (res,) if res.dtype == data.dtype else (res.astype(data.dtype),)
 
 
 if onnx_opset_version() >= 11:

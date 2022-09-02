@@ -15,7 +15,7 @@ def _build_schemas():
                 res[schema.name] = schema
         else:
             res[schema.name] = schema
-        res[schema.name + '_' + str(schema.since_version)] = schema
+        res[schema.name + "_" + str(schema.since_version)] = schema
     return res
 
 
@@ -26,6 +26,7 @@ class RuntimeTypeError(RuntimeError):
     """
     Raised when a type of a variable is unexpected.
     """
+
     pass
 
 
@@ -34,6 +35,7 @@ class DefaultNone:
     Default value for parameters when the parameter is not set
     but the operator has a default behaviour for it.
     """
+
     pass
 
 
@@ -64,6 +66,7 @@ class OpRun:
     :param log_function: function used to log information while
         executing the onnx graph
     """
+
     _attribute_conversion_functions = {
         TensorProto.FLOAT: lambda att: np.float32(att.f),
         TensorProto.INT64: lambda att: np.float32(att.i),
@@ -87,7 +90,8 @@ class OpRun:
         raise NotImplementedError(
             f"Unable to convert attribute {att.name!r} type {att.type!r} "
             f"from node type {self.onnx_node.op_type!r}, "
-            f"domain {self.onnx_node.domain!r}.")
+            f"domain {self.onnx_node.domain!r}."
+        )
 
     def _load_attributes(self):
         "Checks and loads attributes."
@@ -96,12 +100,13 @@ class OpRun:
             value = self._extract_attribute_value(att)
             setattr(self, name, value)
 
-        if self._schema and self.onnx_node.op_type not in {'Constant'}:
+        if self._schema and self.onnx_node.op_type not in {"Constant"}:
             for k, v in self._schema.attributes.items():
-                if not hasattr(self, k) and getattr(v, 'required', True):
+                if not hasattr(self, k) and getattr(v, "required", True):
                     raise RuntimeError(
                         "Attribute '{}' is expected based on ONNX specifications "
-                        "for node '{}'.".format(k, self.onnx_node.op_type))
+                        "for node '{}'.".format(k, self.onnx_node.op_type)
+                    )
 
     @staticmethod
     def local_inputs(graph):
@@ -111,8 +116,7 @@ class OpRun:
         existing in the graph calling this one.
         """
         if not isinstance(graph, GraphProto):
-            raise TypeError(
-                f"Unexpected type {type(graph)!r}.")
+            raise TypeError(f"Unexpected type {type(graph)!r}.")
         local = set()
         known = set()
         for init in graph.initializer:
@@ -157,14 +161,13 @@ class OpRun:
         return False
 
     def __str__(self):
-        atts = [self.__class__.__name__ + '(',
-                f"    op_type={self.onnx_node.op_type}"]
+        atts = [self.__class__.__name__ + "(", f"    op_type={self.onnx_node.op_type}"]
         for k, v in sorted(self.__dict__.items()):
-            if k in {'desc', 'onnx_node'}:
+            if k in {"desc", "onnx_node"}:
                 continue
-            if 'a' <= k[0] <= 'z' and k[-1] != '_':
-                atts.append(f'    {k}={v},')
-        atts.append(')')
+            if "a" <= k[0] <= "z" and k[-1] != "_":
+                atts.append(f"    {k}={v},")
+        atts.append(")")
         return "\n".join(atts)
 
     def _run(self, *args, attributes=None, **kwargs):
@@ -174,7 +177,8 @@ class OpRun:
         """
         raise NotImplementedError(
             "Method '_run' or 'to_python' should be overwritten for operator %s."
-            "" % self.__class__.__name__)
+            "" % self.__class__.__name__
+        )
 
     def run(self, *args, **kwargs):
         """
@@ -186,13 +190,15 @@ class OpRun:
         except TypeError as e:
             raise TypeError(
                 "Issues with types {} (operator {}).".format(
-                    ", ".join(str(type(_)) for _ in args),
-                    self.__class__.__name__)) from e
+                    ", ".join(str(type(_)) for _ in args), self.__class__.__name__
+                )
+            ) from e
         except AttributeError as e:
             raise AttributeError(
                 "Issues with types {} (operator {}).".format(
-                    ", ".join(str(type(_)) for _ in args),
-                    self.__class__.__name__)) from e
+                    ", ".join(str(type(_)) for _ in args), self.__class__.__name__
+                )
+            ) from e
         return res
 
     @property
@@ -203,11 +209,11 @@ class OpRun:
         (close to the signature).
         """
         inps = []
-        if hasattr(self, 'atts'):
+        if hasattr(self, "atts"):
             for k, v in self.atts.items():
                 if isinstance(v, (list, tuple, dict)) and len(v) == 0:
                     v = None
-                inps.append(f'{k}={v!r}')
+                inps.append(f"{k}={v!r}")
         return inps
 
     @property
@@ -215,7 +221,7 @@ class OpRun:
         """
         Returns the list of modified parameters.
         """
-        if not hasattr(self, 'atts'):
+        if not hasattr(self, "atts"):
             return None
 
         inps = []
@@ -225,10 +231,11 @@ class OpRun:
                 val = list(val)
             try:
                 if val != v:
-                    inps.append(f'{k}={val!r}')
+                    inps.append(f"{k}={val!r}")
             except ValueError as e:
                 raise ValueError(
-                    f"Unexpected value for v={v!r} and val={val!r}.") from e
+                    f"Unexpected value for v={v!r} and val={val!r}."
+                ) from e
         return inps
 
     @property
@@ -237,9 +244,9 @@ class OpRun:
         Returns the list of optional arguments.
         """
         inps = []
-        if hasattr(self, 'optional_inputs'):
+        if hasattr(self, "optional_inputs"):
             for k, v in self.optional_inputs.items():
-                inps.append(f'{k}={v!r}')
+                inps.append(f"{k}={v!r}")
         return inps
 
     @property
@@ -247,16 +254,15 @@ class OpRun:
         """
         Returns the list of optional arguments.
         """
-        if hasattr(self, 'mandatory_inputs'):
+        if hasattr(self, "mandatory_inputs"):
             return self.mandatory_inputs
         return None
 
     @property
     def atts_value(self):
         "Returns all parameters in a dictionary."
-        if hasattr(self, 'atts'):
-            return {k: getattr(self, k)
-                    for k in self.atts}
+        if hasattr(self, "atts"):
+            return {k: getattr(self, k) for k in self.atts}
         return None
 
 
@@ -264,11 +270,13 @@ class OpFunction(OpRun):
     """
     Runs a custom function.
     """
+
     def __init__(self, onnx_node, log_function, impl=None):
         if impl is None:
             raise RuntimeError(
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
-                f"from domain {onnx_node.domain!r}.")
+                f"from domain {onnx_node.domain!r}."
+            )
         OpRun.__init__(self, onnx_node, log_function)
         self.impl_ = impl
 
@@ -277,14 +285,16 @@ class OpFunction(OpRun):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
                 f"and the expected number of inputs {len(self.impl_.inputs)} "
-                f"for node {self.op_type!r} from domain {self.domain!r}.")
+                f"for node {self.op_type!r} from domain {self.domain!r}."
+            )
         feeds = {name: value for name, value in zip(self.impl_.input_names, inputs)}
         results = self.impl_.run(None, feeds)
         if len(self.impl_.output_names) != len(results):
             raise RuntimeError(
                 f"Mismatch lengths between the number of outputs {len(results)} "
                 f"and the expected number of outputs {len(self.impl_.output_names)} "
-                f"for node {self.op_type!r} from domain {self.domain!r}.")
+                f"for node {self.op_type!r} from domain {self.domain!r}."
+            )
         return tuple(results)
 
 
@@ -308,8 +318,9 @@ class OpRunUnary(OpRun):
         except TypeError as e:
             raise TypeError(
                 "Issues with types {} (binary operator {}).".format(
-                    ", ".join(str(type(_)) for _ in [x]),
-                    self.__class__.__name__)) from e
+                    ", ".join(str(type(_)) for _ in [x]), self.__class__.__name__
+                )
+            ) from e
         return res
 
 
@@ -323,12 +334,10 @@ class OpRunArg(OpRunUnary):
 
     def __init__(self, onnx_node, logging_function):
         OpRunUnary.__init__(self, onnx_node, logging_function)
-        if not hasattr(self, 'keepdims'):
-            raise AttributeError(
-                "Attribute 'keepdims' is missing.")
-        if not hasattr(self, 'axis'):
-            raise AttributeError(
-                "Attribute 'axis' is missing.")
+        if not hasattr(self, "keepdims"):
+            raise AttributeError("Attribute 'keepdims' is missing.")
+        if not hasattr(self, "axis"):
+            raise AttributeError("Attribute 'axis' is missing.")
 
     def run(self, x, attributes=None):
         """
@@ -340,7 +349,9 @@ class OpRunArg(OpRunUnary):
             raise RuntimeTypeError(
                 "Output type mismatch: should be '{}' != output '{}' "
                 "(operator '{}')".format(
-                    np.int64, res[0].dtype, self.__class__.__name__))
+                    np.int64, res[0].dtype, self.__class__.__name__
+                )
+            )
         return res
 
     def _run_no_checks_(self, x, attributes=None):
@@ -369,8 +380,8 @@ class OpRunUnaryNum(OpRunUnary):
         if not isinstance(res[0], list) and res[0].dtype != x.dtype:
             raise RuntimeTypeError(
                 "Output type mismatch: input '{}' != output '{}' "
-                "(operator '{}')".format(
-                    x.dtype, res[0].dtype, self.__class__.__name__))
+                "(operator '{}')".format(x.dtype, res[0].dtype, self.__class__.__name__)
+            )
         return res
 
     def _run_no_checks_(self, x, attributes=None):
@@ -394,19 +405,22 @@ class OpRunBinary(OpRun):
         """
         if x is None or y is None:
             raise RuntimeError(
-                f"x and y have different dtype: {type(x)} != {type(y)} ({type(self)})")
+                f"x and y have different dtype: {type(x)} != {type(y)} ({type(self)})"
+            )
         if x.dtype != y.dtype:
             raise RuntimeTypeError(
                 "Input type mismatch: {} != {} (operator '{}', shapes {}, {})".format(
-                    x.dtype, y.dtype, self.__class__.__name__,
-                    x.shape, y.shape))
+                    x.dtype, y.dtype, self.__class__.__name__, x.shape, y.shape
+                )
+            )
         try:
             res = self._run(x, y, attributes=attributes)
         except (TypeError, ValueError) as e:
             raise TypeError(
                 "Issues with types {} (binary operator {}).".format(
-                    ", ".join(str(type(_)) for _ in [x, y]),
-                    self.__class__.__name__)) from e
+                    ", ".join(str(type(_)) for _ in [x, y]), self.__class__.__name__
+                )
+            ) from e
         return res
 
     def _run_no_checks_(self, x, y, attributes=None):
@@ -418,8 +432,9 @@ class OpRunBinary(OpRun):
         except TypeError as e:
             raise TypeError(
                 "Issues with types {} (binary operator {}).".format(
-                    ", ".join(str(type(_)) for _ in [x, y]),
-                    self.__class__.__name__)) from e
+                    ", ".join(str(type(_)) for _ in [x, y]), self.__class__.__name__
+                )
+            ) from e
         return res
 
 
@@ -452,8 +467,14 @@ class OpRunBinaryNum(OpRunBinary):
             raise RuntimeTypeError(
                 "Output type mismatch: {} != {} or {} (operator '{}')"
                 " type(x)={} type(y)={}".format(
-                    x.dtype, res[0].dtype, y.dtype,
-                    self.__class__.__name__, type(x), type(y)))
+                    x.dtype,
+                    res[0].dtype,
+                    y.dtype,
+                    self.__class__.__name__,
+                    type(x),
+                    type(y),
+                )
+            )
         return res
 
     def _run_no_checks_(self, x, y, attributes=None):
@@ -471,7 +492,7 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         self.numpy_fct = numpy_fct
 
     def _run(self, a, b, attributes=None):
-        return (self.numpy_fct(a, b), )
+        return (self.numpy_fct(a, b),)
 
 
 class OpRunReduceNumpy(OpRunUnaryNum):

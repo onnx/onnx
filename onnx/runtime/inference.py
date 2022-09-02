@@ -53,21 +53,24 @@ class Inference:
         if self.onnx_graph_:
             self.input_names_ = [i.name for i in self.onnx_graph_.input]
             self.output_names_ = [o.name for o in self.onnx_graph_.output]
-            self.inits_ = (list(self.onnx_graph_.initializer) + list(self.onnx_graph_.sparse_initializer))
+            self.inits_ = list(self.onnx_graph_.initializer) + list(
+                self.onnx_graph_.sparse_initializer
+            )
             self.nodes_ = self.onnx_graph_.node
         else:
             self.input_names_ = list(proto.input)
             self.output_names_ = list(proto.output)
             self.inits_ = []
             self.nodes_ = proto.node
-        if '' not in self.opsets:
-            self.opsets[''] = onnx_opset_version()
+        if "" not in self.opsets:
+            self.opsets[""] = onnx_opset_version()
         if functions is not None:
             for f in functions:
                 if isinstance(f, FunctionProto):
                     existing_functions = list(self.functions_.values())
                     self.functions_[f.domain, f.name] = Inference(
-                        f, verbose=verbose, functions=existing_functions)
+                        f, verbose=verbose, functions=existing_functions
+                    )
                 elif isinstance(f, Inference):
                     onx = f.proto_
                     self.functions_[onx.domain, onx.name] = f
@@ -115,23 +118,28 @@ class Inference:
         if node.domain not in self.opsets:
             raise RuntimeError(
                 f"Domain {node.domain!r} (node type: {node.op_type!r}) "
-                f"is not specified. Known opsets: {self.opsets!r}.")
+                f"is not specified. Known opsets: {self.opsets!r}."
+            )
         version = self.opsets[node.domain]
-        if node.domain == '':
+        if node.domain == "":
             from .aionnx import load_op
+
             return load_op(node.domain, node.op_type, version)
-        if node.domain == 'ai.onnx.ml':
+        if node.domain == "ai.onnx.ml":
             raise NotImplementedError(
-                f"No implemented for domain {node.domain!r} is available yet.")
+                f"No implemented for domain {node.domain!r} is available yet."
+            )
         # It has to be a function.
         key = node.domain, node.op_type
         if key in self.functions_:
             from .aionnx import load_op
+
             impl = self.functions_[key]
             return load_op(node.domain, node.op_type, version, custom=impl)
         raise RuntimeError(
             f"Node type {node.op_type!r} from domain {node.domain!r} "
-            f"is unknown, known functions: {list(sorted(self.functions_))}.")
+            f"is unknown, known functions: {list(sorted(self.functions_))}."
+        )
 
     def run(self, output_names, feed_inputs):
         """
@@ -146,7 +154,7 @@ class Inference:
             output_names = self.output_names
 
         # step 1: inputs and initalizers
-        results = {'': None}  # optional input
+        results = {"": None}  # optional input
         results.update(self.rt_inits_)
         results.update(feed_inputs)
 

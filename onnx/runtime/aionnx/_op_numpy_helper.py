@@ -16,5 +16,4 @@ def numpy_matmul(a, b):
             return np.dot(a, b)
         return np.matmul(a, b)
     except ValueError as e:
-        raise ValueError(
-            f"Unable to multiply shapes {a.shape!r}, {b.shape!r}.") from e
+        raise ValueError(f"Unable to multiply shapes {a.shape!r}, {b.shape!r}.") from e
