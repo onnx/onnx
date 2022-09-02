@@ -2,6 +2,7 @@
 import unittest
 
 import onnx
+from onnx import parser, printer
 
 
 class TestBasicFunctions(unittest.TestCase):
@@ -20,10 +21,10 @@ class TestBasicFunctions(unittest.TestCase):
               C = Softmax(S)
            }
            """
-        graph1 = onnx.parser.parse_graph(text0)
-        text1 = onnx.printer.to_text(graph1)
-        graph2 = onnx.parser.parse_graph(text1)
-        text2 = onnx.printer.to_text(graph2)
+        graph1 = parser.parse_graph(text0)
+        text1 = printer.to_text(graph1)
+        graph2 = parser.parse_graph(text1)
+        text2 = printer.to_text(graph2)
         # Note that text0 and text1 should be semantically-equivalent, but may differ
         # in white-space and other syntactic sugar. However, we expect text1 and text2
         # to be identical.
