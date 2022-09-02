@@ -9,7 +9,7 @@ The operator may have been updated to support more types but that
 did not change the implementation.
 """
 import textwrap
-from ._op import OpRun
+from ._op import OpRun, OpFunction
 # from .op_abs import Abs
 # from .op_acos import Acos
 # from .op_acosh import Acosh
@@ -71,7 +71,7 @@ from .op_clip import Clip_6, Clip_11, Clip
 # from .op_hardmax import Hardmax
 # from .op_hard_sigmoid import HardSigmoid
 # from .op_floor import Floor
-# from .op_identity import Identity
+from .op_identity import Identity
 # from .op_if import If
 # from .op_imputer import Imputer
 # from .op_inverse import Inverse
@@ -191,29 +191,37 @@ for name, cl in clo.items():
     if name[0] == '_' or name in {
             'cl', 'clo', 'name', 'textwrap'}:
         continue  # pragma: no cover
-    if issubclass(cl, OpRun):
+    try:
+        issub = issubclass(cl, OpRun)
+    except TypeError as e:
+        raise TypeError(
+            f"Unexpected variable type {cl!r} and name={name!r}.") from e
+    if issub:
         op, v = _split_name(name)
         if op not in _registered_operators:
             _registered_operators[op] = {}
         _registered_operators[op][v] = cl
 
 
-def load_op(domain, op_type, version):
+def load_op(domain, op_type, version, custom=None):
     """
     Loads the implemented for a specified operator.
 
     :param domain: domain
     :param op_type: oprator type
     :param version: requested version
+    :param custom: custom implementation (like a function)
     :return: class
     """
+    if custom is not None:
+        return lambda *args: OpFunction(*args, impl=custom)
     if domain != '':
         raise ValueError(f"Domain must be '' not {domain!r}.")
     if op_type not in _registered_operators:
         available = '\n'.join(textwrap.wrap(', '.join(
             sorted(_registered_operators))))
         raise ValueError(
-            f"Not registered implemented for operator {op_type!r} "
+            f"Not registered implementation for operator {op_type!r} "
             f"and domain {domain!r} in\n{available}")
     impl = _registered_operators[op_type]
     if None not in impl:
@@ -222,16 +230,22 @@ def load_op(domain, op_type, version):
             f"and domain {domain!r}, found "
             f"{', '.join(map(str, impl))}.")
     if version is None or len(impl) == 1:
-        return impl[None]
-    best = -1
-    for v, cl in impl.items():
-        if v is None:
-            continue
-        if v > best and v <= version:
-            best = v
-    if best == -1:
-        raise RuntimeError(
-            f"No implementation for operator {op_type!r} "
-            f"domain {node.domain!r} and version {version!r}, found "
-            f"{', '.join(map(str, impl))}.")
-    return impl[best]
+        cl = impl[None]
+    else:
+        best = -1
+        for v, cl in impl.items():
+            if v is None:
+                continue
+            if v > best and v <= version:
+                best = v
+        if best == -1:
+            raise RuntimeError(
+                f"No implementation for operator {op_type!r} "
+                f"domain {node.domain!r} and version {version!r}, found "
+                f"{', '.join(map(str, impl))}.")
+        cl = impl[best]
+    if cl is None:
+        raise ValueError(
+            f"Not registered implementation for operator {op_type!r}, "
+            f"domain {domain!r}, and {version!r} in\n{available}")
+    return cl

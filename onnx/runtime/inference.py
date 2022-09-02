@@ -12,14 +12,16 @@ class Inference:
     :param proto: onnx model or file name
     :param verbose: display intermediate results
         on the standard output during the execution
-    :param opsets: if 
+    :param opsets: if *proto* is an instance of *GraphProto*,
+        opsets must be defined
+    :param functions: known onnx functions
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
     it uses this class to execute the subgraph or the function.
     """
 
-    def __init__(self, proto, verbose=0, opsets=None):
+    def __init__(self, proto, verbose=0, opsets=None, functions=None):
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
@@ -27,11 +29,15 @@ class Inference:
             with open(BytesIO(proto), "rb") as f:
                 proto = load(f)
         self.proto_ = proto
+        self.functions_ = {}
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
             if opsets is not None:
                 raise ValueError("opsets must be None if proto is ModelProto.")
+            if functions is not None:
+                raise ValueError("functions must be None if proto is ModelProto.")
+            functions = proto.functions
         elif isinstance(proto, GraphProto):
             self.onnx_graph_ = proto
             if not isinstance(opsets, dict):
@@ -57,6 +63,17 @@ class Inference:
             self.nodes_ = proto.node
         if '' not in self.opsets:
             self.opsets[''] = onnx_opset_version()
+        if functions is not None:
+            for f in functions:
+                if isinstance(f, FunctionProto):
+                    existing_functions = list(self.functions_.values())
+                    self.functions_[f.domain, f.name] = Inference(
+                        f, verbose=verbose, functions=existing_functions)
+                elif isinstance(f, Inference):
+                    onx = f.proto_
+                    self.functions_[onx.domain, onx.name] = f
+                else:
+                    raise TypeError(f"Unexpected type {type(f)!r} for a function.")
         self.verbose = verbose
         self._init()
 
@@ -89,7 +106,8 @@ class Inference:
             self.rt_inits_[init.name] = numpy_helper.to_array(init)
         for node in self.nodes_:
             cl = self._load_impl(node)
-            self.rt_nodes_.append(cl(node, self._log))
+            inst = cl(node, self._log)
+            self.rt_nodes_.append(inst)
 
     def _load_impl(self, node):
         """
@@ -103,6 +121,18 @@ class Inference:
         if node.domain == '':
             from .aionnx import load_op
             return load_op(node.domain, node.op_type, version)
+        if node.domain == 'ai.onnx.ml':
+            raise NotImplementedError(
+                f"No implemented for domain {domain!r} is available yet.")
+        # It has to be a function.
+        key = node.domain, node.op_type
+        if key in self.functions_:
+            from .aionnx import load_op
+            impl = self.functions_[key]
+            return load_op(node.domain, node.op_type, version, custom=impl)
+        raise RuntimeError(
+            f"Node type {node.op_type!r} from domain {node.domain!r} "
+            f"is unknown, known functions: {list(sorted(self.functions_))}.")
 
     def run(self, output_names, feed_inputs):
         """

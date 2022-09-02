@@ -206,6 +206,56 @@ class TestRuntimeInference(unittest.TestCase):
             got = sess.run(None, {'X': a, 'A': a, 'B': b})[0]
             assert_almost_equal(expected, got)        
 
+    def test_nested_local_functions(self):
+        m = parser.parse_model('''
+            <
+              ir_version: 8,
+              opset_import: [ "" : 14, "local" : 1],
+              producer_name: "test",
+              producer_version: "1.0",
+              model_version: 1,
+              doc_string: "Test preprocessing model"
+            >
+            agraph (uint8[H, W, C] x) => (uint8[H, W, C] x_processed)
+            {
+                x_processed = local.func(x)
+            }
+
+            <
+              opset_import: [ "" : 14 ],
+              domain: "local",
+              doc_string: "function 1"
+            >
+            f1 (x) => (y) {
+                y = Identity(x)
+            }
+
+            <
+              opset_import: [ "" : 14 ],
+              domain: "local",
+              doc_string: "function 2"
+            >
+            f2 (x) => (y) {
+                y = Identity(x)
+            }
+
+            <
+              opset_import: [ "" : 14, "local" : 1 ],
+              domain: "local",
+              doc_string: "Preprocessing function."
+            >
+            func (x) => (y) {
+                x1 = local.f1(x)
+                y = local.f2(x1)
+            }
+        ''')
+
+        sess = rt.Inference(m)
+        x = np.array([0, 1, 3], dtype=np.uint8).reshape((1, 1, 3))
+        result = sess.run(None, {'x': x})[0]
+        expected = x
+        assert_almost_equal(expected, result)
+
 
 if __name__ == "__main__":
     # TestRuntimeInference().test_inference_lr_clip_11()

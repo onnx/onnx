@@ -73,7 +73,10 @@ class OpRun:
     def __init__(self, onnx_node, log_function):
         self.onnx_node = onnx_node
         self.log_function = log_function
-        self._schema = _schemas[onnx_node.op_type]
+        if onnx_node.op_type in _schemas:
+            self._schema = _schemas[onnx_node.op_type]
+        else:
+            self._schema = None
         self._load_attributes()
 
     def _extract_attribute_value(self, att):
@@ -94,7 +97,7 @@ class OpRun:
             value = self._extract_attribute_value(att)
             setattr(self, name, value)
 
-        if self.onnx_node.op_type not in {'Constant'}:
+        if self._schema and self.onnx_node.op_type not in {'Constant'}:
             for k, v in self._schema.attributes.items():
                 if not hasattr(self, k) and getattr(v, 'required', True):
                     raise RuntimeError(
@@ -257,6 +260,33 @@ class OpRun:
             return {k: getattr(self, k)
                     for k in self.atts}  # pylint: disable=E1101
         return None
+
+class OpFunction(OpRun):
+    """
+    Runs a custom function.
+    """
+    def __init__(self, onnx_node, log_function, impl=None):
+        if impl is None:
+            raise RuntimeError(
+                f"impl cannot be None for node type {onnx_node.op_type!r} "
+                f"from domain {onnx_node.domain!r}.")
+        OpRun.__init__(self, onnx_node, log_function)
+        self.impl_ = impl
+
+    def _run(self, *inputs):
+        if len(self.impl_.input_names) != len(inputs):
+            raise RuntimeError(
+                f"Mismatch lengths between the number of inputs {len(inputs)} "
+                f"and the expected number of inputs {len(self.impl_.inputs)} "
+                f"for node {self.op_type!r} from domain {self.domain!r}.")
+        feeds = {name: value for name, value in zip(self.impl_.input_names, inputs)}
+        results = self.impl_.run(None, feeds)
+        if len(self.impl_.output_names) != len(results):
+            raise RuntimeError(
+                f"Mismatch lengths between the number of outputs {len(results)} "
+                f"and the expected number of outputs {len(self.impl_.output_names)} "
+                f"for node {self.op_type!r} from domain {self.domain!r}.")
+        return tuple(results)
 
 
 class OpRunUnary(OpRun):
