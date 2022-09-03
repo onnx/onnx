@@ -7,7 +7,7 @@ from onnx import FunctionProto, GraphProto, ModelProto, load, numpy_helper
 from onnx.defs import onnx_opset_version
 
 
-class Inference:  # noqa: R0902
+class Inference:  # noqa
     """
     Executes an onnx model. The implementation relies on numpy
     for the most past and C++ through pybind11.
@@ -24,7 +24,7 @@ class Inference:  # noqa: R0902
     it uses this class to execute the subgraph or the function.
     """
 
-    def __init__(self, proto, verbose=0, opsets=None, functions=None):  # noqa: R0915
+    def __init__(self, proto, verbose=0, opsets=None, functions=None):  # noqa
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
@@ -141,7 +141,7 @@ class Inference:  # noqa: R0902
             )
         version = self.opsets[node.domain]
         if node.domain == "":
-            from .aionnx import load_op  # noqa: C0415
+            from .aionnx import load_op  # noqa
 
             return load_op(node.domain, node.op_type, version)
         if node.domain == "ai.onnx.ml":
@@ -151,7 +151,7 @@ class Inference:  # noqa: R0902
         # It has to be a function.
         key = node.domain, node.op_type
         if key in self.functions_:
-            from .aionnx import load_op  # noqa: C0415
+            from .aionnx import load_op  # noqa
 
             impl = self.functions_[key]
             return load_op(node.domain, node.op_type, version, custom=impl)

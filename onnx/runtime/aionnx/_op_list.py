@@ -17,7 +17,7 @@ from ._op import OpFunction, OpRun
 # from .op_acosh import Acosh
 # from .op_adagrad import Adagrad
 # from .op_adam import Adam
-from .op_add import Add  # noqa: W0611
+from .op_add import Add  # noqa
 
 # from .op_and import And
 # from .op_argmax import ArgMax
@@ -35,7 +35,7 @@ from .op_add import Add  # noqa: W0611
 # from .op_cdist import CDist
 # from .op_ceil import Ceil
 # from .op_celu import Celu
-from .op_clip import Clip, Clip_6, Clip_11  # noqa: W0611
+from .op_clip import Clip, Clip_6, Clip_11  # noqa
 
 # from .op_compress import Compress
 # from .op_concat import Concat
@@ -75,7 +75,7 @@ from .op_clip import Clip, Clip_6, Clip_11  # noqa: W0611
 # from .op_hardmax import Hardmax
 # from .op_hard_sigmoid import HardSigmoid
 # from .op_floor import Floor
-from .op_identity import Identity  # noqa: W0611
+from .op_identity import Identity  # noqa
 
 # from .op_if import If
 # from .op_imputer import Imputer
@@ -91,7 +91,7 @@ from .op_identity import Identity  # noqa: W0611
 # from .op_lp_normalization import LpNormalization
 # from .op_lrn import LRN
 # from .op_lstm import LSTM
-from .op_matmul import MatMul  # noqa: W0611
+from .op_matmul import MatMul  # noqa
 
 # from .op_max import Max
 # from .op_max_pool import MaxPool
@@ -99,7 +99,7 @@ from .op_matmul import MatMul  # noqa: W0611
 # from .op_min import Min
 # from .op_mod import Mod
 # from .op_momentum import Momentum
-from .op_mul import Mul  # noqa: W0611
+from .op_mul import Mul  # noqa
 
 # from .op_neg import Neg
 # from .op_negative_log_likelihood_loss import NegativeLogLikelihoodLoss
@@ -164,7 +164,7 @@ from .op_mul import Mul  # noqa: W0611
 # from .op_squeeze import Squeeze, Squeeze_1, Squeeze_11, Squeeze_13
 # from .op_stft import STFT
 # from .op_string_normalizer import StringNormalizer
-from .op_sub import Sub  # noqa: W0611
+from .op_sub import Sub  # noqa
 
 # from .op_sum import Sum
 # from .op_tan import Tan

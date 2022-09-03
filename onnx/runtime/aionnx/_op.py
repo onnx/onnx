@@ -283,7 +283,7 @@ class OpFunction(OpRun):
         OpRun.__init__(self, onnx_node, log_function)
         self.impl_ = impl
 
-    def _run(self, *inputs):  # noqa: W0221
+    def _run(self, *inputs):  # noqa
         if len(self.impl_.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
@@ -301,7 +301,7 @@ class OpFunction(OpRun):
         return tuple(results)
 
 
-class OpRunUnary(OpRun):  # noqa: W0223
+class OpRunUnary(OpRun):  # noqa
     """
     Ancestor to all unary operators in this subfolder.
     Checks that inputs type are the same.
@@ -310,7 +310,7 @@ class OpRunUnary(OpRun):  # noqa: W0223
     def __init__(self, onnx_node, logging_function):
         OpRun.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, attributes=None):  # noqa: W0221
+    def run(self, x, attributes=None):  # noqa
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -321,9 +321,8 @@ class OpRunUnary(OpRun):  # noqa: W0223
             res = self._run(x, attributes=attributes)
         except TypeError as e:
             raise TypeError(
-                "Issues with types {} (binary operator {}).".format(
-                    ", ".join(str(type(_)) for _ in [x]), self.__class__.__name__
-                )
+                f"Issues with types {', '.join(str(type(_)) for _ in [x])} "
+                f"(binary operator {self.__class__.__name__!r})."
             ) from e
         self.log_function(
             "-- done %s.run -> %d outputs", self.__class__.__name__, len(res)
@@ -331,7 +330,7 @@ class OpRunUnary(OpRun):  # noqa: W0223
         return res
 
 
-class OpRunArg(OpRunUnary):  # noqa: W0223
+class OpRunArg(OpRunUnary):  # noqa
     """
     Ancestor to all unary operators in this subfolder
     and which produces position of extremas (ArgMax, ...).
@@ -346,7 +345,7 @@ class OpRunArg(OpRunUnary):  # noqa: W0223
         if not hasattr(self, "axis"):
             raise AttributeError("Attribute 'axis' is missing.")
 
-    def run(self, x, attributes=None):  # noqa: W0221
+    def run(self, x, attributes=None):  # noqa
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
@@ -354,10 +353,8 @@ class OpRunArg(OpRunUnary):  # noqa: W0223
         res = OpRunUnary.run(self, x, attributes=attributes)
         if res[0].dtype != np.int64:
             raise RuntimeTypeError(
-                "Output type mismatch: should be '{}' != output '{}' "
-                "(operator '{}')".format(
-                    np.int64, res[0].dtype, self.__class__.__name__
-                )
+                f"Output type mismatch: should be '{np.int64}' != output '{res[0].dtype}' "
+                f"(operator {self.__class__.__name__!r})."
             )
         return res
 
@@ -365,7 +362,7 @@ class OpRunArg(OpRunUnary):  # noqa: W0223
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
-class OpRunUnaryNum(OpRunUnary):  # noqa: W0223
+class OpRunUnaryNum(OpRunUnary):  # noqa
     """
     Ancestor to all unary and numerical operators
     in this subfolder. Checks that inputs type
@@ -375,7 +372,7 @@ class OpRunUnaryNum(OpRunUnary):  # noqa: W0223
     def __init__(self, onnx_node, logging_function):
         OpRunUnary.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, attributes=None):  # noqa: W0221
+    def run(self, x, attributes=None):  # noqa
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
@@ -386,16 +383,16 @@ class OpRunUnaryNum(OpRunUnary):  # noqa: W0223
             return res
         if not isinstance(res[0], list) and res[0].dtype != x.dtype:
             raise RuntimeTypeError(
-                "Output type mismatch: input '{}' != output '{}' "
-                "(operator '{}')".format(x.dtype, res[0].dtype, self.__class__.__name__)
+                f"Output type mismatch: input '{x.dtype}' != output '{res[0].dtype}' "
+                f"(operator {self.__class__.__name__!r})."
             )
         return res
 
-    def _run_no_checks_(self, x, attributes=None):  # noqa: W0221
+    def _run_no_checks_(self, x, attributes=None):  # noqa
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
-class OpRunBinary(OpRun):  # noqa: W0223
+class OpRunBinary(OpRun):  # noqa
     """
     Ancestor to all binary operators in this subfolder.
     Checks that inputs type are the same.
@@ -404,7 +401,7 @@ class OpRunBinary(OpRun):  # noqa: W0223
     def __init__(self, onnx_node, logging_function):
         OpRun.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, y, attributes=None):  # noqa: W0221
+    def run(self, x, y, attributes=None):  # noqa
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -417,24 +414,23 @@ class OpRunBinary(OpRun):  # noqa: W0223
             )
         if x.dtype != y.dtype:
             raise RuntimeTypeError(
-                "Input type mismatch: {} != {} (operator '{}', shapes {}, {})".format(
-                    x.dtype, y.dtype, self.__class__.__name__, x.shape, y.shape
-                )
+                f"Input type mismatch: {x.dtype} != {y.dtype} "
+                f"(operator '{self.__class__.__name__!r}', "
+                f"shapes {x.shape}, {y.shape})."
             )
         try:
             res = self._run(x, y, attributes=attributes)
         except (TypeError, ValueError) as e:
             raise TypeError(
-                "Issues with types {} (binary operator {}).".format(
-                    ", ".join(str(type(_)) for _ in [x, y]), self.__class__.__name__
-                )
+                f"Issues with types {', '.join(str(type(_)) for _ in [x, y])} "
+                f"(binary operator {self.__class__.__name__!r})."
             ) from e
         self.log_function(
             "-- done %s.run -> %d outputs", self.__class__.__name__, len(res)
         )
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):  # noqa: W0221
+    def _run_no_checks_(self, x, y, attributes=None):  # noqa
         """
         Calls method ``_run``.
         """
@@ -449,7 +445,7 @@ class OpRunBinary(OpRun):  # noqa: W0223
         return res
 
 
-class OpRunBinaryComparison(OpRunBinary):  # noqa: W0223
+class OpRunBinaryComparison(OpRunBinary):  # noqa
     """
     Ancestor to all binary operators in this subfolder
     comparing tensors.
@@ -459,7 +455,7 @@ class OpRunBinaryComparison(OpRunBinary):  # noqa: W0223
         OpRunBinary.__init__(self, onnx_node, logging_function)
 
 
-class OpRunBinaryNum(OpRunBinary):  # noqa: W0223
+class OpRunBinaryNum(OpRunBinary):  # noqa
     """
     Ancestor to all binary operators in this subfolder.
     Checks that inputs type are the same.
@@ -468,7 +464,7 @@ class OpRunBinaryNum(OpRunBinary):  # noqa: W0223
     def __init__(self, onnx_node, logging_function):
         OpRunBinary.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, y, attributes=None):  # noqa: W0221
+    def run(self, x, y, attributes=None):  # noqa
         """
         Calls method ``OpRunBinary.run``, catches exceptions,
         displays a longer error message.
@@ -476,23 +472,17 @@ class OpRunBinaryNum(OpRunBinary):  # noqa: W0223
         res = OpRunBinary.run(self, x, y, attributes=attributes)
         if res[0].dtype != x.dtype:
             raise RuntimeTypeError(
-                "Output type mismatch: {} != {} or {} (operator '{}')"
-                " type(x)={} type(y)={}".format(
-                    x.dtype,
-                    res[0].dtype,
-                    y.dtype,
-                    self.__class__.__name__,
-                    type(x),
-                    type(y),
-                )
+                f"Output type mismatch: {x.dtype} != {res[0].dtype} or {y.dtype} "
+                f"(operator {self.__class__.__name__!r})"
+                f" type(x)={type(x)} type(y)={type(y)}"
             )
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):  # noqa: W0221
+    def _run_no_checks_(self, x, y, attributes=None):  # noqa
         return OpRunBinary._run_no_checks_(self, x, y, attributes=attributes)
 
 
-class OpRunBinaryNumpy(OpRunBinaryNum):  # noqa: W0223
+class OpRunBinaryNumpy(OpRunBinaryNum):  # noqa
     """
     *numpy_fct* is a binary numpy function which
     takes two matrices.
@@ -502,11 +492,11 @@ class OpRunBinaryNumpy(OpRunBinaryNum):  # noqa: W0223
         OpRunBinaryNum.__init__(self, onnx_node, logging_function)
         self.numpy_fct = numpy_fct
 
-    def _run(self, a, b, attributes=None):  # noqa: W0221
+    def _run(self, a, b, attributes=None):  # noqa
         return (self.numpy_fct(a, b),)
 
 
-class OpRunReduceNumpy(OpRunUnaryNum):  # noqa: W0223
+class OpRunReduceNumpy(OpRunUnaryNum):  # noqa
     """
     Implements the reduce logic.
     It must have a parameter *axes*.
