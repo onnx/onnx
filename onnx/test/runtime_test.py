@@ -98,11 +98,11 @@ class TestRuntimeInference(unittest.TestCase):
                 graph = make_graph(
                     [node1, node2, node3], "lr", [X, A, B], [Y], initializer=initializer
                 )
-            f = lambda x, a, b: np.clip(a @ a + b, min_value, max_value)
+            f = lambda x, a, b: np.clip(a @ a + b, min_value, max_value)  # noqa: E731
         else:
             node2 = make_node("Add", ["XA", "B"], ["Y"])
             graph = make_graph([node1, node2], "lr", [X, A, B], [Y])
-            f = lambda x, a, b: a @ a + b
+            f = lambda x, a, b: a @ a + b  # noqa: E731
         if opset is None:
             onnx_model = make_model(graph)
         else:
