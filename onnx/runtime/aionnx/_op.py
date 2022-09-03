@@ -121,7 +121,7 @@ class OpRun:
         for init in graph.initializer:
             known.add(init.name)
         for sparse_init in graph.sparse_initializer:
-            known.add(sparse_init.name)
+            known.add(sparse_init.name)  # type: ignore
         for inp in graph.input:
             known.add(inp.name)
         for node in graph.node:

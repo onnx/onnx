@@ -83,7 +83,7 @@ class Inference:
         self.verbose = verbose
         self._init()
 
-    def _log_arg(self, a) -> Any:
+    def _log_arg(self, a: Any) -> Any:
         if isinstance(a, (str, int, float)):
             return a
         if isinstance(a, np.ndarray):

@@ -372,4 +372,4 @@ class TestRuntimeInference(unittest.TestCase):
 
 if __name__ == "__main__":
     # TestRuntimeInference().test_inference_lr_clip_11()
-    unittest.main()
+    unittest.main(verbosity=2)
