@@ -131,7 +131,7 @@ class Inference:
             inst = cl(node, lambda pattern, *args: self._log(10, pattern, *args))
             self.rt_nodes_.append(inst)
 
-    def _load_impl(self, node: NodeProto) -> type:
+    def _load_impl(self, node: NodeProto) -> Any:
         """
         Loads the implementation for a specified runtime.
         """

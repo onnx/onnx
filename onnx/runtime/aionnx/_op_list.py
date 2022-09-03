@@ -226,7 +226,9 @@ def _build_registered_operators():  # type: ignore
     return reg_ops
 
 
-def load_op(domain, op_type: str, version: Union[None, int], custom: Any = None) -> Any:
+def load_op(
+    domain: str, op_type: str, version: Union[None, int], custom: Any = None
+) -> Any:
     """
     Loads the implemented for a specified operator.
 
