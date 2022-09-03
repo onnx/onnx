@@ -134,6 +134,20 @@ class TestRuntimeInference(unittest.TestCase):
         expected = (x + y) * (y - z)
         assert_almost_equal(expected, res)
 
+    def test_inference_no_attribute_bytes(self):
+        m = TestRuntimeInference._load_model(TestRuntimeInference.m2_def)
+        checker.check_model(m)
+        sess = rt.Inference(m.SerializeToString())
+        self.assertEqual(sess.input_names, ["B01", "B11", "B21"])
+        self.assertEqual(sess.output_names, ["D0"])
+        self.assertEqual(sess.opsets, {"": 10, "com.microsoft": 1})
+        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+        y = np.array([[4, 5], [6, 7]], dtype=np.float32)
+        z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
+        res = sess.run(None, {"B01": x, "B11": y, "B21": z})[0]
+        expected = (x + y) * (y - z)
+        assert_almost_equal(expected, res)
+
     def test_inference_no_attribute_verbose(self):
         m = TestRuntimeInference._load_model(TestRuntimeInference.m2_def)
         x = np.array([[0, 1], [2, 3]], dtype=np.float32)

@@ -10,7 +10,7 @@ The operator may have been updated to support more types but that
 did not change the implementation.
 """
 import textwrap
-from typing import Any
+from typing import Any, Union
 
 from ._op import OpFunction, OpRun
 
@@ -205,6 +205,7 @@ def _build_registered_operators():  # type: ignore
             "clo",
             "class_name",
             "textwrap",
+            "Union",
         }:
             continue  # pragma: no cover
         if isinstance(class_type, type(load_op)):
@@ -225,7 +226,9 @@ def _build_registered_operators():  # type: ignore
     return reg_ops
 
 
-def load_op(domain, op_type: str, version: None | int, custom: Any = None):
+def load_op(
+    domain, op_type: str, version: Union[None, int], custom: Any = None
+) -> type:
     """
     Loads the implemented for a specified operator.
 

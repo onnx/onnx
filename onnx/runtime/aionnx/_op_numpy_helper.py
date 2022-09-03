@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np
-from scipy.sparse import coo_matrix
+import numpy as np  # type: ignore
+from scipy.sparse import coo_matrix  # type: ignore
 
 
-def numpy_matmul(a, b):
+def numpy_matmul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
     Implements a matmul product. See :func:`numpy.matmul`.
     Handles sparse matrices.

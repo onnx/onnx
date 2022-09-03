@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0902,R0912,R0914,R0915
 from io import BytesIO
-from typing import Any
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np  # type: ignore
 
-from onnx import FunctionProto, GraphProto, ModelProto, load, numpy_helper
+from onnx import FunctionProto, GraphProto, ModelProto, load, NodeProto, numpy_helper
 from onnx.defs import onnx_opset_version
 
 
@@ -18,7 +18,7 @@ class Inference:
     :param verbose: display intermediate results
         on the standard output during the execution
     :param opsets: if *proto* is an instance of *GraphProto*,
-        opsets must be defined
+        opsets must be defined by a dictionary of
     :param functions: known onnx functions
 
     The class maps every node to its associated implementation.
@@ -26,15 +26,14 @@ class Inference:
     it uses this class to execute the subgraph or the function.
     """
 
-    def __init__(self, proto, verbose=0, opsets=None, functions=None):  # type: ignore
+    def __init__(self, proto: Any, verbose: int = 0, opsets: Union[None, Dict[str, int]] = None, functions=None):  # type: ignore
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
         elif isinstance(proto, bytes):
-            with open(BytesIO(proto), "rb") as f:
-                proto = load(f)
+            proto = load(BytesIO(proto))
         self.proto_ = proto
-        self.functions_ = {}
+        self.functions_: Dict[Tuple[str, str], Inference] = {}
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
@@ -49,7 +48,7 @@ class Inference:
                 raise ValueError("opsets must be a dictionary if proto is GraphProto.")
             self.opsets_ = opsets
         elif isinstance(proto, FunctionProto):
-            self.onnx_graph_ = None
+            self.onnx_graph_ = None  # type: ignore
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
             if opsets is not None:
                 raise ValueError("opsets must be None if proto is FunctionProto.")
@@ -59,7 +58,7 @@ class Inference:
             self.input_names_ = [i.name for i in self.onnx_graph_.input]
             self.output_names_ = [o.name for o in self.onnx_graph_.output]
             self.inits_ = list(self.onnx_graph_.initializer) + list(
-                self.onnx_graph_.sparse_initializer
+                self.onnx_graph_.sparse_initializer  # type: ignore
             )
             self.nodes_ = self.onnx_graph_.node
         else:
@@ -77,7 +76,7 @@ class Inference:
                         f, verbose=verbose, functions=existing_functions
                     )
                 elif isinstance(f, Inference):
-                    onx = f.proto_
+                    onx = f.proto_  # type: ignore
                     self.functions_[onx.domain, onx.name] = f
                 else:
                     raise TypeError(f"Unexpected type {type(f)!r} for a function.")
@@ -99,7 +98,7 @@ class Inference:
             return ", ".join(map(self._log_arg, a))
         return a
 
-    def _log(self, level, pattern, *args) -> None:
+    def _log(self, level: int, pattern: str, *args: List[Any]) -> None:
         if level < self.verbose:
             new_args = [self._log_arg(a) for a in args]
             print(pattern % tuple(new_args))
@@ -132,9 +131,9 @@ class Inference:
             inst = cl(node, lambda pattern, *args: self._log(10, pattern, *args))
             self.rt_nodes_.append(inst)
 
-    def _load_impl(self, node) -> type:
+    def _load_impl(self, node: NodeProto) -> type:
         """
-        Loads the implemented for a specified runtime.
+        Loads the implementation for a specified runtime.
         """
         if node.domain not in self.opsets:
             raise RuntimeError(

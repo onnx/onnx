@@ -85,7 +85,7 @@ class OpRun:
         Converts an attribute value into a python value.
         """
         if att.type in OpRun._attribute_conversion_functions:
-            return OpRun._attribute_conversion_functions[att.type](att)
+            return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
         raise NotImplementedError(
             f"Unable to convert attribute {att.name!r} type {att.type!r} "
             f"from node type {self.onnx_node.op_type!r}, "
@@ -120,8 +120,10 @@ class OpRun:
         known = set()
         for init in graph.initializer:
             known.add(init.name)
-        for init in graph.input:
-            known.add(init.name)
+        for sparse_init in graph.sparse_initializer:
+            known.add(sparse_init.name)
+        for inp in graph.input:
+            known.add(inp.name)
         for node in graph.node:
             for o in node.output:
                 known.add(o)
