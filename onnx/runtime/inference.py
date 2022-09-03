@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np  # type: ignore
 
-from onnx import FunctionProto, GraphProto, ModelProto, load, NodeProto, numpy_helper
+from onnx import FunctionProto, GraphProto, ModelProto, NodeProto, load, numpy_helper
 from onnx.defs import onnx_opset_version
 
 
