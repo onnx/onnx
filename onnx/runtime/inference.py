@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0902,R0912,R0914,R0915
 from io import BytesIO
+from typing import Any
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from onnx import FunctionProto, GraphProto, ModelProto, load, numpy_helper
 from onnx.defs import onnx_opset_version
@@ -25,7 +26,7 @@ class Inference:
     it uses this class to execute the subgraph or the function.
     """
 
-    def __init__(self, proto, verbose=0, opsets=None, functions=None):
+    def __init__(self, proto, verbose=0, opsets=None, functions=None):  # type: ignore
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
@@ -83,7 +84,7 @@ class Inference:
         self.verbose = verbose
         self._init()
 
-    def _log_arg(self, a):
+    def _log_arg(self, a) -> Any:
         if isinstance(a, (str, int, float)):
             return a
         if isinstance(a, np.ndarray):
@@ -98,27 +99,27 @@ class Inference:
             return ", ".join(map(self._log_arg, a))
         return a
 
-    def _log(self, level, pattern, *args):
+    def _log(self, level, pattern, *args) -> None:
         if level < self.verbose:
             new_args = [self._log_arg(a) for a in args]
             print(pattern % tuple(new_args))
 
     @property
-    def input_names(self):
+    def input_names(self):  # type: ignore
         "Returns the input names."
         return self.input_names_
 
     @property
-    def output_names(self):
+    def output_names(self):  # type: ignore
         "Returns the output names."
         return self.output_names_
 
     @property
-    def opsets(self):
+    def opsets(self):  # type: ignore
         "Returns the opsets."
         return self.opsets_
 
-    def _init(self):
+    def _init(self) -> None:
         """
         Loads the implementation for every node in the graph.
         """
@@ -131,7 +132,7 @@ class Inference:
             inst = cl(node, lambda pattern, *args: self._log(10, pattern, *args))
             self.rt_nodes_.append(inst)
 
-    def _load_impl(self, node):
+    def _load_impl(self, node) -> type:
         """
         Loads the implemented for a specified runtime.
         """
@@ -161,7 +162,7 @@ class Inference:
             f"is unknown, known functions: {list(sorted(self.functions_))}."
         )
 
-    def run(self, output_names, feed_inputs):
+    def run(self, output_names, feed_inputs):  # type: ignore
         """
         Executes the onnx model.
 

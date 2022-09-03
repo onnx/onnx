@@ -1,22 +1,24 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np
+from typing import Any, Callable, Dict, Iterable, List, Tuple, Type
 
-from onnx import GraphProto, TensorProto
+import numpy as np  # type: ignore
+
+from onnx import AttributeProto, GraphProto, NodeProto, TensorProto
 from onnx.defs import get_all_schemas_with_history
 
 
-def _build_schemas():
-    res = {}
+def _build_schemas() -> Dict[str, type]:
+    res: Dict[str, type] = {}
     for schema in get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
-            if schema.since_version > res[schema.name].since_version:
+            if schema.since_version > res[schema.name].since_version:  # type: ignore
                 # We keep the most recent one.
-                res[schema.name] = schema
+                res[schema.name] = schema  # type: ignore
         else:
-            res[schema.name] = schema
-        res[schema.name + "_" + str(schema.since_version)] = schema
+            res[schema.name] = schema  # type: ignore
+        res[schema.name + "_" + str(schema.since_version)] = schema  # type: ignore
     return res
 
 
@@ -44,10 +46,10 @@ class RefAttrName:
     :param name: name of the input
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         "usual"
         return f"{self.__class__.__name__}({self.name!r})"
 
@@ -69,16 +71,16 @@ class OpRun:
         TensorProto.INT64: lambda att: np.float32(att.i),
     }
 
-    def __init__(self, onnx_node, log_function):
+    def __init__(self, onnx_node: NodeProto, log_function: Any):
         self.onnx_node = onnx_node
         self.log_function = log_function
         if onnx_node.op_type in _schemas:
             self._schema = _schemas[onnx_node.op_type]
         else:
-            self._schema = None
+            self._schema = None  # type: ignore
         self._load_attributes()
 
-    def _extract_attribute_value(self, att):
+    def _extract_attribute_value(self, att: AttributeProto) -> Any:
         """
         Converts an attribute value into a python value.
         """
@@ -90,7 +92,7 @@ class OpRun:
             f"domain {self.onnx_node.domain!r}."
         )
 
-    def _load_attributes(self):
+    def _load_attributes(self) -> None:
         "Checks and loads attributes."
         for att in self.onnx_node.attribute:
             name = att.name
@@ -98,7 +100,7 @@ class OpRun:
             setattr(self, name, value)
 
         if self._schema and self.onnx_node.op_type not in {"Constant"}:
-            for k, v in self._schema.attributes.items():
+            for k, v in self._schema.attributes.items():  # type: ignore
                 if not hasattr(self, k) and getattr(v, "required", True):
                     raise RuntimeError(
                         f"Attribute {k!r} is expected based on ONNX specifications "
@@ -106,7 +108,7 @@ class OpRun:
                     )
 
     @staticmethod
-    def local_inputs(graph):
+    def local_inputs(graph: GraphProto) -> List[str]:
         """
         Returns all varibles not registered as inputs and not produced by
         an node inside the graph. This inputs are part of the context
@@ -129,26 +131,26 @@ class OpRun:
         return list(local)
 
     @property
-    def input(self):
+    def input(self) -> Iterable[str]:
         "Returns node attribute `input`."
-        return self.onnx_node.input
+        return self.onnx_node.input  # type: ignore
 
     @property
-    def output(self):
+    def output(self) -> Iterable[str]:
         "Returns node attribute `output`."
-        return self.onnx_node.output
+        return self.onnx_node.output  # type: ignore
 
     @property
-    def op_type(self):
+    def op_type(self) -> str:
         "Returns node attribute `op_type`."
-        return self.onnx_node.op_type
+        return self.onnx_node.op_type  # type: ignore
 
     @property
-    def domain(self):
+    def domain(self) -> str:
         "Returns node attribute `domain`."
-        return self.onnx_node.domain
+        return self.onnx_node.domain  # type: ignore
 
-    def need_context(self):
+    def need_context(self) -> bool:
         """
         Tells the runtime if this node needs the context
         (all the results produced so far) as it may silently access
@@ -157,7 +159,7 @@ class OpRun:
         """
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         atts = [self.__class__.__name__ + "(", f"    op_type={self.onnx_node.op_type}"]
         for k, v in sorted(self.__dict__.items()):
             if k in {"desc", "onnx_node"}:
@@ -167,7 +169,7 @@ class OpRun:
         atts.append(")")
         return "\n".join(atts)
 
-    def _run(self, *args, attributes=None, **kwargs):
+    def _run(self, *args, attributes=None, **kwargs):  # type: ignore 
         """
         Should be overwritten.
         Parameter *attributes* is used by functions.
@@ -176,7 +178,7 @@ class OpRun:
             f"Method '_run' or 'to_python' should be overwritten for operator {self.__class__.__name__!r}."
         )
 
-    def run(self, *args, **kwargs):
+    def run(self, *args, **kwargs):  # type: ignore
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -201,77 +203,13 @@ class OpRun:
         )
         return res
 
-    @property
-    def args_default(self):
-        """
-        Returns the list of arguments as well as
-        the list of parameters with the default values
-        (close to the signature).
-        """
-        inps = []
-        if hasattr(self, "atts"):
-            for k, v in self.atts.items():
-                if isinstance(v, (list, tuple, dict)) and len(v) == 0:
-                    v = None
-                inps.append(f"{k}={v!r}")
-        return inps
-
-    @property
-    def args_default_modified(self):
-        """
-        Returns the list of modified parameters.
-        """
-        if not hasattr(self, "atts"):
-            return None
-
-        inps = []
-        for k, v in self.atts.items():
-            val = getattr(self, k, None)
-            if isinstance(val, np.ndarray) and isinstance(v, list):
-                val = list(val)
-            try:
-                if val != v:
-                    inps.append(f"{k}={val!r}")
-            except ValueError as e:
-                raise ValueError(
-                    f"Unexpected value for v={v!r} and val={val!r}."
-                ) from e
-        return inps
-
-    @property
-    def args_optional(self):
-        """
-        Returns the list of optional arguments.
-        """
-        inps = []
-        if hasattr(self, "optional_inputs"):
-            for k, v in self.optional_inputs.items():
-                inps.append(f"{k}={v!r}")
-        return inps
-
-    @property
-    def args_mandatory(self):
-        """
-        Returns the list of optional arguments.
-        """
-        if hasattr(self, "mandatory_inputs"):
-            return self.mandatory_inputs
-        return None
-
-    @property
-    def atts_value(self):
-        "Returns all parameters in a dictionary."
-        if hasattr(self, "atts"):
-            return {k: getattr(self, k) for k in self.atts}
-        return None
-
 
 class OpFunction(OpRun):
     """
     Runs a custom function.
     """
 
-    def __init__(self, onnx_node, log_function, impl=None):
+    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any=None):
         if impl is None:
             raise RuntimeError(
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
@@ -280,7 +218,7 @@ class OpFunction(OpRun):
         OpRun.__init__(self, onnx_node, log_function)
         self.impl_ = impl
 
-    def _run(self, *inputs):  # pylint: disable=W0221
+    def _run(self, *inputs):  # type: ignore # pylint: disable=W0221
         if len(self.impl_.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
@@ -304,10 +242,10 @@ class OpRunUnary(OpRun):  # pylint: disable=W0223
     Checks that inputs type are the same.
     """
 
-    def __init__(self, onnx_node, logging_function):
+    def __init__(self, onnx_node: NodeProto, logging_function: Any):
         OpRun.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, attributes=None):  # pylint: disable=W0221
+    def run(self, x, attributes=None):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -335,14 +273,14 @@ class OpRunArg(OpRunUnary):  # pylint: disable=W0223
     The class must have attributes *axis*, *keepdim*.
     """
 
-    def __init__(self, onnx_node, logging_function):
+    def __init__(self, onnx_node: NodeProto, logging_function: Any):
         OpRunUnary.__init__(self, onnx_node, logging_function)
         if not hasattr(self, "keepdims"):
             raise AttributeError("Attribute 'keepdims' is missing.")
         if not hasattr(self, "axis"):
             raise AttributeError("Attribute 'axis' is missing.")
 
-    def run(self, x, attributes=None):  # pylint: disable=W0221
+    def run(self, x, attributes=None):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
@@ -355,7 +293,7 @@ class OpRunArg(OpRunUnary):  # pylint: disable=W0223
             )
         return res
 
-    def _run_no_checks_(self, x, attributes=None):
+    def _run_no_checks_(self, x, attributes=None):  # type: ignore
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
@@ -366,10 +304,10 @@ class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
     are the same.
     """
 
-    def __init__(self, onnx_node, logging_function):
+    def __init__(self, onnx_node: NodeProto, logging_function: Any):
         OpRunUnary.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, attributes=None):  # pylint: disable=W0221
+    def run(self, x, attributes=None):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
@@ -385,7 +323,7 @@ class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
             )
         return res
 
-    def _run_no_checks_(self, x, attributes=None):
+    def _run_no_checks_(self, x, attributes=None):  # type: ignore
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
@@ -395,10 +333,10 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
     Checks that inputs type are the same.
     """
 
-    def __init__(self, onnx_node, logging_function):
+    def __init__(self, onnx_node: NodeProto, logging_function: Any):
         OpRun.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, y, attributes=None):  # pylint: disable=W0221
+    def run(self, x, y, attributes=None):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -427,7 +365,7 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
         )
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):
+    def _run_no_checks_(self, x, y, attributes=None):  # type: ignore 
         """
         Calls method ``_run``.
         """
@@ -447,7 +385,7 @@ class OpRunBinaryComparison(OpRunBinary):  # pylint: disable=W0223
     comparing tensors.
     """
 
-    def __init__(self, onnx_node, logging_function):
+    def __init__(self, onnx_node: NodeProto, logging_function: Any):
         OpRunBinary.__init__(self, onnx_node, logging_function)
 
 
@@ -457,10 +395,10 @@ class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
     Checks that inputs type are the same.
     """
 
-    def __init__(self, onnx_node, logging_function):
+    def __init__(self, onnx_node: NodeProto, logging_function: Any):
         OpRunBinary.__init__(self, onnx_node, logging_function)
 
-    def run(self, x, y, attributes=None):  # pylint: disable=W0221
+    def run(self, x, y, attributes=None):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``OpRunBinary.run``, catches exceptions,
         displays a longer error message.
@@ -474,7 +412,7 @@ class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
             )
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):
+    def _run_no_checks_(self, x, y, attributes=None):  # type: ignore
         return OpRunBinary._run_no_checks_(self, x, y, attributes=attributes)
 
 
@@ -484,11 +422,11 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
     takes two matrices.
     """
 
-    def __init__(self, numpy_fct, onnx_node, logging_function):
+    def __init__(self, numpy_fct: Any, onnx_node: NodeProto, logging_function: Any):
         OpRunBinaryNum.__init__(self, onnx_node, logging_function)
         self.numpy_fct = numpy_fct
 
-    def _run(self, a, b, attributes=None):  # pylint: disable=W0221
+    def _run(self, a, b, attributes=None):  # type: ignore # pylint: disable=W0221
         return (self.numpy_fct(a, b),)
 
 
@@ -498,10 +436,10 @@ class OpRunReduceNumpy(OpRunUnaryNum):
     It must have a parameter *axes*.
     """
 
-    def __init__(self, onnx_node, logging_function):
+    def __init__(self, onnx_node: NodeProto, logging_function: Any):
         OpRunUnaryNum.__init__(self, onnx_node, logging_function)
-        if isinstance(self.axes, np.ndarray):  # pylint: disable=E0203
-            if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:
+        if isinstance(self.axes, np.ndarray):  # type: ignore # pylint: disable=E0203
+            if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:  # type: ignore
                 self.axes = None
             else:
                 self.axes = tuple(self.axes)

@@ -10,6 +10,7 @@ The operator may have been updated to support more types but that
 did not change the implementation.
 """
 import textwrap
+from typing import Any
 
 from ._op import OpFunction, OpRun
 
@@ -183,7 +184,7 @@ from .op_sub import Sub
 # from .op_zipmap import ZipMap
 
 
-def _split_class_namme(name):
+def _split_class_namme(name):  # type: ignore
     if "_" in name:
         prefix, vers = name.rsplit("_", maxsplit=1)
         try:
@@ -194,11 +195,12 @@ def _split_class_namme(name):
     return name, None
 
 
-def _build_registered_operators():
+def _build_registered_operators():  # type: ignore
     clo = globals().copy()
-    reg_ops = {}
+    reg_ops = {}  # type: ignore
     for class_name, class_type in clo.items():
         if class_name[0] == "_" or class_name in {
+            "Any",
             "cl",
             "clo",
             "class_name",
@@ -223,7 +225,7 @@ def _build_registered_operators():
     return reg_ops
 
 
-def load_op(domain, op_type, version, custom=None):
+def load_op(domain, op_type: str, version: None | int, custom: Any=None):
     """
     Loads the implemented for a specified operator.
 
@@ -237,16 +239,16 @@ def load_op(domain, op_type, version, custom=None):
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()
     if custom is not None:
-        return lambda *args: OpFunction(*args, impl=custom)
+        return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
     if domain != "":
         raise ValueError(f"Domain must be '' not {domain!r}.")
-    if op_type not in _registered_operators:
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
+    if op_type not in _registered_operators:  # type: ignore
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
         raise ValueError(
             f"Not registered implementation for operator {op_type!r} "
             f"and domain {domain!r} in\n{available}"
         )
-    impl = _registered_operators[op_type]
+    impl = _registered_operators[op_type]  # type: ignore
     if None not in impl:
         raise RuntimeError(
             f"No default implementation for operator {op_type!r} "

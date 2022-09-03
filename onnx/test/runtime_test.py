@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# type: ignore
 # pylint: disable=C3001
 
 import unittest
@@ -7,7 +8,7 @@ from io import StringIO
 from textwrap import dedent
 
 import numpy as np  # type: ignore
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal  # type: ignore
 
 from onnx import ModelProto, TensorProto, checker, parser
 from onnx.checker import check_model
