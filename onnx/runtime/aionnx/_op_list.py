@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0611
+# pylint: disable=W0611,W0603
 """
 Every class imported in this module defines an implementation of
 an operator of the main domain. Any class name uses `_` to specify a
@@ -198,14 +198,21 @@ def _build_registered_operators():
     clo = globals().copy()
     reg_ops = {}
     for class_name, class_type in clo.items():
-        if class_name[0] == "_" or class_name in {"cl", "clo", "class_name", "textwrap"}:
+        if class_name[0] == "_" or class_name in {
+            "cl",
+            "clo",
+            "class_name",
+            "textwrap",
+        }:
             continue  # pragma: no cover
         if isinstance(class_type, type(load_op)):
             continue
         try:
             issub = issubclass(class_type, OpRun)
         except TypeError as e:
-            raise TypeError(f"Unexpected variable type {class_type!r} and class_name={class_name!r}.") from e
+            raise TypeError(
+                f"Unexpected variable type {class_type!r} and class_name={class_name!r}."
+            ) from e
         if issub:
             op_type, op_version = _split_class_namme(class_name)
             if op_type not in reg_ops:

@@ -173,8 +173,7 @@ class OpRun:
         Parameter *attributes* is used by functions.
         """
         raise NotImplementedError(
-            "Method '_run' or 'to_python' should be overwritten for operator %s."
-            "" % self.__class__.__name__
+            f"Method '_run' or 'to_python' should be overwritten for operator {self.__class__.__name__!r}."
         )
 
     def run(self, *args, **kwargs):
@@ -299,7 +298,7 @@ class OpFunction(OpRun):
         return tuple(results)
 
 
-class OpRunUnary(OpRun):
+class OpRunUnary(OpRun):  # pylint: disable=W0223
     """
     Ancestor to all unary operators in this subfolder.
     Checks that inputs type are the same.
@@ -328,7 +327,7 @@ class OpRunUnary(OpRun):
         return res
 
 
-class OpRunArg(OpRunUnary):
+class OpRunArg(OpRunUnary):  # pylint: disable=W0223
     """
     Ancestor to all unary operators in this subfolder
     and which produces position of extremas (ArgMax, ...).
@@ -360,7 +359,7 @@ class OpRunArg(OpRunUnary):
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
-class OpRunUnaryNum(OpRunUnary):
+class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
     """
     Ancestor to all unary and numerical operators
     in this subfolder. Checks that inputs type
@@ -390,7 +389,7 @@ class OpRunUnaryNum(OpRunUnary):
         return OpRunUnary.run(self, x, attributes=attributes)
 
 
-class OpRunBinary(OpRun):
+class OpRunBinary(OpRun):  # pylint: disable=W0223
     """
     Ancestor to all binary operators in this subfolder.
     Checks that inputs type are the same.
@@ -442,7 +441,7 @@ class OpRunBinary(OpRun):
         return res
 
 
-class OpRunBinaryComparison(OpRunBinary):
+class OpRunBinaryComparison(OpRunBinary):  # pylint: disable=W0223
     """
     Ancestor to all binary operators in this subfolder
     comparing tensors.
@@ -452,7 +451,7 @@ class OpRunBinaryComparison(OpRunBinary):
         OpRunBinary.__init__(self, onnx_node, logging_function)
 
 
-class OpRunBinaryNum(OpRunBinary):
+class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
     """
     Ancestor to all binary operators in this subfolder.
     Checks that inputs type are the same.
@@ -501,7 +500,7 @@ class OpRunReduceNumpy(OpRunUnaryNum):
 
     def __init__(self, onnx_node, logging_function):
         OpRunUnaryNum.__init__(self, onnx_node, logging_function)
-        if isinstance(self.axes, np.ndarray):
+        if isinstance(self.axes, np.ndarray):  # pylint: disable=E0203
             if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:
                 self.axes = None
             else:

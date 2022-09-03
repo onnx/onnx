@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=C0415,R0902,R0912,R0914,R0915
 from io import BytesIO
 
 import numpy as np
@@ -187,4 +188,4 @@ class Inference:
                 results[name] = value
 
         # return the results
-        return [results[name] for name in self.output_names]
+        return [results[name] for name in output_names]

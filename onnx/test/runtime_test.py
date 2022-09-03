@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=C3001
 
 import unittest
 from contextlib import redirect_stdout
@@ -281,7 +282,7 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.max, 1)
-            self.assertFalse("min" in last_node.__dict__)
+            self.assertNotIn("min", last_node.__dict__)
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_almost_equal(expected, got)
 
@@ -297,7 +298,7 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.min, -1)
-            self.assertFalse("max" in last_node.__dict__)
+            self.assertNotIn("max", last_node.__dict__)
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_almost_equal(expected, got)
 
