@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Callable, Dict, Iterable, List, Tuple, Type
+from typing import Any, Dict, Iterable, List
 
 import numpy as np  # type: ignore
 
@@ -169,7 +169,7 @@ class OpRun:
         atts.append(")")
         return "\n".join(atts)
 
-    def _run(self, *args, attributes=None, **kwargs):  # type: ignore 
+    def _run(self, *args, attributes=None, **kwargs):  # type: ignore
         """
         Should be overwritten.
         Parameter *attributes* is used by functions.
@@ -209,7 +209,7 @@ class OpFunction(OpRun):
     Runs a custom function.
     """
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any=None):
+    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
         if impl is None:
             raise RuntimeError(
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
@@ -365,7 +365,7 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
         )
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):  # type: ignore 
+    def _run_no_checks_(self, x, y, attributes=None):  # type: ignore
         """
         Calls method ``_run``.
         """
@@ -430,7 +430,7 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         return (self.numpy_fct(a, b),)
 
 
-class OpRunReduceNumpy(OpRunUnaryNum):
+class OpRunReduceNumpy(OpRunUnaryNum):  # type: ignore
     """
     Implements the reduce logic.
     It must have a parameter *axes*.
