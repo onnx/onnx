@@ -7,7 +7,7 @@ class Identity(OpRunUnaryNum):
     def __init__(self, onnx_node, log_function):
         OpRunUnaryNum.__init__(self, onnx_node, log_function)
 
-    def _run(self, a, attributes=None):  # noqa: W0221
+    def _run(self, a, attributes=None):  # pylint: disable=W0221
         if a is None:
             return (None,)
         return (a.copy(),)
