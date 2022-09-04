@@ -94,7 +94,7 @@ class Inference:
                 elements = elements[:5]
                 return f"{a.dtype}:{a.shape}:{','.join(map(str, elements))}..."
             return f"{a.dtype}:{a.shape}:{elements}"
-        if isinstance(a, list) or a.__class__.__name__ == "RepeatedScalarContainer":
+        if hasattr(a, "append"):
             return ", ".join(map(self._log_arg, a))
         return a
 
