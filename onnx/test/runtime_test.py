@@ -369,7 +369,93 @@ class TestRuntimeInference(unittest.TestCase):
         expected = x
         assert_almost_equal(expected, result)
 
+    def test_reduce_sum_11(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("ReduceSum", ["X"], ["Y"], axes=[1], keepdims=1)
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 11)])
+        check_model(onnx_model)
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
+        expected = x.sum(axis=1, keepdims=1)
+        sess = rt.Inference(onnx_model)
+        got = sess.run(None, {"X": x})[0]
+        assert_almost_equal(expected, got)
+
+    def test_reduce_sum_13(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        A = make_tensor_value_info("A", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("ReduceSum", ["X", "A"], ["Y"], keepdims=1)
+        graph = make_graph([node1], "rs", [X, A], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 13)])
+        check_model(onnx_model)
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
+        a = np.array([1], dtype=np.int64)
+        expected = x.sum(axis=1, keepdims=1)
+        sess = rt.Inference(onnx_model)
+        got = sess.run(None, {"X": x, "A": a})[0]
+        assert_almost_equal(expected, got)
+
+    def test_reduce_sum_13_empty_axes(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        A = make_tensor_value_info("A", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("ReduceSum", ["X", "A"], ["Y"], keepdims=1)
+        graph = make_graph([node1], "rs", [X, A], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 13)])
+        check_model(onnx_model)
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
+        a = np.array([], dtype=np.int64)
+        expected = x.sum(keepdims=1)
+        sess = rt.Inference(onnx_model)
+        got = sess.run(None, {'X': x, "A": a})[0]
+        assert_almost_equal(expected, got)
+
+    def test_reduce_sum_13_empty_axes_noop(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("ReduceSum", ["X"], ["Y"], keepdims=1, noop_with_empty_axes=1)
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 13)])
+        check_model(onnx_model)
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
+        a = np.array([], dtype=np.int64)
+        sess = rt.Inference(onnx_model)
+        got = sess.run(None, {"X": x})[0]
+        assert_almost_equal(x, got)
+
+    def test_reduce_greater(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        Z = make_tensor_value_info("Z", TensorProto.FLOAT, [None])
+        node1 = make_node("Greater", ["X", "Y"], ["Z"])
+        graph = make_graph([node1], "g", [X, Y], [Z])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 13)])
+        check_model(onnx_model)
+        x = np.arange(4).reshape((2, 2)).astype(np.float32)
+        y = np.array([2], dtype=np.float32)
+        expected = x > y
+        sess = rt.Inference(onnx_model)
+        got = sess.run(None, {"X": x, "Y": y})[0]
+        assert_almost_equal(expected, got)
+
+    def test_reduce_greater_or_equal(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        Z = make_tensor_value_info("Z", TensorProto.FLOAT, [None])
+        node1 = make_node("GreaterOrEqual", ["X", "Y"], ["Z"])
+        graph = make_graph([node1], "g", [X, Y], [Z])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 13)])
+        check_model(onnx_model)
+        x = np.arange(4).reshape((2, 2)).astype(np.float32)
+        y = np.array([2], dtype=np.float32)
+        expected = x >= y
+        sess = rt.Inference(onnx_model)
+        got = sess.run(None, {"X": x, "Y": y})[0]
+        assert_almost_equal(expected, got)
+
 
 if __name__ == "__main__":
-    # TestRuntimeInference().test_inference_lr_clip_11()
+    # TestRuntimeInference().test_reduce_sum_13_empty_axes()
     unittest.main(verbosity=2)

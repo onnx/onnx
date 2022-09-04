@@ -71,7 +71,8 @@ from .op_clip import Clip, Clip_6, Clip_11
 # from .op_gather_elements import GatherElements
 # from .op_gemm import Gemm
 # from .op_global_average_pool import GlobalAveragePool, GlobalMaxPool
-# from .op_greater import Greater, GreaterOrEqual
+from .op_greater import Greater, GreaterOrEqual
+
 # from .op_grid_sample import GridSample
 # from .op_gru import GRU
 # from .op_hardmax import Hardmax
@@ -130,8 +131,8 @@ from .op_mul import Mul
 # from .op_reduce_max import ReduceMax
 # from .op_reduce_mean import ReduceMean
 # from .op_reduce_prod import ReduceProd
-# from .op_reduce_sum import (
-#     ReduceSum_1, ReduceSum_11, ReduceSum_13, ReduceSum)
+from .op_reduce_sum import ReduceSum, ReduceSum_1, ReduceSum_11, ReduceSum_13
+
 # from .op_reduce_sum_square import ReduceSumSquare
 # from .op_relu import Relu, ThresholdedRelu
 # from .op_reshape import Reshape, Reshape_5, Reshape_13, Reshape_14

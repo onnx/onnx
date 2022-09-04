@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterable, List
 
 import numpy as np  # type: ignore
 
-from onnx import AttributeProto, GraphProto, NodeProto, TensorProto
+from onnx import AttributeProto, GraphProto, NodeProto
 from onnx.defs import get_all_schemas_with_history
 
 
@@ -67,8 +67,12 @@ class OpRun:
     """
 
     _attribute_conversion_functions = {
-        TensorProto.FLOAT: lambda att: np.float32(att.f),
-        TensorProto.INT64: lambda att: np.float32(att.i),
+        AttributeProto.FLOAT: lambda att: np.float32(att.f),
+        AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
+        AttributeProto.INT: lambda att: int(att.i),
+        AttributeProto.INTS: lambda att: [int(i) for i in att.ints],
+        AttributeProto.STRING: lambda att: str(att.s),
+        AttributeProto.STRINGS: lambda att: [str(s) for s in att.strings],
     }
 
     def __init__(self, onnx_node: NodeProto, log_function: Any):
@@ -101,11 +105,16 @@ class OpRun:
 
         if self._schema and self.onnx_node.op_type not in {"Constant"}:
             for k, v in self._schema.attributes.items():  # type: ignore
-                if not hasattr(self, k) and getattr(v, "required", True):
-                    raise RuntimeError(
-                        f"Attribute {k!r} is expected based on ONNX specifications "
-                        f"for node {self.onnx_node.op_type!r}."
-                    )
+                if not hasattr(self, k):
+                    if getattr(v, "required", True):
+                        raise RuntimeError(
+                            f"Attribute {k!r} is expected based on ONNX specifications "
+                            f"for node {self.onnx_node.op_type!r}."
+                        )
+                    if hasattr(v, "default_value"):
+                        name = k
+                        value = self._extract_attribute_value(v.default_value)
+                        setattr(self, k, value)
 
     @staticmethod
     def local_inputs(graph: GraphProto) -> List[str]:
@@ -295,9 +304,6 @@ class OpRunArg(OpRunUnary):  # pylint: disable=W0223
             )
         return res
 
-    def _run_no_checks_(self, x, attributes=None):  # type: ignore
-        return OpRunUnary.run(self, x, attributes=attributes)
-
 
 class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
     """
@@ -324,9 +330,6 @@ class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
                 f"(operator {self.__class__.__name__!r})."
             )
         return res
-
-    def _run_no_checks_(self, x, attributes=None):  # type: ignore
-        return OpRunUnary.run(self, x, attributes=attributes)
 
 
 class OpRunBinary(OpRun):  # pylint: disable=W0223
@@ -367,19 +370,6 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
         )
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):  # type: ignore
-        """
-        Calls method ``_run``.
-        """
-        try:
-            res = self._run(x, y, attributes=attributes)
-        except TypeError as e:
-            raise TypeError(
-                f"Issues with types {', '.join(str(type(_)) for _ in [x, y])} "
-                f"(binary operator {self.__class__.__name__!r})."
-            ) from e
-        return res
-
 
 class OpRunBinaryComparison(OpRunBinary):  # pylint: disable=W0223
     """
@@ -414,9 +404,6 @@ class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
             )
         return res
 
-    def _run_no_checks_(self, x, y, attributes=None):  # type: ignore
-        return OpRunBinary._run_no_checks_(self, x, y, attributes=attributes)
-
 
 class OpRunBinaryNumpy(OpRunBinaryNum):
     """
@@ -440,12 +427,13 @@ class OpRunReduceNumpy(OpRunUnaryNum):  # type: ignore
 
     def __init__(self, onnx_node: NodeProto, logging_function: Any):
         OpRunUnaryNum.__init__(self, onnx_node, logging_function)
-        if isinstance(self.axes, np.ndarray):  # type: ignore # pylint: disable=E0203
-            if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:  # type: ignore
+        if hasattr(self, "axes"):
+            if isinstance(self.axes, np.ndarray):  # type: ignore # pylint: disable=E0203
+                if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:  # type: ignore
+                    self.axes = None
+                else:
+                    self.axes = tuple(self.axes)
+            elif self.axes in [[], tuple()]:
                 self.axes = None
-            else:
+            elif isinstance(self.axes, list):
                 self.axes = tuple(self.axes)
-        elif self.axes in [[], tuple()]:
-            self.axes = None
-        elif isinstance(self.axes, list):
-            self.axes = tuple(self.axes)
