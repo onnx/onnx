@@ -30,7 +30,13 @@ def _check_dtype(val):  # type: ignore
         )
 
 
-class Constant_9(OpRun):
+class ConstantCommon:
+    def is_constant(self) -> bool:
+        "Defines this node as a constant."
+        return True
+
+
+class Constant_9(ConstantCommon, OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         self.cst = self.value  # type: ignore
@@ -40,7 +46,7 @@ class Constant_9(OpRun):
         return (self.cst,)
 
 
-class Constant_11(OpRun):
+class Constant_11(ConstantCommon, OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         if getattr(self, "sparse_value", None) is None:
@@ -53,7 +59,7 @@ class Constant_11(OpRun):
         return (self.cst,)
 
 
-class Constant_12(OpRun):
+class Constant_12(ConstantCommon, OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "sparse_value") and self.sparse_value is not None:  # type: ignore
@@ -82,7 +88,7 @@ class Constant_12(OpRun):
             self.is_linked_attribute = False
             _check_dtype(self.cst)
 
-    def _run(self):  # type: ignore
+    def _run(self, attributes):  # type: ignore
         if self.is_linked_attribute:
             if attributes is None:
                 raise RuntimeError(
@@ -92,7 +98,7 @@ class Constant_12(OpRun):
                 raise RuntimeError(
                     f"Cannot find attribute {self.cst!r} in {list(attributes)!r}."
                 )
-            return (attributes[self.cst.name]["value"],)
+            return (attributes[self.cst.name],)
         return (self.cst,)
 
 

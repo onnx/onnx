@@ -18,7 +18,7 @@ class RuntimeTypeError(RuntimeError):
 class DefaultNone:
     """
     Default value for parameters when the parameter is not set
-    but the operator has a default behaviour for it.
+    but the operator has a default behavior for it.
     """
 
 
@@ -77,7 +77,9 @@ class OpRun:
         AttributeProto.STRINGS: lambda att: [str(s) for s in att.strings],
     }
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any], schema: Any = None):
+    def __init__(
+        self, onnx_node: NodeProto, run_params: Dict[str, Any], schema: Any = None
+    ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
         if "log" not in run_params:
@@ -195,6 +197,12 @@ class OpRun:
         """
         return False
 
+    def is_constant(self) -> bool:
+        """
+        Tells if the node is a constant.
+        """
+        return False
+
     def __str__(self) -> str:
         atts = [self.__class__.__name__ + "(", f"    op_type={self.onnx_node.op_type}"]
         for k, v in sorted(self.__dict__.items()):
@@ -248,6 +256,11 @@ class OpFunction(OpRun):
             )
         OpRun.__init__(self, onnx_node, log_function)
         self.impl_ = impl
+        # The function implementation is the same whenever the function is called
+        # but the attributes may be different at every call.
+        self.attributes_ = {
+            name: getattr(self, name) for name in self.impl_.attributes_
+        }
 
     def _run(self, *inputs):  # type: ignore # pylint: disable=W0221
         if len(self.impl_.input_names) != len(inputs):
@@ -257,7 +270,7 @@ class OpFunction(OpRun):
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         feeds = dict(zip(self.impl_.input_names, inputs))
-        results = self.impl_.run(None, feeds)
+        results = self.impl_.run(None, feeds, attributes=self.attributes_)
         if len(self.impl_.output_names) != len(results):
             raise RuntimeError(
                 f"Mismatch lengths between the number of outputs {len(results)} "

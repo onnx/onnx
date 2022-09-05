@@ -12,9 +12,9 @@ class ReduceSum_1(OpRunReduceNumpy):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRunReduceNumpy.__init__(self, onnx_node, run_params)
 
-    def _run(self, data):  # type: ignore # pylint: disable=W0221
+    def _run(self, x):  # type: ignore # pylint: disable=W0221
         return (
-            numpy.sum(data, axis=self.axes, keepdims=self.keepdims, dtype=data.dtype),  # type: ignore
+            numpy.sum(x, axis=self.axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
         )
 
 
@@ -27,22 +27,22 @@ class ReduceSum_13(OpRunReduceNumpy):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRunReduceNumpy.__init__(self, onnx_node, run_params)
 
-    def run(self, data, axes=None):  # type: ignore
-        res = self._run(data, axes=axes)
+    def run(self, x, axes=None):  # type: ignore
+        res = self._run(x, axes=axes)
         if not self.keepdims and not isinstance(res[0], numpy.ndarray):  # type: ignore
             res = (numpy.array([res[0]], dtype=res[0].dtype),)
-        if res[0].dtype != data.dtype:
+        if res[0].dtype != x.dtype:
             raise RuntimeTypeError(
-                f"Output type mismatch: input {data.dtype} != output {res[0].dtype} "
+                f"Output type mismatch: input {x.dtype} != output {res[0].dtype} "
                 f"(operator {self.__class__.__name__!r})."
             )
         return res
 
-    def _run(self, data, axes=None):  # type: ignore
+    def _run(self, x, axes=None):  # type: ignore
         if (
             axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
         ) and self.noop_with_empty_axes:  # type: ignore
-            return (data,)
+            return (x,)
         if (
             axes is not None and len(axes.shape) > 0 and axes.shape[0] > 0
         ) and not isinstance(axes, int):
@@ -56,11 +56,11 @@ class ReduceSum_13(OpRunReduceNumpy):
             axes = None
         try:
             return (
-                numpy.sum(data, axis=axes, keepdims=self.keepdims, dtype=data.dtype),  # type: ignore
+                numpy.sum(x, axis=axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
             )
         except TypeError as e:
             raise TypeError(
-                f"Unable to reduce shape {data.shape!r} with axes={axes!r}."
+                f"Unable to reduce shape {x.shape!r} with axes={axes!r}."
             ) from e
 
 

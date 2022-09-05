@@ -177,17 +177,20 @@ class Inference:
             f"is unknown, known functions: {list(sorted(self.functions_))}."
         )
 
-    def run(self, output_names, feed_inputs):  # type: ignore
+    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Dict[str, Any] = None):  # type: ignore
         """
         Executes the onnx model.
 
         :param output_names: requested outputs by names,
             None for all
         :param feed_inputs: dictionary `{ input name: input value }`
+        :param attributes: attributes value if the instance runs a FunctionProto
         :return: list of requested outputs
         """
         if output_names is None:
             output_names = self.output_names
+        if isinstance(self.proto_, FunctionProto) and attributes is None:
+            raise TypeError()
 
         # step 1: inputs and initalizers
         results = {"": None}  # optional input
@@ -198,7 +201,11 @@ class Inference:
         for node in self.rt_nodes_:
             self._log(1, "%s(%s) -> %s", node.op_type, node.input, node.output)
             inputs = [results[i] for i in node.input]
-            outputs = node.run(*inputs)
+            if node.is_constant():
+                # A constant may be using attributes if the node is part of a FunctionProto.
+                outputs = node.run(*inputs, attributes)
+            else:
+                outputs = node.run(*inputs)
             for name, value in zip(node.output, outputs):
                 self._log(2, " + %s: %s", name, value)
                 results[name] = value

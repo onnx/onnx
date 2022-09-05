@@ -575,10 +575,10 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.arange(6).reshape((3, 2)).astype(np.float32)
         a = np.array([1, -1], dtype=np.float32)
         result = sess.run(None, {'X': x, 'A': a})[0]
-        expected = x @ a + 0.67
-        assert_almost_equal(expected, result[0])
+        expected = np.abs(x @ a + 0.67)
+        assert_almost_equal(expected, result)
 
 
 if __name__ == "__main__":
-    TestRuntimeInference().test_function_attribute()
+    # TestRuntimeInference().test_function_attribute()
     unittest.main(verbosity=2)
