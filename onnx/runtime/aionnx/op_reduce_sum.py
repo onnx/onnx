@@ -11,7 +11,7 @@ class ReduceSum_1(OpRunReduceNumpy):
 
     def _run(self, data, attributes=None):  # type: ignore # pylint: disable=W0221
         return (
-            numpy.sum(data, axis=self.axes, keepdims=self.keepdims, dtype=data.dtype),
+            numpy.sum(data, axis=self.axes, keepdims=self.keepdims, dtype=data.dtype),  # type: ignore
         )
 
 
@@ -26,7 +26,7 @@ class ReduceSum_13(OpRunReduceNumpy):
 
     def run(self, data, axes=None, attributes=None):  # type: ignore
         res = self._run(data, axes=axes)
-        if not self.keepdims and not isinstance(res[0], numpy.ndarray):
+        if not self.keepdims and not isinstance(res[0], numpy.ndarray):  # type: ignore
             res = (numpy.array([res[0]], dtype=res[0].dtype),)
         if res[0].dtype != data.dtype:
             raise RuntimeTypeError(
@@ -35,10 +35,10 @@ class ReduceSum_13(OpRunReduceNumpy):
             )
         return res
 
-    def _run(self, data, axes=None, attributes=None):
+    def _run(self, data, axes=None, attributes=None):  # type: ignore
         if (
             axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
-        ) and self.noop_with_empty_axes:
+        ) and self.noop_with_empty_axes:  # type: ignore
             return (data,)
         if (
             axes is not None and len(axes.shape) > 0 and axes.shape[0] > 0
@@ -53,7 +53,7 @@ class ReduceSum_13(OpRunReduceNumpy):
             axes = None
         try:
             return (
-                numpy.sum(data, axis=axes, keepdims=self.keepdims, dtype=data.dtype),
+                numpy.sum(data, axis=axes, keepdims=self.keepdims, dtype=data.dtype),  # type: ignore
             )
         except TypeError as e:
             raise TypeError(

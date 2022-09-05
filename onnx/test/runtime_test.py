@@ -409,7 +409,7 @@ class TestRuntimeInference(unittest.TestCase):
         a = np.array([], dtype=np.int64)
         expected = x.sum(keepdims=1)
         sess = rt.Inference(onnx_model)
-        got = sess.run(None, {'X': x, "A": a})[0]
+        got = sess.run(None, {"X": x, "A": a})[0]
         assert_almost_equal(expected, got)
 
     def test_reduce_sum_13_empty_axes_noop(self):
