@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy  # type: ignore
+
 from onnx.defs import onnx_opset_version
 
 from ..op_run import OpRun, RefAttrName

@@ -26,13 +26,13 @@ class Inference:
     it uses this class to execute the subgraph or the function.
     """
 
-    def __init__(
+    def __init__(  # type: ignore
         self,
         proto: Any,
         opsets: Union[None, Dict[str, int]] = None,
         functions=None,
         verbose: int = 0,
-    ):  # type: ignore
+    ):
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
