@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=C0415
 
 from typing import Any, Dict, Iterable, List
 
