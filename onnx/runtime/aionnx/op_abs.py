@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
+import numpy  #type: ignore
+
 from ._op import OpRunUnaryNum
 
 
-class Identity(OpRunUnaryNum):
+class Abs(OpRunUnaryNum):
+
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRunUnaryNum.__init__(self, onnx_node, run_params)
 
-    def _run(self, a):  # type: ignore # pylint: disable=W0221
-        if a is None:
-            return (None,)
-        return (a.copy(),)
+    def _run(self, x):  # type: ignore
+        return (numpy.absolute(x), )

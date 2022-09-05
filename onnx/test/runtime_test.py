@@ -10,13 +10,16 @@ from textwrap import dedent
 import numpy as np  # type: ignore
 from numpy.testing import assert_almost_equal  # type: ignore
 
-from onnx import ModelProto, TensorProto, checker, parser
+from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
 from onnx.checker import check_model
+from onnx.defs import onnx_opset_version
 from onnx.helper import (
+    make_function,
     make_graph,
     make_model,
     make_node,
     make_opsetid,
+    make_tensor,
     make_tensor_value_info,
 )
 from onnx.numpy_helper import from_array
@@ -456,16 +459,31 @@ class TestRuntimeInference(unittest.TestCase):
 
     def test_if(self):
         C = make_tensor_value_info("C", TensorProto.FLOAT, [None])
-        bthen = make_node("Constant", [], ["C"], value_floats=from_array(np.array([1], dtype=np.float32)))
+        bthen = make_node(
+            "Constant",
+            [],
+            ["C"],
+            value_floats=from_array(np.array([1], dtype=np.float32))
+        )
         bthen_body = make_graph([bthen], "gthen", [], [C])
 
         C = make_tensor_value_info("C", TensorProto.FLOAT, [None])
-        belse = make_node("Constant", [], ["C"], value_floats=from_array(np.array([0], dtype=np.float32)))
+        belse = make_node(
+            "Constant",
+            [],
+            ["C"],
+            value_floats=from_array(np.array([0], dtype=np.float32))
+        )
         belse_body = make_graph([belse], "gelse", [], [C])
 
         zero = from_array(np.array([0], dtype=np.float32), name="zero")
         greater = make_node("Greater", ["X", "zero"], ["G"])
-        node_if = make_node("If", ["G"], ["Z"], then_branch=bthen_body, else_branch=belse_body)
+        node_if = make_node(
+            "If",
+            ["G"],
+            ["Z"],
+            then_branch=bthen_body, else_branch=belse_body
+        )
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Z = make_tensor_value_info("Z", TensorProto.FLOAT, [None])
         graph = make_graph([greater, node_if], "g", [X], [Z], initializer=[zero])
@@ -482,7 +500,85 @@ class TestRuntimeInference(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_almost_equal(np.array([0], dtype=np.float32), got)
 
+    def test_if_function(self):
+        then_out = make_tensor_value_info('then_out', TensorProto.FLOAT, [5])
+        else_out = make_tensor_value_info('else_out', TensorProto.FLOAT, [5])
+
+        x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+        y = np.array([5, 4, 3, 2, 1]).astype(np.float32)
+
+        then_const_node = make_node('Constant', inputs=[], outputs=['then_out'], value=from_array(x))
+        else_const_node = make_node('Constant', inputs=[], outputs=['else_out'], value=from_array(y))
+        then_body = make_graph([then_const_node], 'then_body', [], [then_out])
+        else_body = make_graph([else_const_node], 'else_body', [], [else_out])
+        if_node = make_node('If', inputs=['f_cond'], outputs=['f_res'], then_branch=then_body, else_branch=else_body)
+
+        f = FunctionProto()
+        f.domain = 'custom'
+        f.name = 'fn'
+        f.input.extend(['f_cond'])
+        f.output.extend(['f_res'])
+        f.node.extend([if_node])
+        opset = onnx_opset_version()
+        f.opset_import.extend([make_opsetid("", opset)])
+
+        graph = make_graph(
+            nodes=[make_node('fn', domain='custom', inputs=['cond'], outputs=['res'])],
+            name='graph',
+            inputs=[make_tensor_value_info('cond', TensorProto.BOOL, [])],
+            outputs=[make_tensor_value_info('res', TensorProto.FLOAT, [5])],
+        )
+
+        m = make_model(graph, producer_name='test', opset_imports=[make_opsetid("", opset), make_opsetid("custom", 1)])
+        m.functions.extend([f])
+
+        sess = rt.Inference(m)
+        result = sess.run(None, {'cond': np.array(True)})
+        expected = np.array([1, 2, 3, 4, 5], dtype=np.float32)
+        assert_almost_equal(expected, result[0])
+
+    def test_function_attribute(self):
+        opset = onnx_opset_version()
+        new_domain = 'custom'
+        opset_imports = [make_opsetid("", opset), make_opsetid(new_domain, 1)]
+        cst = make_node('Constant', [], ['B'])
+
+        att = AttributeProto()
+        att.name = "value"
+        att.ref_attr_name = "bias"
+        att.type = AttributeProto.TENSOR
+        cst.attribute.append(att)
+
+        node1 = make_node('MatMul', ['X', 'A'], ['XA'])
+        node2 = make_node('Add', ['XA', 'B'], ['Y'])
+
+        linear_regression = make_function(
+            new_domain, 'LinearRegression', ['X', 'A'], ['Y'], [cst, node1, node2],
+            opset_imports, ["bias"]
+        )
+
+        X = make_tensor_value_info('X', TensorProto.FLOAT, [None, None])
+        A = make_tensor_value_info('A', TensorProto.FLOAT, [None, None])
+        B = make_tensor_value_info('B', TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info('Y', TensorProto.FLOAT, [None])
+
+        graph = make_graph(
+            [make_node('LinearRegression', ['X', 'A'], ['Y1'], domain=new_domain,
+                       bias=make_tensor('former_B', TensorProto.FLOAT, [1], [0.67])),
+             make_node('Abs', ['Y1'], ['Y'])],
+            'example', [X, A], [Y])
+
+        onnx_model = make_model(
+            graph, opset_imports=opset_imports,
+            functions=[linear_regression])
+        sess = rt.Inference(onnx_model)
+        x = np.arange(6).reshape((3, 2)).astype(np.float32)
+        a = np.array([1, -1], dtype=np.float32)
+        result = sess.run(None, {'X': x, 'A': a})[0]
+        expected = x @ a + 0.67
+        assert_almost_equal(expected, result[0])
+
 
 if __name__ == "__main__":
-    # TestRuntimeInference().test_reduce_sum_13_empty_axes()
+    TestRuntimeInference().test_function_attribute()
     unittest.main(verbosity=2)

@@ -4,14 +4,14 @@ from ..op_run import OpRun
 
 
 class If(OpRun):
-    def __init__(self, onnx_node, run_params):
+    def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         if "opsets" not in self.run_params:
             raise KeyError("run_params must contains key 'opsets'.")
         if "verbose" not in run_params:
             raise KeyError("run_params must contains key 'verbose'.")
 
-    def need_context(self):
+    def need_context(self) -> bool:
         """
         Tells the runtime if this node needs the context
         (all the results produced so far) as it may silently access
@@ -20,30 +20,30 @@ class If(OpRun):
         """
         return True
 
-    def _run(self, cond, context=None, attributes=None):
+    def _run(self, cond, context=None):  # type: ignore
 
         if len(cond.shape) > 0:
             if all(cond):
                 self._log("  -- then> {%r}", context)
-                outputs = self._run_then_branch(context, attributes=attributes)
+                outputs = self._run_then_branch(context)  # type: ignore
                 self._log("  -- then<")
                 final = tuple(outputs)
                 branch = "then"
             else:
                 self._log("  -- else> {%r}", context)
-                outputs = self._run_else_branch(context, attributes=attributes)
+                outputs = self._run_else_branch(context)  # type: ignore
                 self._log("  -- else<")
                 final = tuple(outputs)
                 branch = "else"
         elif cond:
             self._log("  -- then> {%r}", context)
-            outputs = self._run_then_branch(context, attributes=attributes)
+            outputs = self._run_then_branch(context)  # type: ignore
             self._log("  -- then<")
             final = tuple(outputs)
             branch = "then"
         else:
             self._log("  -- else> {%r}", context)
-            outputs = self._run_else_branch(context, attributes=attributes)
+            outputs = self._run_else_branch(context)  # type: ignore
             self._log("  -- else<")
             final = tuple(outputs)
             branch = "else"
@@ -54,7 +54,7 @@ class If(OpRun):
             )
         for i, f in enumerate(final):
             if f is None:
-                br = self.then_branch if branch == "then" else self.else_branch
+                br = self.then_branch if branch == "then" else self.else_branch  # type: ignore
                 names = br.output_names
                 inits = [i.name for i in br.obj.graph.initializer]
                 raise RuntimeError(  # pragma: no cover

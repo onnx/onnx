@@ -18,7 +18,7 @@ class OpRunUnary(OpRun):  # pylint: disable=W0223
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
 
-    def run(self, x, attributes=None):  # type: ignore # pylint: disable=W0221
+    def run(self, x):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -26,7 +26,7 @@ class OpRunUnary(OpRun):  # pylint: disable=W0223
         """
         self._log("-- begin %s.run(1 input)", self.__class__.__name__)
         try:
-            res = self._run(x, attributes=attributes)
+            res = self._run(x)
         except TypeError as e:
             raise TypeError(
                 f"Issues with types {', '.join(str(type(_)) for _ in [x])} "
@@ -51,12 +51,12 @@ class OpRunArg(OpRunUnary):  # pylint: disable=W0223
         if not hasattr(self, "axis"):
             raise AttributeError("Attribute 'axis' is missing.")
 
-    def run(self, x, attributes=None):  # type: ignore # pylint: disable=W0221
+    def run(self, x):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
         """
-        res = OpRunUnary.run(self, x, attributes=attributes)
+        res = OpRunUnary.run(self, x)
         if res[0].dtype != np.int64:
             raise RuntimeTypeError(
                 f"Output type mismatch: should be '{np.int64}' != output '{res[0].dtype}' "
@@ -75,13 +75,13 @@ class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
         OpRunUnary.__init__(self, onnx_node, run_params)
 
-    def run(self, x, attributes=None):  # type: ignore # pylint: disable=W0221
+    def run(self, x):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
         Checks that the result is not empty.
         """
-        res = OpRunUnary.run(self, x, attributes=attributes)
+        res = OpRunUnary.run(self, x)
         if len(res) == 0 or res[0] is None:
             return res
         if not isinstance(res[0], list) and res[0].dtype != x.dtype:
@@ -101,7 +101,7 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
 
-    def run(self, x, y, attributes=None):  # type: ignore # pylint: disable=W0221
+    def run(self, x, y):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -119,7 +119,7 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
                 f"shapes {x.shape}, {y.shape})."
             )
         try:
-            res = self._run(x, y, attributes=attributes)
+            res = self._run(x, y)
         except (TypeError, ValueError) as e:
             raise TypeError(
                 f"Issues with types {', '.join(str(type(_)) for _ in [x, y])} "
@@ -148,12 +148,12 @@ class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
         OpRunBinary.__init__(self, onnx_node, run_params)
 
-    def run(self, x, y, attributes=None):  # type: ignore # pylint: disable=W0221
+    def run(self, x, y):  # type: ignore # pylint: disable=W0221
         """
         Calls method ``OpRunBinary.run``, catches exceptions,
         displays a longer error message.
         """
-        res = OpRunBinary.run(self, x, y, attributes=attributes)
+        res = OpRunBinary.run(self, x, y)
         if res[0].dtype != x.dtype:
             raise RuntimeTypeError(
                 f"Output type mismatch: {x.dtype} != {res[0].dtype} or {y.dtype} "
@@ -175,7 +175,7 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         OpRunBinaryNum.__init__(self, onnx_node, run_params)
         self.numpy_fct = numpy_fct
 
-    def _run(self, a, b, attributes=None):  # type: ignore # pylint: disable=W0221
+    def _run(self, a, b):  # type: ignore # pylint: disable=W0221
         return (self.numpy_fct(a, b),)
 
 

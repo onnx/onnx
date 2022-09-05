@@ -12,7 +12,7 @@ class ReduceSum_1(OpRunReduceNumpy):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRunReduceNumpy.__init__(self, onnx_node, run_params)
 
-    def _run(self, data, attributes=None):  # type: ignore # pylint: disable=W0221
+    def _run(self, data):  # type: ignore # pylint: disable=W0221
         return (
             numpy.sum(data, axis=self.axes, keepdims=self.keepdims, dtype=data.dtype),  # type: ignore
         )
@@ -27,7 +27,7 @@ class ReduceSum_13(OpRunReduceNumpy):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRunReduceNumpy.__init__(self, onnx_node, run_params)
 
-    def run(self, data, axes=None, attributes=None):  # type: ignore
+    def run(self, data, axes=None):  # type: ignore
         res = self._run(data, axes=axes)
         if not self.keepdims and not isinstance(res[0], numpy.ndarray):  # type: ignore
             res = (numpy.array([res[0]], dtype=res[0].dtype),)
@@ -38,7 +38,7 @@ class ReduceSum_13(OpRunReduceNumpy):
             )
         return res
 
-    def _run(self, data, axes=None, attributes=None):  # type: ignore
+    def _run(self, data, axes=None):  # type: ignore
         if (
             axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
         ) and self.noop_with_empty_axes:  # type: ignore

@@ -77,7 +77,7 @@ class OpRun:
         AttributeProto.STRINGS: lambda att: [str(s) for s in att.strings],
     }
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any], schema=None):
+    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any], schema: Any = None):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
         if "log" not in run_params:
@@ -93,7 +93,7 @@ class OpRun:
             self._schema = schema
         self._load_attributes()
 
-    def _log(self, pattern, *args):
+    def _log(self, pattern, *args):  # type: ignore
         self.run_params["log"](pattern, *args)
 
     def _extract_attribute_value(self, att: AttributeProto) -> Any:
@@ -116,15 +116,16 @@ class OpRun:
         "Checks and loads attributes."
         for att in self.onnx_node.attribute:
             name = att.name
-            value = self._extract_attribute_value(att)
+            if att.ref_attr_name:
+                value = RefAttrName(att.ref_attr_name)
+            else:
+                value = self._extract_attribute_value(att)
             setattr(self, name, value)
             if att.type == AttributeProto.GRAPH:
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, attributes=None, value=value: value.run(
-                        None, context or {}, attributes=attributes
-                    ),
+                    lambda context, value=value: value.run(None, context or {}),
                 )
 
         if self._schema and self.onnx_node.op_type not in {"Constant"}:
@@ -204,10 +205,9 @@ class OpRun:
         atts.append(")")
         return "\n".join(atts)
 
-    def _run(self, *args, attributes=None, **kwargs):  # type: ignore
+    def _run(self, *args, **kwargs):  # type: ignore
         """
         Should be overwritten.
-        Parameter *attributes* is used by functions.
         """
         raise NotImplementedError(
             f"Method '_run' or 'to_python' should be overwritten for operator {self.__class__.__name__!r}."

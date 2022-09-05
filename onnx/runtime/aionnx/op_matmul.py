@@ -8,5 +8,5 @@ class MatMul(OpRunBinaryNum):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRunBinaryNum.__init__(self, onnx_node, run_params)
 
-    def _run(self, a, b, attributes=None):  # type: ignore # pylint: disable=W0221
+    def _run(self, a, b):  # type: ignore # pylint: disable=W0221
         return (numpy_matmul(a, b),)

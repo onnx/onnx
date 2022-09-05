@@ -26,7 +26,13 @@ class Inference:
     it uses this class to execute the subgraph or the function.
     """
 
-    def __init__(self, proto: Any, verbose: int = 0, opsets: Union[None, Dict[str, int]] = None, functions=None):  # type: ignore
+    def __init__(
+        self,
+        proto: Any,
+        opsets: Union[None, Dict[str, int]] = None,
+        functions=None,
+        verbose: int = 0,
+    ):  # type: ignore
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
@@ -34,6 +40,7 @@ class Inference:
             proto = load(BytesIO(proto))
         self.proto_ = proto
         self.functions_: Dict[Tuple[str, str], Inference] = {}
+        self.attributes_: List[str] = []
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
@@ -52,6 +59,7 @@ class Inference:
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
             if opsets is not None:
                 raise ValueError("opsets must be None if proto is FunctionProto.")
+            self.attributes_ = list(proto.attribute)
         else:
             raise TypeError(f"Unexpected type {type(proto)} for proto.")
         if self.onnx_graph_:
@@ -118,7 +126,7 @@ class Inference:
         "Returns the opsets."
         return self.opsets_
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(self.input_names)}) -> {', '.join(self.output_names)}"
 
     def _init(self) -> None:
@@ -169,14 +177,13 @@ class Inference:
             f"is unknown, known functions: {list(sorted(self.functions_))}."
         )
 
-    def run(self, output_names, feed_inputs, attributes=None):  # type: ignore
+    def run(self, output_names, feed_inputs):  # type: ignore
         """
         Executes the onnx model.
 
         :param output_names: requested outputs by names,
             None for all
         :param feed_inputs: dictionary `{ input name: input value }`
-        :param attributes: used by functions using attributes and called by subgraphs
         :return: list of requested outputs
         """
         if output_names is None:
@@ -197,7 +204,7 @@ class Inference:
                 results[name] = value
 
         # return the results
-        list_results = []
+        list_results: List[Any] = []
         for name in output_names:
             if name not in results:
                 raise RuntimeError(

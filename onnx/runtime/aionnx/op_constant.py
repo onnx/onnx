@@ -6,7 +6,7 @@ from onnx.defs import onnx_opset_version
 from ..op_run import OpRun, RefAttrName
 
 
-def _check_dtype(val):
+def _check_dtype(val):  # type: ignore
     a = val.dtype
     if not isinstance(a, numpy.dtype) and a not in {
         numpy.int8,
@@ -33,10 +33,10 @@ def _check_dtype(val):
 class Constant_9(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
-        self.cst = self.value
+        self.cst = self.value  # type: ignore
         _check_dtype(self.cst)
 
-    def _run(self, attributes=None):  # type: ignore
+    def _run(self):  # type: ignore
         return (self.cst,)
 
 
@@ -44,34 +44,34 @@ class Constant_11(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         if getattr(self, "sparse_value", None) is None:
-            self.cst = self.value
+            self.cst = self.value  # type: ignore
         else:
-            self.cst = self.sparse_value
+            self.cst = self.sparse_value  # type: ignore
         _check_dtype(self.cst)
 
-    def _run(self, attributes=None):  # type: ignore
+    def _run(self):  # type: ignore
         return (self.cst,)
 
 
 class Constant_12(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
-        if hasattr(self, "sparse_value") and self.sparse_value is not None:
-            self.cst = self.sparse_value
-        elif hasattr(self, "value_float") and self.value_float is not None:
-            self.cst = numpy.array([self.value_float], dtype=numpy.float32)
-        elif hasattr(self, "value_floats") and self.value_floats is not None:
-            self.cst = self.value_floats.astype(numpy.float32)
-        elif hasattr(self, "value_int") and self.value_int is not None:
-            self.cst = numpy.array(self.value_int, dtype=numpy.int64)
-        elif hasattr(self, "value_ints") and self.value_ints is not None:
-            self.cst = self.value_ints.astype(numpy.int64)
-        elif hasattr(self, "value_string") and self.value_string is not None:
-            self.cst = self.value_string
-        elif hasattr(self, "value_strings") and self.value_strings is not None:
-            self.cst = self.value_strings
-        elif hasattr(self, "value") and self.value is not None:
-            self.cst = self.value
+        if hasattr(self, "sparse_value") and self.sparse_value is not None:  # type: ignore
+            self.cst = self.sparse_value  # type: ignore
+        elif hasattr(self, "value_float") and self.value_float is not None:  # type: ignore
+            self.cst = numpy.array([self.value_float], dtype=numpy.float32)  # type: ignore
+        elif hasattr(self, "value_floats") and self.value_floats is not None:  # type: ignore
+            self.cst = self.value_floats.astype(numpy.float32)  # type: ignore
+        elif hasattr(self, "value_int") and self.value_int is not None:  # type: ignore
+            self.cst = numpy.array(self.value_int, dtype=numpy.int64)  # type: ignore
+        elif hasattr(self, "value_ints") and self.value_ints is not None:  # type: ignore
+            self.cst = self.value_ints.astype(numpy.int64)  # type: ignore
+        elif hasattr(self, "value_string") and self.value_string is not None:  # type: ignore
+            self.cst = self.value_string  # type: ignore
+        elif hasattr(self, "value_strings") and self.value_strings is not None:  # type: ignore
+            self.cst = self.value_strings  # type: ignore
+        elif hasattr(self, "value") and self.value is not None:  # type: ignore
+            self.cst = self.value  # type: ignore
         else:
             raise AttributeError(  # pragma: no cover
                 "No constant is defined for operator 'Constant'."
@@ -82,7 +82,7 @@ class Constant_12(OpRun):
             self.is_linked_attribute = False
             _check_dtype(self.cst)
 
-    def _run(self, attributes=None):  # type: ignore
+    def _run(self):  # type: ignore
         if self.is_linked_attribute:
             if attributes is None:
                 raise RuntimeError(
