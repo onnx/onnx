@@ -125,8 +125,8 @@ class OnnxBackendTest:
                 try:
                     t = to_array(new_tensor)
                 except ValueError as e:
-                    raise AssertionError(
-                        f"Unable to convert type {type(new_tensor)}\n{str(new_tensor)}")
+                    raise ValueError(
+                        f"Unable to convert type {type(new_tensor)} for {full!r} \n{str(new_tensor)}")
             else:
                 raise RuntimeError(f"Unexpected type {type(new_tensor)} for {full!r}.")
             res.append(t)
@@ -387,7 +387,36 @@ class TestOnnxBackEnd(unittest.TestCase):
                           path, 'onnx').replace("\\", "/"))
 
     def test_enumerate_onnx_tests_run(self):
-        self.common_test_enumerate_onnx_tests_run(None)
+        # test not supported yet
+        skip_test = {
+            "test_identity_opt",
+            "test_identity_sequence",
+            "test_if_opt",
+            "test_if_seq",
+            "test_loop13_seq",
+            "test_loop16_seq_none",
+            "test_optional_get_element",
+            "test_optional_get_element_sequence",
+            "test_optional_has_element",
+            "test_optional_has_element_empty",
+            "test_sequence_insert_at_back",
+            "test_sequence_insert_at_front",
+            "test_sequence_map_add_1_sequence_1_tensor",
+            "test_sequence_map_add_1_sequence_1_tensor_expanded",
+            "test_sequence_map_add_2_sequences",
+            "test_sequence_map_add_2_sequences_expanded",
+            "test_sequence_map_extract_shapes",
+            "test_sequence_map_extract_shapes_expanded",
+            "test_sequence_map_identity_1_sequence",
+            "test_sequence_map_identity_1_sequence_1_tensor",
+            "test_sequence_map_identity_1_sequence_1_tensor_expanded",
+            "test_sequence_map_identity_1_sequence_expanded",
+            "test_sequence_map_identity_2_sequences",
+            "test_sequence_map_identity_2_sequences_expanded",
+        }
+        self.common_test_enumerate_onnx_tests_run(
+            valid=lambda name: name not in skip_test
+        )
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
@@ -397,5 +426,5 @@ class TestOnnxBackEnd(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    TestOnnxBackEnd().test_enumerate_onnx_tests_run_one_case()
+    # TestOnnxBackEnd().test_enumerate_onnx_tests_run_one_case()
     unittest.main(verbosity=2)
