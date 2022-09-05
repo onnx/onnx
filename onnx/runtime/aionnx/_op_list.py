@@ -12,7 +12,7 @@ did not change the implementation.
 import textwrap
 from typing import Any, Union
 
-from ._op import OpFunction, OpRun
+from ..op_run import OpFunction, OpRun
 
 # from .op_abs import Abs
 # from .op_acos import Acos
@@ -44,7 +44,8 @@ from .op_clip import Clip, Clip_6, Clip_11
 # from .op_concat_from_sequence import ConcatFromSequence
 # from .op_conv import Conv
 # from .op_conv_transpose import ConvTranspose
-# from .op_constant import Constant, Constant_12, Constant_11, Constant_9
+from .op_constant import Constant, Constant_9, Constant_11, Constant_12
+
 # from .op_constant_of_shape import ConstantOfShape
 # from .op_cos import Cos
 # from .op_cosh import Cosh
@@ -79,8 +80,8 @@ from .op_greater import Greater, GreaterOrEqual
 # from .op_hard_sigmoid import HardSigmoid
 # from .op_floor import Floor
 from .op_identity import Identity
+from .op_if import If
 
-# from .op_if import If
 # from .op_imputer import Imputer
 # from .op_inverse import Inverse
 # from .op_isinf import IsInf

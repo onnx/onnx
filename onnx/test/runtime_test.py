@@ -454,6 +454,34 @@ class TestRuntimeInference(unittest.TestCase):
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_almost_equal(expected, got)
 
+    def test_if(self):
+        C = make_tensor_value_info("C", TensorProto.FLOAT, [None])
+        bthen = make_node("Constant", [], ["C"], value_floats=from_array(np.array([1], dtype=np.float32)))
+        bthen_body = make_graph([bthen], "gthen", [], [C])
+
+        C = make_tensor_value_info("C", TensorProto.FLOAT, [None])
+        belse = make_node("Constant", [], ["C"], value_floats=from_array(np.array([0], dtype=np.float32)))
+        belse_body = make_graph([belse], "gelse", [], [C])
+
+        zero = from_array(np.array([0], dtype=np.float32), name="zero")
+        greater = make_node("Greater", ["X", "zero"], ["G"])
+        node_if = make_node("If", ["G"], ["Z"], then_branch=bthen_body, else_branch=belse_body)
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Z = make_tensor_value_info("Z", TensorProto.FLOAT, [None])
+        graph = make_graph([greater, node_if], "g", [X], [Z], initializer=[zero])
+        model_def = make_model(graph)
+
+        sess = rt.Inference(model_def)
+        self.assertEqual(str(sess), "Inference(X) -> Z")
+
+        x = np.array([1, 2], dtype=np.float32)
+        got = sess.run(None, {"X": x})[0]
+        assert_almost_equal(np.array([1], dtype=np.float32), got)
+
+        x = np.array([-1, -2], dtype=np.float32)
+        got = sess.run(None, {"X": x})[0]
+        assert_almost_equal(np.array([0], dtype=np.float32), got)
+
 
 if __name__ == "__main__":
     # TestRuntimeInference().test_reduce_sum_13_empty_axes()

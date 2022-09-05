@@ -118,6 +118,9 @@ class Inference:
         "Returns the opsets."
         return self.opsets_
 
+    def __str__(self):
+        return f"{self.__class__.__name__}({', '.join(self.input_names)}) -> {', '.join(self.output_names)}"
+
     def _init(self) -> None:
         """
         Loads the implementation for every node in the graph.
@@ -126,9 +129,14 @@ class Inference:
         self.rt_nodes_ = []
         for init in self.inits_:
             self.rt_inits_[init.name] = numpy_helper.to_array(init)
+        run_params = {
+            "log": lambda pattern, *args: self._log(10, pattern, *args),
+            "opsets": self.opsets,
+            "verbose": self.verbose,
+        }
         for node in self.nodes_:
             cl = self._load_impl(node)
-            inst = cl(node, lambda pattern, *args: self._log(10, pattern, *args))
+            inst = cl(node, run_params)
             self.rt_nodes_.append(inst)
 
     def _load_impl(self, node: NodeProto) -> Any:
@@ -161,13 +169,14 @@ class Inference:
             f"is unknown, known functions: {list(sorted(self.functions_))}."
         )
 
-    def run(self, output_names, feed_inputs):  # type: ignore
+    def run(self, output_names, feed_inputs, attributes=None):  # type: ignore
         """
         Executes the onnx model.
 
         :param output_names: requested outputs by names,
             None for all
         :param feed_inputs: dictionary `{ input name: input value }`
+        :param attributes: used by functions using attributes and called by subgraphs
         :return: list of requested outputs
         """
         if output_names is None:
@@ -188,4 +197,11 @@ class Inference:
                 results[name] = value
 
         # return the results
-        return [results[name] for name in output_names]
+        list_results = []
+        for name in output_names:
+            if name not in results:
+                raise RuntimeError(
+                    f"Unable to find output {name!r} in {list(sorted(results))}."
+                )
+            list_results.append(results[name])
+        return list_results

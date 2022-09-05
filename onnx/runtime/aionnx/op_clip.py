@@ -6,12 +6,13 @@ import numpy as np  # type: ignore
 
 from onnx.defs import onnx_opset_version
 
-from ._op import OpRun, OpRunUnaryNum
+from ..op_run import OpRun
+from ._op import OpRunUnaryNum
 
 
 class Clip_6(OpRunUnaryNum):
-    def __init__(self, onnx_node, log_function):  # type: ignore
-        OpRunUnaryNum.__init__(self, onnx_node, log_function)
+    def __init__(self, onnx_node, run_params):  # type: ignore
+        OpRunUnaryNum.__init__(self, onnx_node, run_params)
 
     def _run(self, data, attributes=None):  # type: ignore # pylint: disable=W0221
         res = np.clip(data, getattr(self, "min", None), getattr(self, "max", None))
@@ -19,8 +20,8 @@ class Clip_6(OpRunUnaryNum):
 
 
 class Clip_11(OpRun):
-    def __init__(self, onnx_node, log_function):  # type: ignore
-        OpRun.__init__(self, onnx_node, log_function)
+    def __init__(self, onnx_node, run_params):  # type: ignore
+        OpRun.__init__(self, onnx_node, run_params)
 
     def _run(self, data, *minmax, attributes=None):  # type: ignore # pylint: disable=W0221
         le = len(minmax)

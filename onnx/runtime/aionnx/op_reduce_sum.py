@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy  # type: ignore
+
 from onnx.defs import onnx_opset_version
-from ._op import OpRunReduceNumpy, RuntimeTypeError
+
+from ..op_run import RuntimeTypeError
+from ._op import OpRunReduceNumpy
 
 
 class ReduceSum_1(OpRunReduceNumpy):
-    def __init__(self, onnx_node, log_function):  # type: ignore
-        OpRunReduceNumpy.__init__(self, onnx_node, log_function)
+    def __init__(self, onnx_node, run_params):  # type: ignore
+        OpRunReduceNumpy.__init__(self, onnx_node, run_params)
 
     def _run(self, data, attributes=None):  # type: ignore # pylint: disable=W0221
         return (
@@ -16,13 +19,13 @@ class ReduceSum_1(OpRunReduceNumpy):
 
 
 class ReduceSum_11(ReduceSum_1):
-    def __init__(self, onnx_node, log_function):  # type: ignore
-        ReduceSum_1.__init__(self, onnx_node, log_function)
+    def __init__(self, onnx_node, run_params):  # type: ignore
+        ReduceSum_1.__init__(self, onnx_node, run_params)
 
 
 class ReduceSum_13(OpRunReduceNumpy):
-    def __init__(self, onnx_node, log_function):  # type: ignore
-        OpRunReduceNumpy.__init__(self, onnx_node, log_function)
+    def __init__(self, onnx_node, run_params):  # type: ignore
+        OpRunReduceNumpy.__init__(self, onnx_node, run_params)
 
     def run(self, data, axes=None, attributes=None):  # type: ignore
         res = self._run(data, axes=axes)
