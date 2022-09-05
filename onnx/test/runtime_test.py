@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C3001
+# pylint: disable=C3001,R0914
 
 import unittest
 from contextlib import redirect_stdout
@@ -463,7 +463,7 @@ class TestRuntimeInference(unittest.TestCase):
             "Constant",
             [],
             ["C"],
-            value_floats=from_array(np.array([1], dtype=np.float32))
+            value_floats=from_array(np.array([1], dtype=np.float32)),
         )
         bthen_body = make_graph([bthen], "gthen", [], [C])
 
@@ -479,7 +479,11 @@ class TestRuntimeInference(unittest.TestCase):
         zero = from_array(np.array([0], dtype=np.float32), name="zero")
         greater = make_node("Greater", ["X", "zero"], ["G"])
         node_if = make_node(
-            "If", ["G"], ["Z"], then_branch=bthen_body, else_branch=belse_body,
+            "If",
+            ["G"],
+            ["Z"],
+            then_branch=bthen_body,
+            else_branch=belse_body,
         )
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Z = make_tensor_value_info("Z", TensorProto.FLOAT, [None])
@@ -510,8 +514,8 @@ class TestRuntimeInference(unittest.TestCase):
         else_const_node = make_node(
             "Constant", inputs=[], outputs=["else_out"], value=from_array(y)
         )
-        then_body = make_graph([then_const_node], 'then_body', [], [then_out])
-        else_body = make_graph([else_const_node], 'else_body', [], [else_out])
+        then_body = make_graph([then_const_node], "then_body", [], [then_out])
+        else_body = make_graph([else_const_node], "else_body", [], [else_out])
         if_node = make_node(
             "If",
             inputs=["f_cond"],
@@ -584,7 +588,7 @@ class TestRuntimeInference(unittest.TestCase):
                     ["X", "A"],
                     ["Y1"],
                     domain=new_domain,
-                    bias=make_tensor('former_B', TensorProto.FLOAT, [1], [0.67]),
+                    bias=make_tensor("former_B", TensorProto.FLOAT, [1], [0.67]),
                 ),
                 make_node("Abs", ["Y1"], ["Y"]),
             ],
