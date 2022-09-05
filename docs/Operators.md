@@ -22339,7 +22339,7 @@ Other versions of this operator: <a href="Changelog.md#RoiAlign-10">10</a>
 #### Attributes
 
 <dl>
-<dt><tt>coordinate_transformation_mode</tt> : string (default is half_pixel)</dt>
+<dt><tt>coordinate_transformation_mode</tt> : string (default is output_half_pixel)</dt>
 <dd>Allowed values are 'half_pixel' and 'output_half_pixel'. Use the value 'half_pixel' to pixel shift the input coordinates by -0.5 (the recommended behavior). Use the value 'output_half_pixel' to omit the pixel shift for the input (use this for a backward-compatible behavior).</dd>
 <dt><tt>mode</tt> : string (default is avg)</dt>
 <dd>The pooling method. Two modes are supported: 'avg' and 'max'. Default is 'avg'.</dd>
