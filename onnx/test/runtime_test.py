@@ -559,7 +559,6 @@ class TestRuntimeInference(unittest.TestCase):
 
         X = make_tensor_value_info('X', TensorProto.FLOAT, [None, None])
         A = make_tensor_value_info('A', TensorProto.FLOAT, [None, None])
-        B = make_tensor_value_info('B', TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info('Y', TensorProto.FLOAT, [None])
 
         graph = make_graph(
