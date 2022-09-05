@@ -420,7 +420,6 @@ class TestRuntimeInference(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 13)])
         check_model(onnx_model)
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
-        a = np.array([], dtype=np.int64)
         sess = rt.Inference(onnx_model)
         got = sess.run(None, {"X": x})[0]
         assert_almost_equal(x, got)
