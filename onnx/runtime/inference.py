@@ -172,7 +172,7 @@ class Inference:
 
             impl = self.functions_[key]
             return load_op(node.domain, node.op_type, version, custom=impl)
-        raise RuntimeError(
+        raise NotImplementedError(
             f"Node type {node.op_type!r} from domain {node.domain!r} "
             f"is unknown, known functions: {list(sorted(self.functions_))}."
         )

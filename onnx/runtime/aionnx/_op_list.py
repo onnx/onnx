@@ -249,8 +249,8 @@ def load_op(
         raise ValueError(f"Domain must be '' not {domain!r}.")
     if op_type not in _registered_operators:  # type: ignore
         available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
-        raise ValueError(
-            f"Not registered implementation for operator {op_type!r} "
+        raise NotImplementedError(
+            f"No registered implementation for operator {op_type!r} "
             f"and domain {domain!r} in\n{available}"
         )
     impl = _registered_operators[op_type]  # type: ignore

@@ -27,6 +27,8 @@ class Clip_11(OpRun):
         le = len(minmax)
         amin = minmax[0] if le > 0 else None
         amax = minmax[1] if le > 1 else None
+        if amin is None and amax is None:
+            return (data,)
         res = np.clip(data, amin, amax)
         return (res,) if res.dtype == data.dtype else (res.astype(data.dtype),)
 
