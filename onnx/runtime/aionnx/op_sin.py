@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=W0221
 
 import numpy  # type: ignore
 
@@ -6,7 +7,7 @@ from ._op import OpRunUnaryNum
 
 
 class Sin(OpRunUnaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):  # type: ignore # noqa: W0221
         OpRunUnaryNum.__init__(self, onnx_node, run_params)
 
     def _run(self, x):  # type: ignore

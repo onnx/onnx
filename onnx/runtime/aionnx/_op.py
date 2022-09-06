@@ -189,7 +189,7 @@ class OpRunReduceNumpy(OpRunUnaryNum):  # type: ignore
         OpRunUnaryNum.__init__(self, onnx_node, run_params)
         if hasattr(self, "axes"):
             if isinstance(self.axes, np.ndarray):  # type: ignore # pylint: disable=E0203
-                if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:  # type: ignore
+                if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:  # type: ignore # pylint: disable=E0203
                     self.axes = None
                 else:
                     self.axes = tuple(self.axes)
