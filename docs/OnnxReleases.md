@@ -5,7 +5,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 ## Preparation
 
 * Install Twine, a utility tool to interact with PyPI. Do  - ``pip install twine``
-* Get hold of the username and password for the ‘onnx’ PyPI account. Release manager should get onnx pypi account credentials from steering committee or from previous release manager.
+* Get hold of the username and password for the ‘onnx’ PyPI account. Release manager should get onnx PyPI account credentials from steering committee or from previous release manager.
 * Pick a release tag (v.1.X.X) for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
 * Prepare a change log for the release –
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
@@ -114,6 +114,9 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 **Merge into main branch**
 * After everything above is done, merge the release branch into the main branch to make it consistent. This step is needed only when there are urgent changes that are made directly into the release branch. The main branch does not have these needed changes. In all other circumstances, the merge PR shall show as empty so nothing needs to be merged.
+
+**Update PyPI account credentials**
+* To secure, [update](https://pypi.org/manage/account/) old PyPI account credentials after every release. Let steering committee know the updated credentials for future use.
 
 **Remove old onnx-weekly packages on TestPyPI**
 * Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://test.pypi.org/project/onnx-weekly/#history) on TestPyPI to save space.
