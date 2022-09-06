@@ -88,9 +88,7 @@ class Constant_12(ConstantCommon):
         elif hasattr(self, "value") and self.value is not None:  # type: ignore
             self.cst = self.value  # type: ignore
         else:
-            raise AttributeError(
-                "No constant is defined for operator 'Constant'."
-            )
+            raise AttributeError("No constant is defined for operator 'Constant'.")
         if isinstance(self.cst, RefAttrName):
             self.is_linked_attribute = True
         else:
