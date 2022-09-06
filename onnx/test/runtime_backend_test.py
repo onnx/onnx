@@ -36,6 +36,7 @@ def assert_almost_equal_string(expected, value):
 
     def is_float(x):
         try:
+            float(x)
             return True
         except ValueError:
             return False

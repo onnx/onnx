@@ -1,8 +1,22 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
+import numpy as np  # type: ignore
+
 from ._op import OpRunBinaryNum
-from ._op_numpy_helper import numpy_matmul
+
+
+def numpy_matmul(a, b):  # type: ignore
+    """
+    Implements a matmul product. See :func:`numpy.matmul`.
+    Handles sparse matrices.
+    """
+    try:
+        if len(a.shape) <= 2 and len(b.shape) <= 2:
+            return np.dot(a, b)
+        return np.matmul(a, b)
+    except ValueError as e:
+        raise ValueError(f"Unable to multiply shapes {a.shape!r}, {b.shape!r}.") from e
 
 
 class MatMul(OpRunBinaryNum):

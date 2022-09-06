@@ -15,7 +15,7 @@ class Inference:
     Executes an onnx model. The implementation relies on numpy
     for the most past and C++ through pybind11.
 
-    :param proto: onnx model or file name
+    :param proto: ModelProto, GraphProto, FunctionProto, filename or bytes
     :param verbose: display intermediate results
         on the standard output during the execution
     :param opsets: if *proto* is an instance of *GraphProto*,
@@ -25,6 +25,26 @@ class Inference:
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
     it uses this class to execute the subgraph or the function.
+    Next example shows how to run inference with an onnx model
+    stored in file `model.onnx`.
+
+    ::
+
+        import numpy as np
+        from onnx.runtime import Inference
+
+        X = np.array(...)
+        sess = Inference("model.onnx")
+        results = sess.run(None, {"X": X})
+        print(results[0])  # display the first result
+
+    The class can be use any implementation available in folder
+    `aionnx <https://github.com/onnx/onnx/tree/main/onnx/runtime/aionnx>`_.
+    Adding an implementation requires two changes. The first is
+    the implementation itself. Any existing node can be used as a template.
+    The second is one line in file `_op_list.py
+    <https://github.com/onnx/onnx/tree/main/onnx/runtime/aionnx/_op_file.py>`_
+    to import the file and let the runtime know it exists.
     """
 
     def __init__(  # type: ignore
@@ -193,7 +213,7 @@ class Inference:
         if isinstance(self.proto_, FunctionProto) and attributes is None:
             raise TypeError()
 
-        # step 1: inputs and initalizers
+        # step 1: inputs and initializers
         results = {"": None}  # optional input
         results.update(self.rt_inits_)
         results.update(feed_inputs)

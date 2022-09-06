@@ -15,7 +15,11 @@ class Clip_6(OpRunUnaryNum):
         OpRunUnaryNum.__init__(self, onnx_node, run_params)
 
     def _run(self, data):  # type: ignore
-        res = np.clip(data, getattr(self, "min", None), getattr(self, "max", None))
+        amin = getattr(self, "min", None)
+        amax = getattr(self, "max", None)
+        if amin is None and amax is None:
+            return (data,)
+        res = np.clip(data, amin, amax)
         return (res,) if res.dtype == data.dtype else (res.astype(data.dtype),)
 
 
