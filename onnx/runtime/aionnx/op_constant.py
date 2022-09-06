@@ -77,7 +77,7 @@ class Constant_12(ConstantCommon, OpRun):
         elif hasattr(self, "value_float") and self.value_float is not None:  # type: ignore
             self.cst = numpy.array(self.value_float, dtype=numpy.float32)  # type: ignore
         elif hasattr(self, "value_floats") and self.value_floats is not None:  # type: ignore
-            self.cst = np.array(self.value_floats, dtype=numpy.float32)  # type: ignore
+            self.cst = numpy.array(self.value_floats, dtype=numpy.float32)  # type: ignore
         elif hasattr(self, "value_int") and self.value_int is not None:  # type: ignore
             self.cst = numpy.array(self.value_int, dtype=numpy.int64)  # type: ignore
         elif hasattr(self, "value_ints") and self.value_ints is not None:  # type: ignore
