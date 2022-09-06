@@ -43,7 +43,11 @@ class Constant_9(ConstantCommon, OpRun):
         self.cst = self.value  # type: ignore
         _check_dtype(self.cst)
 
-    def _run(self):  # type: ignore
+    def _run(self, attributes):  # type: ignore
+        if attributes is not None:
+            raise RuntimeError(
+                "Function attributes are not implemented for opset <= 11. Use opset > 12."
+            )
         return (self.cst,)
 
 
@@ -56,7 +60,11 @@ class Constant_11(ConstantCommon, OpRun):
             self.cst = self.sparse_value  # type: ignore
         _check_dtype(self.cst)
 
-    def _run(self):  # type: ignore
+    def _run(self, attributes):  # type: ignore
+        if attributes is not None:
+            raise RuntimeError(
+                "Function attributes are not implemented for opset <= 11. Use opset > 12."
+            )
         return (self.cst,)
 
 

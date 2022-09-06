@@ -230,14 +230,9 @@ class OpRun:
         self._log("-- begin %s.run(%d inputs)", self.__class__.__name__, len(args))
         try:
             res = self._run(*args, **kwargs)
-        except TypeError as e:
+        except (TypeError, AttributeError) as e:
             raise TypeError(
-                f"Issues with types {', '.join(str(type(_)) for _ in args)} "
-                f"(operator {self.__class__.__name__!r})."
-            ) from e
-        except AttributeError as e:
-            raise AttributeError(
-                f"Issues with types {', '.join(str(type(_)) for _ in args)!r} "
+                f"Issues with types {[type(_) for _ in args]} "
                 f"(operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))

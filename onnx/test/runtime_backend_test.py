@@ -185,7 +185,7 @@ class OnnxBackendTest:
             if isinstance(o, np.ndarray):
                 if decimal is None:
                     if e.dtype == np.float32:
-                        deci = 6
+                        deci = 5
                     elif e.dtype == np.float64:
                         deci = 12
                     else:
@@ -367,11 +367,18 @@ class TestOnnxBackEnd(unittest.TestCase):
                 if verbose > 1:
                     print("  end example.")
 
+        failed = [len(missed), len(load_failed), len(exec_failed), len(mismatch)]
+        coverage = success / (success + sum(failed))
+
         if __name__ == '__main__':
             path = os.path.dirname(onnx_file)
-            failed = [len(missed), len(load_failed), len(exec_failed), len(mismatch)]
-            print(success, failed)
-            print("coverage ratio %f" % (success / (success + sum(failed))))
+            print("-----------")
+            print(
+                f"success={success}, missed={len(missed)}, load_failed={len(load_failed)}, "
+                f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
+            )
+            print(f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests")
+            print("-----------")
             for t in load_failed:
                 print("loading failed",
                       str(t[0]).replace('\\\\', '\\').replace(
@@ -388,6 +395,16 @@ class TestOnnxBackEnd(unittest.TestCase):
                 print("missed",
                       str(t[0]).replace('\\\\', '\\').replace(
                           path, 'onnx').replace("\\", "/"))
+
+        if len(mismatch) > 0:
+            te, e = mismatch[0]
+            raise AssertionError(f"Mismatch in test {te.name!r}.") from e
+        if success > 30 and coverage < 0.083:
+            raise AssertionError(
+                f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
+                f"the runtime among has decreased. New operators were added with no "
+                f"corresponding runtime."
+            )
 
     def test_enumerate_onnx_tests_run(self):
         # test not supported yet
@@ -423,11 +440,11 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_abs" in name,
+            lambda name: "test_tan" in name,
             verbose=4 if __name__ == "__main__" else 0
         )
 
 
 if __name__ == "__main__":
-    # TestOnnxBackEnd().test_enumerate_onnx_tests_run_one_case()
+    TestOnnxBackEnd().test_enumerate_onnx_tests_run_one_case()
     unittest.main(verbosity=2)

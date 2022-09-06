@@ -15,8 +15,9 @@ from typing import Any, Union
 from ..op_run import OpFunction, OpRun
 from .op_abs import Abs
 
-# from .op_acos import Acos
-# from .op_acosh import Acosh
+from .op_acos import Acos
+from .op_acosh import Acosh
+
 # from .op_adagrad import Adagrad
 # from .op_adam import Adam
 from .op_add import Add
@@ -24,10 +25,11 @@ from .op_add import Add
 # from .op_and import And
 # from .op_argmax import ArgMax
 # from .op_argmin import ArgMin
-# from .op_asin import Asin
-# from .op_asinh import Asinh
-# from .op_atan import Atan
-# from .op_atanh import Atanh
+from .op_asin import Asin
+from .op_asinh import Asinh
+from .op_atan import Atan
+from .op_atanh import Atanh
+
 # from .op_average_pool import AveragePool
 # from .op_batch_normalization import BatchNormalization, BatchNormalization_14
 # from .op_binarizer import Binarizer
@@ -35,7 +37,8 @@ from .op_add import Add
 # from .op_broadcast_gradient_args import BroadcastGradientArgs
 # from .op_cast import Cast, CastLike
 # from .op_cdist import CDist
-# from .op_ceil import Ceil
+from .op_ceil import Ceil
+
 # from .op_celu import Celu
 from .op_clip import Clip, Clip_6, Clip_11
 
@@ -47,8 +50,9 @@ from .op_clip import Clip, Clip_6, Clip_11
 from .op_constant import Constant, Constant_9, Constant_11, Constant_12
 
 # from .op_constant_of_shape import ConstantOfShape
-# from .op_cos import Cos
-# from .op_cosh import Cosh
+from .op_cos import Cos
+from .op_cosh import Cosh
+
 # from .op_cum_sum import CumSum
 # from .op_det import Det
 # from .op_depth_to_space import DepthToSpace, SpaceToDepth
@@ -61,7 +65,8 @@ from .op_constant import Constant, Constant_9, Constant_11, Constant_12
 # from .op_elu import Elu
 # from .op_equal import Equal
 # from .op_erf import Erf
-# from .op_exp import Exp
+from .op_exp import Exp
+
 # from .op_expand import Expand, Expand_13
 # from .op_expression import Expression
 # from .op_eyelike import EyeLike
@@ -89,7 +94,8 @@ from .op_if import If
 # from .op_layer_normalization import LayerNormalization
 # from .op_leaky_relu import LeakyRelu
 # from .op_less import Less, LessOrEqual
-# from .op_log import Log
+from .op_log import Log
+
 # from .op_log_softmax import LogSoftmax
 # from .op_loop import Loop
 # from .op_lp_normalization import LpNormalization
@@ -104,8 +110,8 @@ from .op_matmul import MatMul
 # from .op_mod import Mod
 # from .op_momentum import Momentum
 from .op_mul import Mul
+from .op_neg import Neg
 
-# from .op_neg import Neg
 # from .op_negative_log_likelihood_loss import NegativeLogLikelihoodLoss
 # from .op_normalizer import Normalizer
 # from .op_non_max_suppression import NonMaxSuppression
@@ -154,9 +160,10 @@ from .op_reduce_sum import ReduceSum, ReduceSum_1, ReduceSum_11, ReduceSum_13
 # from .op_shape import Shape
 # from .op_shrink import Shrink
 # from .op_sigmoid import Sigmoid
-# from .op_sign import Sign
-# from .op_sin import Sin
-# from .op_sinh import Sinh
+from .op_sign import Sign
+from .op_sin import Sin
+from .op_sinh import Sinh
+
 # from .op_size import Size
 # from .op_slice import Slice, Slice_1, Slice_10
 # from .op_split import Split, Split_2, Split_11, Split_13
@@ -171,8 +178,9 @@ from .op_reduce_sum import ReduceSum, ReduceSum_1, ReduceSum_11, ReduceSum_13
 from .op_sub import Sub
 
 # from .op_sum import Sum
-# from .op_tan import Tan
-# from .op_tanh import Tanh
+from .op_tan import Tan
+from .op_tanh import Tanh
+
 # from .op_tfidfvectorizer import TfIdfVectorizer
 # from .op_tokenizer import Tokenizer
 # from .op_topk import TopK_10, TopK_11, TopK_1, TopK
