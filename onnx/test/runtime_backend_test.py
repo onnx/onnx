@@ -10,6 +10,7 @@ from numpy.testing import assert_almost_equal  # type: ignore
 
 from onnx import (
     load,
+    load_model_from_string,
     load_tensor_from_string,
     ModelProto,
     OptionalProto,
@@ -19,13 +20,12 @@ from onnx import (
 )
 from onnx.backend.test import __file__ as backend_folder
 from onnx.helper import __file__ as onnx_file
-from onnx.numpy_helper import to_array
+from onnx.numpy_helper import to_array, to_list
 
 try:
     import onnx.runtime as rt
 except ImportError:
     # will disappear in the final version of the PR.
-    import os
     import sys
 
     sys.path.insert(
@@ -99,7 +99,7 @@ class OnnxBackendTest:
                     break
                 except Exception:
                     try:
-                        loaded = onnx.load_model_from_string(serialized)
+                        loaded = load_model_from_string(serialized)
                     except Exception:
                         raise RuntimeError(
                             f"Unable to read {full!r}, error is {e}, content is {serialized[:100]!r}."
@@ -124,9 +124,10 @@ class OnnxBackendTest:
             elif isinstance(new_tensor, OptionalProto):
                 try:
                     t = to_array(new_tensor)
-                except ValueError as e:
+                except ValueError:
                     raise ValueError(
-                        f"Unable to convert type {type(new_tensor)} for {full!r} \n{str(new_tensor)}")
+                        f"Unable to convert type {type(new_tensor)} for {full!r} \n{str(new_tensor)}"
+                    )
             else:
                 raise RuntimeError(f"Unexpected type {type(new_tensor)} for {full!r}.")
             res.append(t)
@@ -317,7 +318,9 @@ class TestOnnxBackEnd(unittest.TestCase):
     @staticmethod
     def run_fct(obj, *inputs):
         if len(obj.input_names) < len(inputs):
-            raise AssertionError(f"Got {len(inputs)} inputs but expecting {len(names)}.")
+            raise AssertionError(
+                f"Got {len(inputs)} inputs but expecting {len(obj.input_names)}."
+            )
         feeds = {obj.input_names[i]: inputs[i] for i in range(len(inputs))}
         got = obj.run(None, feeds)
         return got
