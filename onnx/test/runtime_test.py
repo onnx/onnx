@@ -23,21 +23,7 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.numpy_helper import from_array
-
-try:
-    import onnx.runtime as rt
-except ImportError:
-    # will disappear in the final version of the PR.
-    import os
-    import sys
-
-    sys.path.insert(
-        0,
-        os.path.normpath(
-            os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "..", "onnx")
-        ),
-    )
-    import runtime as rt
+import onnx.runtime as rt
 
 
 class TestRuntimeInference(unittest.TestCase):

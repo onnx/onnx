@@ -5,9 +5,9 @@ from typing import Any, Dict, Iterable, List
 
 import numpy as np  # type: ignore
 
-from onnx import AttributeProto, GraphProto, NodeProto
-from onnx.defs import get_all_schemas_with_history
-from onnx.numpy_helper import to_array
+from ..onnx_pb import AttributeProto, GraphProto, NodeProto
+from ..defs import get_all_schemas_with_history
+from ..numpy_helper import to_array
 
 
 class RuntimeTypeError(RuntimeError):

@@ -4,8 +4,7 @@ from typing import Any, Dict
 
 import numpy as np  # type: ignore
 
-from onnx import NodeProto
-
+from ...onnx_pb import NodeProto
 from ..op_run import OpRun, RuntimeTypeError
 
 

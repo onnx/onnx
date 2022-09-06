@@ -21,20 +21,7 @@ from onnx import (
 from onnx.backend.test import __file__ as backend_folder
 from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import to_array, to_list
-
-try:
-    import onnx.runtime as rt
-except ImportError:
-    # will disappear in the final version of the PR.
-    import sys
-
-    sys.path.insert(
-        0,
-        os.path.normpath(
-            os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "..", "onnx")
-        ),
-    )
-    import runtime as rt
+import onnx.runtime as rt
 
 
 def assert_almost_equal_string(expected, value):
@@ -406,10 +393,21 @@ class TestOnnxBackEnd(unittest.TestCase):
             for t in missed:
                 print("missed", _print(t[0], path))
 
+            if success > 30:
+                print("-----------")
+                print(
+                    f"success={success}, missed={len(missed)}, load_failed={len(load_failed)}, "
+                    f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
+                )
+                print(
+                    f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests"
+                )
+                print("-----------")
+
         if len(mismatch) > 0:
             te, e = mismatch[0]
             raise AssertionError(f"Mismatch in test {te.name!r}.") from e
-        if success > 30 and coverage < 0.083:
+        if success > 30 and coverage < 0.08:
             raise AssertionError(
                 f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
                 f"the runtime among has decreased. New operators were added with no "
@@ -429,6 +427,11 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_optional_get_element_sequence",
             "test_optional_has_element",
             "test_optional_has_element_empty",
+            "test_optional_has_element_optional_input",
+            "test_optional_has_element_empty_optional_input",
+            "test_optional_has_element_tensor_input",
+            "test_optional_get_element_optional_sequence",
+            "test_optional_get_element_optional_tensor",
             "test_sequence_insert_at_back",
             "test_sequence_insert_at_front",
             "test_sequence_map_add_1_sequence_1_tensor",

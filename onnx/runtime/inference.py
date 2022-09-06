@@ -5,8 +5,9 @@ from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np  # type: ignore
 
-from onnx import FunctionProto, GraphProto, ModelProto, NodeProto, load, numpy_helper
-from onnx.defs import onnx_opset_version
+from .. import load, numpy_helper
+from ..onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto
+from ..defs import onnx_opset_version
 
 
 class Inference:

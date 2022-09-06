@@ -5,8 +5,7 @@ from typing import Type
 
 import numpy as np  # type: ignore
 
-from onnx.defs import onnx_opset_version
-
+from ...defs import onnx_opset_version
 from ..op_run import OpRun
 from ._op import OpRunUnaryNum
 
