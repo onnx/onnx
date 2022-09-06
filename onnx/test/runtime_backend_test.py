@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
+# pylint: disable=R0912,R0913,W0703
 
 import os
 import unittest

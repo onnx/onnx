@@ -26,7 +26,7 @@ def _check_dtype(val):  # type: ignore
         bool,
         str,
     }:
-        raise TypeError(  # pragma: no cover
+        raise TypeError(
             f"Type ({a}, {type(a)}) is not a numpy type (operator 'Constant')"
         )
 
@@ -39,7 +39,7 @@ class ConstantCommon(OpRun):
 
 class Constant_9(ConstantCommon):
     def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
+        ConstantCommon.__init__(self, onnx_node, run_params)
         self.cst = self.value  # type: ignore
         _check_dtype(self.cst)
 
@@ -53,7 +53,7 @@ class Constant_9(ConstantCommon):
 
 class Constant_11(ConstantCommon):
     def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
+        ConstantCommon.__init__(self, onnx_node, run_params)
         if getattr(self, "sparse_value", None) is None:
             self.cst = self.value  # type: ignore
         else:
@@ -70,7 +70,7 @@ class Constant_11(ConstantCommon):
 
 class Constant_12(ConstantCommon):
     def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
+        ConstantCommon.__init__(self, onnx_node, run_params)
         if hasattr(self, "sparse_value") and self.sparse_value is not None:  # type: ignore
             self.cst = self.sparse_value  # type: ignore
         elif hasattr(self, "value_float") and self.value_float is not None:  # type: ignore
@@ -88,7 +88,7 @@ class Constant_12(ConstantCommon):
         elif hasattr(self, "value") and self.value is not None:  # type: ignore
             self.cst = self.value  # type: ignore
         else:
-            raise AttributeError(  # pragma: no cover
+            raise AttributeError(
                 "No constant is defined for operator 'Constant'."
             )
         if isinstance(self.cst, RefAttrName):
