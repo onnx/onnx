@@ -75,17 +75,17 @@ class Constant_12(ConstantCommon, OpRun):
         if hasattr(self, "sparse_value") and self.sparse_value is not None:  # type: ignore
             self.cst = self.sparse_value  # type: ignore
         elif hasattr(self, "value_float") and self.value_float is not None:  # type: ignore
-            self.cst = numpy.array([self.value_float], dtype=numpy.float32)  # type: ignore
+            self.cst = numpy.array(self.value_float, dtype=numpy.float32)  # type: ignore
         elif hasattr(self, "value_floats") and self.value_floats is not None:  # type: ignore
-            self.cst = self.value_floats.astype(numpy.float32)  # type: ignore
+            self.cst = np.array(self.value_floats, dtype=numpy.float32)  # type: ignore
         elif hasattr(self, "value_int") and self.value_int is not None:  # type: ignore
             self.cst = numpy.array(self.value_int, dtype=numpy.int64)  # type: ignore
         elif hasattr(self, "value_ints") and self.value_ints is not None:  # type: ignore
-            self.cst = self.value_ints.astype(numpy.int64)  # type: ignore
+            self.cst = numpy.array(self.value_ints, dtype=numpy.int64)  # type: ignore
         elif hasattr(self, "value_string") and self.value_string is not None:  # type: ignore
-            self.cst = self.value_string  # type: ignore
+            self.cst = numpy.array(self.value_string)  # type: ignore
         elif hasattr(self, "value_strings") and self.value_strings is not None:  # type: ignore
-            self.cst = self.value_strings  # type: ignore
+            self.cst = numpy.array(self.value_strings)  # type: ignore
         elif hasattr(self, "value") and self.value is not None:  # type: ignore
             self.cst = self.value  # type: ignore
         else:
