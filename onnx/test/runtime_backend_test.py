@@ -9,14 +9,14 @@ from numpy import object as dtype_object
 from numpy.testing import assert_almost_equal  # type: ignore
 
 from onnx import (
-    load,
-    load_model_from_string,
-    load_tensor_from_string,
     ModelProto,
     OptionalProto,
     SequenceProto,
     TensorProto,
     TypeProto,
+    load,
+    load_model_from_string,
+    load_tensor_from_string,
 )
 from onnx.backend.test import __file__ as backend_folder
 from onnx.helper import __file__ as onnx_file
@@ -45,6 +45,7 @@ def assert_almost_equal_string(expected, value):
     :param expected: expected array
     :param value: value
     """
+
     def is_float(x):
         try:
             return True
@@ -75,7 +76,7 @@ class OnnxBackendTest:
         temp = []
         for f in filenames:
             name = os.path.splitext(f)[0]
-            i = name.split('_')[-1]
+            i = name.split("_")[-1]
             temp.append((int(i), f))
         temp.sort()
         return [_[1] for _ in temp]
@@ -84,7 +85,7 @@ class OnnxBackendTest:
     def _read_proto_from_file(full):
         if not os.path.exists(full):
             raise FileNotFoundError(f"File not found: {full!r}.")
-        with open(full, 'rb') as f:
+        with open(full, "rb") as f:
             serialized = f.read()
         try:
             loaded = to_array(load_tensor_from_string(serialized))
@@ -141,9 +142,11 @@ class OnnxBackendTest:
         if not os.path.exists(folder):
             raise FileNotFoundError(f"Unable to find folder {folder!r}.")
         content = os.listdir(folder)
-        onx = [c for c in content if os.path.splitext(c)[-1] in {'.onnx'}]
+        onx = [c for c in content if os.path.splitext(c)[-1] in {".onnx"}]
         if len(onx) != 1:
-            raise ValueError(f"There is more than one onnx file in {folder!r} ({onx!r}).")
+            raise ValueError(
+                f"There is more than one onnx file in {folder!r} ({onx!r})."
+            )
         self.folder = folder
         self.onnx_path = os.path.join(folder, onx[0])
         self.onnx_model = load(self.onnx_path)
@@ -152,9 +155,11 @@ class OnnxBackendTest:
         for sub in content:
             full = os.path.join(folder, sub)
             if os.path.isdir(full):
-                pb = [c for c in os.listdir(full) if os.path.splitext(c)[-1] in {'.pb'}]
-                inputs = OnnxBackendTest._sort(c for c in pb if c.startswith('input_'))
-                outputs = OnnxBackendTest._sort(c for c in pb if c.startswith('output_'))
+                pb = [c for c in os.listdir(full) if os.path.splitext(c)[-1] in {".pb"}]
+                inputs = OnnxBackendTest._sort(c for c in pb if c.startswith("input_"))
+                outputs = OnnxBackendTest._sort(
+                    c for c in pb if c.startswith("output_")
+                )
                 t = dict(
                     inputs=OnnxBackendTest._load(full, inputs),
                     outputs=OnnxBackendTest._load(full, outputs),
@@ -206,7 +211,7 @@ class OnnxBackendTest:
                         raise AssertionError(
                             f"Output {i} of test {index} in folder {self.folder!r} failed."
                         ) from ex
-            elif hasattr(o, 'is_compatible'):
+            elif hasattr(o, "is_compatible"):
                 # A shape
                 if e.dtype != o.dtype:
                     raise AssertionError(
@@ -223,7 +228,7 @@ class OnnxBackendTest:
 
     def is_random(self):
         "Tells if a test is random or not."
-        if 'bernoulli' in self.folder:
+        if "bernoulli" in self.folder:
             return True
         return False
 
@@ -246,8 +251,8 @@ class OnnxBackendTest:
 
         obj = load_fct(self.onnx_model)
 
-        got = run_fct(obj, *self.tests[index]['inputs'])
-        expected = self.tests[index]['outputs']
+        got = run_fct(obj, *self.tests[index]["inputs"])
+        expected = self.tests[index]["outputs"]
         if len(got) != len(expected):
             raise AssertionError(
                 f"Unexpected number of output (test {index}, folder {self.folder!r}), "
@@ -282,9 +287,9 @@ def enumerate_onnx_tests(series, fct_filter=None):
     :return: list of @see cl OnnxBackendTest
     """
     root = os.path.dirname(backend_folder)
-    sub = os.path.join(root, 'data', series)
+    sub = os.path.join(root, "data", series)
     if not os.path.exists(sub):
-        content = '\n'.join(os.listdir(root))
+        content = "\n".join(os.listdir(root))
         raise FileNotFoundError(
             f"Unable to find series of tests in {root!r}, subfolders:\n{content}"
         )
@@ -294,20 +299,21 @@ def enumerate_onnx_tests(series, fct_filter=None):
             continue
         folder = os.path.join(sub, t)
         content = os.listdir(folder)
-        onx = [c for c in content if os.path.splitext(c)[-1] in {'.onnx'}]
+        onx = [c for c in content if os.path.splitext(c)[-1] in {".onnx"}]
         if len(onx) == 1:
             yield OnnxBackendTest(folder)
 
 
 class TestOnnxBackEnd(unittest.TestCase):
 
-    folder = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                          'onnx_backend_test_code')
+    folder = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "onnx_backend_test_code"
+    )
 
     def test_onnx_backend_test(self):
-        name = 'test_abs'
+        name = "test_abs"
         code = []
-        for te in enumerate_onnx_tests('node', lambda folder: folder == name):
+        for te in enumerate_onnx_tests("node", lambda folder: folder == name):
             code.append(te)
         self.assertEqual(len(code), 1)
 
@@ -327,7 +333,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one(self):
         done = 0
-        for te in enumerate_onnx_tests('node', lambda folder: folder == 'test_abs'):
+        for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
             self.assertIn(te.name, repr(te))
             self.assertGreater(len(te), 0)
             te.run(TestOnnxBackEnd.load_fct, TestOnnxBackEnd.run_fct)
@@ -336,13 +342,13 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def common_test_enumerate_onnx_tests_run(self, valid, verbose=0):
         with self.assertRaises(FileNotFoundError):
-            list(enumerate_onnx_tests('NNN'))
+            list(enumerate_onnx_tests("NNN"))
         missed = []
         load_failed = []
         exec_failed = []
         mismatch = []
         success = 0
-        for te in enumerate_onnx_tests('node', valid):
+        for te in enumerate_onnx_tests("node", valid):
             if "_scan_" in te.name or "test_scan" in te.name:
                 # Operator Scan is not supported by onnx-script.
                 continue
@@ -370,31 +376,29 @@ class TestOnnxBackEnd(unittest.TestCase):
         failed = [len(missed), len(load_failed), len(exec_failed), len(mismatch)]
         coverage = success / (success + sum(failed))
 
-        if __name__ == '__main__':
+        if __name__ == "__main__":
             path = os.path.dirname(onnx_file)
             print("-----------")
             print(
                 f"success={success}, missed={len(missed)}, load_failed={len(load_failed)}, "
                 f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
             )
-            print(f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests")
+            print(
+                f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests"
+            )
+
+            def _print(s, path):
+                return str(s).replace("\\\\", "\\").replace(path, "onnx").replace("\\", "/")
+
             print("-----------")
             for t in load_failed:
-                print("loading failed",
-                      str(t[0]).replace('\\\\', '\\').replace(
-                          path, 'onnx').replace("\\", "/"))
+                print("loading failed", _print(t[0], path))
             for t in exec_failed:
-                print("execution failed",
-                      str(t[0]).replace('\\\\', '\\').replace(
-                          path, 'onnx').replace("\\", "/"))
+                print("execution failed", _print(t[0], path))
             for t in mismatch:
-                print("mismatch",
-                      str(t[0]).replace('\\\\', '\\').replace(
-                          path, 'onnx').replace("\\", "/"))
+                print("mismatch", _print(t[0], path))
             for t in missed:
-                print("missed",
-                      str(t[0]).replace('\\\\', '\\').replace(
-                          path, 'onnx').replace("\\", "/"))
+                print("missed", _print(t[0], path))
 
         if len(mismatch) > 0:
             te, e = mismatch[0]
@@ -440,8 +444,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_tan" in name,
-            verbose=4 if __name__ == "__main__" else 0
+            lambda name: "test_tan" in name, verbose=4 if __name__ == "__main__" else 0
         )
 
 
