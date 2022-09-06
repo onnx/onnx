@@ -71,6 +71,7 @@ class OnnxBackendTest:
     :param onnx_model: loaded onnx file
     :param tests: list of test
     """
+
     @staticmethod
     def _sort(filenames):
         temp = []
@@ -388,7 +389,12 @@ class TestOnnxBackEnd(unittest.TestCase):
             )
 
             def _print(s, path):
-                return str(s).replace("\\\\", "\\").replace(path, "onnx").replace("\\", "/")
+                return (
+                    str(s)
+                    .replace("\\\\", "\\")
+                    .replace(path, "onnx")
+                    .replace("\\", "/")
+                )
 
             print("-----------")
             for t in load_failed:
