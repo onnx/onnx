@@ -5,9 +5,9 @@ from typing import Any, Dict, Iterable, List
 
 import numpy as np  # type: ignore
 
-from ..onnx_pb import AttributeProto, GraphProto, NodeProto
 from ..defs import get_all_schemas_with_history
 from ..numpy_helper import to_array
+from ..onnx_pb import AttributeProto, GraphProto, NodeProto
 
 
 class RuntimeTypeError(RuntimeError):
@@ -140,7 +140,6 @@ class OpRun:
                             f"for node {self.onnx_node.op_type!r}."
                         )
                     if hasattr(v, "default_value"):
-                        name = k
                         value = self._extract_attribute_value(v.default_value)
                         setattr(self, k, value)
 

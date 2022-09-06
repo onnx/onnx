@@ -8,6 +8,7 @@ import numpy as np
 from numpy import object as dtype_object
 from numpy.testing import assert_almost_equal  # type: ignore
 
+import onnx.runtime as rt
 from onnx import (
     ModelProto,
     OptionalProto,
@@ -21,7 +22,6 @@ from onnx import (
 from onnx.backend.test import __file__ as backend_folder
 from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import to_array, to_list
-import onnx.runtime as rt
 
 
 def assert_almost_equal_string(expected, value):
@@ -340,10 +340,10 @@ class TestOnnxBackEnd(unittest.TestCase):
             if "_scan_" in te.name or "test_scan" in te.name:
                 # Operator Scan is not supported by onnx-script.
                 continue
-            if verbose:
+            if verbose > 6:
                 print("TEST:", te.name)
             with self.subTest(name=te.name):
-                if verbose > 1:
+                if verbose > 7:
                     print("  check runtime")
                     if verbose > 4:
                         print(te.onnx_model)
@@ -358,13 +358,13 @@ class TestOnnxBackEnd(unittest.TestCase):
                     mismatch.append((te, e))
                     continue
                 success += 1
-                if verbose > 1:
+                if verbose > 7:
                     print("  end example.")
 
         failed = [len(missed), len(load_failed), len(exec_failed), len(mismatch)]
         coverage = success / (success + sum(failed))
 
-        if __name__ == "__main__":
+        if verbose:
             path = os.path.dirname(onnx_file)
             print("-----------")
             print(
@@ -375,34 +375,36 @@ class TestOnnxBackEnd(unittest.TestCase):
                 f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests"
             )
 
-            def _print(s, path):
-                return (
-                    str(s)
-                    .replace("\\\\", "\\")
-                    .replace(path, "onnx")
-                    .replace("\\", "/")
-                )
+            if verbose > 3:
 
-            print("-----------")
-            for t in load_failed:
-                print("loading failed", _print(t[0], path))
-            for t in exec_failed:
-                print("execution failed", _print(t[0], path))
-            for t in mismatch:
-                print("mismatch", _print(t[0], path))
-            for t in missed:
-                print("missed", _print(t[0], path))
+                def _print(s, path):
+                    return (
+                        str(s)
+                        .replace("\\\\", "\\")
+                        .replace(path, "onnx")
+                        .replace("\\", "/")
+                    )
 
-            if success > 30:
                 print("-----------")
-                print(
-                    f"success={success}, missed={len(missed)}, load_failed={len(load_failed)}, "
-                    f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
-                )
-                print(
-                    f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests"
-                )
-                print("-----------")
+                for t in load_failed:
+                    print("loading failed", _print(t[0], path))
+                for t in exec_failed:
+                    print("execution failed", _print(t[0], path))
+                for t in mismatch:
+                    print("mismatch", _print(t[0], path))
+                for t in missed:
+                    print("missed", _print(t[0], path))
+
+                if success > 30:
+                    print("-----------")
+                    print(
+                        f"success={success}, missed={len(missed)}, load_failed={len(load_failed)}, "
+                        f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
+                    )
+                    print(
+                        f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests"
+                    )
+                    print("-----------")
 
         if len(mismatch) > 0:
             te, e = mismatch[0]
@@ -448,12 +450,13 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_sequence_map_identity_2_sequences_expanded",
         }
         self.common_test_enumerate_onnx_tests_run(
-            valid=lambda name: name not in skip_test
+            valid=lambda name: name not in skip_test,
+            verbose=4 if __name__ == "__main__" else 0,
         )
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_tan" in name, verbose=4 if __name__ == "__main__" else 0
+            lambda name: "test_tan" in name, verbose=0
         )
 
 

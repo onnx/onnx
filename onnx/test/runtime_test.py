@@ -10,6 +10,7 @@ from textwrap import dedent
 import numpy as np  # type: ignore
 from numpy.testing import assert_almost_equal  # type: ignore
 
+import onnx.runtime as rt
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
@@ -23,7 +24,6 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.numpy_helper import from_array
-import onnx.runtime as rt
 
 
 class TestRuntimeInference(unittest.TestCase):

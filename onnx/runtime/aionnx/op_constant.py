@@ -31,13 +31,13 @@ def _check_dtype(val):  # type: ignore
         )
 
 
-class ConstantCommon:
+class ConstantCommon(OpRun):
     def is_constant(self) -> bool:
         "Defines this node as a constant."
         return True
 
 
-class Constant_9(ConstantCommon, OpRun):
+class Constant_9(ConstantCommon):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         self.cst = self.value  # type: ignore
@@ -51,7 +51,7 @@ class Constant_9(ConstantCommon, OpRun):
         return (self.cst,)
 
 
-class Constant_11(ConstantCommon, OpRun):
+class Constant_11(ConstantCommon):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         if getattr(self, "sparse_value", None) is None:
@@ -68,7 +68,7 @@ class Constant_11(ConstantCommon, OpRun):
         return (self.cst,)
 
 
-class Constant_12(ConstantCommon, OpRun):
+class Constant_12(ConstantCommon):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "sparse_value") and self.sparse_value is not None:  # type: ignore
