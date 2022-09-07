@@ -20,10 +20,9 @@ from .op_acosh import Acosh
 # from .op_adagrad import Adagrad
 # from .op_adam import Adam
 from .op_add import Add
-
-# from .op_and import And
-# from .op_argmax import ArgMax
-# from .op_argmin import ArgMin
+from .op_and import And
+from .op_argmax import ArgMax
+from .op_argmin import ArgMin
 from .op_asin import Asin
 from .op_asinh import Asinh
 from .op_atan import Atan
@@ -118,7 +117,8 @@ from .op_neg import Neg
 # from .op_not import Not
 # from .op_one_hot import OneHot
 # from .op_optional import OptionalGetElement, OptionalHasElement
-# from .op_or import Or
+from .op_or import Or
+
 # from .op_pad import Pad
 # from .op_pow import Pow
 # from .op_prelu import PRelu
@@ -189,7 +189,8 @@ from .op_tanh import Tanh
 # from .op_unsqueeze import Unsqueeze, Unsqueeze_1, Unsqueeze_11, Unsqueeze_13
 # from .op_where import Where
 # from .op_window import BlackmanWindow, HannWindow, HammingWindow
-# from .op_xor import Xor
+from .op_xor import Xor
+
 # from .op_zipmap import ZipMap
 
 
