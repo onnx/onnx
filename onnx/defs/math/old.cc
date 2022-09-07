@@ -2953,4 +2953,5 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int64)"},
             "Constrain input and output types to float/int tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 } // namespace ONNX_NAMESPACE
