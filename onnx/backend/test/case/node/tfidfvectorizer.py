@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np  # type: ignore
 
