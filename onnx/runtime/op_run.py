@@ -75,8 +75,8 @@ class OpRun(ABC):
         AttributeProto.INT: lambda att: int(att.i),
         AttributeProto.INTS: lambda att: [int(i) for i in att.ints],
         AttributeProto.TENSOR: lambda att: to_array(att.t),
-        AttributeProto.STRING: lambda att: str(att.s),
-        AttributeProto.STRINGS: lambda att: [str(s) for s in att.strings],
+        AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
+        AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
     }
 
     def __init__(
