@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, Sequence
 
 import _pytest  # type: ignore
 import pytest  # type: ignore
