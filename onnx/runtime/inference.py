@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0902,R0912,R0914,R0915
 from io import BytesIO
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np  # type: ignore
 
 from .. import load, numpy_helper
 from ..defs import onnx_opset_version
 from ..onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto
+from .op_run import OpRun
 
 
 class Inference:
@@ -21,6 +22,10 @@ class Inference:
     :param opsets: if *proto* is an instance of *GraphProto*,
         opsets must be defined by a dictionary of
     :param functions: known onnx functions
+    :param new_ops: this runtime can be used to test the implementations
+        of new operators, *new_ops* is a list of classes
+        derived from :class:`OpRun <onnx.runtime.op_run.OpRun>`,
+        every class must define the static attribute `domain`
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
@@ -45,6 +50,36 @@ class Inference:
     The second is one line in file `_op_list.py
     <https://github.com/onnx/onnx/tree/main/onnx/runtime/aionnx/_op_file.py>`_
     to import the file and let the runtime know it exists.
+
+    This class can also be used to test an implementation of
+    a custom operator. Let's assume this new operator
+    is `InvAlpha` from domain `custom`. The implementation
+    must take place in a class inheriting from
+    :class:`OpRun <onnx.runtime.op_run.OpRun>`.
+    It must also define attribute `op_domain`.
+    Here is an example which computes :math:`\\frac{1}{X + \\alpha}`.
+
+    ::
+
+        from onnx.runtime.op_run import OpRun
+
+        class InvAlpha(OpRun):
+
+            op_domain = "custom"
+
+            def __init__(self, onnx_node, run_params):  # type: ignore
+                OpRun.__init__(self, onnx_node, run_params)
+
+            def _run(self, x):  # type: ignore
+                return (1 / (x + self.alpha),)
+
+    Class `Inference` must know about this new implementation
+    and this can be done by specified argument *new_ops*.
+
+    ::
+
+        sess = Inference(onnx_model, new_ops=[InvAlpha])
+        got = sess.run(None, {"X": x})[0]
     """
 
     def __init__(  # type: ignore
@@ -53,6 +88,7 @@ class Inference:
         opsets: Union[None, Dict[str, int]] = None,
         functions=None,
         verbose: int = 0,
+        new_ops: Optional[List[OpRun]] = None,
     ):
         if isinstance(proto, str):
             with open(proto, "rb") as f:
@@ -110,6 +146,23 @@ class Inference:
                 else:
                     raise TypeError(f"Unexpected type {type(f)!r} for a function.")
         self.verbose = verbose
+        self.new_ops_: Dict[Tuple[str, str], OpRun] = {}
+        if new_ops is not None:
+            for cl in new_ops:
+                if not issubclass(cl, OpRun):  # type: ignore
+                    raise TypeError(
+                        f"Class {type(cl)} must inherit from OpRun (in new_ops)."
+                    )
+                if not hasattr(cl, "op_domain"):
+                    raise AttributeError(
+                        f"Class {type(cl)} must define attribute 'op_domain'."
+                    )
+                key = cl.op_domain, cl.__name__  # type: ignore
+                if key in self.new_ops_:
+                    raise ValueError(
+                        f"Operator {cl.__name__!r} from domain {cl.op_domain!r} already exsits."  # type: ignore
+                    )
+                self.new_ops_[key] = cl
         self._init()
 
     def _log_arg(self, a: Any) -> Any:
@@ -193,6 +246,8 @@ class Inference:
 
             impl = self.functions_[key]
             return load_op(node.domain, node.op_type, version, custom=impl)
+        if key in self.new_ops_:
+            return self.new_ops_[key]
         raise NotImplementedError(
             f"Node type {node.op_type!r} from domain {node.domain!r} "
             f"is unknown, known functions: {list(sorted(self.functions_))}."

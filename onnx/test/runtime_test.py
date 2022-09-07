@@ -24,6 +24,7 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.numpy_helper import from_array
+from onnx.runtime.op_run import OpRun
 
 
 class TestRuntimeInference(unittest.TestCase):
@@ -593,7 +594,55 @@ class TestRuntimeInference(unittest.TestCase):
         expected = np.abs(x @ a + 0.67)
         assert_almost_equal(expected, result)
 
+    def test_custom_node(self):
+        class _InvAlpha:
+
+            op_domain = "custom"
+
+            def __init__(self, onnx_node, run_params):  # type: ignore
+                self.onnx_node = onnx_node
+                self.run_params = run_params
+
+            def _run(self, x):  # type: ignore
+                return (1 / (x + self.alpha),)
+
+        class InvAlpha_(OpRun):
+            def __init__(self, onnx_node, run_params):  # type: ignore
+                OpRun.__init__(self, onnx_node, run_params)
+
+            def _run(self, x):  # type: ignore
+                return (1 / (x + self.alpha),)
+
+        class InvAlpha(OpRun):
+
+            op_domain = "custom"
+
+            def __init__(self, onnx_node, run_params):  # type: ignore
+                OpRun.__init__(self, onnx_node, run_params)
+
+            def _run(self, x):  # type: ignore
+                return (1 / (x + self.alpha),)
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
+        with self.assertRaises(NotImplementedError):
+            rt.Inference(onnx_model)
+        with self.assertRaises(TypeError):
+            rt.Inference(onnx_model, new_ops=[_InvAlpha])
+        with self.assertRaises(AttributeError):
+            rt.Inference(onnx_model, new_ops=[InvAlpha_])
+        with self.assertRaises(ValueError):
+            rt.Inference(onnx_model, new_ops=[InvAlpha, InvAlpha])
+        sess = rt.Inference(onnx_model, new_ops=[InvAlpha])
+        got = sess.run(None, {"X": x})[0]
+        expected = 1 / (x + 0.5)
+        assert_almost_equal(expected, got)
+
 
 if __name__ == "__main__":
-    # TestRuntimeInference().test_function_attribute()
+    # TestRuntimeInference().test_custom_node()
     unittest.main(verbosity=2)
