@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0201
 
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List
 
 import numpy as np  # type: ignore
@@ -56,7 +57,7 @@ def _build_schemas() -> Dict[str, type]:
 _schemas = _build_schemas()
 
 
-class OpRun:
+class OpRun(ABC):
     """
     Ancestor to all operators in this subfolder.
     The runtime for every node can checked into
@@ -213,6 +214,7 @@ class OpRun:
         atts.append(")")
         return "\n".join(atts)
 
+    @abstractmethod
     def _run(self, *args, **kwargs):  # type: ignore
         """
         Should be overwritten.
