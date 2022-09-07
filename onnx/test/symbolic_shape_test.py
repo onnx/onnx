@@ -1,21 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import List, Optional
 
 import onnx.shape_inference
-from onnx import (
-    ONNX_ML,
-    GraphProto,
-    ModelProto,
-    NodeProto,
-    TensorProto,
-    TensorShapeProto,
-    ValueInfoProto,
-    checker,
-    helper,
-)
-from onnx.helper import make_model, make_node, make_tensor, make_tensor_value_info
+from onnx import ModelProto, TensorProto, TensorShapeProto, ValueInfoProto, helper
+from onnx.helper import make_model, make_tensor_value_info
 
 
 class TestSymbolicShape(unittest.TestCase):
