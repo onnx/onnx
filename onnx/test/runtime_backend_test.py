@@ -425,6 +425,8 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_castlike_FLOAT_to_BFLOAT16_expanded",
             "test_cast_BFLOAT16_to_FLOAT",
             "test_castlike_BFLOAT16_to_FLOAT_expanded",
+            "test_castlike_BFLOAT16_to_FLOAT",
+            "test_castlike_FLOAT_to_BFLOAT16",
             "test_identity_opt",
             "test_identity_sequence",
             "test_if_opt",
