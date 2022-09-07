@@ -27,7 +27,7 @@ def _get_pad_shape(
     elif auto_pad == "VALID":
         pass
     if len(pad_shape) == 0:
-        raise RuntimeError(  # pragma: no cover
+        raise RuntimeError(
             f"Unable to compute pad shape, auto_pad={auto_pad!r}, "
             f"input_spatial_shape={input_spatial_shape!r}, "
             f"kernel_spatial_shape={kernel_spatial_shape!r}, "
@@ -81,7 +81,7 @@ def _get_output_shape(
                 )
         elif auto_pad == "VALID":
             if pad_shape is None:
-                raise ValueError(  # pragma: no cover
+                raise ValueError(  # pragma: no cogitver
                     "pad_shape cannot be None if auto_pad is "
                     "'VALID' and ceil_mode is 1."
                 )
@@ -98,31 +98,18 @@ def _get_output_shape(
                     )
                 )
     if len(out_shape) == 0:
-        raise RuntimeError(  # pragma: no cover
-            "Unable to compute output shape, auto_pad=%r, "
-            "input_spatial_shape=%r, kernel_spatial_shape=%r, "
-            "strides_spatial=%r, ceil_mode=%r."
-            % (
-                auto_pad,
-                input_spatial_shape,
-                kernel_spatial_shape,
-                strides_spatial,
-                ceil_mode,
-            )
+        raise RuntimeError(
+            f"Unable to compute output shape, auto_pad={auto_pad!r}, "
+            f"input_spatial_shape={input_spatial_shape!r}, "
+            f"kernel_spatial_shape={kernel_spatial_shape!r}, "
+            f"strides_spatial={strides_spatial!r}, ceil_mode={ceil_mode!r}."
         )
     if min(out_shape) <= 0:
-        raise RuntimeError(  # pragma: no cover
-            "output shape cannot be null or negative, out_shape=%r, "
-            "auto_pad=%r, input_spatial_shape=%r, "
-            "kernel_spatial_shape=%r, strides_spatial=%r, ceil_mode=%r."
-            % (
-                out_shape,
-                auto_pad,
-                input_spatial_shape,
-                kernel_spatial_shape,
-                strides_spatial,
-                ceil_mode,
-            )
+        raise RuntimeError(
+            f"output shape cannot be null or negative, out_shape={out_shape!r}, "
+            f"auto_pad={auto_pad!r}, input_spatial_shape={input_spatial_shape!r}, "
+            f"kernel_spatial_shape={kernel_spatial_shape!r}, "
+            f"strides_spatial={strides_spatial!r}, ceil_mode={ceil_mode!r}."
         )
     return tuple(out_shape)  # type: ignore
 
@@ -143,8 +130,8 @@ def _pool(
     elif pooling_type == "MAX":
         fpool = numpy.max
     else:
-        raise NotImplementedError(  # pragma: no cover
-            f"Pooling type {pooling_type} does not support. Should be AVG, MAX."
+        raise NotImplementedError(
+            f"Pooling type {pooling_type!r} does not support. Should be AVG, MAX."
         )
     spatial_size = len(x_shape) - 2
     y = numpy.zeros([x_shape[0], x_shape[1]] + list(out_shape))  # type: ignore
