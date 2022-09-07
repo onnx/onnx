@@ -421,6 +421,10 @@ class TestOnnxBackEnd(unittest.TestCase):
     def test_enumerate_onnx_tests_run(self):
         # test not supported yet
         skip_test = {
+            "test_cast_FLOAT_to_BFLOAT16",
+            "test_castlike_FLOAT_to_BFLOAT16_expanded",
+            "test_cast_BFLOAT16_to_FLOAT",
+            "test_castlike_BFLOAT16_to_FLOAT_expanded",
             "test_identity_opt",
             "test_identity_sequence",
             "test_if_opt",
@@ -458,7 +462,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_tan" in name, verbose=0
+            lambda name: "test_abs" in name, verbose=0
         )
 
 

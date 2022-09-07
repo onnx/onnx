@@ -27,8 +27,9 @@ from .op_atanh import Atanh
 from .op_average_pool import AveragePool
 from .op_batch_normalization import BatchNormalization, BatchNormalization_14
 from .op_bitshift import BitShift
+from .op_cast import Cast
 
-# from .op_cast import Cast, CastLike
+# from .op_cast_like import CastLike
 from .op_ceil import Ceil
 
 # from .op_celu import Celu
