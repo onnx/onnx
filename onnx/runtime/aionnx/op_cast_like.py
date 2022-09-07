@@ -3,8 +3,6 @@
 
 import numpy  # type: ignore
 
-from ...mapping import TENSOR_TYPE_TO_NP_TYPE
-from ...onnx_pb import TensorProto
 from ..op_run import OpRun
 
 

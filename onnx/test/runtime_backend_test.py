@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=R0912,R0913,W0703
+# pylint: disable=R0912,R0913,R0915,W0703
 
 import os
 import unittest
@@ -115,10 +115,10 @@ class OnnxBackendTest:
             elif isinstance(new_tensor, OptionalProto):
                 try:
                     t = to_array(new_tensor)
-                except ValueError:
+                except ValueError as e:
                     raise ValueError(
                         f"Unable to convert type {type(new_tensor)} for {full!r} \n{str(new_tensor)}"
-                    )
+                    ) from e
             else:
                 raise RuntimeError(f"Unexpected type {type(new_tensor)} for {full!r}.")
             res.append(t)
