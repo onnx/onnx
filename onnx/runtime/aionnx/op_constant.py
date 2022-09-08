@@ -37,7 +37,7 @@ class ConstantCommon(OpRun):
         return True
 
 
-class Constant_9(ConstantCommon):
+class Constant_1(ConstantCommon):
     def __init__(self, onnx_node, run_params):  # type: ignore
         ConstantCommon.__init__(self, onnx_node, run_params)
         self.cst = self.value  # type: ignore
@@ -49,6 +49,11 @@ class Constant_9(ConstantCommon):
                 "Function attributes are not implemented for opset <= 11. Use opset > 12."
             )
         return (self.cst,)
+
+
+class Constant_9(Constant_1):
+    def __init__(self, onnx_node, run_params):  # type: ignore
+        Constant_1.__init__(self, onnx_node, run_params)
 
 
 class Constant_11(ConstantCommon):
@@ -113,5 +118,7 @@ if onnx_opset_version() >= 12:
     Constant = Constant_12
 elif onnx_opset_version() >= 11:
     Constant = Constant_11  # type: ignore
-else:
+elif onnx_opset_version() >= 9:
     Constant = Constant_9  # type: ignore
+else:
+    Constant = Constant_1  # type: ignore
