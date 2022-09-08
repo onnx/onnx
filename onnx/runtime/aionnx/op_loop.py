@@ -13,6 +13,9 @@ class Loop(OpRun):
             raise KeyError("run_params must contains key 'opsets'.")
         if "verbose" not in run_params:
             raise KeyError("run_params must contains key 'verbose'.")
+        self.output_index = {n: i for i, n in enumerate(self.body.output_names)}  # type: ignore
+        self.N = len(self.body.input_names) - 2  # type: ignore
+        self.K = len(self.body.output_names) - self.N - 1  # type: ignore
 
     def need_context(self) -> bool:
         """
@@ -44,6 +47,7 @@ class Loop(OpRun):
             for a in context:
                 inputs[a] = context[a]
 
+        k_carried_away = [[] for i in range(self.K)]  # type: ignore
         it = 0
         while cond and it < M:
             self._log("  -- loop> {%r}", context)
@@ -52,24 +56,30 @@ class Loop(OpRun):
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
             outputs = self._run_body(inputs)  # type: ignore
-            cond = outputs[cond_name]
+            if self.K > 0:
+                for k in range(self.K):
+                    k_carried_away[k].append(outputs[-self.K + k])
+            index_cond = self.output_index[cond_name]
+            cond = outputs[index_cond]
             if cond is None:
                 raise RuntimeError(
                     f"Condition {cond_name!r} returned by the subgraph cannot be None."
                 )
             for i, o in zip(body.input_names[2:], body.output_names[1:]):
-                inputs[i] = outputs[o]
+                inputs[i] = outputs[self.output_index[o]]
             it += 1
             self._log("  -- loop<")
 
         if it == 0:
-            outputs = {body.output_names[1]: cond}
-            for i, o in zip(body.input_names[2:], body.output_names[1:]):
-                outputs[o] = inputs[i]
-        for o in body.output_names:
-            if o not in outputs:
-                outputs[o] = numpy.empty(shape=tuple())
-        res = tuple(body.output_names[1:])
+            outputs = []
+            for i in body.input_names[2:]:
+                outputs.append(inputs[i])
+        else:
+            outputs = outputs[1 : 1 + self.N]
+        outputs.extend(k_carried_away)
+        while len(outputs) < len(self.onnx_node.output):
+            outputs.append(numpy.empty(shape=tuple()))
+        res = tuple(outputs)
         if any(r is None for r in res):
             raise TypeError("Operator Loop produces a None value.")
         return res

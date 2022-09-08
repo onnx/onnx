@@ -6,7 +6,7 @@ import os
 import unittest
 
 import numpy as np
-from numpy import object as dtype_object
+from numpy import object_ as dtype_object
 from numpy.testing import assert_almost_equal  # type: ignore
 
 import onnx.runtime as rt
@@ -452,7 +452,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_loop13_seq" in name, verbose=0
+            lambda name: "test_loop11" in name, verbose=0
         )
 
 

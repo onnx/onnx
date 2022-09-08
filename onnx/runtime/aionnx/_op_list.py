@@ -139,8 +139,9 @@ from .op_reduce_sum import ReduceSum, ReduceSum_1, ReduceSum_11, ReduceSum_13
 # from .op_selu import Selu
 # from .op_sequence_at import SequenceAt
 # from .op_sequence_construct import SequenceConstruct
-# from .op_sequence_empty import SequenceEmpty
-# from .op_sequence_insert import SequenceInsert
+from .op_sequence_empty import SequenceEmpty
+from .op_sequence_insert import SequenceInsert
+
 # from .op_shape import Shape
 # from .op_shrink import Shrink
 # from .op_sigmoid import Sigmoid

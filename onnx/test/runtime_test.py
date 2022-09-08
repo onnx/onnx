@@ -20,7 +20,6 @@ from onnx.helper import (
     make_graph,
     make_model,
     make_node,
-    make_operatorsetid,
     make_opsetid,
     make_sequence_type_proto,
     make_tensor,
@@ -765,7 +764,7 @@ class TestRuntimeInference(unittest.TestCase):
         trip_count = np.array(5).astype(np.int64)
         seq_empty = []  # type: List[Any]
         # seq_res = [x[:int(i)] for i in x]
-        cond = np.array(1).astype(np.bool)
+        cond = np.array(1).astype(np.bool_)
 
         model_def = make_model(
             graph=make_graph(
