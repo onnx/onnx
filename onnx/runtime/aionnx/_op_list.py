@@ -46,9 +46,8 @@ from .op_cum_sum import CumSum
 from .op_depth_to_space import DepthToSpace
 from .op_dequantize_linear import DequantizeLinear
 from .op_det import Det
+from .op_dft import DFT
 
-# from .op_dft import DFT
-# from .op_dict_vectorizer import DictVectorizer
 # from .op_div import Div
 # from .op_dropout import Dropout, Dropout_7, Dropout_12
 # from .op_einsum import Einsum
