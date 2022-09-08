@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from collections import defaultdict
-from typing import Dict, List
+from typing import List
 
 import onnx.onnx_cpp2py_export.defs as C
 from onnx import AttributeProto, FunctionProto

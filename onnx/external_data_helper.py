@@ -148,7 +148,9 @@ def convert_model_to_external_data(
 
 def convert_model_from_external_data(model: ModelProto) -> None:
     """
-    Call to set all tensors which use external data as embedded data. save_model saves all the tensors data as embedded data after calling this function.
+    Call to set all tensors which use external data as embedded data.
+    save_model saves all the tensors data as embedded data after
+    calling this function.
 
     Arguments:
         model (ModelProto): Model to be converted.

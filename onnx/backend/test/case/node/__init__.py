@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import re
 import sys
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
@@ -8,14 +7,6 @@ import numpy as np  # type: ignore
 
 import onnx
 import onnx.mapping
-
-from ..test_case import TestCase
-from ..utils import import_recursive
-
-_NodeTestCases = []
-_TargetOpType = None
-
-
 from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
@@ -25,6 +16,12 @@ from onnx.onnx_pb import (
     OperatorSetIdProto,
     TypeProto,
 )
+
+from ..test_case import TestCase
+from ..utils import import_recursive
+
+_NodeTestCases = []
+_TargetOpType = None
 
 
 def _rename_edges_helper(
@@ -139,7 +136,9 @@ def function_testcase_helper(
     if schema.has_function:  # type: ignore
         function_proto = schema.function_body  # type: ignore
     elif schema.has_context_dependent_function:  # type: ignore
-        function_proto_str = schema.get_context_dependent_function(node.SerializeToString(), [t.SerializeToString() for t in input_types])  # type: ignore
+        function_proto_str = schema.get_context_dependent_function(  # type: ignore
+            node.SerializeToString(), [t.SerializeToString() for t in input_types]
+        )
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
     else:

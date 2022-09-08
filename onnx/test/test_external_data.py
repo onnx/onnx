@@ -2,7 +2,6 @@
 import os
 import os.path as Path
 import shutil
-import sys
 import tempfile
 import unittest
 import uuid
