@@ -6019,7 +6019,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Pad", "x", "y", pads=[1, 3, 1, 1, 0, 1])],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, None, 4))], opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 10)])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (3, None, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 10)],
+        )  # type: ignore
 
     def test_constant_pad_2d_opset10(self) -> None:
         graph = self._make_graph(
