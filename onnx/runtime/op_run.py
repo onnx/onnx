@@ -2,7 +2,7 @@
 # pylint: disable=C0415
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Optional
 
 import numpy as np  # type: ignore
 
@@ -89,7 +89,9 @@ class OpRun(ABC):
         self.onnx_node = onnx_node
         self.run_params = run_params
         if schema is None:
-            if onnx_node.op_type in _schemas:
+            if self.__class__.__name__ in _schemas:
+                self._schema = _schemas[self.__class__.__name__]
+            elif onnx_node.op_type in _schemas:
                 self._schema = _schemas[onnx_node.op_type]
             else:
                 self._schema = None  # type: ignore
@@ -100,7 +102,9 @@ class OpRun(ABC):
     def _log(self, pattern, *args):  # type: ignore
         self.run_params["log"](pattern, *args)
 
-    def _extract_attribute_value(self, att: AttributeProto) -> Any:
+    def _extract_attribute_value(
+        self, att: AttributeProto, ref_att: Optional[AttributeProto] = None
+    ) -> Any:
         """
         Converts an attribute value into a python value.
         """
@@ -110,11 +114,18 @@ class OpRun(ABC):
             return Inference(att.g, opsets=self.run_params["opsets"])
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
-        raise NotImplementedError(
-            f"Unable to convert attribute {att.name!r} type {att.type!r} "
-            f"from node type {self.onnx_node.op_type!r}, "
-            f"domain {self.onnx_node.domain!r}."
-        )
+        if ref_att is None:
+            raise AttributeError(
+                f"Unable to convert attribute {att.name!r} type {att.type!r} "
+                f"from node type {self.onnx_node.op_type!r}, "
+                f"domain {self.onnx_node.domain!r}\n{att}."
+            )
+        else:
+            raise AttributeError(
+                f"Unable to convert default value for {ref_att.name!r} type {att.type!r} "
+                f"from node type {self.onnx_node.op_type!r}, "
+                f"domain {self.onnx_node.domain!r}\n{att}\n{ref_att}."
+            )
 
     def _load_attributes(self) -> None:
         "Checks and loads attributes."
@@ -141,7 +152,11 @@ class OpRun(ABC):
                             f"for node {self.onnx_node.op_type!r}."
                         )
                     if hasattr(v, "default_value"):
-                        value = self._extract_attribute_value(v.default_value)
+                        if v.default_value.type == 0:
+                            # default value is undefined, it depends on the inputs
+                            value = None  # type: ignore
+                        else:
+                            value = self._extract_attribute_value(v.default_value, v)
                         setattr(self, k, value)
 
     @staticmethod

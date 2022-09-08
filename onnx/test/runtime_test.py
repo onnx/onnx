@@ -298,11 +298,11 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.max, 1)
-            self.assertNotIn("min", last_node.__dict__)
+            self.assertEqual(last_node.min, -3.4028234663852886e38)
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_almost_equal(expected, got)
 
-        with self.subTest(opt="max"):
+        with self.subTest(opt="min"):
             lr, f = TestRuntimeInference._linear_regression(
                 clip=True, opset=10, max_value=None
             )
@@ -314,7 +314,7 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.min, -1)
-            self.assertNotIn("max", last_node.__dict__)
+            self.assertEqual(last_node.max, 3.4028234663852886e38)
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_almost_equal(expected, got)
 

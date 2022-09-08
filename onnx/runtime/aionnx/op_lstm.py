@@ -82,15 +82,27 @@ class CommonLSTM(OpRun):
         if num_directions == 1:
             R = numpy.squeeze(R, axis=0)
             W = numpy.squeeze(W, axis=0)
-            if B is not None:
+            if B is not None and len(B.shape) > 0 and B.shape[0] == 1:
                 B = numpy.squeeze(B, axis=0)
-            if sequence_lens is not None:
+            if (
+                sequence_lens is not None
+                and len(sequence_lens.shape) > 0
+                and sequence_lens.shape[0] == 1
+            ):
                 sequence_lens = numpy.squeeze(sequence_lens, axis=0)
-            if initial_h is not None:
+            if (
+                initial_h is not None
+                and len(initial_h.shape) > 0
+                and initial_h.shape[0] == 1
+            ):
                 initial_h = numpy.squeeze(initial_h, axis=0)
-            if initial_c is not None:
+            if (
+                initial_c is not None
+                and len(initial_c.shape) > 0
+                and initial_c.shape[0] == 1
+            ):
                 initial_c = numpy.squeeze(initial_c, axis=0)
-            if P is not None:
+            if P is not None and len(P.shape) > 0 and P.shape[0] == 1:
                 P = numpy.squeeze(P, axis=0)
 
             hidden_size = R.shape[-1]

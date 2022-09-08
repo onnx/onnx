@@ -364,16 +364,24 @@ class TestOnnxBackEnd(unittest.TestCase):
             with self.subTest(name=te.name):
                 if verbose > 7:
                     print("  check runtime")
-                    if verbose > 4:
+                    if verbose > 8:
                         print(te.onnx_model)
                 self.assertIn(te.name, repr(te))
                 self.assertGreater(len(te), 0)
                 try:
+                    if verbose > 7:
+                        print("  run")
                     te.run(TestOnnxBackEnd.load_fct, TestOnnxBackEnd.run_fct)
+                    if verbose > 7:
+                        print("  end run")
                 except NotImplementedError as e:
+                    if verbose > 7:
+                        print("  ", e, type(e))
                     missed.append((te, e))
                     continue
                 except AssertionError as e:
+                    if verbose > 7:
+                        print("  ", e, type(e))
                     mismatch.append((te, e))
                     continue
                 success += 1
@@ -444,6 +452,7 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_castlike_BFLOAT16_to_FLOAT_expanded",
             "test_castlike_BFLOAT16_to_FLOAT",
             "test_castlike_FLOAT_to_BFLOAT16",
+            "test_gru_batchwise",
         }
         self.common_test_enumerate_onnx_tests_run(
             valid=lambda name: name not in skip_test,
@@ -452,7 +461,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_loop11" in name, verbose=0
+            lambda name: "test_dropout_default_old" in name, verbose=0
         )
 
 

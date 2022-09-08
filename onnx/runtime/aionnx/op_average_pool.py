@@ -181,16 +181,16 @@ class AveragePool(OpRun):
         OpRun.__init__(self, onnx_node, run_params)
 
     def _run(self, x):  # type: ignore
-        if len(self.strides) == 0:  # type: ignore
+        if self.strides is None or len(self.strides) == 0:  # type: ignore
             strides = [1] * (len(x.shape) - 2)
         else:
             strides = self.strides  # type: ignore
         kernel_shape = list(self.kernel_shape)  # type: ignore
         auto_pad = (
-            "VALID" if self.auto_pad == b"NOTSET" else self.auto_pad.decode("ascii")  # type: ignore
+            "VALID" if self.auto_pad == "NOTSET" else self.auto_pad  # type: ignore
         )
 
-        if len(self.pads) == 0:  # type: ignore
+        if self.pads is None or len(self.pads) == 0:  # type: ignore
             pad_shape = [0] * (len(x.shape) - 2)
             x_shape = x.shape[2:]
             padded = x
