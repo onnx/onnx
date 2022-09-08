@@ -11,7 +11,7 @@ from ._op import OpRunUnaryNum
 class Erf(OpRunUnaryNum):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRunUnaryNum.__init__(self, onnx_node, run_params)
-        self._erf = vfunc = numpy.vectorize(erf)
+        self._erf = numpy.vectorize(erf)
 
     def _run(self, x):  # type: ignore
         return (self._erf(x).astype(x.dtype),)

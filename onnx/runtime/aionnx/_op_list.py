@@ -54,15 +54,13 @@ from .op_elu import Elu
 from .op_equal import Equal
 from .op_erf import Erf
 from .op_exp import Exp
+from .op_expand import Expand
+from .op_eyelike import EyeLike
+from .op_flatten import Flatten
+from .op_gather import Gather
+from .op_gather_elements import GatherElements
+from .op_gathernd import GatherND
 
-# from .op_expand import Expand, Expand_13
-# from .op_expression import Expression
-# from .op_eyelike import EyeLike
-# from .op_feature_vectorizer import FeatureVectorizer
-# from .op_flatten import Flatten
-# from .op_gather import Gather
-# from .op_gathernd import GatherND
-# from .op_gather_elements import GatherElements
 # from .op_gemm import Gemm
 # from .op_global_average_pool import GlobalAveragePool, GlobalMaxPool
 from .op_greater import Greater, GreaterOrEqual
