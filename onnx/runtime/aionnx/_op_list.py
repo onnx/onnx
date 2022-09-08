@@ -35,19 +35,18 @@ from .op_clip import Clip, Clip_6, Clip_11
 from .op_compress import Compress
 from .op_concat import Concat
 from .op_concat_from_sequence import ConcatFromSequence
+from .op_constant import Constant, Constant_9, Constant_11, Constant_12
+from .op_constant_of_shape import ConstantOfShape
 
 # from .op_conv import Conv
 # from .op_conv_transpose import ConvTranspose
-from .op_constant import Constant, Constant_9, Constant_11, Constant_12
-
-# from .op_constant_of_shape import ConstantOfShape
 from .op_cos import Cos
 from .op_cosh import Cosh
 from .op_cum_sum import CumSum
+from .op_depth_to_space import DepthToSpace
+from .op_dequantize_linear import DequantizeLinear
+from .op_det import Det
 
-# from .op_det import Det
-# from .op_depth_to_space import DepthToSpace, SpaceToDepth
-# from .op_dequantize_linear import DequantizeLinear
 # from .op_dft import DFT
 # from .op_dict_vectorizer import DictVectorizer
 # from .op_div import Div
@@ -164,6 +163,8 @@ from .op_sinh import Sinh
 # from .op_softsign import Softsign
 # from .op_solve import Solve
 # from .op_sqrt import Sqrt
+from .op_space_to_depth import SpaceToDepth
+
 # from .op_squeeze import Squeeze, Squeeze_1, Squeeze_11, Squeeze_13
 # from .op_stft import STFT
 # from .op_string_normalizer import StringNormalizer
