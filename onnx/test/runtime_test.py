@@ -6,6 +6,7 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from textwrap import dedent
+from typing import Any, List
 
 import numpy as np  # type: ignore
 from numpy.testing import assert_almost_equal  # type: ignore
@@ -19,12 +20,23 @@ from onnx.helper import (
     make_graph,
     make_model,
     make_node,
+    make_operatorsetid,
     make_opsetid,
+    make_sequence_type_proto,
     make_tensor,
+    make_tensor_sequence_value_info,
     make_tensor_value_info,
+    make_value_info,
 )
 from onnx.numpy_helper import from_array
 from onnx.runtime.op_run import OpRun
+
+
+def make_sequence_value_info(name, elem_type, shape):
+    if isinstance(elem_type, int):
+        return make_tensor_sequence_value_info(name, elem_type, shape)
+    s_type = make_sequence_type_proto(elem_type)
+    return make_value_info(name, s_type, shape)
 
 
 class TestRuntimeInference(unittest.TestCase):
@@ -641,6 +653,143 @@ class TestRuntimeInference(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         expected = 1 / (x + 0.5)
         assert_almost_equal(expected, got)
+
+    def test_loop(self):
+        # Given a tensor x of values [x1, ..., xN],
+        # Return a sequence of tensors of
+        #   [[x1], [x1, x2], ..., [x1, ..., xN]]
+
+        cond_in = make_tensor_value_info("cond_in", TensorProto.BOOL, [])
+        cond_out = make_tensor_value_info("cond_out", TensorProto.BOOL, [])
+        iter_count = make_tensor_value_info("iter_count", TensorProto.INT64, [])
+        seq_in = make_tensor_sequence_value_info("seq_in", TensorProto.FLOAT, None)
+        seq_out = make_tensor_sequence_value_info("seq_out", TensorProto.FLOAT, None)
+
+        x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+
+        x_const_node = make_node(
+            "Constant",
+            inputs=[],
+            outputs=["x"],
+            value=make_tensor(
+                name="const_tensor_x",
+                data_type=TensorProto.FLOAT,
+                dims=x.shape,
+                vals=x.flatten().astype(float),
+            ),
+        )
+
+        one_const_node = make_node(
+            "Constant",
+            inputs=[],
+            outputs=["one"],
+            value=make_tensor(
+                name="const_tensor_one",
+                data_type=TensorProto.INT64,
+                dims=(),
+                vals=[1],
+            ),
+        )
+
+        zero_const_node = make_node(
+            "Constant",
+            inputs=[],
+            outputs=["slice_start"],
+            value=make_tensor(
+                name="const_tensor_zero",
+                data_type=TensorProto.INT64,
+                dims=(1,),
+                vals=[0],
+            ),
+        )
+
+        axes_node = make_node(
+            "Constant",
+            inputs=[],
+            outputs=["axes"],
+            value=make_tensor(
+                name="const_tensor_axes",
+                data_type=TensorProto.INT64,
+                dims=(),
+                vals=[0],
+            ),
+        )
+
+        add_node = make_node("Add", inputs=["iter_count", "one"], outputs=["end"])
+
+        end_unsqueeze_node = make_node(
+            "Unsqueeze", inputs=["end", "axes"], outputs=["slice_end"]
+        )
+
+        slice_node = make_node(
+            "Slice", inputs=["x", "slice_start", "slice_end"], outputs=["slice_out"]
+        )
+
+        insert_node = make_node(
+            "SequenceInsert", inputs=["seq_in", "slice_out"], outputs=["seq_out"]
+        )
+
+        identity_node = make_node("Identity", inputs=["cond_in"], outputs=["cond_out"])
+
+        loop_body = make_graph(
+            [
+                identity_node,
+                x_const_node,
+                one_const_node,
+                zero_const_node,
+                add_node,
+                axes_node,
+                end_unsqueeze_node,
+                slice_node,
+                insert_node,
+            ],
+            "loop_body",
+            [iter_count, cond_in, seq_in],
+            [cond_out, seq_out],
+        )
+
+        node = make_node(
+            "Loop",
+            inputs=["trip_count", "cond", "seq_empty"],
+            outputs=["seq_res"],
+            body=loop_body,
+        )
+        node_concat = make_node(
+            "ConcatFromSequence",
+            inputs=["seq_res"],
+            outputs=["res"],
+            axis=0,
+            new_axis=0,
+        )
+
+        trip_count = np.array(5).astype(np.int64)
+        seq_empty = []  # type: List[Any]
+        # seq_res = [x[:int(i)] for i in x]
+        cond = np.array(1).astype(np.bool)
+
+        model_def = make_model(
+            graph=make_graph(
+                name="loop_test",
+                inputs=[
+                    make_tensor_value_info(
+                        "trip_count", TensorProto.INT64, trip_count.shape
+                    ),
+                    make_tensor_value_info("cond", TensorProto.BOOL, cond.shape),
+                    make_sequence_value_info("seq_empty", TensorProto.FLOAT, []),
+                ],
+                outputs=[make_tensor_value_info("res", TensorProto.FLOAT, None)],
+                nodes=[node, node_concat],
+            )
+        )
+
+        expected = np.array(
+            [1.0, 1.0, 2.0, 1.0, 2.0, 3.0, 1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0, 5.0],
+            dtype=np.float32,
+        )
+        oinf = rt.Inference(model_def)
+        inputs = {"trip_count": trip_count, "cond": cond, "seq_empty": seq_empty}
+        got = oinf.run(None, inputs)
+        assert_almost_equal(expected, got[0])
 
 
 if __name__ == "__main__":
