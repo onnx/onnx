@@ -705,6 +705,13 @@ OpSchema& OpSchema::FunctionBody(
   return FunctionBody(func_nodes);
 }
 
+OpSchema& OpSchema::FunctionAddOpset(const char* domain, int version) {
+  OperatorSetIdProto* onnx_opset = function_body_.mutable_opset_import()->Add();
+  onnx_opset->set_domain(domain);
+  onnx_opset->set_version(version);
+  return *this;
+}
+
 const FunctionProto* OpSchema::GetFunction() const {
   return function_body_.node_size() > 0 ? &function_body_ : nullptr;
 }
