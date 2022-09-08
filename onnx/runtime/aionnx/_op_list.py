@@ -177,8 +177,8 @@ from .op_tanh import Tanh
 # from .op_trilu import Trilu
 # from .op_unique import Unique
 from .op_unsqueeze import Unsqueeze, Unsqueeze_1, Unsqueeze_11, Unsqueeze_13
+from .op_where import Where
 
-# from .op_where import Where
 # from .op_window import BlackmanWindow, HannWindow, HammingWindow
 from .op_xor import Xor
 
