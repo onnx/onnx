@@ -25,6 +25,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
 |<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
+|<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
 |<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
@@ -2740,6 +2741,67 @@ x = np.array([16, 4, 1]).astype(np.uint8)
 y = np.array([1, 2, 3]).astype(np.uint8)
 z = x >> y  # expected output [8, 1, 0]
 expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_uint8")
+```
+
+</details>
+
+
+### <a name="BitwiseNot"></a><a name="bitwisenot">**BitwiseNot**</a>
+
+  Returns the bitwise not of the input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input/output to integer tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>bitwisenot</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseNot",
+    inputs=["x"],
+    outputs=["bitwise_not"],
+)
+
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_2d")
+
+# 3d
+x = np.random.randn(3, 4, 5).astype(np.uint16)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
+
+# 4d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_4d")
 ```
 
 </details>

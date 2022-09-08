@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 166/181 (91.71%, 5 generators excluded) common operators.
+Node tests have covered 167/182 (91.76%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1942,6 +1942,37 @@ x = np.array([16, 4, 1]).astype(np.uint8)
 y = np.array([1, 2, 3]).astype(np.uint8)
 z = x >> y  # expected output [8, 1, 0]
 expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_uint8")
+```
+
+</details>
+
+
+### BitwiseNot
+There are 1 test cases, listed as following:
+<details>
+<summary>bitwisenot</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseNot",
+    inputs=["x"],
+    outputs=["bitwise_not"],
+)
+
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_2d")
+
+# 3d
+x = np.random.randn(3, 4, 5).astype(np.uint16)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
+
+# 4d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_4d")
 ```
 
 </details>

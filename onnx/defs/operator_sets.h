@@ -1010,6 +1010,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterElements);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, AttributeHasValue);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot);
 
 // Iterate over schema from ai.onnx version 18
 class OpSet_Onnx_ver18 {
@@ -1025,6 +1026,7 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterElements)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, AttributeHasValue)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot)>());
   }
 };
 
