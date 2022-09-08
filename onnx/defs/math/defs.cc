@@ -400,7 +400,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             XLessThanZero = Less(X, ZeroCast)
             AlphaMulX = Mul (AlphaCast, X)
             Y = Where (XLessThanZero, AlphaMulX, X)
-		      }
+          }
         )ONNX"));
 
 static const char* ThresholdedRelu_ver10_doc = R"DOC(
@@ -430,7 +430,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             ZeroCast = CastLike (Zero, X)
             AlphaLessThanX = Less(AlphaCast, X)
             Y = Where(AlphaLessThanX, X, ZeroCast)
-		      }
+          }
         )ONNX")
         .FunctionAddOpset("", 18));
 
@@ -480,7 +480,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             Pos = Mul (GammaCast, X)
             XLessThanZero = Less (X, ZeroCast)
             Y = Where(XLessThanZero, Neg, Pos)
-		      }
+          }
         )ONNX")
         .FunctionAddOpset("", 18));
 
@@ -517,7 +517,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             ExpXSubOne = Sub (ExpX, OneCast)
             AlphaMulExpXSubOne = Mul (AlphaCast, ExpXSubOne)
             Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
-		      }
+          }
         )ONNX")
         .FunctionAddOpset("", 18));
 
@@ -612,10 +612,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input X and output types to float tensors.")
         .FunctionBody(R"ONNX(
           {
-			Softplus_X = Softplus (X)
-			TanHSoftplusX = Tanh (Softplus_X)
-			Y = Mul (X, TanHSoftplusX)
-		   }
+            Softplus_X = Softplus (X)
+            TanHSoftplusX = Tanh (Softplus_X)
+            Y = Mul (X, TanHSoftplusX)
+           }
         )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
@@ -854,7 +854,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AlphaMulXAddBeta = Add (AlphaMulX, BetaCast)
             MinOneOrAlphaMulXAddBeta = Min (AlphaMulXAddBeta, OneCast)
             Y = Max(MinOneOrAlphaMulXAddBeta, ZeroCast)
-		      }
+          }
         )ONNX")
         .FunctionAddOpset("", 18));
 
@@ -1137,7 +1137,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AbsInput = Abs(input)
             OneAddAbsInput = Add (OneCast, AbsInput)
             output = Div(input, OneAddAbsInput)
-		      }
+          }
         )ONNX")
         .FunctionAddOpset("", 18));
 
