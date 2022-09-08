@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
+# pylint: disable=R0912,R0914,W0221
 
 import numpy  # type: ignore
 
@@ -69,7 +69,7 @@ class Loop(OpRun):
         for o in body.output_names:
             if o not in outputs:
                 outputs[o] = numpy.empty(shape=tuple())
-        res = tuple([outputs[name] for name in body.output_names[1:]])
+        res = tuple(body.output_names[1:])
         if any(r is None for r in res):
             raise TypeError("Operator Loop produces a None value.")
         return res

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
+# pylint: disable=R0913,R0914,W0221
 
 from typing import Tuple
 
@@ -32,12 +32,13 @@ class CommonLSTM(OpRun):
         H_0: numpy.ndarray,
         C_0: numpy.ndarray,
         P: numpy.ndarray,
+        num_directions: int,
     ) -> Tuple[numpy.ndarray, numpy.ndarray]:
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]
 
-        Y = numpy.empty([seq_length, self.num_directions, batch_size, hidden_size])
+        Y = numpy.empty([seq_length, num_directions, batch_size, hidden_size])
         h_list = []
 
         [p_i, p_o, p_f] = numpy.split(P, 3)
@@ -61,7 +62,7 @@ class CommonLSTM(OpRun):
             C_t = C
 
         concatenated = numpy.concatenate(h_list)
-        if self.num_directions == 1:
+        if num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
         if self.layout == 0:  # type: ignore
@@ -76,9 +77,9 @@ class CommonLSTM(OpRun):
         number_of_gates = 4
         number_of_peepholes = 3
 
-        self.num_directions = W.shape[0]
+        num_directions = W.shape[0]
 
-        if self.num_directions == 1:
+        if num_directions == 1:
             R = numpy.squeeze(R, axis=0)
             W = numpy.squeeze(W, axis=0)
             if B is not None:
@@ -107,11 +108,13 @@ class CommonLSTM(OpRun):
                 initial_c = numpy.zeros((batch_size, hidden_size), dtype=numpy.float32)
         else:
             raise NotImplementedError(  # pragma: no cover
-                f"Unsupported value {self.num_directions!r} for num_directions "
+                f"Unsupported value {num_directions!r} for num_directions "
                 f"and operator {self.__class__.__name__!r}."
             )
 
-        Y, Y_h = self._step(X, R, B, W, initial_h, initial_c, P)
+        Y, Y_h = self._step(
+            X, R, B, W, initial_h, initial_c, P, num_directions=num_directions
+        )
 
         return (Y,) if self.n_outputs == 1 else (Y, Y_h)  # type: ignore
 

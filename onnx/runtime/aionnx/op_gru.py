@@ -18,12 +18,12 @@ class CommonGRU(OpRun):
     def g(self, x):  # type: ignore
         return numpy.tanh(x)
 
-    def _step(self, X, R, B, W, H_0):  # type: ignore
+    def _step(self, X, R, B, W, H_0, num_directions):  # type: ignore
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]
 
-        Y = numpy.empty([seq_length, self.num_directions, batch_size, hidden_size])
+        Y = numpy.empty([seq_length, num_directions, batch_size, hidden_size])
         h_list = []
 
         [w_z, w_r, w_h] = numpy.split(W, 3)
@@ -58,7 +58,7 @@ class CommonGRU(OpRun):
             H_t = H
 
         concatenated = numpy.concatenate(h_list)
-        if self.num_directions == 1:
+        if num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
         if self.layout == 0:  # type: ignore
@@ -70,9 +70,9 @@ class CommonGRU(OpRun):
         return Y, Y_h
 
     def _run(self, X, W, R, B=None, sequence_lens=None, initial_h=None):  # type: ignore
-        self.num_directions = W.shape[0]
+        num_directions = W.shape[0]
 
-        if self.num_directions == 1:
+        if num_directions == 1:
             R = numpy.squeeze(R, axis=0)
             W = numpy.squeeze(W, axis=0)
             if B is not None:
@@ -100,11 +100,11 @@ class CommonGRU(OpRun):
             H_0 = h_0
         else:
             raise NotImplementedError(
-                f"Unsupported value {self.num_directions} for num_directions and operator "
+                f"Unsupported value {num_directions} for num_directions and operator "
                 f"{self.__class__.__name__!r}."
             )
 
-        Y, Y_h = self._step(X, R, B, W, H_0)
+        Y, Y_h = self._step(X, R, B, W, H_0, num_directions=num_directions)
 
         return (Y,) if self.nb_outputs == 1 else (Y, Y_h)
 
