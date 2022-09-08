@@ -348,7 +348,10 @@ class Split(Base):
     @staticmethod
     def export_2d_uneven_split_opset18() -> None:
         node_input = np.array(
-            [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0], [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0]]
+            [
+                [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+                [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0],
+            ]
         ).astype(np.float32)
 
         node = onnx.helper.make_node(
