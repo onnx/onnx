@@ -405,13 +405,13 @@ class TestOnnxBackEnd(unittest.TestCase):
                     )
 
                 print("-----------")
-                for t in load_failed:
+                for t in sorted(load_failed, key=lambda m: m[0].name):
                     print("loading failed", _print(t[0], path))
-                for t in exec_failed:
+                for t in sorted(exec_failed, key=lambda m: m[0].name):
                     print("execution failed", _print(t[0], path))
-                for t in mismatch:
+                for t in sorted(mismatch, key=lambda m: m[0].name):
                     print("mismatch", _print(t[0], path))
-                for t in missed:
+                for t in sorted(missed, key=lambda m: m[0].name):
                     print("missed", _print(t[0], path))
 
                 if success > 30:
