@@ -47,9 +47,9 @@ from .op_depth_to_space import DepthToSpace
 from .op_dequantize_linear import DequantizeLinear
 from .op_det import Det
 from .op_dft import DFT
+from .op_div import Div
+from .op_dropout import Dropout, Dropout_7, Dropout_12
 
-# from .op_div import Div
-# from .op_dropout import Dropout, Dropout_7, Dropout_12
 # from .op_einsum import Einsum
 # from .op_elu import Elu
 # from .op_equal import Equal
