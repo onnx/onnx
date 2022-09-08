@@ -1839,7 +1839,25 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+          {
+            Lambd = Constant <value_float: float = @lambd>()
+            LambdCast = CastLike (Lambd, input)
+            Bias = Constant <value_float: float = @bias>()
+            BiasCast = CastLike (Bias, input)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, input)
+            NegLmbda = Neg (LambdCast)
+            InputLessThanNegLambda = Less (input, NegLmbda)
+            InputAddBias = Add (input, BiasCast)
+            InputSubBias = Sub (input, BiasCast)
+            LambdaLessThanInput = Less (LambdCast, input)
+            InputSubBiasOrZero = Where (LambdaLessThanInput, InputSubBias, ZeroCast)
+            output = Where(InputLessThanNegLambda, InputAddBias, InputSubBiasOrZero)
+		      }
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* Flatten_ver13_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -2529,8 +2547,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Output Y has same shape as X
           // Outputs Mean and InvStdDev have shape: [d[0], ..., d[axis-1], 1, ..., 1]
           FunctionBuilder builder(functionProto);
-          builder.AddOpset("", 16)
-              .Const("FloatEpsilon", ToTensor<float>(epsilon))
+          builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
               .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
               .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
               .Add("Rank = Size (XShape)") // rank of input tensor: scalar
