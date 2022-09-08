@@ -31,7 +31,7 @@ from urllib.request import urlretrieve
 import numpy as np  # type: ignore
 
 import onnx
-from onnx import ModelProto, NodeProto, TypeProto, helper, numpy_helper
+from onnx import ModelProto, NodeProto, TypeProto, numpy_helper
 from onnx.backend.base import Backend
 
 from ..case.test_case import TestCase
