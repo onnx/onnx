@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
+# pylint: disable=R0913,R0914,W0221
 
 import numpy  # type: ignore
 
@@ -99,9 +99,9 @@ class CommonGRU(OpRun):
             B = b
             H_0 = h_0
         else:
-            raise NotImplementedError(  # pragma: no cover
-                "Unsupported value %r for num_directions and operator %r."
-                % (self.num_directions, self.__class__.__name__)
+            raise NotImplementedError(
+                f"Unsupported value {self.num_directions} for num_directions and operator "
+                f"{self.__class__.__name__!r}."
             )
 
         Y, Y_h = self._step(X, R, B, W, H_0)
