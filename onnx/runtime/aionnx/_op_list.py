@@ -57,12 +57,13 @@ from .op_exp import Exp
 from .op_expand import Expand
 from .op_eyelike import EyeLike
 from .op_flatten import Flatten
+from .op_floor import Floor
 from .op_gather import Gather
 from .op_gather_elements import GatherElements
 from .op_gathernd import GatherND
-
-# from .op_gemm import Gemm
-# from .op_global_average_pool import GlobalAveragePool, GlobalMaxPool
+from .op_gemm import Gemm
+from .op_global_average_pool import GlobalAveragePool
+from .op_global_max_pool import GlobalMaxPool
 from .op_greater import Greater, GreaterOrEqual
 
 # from .op_grid_sample import GridSample
