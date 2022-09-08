@@ -464,7 +464,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_abs" in name, verbose=0
+            lambda name: "test_depthtospace_example" in name, verbose=0
         )
 
 

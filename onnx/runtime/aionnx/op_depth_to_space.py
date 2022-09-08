@@ -14,7 +14,7 @@ class DepthToSpace(OpRun):
         if len(data.shape) != 4:
             raise RuntimeError(f"Unexpected shape {data.shape!r}.")
         b, c, h, w = data.shape
-        if self.mode == b"DCR":  # type: ignore
+        if self.mode == "DCR":  # type: ignore
             tmpshape = (
                 b,
                 self.blocksize,  # type: ignore
