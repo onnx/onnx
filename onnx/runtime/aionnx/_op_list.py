@@ -67,10 +67,9 @@ from .op_global_max_pool import GlobalMaxPool
 from .op_greater import Greater, GreaterOrEqual
 
 # from .op_grid_sample import GridSample
-# from .op_gru import GRU
-# from .op_hardmax import Hardmax
-# from .op_hard_sigmoid import HardSigmoid
-# from .op_floor import Floor
+from .op_gru import GRU
+from .op_hard_sigmoid import HardSigmoid
+from .op_hardmax import Hardmax
 from .op_identity import Identity
 from .op_if import If
 
