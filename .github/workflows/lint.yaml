@@ -67,6 +67,9 @@ jobs:
           level: warning
           filter_mode: diff_context
           glob_pattern: "**/*.py"
+      - name: Install specified mypy version
+        run: |
+          python -m pip install -q -r requirements-dev.txt
       - name: mypy
         uses: tsuyoshicho/action-mypy@v3
         with:
