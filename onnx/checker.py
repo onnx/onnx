@@ -9,7 +9,7 @@ import functools
 import sys
 from typing import Any, Callable, Type, TypeVar, Union, cast
 
-from google.protobuf.message import Message
+from google.protobuf.message import Message  # type: ignore
 
 import onnx.defs
 import onnx.onnx_cpp2py_export.checker as C

@@ -16,7 +16,7 @@ from typing import (
     cast,
 )
 
-import google.protobuf.message
+import google.protobuf.message  # type: ignore
 import numpy as np  # type: ignore
 
 from onnx import (
