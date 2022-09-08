@@ -22,7 +22,8 @@ from onnx import (
 )
 from onnx.backend.test import __file__ as backend_folder
 from onnx.helper import __file__ as onnx_file
-from onnx.numpy_helper import to_array, to_list
+from onnx.mapping import OPTIONAL_ELEMENT_TYPE_TO_FIELD, TENSOR_TYPE_TO_NP_TYPE
+from onnx.numpy_helper import to_array, to_list, to_optional
 
 
 def assert_almost_equal_string(expected, value):
@@ -114,11 +115,27 @@ class OnnxBackendTest:
                 t = to_array(new_tensor)
             elif isinstance(new_tensor, OptionalProto):
                 try:
-                    t = to_array(new_tensor)
+                    t = to_optional(new_tensor)
+                except TypeError as e:
+                    if new_tensor.name == "seq_empty":
+                        t = None
+                    else:
+                        raise TypeError(
+                            f"Unable to convert {type(new_tensor)} into python.\n{str(new_tensor)}\n."
+                        ) from e
                 except ValueError as e:
-                    raise ValueError(
-                        f"Unable to convert type {type(new_tensor)} for {full!r} \n{str(new_tensor)}"
-                    ) from e
+                    elem_type = new_tensor.elem_type
+                    value_field = OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
+                    value = getattr(new_tensor, value_field)
+                    if isinstance(value, TensorProto):
+                        # something went wrong, one reason is the dimension do not fit raw_data
+                        el_type = value.data_type
+                        dtype = TENSOR_TYPE_TO_NP_TYPE[el_type]
+                        t = np.frombuffer(value.raw_data, dtype=dtype)
+                    else:
+                        raise ValueError(
+                            f"Unable to convert {type(new_tensor)} into python.\n{str(new_tensor)}\n."
+                        ) from e
             else:
                 raise RuntimeError(f"Unexpected type {type(new_tensor)} for {full!r}.")
             res.append(t)
@@ -427,35 +444,6 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_castlike_BFLOAT16_to_FLOAT_expanded",
             "test_castlike_BFLOAT16_to_FLOAT",
             "test_castlike_FLOAT_to_BFLOAT16",
-            "test_identity_opt",
-            "test_identity_sequence",
-            "test_if_opt",
-            "test_if_seq",
-            "test_loop13_seq",
-            "test_loop16_seq_none",
-            "test_optional_get_element",
-            "test_optional_get_element_sequence",
-            "test_optional_has_element",
-            "test_optional_has_element_empty",
-            "test_optional_has_element_optional_input",
-            "test_optional_has_element_empty_optional_input",
-            "test_optional_has_element_tensor_input",
-            "test_optional_get_element_optional_sequence",
-            "test_optional_get_element_optional_tensor",
-            "test_sequence_insert_at_back",
-            "test_sequence_insert_at_front",
-            "test_sequence_map_add_1_sequence_1_tensor",
-            "test_sequence_map_add_1_sequence_1_tensor_expanded",
-            "test_sequence_map_add_2_sequences",
-            "test_sequence_map_add_2_sequences_expanded",
-            "test_sequence_map_extract_shapes",
-            "test_sequence_map_extract_shapes_expanded",
-            "test_sequence_map_identity_1_sequence",
-            "test_sequence_map_identity_1_sequence_1_tensor",
-            "test_sequence_map_identity_1_sequence_1_tensor_expanded",
-            "test_sequence_map_identity_1_sequence_expanded",
-            "test_sequence_map_identity_2_sequences",
-            "test_sequence_map_identity_2_sequences_expanded",
         }
         self.common_test_enumerate_onnx_tests_run(
             valid=lambda name: name not in skip_test,
@@ -464,7 +452,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_depthtospace_example" in name, verbose=0
+            lambda name: "test_loop13_seq" in name, verbose=0
         )
 
 

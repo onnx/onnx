@@ -72,21 +72,18 @@ from .op_hard_sigmoid import HardSigmoid
 from .op_hardmax import Hardmax
 from .op_identity import Identity
 from .op_if import If
-
-# from .op_imputer import Imputer
-# from .op_inverse import Inverse
-# from .op_isinf import IsInf
-# from .op_isnan import IsNaN
-# from .op_layer_normalization import LayerNormalization
-# from .op_leaky_relu import LeakyRelu
-# from .op_less import Less, LessOrEqual
+from .op_isinf import IsInf
+from .op_isnan import IsNaN
+from .op_layer_normalization import LayerNormalization
+from .op_leaky_relu import LeakyRelu
+from .op_less import Less
+from .op_less_or_equal import LessOrEqual
 from .op_log import Log
-
-# from .op_log_softmax import LogSoftmax
-# from .op_loop import Loop
-# from .op_lp_normalization import LpNormalization
-# from .op_lrn import LRN
-# from .op_lstm import LSTM
+from .op_log_softmax import LogSoftmax
+from .op_loop import Loop
+from .op_lp_normalization import LpNormalization
+from .op_lrn import LRN
+from .op_lstm import LSTM
 from .op_matmul import MatMul
 
 # from .op_max import Max
@@ -154,7 +151,8 @@ from .op_sinh import Sinh
 # from .op_size import Size
 # from .op_slice import Slice, Slice_1, Slice_10
 # from .op_split import Split, Split_2, Split_11, Split_13
-# from .op_softmax import Softmax, SoftmaxGrad, SoftmaxGrad_13
+from .op_softmax import Softmax
+
 # from .op_softplus import Softplus
 # from .op_softsign import Softsign
 # from .op_solve import Solve
