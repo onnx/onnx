@@ -21,8 +21,8 @@ from contextlib import contextmanager
 from typing import Any, Callable, Dict, Generator, List, Optional, Set, cast
 
 try:
-    import google.protobuf.descriptor_pb2 as d_typed
-    from google.protobuf.compiler import plugin_pb2 as plugin
+    import google.protobuf.descriptor_pb2 as d_typed  # type: ignore
+    from google.protobuf.compiler import plugin_pb2 as plugin  # type: ignore
 except ImportError as e:
     sys.stderr.write(f"Failed to generate mypy stubs: {e}\n")
     sys.exit(0)

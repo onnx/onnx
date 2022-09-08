@@ -119,7 +119,7 @@ def main():
         print(
             f"In all {len(model_list)} models, {len(failed_models)} models failed, {len(skip_models)} models were skipped"
         )
-        for model, error in failed_messages:
+        for model, error in failed_messages:  # type: ignore
             print(f"{model} failed because: {error}")
         sys.exit(1)
 

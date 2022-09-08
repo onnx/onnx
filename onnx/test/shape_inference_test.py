@@ -100,7 +100,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         inferred_model = self._inferred(graph, **kwargs)
         inferred_vis = list(inferred_model.graph.value_info)
         vis = list(sorted(vis, key=lambda x: x.name))
-        inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))
+        inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))  # type: ignore
         assert len(vis) == len(inferred_vis)
         for i in range(len(vis)):
             self._compare_value_infos(vis[i].type, inferred_vis[i].type)
