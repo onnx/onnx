@@ -32,8 +32,8 @@ from .op_cast_like import CastLike
 from .op_ceil import Ceil
 from .op_celu import Celu
 from .op_clip import Clip, Clip_6, Clip_11
+from .op_compress import Compress
 
-# from .op_compress import Compress
 # from .op_concat import Concat
 # from .op_concat_from_sequence import ConcatFromSequence
 # from .op_conv import Conv
