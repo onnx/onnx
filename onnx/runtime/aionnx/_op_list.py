@@ -49,11 +49,10 @@ from .op_det import Det
 from .op_dft import DFT
 from .op_div import Div
 from .op_dropout import Dropout, Dropout_7, Dropout_12
-
-# from .op_einsum import Einsum
-# from .op_elu import Elu
-# from .op_equal import Equal
-# from .op_erf import Erf
+from .op_einsum import Einsum
+from .op_elu import Elu
+from .op_equal import Equal
+from .op_erf import Erf
 from .op_exp import Exp
 
 # from .op_expand import Expand, Expand_13
