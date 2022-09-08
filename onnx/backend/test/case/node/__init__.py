@@ -306,8 +306,10 @@ def expect(
         kwargs["producer_name"] = "backend-test"
 
         # replace opset versions with what are specified in function proto
-        for opset_import in func_opset_import:
-            if "opset_imports" in kwargs:
+        if "opset_imports" not in kwargs:
+            kwargs["opset_imports"] = func_opset_import
+        else:
+            for opset_import in func_opset_import:
                 matches = [
                     opset
                     for opset in kwargs["opset_imports"]
@@ -317,8 +319,6 @@ def expect(
                     matches[0].version = opset_import.version
                 else:
                     kwargs["opset_imports"].append(opset_import)
-            else:
-                kwargs["opset_imports"] = [opset_import]
 
         model = _make_test_model_gen_version(graph, **kwargs)
         _NodeTestCases.append(
