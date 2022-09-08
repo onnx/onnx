@@ -43,8 +43,8 @@ from .op_constant import Constant, Constant_9, Constant_11, Constant_12
 # from .op_constant_of_shape import ConstantOfShape
 from .op_cos import Cos
 from .op_cosh import Cosh
+from .op_cum_sum import CumSum
 
-# from .op_cum_sum import CumSum
 # from .op_det import Det
 # from .op_depth_to_space import DepthToSpace, SpaceToDepth
 # from .op_dequantize_linear import DequantizeLinear
