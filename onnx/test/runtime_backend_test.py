@@ -474,7 +474,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_quantizelinear" in name, verbose=0
+            lambda name: "test_dynamicquantizelinear_max_adjusted" in name, verbose=0
         )
 
 

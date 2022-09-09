@@ -49,6 +49,7 @@ from .op_det import Det
 from .op_dft import DFT
 from .op_div import Div
 from .op_dropout import Dropout, Dropout_7, Dropout_12
+from .op_dynamic_quantize_linear import DynamicQuantizeLinear
 from .op_einsum import Einsum
 from .op_elu import Elu
 from .op_equal import Equal
@@ -108,7 +109,6 @@ from .op_pow import Pow
 from .op_prelu import PRelu
 from .op_quantize_linear import QuantizeLinear
 
-# from .op_quantize_linear import QuantizeLinear, DynamicQuantizeLinear
 # from .op_qlinear_conv import QLinearConv
 # from .op_random import (
 #     Bernoulli, RandomNormal, RandomUniform,
