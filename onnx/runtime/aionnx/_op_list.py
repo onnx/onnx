@@ -128,8 +128,8 @@ from .op_reduce_prod import ReduceProd
 from .op_reduce_sum import ReduceSum, ReduceSum_1, ReduceSum_11, ReduceSum_13
 from .op_reduce_sum_square import ReduceSumSquare
 from .op_relu import Relu
+from .op_reshape import Reshape, Reshape_5, Reshape_14
 
-# from .op_reshape import Reshape, Reshape_5, Reshape_13, Reshape_14
 # from .op_resize import Resize
 # from .op_roi_align import RoiAlign
 from .op_round import Round
@@ -138,7 +138,6 @@ from .op_round import Round
 # from .op_scan import Scan
 # from .op_scatter_elements import ScatterElements
 # from .op_scatternd import ScatterND
-# from .op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss
 from .op_selu import Selu
 from .op_sequence_at import SequenceAt
 from .op_sequence_construct import SequenceConstruct
@@ -156,26 +155,26 @@ from .op_slice import Slice, Slice_1, Slice_10
 
 # from .op_split import Split, Split_2, Split_11, Split_13
 from .op_softmax import Softmax
+from .op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss
 from .op_softplus import Softplus
 from .op_softsign import Softsign
 from .op_space_to_depth import SpaceToDepth
 from .op_sqrt import Sqrt
+from .op_squeeze import Squeeze, Squeeze_1, Squeeze_11, Squeeze_13
 
-# from .op_squeeze import Squeeze, Squeeze_1, Squeeze_11, Squeeze_13
 # from .op_stft import STFT
 # from .op_string_normalizer import StringNormalizer
 from .op_sub import Sub
 
-# from .op_sum import Sum
+from .op_sum import Sum
 from .op_tan import Tan
 from .op_tanh import Tanh
 from .op_thresholded_relu import ThresholdedRelu
 
 # from .op_topk import TopK_10, TopK_11, TopK_1, TopK
-# from .op_transpose import Transpose
+from .op_transpose import Transpose
 from .op_trilu import Trilu
-
-# from .op_unique import Unique
+from .op_unique import Unique
 from .op_unsqueeze import Unsqueeze, Unsqueeze_1, Unsqueeze_11, Unsqueeze_13
 from .op_where import Where
 
