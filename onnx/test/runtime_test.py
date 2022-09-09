@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C3001,R0914,W0221
+# pylint: disable=C3001,R0904,R0914,W0221
 
 import unittest
 from contextlib import redirect_stdout
