@@ -6,9 +6,7 @@ import numpy  # type: ignore
 from ..op_run import OpRun
 
 
-def gather_numpy_2(
-    self: numpy.ndarray, index: numpy.ndarray
-) -> numpy.ndarray:
+def gather_numpy_2(self: numpy.ndarray, index: numpy.ndarray) -> numpy.ndarray:
     res = []
     for a, b in zip(self, index):
         res.append(a[b[0]])

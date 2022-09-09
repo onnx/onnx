@@ -35,7 +35,7 @@ def _cfft(
     normalize: bool = False,
 ) -> numpy.ndarray:
     if normalize:
-        raise RuntimeError(f"DFT is not implemented when normalize is True.")
+        raise RuntimeError("DFT is not implemented when normalize is True.")
     if x.shape[-1] == 1:
         tmp = x
     else:

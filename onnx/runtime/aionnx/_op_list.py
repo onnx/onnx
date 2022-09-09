@@ -114,17 +114,17 @@ from .op_prelu import PRelu
 #     RandomUniformLike, RandomNormalLike)
 # from .op_range import Range
 # from .op_reciprocal import Reciprocal
-# from .op_reduce_log_sum import ReduceLogSum
-# from .op_reduce_log_sum_exp import ReduceLogSumExp
-# from .op_reduce_l1 import ReduceL1
-# from .op_reduce_l2 import ReduceL2
-# from .op_reduce_min import ReduceMin
-# from .op_reduce_max import ReduceMax
-# from .op_reduce_mean import ReduceMean
-# from .op_reduce_prod import ReduceProd
+from .op_reduce_l1 import ReduceL1
+from .op_reduce_l2 import ReduceL2
+from .op_reduce_log_sum import ReduceLogSum
+from .op_reduce_log_sum_exp import ReduceLogSumExp
+from .op_reduce_max import ReduceMax
+from .op_reduce_mean import ReduceMean
+from .op_reduce_min import ReduceMin
+from .op_reduce_prod import ReduceProd
 from .op_reduce_sum import ReduceSum, ReduceSum_1, ReduceSum_11, ReduceSum_13
+from .op_reduce_sum_square import ReduceSumSquare
 
-# from .op_reduce_sum_square import ReduceSumSquare
 # from .op_relu import Relu, ThresholdedRelu
 # from .op_reshape import Reshape, Reshape_5, Reshape_13, Reshape_14
 # from .op_resize import Resize

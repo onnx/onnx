@@ -120,12 +120,11 @@ class OpRun(ABC):
                 f"from node type {self.onnx_node.op_type!r}, "
                 f"domain {self.onnx_node.domain!r}\n{att}."
             )
-        else:
-            raise AttributeError(
-                f"Unable to convert default value for {ref_att.name!r} type {att.type!r} "
-                f"from node type {self.onnx_node.op_type!r}, "
-                f"domain {self.onnx_node.domain!r}\n{att}\n{ref_att}."
-            )
+        raise AttributeError(
+            f"Unable to convert default value for {ref_att.name!r} type {att.type!r} "
+            f"from node type {self.onnx_node.op_type!r}, "
+            f"domain {self.onnx_node.domain!r}\n{att}\n{ref_att}."
+        )
 
     def _load_attributes(self) -> None:
         "Checks and loads attributes."
