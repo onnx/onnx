@@ -435,7 +435,9 @@ class TestOnnxBackEnd(unittest.TestCase):
 
         if len(mismatch) > 0:
             te, e = mismatch[0]
-            raise AssertionError(f"Mismatch in test {te.name!r}.") from e
+            raise AssertionError(
+                f"Mismatch in test {te.name!r}\n{te.onnx_model}."
+            ) from e
         if success > 30 and coverage < 0.179:
             raise AssertionError(
                 f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
@@ -452,6 +454,7 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_castlike_BFLOAT16_to_FLOAT_expanded",
             "test_castlike_BFLOAT16_to_FLOAT",
             "test_castlike_FLOAT_to_BFLOAT16",
+            "test_center_crop_pad_crop_axes_hwc_expanded",
             "test_gru_batchwise",
         }
         self.common_test_enumerate_onnx_tests_run(
