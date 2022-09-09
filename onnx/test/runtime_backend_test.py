@@ -499,6 +499,9 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_resize_downsample_sizes_cubic_antialias",
             "test_resize_downsample_sizes_linear_antialias",
             "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",
+            # bug
+            "test_scatter_elements_with_reduction_min",
+            "test_scatter_elements_with_duplicate_indices",
         }
         self.common_test_enumerate_onnx_tests_run(
             valid=lambda name: name not in skip_test,

@@ -139,8 +139,8 @@ from .op_round import Round
 
 # from .op_rnn import RNN
 # from .op_scan import Scan
-# from .op_scatter_elements import ScatterElements
-# from .op_scatternd import ScatterND
+from .op_scatter_elements import ScatterElements
+from .op_scatternd import ScatterND
 from .op_selu import Selu
 from .op_sequence_at import SequenceAt
 from .op_sequence_construct import SequenceConstruct
