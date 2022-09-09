@@ -1,6 +1,9 @@
 import os
 import sys
 import warnings
+import skl2onnx
+import onnx
+import sphinx_bootstrap_theme
 
 sys.path.append(os.path.abspath('exts'))
 # from github_link import make_linkcode_resolve  # noqa
@@ -46,11 +49,15 @@ coverage_show_missing_items = True
 
 html_theme = "bootstrap"
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-html_logo = "../../images/ONNX_ICON.png"
+html_logo = "_static/onnx_logo.png"
 
 # Navbar
 html_theme_options = {
     'navbar_title': "ONNX Docs",
+    'navbar_links': [
+        ("API Overview", "onnx-api/index"),
+        ("Op Schemas", "operators/index"),
+    ],
 }
 html_static_path = ["_static"]
 
@@ -105,14 +112,6 @@ language = "en"
 mathdef_link_only = True
 
 # \\usepackage{eepic}
-
-#Code to generate include.rst
-files = os.listdir('../onnx_doc_folder')
-
-with open('include.rst', 'w') as file:
-    for f in files:
-        if (f != 'index.rst'):
-            file.write('.. include:: ../onnx_doc_folder/' + f + '\n')
 
 
 
