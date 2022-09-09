@@ -130,7 +130,8 @@ from .op_reduce_sum_square import ReduceSumSquare
 from .op_relu import Relu
 from .op_reshape import Reshape, Reshape_5, Reshape_14
 
-# from .op_resize import Resize
+from .op_resize import Resize
+
 # from .op_roi_align import RoiAlign
 from .op_round import Round
 
