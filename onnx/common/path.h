@@ -10,65 +10,41 @@
 #include <string>
 #ifdef _WIN32
 #include <windows.h>
+#include <filesystem>
+#include "onnx/checker.h"
 #endif
 
 namespace ONNX_NAMESPACE {
 
 #ifdef _WIN32
-const std::string k_preferred_path_separator = "\\";
-const std::wstring w_k_preferred_path_separator = L"\\";
+constexpr char* k_preferred_path_separator = "\\";
 #else // POSIX
-const std::string k_preferred_path_separator = "/";
+constexpr const char* k_preferred_path_separator = "/";
 #endif
 
-template <typename STRING>
-STRING path_join(const STRING& origin, const STRING& append);
-
-template <typename CHAR>
-bool is_path_separator(CHAR c) {
-  // Windows accept / as path separator.
-  if (k_preferred_path_separator == "\\") {
-    return c == '\\' || c == '/';
-  }
-
-  return c == k_preferred_path_separator[0];
-}
-
-// To always use backward slash as path separator on Windows
-template <typename STRING>
-void normalize_separator(STRING& path) {
-  char preferred_sep = k_preferred_path_separator[0];
-  if (preferred_sep == '/') {
-    // Do nothing on linux.
-    return;
-  }
-
-  for (size_t i = 0; i < path.size(); i++) {
-    if (is_path_separator(path[i]) && path[i] != preferred_sep) {
-      path[i] = preferred_sep;
-    }
-  }
-}
-
-// Clean up relative path when there is ".." in the path, e.g.: a/b/../c -> a/c
-// std::string or std::wstring
-template <typename STRING>
-STRING clean_relative_path(const STRING& path);
-
-// std::string in template cannot be recognized as char[]
-// Therefore explicitly define char[] to handle char[] input
-template <typename CHAR, typename std::size_t N>
-std::basic_string<CHAR> clean_relative_path(const CHAR (&path)[N]) {
-  return clean_relative_path(std::basic_string<CHAR>(path));
-}
-
 #ifdef _WIN32
+inline std::wstring path_join(const std::wstring& origin, const std::wstring& append) {
+  return (std::filesystem::path(origin) / std::filesystem::path(append)).wstring();
+}
+inline std::wstring clean_relative_path(const std::wstring& path) {
+  return std::filesystem::path(path).lexically_normal().make_preferred().wstring();
+}
 inline std::wstring utf8str_to_wstring(const std::string& utf8str) {
+  if (utf8str.size() > INT_MAX) {
+    fail_check("utf8str_to_wstring: string is too long for converting to wstring.");
+  }
   int size_required = MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), (int)utf8str.size(), NULL, 0);
   std::wstring ws_str(size_required, 0);
   MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), (int)utf8str.size(), &ws_str[0], size_required);
   return ws_str;
 }
+
+#else
+std::string path_join(const std::string& origin, const std::string& append);
+// TODO: also use std::filesystem::path for clean_relative_path after ONNX has supported C++17 for POSIX
+// Clean up relative path when there is ".." in the path, e.g.: a/b/../c -> a/c
+// std::string or std::wstring
+std::string clean_relative_path(const std::string& path);
 #endif
 
 } // namespace ONNX_NAMESPACE

@@ -17,18 +17,7 @@
 
 #ifdef _WIN32
 #include <direct.h>
-#ifdef __cpp_lib_filesystem
-// TODO use filesystem on all platforms after ONNX globally supports C++17
 #include <filesystem>
-namespace fs = std::filesystem;
-#elif __cpp_lib_experimental_filesystem
-// C++14
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING // required by VS 2019
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#else
-#error "No filesystem support available for compiler versions < c++14"
-#endif
 
 #else // POSIX
 #include <sys/stat.h>
@@ -141,11 +130,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
 #ifdef _WIN32
-        std::wstring w_path = utf8str_to_wstring(entry.value());
-        const fs::path windows_path(w_path);
-        std::wstring relative_path = clean_relative_path(windows_path.wstring());
-        // Check that normalized relative path starts with "../" or "..\" on Windows.
-        if (relative_path.find(L".." + w_k_preferred_path_separator, 0) != std::string::npos) {
+        std::wstring relative_path = clean_relative_path(utf8str_to_wstring(entry.value()));
+        // Check that normalized relative path starts with ".." on Windows.
+        if (relative_path.find(L"..", 0) != std::string::npos) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -162,13 +149,13 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
               ") should be stored in ",
-              path_join(ctx.get_model_dir(), entry.value()),
+              entry.value(),
               ", but it doesn't exist or is not accessible.");
         }
 #else // POSIX
         std::string relative_path = clean_relative_path(entry.value());
         // Check that normalized relative path starts with "../" or "..\" on windows.
-        if (relative_path.find(".." + k_preferred_path_separator, 0) != std::string::npos) {
+        if (relative_path.find(".." + std::string(k_preferred_path_separator), 0) != std::string::npos) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
