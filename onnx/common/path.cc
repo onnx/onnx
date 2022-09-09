@@ -13,7 +13,7 @@ namespace ONNX_NAMESPACE {
 
 std::string path_join(const std::string& origin, const std::string& append) {
   if (origin.find_last_of(k_preferred_path_separator) != origin.length() - 1) {
-    return origin + std::string(k_preferred_path_separator) + append;
+    return origin + k_preferred_path_separator + append;
   }
   return origin + append;
 }
@@ -25,35 +25,34 @@ std::string clean_relative_path(const std::string& path) {
 
   std::string out;
 
-  char sep = k_preferred_path_separator[0];
   size_t n = path.size();
 
   size_t r = 0;
   size_t dotdot = 0;
 
   while (r < n) {
-    if (path[r] == sep) {
+    if (path[r] == k_preferred_path_separator) {
       r++;
       continue;
     }
 
-    if (path[r] == '.' && (r + 1 == n || path[r + 1] == sep)) {
+    if (path[r] == '.' && (r + 1 == n || path[r + 1] == k_preferred_path_separator)) {
       r++;
       continue;
     }
 
-    if (path[r] == '.' && path[r + 1] == '.' && (r + 2 == n || path[r + 2] == sep)) {
+    if (path[r] == '.' && path[r + 1] == '.' && (r + 2 == n || path[r + 2] == k_preferred_path_separator)) {
       r += 2;
 
       if (out.size() > dotdot) {
-        while (out.size() > dotdot && out.back() != sep) {
+        while (out.size() > dotdot && out.back() != k_preferred_path_separator) {
           out.pop_back();
         }
         if (!out.empty())
           out.pop_back();
       } else {
         if (!out.empty()) {
-          out.push_back(sep);
+          out.push_back(k_preferred_path_separator);
         }
 
         out.push_back('.');
@@ -64,11 +63,11 @@ std::string clean_relative_path(const std::string& path) {
       continue;
     }
 
-    if (!out.empty() && out.back() != sep) {
-      out.push_back(sep);
+    if (!out.empty() && out.back() != k_preferred_path_separator) {
+      out.push_back(k_preferred_path_separator);
     }
 
-    for (; r < n && path[r] != sep; r++) {
+    for (; r < n && path[r] != k_preferred_path_separator; r++) {
       out.push_back(path[r]);
     }
   }

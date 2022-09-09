@@ -17,9 +17,9 @@
 namespace ONNX_NAMESPACE {
 
 #ifdef _WIN32
-constexpr char* k_preferred_path_separator = "\\";
+constexpr const char k_preferred_path_separator = '\\';
 #else // POSIX
-constexpr const char* k_preferred_path_separator = "/";
+constexpr const char k_preferred_path_separator = '/';
 #endif
 
 #ifdef _WIN32

@@ -10,7 +10,7 @@
 
 #ifdef _WIN32
 // Only test clean_relative_path and normalize_separator on non-Windows
-// because Windows has its own implementation of for them from std::filesystem::path.
+// because Windows has its own implementation for them from std::filesystem::path.
 #else
 using namespace ONNX_NAMESPACE;
 namespace ONNX_NAMESPACE {
