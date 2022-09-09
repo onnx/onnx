@@ -101,7 +101,7 @@ def _get_neighbor(x, n, data):  # type: ignore
     return idxes - pad_width, ret
 
 
-def _interpolate_1d_with_x(
+def _interpolate_1d_with_x(  # type: ignore
     data,
     scale_factor,
     x,
@@ -163,7 +163,7 @@ def _interpolate_1d_with_x(
     return numpy.dot(coeffs, points).item()
 
 
-def _interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, roi=None, **kwargs):
+def _interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, roi=None, **kwargs):  # type: ignore
     if n == 1:
         return _interpolate_1d_with_x(
             data, scale_factors[0], x[0], get_coeffs, roi=roi, **kwargs
@@ -191,11 +191,11 @@ def _interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, roi=None, **kw
     )
 
 
-def _get_all_coords(data):
+def _get_all_coords(data):  # type: ignore
     return _cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
 
 
-def _interpolate_nd(
+def _interpolate_nd(  # type: ignore
     data, get_coeffs, output_size=None, scale_factors=None, roi=None, **kwargs
 ):
 
@@ -217,17 +217,17 @@ def _interpolate_nd(
 class Resize(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
-        if self.mode == "nearest":
-            if self.nearest_mode is not None:
-                self.fct = lambda x: _nearest_coeffs(x, mode=self.nearest_mode)
+        if self.mode == "nearest":  # type: ignore
+            if self.nearest_mode is not None:  # type: ignore
+                self.fct = lambda x: _nearest_coeffs(x, mode=self.nearest_mode)  # type: ignore
             else:
                 self.fct = _nearest_coeffs
-        elif self.mode == "cubic":
+        elif self.mode == "cubic":  # type: ignore
             self.fct = _cubic_coeffs
-        elif self.mode == "linear":
+        elif self.mode == "linear":  # type: ignore
             self.fct = _linear_coeffs
         else:
-            raise ValueError(f"Unexpected value {self.mode!r} for mode.")
+            raise ValueError(f"Unexpected value {self.mode!r} for mode.")  # type: ignore
 
     def _run(self, X, roi, scales=None, sizes=None):  # type: ignore
         output = _interpolate_nd(
@@ -236,7 +236,7 @@ class Resize(OpRun):
             scale_factors=scales,
             output_size=sizes,
             roi=roi,
-            coordinate_transformation_mode=self.coordinate_transformation_mode,
-            extrapolation_value=self.extrapolation_value,
+            coordinate_transformation_mode=self.coordinate_transformation_mode,  # type: ignore
+            extrapolation_value=self.extrapolation_value,  # type: ignore
         ).astype(X.dtype)
         return (output,)

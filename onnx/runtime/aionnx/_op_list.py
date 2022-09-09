@@ -28,6 +28,7 @@ from .op_average_pool import AveragePool
 from .op_batch_normalization import BatchNormalization, BatchNormalization_14
 from .op_bernoulli import Bernoulli
 from .op_bitshift import BitShift
+from .op_blackman_window import BlackmanWindow
 from .op_cast import Cast
 from .op_cast_like import CastLike
 from .op_ceil import Ceil
@@ -71,6 +72,8 @@ from .op_greater_or_equal import GreaterOrEqual
 
 # from .op_grid_sample import GridSample
 from .op_gru import GRU
+from .op_hamming_window import HammingWindow
+from .op_hann_window import HannWindow
 from .op_hard_sigmoid import HardSigmoid
 from .op_hardmax import Hardmax
 from .op_identity import Identity
@@ -129,7 +132,6 @@ from .op_reduce_sum import ReduceSum, ReduceSum_1, ReduceSum_11, ReduceSum_13
 from .op_reduce_sum_square import ReduceSumSquare
 from .op_relu import Relu
 from .op_reshape import Reshape, Reshape_5, Reshape_14
-
 from .op_resize import Resize
 
 # from .op_roi_align import RoiAlign
@@ -166,7 +168,6 @@ from .op_squeeze import Squeeze, Squeeze_1, Squeeze_11, Squeeze_13
 # from .op_stft import STFT
 # from .op_string_normalizer import StringNormalizer
 from .op_sub import Sub
-
 from .op_sum import Sum
 from .op_tan import Tan
 from .op_tanh import Tanh
@@ -178,8 +179,6 @@ from .op_trilu import Trilu
 from .op_unique import Unique
 from .op_unsqueeze import Unsqueeze, Unsqueeze_1, Unsqueeze_11, Unsqueeze_13
 from .op_where import Where
-
-# from .op_window import BlackmanWindow, HannWindow, HammingWindow
 from .op_xor import Xor
 
 # from .op_zipmap import ZipMap
