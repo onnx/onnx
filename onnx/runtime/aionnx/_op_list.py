@@ -135,9 +135,9 @@ from .op_reshape import Reshape, Reshape_5, Reshape_14
 from .op_resize import Resize
 
 # from .op_roi_align import RoiAlign
+from .op_rnn import RNN
 from .op_round import Round
 
-# from .op_rnn import RNN
 # from .op_scan import Scan
 from .op_scatter_elements import ScatterElements
 from .op_scatternd import ScatterND
@@ -147,8 +147,7 @@ from .op_sequence_construct import SequenceConstruct
 from .op_sequence_empty import SequenceEmpty
 from .op_sequence_insert import SequenceInsert
 from .op_shape import Shape
-
-# from .op_shrink import Shrink
+from .op_shrink import Shrink
 from .op_sigmoid import Sigmoid
 from .op_sign import Sign
 from .op_sin import Sin

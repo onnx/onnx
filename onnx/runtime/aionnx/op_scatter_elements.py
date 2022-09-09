@@ -6,7 +6,7 @@ import numpy  # type: ignore
 from ..op_run import OpRun
 
 
-def scatter_elements(data, indices, updates, axis=0, reduction=None):
+def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: ignore
     """
     ::
         // for 3-dim and axis=0
@@ -26,12 +26,12 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):
 
     idx_xsection_shape = indices.shape[:axis] + indices.shape[axis + 1 :]
 
-    def make_slice(arr, axis, i):
+    def make_slice(arr, axis, i):  # type: ignore
         slc = [slice(None)] * arr.ndim
         slc[axis] = i
         return slc
 
-    def unpack(packed):
+    def unpack(packed):  # type: ignore
         unpacked = packed[0]
         for i in range(1, len(packed)):
             unpacked = unpacked, packed[i]
@@ -78,6 +78,6 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):
 class ScatterElements(OpRun):
     def _run(self, data, indices, updates):  # type: ignore
         res = scatter_elements(
-            data, indices, updates, axis=self.axis, reduction=self.reduction
+            data, indices, updates, axis=self.axis, reduction=self.reduction  # type: ignore
         )
         return (res,)

@@ -6,7 +6,7 @@ import numpy  # type: ignore
 from ..op_run import OpRun
 
 
-def _scatter_nd_impl(data, indices, updates, reduction=None):
+def _scatter_nd_impl(data, indices, updates, reduction=None):  # type: ignore
     output = numpy.copy(data)
     for i in numpy.ndindex(indices.shape[:-1]):
         if reduction == "add":
@@ -24,5 +24,5 @@ def _scatter_nd_impl(data, indices, updates, reduction=None):
 
 class ScatterND(OpRun):
     def _run(self, data, indices, updates):  # type: ignore
-        y = _scatter_nd_impl(data, indices, updates, reduction=self.reduction)
+        y = _scatter_nd_impl(data, indices, updates, reduction=self.reduction)  # type: ignore
         return (y,)

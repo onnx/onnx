@@ -347,7 +347,9 @@ class TestOnnxBackEnd(unittest.TestCase):
             done += 1
         self.assertEqual(done, 1)
 
-    def common_test_enumerate_onnx_tests_run(self, valid, verbose=0):
+    def common_test_enumerate_onnx_tests_run(self, valid, verbose=0, decimal=None):
+        if decimal is None:
+            decimal = {}
         with self.assertRaises(FileNotFoundError):
             list(enumerate_onnx_tests("NNN"))
         missed = []
@@ -356,9 +358,6 @@ class TestOnnxBackEnd(unittest.TestCase):
         mismatch = []
         success = 0
         for te in enumerate_onnx_tests("node", valid):
-            if "_scan_" in te.name or "test_scan" in te.name:
-                # Operator Scan is not supported by onnx-script.
-                continue
             if verbose > 6:
                 print("TEST:", te.name)
             with self.subTest(name=te.name):
@@ -371,7 +370,11 @@ class TestOnnxBackEnd(unittest.TestCase):
                 try:
                     if verbose > 7:
                         print("  run")
-                    te.run(TestOnnxBackEnd.load_fct, TestOnnxBackEnd.run_fct)
+                    te.run(
+                        TestOnnxBackEnd.load_fct,
+                        TestOnnxBackEnd.run_fct,
+                        decimal=decimal.get(te.name, None),
+                    )
                     if verbose > 7:
                         print("  end run")
                 except NotImplementedError as e:
@@ -502,10 +505,16 @@ class TestOnnxBackEnd(unittest.TestCase):
             # bug
             "test_scatter_elements_with_reduction_min",
             "test_scatter_elements_with_duplicate_indices",
+            # bug
+            "test_simple_rnn_batchwise",
+        }
+        decimal = {
+            "test_simple_rnn_batchwise": 2,
         }
         self.common_test_enumerate_onnx_tests_run(
             valid=lambda name: name not in skip_test,
             verbose=4 if __name__ == "__main__" else 0,
+            decimal=decimal,
         )
 
     def test_enumerate_onnx_tests_run_one_case(self):
