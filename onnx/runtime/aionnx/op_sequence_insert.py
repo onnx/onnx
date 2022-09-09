@@ -20,7 +20,9 @@ def sequence_insert_reference_implementation(
         try:
             seq = list(sequence)
         except TypeError as e:
-            raise TypeError(f"Unable to iterate on type {type(sequence)}: {sequence}.") from e
+            raise TypeError(
+                f"Unable to iterate on type {type(sequence)}: {sequence}."
+            ) from e
     if position is not None:
         # In these cases, insert_position will be between [-len(sequence), len(sequence)]
         # The position argument will be in the format np.array([pos_index])

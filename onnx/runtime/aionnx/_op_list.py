@@ -147,7 +147,7 @@ from .op_sequence_insert import SequenceInsert
 from .op_shape import Shape
 
 # from .op_shrink import Shrink
-# from .op_sigmoid import Sigmoid
+from .op_sigmoid import Sigmoid
 from .op_sign import Sign
 from .op_sin import Sin
 from .op_sinh import Sinh
@@ -156,9 +156,8 @@ from .op_slice import Slice, Slice_1, Slice_10
 
 # from .op_split import Split, Split_2, Split_11, Split_13
 from .op_softmax import Softmax
-
-# from .op_softplus import Softplus
-# from .op_softsign import Softsign
+from .op_softplus import Softplus
+from .op_softsign import Softsign
 from .op_space_to_depth import SpaceToDepth
 from .op_sqrt import Sqrt
 
