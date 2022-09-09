@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np  # type: ignore
+from bfloat16 import bfloat16
 
 from onnx import OptionalProto, SequenceProto, TensorProto
 
@@ -15,9 +16,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.INT64): np.dtype("int64"),
     int(TensorProto.BOOL): np.dtype("bool"),
     int(TensorProto.FLOAT16): np.dtype("float16"),
-    int(TensorProto.BFLOAT16): np.dtype(
-        "float32"
-    ),  # Native numpy does not support bfloat16 so now use float32 for bf16 values
+    int(TensorProto.BFLOAT16): np.dtype(bfloat16),
     int(TensorProto.DOUBLE): np.dtype("float64"),
     int(TensorProto.COMPLEX64): np.dtype("complex64"),
     int(TensorProto.COMPLEX128): np.dtype("complex128"),
@@ -29,7 +28,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
 # Numpy float32 array is only reversed to TensorProto.FLOAT
 NP_TYPE_TO_TENSOR_TYPE = {
-    v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16
+    v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items()
 }
 
 # This is only used to get keys into STORAGE_TENSOR_TYPE_TO_FIELD.

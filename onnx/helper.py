@@ -387,17 +387,6 @@ def make_tensor(
     else:
         if data_type == TensorProto.COMPLEX64 or data_type == TensorProto.COMPLEX128:
             vals = split_complex_to_pairs(vals)
-        elif data_type == TensorProto.FLOAT16:
-            vals = (
-                np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
-            )
-        elif data_type == TensorProto.BFLOAT16:
-            vals = list(
-                map(
-                    float32_to_bfloat16,
-                    np.array(vals).astype(np_dtype).flatten().tolist(),
-                )
-            )
         field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
             mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]
         ]

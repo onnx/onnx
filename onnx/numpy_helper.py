@@ -13,7 +13,7 @@ def combine_pairs_to_complex(fa: Sequence[int]) -> List[complex]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def bfloat16_to_float32(
+def bfloat16uint32_to_float32(
     data: np.ndarray, dims: Union[int, Sequence[int]]
 ) -> np.ndarray:
     """Converts ndarray of bf16 (as uint32) to f32 (as uint32)."""
@@ -57,11 +57,6 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
             # Convert endian from little to big
             convert_endian(tensor)
 
-        # manually convert bf16 since there's no numpy support
-        if tensor_dtype == TensorProto.BFLOAT16:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int16)
-            return bfloat16_to_float32(data, dims)
-
         return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)
     else:
         # float16 is stored as int32 (uint16 type); Need view to get the original value
@@ -71,11 +66,6 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
                 .reshape(dims)
                 .view(np.float16)
             )
-
-        # bfloat16 is stored as int32 (uint16 type); no numpy support for bf16
-        if tensor_dtype == TensorProto.BFLOAT16:
-            data = np.asarray(tensor.int32_data, dtype=np.int32)
-            return bfloat16_to_float32(data, dims)
 
         data = getattr(tensor, storage_field)
         if (
