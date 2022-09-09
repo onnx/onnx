@@ -154,8 +154,7 @@ from .op_sin import Sin
 from .op_sinh import Sinh
 from .op_size import Size
 from .op_slice import Slice, Slice_1, Slice_10
-
-# from .op_split import Split, Split_2, Split_11, Split_13
+from .op_split import Split, Split_2, Split_11, Split_13
 from .op_softmax import Softmax
 from .op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss
 from .op_softplus import Softplus
@@ -163,24 +162,20 @@ from .op_softsign import Softsign
 from .op_space_to_depth import SpaceToDepth
 from .op_sqrt import Sqrt
 from .op_squeeze import Squeeze, Squeeze_1, Squeeze_11, Squeeze_13
-
-# from .op_stft import STFT
-# from .op_string_normalizer import StringNormalizer
+from .op_stft import STFT
+from .op_string_normalizer import StringNormalizer
 from .op_sub import Sub
 from .op_sum import Sum
 from .op_tan import Tan
 from .op_tanh import Tanh
 from .op_thresholded_relu import ThresholdedRelu
-
-# from .op_topk import TopK_10, TopK_11, TopK_1, TopK
+from .op_topk import TopK, TopK_1, TopK_10, TopK_11
 from .op_transpose import Transpose
 from .op_trilu import Trilu
 from .op_unique import Unique
 from .op_unsqueeze import Unsqueeze, Unsqueeze_1, Unsqueeze_11, Unsqueeze_13
 from .op_where import Where
 from .op_xor import Xor
-
-# from .op_zipmap import ZipMap
 
 
 def _split_class_namme(name):  # type: ignore

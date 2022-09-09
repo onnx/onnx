@@ -28,9 +28,8 @@ class Unique(OpRun):
         if not self.sorted:  # type: ignore
             argsorted_indices = numpy.argsort(indices)
             inverse_indices_map = dict(
-                zip(
-                    argsorted_indices, numpy.arange(len(argsorted_indices))
-                )
+                zip(argsorted_indices, numpy.arange(len(argsorted_indices)))
+            )
             indices = indices[argsorted_indices]
             y = numpy.take(x, indices, axis=0)
             inverse_indices = numpy.asarray(

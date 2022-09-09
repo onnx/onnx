@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=R0912,R0913,R0915,W0703
+# pylint: disable=R0912,R0913,R0914,R0915,W0703
 
 import os
 import unittest
@@ -47,7 +47,8 @@ def assert_almost_equal_string(expected, value):
         value_float = value.astype(np.float32)
         assert_almost_equal(expected_float, value_float)
     else:
-        assert_almost_equal(expected, value)
+        if expected.tolist() != value.tolist():
+            raise AssertionError(f"Mismatches {expected} != {value}.")
 
 
 class OnnxBackendTest:
@@ -507,6 +508,8 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_scatter_elements_with_duplicate_indices",
             # bug
             "test_simple_rnn_batchwise",
+            "test_stft_with_window",
+            "test_stft",
         }
         decimal = {
             "test_simple_rnn_batchwise": 2,
