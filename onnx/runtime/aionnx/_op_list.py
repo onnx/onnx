@@ -85,13 +85,12 @@ from .op_lp_normalization import LpNormalization
 from .op_lrn import LRN
 from .op_lstm import LSTM
 from .op_matmul import MatMul
+from .op_max import Max
 
-# from .op_max import Max
 # from .op_max_pool import MaxPool
-# from .op_mean import Mean
-# from .op_min import Min
-# from .op_mod import Mod
-# from .op_momentum import Momentum
+from .op_mean import Mean
+from .op_min import Min
+from .op_mod import Mod
 from .op_mul import Mul
 from .op_neg import Neg
 
@@ -141,15 +140,14 @@ from .op_reduce_sum import ReduceSum, ReduceSum_1, ReduceSum_11, ReduceSum_13
 # from .op_sequence_construct import SequenceConstruct
 from .op_sequence_empty import SequenceEmpty
 from .op_sequence_insert import SequenceInsert
+from .op_shape import Shape
 
-# from .op_shape import Shape
 # from .op_shrink import Shrink
 # from .op_sigmoid import Sigmoid
 from .op_sign import Sign
 from .op_sin import Sin
 from .op_sinh import Sinh
-
-# from .op_size import Size
+from .op_size import Size
 from .op_slice import Slice, Slice_1, Slice_10
 
 # from .op_split import Split, Split_2, Split_11, Split_13
