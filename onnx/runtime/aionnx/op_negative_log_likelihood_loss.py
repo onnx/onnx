@@ -72,9 +72,6 @@ def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mea
 
 
 class NegativeLogLikelihoodLoss(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, x, target, weight=None):  # type: ignore
         return _compute_negative_log_likelihood_loss(
             x,

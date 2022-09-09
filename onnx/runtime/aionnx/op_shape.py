@@ -10,17 +10,11 @@ from ..op_run import OpRun
 
 
 class Shape_1(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, data):  # type: ignore
         return (numpy.array(data.shape, dtype=numpy.int64),)
 
 
 class Shape_15(Shape_1):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        Shape_1.__init__(self, onnx_node, run_params)  # type: ignore
-
     def _interval(self, n: int) -> Optional[Tuple[int, int]]:
         if self.start == 0:  # type: ignore
             if self.end is None or numpy.isnan(self.end):  # type: ignore

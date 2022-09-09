@@ -24,9 +24,6 @@ def _argmax_use_numpy_select_last_index(data, axis=0, keepdims=True):  # type: i
 
 
 class _ArgMax(OpRunArg):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunArg.__init__(self, onnx_node, run_params)
-
     def _run(self, data):  # type: ignore
         return (_argmax(data, axis=self.axis, keepdims=self.keepdims),)  # type: ignore
 
@@ -37,9 +34,6 @@ class ArgMax_11(_ArgMax):
 
 
 class ArgMax_12(_ArgMax):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        _ArgMax.__init__(self, onnx_node, run_params)
-
     def _run(self, data):  # type: ignore
         if self.select_last_index == 0:  # type: ignore
             return _ArgMax._run(self, data)

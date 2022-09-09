@@ -7,9 +7,6 @@ from ._op import OpRunUnaryNum
 
 
 class Hardmax(OpRunUnaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnaryNum.__init__(self, onnx_node, run_params)
-
     def _run(self, x):  # type: ignore
         x_argmax = numpy.argmax(x, axis=self.axis)  # type: ignore
         y = numpy.zeros_like(x)

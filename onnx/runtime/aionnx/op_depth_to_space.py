@@ -7,9 +7,6 @@ from ..op_run import OpRun
 
 
 class DepthToSpace(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, data):  # type: ignore
         if len(data.shape) != 4:
             raise RuntimeError(f"Unexpected shape {data.shape!r}.")

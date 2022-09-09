@@ -177,9 +177,6 @@ def _pool(
 
 
 class AveragePool(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, x):  # type: ignore
         if self.strides is None or len(self.strides) == 0:  # type: ignore
             strides = [1] * (len(x.shape) - 2)

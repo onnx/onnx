@@ -12,7 +12,7 @@ class CommonLSTM(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         self.n_outputs = len(onnx_node.output)
-        self.number_of_gates = 3
+        self.n_gates = 3
 
     def f(self, x: numpy.ndarray) -> numpy.ndarray:
         return 1 / (1 + numpy.exp(-x))
@@ -74,7 +74,7 @@ class CommonLSTM(OpRun):
         return Y, Y_h  # type: ignore
 
     def _run(self, X, W, R, B=None, sequence_lens=None, initial_h=None, initial_c=None, P=None):  # type: ignore
-        number_of_gates = 4
+        n_gates = 4
         number_of_peepholes = 3
 
         num_directions = W.shape[0]
@@ -111,7 +111,7 @@ class CommonLSTM(OpRun):
             if self.layout != 0:  # type: ignore
                 X = numpy.swapaxes(X, 0, 1)
             if B is None:
-                B = numpy.zeros(2 * number_of_gates * hidden_size, dtype=numpy.float32)
+                B = numpy.zeros(2 * n_gates * hidden_size, dtype=numpy.float32)
             if P is None:
                 P = numpy.zeros(number_of_peepholes * hidden_size, dtype=numpy.float32)
             if initial_h is None:

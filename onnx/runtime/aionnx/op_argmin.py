@@ -24,9 +24,6 @@ def _argmin_use_numpy_select_last_index(data, axis=0, keepdims=True):  # type: i
 
 
 class _ArgMin(OpRunArg):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunArg.__init__(self, onnx_node, run_params)
-
     def _run(self, data):  # type: ignore
         return (_argmin(data, axis=self.axis, keepdims=self.keepdims),)  # type: ignore
 
@@ -37,9 +34,6 @@ class ArgMin_11(_ArgMin):
 
 
 class ArgMin_12(_ArgMin):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        _ArgMin.__init__(self, onnx_node, run_params)
-
     def _run(self, data):  # type: ignore
         if self.select_last_index == 0:  # type: ignore
             return _ArgMin._run(self, data)

@@ -6,6 +6,6 @@ import numpy  # type: ignore
 from ._op import OpRunBinaryComparison
 
 
-class LessOrEqual(OpRunBinaryComparison):
+class GreaterOrEqual(OpRunBinaryComparison):
     def _run(self, a, b):  # type: ignore
-        return (numpy.less_equal(a, b),)
+        return (numpy.greater_equal(a, b),)

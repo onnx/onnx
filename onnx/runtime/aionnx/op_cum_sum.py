@@ -7,9 +7,6 @@ from ..op_run import OpRun
 
 
 class CumSum(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, x, *axis):  # type: ignore
         axis = None if len(axis) == 0 else axis[0]  # type: ignore
         if axis is None:

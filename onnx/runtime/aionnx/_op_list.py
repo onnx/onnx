@@ -64,7 +64,8 @@ from .op_gathernd import GatherND
 from .op_gemm import Gemm
 from .op_global_average_pool import GlobalAveragePool
 from .op_global_max_pool import GlobalMaxPool
-from .op_greater import Greater, GreaterOrEqual
+from .op_greater import Greater
+from .op_greater_or_equal import GreaterOrEqual
 
 # from .op_grid_sample import GridSample
 from .op_gru import GRU

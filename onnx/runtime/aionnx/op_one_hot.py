@@ -21,9 +21,6 @@ def _one_hot(indices, depth, axis=-1, dtype=numpy.float32):  # type: ignore
 
 
 class OneHot(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, indices, depth, values):  # type: ignore
         off_value, on_value = values
         y = _one_hot(indices, depth, axis=self.axis, dtype=values.dtype)  # type: ignore

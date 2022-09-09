@@ -31,7 +31,7 @@ def _dropout(
 class DropoutBase(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
-        self.nb_outputs = len(onnx_node.output)
+        self.n_outputs = len(onnx_node.output)
 
     def _private_run(
         self,
@@ -44,23 +44,17 @@ class DropoutBase(OpRun):
             X,
             ratio,
             seed=seed,  # type: ignore
-            return_mask=self.nb_outputs == 2,
+            return_mask=self.n_outputs == 2,
             training_mode=training_mode,
         )
 
 
 class Dropout_7(DropoutBase):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        DropoutBase.__init__(self, onnx_node, run_params)
-
     def _run(self, X):  # type: ignore
         return self._private_run(X, self.ratio)  # type: ignore
 
 
 class Dropout_12(DropoutBase):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        DropoutBase.__init__(self, onnx_node, run_params)
-
     def _run(self, *inputs):  # type: ignore
         X = inputs[0]
         ratio = 0.5 if len(inputs) <= 1 else inputs[1]

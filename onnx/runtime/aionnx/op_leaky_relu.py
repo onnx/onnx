@@ -13,8 +13,5 @@ def _leaky_relu(x: numpy.ndarray, alpha: float) -> numpy.ndarray:
 
 
 class LeakyRelu(OpRunUnaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnaryNum.__init__(self, onnx_node, run_params)
-
     def _run(self, x):  # type: ignore
         return (_leaky_relu(x, self.alpha),)  # type: ignore

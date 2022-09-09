@@ -94,9 +94,6 @@ def _cifft(
 
 
 class DFT(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, x, dft_length=None):  # type: ignore
         if dft_length is None:
             dft_length = numpy.array([x.shape[self.axis]], dtype=numpy.int64)  # type: ignore

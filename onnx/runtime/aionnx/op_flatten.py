@@ -7,9 +7,6 @@ from ._op import OpRunUnary
 
 
 class Flatten(OpRunUnary):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnary.__init__(self, onnx_node, run_params)
-
     def _run(self, x):  # type: ignore
         i = self.axis  # type: ignore
         shape = x.shape

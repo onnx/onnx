@@ -7,9 +7,6 @@ from ..op_run import OpRun
 
 
 class Concat(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _preprocess(self, a: numpy.ndarray) -> numpy.ndarray:
         if len(a.shape) == 0:
             raise RuntimeError(f"Concat: one input has an empty shape: {a!r}.")

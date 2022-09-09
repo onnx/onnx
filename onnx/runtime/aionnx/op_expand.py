@@ -14,8 +14,5 @@ def common_reference_implementation(
 
 
 class Expand(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, data, shape):  # type: ignore
         return (common_reference_implementation(data, shape),)

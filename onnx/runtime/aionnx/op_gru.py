@@ -9,7 +9,7 @@ from ..op_run import OpRun
 class CommonGRU(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
-        self.nb_outputs = len(onnx_node.output)
+        self.n_outputs = len(onnx_node.output)
         self.number_of_gates = 3
 
     def f(self, x):  # type: ignore
@@ -106,7 +106,7 @@ class CommonGRU(OpRun):
 
         Y, Y_h = self._step(X, R, B, W, H_0, num_directions=num_directions)
 
-        return (Y,) if self.nb_outputs == 1 else (Y, Y_h)
+        return (Y,) if self.n_outputs == 1 else (Y, Y_h)
 
 
 class GRU(CommonGRU):

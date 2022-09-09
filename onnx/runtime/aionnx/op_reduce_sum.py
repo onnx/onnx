@@ -9,9 +9,6 @@ from ._op import OpRunReduceNumpy
 
 
 class ReduceSum_1(OpRunReduceNumpy):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunReduceNumpy.__init__(self, onnx_node, run_params)
-
     def _run(self, x):  # type: ignore # pylint: disable=W0221
         return (
             numpy.sum(x, axis=self.axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
@@ -24,9 +21,6 @@ class ReduceSum_11(ReduceSum_1):
 
 
 class ReduceSum_13(OpRunReduceNumpy):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunReduceNumpy.__init__(self, onnx_node, run_params)
-
     def run(self, x, axes=None):  # type: ignore
         res = self._run(x, axes=axes)
         if not self.keepdims and not isinstance(res[0], numpy.ndarray):  # type: ignore

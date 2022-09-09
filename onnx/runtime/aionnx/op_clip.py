@@ -11,9 +11,6 @@ from ._op import OpRunUnaryNum
 
 
 class Clip_6(OpRunUnaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnaryNum.__init__(self, onnx_node, run_params)
-
     def _run(self, data):  # type: ignore
         amin = getattr(self, "min", None)
         amax = getattr(self, "max", None)
@@ -24,9 +21,6 @@ class Clip_6(OpRunUnaryNum):
 
 
 class Clip_11(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, data, *minmax):  # type: ignore
         le = len(minmax)
         amin = minmax[0] if le > 0 else None

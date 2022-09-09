@@ -20,9 +20,6 @@ def _concat_from_sequence(
 
 
 class ConcatFromSequence(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, seq):  # type: ignore
         if seq is None:
             raise RuntimeError("A sequence cannot be null.")

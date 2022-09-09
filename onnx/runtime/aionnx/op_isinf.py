@@ -7,9 +7,6 @@ from ._op import OpRunUnary
 
 
 class IsInf(OpRunUnary):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnary.__init__(self, onnx_node, run_params)
-
     def _run(self, data):  # type: ignore
         if self.detect_negative:  # type: ignore
             if self.detect_positive:  # type: ignore

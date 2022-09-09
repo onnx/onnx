@@ -20,8 +20,5 @@ def numpy_matmul(a, b):  # type: ignore
 
 
 class MatMul(OpRunBinaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunBinaryNum.__init__(self, onnx_node, run_params)
-
     def _run(self, a, b):  # type: ignore
         return (numpy_matmul(a, b),)

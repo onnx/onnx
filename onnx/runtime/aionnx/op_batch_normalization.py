@@ -50,18 +50,12 @@ def _batchnorm_training_mode(
 
 
 class BatchNormalization_9(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, x, scale, bias, mean, var):  # type: ignore
         res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=self.epsilon)  # type: ignore
         return (res,)
 
 
 class BatchNormalization_14(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, x, scale, bias, mean, var):  # type: ignore
         if self.training_mode == 0:  # type: ignore
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=self.epsilon)  # type: ignore

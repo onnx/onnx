@@ -63,9 +63,6 @@ def _layer_normalization(
 
 
 class LayerNormalization(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, X, Scale, B=None):  # type: ignore
         res = _layer_normalization(X, Scale, B, axis=self.axis, epsilon=self.epsilon)  # type: ignore
         return res

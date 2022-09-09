@@ -9,9 +9,6 @@ from ..op_run import OpRun
 
 
 class LRN(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, x):  # type: ignore
         if len(x.shape) != 4:
             raise RuntimeError(

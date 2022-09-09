@@ -15,9 +15,6 @@ def _global_max_pool(x: numpy.ndarray) -> numpy.ndarray:
 
 
 class GlobalMaxPool(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-
     def _run(self, x):  # type: ignore
         res = _global_max_pool(x)
         return (res,)

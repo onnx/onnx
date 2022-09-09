@@ -10,7 +10,7 @@ class Div(OpRunBinaryNumpy):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRunBinaryNumpy.__init__(self, numpy.divide, onnx_node, run_params)
 
-    def _run(self, a, b, attributes=None, verbose=0, fLOG=None):  # type: ignore
+    def _run(self, a, b):  # type: ignore
         res = OpRunBinaryNumpy._run(self, a, b)
         if res[0].dtype != a.dtype:
             return (res[0].astype(a.dtype),)

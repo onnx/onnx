@@ -13,8 +13,5 @@ def _vcelu1(x: numpy.ndarray, alpha: float = 1.0) -> numpy.ndarray:
 
 
 class Celu(OpRunUnaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnaryNum.__init__(self, onnx_node, run_params)
-
     def _run(self, x):  # type: ignore
         return (_vcelu1(x, self.alpha),)  # type: ignore

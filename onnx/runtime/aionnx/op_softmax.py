@@ -7,9 +7,6 @@ from ._op import OpRunUnaryNum
 
 
 class Softmax(OpRunUnaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnaryNum.__init__(self, onnx_node, run_params)
-
     def _run(self, X):  # type: ignore
         tmp = X - X.max(axis=self.axis, keepdims=1)  # type: ignore
         Y = numpy.exp(tmp)
