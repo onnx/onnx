@@ -7,7 +7,7 @@ from ..op_run import OpRun
 
 
 def gather_numpy_2(
-    self: numpy.ndarray, dim: int, index: numpy.ndarray
+    self: numpy.ndarray, index: numpy.ndarray
 ) -> numpy.ndarray:
     res = []
     for a, b in zip(self, index):
@@ -31,7 +31,7 @@ def gather_numpy(self: numpy.ndarray, dim: int, index: numpy.ndarray) -> numpy.n
         gathered = numpy.choose(index_swaped, data_swaped, mode="wrap")
     except ValueError as e:
         if len(index_swaped.shape) == 2 and len(data_swaped.shape) == 2:
-            return gather_numpy_2(self, dim, index)
+            return gather_numpy_2(self, index)
         raise e  # pragma: no cover
 
     return numpy.swapaxes(gathered, 0, dim)

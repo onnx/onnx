@@ -19,12 +19,12 @@ class Shape_15(Shape_1):
         if self.start == 0:  # type: ignore
             if self.end is None or numpy.isnan(self.end):  # type: ignore
                 return None
-            elif self.end < 0:  # type: ignore
+            if self.end < 0:  # type: ignore
                 return (0, n + self.end)  # type: ignore
             return (0, self.end)  # type: ignore
         if self.end is None or numpy.isnan(self.end):  # type: ignore
             return (self.start, n)  # type: ignore
-        elif self.end < 0:  # type: ignore
+        if self.end < 0:  # type: ignore
             return (self.start, n + self.end)  # type: ignore
         return (self.start, self.end)  # type: ignore
 
