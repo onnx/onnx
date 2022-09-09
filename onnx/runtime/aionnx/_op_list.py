@@ -140,9 +140,8 @@ from .op_round import Round
 # from .op_scatternd import ScatterND
 # from .op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss
 from .op_selu import Selu
-
-# from .op_sequence_at import SequenceAt
-# from .op_sequence_construct import SequenceConstruct
+from .op_sequence_at import SequenceAt
+from .op_sequence_construct import SequenceConstruct
 from .op_sequence_empty import SequenceEmpty
 from .op_sequence_insert import SequenceInsert
 from .op_shape import Shape

@@ -387,6 +387,8 @@ class TestOnnxBackEnd(unittest.TestCase):
                 except Exception as e:
                     if verbose > 7:
                         print("  ", e, type(e))
+                    with open(f"issue_{te.name}.onnx", "wb") as f:
+                        f.write(te.onnx_model.SerializeToString())
                     raise AssertionError(
                         f"Unable to run model due to {e}\n{str(te.onnx_model)}"
                     ) from e
@@ -478,6 +480,8 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_hannwindow_symmetric_expanded",
             "test_hammingwindow_expanded",
             "test_hammingwindow_symmetric_expanded",
+            # bug
+            "test_loop16_seq_none",
         }
         self.common_test_enumerate_onnx_tests_run(
             valid=lambda name: name not in skip_test,
