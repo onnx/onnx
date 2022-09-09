@@ -329,8 +329,8 @@ tests_require.append("tabulate")
 
 extras_require["lint"] = [
     "clang-format==13.0.0",
-    "flake8==5.0.2",
-    "mypy==0.782",
+    "flake8>=5.0.2",
+    "mypy>=0.782",
     "types-protobuf==3.18.4",
     "black>=22.3",
     "isort[colors]>=5.10",

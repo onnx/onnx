@@ -10,9 +10,9 @@ pyzmq
 setuptools
 twine
 # Dependencies for linting. Versions match those in setup.py.
-flake8==5.0.2
+flake8>=5.0.2
 clang-format==13.0.0
-mypy==0.782
+mypy>=0.782
 types-protobuf==3.18.4
 black>=22.3
 isort[colors]>=5.10
