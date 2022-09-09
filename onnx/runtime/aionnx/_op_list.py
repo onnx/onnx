@@ -99,8 +99,8 @@ from .op_negative_log_likelihood_loss import NegativeLogLikelihoodLoss
 from .op_non_zero import NonZero
 from .op_not import Not
 from .op_one_hot import OneHot
-
-# from .op_optional import OptionalGetElement, OptionalHasElement
+from .op_optional_get_element import OptionalGetElement
+from .op_optional_has_element import OptionalHasElement
 from .op_or import Or
 
 # from .op_pad import Pad
