@@ -27,9 +27,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
 # Numpy float32 array is only reversed to TensorProto.FLOAT
-NP_TYPE_TO_TENSOR_TYPE = {
-    v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items()
-}
+NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items()}
 
 # This is only used to get keys into STORAGE_TENSOR_TYPE_TO_FIELD.
 # TODO(https://github.com/onnx/onnx/issues/4261): Remove this.
