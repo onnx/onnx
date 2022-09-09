@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-from typing import Type
-
 import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
@@ -32,6 +30,6 @@ class Clip_11(OpRun):
 
 
 if onnx_opset_version() >= 11:
-    Clip: Type[OpRun] = Clip_11  # type: ignore
+    Clip = Clip_11
 else:
-    Clip: Type[OpRun] = Clip_6  # type: ignore
+    Clip = Clip_6  # type: ignore

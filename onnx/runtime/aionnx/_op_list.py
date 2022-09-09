@@ -103,10 +103,10 @@ from .op_one_hot import OneHot
 from .op_optional_get_element import OptionalGetElement
 from .op_optional_has_element import OptionalHasElement
 from .op_or import Or
+from .op_pad import Pad
+from .op_pow import Pow
+from .op_prelu import PRelu
 
-# from .op_pad import Pad
-# from .op_pow import Pow
-# from .op_prelu import PRelu
 # from .op_quantize_linear import QuantizeLinear, DynamicQuantizeLinear
 # from .op_qlinear_conv import QLinearConv
 # from .op_random import (
