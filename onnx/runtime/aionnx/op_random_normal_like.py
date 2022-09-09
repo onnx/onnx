@@ -7,11 +7,11 @@ from ...mapping import TENSOR_TYPE_TO_NP_TYPE
 from ._op_random_common import _CommonRandom
 
 
-class RandomUniform(_CommonRandom):
-    def _run(self):  # type: ignore
-        dtype = self._dtype()
+class RandomNormalLike(_CommonRandom):
+    def _run(self, x):  # type: ignore
+        dtype = self._dtype(x)
         state = self._get_state(self.seed)  # type: ignore
-        res = state.rand(*self.shape).astype(dtype)  # type: ignore
-        res *= self.high - self.low  # type: ignore
-        res += self.low  # type: ignore
+        res = state.randn(*x.shape).astype(dtype)
+        res *= self.scale  # type: ignore
+        res += self.mean  # type: ignore
         return (res.astype(dtype),)

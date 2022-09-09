@@ -26,6 +26,7 @@ from .op_atan import Atan
 from .op_atanh import Atanh
 from .op_average_pool import AveragePool
 from .op_batch_normalization import BatchNormalization, BatchNormalization_14
+from .op_bernoulli import Bernoulli
 from .op_bitshift import BitShift
 from .op_cast import Cast
 from .op_cast_like import CastLike
@@ -110,10 +111,10 @@ from .op_prelu import PRelu
 from .op_quantize_linear import QuantizeLinear
 
 # from .op_qlinear_conv import QLinearConv
+from .op_random_normal import RandomNormal
+from .op_random_normal_like import RandomNormalLike
 from .op_random_uniform import RandomUniform
-
-#     Bernoulli, RandomNormal, RandomUniform,
-#     RandomUniformLike, RandomNormalLike)
+from .op_random_uniform_like import RandomUniformLike
 from .op_range import Range
 from .op_reciprocal import Reciprocal
 from .op_reduce_l1 import ReduceL1

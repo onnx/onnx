@@ -7,11 +7,9 @@ from ...mapping import TENSOR_TYPE_TO_NP_TYPE
 from ._op_random_common import _CommonRandom
 
 
-class RandomUniform(_CommonRandom):
-    def _run(self):  # type: ignore
-        dtype = self._dtype()
+class Bernoulli(_CommonRandom):
+    def _run(self, x):  # type: ignore
+        dtype = self._dtype(x, dtype_first=True)
         state = self._get_state(self.seed)  # type: ignore
-        res = state.rand(*self.shape).astype(dtype)  # type: ignore
-        res *= self.high - self.low  # type: ignore
-        res += self.low  # type: ignore
+        res = state.binomial(1, p=x).astype(dtype)
         return (res.astype(dtype),)

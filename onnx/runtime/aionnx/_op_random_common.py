@@ -10,14 +10,14 @@ from ..op_run import OpRun
 class _CommonRandom(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
-        if len(self.shape) == 0:  # type: ignore
+        if hasattr(self, "shape") and len(self.shape) == 0:  # type: ignore
             raise ValueError(  # pragma: no cover
                 f"shape cannot be empty for operator {self.__class__.__name__}."
             )
-        self.numpy_type = TENSOR_TYPE_TO_NP_TYPE[self.dtype]  # type: ignore
+        self.numpy_type = TENSOR_TYPE_TO_NP_TYPE[self.dtype] if (hasattr(self, "dtype") and self.dtype is not None) else None  # type: ignore
 
     def _dtype(self, *data, dtype_first=False):  # type: ignore
-        if dtype_first:
+        if dtype_first and self.numpy_type is not None:
             if self.dtype != 0:  # type: ignore
                 return self.numpy_type
             if len(data) > 0:
