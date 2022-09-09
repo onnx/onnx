@@ -41,7 +41,7 @@ class _CommonRandom(OpRun):
         return res
 
     def _get_state(self, seed):  # type: ignore
-        if numpy.isnan(self.seed):  # type: ignore
+        if self.seed is None or numpy.isnan(self.seed):  # type: ignore
             state = numpy.random.RandomState()
         else:
             state = numpy.random.RandomState(seed=int(self.seed))  # type: ignore

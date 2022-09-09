@@ -280,6 +280,8 @@ class Inference:
             if node.is_constant():
                 # A constant may be using attributes if the node is part of a FunctionProto.
                 outputs = node.run(*inputs, attributes)
+            elif node.need_context():
+                outputs = node.run(*inputs, context=results)
             else:
                 outputs = node.run(*inputs)
             for name, value in zip(node.output, outputs):
