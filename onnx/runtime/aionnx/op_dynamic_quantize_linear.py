@@ -7,8 +7,8 @@ from ..op_run import OpRun
 
 
 class DynamicQuantizeLinear(OpRun):
-    def __init__(self, onnx_node, run_params):  # type; ignore
-        OpRun.__init__(self, onnx_node, run_params)  # type; ignore
+    def __init__(self, onnx_node, run_params):  # type: ignore
+        OpRun.__init__(self, onnx_node, run_params)
         self.dtype = numpy.uint8
 
     def _run(self, x):  # type: ignore

@@ -790,6 +790,19 @@ class TestRuntimeInference(unittest.TestCase):
         got = oinf.run(None, inputs)
         assert_almost_equal(expected, got[0])
 
+    def test_onnxt_runtime_random_uniform(self):
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("RandomUniform", [], ["Y"], seed=0.0, shape=[2, 4])
+        graph = make_graph([node1], "g", [], [Y])
+        onnx_model = make_model(graph)
+        check_model(onnx_model)
+        sess = rt.Inference(onnx_model)
+        got = sess.run(None, {})[0]
+        self.assertEqual(got.shape, (2, 4))
+        self.assertEqual(got.dtype, np.float32)
+        self.assertGreater(got.min(), 0)
+        self.assertLess(got.max(), 1)
+
 
 if __name__ == "__main__":
     # TestRuntimeInference().test_custom_node()

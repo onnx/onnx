@@ -3,18 +3,19 @@
 
 import numpy  # type: ignore
 
-from ..op_run import OpRun
+from ...mapping import TENSOR_TYPE_TO_NP_TYPE
+from ._op_random_common import _CommonRandom
 
 
-class Concat(OpRun):
-    def _preprocess(self, a: numpy.ndarray) -> numpy.ndarray:
-        if len(a.shape) == 0:
-            raise RuntimeError(f"Concat: one input has an empty shape: {a!r}.")
-        if self.axis >= len(a.shape):  # type: ignore
-            new_shape = a.shape + (1,) * (self.axis + 1 - len(a.shape))  # type: ignore
-            return a.reshape(new_shape)
-        return a
-
+class RandomUniform(_CommonRandom):
     def _run(self, *args):  # type: ignore
-        targs = tuple(self._preprocess(a) for a in args)
-        return (numpy.concatenate(targs, self.axis),)  # type: ignore
+        if len(args) != 0:
+            raise RuntimeError(
+                f"Operator {self.__class__.__name__} cannot have inputs."
+            )
+        dtype = self._dtype(*args)
+        state = self._get_state(self.seed)  # type: ignore
+        res = state.rand(*self.shape).astype(dtype)  # type: ignore
+        res *= self.high - self.low  # type: ignore
+        res += self.low  # type: ignore
+        return (res.astype(dtype),)

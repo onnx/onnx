@@ -110,7 +110,8 @@ from .op_prelu import PRelu
 from .op_quantize_linear import QuantizeLinear
 
 # from .op_qlinear_conv import QLinearConv
-# from .op_random import (
+from .op_random_uniform import RandomUniform
+
 #     Bernoulli, RandomNormal, RandomUniform,
 #     RandomUniformLike, RandomNormalLike)
 from .op_range import Range
