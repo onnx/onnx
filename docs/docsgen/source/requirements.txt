@@ -1,0 +1,13 @@
+matplotlib
+mlinsights
+mlprodict
+myst-parser
+nbsphinx
+onnx
+pillow
+pandas
+pyquickhelper>=1.9.3359
+sphinx
+sphinxcontrib-blockdiag
+sphinx-gallery
+tqdm

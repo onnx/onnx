@@ -1,0 +1,16 @@
+name: Build and publish ONNX docs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  docs-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build Docs
+        run: cd docs/docsgen && make html
