@@ -15,7 +15,7 @@ class HannWindow(_CommonWindow):
     <https://pytorch.org/docs/stable/generated/torch.hann_window.html>`_
     """
 
-    def _run(self, size):  # run_params
+    def _run(self, size):  # type: ignore
         ni, N_1 = self._begin(size)
         res = numpy.sin(ni * 3.1415 / N_1) ** 2
         return self._end(size, res)

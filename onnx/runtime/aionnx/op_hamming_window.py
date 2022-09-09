@@ -16,7 +16,7 @@ class HammingWindow(_CommonWindow):
     `alpha=0.54, beta=0.46`
     """
 
-    def _run(self, size):  # run_params
+    def _run(self, size):  # type: ignore
         ni, N_1 = self._begin(size)
         alpha = 25.0 / 46.0
         beta = 1 - alpha

@@ -16,7 +16,7 @@ class BlackmanWindow(_CommonWindow):
     <https://pytorch.org/docs/stable/generated/torch.blackman_window.html>`_
     """
 
-    def _run(self, size):  # run_params
+    def _run(self, size):  # type: ignore
         # ni, N_1 = self._begin(size)
         ni, N_1 = numpy.arange(size, dtype=self.dtype), size
         alpha = 0.42
