@@ -46,7 +46,7 @@ std::string clean_relative_path(const std::string& path) {
       r += 2;
 
       if (out.size() > dotdot) {
-        while (out.size() > dotdot && !out.back() == sep) {
+        while (out.size() > dotdot && out.back() != sep) {
           out.pop_back();
         }
         if (!out.empty())
@@ -68,7 +68,7 @@ std::string clean_relative_path(const std::string& path) {
       out.push_back(sep);
     }
 
-    for (; r < n && !path[r] == sep; r++) {
+    for (; r < n && path[r] != sep; r++) {
       out.push_back(path[r]);
     }
   }
