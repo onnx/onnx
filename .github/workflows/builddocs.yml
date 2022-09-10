@@ -14,4 +14,17 @@ jobs:
 
       - name: Build Docs
         run: cd docs/docsgen && make html
+
+      - name: Upload docs artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+           path: docs/docsgen/build/html
+
+      - name: Deploy to GitHub pages
+        id: deployment
+        uses: actions/deploy-pages@v1
+
+
+
+
         
