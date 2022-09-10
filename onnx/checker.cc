@@ -162,12 +162,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         }
 #else // POSIX
         if (entry.value().empty()) {
-          fail_check(
-              "Location of external TensorProto ( tensor name: ",
-              tensor.name(),
-              ") should not be empty.");
-        }
-        else if (entry.value()[0] == '/') {
+          fail_check("Location of external TensorProto ( tensor name: ", tensor.name(), ") should not be empty.");
+        } else if (entry.value()[0] == '/') {
           fail_check(
               "Location of external TensorProto ( tensor name: ",
               tensor.name(),

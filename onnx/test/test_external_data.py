@@ -623,7 +623,7 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
         tensor_filename = "../../file.bin"
 
         set_external_data(tensor, location=tensor_filename)
-        with open(os.path.join(self.temp_dir, tensor_filename), 'wb') as data_file:
+        with open(os.path.join(self.temp_dir, tensor_filename), "wb") as data_file:
             data_file.write(tensor.raw_data)
 
         tensor.ClearField("raw_data")
@@ -651,7 +651,7 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
         tensor_filename = "..\\..\\file.bin"
 
         set_external_data(tensor, location=tensor_filename)
-        with open(os.path.join(self.temp_dir, tensor_filename), 'wb') as data_file:
+        with open(os.path.join(self.temp_dir, tensor_filename), "wb") as data_file:
             data_file.write(tensor.raw_data)
 
         tensor.ClearField("raw_data")
