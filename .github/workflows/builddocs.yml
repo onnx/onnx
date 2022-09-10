@@ -16,7 +16,7 @@ jobs:
         run: cd docs/docsgen && make html
 
       - name: Upload docs artifacts
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v1
         with:
            path: docs/docsgen/build/html
 
