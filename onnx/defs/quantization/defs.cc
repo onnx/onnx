@@ -15,6 +15,68 @@ For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's i
 For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
 )DOC";
 
+bool BuildContextDependentFunctionBodyQuantizeLinear(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  FunctionBuilder builder(functionProto);
+
+  auto* input_type = ctx.getInputType(0);
+  if (!input_type->has_tensor_type()) {
+    fail_schema("Invalid x input type. Expected a tensor type");
+  }
+  auto input_elt_type = input_type->tensor_type().elem_type();
+
+  auto output_elt_type = TensorProto::UINT8;
+  float quantized_min = 0, quantized_max = 255;
+
+  if (ctx.hasInput(2)) {
+    auto* zero_point_type = ctx.getInputType(2);
+    if (!zero_point_type->has_tensor_type()) {
+      fail_schema("Invalid y_zero_point input type. Expected a tensor type");
+    }
+    if (zero_point_type->tensor_type().elem_type() == TensorProto::UINT8) {
+      quantized_min = 0;
+      quantized_max = 255;
+      output_elt_type = TensorProto::UINT8;
+    } else if (zero_point_type->tensor_type().elem_type() == TensorProto::INT8) {
+      quantized_min = -128;
+      quantized_max = 127;
+      output_elt_type = TensorProto::INT8;
+    } else {
+      fail_schema("Invalid zero_point_type. Expected TensorProto::UINT8 or TensorProto::INT8");
+    }
+  }
+
+  bool is_per_axis = ctx.getInputType(1)->tensor_type().shape().dim().size() == 1
+    && ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value() > 1;
+
+  builder.Const("quantized_min", ToTensor(quantized_min))
+    .Const("quantized_max", ToTensor(quantized_max));
+  if (is_per_axis) {
+    auto* axis_attribute = ctx.getAttribute("axis");
+    int axis = axis_attribute ? ctx.getAttribute("axis")->i() : 1;
+    int x_rank = ctx.getInputType(0)->tensor_type().shape().dim().size();
+    std::vector<int64_t> y_scale_shape(x_rank - axis, 1);
+    y_scale_shape[0] = ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value();
+    builder.Const("y_scale_shape", y_scale_shape);
+    builder.Add("y_scale_reshape = Reshape (y_scale, y_scale_shape)");
+    builder.Add("x_s = Div (x, y_scale_reshape)");
+    builder.Add("y_zero_point_reshape = Reshape (y_zero_point, y_scale_shape)");
+    builder.Add("y_zero_point_cast = Cast(y_zero_point_reshape)", "to", (int64_t)(input_elt_type));
+  } else {
+    builder.Add("x_s = Div (x, y_scale)");
+    builder.Add("y_zero_point_cast = Cast(y_zero_point)", "to", (int64_t)(input_elt_type));
+  }
+
+  builder.Add("x_s_z = Add (x_s, y_zero_point_cast)")
+    .Add("x_s_z_clipped = Clip (x_s_z, quantized_min, quantized_max)")
+    .Add("y = Cast (x_s_z_clipped)", "to", (int64_t)(output_elt_type));
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
     13,
@@ -45,6 +107,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int8)", "tensor(uint8)"},
             "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
         .SetDoc(QuantizeLinear_ver13_doc)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyQuantizeLinear)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.hasInput(2)) {
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
@@ -66,6 +129,46 @@ for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantizati
 'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
 there's no zero point (zero point is supposed to be 0).
 )DOC";
+
+bool BuildContextDependentFunctionBodyDequantizeLinear(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  FunctionBuilder builder(functionProto);
+
+  auto* input_type = ctx.getInputType(0);
+  if (!input_type->has_tensor_type()) {
+    fail_schema("Invalid x input type. Expected a tensor type");
+  }
+  auto input_elt_type = input_type->tensor_type().elem_type();
+  auto output_elt_type = TensorProto::FLOAT;
+
+  bool is_per_axis = ctx.getInputType(1)->tensor_type().shape().dim().size() == 1
+    && ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value() > 1;
+
+  // need to cast to output element type first for cases
+  // where quantized types are not accepted as input with some ops.
+  builder.Add("x_cast = Cast(x)", "to", (int64_t)(output_elt_type));
+  builder.Add("x_zero_point_cast = Cast(x_zero_point)", "to", (int64_t)(output_elt_type));
+  if (is_per_axis) {
+    auto* axis_attribute = ctx.getAttribute("axis");
+    int axis = axis_attribute ? ctx.getAttribute("axis")->i() : 1;
+    int x_rank = ctx.getInputType(0)->tensor_type().shape().dim().size();
+    std::vector<int64_t> x_scale_shape(x_rank - axis, 1);
+    x_scale_shape[0] = ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value();
+    builder.Const("x_scale_shape", x_scale_shape);
+    builder.Add("x_scale_reshape = Reshape (x_scale, x_scale_shape)");
+    builder.Add("x_zero_point_reshape = Reshape (x_zero_point_cast, x_scale_shape)");
+    builder.Add("x_sub_zero_point = Sub (x_cast, x_zero_point_reshape)");
+    builder.Add("y = Mul (x_sub_zero_point, x_scale_reshape)");
+  } else {
+    builder.Add("x_sub_zero_point = Sub (x_cast, x_zero_point_cast)");
+    builder.Add("y = Mul (x_sub_zero_point, x_scale)");
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
@@ -96,6 +199,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int8)", "tensor(uint8)", "tensor(int32)"},
             "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
         .SetDoc(DequantizeLinear_ver13_doc)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyDequantizeLinear)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto y_type = ctx.getOutputType(0);
           // only float is supported
