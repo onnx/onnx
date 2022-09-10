@@ -61,7 +61,9 @@ class TestLoadExternalDataBase(unittest.TestCase):
         )
 
         initializers = [
-            self.create_external_data_tensor(self.initializer_value, "input_value", location)
+            self.create_external_data_tensor(
+                self.initializer_value, "input_value", location
+            )
         ]
         inputs = [
             helper.make_tensor_value_info(
