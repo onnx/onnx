@@ -3,6 +3,11 @@ name: Build and publish ONNX docs
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   docs-build:
     runs-on: ubuntu-latest
