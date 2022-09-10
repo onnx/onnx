@@ -620,8 +620,11 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
+        tensor_filename = "../../file.bin"
 
-        set_external_data(tensor, location="../../file.bin")
+        set_external_data(tensor, location=tensor_filename)
+        with open(os.path.join(self.temp_dir, tensor_filename), 'wb') as data_file:
+            data_file.write(tensor.raw_data)
 
         tensor.ClearField("raw_data")
         tensor.data_location = onnx.TensorProto.EXTERNAL
@@ -645,8 +648,11 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
+        tensor_filename = "..\\..\\file.bin"
 
-        set_external_data(tensor, location="..\\..\\file.bin")
+        set_external_data(tensor, location=tensor_filename)
+        with open(os.path.join(self.temp_dir, tensor_filename), 'wb') as data_file:
+            data_file.write(tensor.raw_data)
 
         tensor.ClearField("raw_data")
         tensor.data_location = onnx.TensorProto.EXTERNAL

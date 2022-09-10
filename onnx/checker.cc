@@ -130,8 +130,16 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
 #ifdef _WIN32
-        std::wstring relative_path = clean_relative_path(utf8str_to_wstring(entry.value()));
-        // Check that normalized relative path starts with ".." on Windows.
+        auto file_path = std::filesystem::path(utf8str_to_wstring(entry.value()));
+        if (file_path.is_absolute()) {
+          fail_check(
+              "Location of external TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be a relative path, but it is an absolute path: ",
+              entry.value());
+        }
+        auto relative_path = file_path.lexically_normal().make_preferred().wstring();
+        // Check that normalized relative path contains ".." on Windows.
         if (relative_path.find(L"..", 0) != std::string::npos) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
@@ -153,9 +161,22 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               ", but it doesn't exist or is not accessible.");
         }
 #else // POSIX
+        if (entry.value().empty()) {
+          fail_check(
+              "Location of external TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should not be empty.");
+        }
+        else if (entry.value()[0] == '/') {
+          fail_check(
+              "Location of external TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be a relative path, but it is an absolute path: ",
+              entry.value());
+        }
         std::string relative_path = clean_relative_path(entry.value());
-        // Check that normalized relative path starts with "../" on POSIX
-        if (relative_path.find("../", 0) != std::string::npos) {
+        // Check that normalized relative path contains ".." on POSIX
+        if (relative_path.find("..", 0) != std::string::npos) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),

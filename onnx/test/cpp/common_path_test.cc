@@ -25,9 +25,6 @@ TEST(PathTest, CleanRelativePathTest) {
   EXPECT_EQ(clean_relative_path(".."), "..");
   EXPECT_EQ(clean_relative_path("../.."), "../..");
   EXPECT_EQ(clean_relative_path("../../abc"), "../../abc");
-  // Remove leading slash
-  EXPECT_EQ(clean_relative_path("/abc"), "abc");
-  EXPECT_EQ(clean_relative_path("/"), ".");
   // Remove trailing slash
   EXPECT_EQ(clean_relative_path("abc/"), "abc");
   EXPECT_EQ(clean_relative_path("abc/def/"), "abc/def");
@@ -35,27 +32,22 @@ TEST(PathTest, CleanRelativePathTest) {
   EXPECT_EQ(clean_relative_path("./"), ".");
   EXPECT_EQ(clean_relative_path("../"), "..");
   EXPECT_EQ(clean_relative_path("../../"), "../..");
-  EXPECT_EQ(clean_relative_path("/abc/"), "abc");
   // Remove doubled slash
   EXPECT_EQ(clean_relative_path("abc//def//ghi"), "abc/def/ghi");
-  EXPECT_EQ(clean_relative_path("//abc"), "abc");
-  EXPECT_EQ(clean_relative_path("///abc"), "abc");
-  EXPECT_EQ(clean_relative_path("//abc//"), "abc");
+  EXPECT_EQ(clean_relative_path("abc///"), "abc");
   EXPECT_EQ(clean_relative_path("abc//"), "abc");
   // Remove . elements
   EXPECT_EQ(clean_relative_path("abc/./def"), "abc/def");
-  EXPECT_EQ(clean_relative_path("/./abc/def"), "abc/def");
+  EXPECT_EQ(clean_relative_path("./abc/def"), "abc/def");
   EXPECT_EQ(clean_relative_path("abc/."), "abc");
   // Remove .. elements
   EXPECT_EQ(clean_relative_path("abc/def/ghi/../jkl"), "abc/def/jkl");
   EXPECT_EQ(clean_relative_path("abc/def/../ghi/../jkl"), "abc/jkl");
   EXPECT_EQ(clean_relative_path("abc/def/.."), "abc");
   EXPECT_EQ(clean_relative_path("abc/def/../.."), ".");
-  EXPECT_EQ(clean_relative_path("/abc/def/../.."), ".");
   EXPECT_EQ(clean_relative_path("abc/def/../../.."), "..");
-  EXPECT_EQ(clean_relative_path("/abc/def/../../.."), "..");
   EXPECT_EQ(clean_relative_path("abc/def/../../../ghi/jkl/../../../mno"), "../../mno");
-  EXPECT_EQ(clean_relative_path("/../abc"), "../abc");
+  EXPECT_EQ(clean_relative_path("../abc"), "../abc");
   // Combinations
   EXPECT_EQ(clean_relative_path("abc/./../def"), "def");
   EXPECT_EQ(clean_relative_path("abc//./../def"), "def");
