@@ -37,15 +37,11 @@ jobs:
         run: pip install -r docs/docsgen/source/requirements.txt
 
       - name: Build Docs
-#       run: cd docs/docsgen && make html
-        run: |
-            mkdir -p docs/docsgen/build/html
-            echo "Hello World" > docs/docsgen/build/html/index.html   
+        run: cd docs/docsgen && make html
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          # Upload entire repository
           path: 'docs/docsgen/build/html'
       - name: Deploy to GitHub Pages
         id: deployment
