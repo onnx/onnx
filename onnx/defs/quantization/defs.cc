@@ -48,11 +48,11 @@ bool BuildContextDependentFunctionBodyQuantizeLinear(
     }
   }
 
-  bool is_per_axis = ctx.getInputType(1)->tensor_type().shape().dim().size() == 1
-    && ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value() > 1;
+  bool is_per_axis = ctx.getInputType(1)->tensor_type().shape().dim().size() == 1 &&
+      ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value() > 1;
 
-  builder.Const("quantized_min", ToTensor(quantized_min))
-    .Const("quantized_max", ToTensor(quantized_max));
+  builder.Const("quantized_min", ToTensor(quantized_min));
+  builder.Const("quantized_max", ToTensor(quantized_max));
   if (is_per_axis) {
     auto* axis_attribute = ctx.getAttribute("axis");
     int axis = axis_attribute ? ctx.getAttribute("axis")->i() : 1;
@@ -69,9 +69,9 @@ bool BuildContextDependentFunctionBodyQuantizeLinear(
     builder.Add("y_zero_point_cast = Cast(y_zero_point)", "to", (int64_t)(input_elt_type));
   }
 
-  builder.Add("x_s_z = Add (x_s, y_zero_point_cast)")
-    .Add("x_s_z_clipped = Clip (x_s_z, quantized_min, quantized_max)")
-    .Add("y = Cast (x_s_z_clipped)", "to", (int64_t)(output_elt_type));
+  builder.Add("x_s_z = Add (x_s, y_zero_point_cast)");
+  builder.Add("x_s_z_clipped = Clip (x_s_z, quantized_min, quantized_max)");
+  builder.Add("y = Cast (x_s_z_clipped)", "to", (int64_t)(output_elt_type));
 
   schema.BuildFunction(functionProto);
   return true;
@@ -142,8 +142,8 @@ bool BuildContextDependentFunctionBodyDequantizeLinear(
   }
   auto output_elt_type = TensorProto::FLOAT;
 
-  bool is_per_axis = ctx.getInputType(1)->tensor_type().shape().dim().size() == 1
-    && ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value() > 1;
+  bool is_per_axis = ctx.getInputType(1)->tensor_type().shape().dim().size() == 1 &&
+      ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value() > 1;
 
   // need to cast to output element type first for cases
   // where quantized types are not accepted as input with some ops.
