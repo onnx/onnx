@@ -3,6 +3,11 @@ name: Build and publish ONNX docs
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   docs-build:
     runs-on: ubuntu-latest
@@ -10,7 +15,24 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install Dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r docs/docsgen/source/requirements.txt
 
       - name: Build Docs
-        run: cd docs/docsgen && make html
+#       run: cd docs/docsgen && make html
+        run: |
+            mkdir -p docs/docsgen/build/html
+            echo "Hello World" > docs/docsgen/build/html/index.html
+
+      - name: Upload docs artifacts
+        uses: actions/upload-pages-artifact@v1
+        with:
+           path: docs/docsgen/build/html
+
+      - name: Deploy to GitHub pages
+        id: deployment
+        uses: actions/deploy-pages@v1
+
+
+
+
+        
