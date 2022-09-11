@@ -2,7 +2,6 @@
 
 import struct
 import unittest
-from typing import Callable, List, Sequence, Tuple
 
 import numpy as np  # type: ignore
 
@@ -10,12 +9,10 @@ import onnx.version_converter
 from onnx import (
     GraphProto,
     ModelProto,
-    NodeProto,
     OperatorSetIdProto,
     TensorProto,
     checker,
     helper,
-    numpy_helper,
 )
 
 

@@ -2,7 +2,6 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-import io
 import os
 from typing import IO, Any, Dict, List, Sequence
 
