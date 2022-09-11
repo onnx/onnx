@@ -637,13 +637,13 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
             checker.check_model(self.model_filename)
 
     def test_check_model_relative(self) -> None:
-        """We only test the model validation as onnxruntime uses this to load the model."""
+        """More relative path test."""
         self.model_filename = self.create_test_model("../test/../file.bin")
         with self.assertRaises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
     def test_check_model_absolute(self) -> None:
-        """We only test the model validation as onnxruntime uses this to load the model."""
+        """ONNX checker disallows using absolute path as location in external tensor."""
         self.model_filename = self.create_test_model("//file.bin")
         with self.assertRaises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
@@ -663,13 +663,13 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
             checker.check_model(self.model_filename)
 
     def test_check_model_relative(self) -> None:
-        """We only test the model validation as onnxruntime uses this to load the model."""
+        """More relative path test."""
         self.model_filename = self.create_test_model("..\\test\\..\\file.bin")
         with self.assertRaises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
     def test_check_model_absolute(self) -> None:
-        """We only test the model validation as onnxruntime uses this to load the model."""
+        """ONNX checker disallows using absolute path as location in external tensor."""
         self.model_filename = self.create_test_model("C:/file.bin")
         with self.assertRaises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
