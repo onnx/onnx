@@ -140,7 +140,6 @@ bool BuildContextDependentFunctionBodyDequantizeLinear(
   if (!input_type->has_tensor_type()) {
     fail_schema("Invalid x input type. Expected a tensor type");
   }
-  auto input_elt_type = input_type->tensor_type().elem_type();
   auto output_elt_type = TensorProto::FLOAT;
 
   bool is_per_axis = ctx.getInputType(1)->tensor_type().shape().dim().size() == 1
