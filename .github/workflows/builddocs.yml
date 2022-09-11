@@ -19,7 +19,9 @@ jobs:
 
       - name: Build Docs
 #       run: cd docs/docsgen && make html
-        run: echo "Hello World" > docs/docsgen/build/html/index.html
+        run: |
+            mkdir -p docs/docsgen/build/html
+            echo "Hello World" > docs/docsgen/build/html/index.html
 
       - name: Upload docs artifacts
         uses: actions/upload-pages-artifact@v1
