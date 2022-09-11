@@ -32,11 +32,21 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup Pages
         uses: actions/configure-pages@v2
+
+      - name: Install Dependencies
+        run: pip install -r docs/docsgen/source/requirements.txt
+
+      - name: Build Docs
+#       run: cd docs/docsgen && make html
+        run: |
+            mkdir -p docs/docsgen/build/html
+            echo "Hello World" > docs/docsgen/build/html/index.html   
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
-          path: '.'
+          path: 'docs/docsgen/build/html'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
