@@ -25,7 +25,7 @@ black . --color --diff --check
 echo -e "::endgroup::"
 
 echo -e "\n::group:: ===> check mypy"
-mypy . --no-site-packages
+mypy . --no-site-packages --ignore-missing-imports
 echo -e "::endgroup::"
 
 echo -e "\n::group:: ===> run clang-format"
