@@ -6,7 +6,7 @@ import unittest
 from typing import Any, List, Tuple
 
 import numpy as np  # type: ignore
-from paddle_bfloat import bfloat16
+from paddle_bfloat import bfloat16  # type: ignore
 
 from onnx import (
     AttributeProto,
