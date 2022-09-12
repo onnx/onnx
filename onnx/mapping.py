@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np  # type: ignore
-from bfloat16 import bfloat16  # type: ignore
+from paddle_bfloat import bfloat16  # type: ignore
 
 from onnx import OptionalProto, SequenceProto, TensorProto
 
