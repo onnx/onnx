@@ -21,7 +21,7 @@ import onnx.helper  # noqa
 import onnx.utils  # noqa
 import onnx.compose  # noqa
 
-import google.protobuf.message  # type: ignore
+import google.protobuf.message
 
 from typing import Union, IO, Optional, cast, TypeVar, Any
 

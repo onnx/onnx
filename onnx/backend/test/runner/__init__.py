@@ -28,7 +28,7 @@ from typing import (
 )
 from urllib.request import urlretrieve
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from onnx import ModelProto, NodeProto, TypeProto, numpy_helper
@@ -113,7 +113,7 @@ class Runner:
         return self
 
     def enable_report(self) -> Runner:
-        import pytest  # type: ignore
+        import pytest
 
         for category, items_map in self._test_items.items():
             for name, item in items_map.items():

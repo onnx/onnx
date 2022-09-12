@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-import collections.abc  # type: ignore
+import collections.abc
 import numbers
 import struct
 from cmath import isnan
@@ -16,8 +16,8 @@ from typing import (
     cast,
 )
 
-import google.protobuf.message  # type: ignore
-import numpy as np  # type: ignore
+import google.protobuf.message
+import numpy as np
 
 from onnx import (
     IR_VERSION,

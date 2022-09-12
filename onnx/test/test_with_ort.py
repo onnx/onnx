@@ -4,10 +4,10 @@
 
 
 def example_test_with_ort() -> None:
-    import numpy  # type: ignore
-    import numpy.random  # type: ignore
-    import onnxruntime as rt  # type: ignore
-    from onnxruntime.datasets import get_example  # type: ignore
+    import numpy
+    import numpy.random
+    import onnxruntime as rt
+    from onnxruntime.datasets import get_example
 
     import onnx
 

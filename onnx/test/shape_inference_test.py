@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx.shape_inference
 from onnx import (

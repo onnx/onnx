@@ -3,7 +3,7 @@
 import sys
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 import onnx.mapping

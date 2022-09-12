@@ -7,7 +7,7 @@ import unittest
 import uuid
 from typing import Any, List, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 import pytest  # type: ignore
 
 import onnx
