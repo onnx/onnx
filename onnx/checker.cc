@@ -16,6 +16,8 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#include <filesystem>
+
 #else // POSIX
 #include <sys/stat.h>
 #endif
@@ -126,9 +128,18 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        std::string relative_path = clean_relative_path(entry.value());
-        // Check that normalized relative path starts with "../" or "..\" on windows.
-        if (relative_path.rfind(".." + k_preferred_path_separator, 0) == 0) {
+#ifdef _WIN32
+        auto file_path = std::filesystem::path(utf8str_to_wstring(entry.value()));
+        if (file_path.is_absolute()) {
+          fail_check(
+              "Location of external TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be a relative path, but it is an absolute path: ",
+              entry.value());
+        }
+        auto relative_path = file_path.lexically_normal().make_preferred().wstring();
+        // Check that normalized relative path contains ".." on Windows.
+        if (relative_path.find(L"..", 0) != std::string::npos) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -138,7 +149,38 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               entry.value(),
               "' points outside the directory");
         }
-
+        std::wstring data_path = path_join(utf8str_to_wstring(ctx.get_model_dir()), relative_path);
+        struct _stat buff;
+        if (_wstat(data_path.c_str(), &buff) != 0) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be stored in ",
+              entry.value(),
+              ", but it doesn't exist or is not accessible.");
+        }
+#else // POSIX
+        if (entry.value().empty()) {
+          fail_check("Location of external TensorProto ( tensor name: ", tensor.name(), ") should not be empty.");
+        } else if (entry.value()[0] == '/') {
+          fail_check(
+              "Location of external TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be a relative path, but it is an absolute path: ",
+              entry.value());
+        }
+        std::string relative_path = clean_relative_path(entry.value());
+        // Check that normalized relative path contains ".." on POSIX
+        if (relative_path.find("..", 0) != std::string::npos) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be file inside the ",
+              ctx.get_model_dir(),
+              ", but the '",
+              entry.value(),
+              "' points outside the directory");
+        }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
         // use stat to check whether the file exists
         struct stat buffer;
@@ -150,9 +192,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               data_path,
               ", but it doesn't exist or is not accessible.");
         }
-#ifdef _WIN32
-#else // POSIX
-      //  Do not allow symlinks or directories.
+        // Do not allow symlinks or directories.
         if (!S_ISREG(buffer.st_mode)) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
