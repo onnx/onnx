@@ -363,15 +363,19 @@ def make_tensor(
     # Check number of vals specified equals tensor size
     expected_size = 1
     if raw:
-        # NumPy doesn't have BFLOAT16. TENSOR_TYPE_TO_NP_TYPE maps it to float32,
-        # which has the wrong itemsize.
-        if data_type == TensorProto.BFLOAT16:
-            expected_size = 2
-        else:
-            expected_size = np_dtype.itemsize
+        expected_size = np_dtype.itemsize
 
-    if type(vals) is np.ndarray and len(vals.shape) > 1:
+    if isinstance(vals, np.ndarray) and len(vals.shape) > 1:
         vals = vals.flatten()
+
+    if not raw and np_dtype.itemsize < 4:
+        raw = True
+        expected_size = np_dtype.itemsize
+        if isinstance(vals, np.ndarray):
+            vals = vals.tobytes()
+        else:
+            vals = np.array(vals).astype(np_dtype).tobytes()
+
     for d in dims:
         expected_size *= d
 

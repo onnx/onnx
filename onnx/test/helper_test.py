@@ -6,6 +6,7 @@ import unittest
 from typing import Any, List, Tuple
 
 import numpy as np  # type: ignore
+from paddle_bfloat import bfloat16
 
 from onnx import (
     AttributeProto,
@@ -481,7 +482,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
                 [0.0998535081744, 0.1],
                 [np.nan, np.inf],
             ],
-            dtype=np.float32,
+            dtype=bfloat16,
         )
         np_results = np.array(
             [
@@ -510,7 +511,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
                     struct.unpack("!f", bytes.fromhex("7F800000"))[0],
                 ],  # inf
             ]
-        )
+        ).astype(bfloat16)
 
         tensor = helper.make_tensor(
             name="test",
@@ -519,7 +520,10 @@ class TestHelperTensorFunctions(unittest.TestCase):
             vals=np_array,
         )
         self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
+        self.assertEqual(np_results.dtype, bfloat16)
+        conv = numpy_helper.to_array(tensor)
+        self.assertEqual(conv.dtype, bfloat16)
+        np.testing.assert_equal(np_results.tolist(), conv.tolist())
 
     def test_make_bfloat16_tensor_raw(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
@@ -531,7 +535,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
                 [0.0998535081744, 0.1],
                 [np.nan, np.inf],
             ],
-            dtype=np.float32,
+            dtype=bfloat16,
         )
         np_results = np.array(
             [
@@ -545,23 +549,21 @@ class TestHelperTensorFunctions(unittest.TestCase):
                 ],  # 4.0
                 [
                     struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],  # truncated
-                    struct.unpack("!f", bytes.fromhex("3DCB0000"))[0],
+                    struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],
                 ],  # truncated
                 [
                     struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],  # truncated
-                    struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],
+                    struct.unpack("!f", bytes.fromhex("3DCD0000"))[0],
                 ],  # truncated
                 [
                     struct.unpack("!f", bytes.fromhex("7FC00000"))[0],  # NaN
                     struct.unpack("!f", bytes.fromhex("7F800000"))[0],
                 ],  # inf
             ]
-        )
+        ).astype(bfloat16)
 
-        # write out 16-bit of fp32 to create bf16 using truncation, no rounding
-        truncate = lambda x: x >> 16  # noqa: E731
-        values_as_ints = np_array.astype(np.float32).view(np.uint32).flatten()
-        packed_values = truncate(values_as_ints).astype(np.uint16).tobytes()
+        values_as_ints = np_array.view(np.uint16).flatten()
+        packed_values = values_as_ints.tobytes()
         tensor = helper.make_tensor(
             name="test",
             data_type=TensorProto.BFLOAT16,
@@ -570,7 +572,10 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
+        self.assertEqual(np_results.dtype, bfloat16)
+        conv = numpy_helper.to_array(tensor)
+        self.assertEqual(conv.dtype, bfloat16)
+        np.testing.assert_equal(np_results.tolist(), conv.tolist())
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]

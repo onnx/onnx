@@ -60,13 +60,6 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)
     else:
         # float16 is stored as int32 (uint16 type); Need view to get the original value
-        if tensor_dtype == TensorProto.FLOAT16:
-            return (
-                np.asarray(tensor.int32_data, dtype=np.uint16)
-                .reshape(dims)
-                .view(np.float16)
-            )
-
         data = getattr(tensor, storage_field)
         if (
             tensor_dtype == TensorProto.COMPLEX64
