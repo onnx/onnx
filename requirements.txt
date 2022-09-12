@@ -1,4 +1,4 @@
-numpy >= 1.16.6 # TODO: update once TensorFlow 2.6 is end of life
+numpy>=1.22
 paddle-bfloat
 protobuf >= 3.12.2, <= 3.20.1
 typing-extensions >= 3.6.2.1
