@@ -116,8 +116,8 @@ class Extractor:
 
         initializer = [self.wmap[t] for t in self.wmap.keys() if t in all_tensors_name]
         value_info = [self.vimap[t] for t in self.vimap.keys() if t in all_tensors_name]
-        assert(len(self.graph.sparse_initializer) == 0)
-        assert(len(self.graph.quantization_annotation) == 0)
+        assert len(self.graph.sparse_initializer) == 0
+        assert len(self.graph.quantization_annotation) == 0
         return (initializer, value_info)
 
     def _make_model(

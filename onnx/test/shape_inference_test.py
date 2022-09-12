@@ -1212,7 +1212,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
                 layout=1, direction=direction)],
             [])
-        if(direction == 'bidirectional'):
+        if direction == 'bidirectional':
             num_directions = 2
         else:
             num_directions = 1
