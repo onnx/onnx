@@ -1,8 +1,8 @@
 import unittest
 
 import numpy as np  # type: ignore
-from paddle_bfloat import bfloat16  # type: ignore
 from numpy.testing import assert_almost_equal  # type: ignore
+from paddle_bfloat import bfloat16  # type: ignore
 
 from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
 from onnx.numpy_helper import from_array, to_array
