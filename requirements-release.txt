@@ -3,6 +3,7 @@ protobuf == 3.16.0
 pytest
 nbval
 ipython
+paddle-bfloat
 wheel
 setuptools
 twine

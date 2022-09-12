@@ -1,6 +1,7 @@
 numpy
 protobuf
 typing-extensions
+paddle-bfloat
 pytest
 pytest-cov
 nbval
