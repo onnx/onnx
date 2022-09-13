@@ -14,7 +14,7 @@
 
 # Proposing and submitting a new operator or function to ONNX <a name="new_operator_or_function"></a>
 
-Operators are the basic building blocks that define ONNX model. With a rich set of operators, ONNX can describe most DNN and ML models from various frameworks. Functions allow for composing complex operators from more primitive operators. The ONNX specification includes a core set of operators that enable many models. It is a non-goal to add all possible operators, however more operators are added as needed to cover evolving needs.
+Operators are the basic building blocks used to define ONNX models. With a rich set of operators, ONNX can describe most DNN and ML models from various frameworks. Functions enable expressing complex operators in terms of more primitive operators. The ONNX specification includes a core set of operators that enable many models. It is a non-goal to add all possible operators, however more operators are added as needed to cover evolving needs.
 
 In this document, we describe the process of accepting a new proposed operator and how to properly submit a new operator as part of ONNX standard. The goal is to improve on what we currently have based on our experience, learning and feedbacks we gathered from the community.
 
@@ -26,7 +26,7 @@ In this document, we describe the process of accepting a new proposed operator a
 
 ## Step 1: Proposing a new operator/function <a name="step1_new_operator_or_function"></a>
 In order to propose a new operator/function, the following is needed:
-1. If the operator can be composed by other ONNX operators, then it should be a function and not an operator (we have a function in ONNX : MeanVarianceNormalization).
+1. If the operator can be expressed in terms of other ONNX operators, then it should be a function and not an operator (we have a function in ONNX : MeanVarianceNormalization).
 2. If the operators can be split to new primitives, propose those primitives instead and make the operator a function.
 3. Based on a model. This will help us understand the usage and that it solves an actual problem. For the case of the model being private or IP and can't be shared, the operator doesn't belong to the standard and should be implemented as custom OP.
 4. The operator needs to be implemented by at-least one (well-known) framework. This help us to understand the actual behavior of the operator and its usage.
@@ -34,6 +34,11 @@ In order to propose a new operator/function, the following is needed:
     1. If the operator is available in numpy, prefer numpy semantics.
     2. If the operator is available in more than one frameworks, make sure that your design is general and cover those frameworks.
 6. Prefer attributes over inputs.
+7. The operator should not be made more complex than is required by the use-cases. However, the operator
+should be made as general as possible, as long as it does not make the implementation more complex.
+This requires carefully balancing generality and complexity. For example, generalizing from 3-D tensors to
+N-D tensors is straight-forward (implementation-wise) for some operators, but complex for other operators.
+The choice in such cases will be made based on the complexity of such a generalization.
 
 ## Step 2: Submit PR <a name="step2_new_operator_or_function"></a>
 Once the criteria of proposing new operator/function has been satisfied, you will need to submit a PR for the new operator/function. Here the expectation of what the PR should include. The reviewer is expected to verify the completeness of the PR before signoff.
@@ -49,7 +54,7 @@ Once the criteria of proposing new operator/function has been satisfied, you wil
     1. The testing examples will be extracted to the doc.
     2. We also generate binary data for it.
     3. Example: [onnx/backend/test/case/node/abs.py](/onnx/backend/test/case/node/abs.py)
-5. Add at least one automatic upgrade test for your operator in [onnx/test/automatic_upgrade_test.py](/onnx/test/automatic_upgrade_test.py) using `_test_op_upgrade`. These tests create a given operator at a given opset version (usually the version the operator was introduced in) and test that the version converter is able to convert them to the highest available version. So for a new operator `_test_op_upgrade` will not test anything, but as soon as the operator gets updated in a future opset the test will autoamtically become nontrivial.
+5. Add at least one automatic upgrade test for your operator in [onnx/test/automatic_upgrade_test.py](/onnx/test/automatic_upgrade_test.py) using `_test_op_upgrade`. These tests create a given operator at a given opset version (usually the version the operator was introduced in) and test that the version converter is able to convert them to the highest available version. So for a new operator `_test_op_upgrade` will not test anything, but as soon as the operator gets updated in a future opset the test will automatically become nontrivial.
 6. Update the documentation and generate the test data.
     1. Running [the script](/tools/update_doc.sh)
 to update the doc and generate the test data.

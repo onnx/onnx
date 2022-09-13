@@ -34,7 +34,10 @@ from onnx root dir should work.
 [Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh these docs, run the following commands from the repo root and commit the results. Note `ONNX_ML=0` updates Operators.md whereas `ONNX_ML=1` updates Operators-ml.md:
 
 ```
+# Windows
 set ONNX_ML=0
+# UNIX
+# export ONNX_ML=0
 pip install setup.py
 python onnx/defs/gen_doc.py
 ```
@@ -44,6 +47,18 @@ python onnx/defs/gen_doc.py
 ONNX is an open standard, and we encourage developers to contribute high
 quality operators to ONNX specification.
 Before proposing a new operator, please read [the tutorial](AddNewOp.md).
+
+# Code style
+
+We use flake8, mypy, and clang-format for checking code format.
+*Note: You'll find the versions of these tools in `setup.py`.*
+You can run these checks by:
+
+```
+pip install -e .[lint]
+
+./tools/style.sh
+```
 
 # Testing
 
@@ -71,14 +86,28 @@ python onnx\backend\test\stat_coverage.py
 
 Some functionalities are tested with googletest. Those tests are listed in `test/cpp`, and include tests for shape inference, data propagation, parser, and others.
 
-To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e .` and then run `.setuptools-cmake-build/onnx_gtests`.
+To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e .`.
+
+### Linux and MacOS
+The cpp tests require dynamically linking to built libraries.
+
+```bash
+export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+.setuptools-cmake-build/onnx_gtests
+```
+
+### Windows
+```bat
+# If you set DEBUG=1, use `.setuptools-cmake-build\Debug\onnx_gtests.exe` instead
+.setuptools-cmake-build\Release\onnx_gtests.exe
+```
 
 # Static typing (mypy)
 
 We use [mypy](http://mypy-lang.org/) to run static type checks on the onnx code base. To check that your code passes, you'll first need to install the mypy type checker. If you're using python 3, call from your onnx source folder:
 
 ```
-pip install -e .[mypy]
+pip install -e .[lint]
 ```
 
 *Note: You'll find the version we're currently using in `setup.py`.*
@@ -90,7 +119,7 @@ python setup.py typecheck
 ```
 # CI Pipelines
 
-Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipelines.md).
+Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipelines.md). Passing [Lint Python CI](../.github/workflows/lint.yaml) is not required but recommended.
 
 # Other developer documentation
 

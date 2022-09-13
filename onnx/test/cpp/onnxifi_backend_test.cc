@@ -5,8 +5,8 @@
 #include <iostream>
 
 #include "gtest/gtest.h"
-#include "onnx/onnxifi_loader.h"
 #include "onnx/onnxifi.h"
+#include "onnx/onnxifi_loader.h"
 
 #if defined(__APPLE__)
 #define ONNXIFI_DUMMY_LIBRARY "libonnxifi_dummy.dylib"
@@ -42,22 +42,17 @@ TEST(OnnxifiLoadTest, OnnxifiDummyBackend) {
   char infoValue[11] = "abc";
   size_t infoValueSize = 3;
 
-  EXPECT_EQ_OSS(dummy_backend.onnxGetBackendInfo(
-      backendID, infoType, infoValue, &infoValueSize));
+  EXPECT_EQ_OSS(dummy_backend.onnxGetBackendInfo(backendID, infoType, infoValue, &infoValueSize));
   EXPECT_EQ(infoValue[0], 0);
 
   // Testing onnxGetBackendCompatibility
   char onnxModel[] = "";
   size_t onnxModelSize = 0;
-  EXPECT_EQ_OSS(dummy_backend.onnxGetBackendCompatibility(
-      backendID, onnxModelSize, onnxModel));
+  EXPECT_EQ_OSS(dummy_backend.onnxGetBackendCompatibility(backendID, onnxModelSize, onnxModel));
 
   // Testing onnxInitBackend
-  const uint64_t backendProperties[] = {
-      ONNXIFI_BACKEND_PROPERTY_NONE
-  };
-  EXPECT_EQ_OSS(
-      dummy_backend.onnxInitBackend(backendID, backendProperties, &backend));
+  const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
+  EXPECT_EQ_OSS(dummy_backend.onnxInitBackend(backendID, backendProperties, &backend));
 
   // Testing onnxReleaseBackend
   EXPECT_EQ_OSS(dummy_backend.onnxReleaseBackend(backend));
@@ -77,25 +72,16 @@ TEST(OnnxifiLoadTest, OnnxifiDummyBackend) {
   // Testing onnxInitGraph
   uint32_t weightCount = 1;
   onnxTensorDescriptorV1 weightDescriptors;
-  const uint64_t graphProperties[] = {
-      ONNXIFI_GRAPH_PROPERTY_NONE
-  };
+  const uint64_t graphProperties[] = {ONNXIFI_GRAPH_PROPERTY_NONE};
   EXPECT_EQ_OSS(dummy_backend.onnxInitGraph(
-      backend,
-      graphProperties,
-      onnxModelSize,
-      onnxModel,
-      weightCount,
-      &weightDescriptors,
-      &graph));
+      backend, graphProperties, onnxModelSize, onnxModel, weightCount, &weightDescriptors, &graph));
 
   // Testing onnxSetGraphIO
   uint32_t inputsCount = 1;
   onnxTensorDescriptorV1 inputDescriptors;
   uint32_t outputsCount = 1;
   onnxTensorDescriptorV1 outputDescriptors;
-  EXPECT_EQ_OSS(dummy_backend.onnxSetGraphIO(
-      graph, inputsCount, &inputDescriptors, outputsCount, &outputDescriptors));
+  EXPECT_EQ_OSS(dummy_backend.onnxSetGraphIO(graph, inputsCount, &inputDescriptors, outputsCount, &outputDescriptors));
 
   // Testing onnxRunGraph
   onnxMemoryFenceV1 inputFence, outputFence;

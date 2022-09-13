@@ -20,7 +20,7 @@ void LoadProtoFromPath(const std::string proto_path, T& proto) {
   std::string data{std::istreambuf_iterator<char>{proto_stream}, std::istreambuf_iterator<char>{}};
   if (!ParseProtoFromBytes(&proto, data.c_str(), data.size())) {
     fail_check(
-    "Unable to parse proto from file: ", proto_path, ". Please check if it is a valid protobuf file of proto. ");
+        "Unable to parse proto from file: ", proto_path, ". Please check if it is a valid protobuf file of proto. ");
   }
 }
 } // namespace ONNX_NAMESPACE

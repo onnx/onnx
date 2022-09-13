@@ -1,9 +1,12 @@
-from typing import Text
+class InferenceError(Exception): ...
 
-
-class InferenceError(Exception):
-    ...
-
-def infer_shapes(b: bytes, check_type: bool, strict_mode: bool, data_prop: bool) -> bytes: ...
-
-def infer_shapes_path(model_path: Text, output_path: Text, check_type: bool, strict_mode: bool, data_prop: bool) -> None: ...
+def infer_shapes(
+    b: bytes, check_type: bool, strict_mode: bool, data_prop: bool
+) -> bytes: ...
+def infer_shapes_path(
+    model_path: str,
+    output_path: str,
+    check_type: bool,
+    strict_mode: bool,
+    data_prop: bool,
+) -> None: ...

@@ -126,7 +126,11 @@ class KeyWordMap {
     DOMAIN_KW,
     MODEL_VERSION,
     DOC_STRING,
-    METADATA_PROPS
+    METADATA_PROPS,
+    SEQ_TYPE,
+    MAP_TYPE,
+    OPTIONAL_TYPE,
+    SPARSE_TENSOR_TYPE
   };
 
   KeyWordMap() {
@@ -138,6 +142,10 @@ class KeyWordMap {
     map_["model_version"] = KeyWord::MODEL_VERSION;
     map_["doc_string"] = KeyWord::DOC_STRING;
     map_["metadata_props"] = KeyWord::METADATA_PROPS;
+    map_["seq"] = KeyWord::SEQ_TYPE;
+    map_["map"] = KeyWord::MAP_TYPE;
+    map_["optional"] = KeyWord::OPTIONAL_TYPE;
+    map_["sparse_tensor"] = KeyWord::SPARSE_TENSOR_TYPE;
   }
 
   static const std::unordered_map<std::string, KeyWord>& Instance() {
@@ -150,6 +158,15 @@ class KeyWordMap {
     if (it != Instance().end())
       return it->second;
     return KeyWord::NONE;
+  }
+
+  static const std::string& ToString(KeyWord kw) {
+    static std::string undefined("undefined");
+    for (const auto& pair : Instance()) {
+      if (pair.second == kw)
+        return pair.first;
+    }
+    return undefined;
   }
 
  private:
@@ -197,7 +214,7 @@ class ParserBase {
     const char* context_start = (p > start_) ? (p + 1) : start_;
     for (p = context_start; (p < end_) && (*p != '\n'); ++p)
       ;
-    return std::string(context_start, p-context_start);
+    return std::string(context_start, p - context_start);
   }
 
   template <typename... Args>
@@ -255,49 +272,7 @@ class ParserBase {
     std::string value;
   };
 
-  Status Parse(Literal& result) {
-    bool decimal_point = false;
-    auto nextch = NextChar();
-    auto from = next_;
-    if (nextch == '"') {
-      ++next_;
-      // TODO: Handle escape characters
-      while ((next_ < end_) && (*next_ != '"')) {
-        ++next_;
-      }
-      ++next_;
-      result.type = LiteralType::STRING_LITERAL;
-      result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
-    } else if ((isdigit(nextch) || (nextch == '-'))) {
-      ++next_;
-
-      while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
-        if (*next_ == '.') {
-          if (decimal_point)
-            break; // Only one decimal point allowed in numeric literal
-          decimal_point = true;
-        }
-        ++next_;
-      }
-
-      if (next_ == from)
-        return ParseError("Value expected but not found.");
-
-      // Optional exponent syntax: (e|E)(+|-)?[0-9]+
-      if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
-        decimal_point = true; // treat as float-literal
-        ++next_;
-        if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
-          ++next_;
-        while ((next_ < end_) && (isdigit(*next_)))
-          ++next_;
-      }
-
-      result.value = std::string(from, next_ - from);
-      result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
-    }
-    return Status::OK();
-  }
+  Status Parse(Literal& result);
 
   Status Parse(int64_t& val) {
     Literal literal;

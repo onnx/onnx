@@ -4,7 +4,7 @@ trigger:
 jobs:
 - job: 'Test'
   pool:
-    vmImage: 'macOS-10.15'
+    vmImage: 'macOS-11'
   strategy:
     matrix:
       py39:
@@ -63,14 +63,6 @@ jobs:
     displayName: 'Install dependencies and ONNX'
 
   - script: |
-      # lint python code
-      python -m pip install -q flake8
-      flake8
-      if [ $? -ne 0 ]; then
-        echo "flake8 returned failures"
-        exit 1
-      fi
-
       # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
@@ -107,6 +99,14 @@ jobs:
       ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
       if [ $? -ne 0 ]; then
         echo "onnxifi_test_driver_gtests failed"
+        exit 1
+      fi
+
+      python onnx/backend/test/cmd_tools.py generate-data
+      git status
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+      if [ $? -ne 0 ]; then
+        echo "git diff for test generation returned failures. Please check updated node test files"
         exit 1
       fi
 

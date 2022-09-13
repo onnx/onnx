@@ -2,9 +2,10 @@
 
 <p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/ONNX_logo_main.png" /></p>
 
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/7?label=Linux&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=main)
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/5?label=Windows&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)
-[![Build Status](https://img.shields.io/azure-devops/build/onnx-pipelines/onnx/6?label=MacOS&logo=Azure-Pipelines)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=main)
+
+[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Windows-CI?branchName=main)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)
+[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Linux-CI?branchName=main)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=main)
+[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/MacOS-CI?branchName=main)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=main)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
@@ -29,9 +30,6 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Graph Optimization](https://github.com/onnx/optimizer)
 * [Opset Version Conversion](docs/VersionConverter.md)
 
-# NOTICE: ONNX now uses main branch as default branch
-Here are the [steps](https://github.com/onnx/onnx/wiki/How-to-migrate-to-main-branch-in-local-repo) from ONNX wiki for migrating to main branch in local repo.
-
 # Contribute
 ONNX is a [community project](community/readme.md). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [Special Interest Groups](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
 
@@ -41,30 +39,17 @@ If you think some operator should be added to ONNX specification, please read
 [this document](docs/AddNewOp.md).
 
 # Discuss
-We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://slack.lfai.foundation/) for more real-time discussion
+We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-o65errpw-gMTbwNr7FnNbVXNVFkmyNA) to join the group) for more real-time discussion.
 
 # Follow Us
 Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
 
 
-
-
-
-
 # Installation
-
-## Prerequisites
-
-```
-numpy >= 1.16.6
-protobuf >= 3.12.2
-typing-extensions >= 3.6.2.1
-```
 
 ## Official Python packages
 ONNX released packages are published in PyPi.
 ```
-pip install numpy protobuf==3.16.0
 pip install onnx
 ```
 
@@ -74,15 +59,14 @@ pip install onnx
 ## Conda packages
 A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
 ```
-conda install -c conda-forge numpy protobuf==3.16.0 libprotobuf=3.16.0
 conda install -c conda-forge onnx
 ```
-
-You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-dev) for a Linux-based installation without having to worry about dependency versioning.
 
 
 ## Build ONNX from Source
 Before building from source uninstall any existing versions of onnx `pip uninstall onnx`.
+
+c++17 or higher C++ compiler version is required to build ONNX from source on Windows. For other platforms, please use C++11 or higher versions.
 
 Generally speaking, you need to install [protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) before proceeding forward. Then depending on how you installed protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF".  For example, you may need to run the following command:
 
@@ -135,67 +119,65 @@ git submodule update --init --recursive
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
+
 ### Linux
 
-First, you need to install protobuf.
+First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.0.0. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
-Ubuntu users: the quickest way to install protobuf is to run
-
+Ubuntu 18.04 (and newer) users may choose to install protobuf via
 ```bash
 apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler
 ```
+In this case, it is required to add `-DONNX_USE_PROTOBUF_SHARED_LIBS=ON` to CMAKE_ARGS in the ONNX build step.
 
-Then you can build ONNX as:
-```
-export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-git clone --recursive https://github.com/onnx/onnx.git
-cd onnx
-# prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
-```
+A more general way is to build and install it from source. See the instructions below for more details.
 
-Otherwise, you may need to install it from source. You can use the following commands to do it:
+<details>
+  <summary> Installing Protobuf from source </summary>
 
-Debian/Ubuntu:
-```
-git clone https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git checkout v3.16.0
-git submodule update --init --recursive
-mkdir build_source && cd build_source
-cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-make install
-```
+  Debian/Ubuntu:
+  ```bash
+    git clone https://github.com/protocolbuffers/protobuf.git
+    cd protobuf
+    git checkout v3.16.0
+    git submodule update --init --recursive
+    mkdir build_source && cd build_source
+    cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
+    make install
+  ```
 
-CentOS/RHEL/Fedora:
-```
-git clone https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git checkout v3.16.0
-git submodule update --init --recursive
-mkdir build_source && cd build_source
-cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-make install
-```
+  CentOS/RHEL/Fedora:
+  ```bash
+    git clone https://github.com/protocolbuffers/protobuf.git
+    cd protobuf
+    git checkout v3.16.0
+    git submodule update --init --recursive
+    mkdir build_source && cd build_source
+    cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
+    make install
+  ```
 
-Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
+  Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
 
-Once build is successful, update PATH to include protobuf paths.
+  Once build is successful, update PATH to include protobuf paths.
+
+</details>
+
 
 Then you can build ONNX as:
 ```
 git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
-# prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+# Optional: prefer lite proto
+export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
 
-* **Mac**
+### Mac
+
 ```
 export NUM_CORES=`sysctl -n hw.ncpu`
 brew update
@@ -215,7 +197,7 @@ Then you can build ONNX as:
 ```
 git clone --recursive https://github.com/onnx/onnx.git
 cd onnx
-# prefer lite proto
+# Optional: prefer lite proto
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
@@ -257,7 +239,9 @@ For full list refer to CMakeLists.txt
 ## Common Errors
 * Note: the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
 
-* Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
+* If you run into any issues while building Protobuf as a static library, please ensure that shared Protobuf libraries, like libprotobuf, are not installed on your device or in the conda environment. If these shared libraries exist, either remove them to build Protobuf from source as a static library, or skip the Protobuf build from source to use the shared version directly.
+
+* If you run into any issues while building ONNX from source, and your error message reads, "Could not find pythonXX.lib", ensure that you have consistent Python versions for common commands, such as `python` and `pip`. Clean all existing build files and rebuild ONNX again.
 
 # Testing
 

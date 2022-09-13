@@ -114,6 +114,18 @@ Name|Type|Format|Description
 model_author|string|A comma-separated list of names.|The personal name of the author(s) of the model, and/or their organizations.
 model_license|string|Name or URL.|The well-known name or URL of the license under which the model is made available.
 
+### Operator Set Identifiers
+
+Each operator set is uniquely identified by a (domain, version) pair.
+
+Name|Type|Description
+|---|---|---|
+domain|string|The domain of the operator set being identified.
+version|int64|The version of the operator set being identified. Same as 'opset_version' in the operator set.
+
+The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published.
+
+Operator sets other than the default operator set MUST specify a domain and SHOULD use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
 ### Operator Sets
 
@@ -148,7 +160,7 @@ The properties of an operator definition are:
 
 Name|Type|Description
 |---|---|---|
-op_type|string|The name of the operator, as used in graph nodes. MUST be unique within the operator set’s domain.
+op_type|string|The name of the operator (case sensitive), as used in graph nodes. MUST be unique within the operator set’s domain.
 since_version|int64|The version of the operator set when this operator was introduced.
 status|OperatorStatus|One of ‘EXPERIMENTAL’ or ‘STABLE.’
 doc_string|string|A human-readable documentation string for this operator. Markdown is allowed.
@@ -158,6 +170,41 @@ The version value MUST be the same value as the operator set version when the op
 The ‘status’ property indicates whether the syntax, semantics, or presence of the operator is in an experimental or stable stage. Once an operator is published as STABLE, it’s syntax and semantics MUST NOT change in subsequent versions of the operator set.
 
 There are two distinct ways to pass information to operators – inputs and attributes. Inputs represent graph inputs or values computed elsewhere in the graph, while attributes are used for values that are constants in the graph. This distinction may be highly relevant to achieving good performance for some implementations, while completely irrelevant to others.
+
+### Functions
+
+A _function_ may be thought of as an operator combined with an implementation of the operator using
+other, more primitive, ops, referred to as the _function body_. The function body consists of a
+topologically sorted list of nodes that form a graph. Thus, a function combines aspects of both
+an operator as well a graph (described below).
+
+Each function contained in a Model (also referred to as a model-local function) serves
+as a default or fallback implementation of the corresponding operator. A runtime, however,
+may choose to use an alternative implementation of the operator (usually as an optimized kernel).
+As such, the unique name of a function is significant as it is implicitly associated with a
+semantic specification.
+
+A serialized function (a _FunctionProto_) has the following properties:
+
+|Name|Type|Description|
+|---|---|---|
+name|string|The name of the function
+domain|string|The domain to which this function belongs
+doc_string|string|Human-readable documentation for this function. Markdown is allowed.
+attribute|string[]|The attribute parameters of the function
+input|string[]|The input parameters of the function
+output|string[]|The output parameters of the function.
+node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
+|opset_import|OperatorSetId|A collection of operator set identifiers used by the function implementation.
+
+The name and domain serve to identify the operator uniquely. An opset version is not explicitly
+identified in a FunctionProto, but it is implicitly determined by the opset version of the domain
+included in the model.
+
+The input, output, and attribute constitute the signature part of the operator. No type information
+is explicitly included in the signature.
+
+The opset_import and node fields describe the implementation of the function.
 
 ### Graphs
 
@@ -280,8 +327,11 @@ ints|int64[]|A list of 64-bit integer values.
 strings|byte[][]|A list of UTF-8 strings.
 tensors|Tensor[]|A list of tensor values.
 graphs|Graph[]|A list of graphs.
+ref_attr_name|string|The name of a parent function's attribute.
 
 The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
+
+In case ‘ref_attr_name’ is set, this attribute does not contain data, and instead it's a reference to the parent function's attribute of the given name. Can only be used within the function body.
 
 
 #### Variadic Inputs and Outputs

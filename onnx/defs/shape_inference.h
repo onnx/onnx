@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <functional>
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
-#include <functional>
 
 namespace ONNX_NAMESPACE {
 
@@ -23,20 +23,18 @@ struct ShapeInferenceOptions {
   // Enables data propagation for limited operators
   // to perform shape computation
   bool enable_data_propagation;
-  ShapeInferenceOptions(bool check_type_val = false,
-    int strict_mode_val = 0,bool data_prop_val = false):
-    check_type(check_type_val), error_mode(strict_mode_val),
-    enable_data_propagation(data_prop_val) {};
+  ShapeInferenceOptions(bool check_type_val = false, int strict_mode_val = 0, bool data_prop_val = false)
+      : check_type(check_type_val), error_mode(strict_mode_val), enable_data_propagation(data_prop_val){};
 };
 
 // Maintains a SymbolTable for symbolic shape inference
 class SymbolTable {
  public:
-    // Adds existing symbols from a main graph or subgraph
-    virtual void addFromGraph(const GraphProto& g) = 0;
-    // Creates a new symbol which is not duplicate as any existing one
-    virtual std::string createNew(const std::string& symbol_prefix) = 0;
-    virtual ~SymbolTable() = default;
+  // Adds existing symbols from a main graph or subgraph
+  virtual void addFromGraph(const GraphProto& g) = 0;
+  // Creates a new symbol which is not duplicate as any existing one
+  virtual std::string createNew(const std::string& symbol_prefix) = 0;
+  virtual ~SymbolTable() = default;
 };
 
 class GraphInferencer {
@@ -82,6 +80,15 @@ struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
+  virtual bool hasInput(size_t index) const {
+    // The default implementation below is used for backward-compatibility
+    // for implementations of InferenceContext that don't provide an explicit
+    // implementation. This works for normal usage, but may be imprecise in
+    // the edge-case where an input is supplied but has no known type.
+    // However, inference-methods work only under the assumption that the
+    // input-types of all inputs are known.
+    return ((index < getNumInputs()) && (getInputType(index) != nullptr));
+  }
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
@@ -119,10 +126,10 @@ using DataPropagationFunction = std::function<void(DataPropagationContext&)>;
 
 // This no-op inference function is used for operators without an
 // inference implementation.
-inline void dummyInferenceFunction(InferenceContext&) {};
+inline void dummyInferenceFunction(InferenceContext&){};
 
 // This no-op data propagation function is used for operators without a defined data propagator
-inline void dummyDataPropagationFunction(DataPropagationContext&) {};
+inline void dummyDataPropagationFunction(DataPropagationContext&){};
 
 template <typename T>
 inline bool getRepeatedAttribute(InferenceContext& ctx, std::string attr_name, std::vector<T>& values) {
@@ -311,6 +318,24 @@ inline const TensorShapeProto& getInputShape(InferenceContext& ctx, size_t n) {
   }
 }
 
+inline const TensorShapeProto* getOptionalInputShape(InferenceContext& ctx, size_t n) {
+  const auto* input_type = ctx.getInputType(n);
+
+  if (input_type == nullptr) {
+    return nullptr;
+  }
+
+  const auto value_case = input_type->value_case();
+  if (value_case != TypeProto::kTensorType && value_case != TypeProto::kSparseTensorType) {
+    fail_type_inference("Attribute expected to have tensor or sparse tensor type");
+  }
+  if (value_case == TypeProto::kTensorType) {
+    return &input_type->tensor_type().shape();
+  } else {
+    return &input_type->sparse_tensor_type().shape();
+  }
+}
+
 // Caller must make sure fromDimIndex is strictly less than shape.dim_size()
 inline void appendSingleDimCopiedFromInputTypeToOutputType(
     InferenceContext& ctx,
@@ -352,7 +377,7 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
   }
 
   if (TypeProto::kTensorType == from_type_case || TypeProto::kSparseTensorType == from_type_case) {
-    // If input shape is "uknown", the corresponding should be "unknown" too.
+    // If input shape is "unknown", the corresponding should be "unknown" too.
     // The way to make output shape unknown is not to assign it any value.
     if (hasShape(*from_type)) {
       if (TypeProto::kTensorType == from_type_case) {
@@ -502,6 +527,12 @@ inline void updateOutputShape(
     *dim = d;
   }
 }
+
+// Get shape input by first checking initializer and then propagated symbolic data.
+// If neither is available, try rank inference.
+// When one of above succeeds, `true` is stored in `found`.
+// Otherwise, `false` is stored, which means that returned TensorShapeProto does not make sense.
+TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& found);
 
 // Infer shape of an output from the value of a specified attribute, which is
 // expected to be a list of integers specifying a valid shape.

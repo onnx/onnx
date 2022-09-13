@@ -1,15 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
-
 import onnx
 import onnx.onnx_cpp2py_export.parser as C
-from typing import Text
 
 
 class ParseError(Exception):
     pass
 
 
-def parse_model(model_text: Text) -> onnx.ModelProto:
+def parse_model(model_text: str) -> onnx.ModelProto:
     """Parse a string to build a ModelProto.
 
     Arguments:
@@ -24,7 +22,7 @@ def parse_model(model_text: Text) -> onnx.ModelProto:
         raise ParseError(msg)
 
 
-def parse_graph(graph_text: Text) -> onnx.GraphProto:
+def parse_graph(graph_text: str) -> onnx.GraphProto:
     """Parse a string to build a GraphProto.
 
     Arguments:
@@ -37,5 +35,22 @@ def parse_graph(graph_text: Text) -> onnx.GraphProto:
         G = onnx.GraphProto()
         G.ParseFromString(graph_proto_str)
         return G
+    else:
+        raise ParseError(msg)
+
+
+def parse_function(function_text: str) -> onnx.FunctionProto:
+    """Parse a string to build a FunctionProto.
+
+    Arguments:
+        function_text (string): formatted string
+    Returns:
+        FunctionProto
+    """
+    (success, msg, function_proto_str) = C.parse_function(function_text)
+    if success:
+        F = onnx.FunctionProto()
+        F.ParseFromString(function_proto_str)
+        return F
     else:
         raise ParseError(msg)

@@ -7,8 +7,8 @@
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
-#include "onnx/defs/schema.h"
 #include "onnx/defs/parser.h"
+#include "onnx/defs/schema.h"
 #include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/shape_inference/implementation.h"
@@ -17,6 +17,19 @@ namespace ONNX_NAMESPACE {
 namespace Test {
 using namespace checker;
 using TENSOR_TYPES_MAP = std::unordered_map<std::string, std::vector<std::string>>;
+
+void GetFunctionProtoOpsetImport(
+    const OpSchema& op,
+    const FunctionProto* function_proto,
+    std::unordered_map<std::string, int>& op_set) {
+  if (function_proto->opset_import_size() > 0) {
+    for (const auto& opset_import : function_proto->opset_import()) {
+      op_set.insert({opset_import.domain(), opset_import.version()});
+    }
+  } else {
+    op_set.insert({op.domain(), op.since_version()});
+  }
+}
 
 void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* function_proto, int& counter) {
   // This is a simple partial type-checker for a function-body.
@@ -39,9 +52,20 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
     }
   }
 
+  std::unordered_map<std::string, int> op_set;
+  GetFunctionProtoOpsetImport(function_op, function_proto, op_set);
+
   for (auto& node : function_proto->node()) {
     std::string op_type = node.op_type();
-    const OpSchema* schema = OpSchemaRegistry::Schema(op_type, function_op.since_version(), function_op.domain());
+    std::unordered_map<std::string, int>::const_iterator it = op_set.find(node.domain());
+    if (it == op_set.end()) {
+      fail_check(
+          "Op " + op_type + " of domain " + node.domain() + " used in " + function_op.Name() +
+          " function body does not has a opset import.");
+    }
+
+    int opset_version = it->second;
+    const OpSchema* schema = OpSchemaRegistry::Schema(op_type, opset_version, node.domain());
 
     // Check that the types of actual inputs, if known, are legal as per schema
     // of called op:
@@ -85,17 +109,10 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int
   }
   CheckerContext ctx;
   std::unordered_map<std::string, int> op_set;
+  GetFunctionProtoOpsetImport(op, function_proto, op_set);
   auto version_range = OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(op.domain());
   if (op.since_version() > version_range.second || op.since_version() < version_range.first) {
     fail_check("Invalid function version in function op '", op.Name(), "'");
-  }
-
-  if (function_proto->opset_import_size() > 0) {
-    for (const auto& opset_import : function_proto->opset_import()) {
-      op_set.insert({opset_import.domain(), opset_import.version()});
-    }
-  } else {
-    op_set.insert({op.domain(), op.since_version()});
   }
 
   ctx.set_opset_imports(op_set);

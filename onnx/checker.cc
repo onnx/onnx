@@ -8,6 +8,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
+#include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
 #include <fstream>
@@ -16,6 +17,8 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#include <filesystem>
+
 #else // POSIX
 #include <sys/stat.h>
 #endif
@@ -23,25 +26,25 @@
 namespace ONNX_NAMESPACE {
 namespace checker {
 
-#define enforce_has_field(proto, field)                                            \
-  do {                                                                             \
-    if (!proto.has_##field()) {                                                    \
-      fail_check("Field '", #field, "' of ", #proto, " is required but missing."); \
-    }                                                                              \
+#define enforce_has_field(proto, field)                                              \
+  do {                                                                               \
+    if (!proto.has_##field()) {                                                      \
+      fail_check("Field '", #field, "' of '", #proto, "' is required but missing."); \
+    }                                                                                \
   } while (0)
 
-#define enforce_has_repeated_field(proto, field)                            \
-  do {                                                                      \
-    if (!proto.field##_size()) {                                            \
-      fail_check("Repeated Field '", #field, "' is required but missing."); \
-    }                                                                       \
+#define enforce_has_repeated_field(proto, field)                                              \
+  do {                                                                                        \
+    if (!proto.field##_size()) {                                                              \
+      fail_check("Repeated Field '", #field, "' of '", #proto, "' is required but missing."); \
+    }                                                                                         \
   } while (0)
 
-#define enforce_non_empty_field(proto, field)                                          \
-  do {                                                                                 \
-    if (proto.field().empty()) {                                                       \
-      fail_check("Field '", #field, "' of ", #proto, " is required to be non-empty."); \
-    }                                                                                  \
+#define enforce_non_empty_field(proto, field)                                            \
+  do {                                                                                   \
+    if (proto.field().empty()) {                                                         \
+      fail_check("Field '", #field, "' of '", #proto, "' is required to be non-empty."); \
+    }                                                                                    \
   } while (0)
 
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
@@ -126,7 +129,60 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        std::string data_path = path_join(ctx.get_model_dir(), entry.value());
+#ifdef _WIN32
+        auto file_path = std::filesystem::path(utf8str_to_wstring(entry.value()));
+        if (file_path.is_absolute()) {
+          fail_check(
+              "Location of external TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be a relative path, but it is an absolute path: ",
+              entry.value());
+        }
+        auto relative_path = file_path.lexically_normal().make_preferred().wstring();
+        // Check that normalized relative path contains ".." on Windows.
+        if (relative_path.find(L"..", 0) != std::string::npos) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be file inside the ",
+              ctx.get_model_dir(),
+              ", but the '",
+              entry.value(),
+              "' points outside the directory");
+        }
+        std::wstring data_path = path_join(utf8str_to_wstring(ctx.get_model_dir()), relative_path);
+        struct _stat buff;
+        if (_wstat(data_path.c_str(), &buff) != 0) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be stored in ",
+              entry.value(),
+              ", but it doesn't exist or is not accessible.");
+        }
+#else // POSIX
+        if (entry.value().empty()) {
+          fail_check("Location of external TensorProto ( tensor name: ", tensor.name(), ") should not be empty.");
+        } else if (entry.value()[0] == '/') {
+          fail_check(
+              "Location of external TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be a relative path, but it is an absolute path: ",
+              entry.value());
+        }
+        std::string relative_path = clean_relative_path(entry.value());
+        // Check that normalized relative path contains ".." on POSIX
+        if (relative_path.find("..", 0) != std::string::npos) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be file inside the ",
+              ctx.get_model_dir(),
+              ", but the '",
+              entry.value(),
+              "' points outside the directory");
+        }
+        std::string data_path = path_join(ctx.get_model_dir(), relative_path);
         // use stat to check whether the file exists
         struct stat buffer;
         if (stat((data_path).c_str(), &buffer) != 0) {
@@ -137,6 +193,16 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               data_path,
               ", but it doesn't exist or is not accessible.");
         }
+        // Do not allow symlinks or directories.
+        if (!S_ISREG(buffer.st_mode)) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be stored in ",
+              data_path,
+              ", but it is not regular file.");
+        }
+#endif
       }
     }
     if (!has_location) {
@@ -758,28 +824,28 @@ void check_model_local_functions(
     const ModelProto& model,
     const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
-    // make a copy of model opset imports to maintain a main copy of opset imports across the model and 
-    // all model local functions to verify opset compatibility
-    std::unordered_map<std::string, int> model_opset_imports(ctx.get_opset_imports());
+  // make a copy of model opset imports to maintain a main copy of opset imports across the model and
+  // all model local functions to verify opset compatibility
+  std::unordered_map<std::string, int> model_opset_imports(ctx.get_opset_imports());
 
-    // merge the opset imports from every function in model_opset_imports
-    // only add the opset import if an entry for it does not exist in model_opset_imports
-    // if there is an entry then the compatibility will be checked later on in check_opset_compatibility
-    // called by check_function.
-    for (const auto& function_proto : model.functions()) {
-      for (const auto& opset_import : function_proto.opset_import()) {
-        if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
-          model_opset_imports[opset_import.domain()] = opset_import.version();
-        }
+  // merge the opset imports from every function in model_opset_imports
+  // only add the opset import if an entry for it does not exist in model_opset_imports
+  // if there is an entry then the compatibility will be checked later on in check_opset_compatibility
+  // called by check_function.
+  for (const auto& function_proto : model.functions()) {
+    for (const auto& opset_import : function_proto.opset_import()) {
+      if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
+        model_opset_imports[opset_import.domain()] = opset_import.version();
       }
     }
+  }
 
-    CheckerContext ctx_copy = ctx;
-    ctx_copy.set_opset_imports(model_opset_imports);
+  CheckerContext ctx_copy = ctx;
+  ctx_copy.set_opset_imports(model_opset_imports);
 
-    for (const auto& function_proto : model.functions()) {
-        check_function(function_proto, ctx_copy, parent_lex);
-    }
+  for (const auto& function_proto : model.functions()) {
+    check_function(function_proto, ctx_copy, parent_lex);
+  }
 }
 
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
@@ -912,7 +978,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   }
 }
 
-void check_model(const std::string& model_path) {
+void check_model(const std::string& model_path, bool full_check) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -924,11 +990,23 @@ void check_model(const std::string& model_path) {
   }
   ctx.set_model_dir(model_dir);
   check_model(model, ctx);
+
+  if (full_check) {
+    ShapeInferenceOptions options{true, 1, false};
+    ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
+  }
 }
 
-void check_model(const ModelProto& model) {
+void check_model(const ModelProto& model, bool full_check) {
   CheckerContext ctx;
   check_model(model, ctx);
+  if (full_check) {
+    ShapeInferenceOptions options{true, 1, false};
+    // Do not update the model in place by the check from shape inference
+    // because checker should not modify the original model
+    ModelProto copy = model;
+    ONNX_NAMESPACE::shape_inference::InferShapes(copy, ctx.get_schema_registry(), options);
+  }
 }
 
 std::set<std::string> experimental_ops = {

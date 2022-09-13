@@ -11,27 +11,22 @@ jobs:
         python.version: '3.9'
         onnx_ml: 1
         onnx_debug: 1
-        onnx_lite: 0
       py38:
         python.version: '3.8'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 1
       py38-ml:
         python.version: '3.8'
         onnx_ml: 1
         onnx_debug: 0
-        onnx_lite: 1
       py37:
         python.version: '3.7'
         onnx_ml: 0
         onnx_debug: 0
-        onnx_lite: 1
       py37-ml:
         python.version: '3.7'
         onnx_ml: 1
         onnx_debug: 0
-        onnx_lite: 1
     maxParallel: 6
 
   steps:
@@ -42,15 +37,15 @@ jobs:
 
   - script: |
       python -m pip -q install virtualenv
-      python -m virtualenv py$(python.version)
-      source py$(python.version)/bin/activate
+      python -m virtualenv venv
+      source venv/bin/activate
 
-      source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
-
+      sudo apt-get install libprotobuf-dev protobuf-compiler
       python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
+
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
       if [ '$(onnx_debug)' == '1' ]; then
@@ -59,22 +54,19 @@ jobs:
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
       fi
-      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
-      if [ '$(onnx_lite)' == '1' ]; then
-        export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
-      fi
+      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py --quiet install
     displayName: 'Install ONNX and dependencies'
 
   - script: |
-      source py$(python.version)/bin/activate
+      source venv/bin/activate
 
-      # lint python code
-      python -m pip install -q flake8
-      flake8 onnx
+      # style check (flake8, mypy, and clang-format)
+      python -m pip install -q -r requirements-dev.txt
+      bash tools/style.sh
       if [ $? -ne 0 ]; then
-        echo "flake8 returned failures"
+        echo "style check failed"
         exit 1
       fi
 
@@ -122,26 +114,18 @@ jobs:
         exit 1
       fi
 
-      # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
-      python -m pip uninstall -y onnx
-      python -m pip install -q --no-use-pep517 -e .[mypy]
-      python setup.py --quiet typecheck
-      if [ $? -ne 0 ]; then
-        echo "type check failed"
-        exit 1
-      fi
-      python -m pip uninstall -y onnx
-      rm -rf .setuptools-cmake-build
-      python -m pip install -q .
-
     displayName: 'Run ONNX tests'
 
   - script: |
-      source py$(python.version)/bin/activate
-      # onnx.checker all existing backend data
-      python workflow_scripts/test_generated_backend.py
-      # onnx.checker all generated backend data
+      source venv/bin/activate
       python onnx/backend/test/cmd_tools.py generate-data
-      python workflow_scripts/test_generated_backend.py
+      git status
+      # Skip *output_*.pb because NumPy functions might behave differently on different platforms
+      # Skip test_log's input.pb because it uses np.random, which might behave differently on different platforms
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+      if [ $? -ne 0 ]; then
+        echo "git diff for test generation returned failures. Please check updated node test files"
+        exit 1
+      fi
 
     displayName: Test backend test data

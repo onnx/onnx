@@ -2,39 +2,32 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-from collections import defaultdict
-import io
 import os
+from collections import defaultdict
+from typing import Any, Dict, List, NamedTuple, Sequence, Set, Tuple
 
 import numpy as np  # type: ignore
 
-from onnx import defs, FunctionProto, helper
-from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
-from onnx.backend.test.case import collect_snippets
+from onnx import defs, helper
 from onnx.backend.sample.ops import collect_sample_implementations
-from typing import Any, Text, Sequence, Dict, List, NamedTuple, Set, Tuple
-
+from onnx.backend.test.case import collect_snippets
+from onnx.defs import ONNX_ML_DOMAIN, OpSchema
 
 SNIPPETS = collect_snippets()
 SAMPLE_IMPLEMENTATIONS = collect_sample_implementations()
-ONNX_ML = not bool(os.getenv('ONNX_ML') == '0')
+ONNX_ML = not bool(os.getenv("ONNX_ML") == "0")
 
 
-ext = '-ml.md' if ONNX_ML else '.md'
+ext = "-ml.md" if ONNX_ML else ".md"
 
 
-def display_number(v: int) -> Text:
+def display_number(v: int) -> str:
     if defs.OpSchema.is_infinite(v):
-        return '&#8734;'
-    return Text(v)
+        return "&#8734;"
+    return str(v)
 
 
-def should_render_domain(domain: Text) -> bool:
+def should_render_domain(domain: str) -> bool:
     if domain == ONNX_ML_DOMAIN and not ONNX_ML:
         return False
     if ONNX_ML and domain != ONNX_ML_DOMAIN:
@@ -42,46 +35,52 @@ def should_render_domain(domain: Text) -> bool:
     return True
 
 
-def format_name_with_domain(domain: Text, schema_name: Text) -> Text:
+def format_name_with_domain(domain: str, schema_name: str) -> str:
     if domain:
-        return '{}.{}'.format(domain, schema_name)
+        return f"{domain}.{schema_name}"
     return schema_name
 
 
-def format_versions(versions: Sequence[OpSchema]) -> Text:
-    return '{}'.format(', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
-                                               v.since_version) for v in versions[::-1]))
+def format_versions(versions: Sequence[OpSchema]) -> str:
+    return "{}".format(
+        ", ".join(
+            display_version_link(
+                format_name_with_domain(v.domain, v.name), v.since_version
+            )
+            for v in versions[::-1]
+        )
+    )
 
 
-def display_attr_type(v: OpSchema.AttrType) -> Text:
+def display_attr_type(v: OpSchema.AttrType) -> str:
     assert isinstance(v, OpSchema.AttrType)
-    s = Text(v)
-    s = s[s.rfind('.') + 1:].lower()
-    if s[-1] == 's':
-        s = 'list of ' + s
+    s = str(v)
+    s = s[s.rfind(".") + 1 :].lower()
+    if s[-1] == "s":
+        s = "list of " + s
     return s
 
 
-def display_domain(domain: Text) -> Text:
+def display_domain(domain: str) -> str:
     if domain:
-        return "the '{}' operator set".format(domain)
+        return f"the '{domain}' operator set"
     return "the default ONNX operator set"
 
 
-def display_domain_short(domain: Text) -> Text:
+def display_domain_short(domain: str) -> str:
     if domain:
         return domain
-    return 'ai.onnx (default)'
+    return "ai.onnx (default)"
 
 
-def display_version_link(name: Text, version: int) -> Text:
-    changelog_md = 'Changelog' + ext
-    name_with_ver = '{}-{}'.format(name, version)
-    return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, version)
+def display_version_link(name: str, version: int) -> str:
+    changelog_md = "Changelog" + ext
+    name_with_ver = f"{name}-{version}"
+    return f'<a href="{changelog_md}#{name_with_ver}">{version}</a>'
 
 
-def generate_formal_parameter_tags(formal_parameter: OpSchema.FormalParameter) -> Text:
-    tags: List[Text] = []
+def generate_formal_parameter_tags(formal_parameter: OpSchema.FormalParameter) -> str:
+    tags: List[str] = []
     if OpSchema.FormalParameterOption.Optional == formal_parameter.option:
         tags = ["optional"]
     elif OpSchema.FormalParameterOption.Variadic == formal_parameter.option:
@@ -89,38 +88,52 @@ def generate_formal_parameter_tags(formal_parameter: OpSchema.FormalParameter) -
             tags = ["variadic"]
         else:
             tags = ["variadic", "heterogeneous"]
-    differentiable: OpSchema.DifferentiationCategory = OpSchema.DifferentiationCategory.Differentiable
-    non_differentiable: OpSchema.DifferentiationCategory = OpSchema.DifferentiationCategory.NonDifferentiable
+    differentiable: OpSchema.DifferentiationCategory = (
+        OpSchema.DifferentiationCategory.Differentiable
+    )
+    non_differentiable: OpSchema.DifferentiationCategory = (
+        OpSchema.DifferentiationCategory.NonDifferentiable
+    )
     if differentiable == formal_parameter.differentiationCategory:
-        tags.append('differentiable')
+        tags.append("differentiable")
     elif non_differentiable == formal_parameter.differentiationCategory:
-        tags.append('non-differentiable')
+        tags.append("non-differentiable")
 
-    return '' if len(tags) == 0 else ' (' + ', '.join(tags) + ')'
+    return "" if len(tags) == 0 else " (" + ", ".join(tags) + ")"
 
 
-def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> Text:
-    s = ''
+def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> str:
+    s = ""
 
     # doc
     if schema.doc:
-        s += '\n'
-        s += '\n'.join(('  ' + line).rstrip()
-                       for line in schema.doc.lstrip().splitlines())
-        s += '\n'
+        s += "\n"
+        s += "\n".join(
+            ("  " + line).rstrip() for line in schema.doc.lstrip().splitlines()
+        )
+        s += "\n"
 
     # since version
-    s += '\n#### Version\n'
+    s += "\n#### Version\n"
     if schema.support_level == OpSchema.SupportType.EXPERIMENTAL:
-        s += '\nNo versioning maintained for experimental ops.'
+        s += "\nNo versioning maintained for experimental ops."
     else:
-        s += '\nThis version of the operator has been ' + ('deprecated' if schema.deprecated else 'available') + ' since version {}'.format(schema.since_version)
-        s += ' of {}.\n'.format(display_domain(schema.domain))
+        s += (
+            "\nThis version of the operator has been "
+            + ("deprecated" if schema.deprecated else "available")
+            + f" since version {schema.since_version}"
+        )
+        s += f" of {display_domain(schema.domain)}.\n"
         if len(versions) > 1:
             # TODO: link to the Changelog.md
-            s += '\nOther versions of this operator: {}\n'.format(
-                ', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
-                                               v.since_version) for v in versions[:-1]))
+            s += "\nOther versions of this operator: {}\n".format(
+                ", ".join(
+                    display_version_link(
+                        format_name_with_domain(v.domain, v.name), v.since_version
+                    )
+                    for v in versions[:-1]
+                )
+            )
 
     # If this schema is deprecated, don't display any of the following sections
     if schema.deprecated:
@@ -128,97 +141,100 @@ def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> Text:
 
     # attributes
     if schema.attributes:
-        s += '\n#### Attributes\n\n'
-        s += '<dl>\n'
+        s += "\n#### Attributes\n\n"
+        s += "<dl>\n"
         for _, attr in sorted(schema.attributes.items()):
             # option holds either required or default value
-            opt = ''
+            opt = ""
             if attr.required:
-                opt = 'required'
+                opt = "required"
             elif attr.default_value.name:
                 default_value = helper.get_attribute_value(attr.default_value)
 
-                def format_value(value: Any) -> Text:
+                def format_value(value: Any) -> str:
                     if isinstance(value, float):
                         formatted = str(np.round(value, 5))
                         # use default formatting, unless too long.
-                        if (len(formatted) > 10):
-                            formatted = str("({:e})".format(value))
+                        if len(formatted) > 10:
+                            formatted = str(f"({value:e})")
                         return formatted
                     elif isinstance(value, (bytes, bytearray)):
-                        return str(value.decode('utf-8'))
+                        return str(value.decode("utf-8"))
                     return str(value)
 
                 if isinstance(default_value, list):
                     default_value = [format_value(val) for val in default_value]
                 else:
                     default_value = format_value(default_value)
-                opt = 'default is {}'.format(default_value)
+                opt = f"default is {default_value}"
 
-            s += '<dt><tt>{}</tt> : {}{}</dt>\n'.format(
-                attr.name,
-                display_attr_type(attr.type),
-                ' ({})'.format(opt) if opt else '')
-            s += '<dd>{}</dd>\n'.format(attr.description)
-        s += '</dl>\n'
+            s += "<dt><tt>{}</tt> : {}{}</dt>\n".format(
+                attr.name, display_attr_type(attr.type), f" ({opt})" if opt else ""
+            )
+            s += f"<dd>{attr.description}</dd>\n"
+        s += "</dl>\n"
 
     # inputs
-    s += '\n#### Inputs'
+    s += "\n#### Inputs"
     if schema.min_input != schema.max_input:
-        s += ' ({} - {})'.format(display_number(schema.min_input),
-                                 display_number(schema.max_input))
-    s += '\n\n'
+        s += " ({} - {})".format(
+            display_number(schema.min_input), display_number(schema.max_input)
+        )
+    s += "\n\n"
     if schema.inputs:
-        s += '<dl>\n'
+        s += "<dl>\n"
         for input in schema.inputs:
             option_str = generate_formal_parameter_tags(input)
-            s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
-            s += '<dd>{}</dd>\n'.format(input.description)
-        s += '</dl>\n'
+            s += f"<dt><tt>{input.name}</tt>{option_str} : {input.typeStr}</dt>\n"
+            s += f"<dd>{input.description}</dd>\n"
+        s += "</dl>\n"
 
     # outputs
-    s += '\n#### Outputs'
+    s += "\n#### Outputs"
     if schema.min_output != schema.max_output:
-        s += ' ({} - {})'.format(display_number(schema.min_output),
-                                 display_number(schema.max_output))
-    s += '\n\n'
+        s += " ({} - {})".format(
+            display_number(schema.min_output), display_number(schema.max_output)
+        )
+    s += "\n\n"
 
     if schema.outputs:
-        s += '<dl>\n'
+        s += "<dl>\n"
         for output in schema.outputs:
             option_str = generate_formal_parameter_tags(output)
-            s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(output.name, option_str, output.typeStr)
-            s += '<dd>{}</dd>\n'.format(output.description)
-        s += '</dl>\n'
+            s += f"<dt><tt>{output.name}</tt>{option_str} : {output.typeStr}</dt>\n"
+            s += f"<dd>{output.description}</dd>\n"
+        s += "</dl>\n"
 
     # type constraints
-    s += '\n#### Type Constraints'
-    s += '\n\n'
+    s += "\n#### Type Constraints"
+    s += "\n\n"
     if schema.type_constraints:
-        s += '<dl>\n'
+        s += "<dl>\n"
         for type_constraint in schema.type_constraints:
             allowedTypes = type_constraint.allowed_type_strs
-            if (len(allowedTypes) > 0):
+            if len(allowedTypes) > 0:
                 allowedTypeStr = allowedTypes[0]
             for allowedType in allowedTypes[1:]:
-                allowedTypeStr += ', ' + allowedType
-            s += '<dt><tt>{}</tt> : {}</dt>\n'.format(
-                type_constraint.type_param_str, allowedTypeStr)
-            s += '<dd>{}</dd>\n'.format(type_constraint.description)
-        s += '</dl>\n'
+                allowedTypeStr += ", " + allowedType
+            s += "<dt><tt>{}</tt> : {}</dt>\n".format(
+                type_constraint.type_param_str, allowedTypeStr
+            )
+            s += f"<dd>{type_constraint.description}</dd>\n"
+        s += "</dl>\n"
 
     # Function Body
     # TODO: this should be refactored to show the function body graph's picture (DAG).
-    #if schema.has_function or schema.has_context_dependent_function:  # type: ignore
+    # if schema.has_function or schema.has_context_dependent_function:  # type: ignore
     #    s += '\n#### Function\n'
     #    s += '\nThe Function can be represented as a function.\n'
 
     return s
 
 
-def support_level_str(level: OpSchema.SupportType) -> Text:
-    return \
+def support_level_str(level: OpSchema.SupportType) -> str:
+    return (
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
+    )
 
 
 class Args(NamedTuple):
@@ -227,9 +243,9 @@ class Args(NamedTuple):
 
 
 def main(args: Args) -> None:
-    with io.open(args.changelog, 'w', newline='') as fout:
-        fout.write('<!--- SPDX-License-Identifier: Apache-2.0 -->\n')
-        fout.write('## Operator Changelog\n')
+    with open(args.changelog, "w", newline="") as fout:
+        fout.write("<!--- SPDX-License-Identifier: Apache-2.0 -->\n")
+        fout.write("## Operator Changelog\n")
         fout.write(
             "*This file is automatically generated from the\n"
             "            [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).\n"
@@ -237,35 +253,44 @@ def main(args: Args) -> None:
             "\n"
             "For an operator input/output's differentiability, it can be differentiable,\n"
             "            non-differentiable, or undefined. If a variable's differentiability\n"
-            "            is not specified, that variable has undefined differentiability.\n")
+            "            is not specified, that variable has undefined differentiability.\n"
+        )
 
         # domain -> version -> [schema]
-        dv_index: Dict[Text, Dict[int, List[OpSchema]]] = defaultdict(lambda: defaultdict(list))
+        dv_index: Dict[str, Dict[int, List[OpSchema]]] = defaultdict(
+            lambda: defaultdict(list)
+        )
         for schema in defs.get_all_schemas_with_history():
             dv_index[schema.domain][schema.since_version].append(schema)
 
-        fout.write('\n')
+        fout.write("\n")
 
         for domain, versionmap in sorted(dv_index.items()):
             if not should_render_domain(domain):
                 continue
 
-            s = '# {}\n'.format(display_domain_short(domain))
+            s = f"# {display_domain_short(domain)}\n"
 
             for version, unsorted_schemas in sorted(versionmap.items()):
-                s += '## Version {} of {}\n'.format(version, display_domain(domain))
+                s += f"## Version {version} of {display_domain(domain)}\n"
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
-                    name_with_ver = '{}-{}'.format(format_name_with_domain(domain, schema.name),
-                                                   schema.since_version)
-                    s += ('### <a name="{}"></a>**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(name_with_ver, name_with_ver)
+                    name_with_ver = "{}-{}".format(
+                        format_name_with_domain(domain, schema.name),
+                        schema.since_version,
+                    )
+                    s += (
+                        '### <a name="{}"></a>**{}**'
+                        + (" (deprecated)" if schema.deprecated else "")
+                        + "</a>\n"
+                    ).format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema])
-                    s += '\n'
+                    s += "\n"
 
             fout.write(s)
 
-    with io.open(args.output, 'w', newline='', encoding="utf-8") as fout:
-        fout.write('<!--- SPDX-License-Identifier: Apache-2.0 -->\n')
-        fout.write('## Operator Schemas\n')
+    with open(args.output, "w", newline="", encoding="utf-8") as fout:
+        fout.write("<!--- SPDX-License-Identifier: Apache-2.0 -->\n")
+        fout.write("## Operator Schemas\n")
         fout.write(
             "*This file is automatically generated from the\n"
             "            [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).\n"
@@ -273,19 +298,24 @@ def main(args: Args) -> None:
             "\n"
             "For an operator input/output's differentiability, it can be differentiable,\n"
             "            non-differentiable, or undefined. If a variable's differentiability\n"
-            "            is not specified, that variable has undefined differentiability.\n")
+            "            is not specified, that variable has undefined differentiability.\n"
+        )
 
         # domain -> support level -> name -> [schema]
-        index: Dict[Text, Dict[int, Dict[Text, List[OpSchema]]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        index: Dict[str, Dict[int, Dict[str, List[OpSchema]]]] = defaultdict(
+            lambda: defaultdict(lambda: defaultdict(list))
+        )
         for schema in defs.get_all_schemas_with_history():
             index[schema.domain][int(schema.support_level)][schema.name].append(schema)
 
-        fout.write('\n')
+        fout.write("\n")
 
         # Preprocess the Operator Schemas
         # [(domain, [(support_level, [(schema name, current schema, all versions schemas)])])]
-        operator_schemas: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]] = list()
-        existing_ops: Set[Text] = set()
+        operator_schemas: List[
+            Tuple[str, List[Tuple[int, List[Tuple[str, OpSchema, List[OpSchema]]]]]]
+        ] = list()
+        existing_ops: Set[str] = set()
         for domain, _supportmap in sorted(index.items()):
             if not should_render_domain(domain):
                 continue
@@ -305,11 +335,11 @@ def main(args: Args) -> None:
 
         # Table of contents
         for domain, supportmap in operator_schemas:
-            s = '### {}\n'.format(display_domain_short(domain))
+            s = f"### {display_domain_short(domain)}\n"
             fout.write(s)
 
-            fout.write('|**Operator**|**Since version**|\n')
-            fout.write('|-|-|\n')
+            fout.write("|**Operator**|**Since version**|\n")
+            fout.write("|-|-|\n")
 
             function_ops = list()
             for _, namemap in supportmap:
@@ -321,62 +351,75 @@ def main(args: Args) -> None:
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),
-                        ' (deprecated)' if schema.deprecated else '',
-                        format_versions(versions))
+                        " (deprecated)" if schema.deprecated else "",
+                        format_versions(versions),
+                    )
                     fout.write(s)
             if len(function_ops):
-                fout.write('|**Function**|**Since version**|\n')
+                fout.write("|**Function**|**Since version**|\n")
                 for n, schema, versions in function_ops:
                     s = '|{}<a href="#{}">{}</a>|{}|\n'.format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),
-                        format_versions(versions))
+                        format_versions(versions),
+                    )
                     fout.write(s)
 
-            fout.write('\n')
+            fout.write("\n")
 
-        fout.write('\n')
+        fout.write("\n")
 
         for domain, supportmap in operator_schemas:
-            s = '## {}\n'.format(display_domain_short(domain))
+            s = f"## {display_domain_short(domain)}\n"
             fout.write(s)
 
             for _, namemap in supportmap:
                 for op_type, schema, versions in namemap:
                     # op_type
-                    s = ('### {}<a name="{}"></a><a name="{}">**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(
+                    s = (
+                        '### {}<a name="{}"></a><a name="{}">**{}**'
+                        + (" (deprecated)" if schema.deprecated else "")
+                        + "</a>\n"
+                    ).format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, op_type),
                         format_name_with_domain(domain, op_type.lower()),
-                        format_name_with_domain(domain, op_type))
+                        format_name_with_domain(domain, op_type),
+                    )
 
                     s += display_schema(schema, versions)
 
-                    s += '\n\n'
+                    s += "\n\n"
 
                     if op_type in SNIPPETS:
-                        s += '#### Examples\n\n'
+                        s += "#### Examples\n\n"
                         for summary, code in sorted(SNIPPETS[op_type]):
-                            s += '<details>\n'
-                            s += '<summary>{}</summary>\n\n'.format(summary)
-                            s += '```python\n{}\n```\n\n'.format(code)
-                            s += '</details>\n'
-                            s += '\n\n'
+                            s += "<details>\n"
+                            s += f"<summary>{summary}</summary>\n\n"
+                            s += f"```python\n{code}\n```\n\n"
+                            s += "</details>\n"
+                            s += "\n\n"
                     if op_type.lower() in SAMPLE_IMPLEMENTATIONS:
-                        s += '#### Sample Implementation\n\n'
-                        s += '<details>\n'
-                        s += '<summary>{}</summary>\n\n'.format(op_type)
-                        s += '```python\n{}\n```\n\n'.format(SAMPLE_IMPLEMENTATIONS[op_type.lower()])
-                        s += '</details>\n'
-                        s += '\n\n'
+                        s += "#### Sample Implementation\n\n"
+                        s += "<details>\n"
+                        s += f"<summary>{op_type}</summary>\n\n"
+                        s += f"```python\n{SAMPLE_IMPLEMENTATIONS[op_type.lower()]}\n```\n\n"
+                        s += "</details>\n"
+                        s += "\n\n"
 
                     fout.write(s)
 
 
-if __name__ == '__main__':
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-    docs_dir = os.path.join(base_dir, 'docs')
+if __name__ == "__main__":
+    base_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    )
+    docs_dir = os.path.join(base_dir, "docs")
 
-    main(Args(os.path.join(docs_dir, 'Operators' + ext),
-              os.path.join(docs_dir, 'Changelog' + ext)))
+    main(
+        Args(
+            os.path.join(docs_dir, "Operators" + ext),
+            os.path.join(docs_dir, "Changelog" + ext),
+        )
+    )

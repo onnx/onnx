@@ -8,16 +8,18 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE { namespace version_conversion {
+namespace ONNX_NAMESPACE {
+namespace version_conversion {
 
-struct Upsample_6_7 final: public Adapter {
+struct Upsample_6_7 final : public Adapter {
   explicit Upsample_6_7() : Adapter("Upsample", OpSetID(6), OpSetID(7)) {}
 
   void adapt_upsample_6_7(std::shared_ptr<Graph>, Node* node) const {
-
     Symbol width_scale_symbol = Symbol("width_scale");
     Symbol height_scale_symbol = Symbol("height_scale");
-    ONNX_ASSERTM(node->hasAttribute(width_scale_symbol) && node->hasAttribute(height_scale_symbol), "Upsample in opset 1 needs to have width_scale and height_scale attributes");
+    ONNX_ASSERTM(
+        node->hasAttribute(width_scale_symbol) && node->hasAttribute(height_scale_symbol),
+        "Upsample in opset 1 needs to have width_scale and height_scale attributes");
 
     auto width_scale = node->f(width_scale_symbol);
     auto height_scale = node->f(height_scale_symbol);
@@ -37,4 +39,5 @@ struct Upsample_6_7 final: public Adapter {
   }
 };
 
-}} // namespace ONNX_NAMESPACE::version_conversion
+} // namespace version_conversion
+} // namespace ONNX_NAMESPACE

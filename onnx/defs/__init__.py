@@ -1,19 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from typing import List
 
-from onnx import AttributeProto, FunctionProto
 import onnx.onnx_cpp2py_export.defs as C
-
-from collections import defaultdict
-from typing import List, Dict
+from onnx import AttributeProto, FunctionProto
 
 ONNX_DOMAIN = ""
-ONNX_ML_DOMAIN = 'ai.onnx.ml'
-AI_ONNX_PREVIEW_TRAINING_DOMAIN = 'ai.onnx.preview.training'
+ONNX_ML_DOMAIN = "ai.onnx.ml"
+AI_ONNX_PREVIEW_TRAINING_DOMAIN = "ai.onnx.preview.training"
 
 
 has = C.has_schema

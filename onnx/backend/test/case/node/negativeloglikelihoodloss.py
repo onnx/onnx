@@ -1,18 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import numpy as np  # type: ignore
 
 import onnx
+
 from ..base import Base
 from . import expect
 
 
-def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='mean', ignore_index=None):  # type: ignore
+def compute_negative_log_likelihood_loss(input, target, weight=None, reduction="mean", ignore_index=None):  # type: ignore
     input_shape = input.shape
     if len(input_shape) == 1:
         raise RuntimeError("Unsupported shape")
@@ -28,12 +24,14 @@ def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='
         # when the target value is > C or < 0, it doesn't matter which value we are
         # taking in gather_weight, since it will be set to 0 in the following if-block
         # use np.int32 to make it compatible with x86 machines
-        gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode='clip')
+        gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode="clip")
         # set `ignore_index`'s loss weight to 0.
         # The loss tensor will be multiplied by this weight tensor,
         # so `ingore_index`'s loss value will be eliminated.
         if ignore_index is not None:
-            gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(dtype=np.float32)
+            gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
+                dtype=np.float32
+            )
     elif ignore_index is not None:
         gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=np.float32)
 
@@ -62,47 +60,52 @@ def compute_negative_log_likelihood_loss(input, target, weight=None, reduction='
     # apply the weights when required
     if gather_weight is not None:
         loss = gather_weight * loss
-        if reduction == 'mean':
+        if reduction == "mean":
             loss = loss.sum() / gather_weight.sum()
             return loss
 
-    if reduction == 'mean':
+    if reduction == "mean":
         loss = np.mean(loss)
-    elif reduction == 'sum':
+    elif reduction == "sum":
         loss = np.sum(loss)
     return loss
 
 
 class NegativeLogLikelihoodLoss(Base):
-
     @staticmethod
     def export_input_shape_is_NC() -> None:
-        reduction = 'none'
+        reduction = "none"
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target'],
-            outputs=['loss'],
-            reduction=reduction
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target"],
+            outputs=["loss"],
+            reduction=reduction,
         )
 
         N, C = 3, 5
         np.random.seed(0)
         input = np.random.rand(N, C).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, )).astype(np.int64)
+        target = np.random.randint(0, high=C, size=(N,)).astype(np.int64)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=None, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NC')
+        expect(
+            node,
+            inputs=[input, target],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NC",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2() -> None:
-        reduction = 'none'
+        reduction = "none"
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target'],
-            outputs=['loss'],
-            reduction=reduction
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target"],
+            outputs=["loss"],
+            reduction=reduction,
         )
 
         N, C, dim1, dim2 = 3, 5, 6, 6
@@ -110,19 +113,25 @@ class NegativeLogLikelihoodLoss(Base):
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
         target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=None, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2')
+        expect(
+            node,
+            inputs=[input, target],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2_reduction_mean() -> None:
-        reduction = 'mean'
+        reduction = "mean"
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target'],
-            outputs=['loss'],
-            reduction=reduction
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target"],
+            outputs=["loss"],
+            reduction=reduction,
         )
 
         N, C, dim1, dim2 = 3, 5, 6, 6
@@ -130,39 +139,51 @@ class NegativeLogLikelihoodLoss(Base):
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
         target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=None, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2_reduction_mean')
+        expect(
+            node,
+            inputs=[input, target],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2_reduction_mean",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2_reduction_sum() -> None:
-        reduction = 'sum'
+        reduction = "sum"
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target'],
-            outputs=['loss'],
-            reduction=reduction
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target"],
+            outputs=["loss"],
+            reduction=reduction,
         )
 
         N, C, dim1, dim2 = 3, 5, 6, 6
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2))
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=None, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2_reduction_sum')
+        expect(
+            node,
+            inputs=[input, target],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2_reduction_sum",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2_with_weight() -> None:
-        reduction = 'none'
+        reduction = "none"
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target', 'weight'],
-            outputs=['loss'],
-            reduction=reduction
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target", "weight"],
+            outputs=["loss"],
+            reduction=reduction,
         )
 
         N, C, dim1, dim2 = 3, 5, 6, 6
@@ -171,19 +192,25 @@ class NegativeLogLikelihoodLoss(Base):
         target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=weight, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2_with_weight')
+        expect(
+            node,
+            inputs=[input, target, weight],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2_with_weight",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2_with_weight_reduction_mean() -> None:
-        reduction = 'mean'
+        reduction = "mean"
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target', 'weight'],
-            outputs=['loss'],
-            reduction=reduction
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target", "weight"],
+            outputs=["loss"],
+            reduction=reduction,
         )
 
         N, C, dim1, dim2 = 3, 5, 6, 6
@@ -192,19 +219,25 @@ class NegativeLogLikelihoodLoss(Base):
         target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=weight, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2_with_weight_reduction_mean')
+        expect(
+            node,
+            inputs=[input, target, weight],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2_with_weight_reduction_mean",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2_with_weight_reduction_sum() -> None:
-        reduction = 'sum'
+        reduction = "sum"
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target', 'weight'],
-            outputs=['loss'],
-            reduction=reduction
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target", "weight"],
+            outputs=["loss"],
+            reduction=reduction,
         )
 
         N, C, dim1, dim2 = 3, 5, 6, 6
@@ -213,21 +246,27 @@ class NegativeLogLikelihoodLoss(Base):
         target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=weight, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2_with_weight_reduction_sum')
+        expect(
+            node,
+            inputs=[input, target, weight],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2_with_weight_reduction_sum",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2_with_weight_reduction_sum_ii() -> None:
-        reduction = 'sum'
+        reduction = "sum"
         ignore_index = np.int64(0)
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target', 'weight'],
-            outputs=['loss'],
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target", "weight"],
+            outputs=["loss"],
             reduction=reduction,
-            ignore_index=ignore_index
+            ignore_index=ignore_index,
         )
 
         N, C, dim1, dim2 = 3, 5, 6, 6
@@ -237,21 +276,27 @@ class NegativeLogLikelihoodLoss(Base):
         target[0][0][0] = np.int64(0)
         weight = np.random.rand(C).astype(np.float32)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=weight, reduction=reduction, ignore_index=ignore_index
+        )
 
-        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2_with_weight_reduction_sum_ii')
+        expect(
+            node,
+            inputs=[input, target, weight],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2_with_weight_reduction_sum_ii",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2_no_weight_reduction_mean_ii() -> None:
-        reduction = 'mean'
+        reduction = "mean"
         ignore_index = np.int64(1)
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target'],
-            outputs=['loss'],
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target"],
+            outputs=["loss"],
             reduction=reduction,
-            ignore_index=ignore_index
+            ignore_index=ignore_index,
         )
 
         N, C, dim1, dim2 = 3, 5, 6, 6
@@ -260,19 +305,25 @@ class NegativeLogLikelihoodLoss(Base):
         target = np.random.randint(0, high=C, size=(N, dim1, dim2)).astype(np.int64)
         target[0][0][0] = np.int64(1)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, reduction=reduction, ignore_index=ignore_index)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, reduction=reduction, ignore_index=ignore_index
+        )
 
-        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2_no_weight_reduction_mean_ii')
+        expect(
+            node,
+            inputs=[input, target],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2_no_weight_reduction_mean_ii",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1() -> None:
-        reduction = 'mean'
+        reduction = "mean"
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target'],
-            outputs=['loss'],
-            reduction=reduction
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target"],
+            outputs=["loss"],
+            reduction=reduction,
         )
 
         N, C, d1 = 3, 5, 2
@@ -280,19 +331,25 @@ class NegativeLogLikelihoodLoss(Base):
         input = np.random.rand(N, C, d1).astype(np.float32)
         target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=None, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1')
+        expect(
+            node,
+            inputs=[input, target],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1_weight() -> None:
-        reduction = 'mean'
+        reduction = "mean"
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target', 'weight'],
-            outputs=['loss'],
-            reduction=reduction
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target", "weight"],
+            outputs=["loss"],
+            reduction=reduction,
         )
 
         N, C, d1 = 3, 5, 2
@@ -301,21 +358,27 @@ class NegativeLogLikelihoodLoss(Base):
         target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=weight, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1_weight')
+        expect(
+            node,
+            inputs=[input, target, weight],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1_weight",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1_ii() -> None:
-        reduction = 'mean'
+        reduction = "mean"
         ignore_index = np.int64(1)
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target'],
-            outputs=['loss'],
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target"],
+            outputs=["loss"],
             reduction=reduction,
-            ignore_index=ignore_index
+            ignore_index=ignore_index,
         )
 
         N, C, d1 = 3, 5, 2
@@ -324,21 +387,27 @@ class NegativeLogLikelihoodLoss(Base):
         target = np.random.randint(0, high=C, size=(N, d1)).astype(np.int64)
         target[0][0] = np.int64(1)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=None, reduction=reduction, ignore_index=ignore_index)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=None, reduction=reduction, ignore_index=ignore_index
+        )
 
-        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1_ii')
+        expect(
+            node,
+            inputs=[input, target],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1_ii",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1_weight_ii() -> None:
-        reduction = 'mean'
+        reduction = "mean"
         ignore_index = np.int64(1)
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target', 'weight'],
-            outputs=['loss'],
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target", "weight"],
+            outputs=["loss"],
             reduction=reduction,
-            ignore_index=ignore_index
+            ignore_index=ignore_index,
         )
 
         N, C, d1 = 3, 5, 2
@@ -348,68 +417,88 @@ class NegativeLogLikelihoodLoss(Base):
         target[0][0] = np.int64(1)
         weight = np.random.rand(C).astype(np.float32)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input, target, weight=weight, reduction=reduction, ignore_index=ignore_index)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=weight, reduction=reduction, ignore_index=ignore_index
+        )
 
-        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1_weight_ii')
+        expect(
+            node,
+            inputs=[input, target, weight],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1_weight_ii",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2d3d4d5_mean_weight() -> None:
-        reduction = 'mean'
+        reduction = "mean"
 
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target', 'weight'],
-            outputs=['loss'],
-            reduction=reduction)
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target", "weight"],
+            outputs=["loss"],
+            reduction=reduction,
+        )
 
         N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
+        target = np.random.randint(
+            0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)
+        ).astype(np.int64)
         weight = np.random.rand(C).astype(np.float32)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
-                                                                            target,
-                                                                            weight=weight,
-                                                                            reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=weight, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2d3d4d5_mean_weight')
+        expect(
+            node,
+            inputs=[input, target, weight],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2d3d4d5_mean_weight",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2d3d4d5_none_no_weight() -> None:
-        reduction = 'none'
+        reduction = "none"
 
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target'],
-            outputs=['loss'],
-            reduction=reduction)
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target"],
+            outputs=["loss"],
+            reduction=reduction,
+        )
 
         N, C, dim1, dim2, dim3, dim4, dim5 = 3, 5, 6, 6, 5, 3, 4
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2, dim3, dim4, dim5).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)).astype(np.int64)
+        target = np.random.randint(
+            0, high=C, size=(N, dim1, dim2, dim3, dim4, dim5)
+        ).astype(np.int64)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
-                                                                            target,
-                                                                            reduction=reduction)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, reduction=reduction
+        )
 
-        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2d3d4d5_none_no_weight')
+        expect(
+            node,
+            inputs=[input, target],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2d3d4d5_none_no_weight",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1_mean_weight_negative_ii() -> None:
-        reduction = 'mean'
+        reduction = "mean"
         ignore_index = np.int64(-1)
 
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target', 'weight'],
-            outputs=['loss'],
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target", "weight"],
+            outputs=["loss"],
             reduction=reduction,
-            ignore_index=ignore_index)
+            ignore_index=ignore_index,
+        )
 
         N, C, dim1 = 3, 5, 6
         np.random.seed(0)
@@ -418,65 +507,76 @@ class NegativeLogLikelihoodLoss(Base):
         target[0][0] = -1
         weight = np.random.rand(C).astype(np.float32)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
-                                                                            target,
-                                                                            weight=weight,
-                                                                            reduction=reduction,
-                                                                            ignore_index=ignore_index)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=weight, reduction=reduction, ignore_index=ignore_index
+        )
 
-        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1_mean_weight_negative_ii')
+        expect(
+            node,
+            inputs=[input, target, weight],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1_mean_weight_negative_ii",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2d3_none_no_weight_negative_ii() -> None:
-        reduction = 'none'
+        reduction = "none"
         ignore_index = np.int64(-5)
 
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target'],
-            outputs=['loss'],
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target"],
+            outputs=["loss"],
             reduction=reduction,
-            ignore_index=ignore_index)
+            ignore_index=ignore_index,
+        )
 
         N, C, dim1, dim2, dim3 = 3, 5, 6, 6, 5
         np.random.seed(0)
         input = np.random.rand(N, C, dim1, dim2, dim3).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3)).astype(np.int64)
+        target = np.random.randint(0, high=C, size=(N, dim1, dim2, dim3)).astype(
+            np.int64
+        )
         target[0][0][0][0] = -5
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
-                                                                            target,
-                                                                            reduction=reduction,
-                                                                            ignore_index=ignore_index)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, reduction=reduction, ignore_index=ignore_index
+        )
 
-        expect(node, inputs=[input, target], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2d3_none_no_weight_negative_ii')
+        expect(
+            node,
+            inputs=[input, target],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2d3_none_no_weight_negative_ii",
+        )
 
     @staticmethod
     def export_input_shape_is_NCd1d2d3_sum_weight_high_ii() -> None:
-        reduction = 'sum'
+        reduction = "sum"
         ignore_index = np.int64(10)
 
         node = onnx.helper.make_node(
-            'NegativeLogLikelihoodLoss',
-            inputs=['input', 'target', 'weight'],
-            outputs=['loss'],
+            "NegativeLogLikelihoodLoss",
+            inputs=["input", "target", "weight"],
+            outputs=["loss"],
             reduction=reduction,
-            ignore_index=ignore_index)
+            ignore_index=ignore_index,
+        )
 
         N, C = 3, 5
         np.random.seed(0)
         input = np.random.rand(N, C).astype(np.float32)
-        target = np.random.randint(0, high=C, size=(N))
+        target = np.random.randint(0, high=C, size=(N)).astype(np.int64)
         target[0] = 10
         weight = np.random.rand(C).astype(np.float32)
 
-        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(input,
-                                                                            target,
-                                                                            weight=weight,
-                                                                            reduction=reduction,
-                                                                            ignore_index=ignore_index)
+        negative_log_likelihood_loss = compute_negative_log_likelihood_loss(
+            input, target, weight=weight, reduction=reduction, ignore_index=ignore_index
+        )
 
-        expect(node, inputs=[input, target, weight], outputs=[negative_log_likelihood_loss],
-            name='test_nllloss_NCd1d2d3_sum_weight_high_ii')
+        expect(
+            node,
+            inputs=[input, target, weight],
+            outputs=[negative_log_likelihood_loss],
+            name="test_nllloss_NCd1d2d3_sum_weight_high_ii",
+        )

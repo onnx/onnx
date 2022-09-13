@@ -6,6 +6,7 @@
 #include <fstream>
 #include <list>
 #include "onnx/checker.h"
+#include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/string_utils.h"
 
@@ -58,7 +59,7 @@ std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
 
 } // namespace
 
-template<class T>
+template <class T>
 void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_type) {
   if (inferred_type.elem_type() != TensorProto::UNDEFINED && existing_type.elem_type() != TensorProto::UNDEFINED &&
       existing_type.elem_type() != inferred_type.elem_type()) {
@@ -110,13 +111,15 @@ void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existi
 
   if (inferred_value_case == TypeProto::kTensorType && existing_value_case == TypeProto::kTensorType) {
     CheckTensorShapesAndTypes(inferred_type.tensor_type(), existing_type.tensor_type());
-  } else if (inferred_value_case == TypeProto::kSparseTensorType && existing_value_case == TypeProto::kSparseTensorType) {
+  } else if (
+      inferred_value_case == TypeProto::kSparseTensorType && existing_value_case == TypeProto::kSparseTensorType) {
     CheckTensorShapesAndTypes(inferred_type.sparse_tensor_type(), existing_type.sparse_tensor_type());
   } else if (inferred_value_case == TypeProto::kSequenceType && existing_value_case == TypeProto::kSequenceType) {
     checkShapesAndTypes(inferred_type.sequence_type().elem_type(), existing_type.sequence_type().elem_type());
   } else if (inferred_value_case == TypeProto::kOptionalType && existing_value_case == TypeProto::kOptionalType) {
     checkShapesAndTypes(inferred_type.optional_type().elem_type(), existing_type.optional_type().elem_type());
-  } else if (inferred_value_case == TypeProto::TypeProto::kMapType && existing_value_case == TypeProto::TypeProto::kMapType) {
+  } else if (
+      inferred_value_case == TypeProto::TypeProto::kMapType && existing_value_case == TypeProto::TypeProto::kMapType) {
     if (inferred_type.map_type().key_type() != existing_type.map_type().key_type()) {
       fail_type_inference(
           "key type mismatch from MapProto. existing=",
@@ -147,8 +150,7 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor
   for (int i = 0; i < inferred_type.shape().dim_size(); ++i) {
     const auto& inferred_dim = inferred_type.shape().dim(i);
     auto* existing_dim = existing_type->mutable_shape()->mutable_dim(i);
-    if ((!existing_dim->has_dim_value() && !existing_dim->has_dim_param()) ||
-        inferred_dim.has_dim_value()) {
+    if ((!existing_dim->has_dim_value() && !existing_dim->has_dim_param()) || inferred_dim.has_dim_value()) {
       *existing_dim = inferred_dim;
     }
   }
@@ -171,8 +173,7 @@ void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_
   for (int i = 0; i < inferred_type.shape().dim_size(); ++i) {
     const auto& inferred_dim = inferred_type.shape().dim(i);
     auto* existing_dim = existing_type->mutable_shape()->mutable_dim(i);
-    if ((!existing_dim->has_dim_value() && !existing_dim->has_dim_param()) ||
-        inferred_dim.has_dim_value()) {
+    if ((!existing_dim->has_dim_value() && !existing_dim->has_dim_param()) || inferred_dim.has_dim_value()) {
       *existing_dim = inferred_dim;
     }
   }
@@ -193,8 +194,7 @@ void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_typ
     mergeShapesAndTypes(
         inferred_type.optional_type().elem_type(), existing_type->mutable_optional_type()->mutable_elem_type());
   } else if (inferred_val_case == TypeProto::kMapType) {
-    mergeShapesAndTypes(
-      inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type());
+    mergeShapesAndTypes(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type());
   }
 }
 
@@ -236,107 +236,57 @@ std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const
   return domain + ":" + func_name;
 }
 
-static void InferShapesImpl(
-    GraphProto* g,
-    const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name,
-    const std::unordered_map<std::string, int>& opset_imports,
-    const ShapeInferenceOptions& options,
-    SymbolTable* symbol_table,
-    const ModelLocalFunctionsMap& model_local_functions_map,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const int ir_version = IR_VERSION // default the latest one
-) {
-  std::unordered_map<std::string, TypeProto*> value_types_by_name{outer_scope_value_types_by_name};
-  std::unordered_map<std::string, TypeProto*> undefined_value_types_by_name{outer_scope_value_types_by_name};
-  std::unordered_map<std::string, TensorShapeProto> generated_shape_data_by_name;
-
-  GraphInferenceContext graph_inference_context{
-      value_types_by_name, opset_imports, symbol_table, schema_registry, ir_version, model_local_functions_map};
-  for (auto& vi : *g->mutable_value_info()) {
-    if (vi.has_type()) {
-      value_types_by_name[vi.name()] = vi.mutable_type();
-    }
-  }
-  for (auto& vi : *g->mutable_input()) {
-    if (vi.has_type()) {
-      value_types_by_name[vi.name()] = vi.mutable_type();
-    }
-  }
-  for (auto& vi : *g->mutable_output()) {
-    if (vi.has_type()) {
-      value_types_by_name[vi.name()] = vi.mutable_type();
-    } else {
-      // Some output type might be undefined in subgraph. e.g., Loop Op
-      // Saving names of outputs with undefined types to allow assigning inferred types to them
-      undefined_value_types_by_name[vi.name()] = vi.mutable_type();
-    }
-  }
-
-  // Holds the contructed type protos for graph initializers
-  std::list<TypeProto> initializer_type_list;
-  // Create TypeProtos for all graph initializers including sparse initializers
-  std::unordered_map<std::string, const TensorProto*> input_data_by_name;
-  for (const auto& tp : g->initializer()) {
-    input_data_by_name[tp.name()] = &tp;
-    TypeProto initializer_type;
-    TypeProto_Tensor* initializer_tensor_type = initializer_type.mutable_tensor_type();
-    initializer_tensor_type->set_elem_type(tp.data_type());
-    // set the shape according to the initializer shape info
-    auto* shape = initializer_tensor_type->mutable_shape();
-    for (int i = 0; i < tp.dims_size(); ++i) {
-      shape->add_dim()->set_dim_value(tp.dims(i));
+class ShapeInferenceImplBase {
+ public:
+  void updateType(const std::string& name, TypeProto* inferred_type) {
+    if (inferred_type->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
+      return;
     }
 
-    auto iter = value_types_by_name.find(tp.name());
-    // If it already exists in input, check input and initializer is sync
-    // use shape info from input (input has priority over initializer)
-    if (iter != value_types_by_name.end()) {
-      CheckTensorShapesAndTypes(*initializer_tensor_type, *iter->second->mutable_tensor_type());
-    }
-    // Support IR>=4: some tensors can only exist in initializer and not in input
-    // So shape_inference should make use of initializer shapes
-    // Store initializer shape info in value_info as well
-    else if (ir_version >= 4) {
-      initializer_type_list.push_back(std::move(initializer_type));
-      value_types_by_name[tp.name()] = &initializer_type_list.back();
-    }
-  }
-
-  std::unordered_map<std::string, const SparseTensorProto*> input_sparse_data_by_name;
-  for (const auto& tp : g->sparse_initializer()) {
-    const auto& name = tp.values().name();
-    input_sparse_data_by_name[name] = &tp;
-    // Create TypeProto for sparse initializer
-    TypeProto initializer_type;
-    auto* initializer_sparse_tensor_type = initializer_type.mutable_sparse_tensor_type();
-    initializer_sparse_tensor_type->set_elem_type(tp.values().data_type());
-    // set the shape according to the initializer shape info
-    auto* shape = initializer_sparse_tensor_type->mutable_shape();
-    for (int i = 0; i < tp.dims_size(); ++i) {
-      shape->add_dim()->set_dim_value(tp.dims(i));
+    if (symbol_table) {
+      MaterializeSymbolicShape(inferred_type, *symbol_table);
     }
 
+    // Find any pre-existing type and shape info. If there is such,
+    // then check for compatibility with the inferred
+    // information. Otherwise, initialize it in an empty state.
     auto iter = value_types_by_name.find(name);
-    // If it already exists in input, check input and initializer is sync
-    // use shape info from input (input has priority over initializer)
+    TypeProto* existing_type = nullptr;
     if (iter != value_types_by_name.end()) {
-      CheckTensorShapesAndTypes(*initializer_sparse_tensor_type, *iter->second->mutable_sparse_tensor_type());
+      existing_type = iter->second;
+    } else {
+      // Create a new value_info if defined type does not exist
+      auto vi = g.add_value_info(); // TODO: clean this up
+      vi->set_name(name);
+      existing_type = vi->mutable_type();
+      // For undefined output type, update both value_info and output for now
+      // Update existing output with undefined type: assign inferred type to it
+      iter = undefined_value_types_by_name.find(name);
+      if (iter != undefined_value_types_by_name.end()) {
+        *iter->second = *inferred_type;
+      }
     }
-    // Support IR>=4: some tensors can only exist in initializer and not in input
-    // So shape_inference should make use of initializer shapes
-    // Store initializer shape info in value_info as well
-    else if (ir_version >= 4) {
-      initializer_type_list.push_back(std::move(initializer_type));
-      value_types_by_name[name] = &initializer_type_list.back();
+
+    // TODO: cleanup this by merging with previous if-else
+    // Now we can merge pre-existing and inferred info
+    mergeShapesAndTypes(*inferred_type, existing_type);
+
+    // Make merged info available to further inference.
+    value_types_by_name[name] = existing_type;
+  }
+
+  void updateType(ValueInfoProto& valueInfo) {
+    if (valueInfo.has_type()) {
+      value_types_by_name[valueInfo.name()] = valueInfo.mutable_type();
+    } else {
+      undefined_value_types_by_name[valueInfo.name()] = valueInfo.mutable_type();
     }
   }
 
-  bool has_experimental_op = false;
-  // Collect data from constant nodes and check if any experimental ops exist
-  for (const auto& n : g->node()) {
+  void preprocess(NodeProto& n) {
     if (checker::check_is_experimental_op(n.op_type())) {
       has_experimental_op = true;
-    } else if (n.op_type() == "Constant" &&  n.output().size() == 1) {
+    } else if (n.op_type() == "Constant" && n.output().size() == 1) {
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {
           if (attr.type() == AttributeProto::TENSOR && attr.has_t()) {
@@ -349,14 +299,23 @@ static void InferShapesImpl(
     }
   }
 
-  std::vector<std::string> inference_errors;
-  bool has_unsupported_op = false; // check whether exist unsupported ops
-  for (auto& n : *g->mutable_node()) {
+  void process(NodeProto& n) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
-      fail_type_inference("Cannot infer type and shape for node name ", n.name(), ". No opset import for domain",
-          n.domain(), " optype ", n.op_type());
+      // Both "" and "ai.onnx" refer to the default ONNX domain
+      if (n.domain() == "") {
+        dit = opset_imports.find("ai.onnx");
+      }
+      if (dit == opset_imports.end()) {
+        fail_type_inference(
+            "Cannot infer type and shape for node name ",
+            n.name(),
+            ". No opset import for domain",
+            n.domain(),
+            " optype ",
+            n.op_type());
+      }
     }
     auto domain_version = dit->second;
     const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
@@ -365,7 +324,7 @@ static void InferShapesImpl(
         value_types_by_name,
         input_data_by_name,
         input_sparse_data_by_name,
-        &generated_shape_data_by_name,
+        generated_shape_data_by_name,
         &graph_inference_context);
 
     ONNX_TRY {
@@ -380,10 +339,10 @@ static void InferShapesImpl(
               options,
               model_local_functions_map,
               symbol_table,
-              &generated_shape_data_by_name);
+              generated_shape_data_by_name);
         } else {
           // Continue with inference for remaining nodes
-          continue;
+          return;
         }
       } else if (model_local_functions_map.size() > 0) {
         auto iter = model_local_functions_map.find(GetModelLocalFunctionsMapIdentifier(n.domain(), n.op_type()));
@@ -395,14 +354,14 @@ static void InferShapesImpl(
               options,
               model_local_functions_map,
               symbol_table,
-              &generated_shape_data_by_name);
+              generated_shape_data_by_name);
         } else {
           has_unsupported_op = true;
-          continue;
+          return;
         }
       } else {
         has_unsupported_op = true;
-        continue;
+        return;
       }
     }
     ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
@@ -414,7 +373,7 @@ static void InferShapesImpl(
         }
       });
       // Continue with inference for remaining nodes
-      continue;
+      return;
     }
 
     ONNX_TRY {
@@ -425,207 +384,106 @@ static void InferShapesImpl(
 
       for (int i = 0; i < n.output_size(); ++i) {
         // skip type and shape propagation for missing optional outputs.
-        if (n.output(i).empty()) {
-          continue;
-        }
-        auto* inferred_type = ctx.getOutputType(i);
-        if (inferred_type->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
-          continue;
-        }
+        if (!n.output(i).empty())
+          updateType(n.output(i), ctx.getOutputType(i));
+      }
 
-        if (symbol_table) {
-          MaterializeSymbolicShape(inferred_type, *symbol_table);
+      // If data propagation is enabled, propagate shape data if it exists.
+      if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
+        if (generated_shape_data_by_name == nullptr) {
+          fail_shape_inference(
+              "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
         }
-
-        // Find any pre-existing type and shape info. If there is such,
-        // then check for compatibility with the inferred
-        // information. Otherwise, initialize it in an empty state.
-        auto iter = value_types_by_name.find(n.output(i));
-        TypeProto* existing_type = nullptr;
-        if (iter != value_types_by_name.end()) {
-          existing_type = iter->second;
-        } else {
-          // Create a new value_info if defined type does not exist
-          auto vi = g->add_value_info();
-          vi->set_name(n.output(i));
-          existing_type = vi->mutable_type();
-          // For undefined output type, update both value_info and output for now
-          // Update existing output with undefined type: assign inferred type to it
-          iter = undefined_value_types_by_name.find(n.output(i));
-          if (iter != undefined_value_types_by_name.end()) {
-            *iter->second = *inferred_type;
-          }
-        }
-
-        // Now we can merge pre-existing and inferred info
-        mergeShapesAndTypes(*inferred_type, existing_type);
-
-        // If data propagation is enabled, propagate shape data if it exists.
-        if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
-          DataPropagationContextImpl data_propagation_ctx(
-              n, value_types_by_name, input_data_by_name, generated_shape_data_by_name);
-          schema->GetDataPropagationFunction()(data_propagation_ctx);
-        }
-
-        // Make merged info available to further inference.
-        value_types_by_name[n.output(i)] = existing_type;
+        DataPropagationContextImpl data_propagation_ctx(
+            n, value_types_by_name, input_data_by_name, *generated_shape_data_by_name);
+        schema->GetDataPropagationFunction()(data_propagation_ctx);
       }
     }
     ONNX_CATCH(const std::runtime_error& err) {
       ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)); });
     }
   }
-  // Throw shape inference error if any. Error mode right now only supports 0 and 1. 
-  // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
-  // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
-  // TODO: Add a more granular way for exception handling.
-  if (options.error_mode > 0 && !inference_errors.empty()) {
-    std::string full_errors = "Shape inference error(s): ";
-    for (const std::string& error : inference_errors) {
-      full_errors += error + "\n";
+
+  // TypeProto_Tensor or TypeProto_SparseTensor
+  template <typename T>
+  void processInitializer(
+      const std::string& name,
+      const T& tensorValue,
+      TypeProto& initializer_type,
+      std::unordered_map<std::string, const T*>& map) {
+    map[name] = &tensorValue;
+    auto iter = value_types_by_name.find(name);
+    // If it already exists in input, check input and initializer is sync
+    // use shape info from input (input has priority over initializer)
+    if (iter != value_types_by_name.end()) {
+      checkShapesAndTypes(initializer_type, *iter->second);
+      // CheckTensorShapesAndTypes(*initializer_tensor_type, *iter->second->mutable_tensor_type());
     }
-    fail_shape_inference(full_errors);
-  }
-}
-
-void InferShapes(
-    GraphProto* g,
-    const std::unordered_map<std::string, int>& opset_imports,
-    const ISchemaRegistry* schema_registry,
-    const ShapeInferenceOptions& options,
-    const std::unordered_map<std::string, const FunctionProto*>& model_local_functions) {
-  SymbolTableImpl symbol_table;
-  TraverseGraphsToAddExistingSymbols(*g, symbol_table);
-  InferShapesImpl(
-      g,
-      std::unordered_map<std::string, TypeProto*>(0),
-      opset_imports,
-      options,
-      &symbol_table,
-      model_local_functions,
-      schema_registry);
-}
-
-void InferShapes(
-    ModelProto& m,
-    const ISchemaRegistry* schema_registry,
-    const ShapeInferenceOptions& options) {
-  std::unordered_map<std::string, int> opset_imports;
-  for (const auto& opset_import : m.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
-  }
-
-  ModelLocalFunctionsMap model_local_functions_by_id;
-  for (const auto& function_proto : m.functions()) {
-    model_local_functions_by_id.insert(
-        {GetModelLocalFunctionsMapIdentifier(function_proto.domain(), function_proto.name()), &function_proto});
-  }
-
-  auto* g = m.mutable_graph();
-  SymbolTableImpl symbol_table;
-  TraverseGraphsToAddExistingSymbols(*g, symbol_table);
-  InferShapesImpl(
-      g,
-      std::unordered_map<std::string, TypeProto*>(0),
-      opset_imports,
-      options,
-      &symbol_table,
-      model_local_functions_by_id,
-      schema_registry,
-      m.ir_version());
-}
-
-void InferShapes(
-    const std::string& model_path,
-    const std::string& save_path,
-    const ISchemaRegistry* schema_registry,
-    const ShapeInferenceOptions& options) {
-  ModelProto model;
-  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if (!model_stream.good()) {
-    fail_check("Unable to open model file:", model_path, ". Please check if it is a valid file.");
-  }
-  std::string data{std::istreambuf_iterator<char>{model_stream}, std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
-    fail_check(
-        "Unable to parse model from file:", model_path, ". Please check if it is a valid protobuf file of model.");
-  }
-  InferShapes(model, schema_registry, options);
-  // Save the inferred model to the original model path
-  // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
-  std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
-  std::string model_string;
-  ONNX_TRY {
-    model.SerializeToString(&model_string);
-    output << model_string;
-  }
-  ONNX_CATCH(...) {
-    fail_check("Unable to save inferred model to the target path:", save_path);
-  }
-}
-
-// Infer shape for functions.
-void InferShapeForFunctionNode(
-    const FunctionProto& func_proto,
-    const std::unordered_map<std::string, int>& func_opset_imports,
-    const ISchemaRegistry* schema_registry,
-    InferenceContext& ctx,
-    const ShapeInferenceOptions& options,
-    const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
-    SymbolTable* symbol_table,
-    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
-
-  if (options.enable_data_propagation && generated_shape_data_by_name == nullptr) {
-    fail_shape_inference(
-        "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
-  }
-
-  GraphProto g;
-  // Get a temporary tensor-shape map
-  const auto num_func_inputs = func_proto.input_size();
-  std::unordered_map<std::string, TypeProto*> value_types_by_name;
-  std::vector<TypeProto> types_cache(func_proto.input_size());
-  for (int i = 0; i < num_func_inputs; ++i) {
-    types_cache[i] = *ctx.getInputType(i);
-    value_types_by_name[func_proto.input().Get(i)] = &types_cache[i];
-  }
-
-  // Create a temporary initializer value map
-  std::unordered_map<std::string, const TensorProto*> initializers_by_name;
-  std::unordered_map<std::string, const SparseTensorProto*> sparse_initializers_by_name;
-  for (int i = 0; i < static_cast<int>(ctx.getNumInputs()) && i < num_func_inputs; ++i) {
-    const TypeProto* type = ctx.getInputType(i);
-    if (type->value_case() == TypeProto::kTensorType && ctx.getInputData(i) != nullptr) {
-      initializers_by_name[func_proto.input().Get(i)] = ctx.getInputData(i);
-    } else if (type->value_case() == TypeProto::kSparseTensorType && ctx.getInputSparseData(i) != nullptr) {
-      sparse_initializers_by_name[func_proto.input().Get(i)] = ctx.getInputSparseData(i);
+    // Support IR>=4: some tensors can only exist in initializer and not in input
+    // So shape_inference should make use of initializer shapes
+    // Store initializer shape info in value_info as well
+    else if (ir_version >= 4) {
+      initializer_type_list.push_back(std::move(initializer_type));
+      value_types_by_name[name] = &initializer_type_list.back();
     }
   }
 
-  std::unordered_map<std::string, const AttributeProto*> attr_map;
-  for (auto& attr : func_proto.attribute()) {
-    if (ctx.getAttribute(attr) != nullptr) {
-      attr_map[attr] = ctx.getAttribute(attr);
+  void process(GraphProto& graph) {
+    if (symbol_table) {
+      TraverseGraphsToAddExistingSymbols(graph, *symbol_table);
+    }
+    for (auto& vi : *graph.mutable_value_info()) {
+      updateType(vi);
+    }
+    for (auto& vi : *graph.mutable_input()) {
+      updateType(vi);
+    }
+    for (auto& vi : *graph.mutable_output()) {
+      updateType(vi);
+    }
+    for (const auto& tp : graph.initializer()) {
+      TypeProto initializer_type;
+      TypeProto_Tensor* initializer_tensor_type = initializer_type.mutable_tensor_type();
+      initializer_tensor_type->set_elem_type(tp.data_type());
+      // set the shape according to the initializer shape info
+      auto* shape = initializer_tensor_type->mutable_shape();
+      for (int i = 0; i < tp.dims_size(); ++i) {
+        shape->add_dim()->set_dim_value(tp.dims(i));
+      }
+      processInitializer(tp.name(), tp, initializer_type, input_data_by_name);
+    }
+    for (const auto& tp : graph.sparse_initializer()) {
+      TypeProto initializer_type;
+      auto* initializer_sparse_tensor_type = initializer_type.mutable_sparse_tensor_type();
+      initializer_sparse_tensor_type->set_elem_type(tp.values().data_type());
+      // set the shape according to the initializer shape info
+      auto* shape = initializer_sparse_tensor_type->mutable_shape();
+      for (int i = 0; i < tp.dims_size(); ++i) {
+        shape->add_dim()->set_dim_value(tp.dims(i));
+      }
+      processInitializer(tp.values().name(), tp, initializer_type, input_sparse_data_by_name);
+    }
+    // Collect data from constant nodes and check if any experimental ops exist
+    for (auto& n : *graph.mutable_node()) {
+      preprocess(n); // process constant node
+    }
+    for (auto& n : *graph.mutable_node()) {
+      process(n);
+    }
+    // Throw shape inference error if any. Error mode right now only supports 0 and 1.
+    // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
+    // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
+    // TODO: Add a more granular way for exception handling.
+    if (options.error_mode > 0 && !inference_errors.empty()) {
+      std::string full_errors = "Shape inference error(s): ";
+      for (const std::string& error : inference_errors) {
+        full_errors += error + "\n";
+      }
+      fail_shape_inference(full_errors);
     }
   }
 
-  for (auto& n : func_proto.node()) {
-    // Resolve domain for node
-    auto it = func_opset_imports.find(n.domain());
-    if (it == func_opset_imports.end()) {
-      fail_type_inference(
-          "Cannot infer type and shape for function",
-          func_proto.name(),
-          ". No opset import for domain",
-          n.domain(),
-          " referenced by function body node ",
-          n.name(),
-          " optype ",
-          n.op_type());
-    }
-    auto domain_version = it->second;
-    const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
-
+  void process(const NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
     NodeProto copy_n(n);
     // Add attribute information into the temporary node
     copy_n.clear_attribute();
@@ -640,81 +498,236 @@ void InferShapeForFunctionNode(
         copy_n.add_attribute()->CopyFrom(attr);
       }
     }
-    ONNX_NAMESPACE::shape_inference::InferenceContextImpl func_node_ctx(
-        copy_n, value_types_by_name, initializers_by_name, sparse_initializers_by_name, {});
+    process(copy_n);
+  }
 
-    if (schema && schema->has_type_and_shape_inference_function()) {
-      schema->GetTypeAndShapeInferenceFunction()(func_node_ctx);
-    } else if (schema && schema->HasFunction()) {
-      InferShapeForFunctionNode(
-          *(schema->GetFunction()),
-          schema_registry,
-          func_node_ctx,
-          options,
-          model_local_functions_map,
-          symbol_table,
-          generated_shape_data_by_name);
-    } else if (model_local_functions_map.size() > 0) {
-      // check model local functions for FunctionProto
-      auto iter = model_local_functions_map.find(GetModelLocalFunctionsMapIdentifier(n.domain(), n.op_type()));
-      if (iter == model_local_functions_map.end()) {
-        return;
+  void process(const FunctionProto& func_proto, InferenceContext& ctx) {
+    // Get a temporary tensor-shape map
+    const auto num_func_inputs = func_proto.input_size();
+    std::vector<TypeProto> types_cache(num_func_inputs);
+    for (int i = 0; i < num_func_inputs; ++i) {
+      if (ctx.getInputType(i) == nullptr) {
+        fail_type_inference("Input ", i, " type is missing.");
       }
-
-      InferShapeForFunctionNode(
-          *iter->second,
-          schema_registry,
-          func_node_ctx,
-          options,
-          model_local_functions_map,
-          symbol_table,
-          generated_shape_data_by_name);
-    } else {
-      // Cannot find the function definition in onnx defined schemas and model local functions map, so return.
-      return;
+      types_cache[i] = *ctx.getInputType(i); // TODO: investigate whether we can remove cache
+      value_types_by_name[func_proto.input().Get(i)] = &types_cache[i];
     }
 
-    for (int i = 0; i < copy_n.output_size(); ++i) {
-      TypeProto* inferred_output_type = func_node_ctx.getOutputType(i);
-      // validate and merge the inferred type
-      TypeProto* existing_type = nullptr;
-      auto iter = value_types_by_name.find(n.output(i));
-      if (iter != value_types_by_name.end()) {
-        existing_type = iter->second;
-        checkShapesAndTypes(*inferred_output_type, *existing_type);
-      } else {
-        // Store the inferred type info in the temporary subgraph
-        auto vi = g.add_value_info();
-        vi->set_name(copy_n.output(i));
-        existing_type = vi->mutable_type();
+    // Create a temporary initializer value map
+    for (int i = 0; i < static_cast<int>(ctx.getNumInputs()) && i < num_func_inputs; ++i) {
+      const TypeProto* type = ctx.getInputType(i);
+      if (type->value_case() == TypeProto::kTensorType && ctx.getInputData(i) != nullptr) {
+        input_data_by_name[func_proto.input().Get(i)] = ctx.getInputData(i);
+      } else if (type->value_case() == TypeProto::kSparseTensorType && ctx.getInputSparseData(i) != nullptr) {
+        input_sparse_data_by_name[func_proto.input().Get(i)] = ctx.getInputSparseData(i);
       }
+    }
 
-      if (symbol_table) {
-        MaterializeSymbolicShape(inferred_output_type, *symbol_table);
+    std::unordered_map<std::string, const AttributeProto*> attr_map;
+    for (auto& attr : func_proto.attribute()) {
+      if (ctx.getAttribute(attr) != nullptr) {
+        attr_map[attr] = ctx.getAttribute(attr);
       }
-      mergeShapesAndTypes(*inferred_output_type, existing_type);
-      if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
-        DataPropagationContextImpl data_propagation_ctx(
-            copy_n, value_types_by_name, initializers_by_name, *generated_shape_data_by_name);
-        schema->GetDataPropagationFunction()(data_propagation_ctx);
-      }
+    }
+    for (auto& n : func_proto.node()) {
+      process(n, attr_map);
+    }
 
-      // Make merged info available to downstream inference.
-      value_types_by_name[copy_n.output(i)] = existing_type;
+    for (int i = 0; i < func_proto.output_size(); ++i) {
+      const std::string& output_name = func_proto.output().Get(i);
+      // Skip if no type inferred for the tensor
+      auto iter = value_types_by_name.find(output_name);
+      if (iter != value_types_by_name.cend()) {
+        // Copy the type info to ctx
+        // to pass back to main graph
+        auto type_proto = ctx.getOutputType(i);
+        type_proto->CopyFrom(*(iter->second));
+      }
     }
   }
 
-  for (int i = 0; i < func_proto.output_size(); ++i) {
-    const std::string& output_name = func_proto.output().Get(i);
-    // Skip if no type inferred for the tensor
-    auto iter = value_types_by_name.find(output_name);
-    if (iter != value_types_by_name.cend()) {
-      // Copy the type info to ctx
-      // to pass back to main graph
-      auto type_proto = ctx.getOutputType(i);
-      type_proto->CopyFrom(*(iter->second));
+ public:
+  ShapeInferenceImplBase(
+      GraphProto* g_in,
+      const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
+      const std::unordered_map<std::string, int>& opset_imports_in,
+      const ShapeInferenceOptions& options_in,
+      SymbolTable* symbol_table_in,
+      const ModelLocalFunctionsMap& model_local_functions_map_in,
+      const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
+      std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name_in = nullptr,
+      const int ir_version_in = IR_VERSION // default the latest one
+      )
+      : g(*g_in),
+        value_types_by_name(outer_scope_value_types_by_name_in),
+        opset_imports(opset_imports_in),
+        options(options_in),
+        symbol_table(symbol_table_in),
+        model_local_functions_map(model_local_functions_map_in),
+        schema_registry(schema_registry_in),
+        generated_shape_data_by_name(generated_shape_data_by_name_in),
+        ir_version(ir_version_in),
+        graph_inference_context{
+            value_types_by_name,
+            opset_imports,
+            symbol_table,
+            model_local_functions_map,
+            schema_registry,
+            generated_shape_data_by_name,
+            ir_version} {
+    if (options.enable_data_propagation && generated_shape_data_by_name == nullptr) {
+      fail_shape_inference(
+          "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
     }
   }
+
+ private:
+  GraphProto& g;
+  std::unordered_map<std::string, TypeProto*> value_types_by_name;
+  const std::unordered_map<std::string, int>& opset_imports;
+
+  const ShapeInferenceOptions& options;
+  SymbolTable* symbol_table;
+  const ModelLocalFunctionsMap& model_local_functions_map;
+  const ISchemaRegistry* schema_registry;
+  std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name;
+  int ir_version;
+  GraphInferenceContext graph_inference_context;
+
+  std::unordered_map<std::string, TypeProto*> undefined_value_types_by_name;
+  std::unordered_map<std::string, const TensorProto*> input_data_by_name;
+  std::unordered_map<std::string, const SparseTensorProto*> input_sparse_data_by_name;
+
+  bool has_experimental_op = false;
+  bool has_unsupported_op = false;
+
+  std::vector<std::string> inference_errors;
+
+  std::list<TypeProto> initializer_type_list;
+};
+
+static void InferShapesImpl(
+    GraphProto* g,
+    const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name,
+    const std::unordered_map<std::string, int>& opset_imports,
+    const ShapeInferenceOptions& options,
+    SymbolTable* symbol_table,
+    const ModelLocalFunctionsMap& model_local_functions_map,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr,
+    const int ir_version = IR_VERSION // default the latest one
+) {
+  std::unordered_map<std::string, TensorShapeProto> empty;
+  if (generated_shape_data_by_name == nullptr) {
+    generated_shape_data_by_name = &empty;
+  }
+  ShapeInferenceImplBase base(
+      g,
+      outer_scope_value_types_by_name,
+      opset_imports,
+      options,
+      symbol_table,
+      model_local_functions_map,
+      schema_registry,
+      generated_shape_data_by_name,
+      ir_version);
+  base.process(*g);
+}
+
+// Either ModelProto or FunctionProto
+template <class T>
+std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
+  std::unordered_map<std::string, int> opset_imports;
+  for (const auto& opset_import : proto.opset_import()) {
+    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+  }
+  return opset_imports;
+}
+
+void InferShapes(
+    GraphProto* g,
+    const std::unordered_map<std::string, int>& opset_imports,
+    const ISchemaRegistry* schema_registry,
+    const ShapeInferenceOptions& options,
+    const std::unordered_map<std::string, const FunctionProto*>& model_local_functions) {
+  SymbolTableImpl symbol_table;
+  InferShapesImpl(
+      g,
+      std::unordered_map<std::string, TypeProto*>(0),
+      opset_imports,
+      options,
+      &symbol_table,
+      model_local_functions,
+      schema_registry);
+}
+
+void InferShapes(
+    ModelProto& m,
+    const ISchemaRegistry* schema_registry,
+    const ShapeInferenceOptions& options,
+    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
+  auto opset_imports = GetOpsetImportsFromProto(m);
+  SymbolTableImpl symbol_table;
+  ModelLocalFunctionsMap model_local_functions_by_id;
+  for (const auto& function_proto : m.functions()) {
+    model_local_functions_by_id.insert(
+        {GetModelLocalFunctionsMapIdentifier(function_proto.domain(), function_proto.name()), &function_proto});
+  }
+  InferShapesImpl(
+      m.mutable_graph(),
+      std::unordered_map<std::string, TypeProto*>(0),
+      opset_imports,
+      options,
+      &symbol_table,
+      model_local_functions_by_id,
+      schema_registry,
+      generated_shape_data_by_name,
+      m.ir_version());
+}
+
+void InferShapes(
+    const std::string& model_path,
+    const std::string& save_path,
+    const ISchemaRegistry* schema_registry,
+    const ShapeInferenceOptions& options,
+    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
+  ModelProto model;
+  LoadProtoFromPath(model_path, model);
+  InferShapes(model, schema_registry, options, generated_shape_data_by_name);
+  // Save the inferred model to the original model path
+  // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
+  std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
+  std::string model_string;
+  ONNX_TRY {
+    model.SerializeToString(&model_string);
+    output << model_string;
+  }
+  ONNX_CATCH(...) {
+    fail_check("Unable to save inferred model to the target path:", save_path);
+  }
+}
+
+// Infer shape for functions
+void InferShapeForFunctionNode(
+    const FunctionProto& func_proto,
+    const std::unordered_map<std::string, int>& func_opset_imports,
+    const ISchemaRegistry* schema_registry,
+    InferenceContext& ctx,
+    const ShapeInferenceOptions& options,
+    const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
+    SymbolTable* symbol_table,
+    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
+  GraphProto g;
+  ShapeInferenceImplBase base(
+      &g,
+      {}, // outer_scope_value_types_by_name
+      func_opset_imports,
+      options,
+      symbol_table,
+      model_local_functions_map,
+      schema_registry,
+      generated_shape_data_by_name);
+  base.process(func_proto, ctx);
 }
 
 void InferShapeForFunctionNode(
@@ -725,12 +738,7 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
     SymbolTable* symbol_table,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
-
-  std::unordered_map<std::string, int> opset_imports;
-  for (const auto& opset_import : function_proto.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
-  }
-
+  auto opset_imports = GetOpsetImportsFromProto(function_proto);
   InferShapeForFunctionNode(
       function_proto,
       opset_imports,
@@ -745,7 +753,7 @@ void InferShapeForFunctionNode(
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& input_types,
     const std::vector<const TensorProto*>& input_data) {
-  SymbolTable* symbol_table = getSymbolTable();
+  SymbolTable* symbol_table = context_->symbol_table;
   int num_inputs = int(input_types.size());
   std::unordered_set<std::string> initializer_name_set;
   for (const auto& tp : g_->initializer()) {
@@ -758,13 +766,13 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     }
     for (int i = 0; i < g_->input_size(); ++i) {
       if (initializer_name_set.count(g_->input(i).name()) > 0) {
-        fail_shape_inference("Cannot use the same name as both a subgraph initializer and subgraph input: ",
-          g_->input(i).name());
+        fail_shape_inference(
+            "Cannot use the same name as both a subgraph initializer and subgraph input: ", g_->input(i).name());
       }
     }
   } else {
     // IR < 4 requires all initializers to be optional inputs
-    // So the number of graph input can be larger than the number of node input 
+    // So the number of graph input can be larger than the number of node input
     if (num_inputs > g_->input_size()) {
       fail_shape_inference(
           "Graph has ",
@@ -772,12 +780,11 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
           " inputs but ",
           num_inputs,
           " were provided.",
-        "The number of graph input cannot be smaller than the number of node input" );
+          "The number of graph input cannot be smaller than the number of node input");
     } else if (num_inputs < g_->input_size()) {
       for (int i = 0; i < g_->input_size(); ++i) {
         if (i < num_inputs && initializer_name_set.count(g_->input(i).name()) > 0) {
-          fail_shape_inference("Graph initializer names must appear after the actual inputs: ",
-            g_->input(i).name());
+          fail_shape_inference("Graph initializer names must appear after the actual inputs: ", g_->input(i).name());
         } else if (i >= num_inputs && initializer_name_set.count(g_->input(i).name()) == 0) {
           // Further check whether the additional input is in initializers
           fail_shape_inference("Cannot find missing input: ", g_->input(i).name(), "in initializers. ");
@@ -804,7 +811,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // future: pass inputData into InferShapes either directly, or indirectly by
   // updating initializers that match subgraph inputs.
   (void)input_data;
-  ShapeInferenceOptions options {};
+  ShapeInferenceOptions options{};
   InferShapesImpl(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
@@ -812,7 +819,8 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       options,
       symbol_table,
       context_->model_local_functions,
-      context_->schema_registry);
+      context_->schema_registry,
+      context_->generated_shape_data_by_name);
 
   std::vector<const TypeProto*> graph_output_types;
   graph_output_types.reserve(g_->output().size());

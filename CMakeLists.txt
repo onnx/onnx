@@ -58,10 +58,15 @@ else()
   set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
-# Set C++11 as standard for the whole project
+# Required to use /std:c++17 or higher on Windows
+# For other platforms, set C++11 as standard for the whole project
 if(NOT MSVC)
   set(CMAKE_CXX_STANDARD 11)
-endif(NOT MSVC)
+else()
+  string(APPEND CMAKE_CXX_FLAGS " /std:c++17")
+endif()
+
+include(GNUInstallDirs)
 
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
@@ -156,17 +161,17 @@ else()
                            ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
     find_library(Protobuf_PROTOC_LIBRARY
                  NAMES protoc
-                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
                  NO_DEFAULT_PATH)
     if(ONNX_USE_LITE_PROTO)
       find_library(Protobuf_LITE_LIBRARY
         NAMES protobuf-lite
-        PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
         NO_DEFAULT_PATH)
     else()
       find_library(Protobuf_LIBRARY
         NAMES protobuf
-        PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
         NO_DEFAULT_PATH)
     endif(ONNX_USE_LITE_PROTO)
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
@@ -277,10 +282,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
           # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
           configure_file(
             ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
-            ${ROOT_DIR}/tools/protoc-gen-mypy.sh
+            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh
             @ONLY)
-          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.sh)
+          execute_process(COMMAND chmod +x ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
+          configure_file(
+            ${ROOT_DIR}/tools/protoc-gen-mypy.py
+            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.py
+            COPYONLY)
+          set(PROTOC_MYPY_PLUGIN_FILE ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
         else()
           set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
         endif()
@@ -444,28 +453,29 @@ if(BUILD_ONNX_PYTHON)
   target_include_directories(onnx_cpp2py_export PRIVATE
                              $<BUILD_INTERFACE:${ONNX_ROOT}>
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                             $<INSTALL_INTERFACE:include>
-                             ${PYTHON_INCLUDE_DIR})
+                             $<INSTALL_INTERFACE:include>)
 
   # pybind11 is a header only lib
-  find_package(pybind11 2.2)
-  if(pybind11_FOUND)
-    target_include_directories(onnx_cpp2py_export PUBLIC
-      ${pybind11_INCLUDE_DIRS})
-  else()
-    if(EXISTS ${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h)
-      target_include_directories(onnx_cpp2py_export PUBLIC
-        ${ONNX_ROOT}/third_party/pybind11/include)
+  find_package(pybind11 2.2 CONFIG)
+  if(NOT pybind11_FOUND)
+    if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
+      add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
     else()
       message(FATAL_ERROR "cannot find pybind")
     endif()
   endif()
 
+  target_include_directories(onnx_cpp2py_export PUBLIC
+    "${pybind11_INCLUDE_DIRS}"
+    "${PYTHON_INCLUDE_DIRS}")
+
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
                           PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+    # Only put double quotes around $<TARGET_FILE:onnx> for Mac
+    # Other platforms like Windows and Ubuntu originally work fine without double quotes
     target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -Wl,-force_load,$<TARGET_FILE:onnx>)
+                          PRIVATE -Wl,-force_load,"$<TARGET_FILE:onnx>")
   elseif(MSVC)
     # In MSVC, we will add whole archive in default
     target_link_libraries(onnx_cpp2py_export
@@ -661,12 +671,12 @@ if(MSVC)
                         )
 endif()
 
-include(GNUInstallDirs)
-
 install(DIRECTORY ${ONNX_ROOT}/onnx
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING
-        PATTERN "*.h")
+        PATTERN "*.h"
+        PATTERN "backend/test/case" EXCLUDE
+        PATTERN "backend/test/data" EXCLUDE)
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING

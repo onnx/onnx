@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 #include <algorithm>
 #include <functional>
 #include "onnx/defs/schema.h"
@@ -10,8 +9,7 @@
 
 namespace ONNX_NAMESPACE {
 
-std::vector<std::string> GetSupportedDataTypesForReductionOps(
-    bool supports8bit) {
+std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit) {
   if (supports8bit) {
     auto data_types = OpSchema::numeric_types_for_math_reduction_with_bfloat();
     data_types.push_back("tensor(uint8)");
@@ -23,35 +21,25 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(
   return OpSchema::numeric_types_for_math_reduction_with_bfloat();
 }
 
-std::function<void(OpSchema&)> ReduceDocGenerator(
-    const char* name,
-    bool supports_8bit_datatypes = false,
-    bool axes_input = false) {
+std::function<void(OpSchema&)>
+ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false, bool axes_input = false) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
-Computes the {name} of the input tensor's element along the provided axes. The resulted
-tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
-the resulted tensor have the reduced dimension pruned.
+Computes the {name} of the input tensor's element along the provided axes. The resulting
+tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+the resulting tensor has the reduced dimension pruned.
 
-The above behavior is similar to numpy, with the exception that numpy default keepdims to
+The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
 False instead of True.)DOC";
                         ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "keepdims",
-        "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
+        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
-    schema.Input(
-        0,
-        "data",
-        "An input tensor.",
-        "T",
-        OpSchema::Single,
-        true,
-        1,
-        OpSchema::Differentiable);
+    schema.Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     if (axes_input) {
       schema.Attr(
           "noop_with_empty_axes",
@@ -80,21 +68,12 @@ False instead of True.)DOC";
           AttributeProto::INTS,
           OPTIONAL_VALUE);
     }
-    schema.Output(
-        0,
-        "reduced",
-        "Reduced output tensor.",
-        "T",
-        OpSchema::Single,
-        true,
-        1,
-        OpSchema::Differentiable);
+    schema.Output(0, "reduced", "Reduced output tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForReductionOps(supports_8bit_datatypes),
-        supports_8bit_datatypes
-            ? "Constrain input and output types to high-precision and 8 bit numeric tensors."
-            : "Constrain input and output types to high-precision numeric tensors.");
+        supports_8bit_datatypes ? "Constrain input and output types to high-precision and 8 bit numeric tensors."
+                                : "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -135,21 +114,18 @@ False instead of True.)DOC";
         return;
       }
       int64_t input_ndim = input_shape.dim_size();
-      auto output_shape =
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
       for (size_t i = 0; i < axes.size(); ++i) {
         if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
-          fail_shape_inference(
-              "axis must be in [-rank, rank-1]. input rank was ", input_ndim);
+          fail_shape_inference("axis must be in [-rank, rank-1]. input rank was ", input_ndim);
         }
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim
-        if (!axes.empty() &&
-            std::find(axes.begin(), axes.end(), i) == axes.end()) {
+        if (!axes.empty() && std::find(axes.begin(), axes.end(), i) == axes.end()) {
           auto dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
@@ -163,63 +139,33 @@ False instead of True.)DOC";
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceMax,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("max", true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 13, OpSchema().FillUsing(ReduceDocGenerator("max", true)));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceMin,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("min", true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 13, OpSchema().FillUsing(ReduceDocGenerator("min", true)));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceSum,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("sum", false, true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceDocGenerator("sum", false, true)));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceSumSquare,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("sum square")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 13, OpSchema().FillUsing(ReduceDocGenerator("sum square")));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceMean,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("mean")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 13, OpSchema().FillUsing(ReduceDocGenerator("mean")));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceProd,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("product")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 13, OpSchema().FillUsing(ReduceDocGenerator("product")));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceLogSum,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("log sum")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 13, OpSchema().FillUsing(ReduceDocGenerator("log sum")));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceLogSumExp,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("log sum exponent")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceLogSumExp, 13, OpSchema().FillUsing(ReduceDocGenerator("log sum exponent")));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceL1,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("L1 norm")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 13, OpSchema().FillUsing(ReduceDocGenerator("L1 norm")));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceL2,
-    13,
-    OpSchema().FillUsing(ReduceDocGenerator("L2 norm")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 13, OpSchema().FillUsing(ReduceDocGenerator("L2 norm")));
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the
-provided axis. The resulting tensor has the same rank as the input if keepdims equal 1.
-If keepdims equal 0, then the resulting tensor have the reduced dimension pruned.
+provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
+If keepdims equals 0, then the resulting tensor has the reduced dimension pruned.
 If select_last_index is True (default False), the index of the last occurrence of the {name}
 is selected if the {name} appears more than once in the input. Otherwise the index of the
 first occurrence is selected.
@@ -233,7 +179,7 @@ The type of the output tensor is integer.)DOC";
         static_cast<int64_t>(0));
     schema.Attr(
         "keepdims",
-        "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
+        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Attr(
@@ -241,15 +187,7 @@ The type of the output tensor is integer.)DOC";
         "Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
         AttributeProto::INT,
         static_cast<int64_t>(0));
-    schema.Input(
-        0,
-        "data",
-        "An input tensor.",
-        "T",
-        OpSchema::Single,
-        true,
-        1,
-        OpSchema::NonDifferentiable);
+    schema.Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable);
     schema.Output(
         0,
         "reduced",
@@ -260,9 +198,7 @@ The type of the output tensor is integer.)DOC";
         1,
         OpSchema::NonDifferentiable);
     schema.TypeConstraint(
-        "T",
-        OpSchema::all_numeric_types_with_bfloat(),
-        "Constrain input and output types to all numeric tensors.");
+        "T", OpSchema::all_numeric_types_with_bfloat(), "Constrain input and output types to all numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
       updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
@@ -272,16 +208,14 @@ The type of the output tensor is integer.)DOC";
       }
 
       auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-      auto output_shape =
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
       int64_t axis = 0; // default to 0
       auto axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
         if (axis < -input_ndim || axis >= input_ndim) {
-          fail_shape_inference(
-              "'axis' must be in [-rank(indices), rank(indices)-1]");
+          fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
         }
         if (axis < 0)
           axis += input_ndim;
@@ -308,14 +242,8 @@ The type of the output tensor is integer.)DOC";
   };
 } // namespace ONNX_NAMESPACE
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ArgMax,
-    13,
-    OpSchema().FillUsing(ArgReduceDocGenerator("max")));
+ONNX_OPERATOR_SET_SCHEMA(ArgMax, 13, OpSchema().FillUsing(ArgReduceDocGenerator("max")));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ArgMin,
-    13,
-    OpSchema().FillUsing(ArgReduceDocGenerator("min")));
+ONNX_OPERATOR_SET_SCHEMA(ArgMin, 13, OpSchema().FillUsing(ArgReduceDocGenerator("min")));
 
 } // namespace ONNX_NAMESPACE

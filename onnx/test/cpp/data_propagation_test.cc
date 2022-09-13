@@ -22,7 +22,8 @@ inline bool CompareShape(
     const TensorShapeProto& inferredShape,
     const TensorShapeProto& expectedShape,
     bool checkSameParam = false) {
-  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size()) << "Dim size for inferred and expected shape is different.";
+  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size())
+      << "Dim size for inferred and expected shape is different.";
 
   for (int i = 0; i < inferredShape.dim_size(); i++) {
     EXPECT_TRUE(
@@ -40,7 +41,7 @@ inline bool CompareShape(
   return true;
 }
 
- TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 15) {
+TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 15) {
   // Parses the graph from graphCode
   GraphProto graph;
   OnnxParser parser(graphCode);
@@ -89,28 +90,27 @@ inline bool CompareShape(
   std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
   auto* schemaRegistry = OpSchemaRegistry::Instance();
   TensorShapeProto inferredShape;
-  for (auto n: graph.node()) {
+  for (auto n : graph.node()) {
     // No need to run data propagation on Constant
     if (n.op_type() == "Constant") {
       continue;
     }
-    DataPropagationContextImpl dataPropagationCtx(
-        n, valueTypesByName, inputDataByName, generatedShapeDataByName);
+    DataPropagationContextImpl dataPropagationCtx(n, valueTypesByName, inputDataByName, generatedShapeDataByName);
     const auto schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
   }
 
-  // Assuming the graph being tested only has 1 output. 
+  // Assuming the graph being tested only has 1 output.
   // If this ever changes then fixes are required here.
-  const auto inputShapeDataIter = generatedShapeDataByName.find(graph.output()[0].name());
+  const auto inputShapeDataIter = generatedShapeDataByName.find(graph.output(0).name());
   EXPECT_TRUE(inputShapeDataIter != generatedShapeDataByName.cend());
 
   inferredShape.CopyFrom(inputShapeDataIter->second);
 
   // Returns the partial shape data for output
   return inferredShape;
- }
+}
 
 TEST(DataPropagationImplTest, ShapeTest) {
   const char* code = R"ONNX(
