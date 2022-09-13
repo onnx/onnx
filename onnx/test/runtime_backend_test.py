@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0703
+# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0640,W0703
 
 import os
 import unittest
@@ -402,7 +402,7 @@ class TestOnnxBackEnd(unittest.TestCase):
                         from onnxruntime import InferenceSession
 
                         te.run(
-                            lambda obj: InferenceSession(obj.SerializeToString()),  # pylint: disable=W0640
+                            lambda obj: InferenceSession(obj.SerializeToString()),
                             lambda *a, **b: TestOnnxBackEnd.run_fct(*a, verbose=1, **b),
                         )
                     continue
