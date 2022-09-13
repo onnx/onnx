@@ -244,7 +244,7 @@ class Inference:
             return load_op(node.domain, node.op_type, version)
 
         if node.domain == "ai.onnx.preview.training":
-            from .aionnx_preview_training import load_op_pt
+            from .aionnx_preview_training import load_op as load_op_pt
 
             return load_op_pt(node.domain, node.op_type, version)
 
