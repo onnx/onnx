@@ -490,6 +490,10 @@ class TestOnnxBackEnd(unittest.TestCase):
         }
         # discrepancies
         skip_test |= {
+            # deprecated
+            "test_scatter_with_axis",
+            "test_scatter_without_axis",
+            # bug
             "test_gru_batchwise",
             # problem with constant pi
             "test_blackmanwindow_expanded",
@@ -546,7 +550,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_blackmanwindow_expanded" in name,
+            lambda name: "test_reversesequence_time" in name,
             verbose=0,
             decimal={"test_blackmanwindow_expanded": 4},
         )
