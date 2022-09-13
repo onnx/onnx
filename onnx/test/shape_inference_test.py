@@ -8505,6 +8505,22 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_svd_2d_partial_flipped(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (4, 3))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"], full_matrices=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (3,)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (4, 3)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (3, 3)),
+            ],
+        )
+
     def test_svd_3d_partial(self):  # type: () -> None
         graph = self._make_graph(
             [("A", TensorProto.FLOAT, (2, 3, 4))],
@@ -8590,6 +8606,189 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info("S", TensorProto.FLOAT, (5, 4, 3, 2, 1, 3)),
+            ],
+        )
+
+    def test_svd_missing_type(self):  # type: () -> None
+        graph = self._make_graph(["A"], [make_node("SVD", ["A"], ["S", "U", "Vh"])], [])
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_svd_missing_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, None)],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, None),
+                make_tensor_value_info("U", TensorProto.FLOAT, None),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, None),
+            ],
+        )
+
+    def test_svd_missing_shape_batch_dimension(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, ("batch_dim", 3, 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, ("batch_dim", 3)),
+                make_tensor_value_info("U", TensorProto.FLOAT, ("batch_dim", 3, 3)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, ("batch_dim", 4, 4)),
+            ],
+        )
+
+    def test_svd_missing_rows_dim_full_matrices(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, ("A_n_rows_dim", 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (None,)),
+                make_tensor_value_info(
+                    "U", TensorProto.FLOAT, ("A_n_rows_dim", "A_n_rows_dim")
+                ),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (4, 4)),
+            ],
+        )
+
+    def test_svd_missing_cols_dim_full_matrices(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (3, "A_n_cols_dim"))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (None,)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (3, 3)),
+                make_tensor_value_info(
+                    "Vh", TensorProto.FLOAT, ("A_n_cols_dim", "A_n_cols_dim")
+                ),
+            ],
+        )
+
+    def test_svd_missing_dims_full_matrices(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, ("A_n_rows_dim", "A_n_cols_dim"))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (None,)),
+                make_tensor_value_info(
+                    "U", TensorProto.FLOAT, ("A_n_rows_dim", "A_n_rows_dim")
+                ),
+                make_tensor_value_info(
+                    "Vh", TensorProto.FLOAT, ("A_n_cols_dim", "A_n_cols_dim")
+                ),
+            ],
+        )
+
+    def test_svd_missing_rows_dim_partial(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, ("A_n_rows_dim", 4))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"], full_matrices=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (None,)),
+                make_tensor_value_info("U", TensorProto.FLOAT, ("A_n_rows_dim", None)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (None, 4)),
+            ],
+        )
+
+    def test_svd_missing_cols_dim_partial(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (3, "A_n_cols_dim"))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"], full_matrices=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (None,)),
+                make_tensor_value_info("U", TensorProto.FLOAT, (3, None)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (None, "A_n_cols_dim")),
+            ],
+        )
+
+    def test_svd_missing_dim_partial(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, ("A_n_rows_dim", "A_n_cols_dim"))],
+            [make_node("SVD", ["A"], ["S", "U", "Vh"], full_matrices=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (None,)),
+                make_tensor_value_info("U", TensorProto.FLOAT, ("A_n_rows_dim", None)),
+                make_tensor_value_info("Vh", TensorProto.FLOAT, (None, "A_n_cols_dim")),
+            ],
+        )
+
+    def test_svd_missing_cols_dim_compute_uv_false(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, (3, "A_n_cols_dim"))],
+            [make_node("SVD", ["A"], ["S"], compute_uv=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (None,)),
+            ],
+        )
+
+    def test_svd_missing_rows_dim_compute_uv_false(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, ("A_n_rows_dim", 4))],
+            [make_node("SVD", ["A"], ["S"], compute_uv=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (None,)),
+            ],
+        )
+
+    def test_svd_missing_dim_compute_uv_false(self):  # type: () -> None
+        graph = self._make_graph(
+            [("A", TensorProto.FLOAT, ("A_n_rows_dim", "A_n_cols_dim"))],
+            [make_node("SVD", ["A"], ["S"], compute_uv=0)],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("S", TensorProto.FLOAT, (None,)),
             ],
         )
 

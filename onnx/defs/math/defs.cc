@@ -3546,6 +3546,10 @@ void SVDInferenceFunction(InferenceContext& ctx) {
   // The rest of the dimensions are used for broadcasting,
   // see https://numpy.org/doc/stable/reference/generated/numpy.linalg.svd.html
 
+  if (!hasInputShape(ctx, 0)) {
+    return;
+  }
+
   const auto A_shape = ctx.getInputType(0)->tensor_type().shape();
   const auto A_dim_size = A_shape.dim_size();
 
@@ -3571,12 +3575,25 @@ void SVDInferenceFunction(InferenceContext& ctx) {
     *S_shape->add_dim() = dim;
   }
 
-  // SVD Factorization is only applied to the last two dimensions.
+  // SVD Factoring is only applied to the last two dimensions.
 
   const auto A_n_rows_dim = A_shape.dim(dim_idx);
   const auto A_n_cols_dim = A_shape.dim(dim_idx + 1);
 
-  const auto min_dimension = A_n_rows_dim.dim_value() < A_n_cols_dim.dim_value() ? A_n_rows_dim : A_n_cols_dim;
+  const auto has_min_dimension = A_n_rows_dim.has_dim_value() && A_n_cols_dim.dim_value();
+
+  const auto min_dimension = [&] {
+    if (has_min_dimension) {
+      if (A_n_rows_dim.dim_value() < A_n_cols_dim.dim_value()) {
+        return A_n_rows_dim;
+      } else {
+        return A_n_cols_dim;
+      }
+    } else {
+      // Dummy value, won't be used.
+      return A_n_rows_dim;
+    }
+  }();
 
   if (compute_uv) {
     const auto* full_matrices_attr = ctx.getAttribute("full_matrices");
@@ -3588,7 +3605,11 @@ void SVDInferenceFunction(InferenceContext& ctx) {
       *U_shape->add_dim() = A_n_rows_dim;
       *U_shape->add_dim() = A_n_rows_dim;
 
-      *S_shape->add_dim() = min_dimension;
+      if (has_min_dimension) {
+        *S_shape->add_dim() = min_dimension;
+      } else {
+        S_shape->add_dim();
+      }
 
       *Vh_shape->add_dim() = A_n_cols_dim;
       *Vh_shape->add_dim() = A_n_cols_dim;
@@ -3596,16 +3617,35 @@ void SVDInferenceFunction(InferenceContext& ctx) {
       // Partial SVD
       // U's number of columns becomes the min dimension
       // Vh's number of rows becomes the min dimension
-      *U_shape->add_dim() = min_dimension;
+
       *U_shape->add_dim() = A_n_rows_dim;
 
-      *S_shape->add_dim() = min_dimension;
+      if (has_min_dimension) {
+        *U_shape->add_dim() = min_dimension;
+      } else {
+        U_shape->add_dim();
+      }
 
-      *Vh_shape->add_dim() = min_dimension;
+      if (has_min_dimension) {
+        *S_shape->add_dim() = min_dimension;
+      } else {
+        S_shape->add_dim();
+      }
+
+      if (has_min_dimension) {
+        *Vh_shape->add_dim() = min_dimension;
+      } else {
+        Vh_shape->add_dim();
+      }
+
       *Vh_shape->add_dim() = A_n_cols_dim;
     }
   } else {
-    *S_shape->add_dim() = min_dimension;
+    if (has_min_dimension) {
+      *S_shape->add_dim() = min_dimension;
+    } else {
+      S_shape->add_dim();
+    }
   }
 }
 
