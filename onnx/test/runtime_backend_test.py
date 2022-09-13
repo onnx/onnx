@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=R0912,R0913,R0914,R0915,W0703
+# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0703
 
 import os
 import unittest
@@ -330,7 +330,7 @@ class TestOnnxBackEnd(unittest.TestCase):
         return rt.Inference(obj)
 
     @staticmethod
-    def run_fct(obj, *inputs, verbose=0):
+    def run_fct(obj, *inputs, verbose=0):  # pylint: disable=W0613
         if hasattr(obj, "input_names"):
             input_names = obj.input_names
         elif hasattr(obj, "get_inputs"):
@@ -402,7 +402,7 @@ class TestOnnxBackEnd(unittest.TestCase):
                         from onnxruntime import InferenceSession
 
                         te.run(
-                            lambda obj: InferenceSession(obj.SerializeToString()),
+                            lambda obj: InferenceSession(obj.SerializeToString()),  # pylint: disable=W0640
                             lambda *a, **b: TestOnnxBackEnd.run_fct(*a, verbose=1, **b),
                         )
                     continue
