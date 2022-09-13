@@ -217,7 +217,7 @@ class OnnxBackendTest:
                         assert_almost_equal(e, o, decimal=deci)
                     except AssertionError as ex:
                         raise AssertionError(
-                            f"Output {i} of test {index} in folder {self.folder!r} failed."
+                            f"Output {i} of test {index} in folder {self.folder!r} failed (decimal={deci})."
                         ) from ex
             elif hasattr(o, "is_compatible"):
                 # A shape
@@ -330,12 +330,20 @@ class TestOnnxBackEnd(unittest.TestCase):
         return rt.Inference(obj)
 
     @staticmethod
-    def run_fct(obj, *inputs):
-        if len(obj.input_names) < len(inputs):
+    def run_fct(obj, *inputs, verbose=0):
+        if hasattr(obj, "input_names"):
+            input_names = obj.input_names
+        elif hasattr(obj, "get_inputs"):
+            input_names = [_.name for _ in obj.get_inputs()]
+        else:
+            raise AttributeError(
+                f"Unable to extract the number to guess the number of inputs for type {type(obj)}."
+            )
+        if len(input_names) < len(inputs):
             raise AssertionError(
                 f"Got {len(inputs)} inputs but expecting {len(obj.input_names)}."
             )
-        feeds = {obj.input_names[i]: inputs[i] for i in range(len(inputs))}
+        feeds = {input_names[i]: inputs[i] for i in range(len(inputs))}
         got = obj.run(None, feeds)
         return got
 
@@ -348,7 +356,9 @@ class TestOnnxBackEnd(unittest.TestCase):
             done += 1
         self.assertEqual(done, 1)
 
-    def common_test_enumerate_onnx_tests_run(self, valid, verbose=0, decimal=None):
+    def common_test_enumerate_onnx_tests_run(
+        self, valid, verbose=0, decimal=None, check_ort_mismath=False
+    ):
         if decimal is None:
             decimal = {}
         with self.assertRaises(FileNotFoundError):
@@ -387,6 +397,14 @@ class TestOnnxBackEnd(unittest.TestCase):
                     if verbose > 7:
                         print("  ", e, type(e))
                     mismatch.append((te, e))
+
+                    if check_ort_mismath:
+                        from onnxruntime import InferenceSession
+
+                        te.run(
+                            lambda obj: InferenceSession(obj.SerializeToString()),
+                            lambda *a, **b: TestOnnxBackEnd.run_fct(*a, verbose=1, **b),
+                        )
                     continue
                 except Exception as e:
                     if verbose > 7:
@@ -460,6 +478,8 @@ class TestOnnxBackEnd(unittest.TestCase):
     def test_enumerate_onnx_tests_run(self):
         # test not supported yet
         # not supported yet
+        # see http://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
+        # to compare with onnxruntime
         skip_test = {
             "test_cast_FLOAT_to_BFLOAT16",
             "test_castlike_FLOAT_to_BFLOAT16_expanded",
@@ -502,6 +522,7 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_resize_downsample_scales_linear_antialias",
             "test_resize_downsample_sizes_cubic_antialias",
             "test_resize_downsample_sizes_linear_antialias",
+            "test_nesterov_momentum",
             "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",
             # bug
             "test_scatter_elements_with_reduction_min",
@@ -512,8 +533,11 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_stft",
         }
         decimal = {
+            "test_adam_multiple": 2,
+            "test_blackmanwindow_expanded": 4,
             "test_simple_rnn_batchwise": 2,
         }
+
         self.common_test_enumerate_onnx_tests_run(
             valid=lambda name: name not in skip_test,
             verbose=4 if __name__ == "__main__" else 0,
@@ -522,7 +546,9 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_abs" in name, verbose=0
+            lambda name: "test_blackmanwindow_expanded" in name,
+            verbose=0,
+            decimal={"test_blackmanwindow_expanded": 4},
         )
 
 

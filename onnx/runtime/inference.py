@@ -231,23 +231,34 @@ class Inference:
                 f"is not specified. Known opsets: {self.opsets!r}."
             )
         version = self.opsets[node.domain]
+        key = node.domain, node.op_type
+        if key in self.new_ops_:
+            # This operator has a custom implementation.
+            # This mechanism can be used to implement a custom onnx node
+            # or to overwrite an existing one.
+            return self.new_ops_[key]
+
         if node.domain == "":
             from .aionnx import load_op
 
             return load_op(node.domain, node.op_type, version)
+
         if node.domain == "ai.onnx.ml":
-            raise NotImplementedError(
-                f"No implemented for domain {node.domain!r} is available yet."
-            )
+            from .aionnxml import load_op
+
+            return load_op(node.domain, node.op_type, version)
+
+        if node.domain == "ai.onnx.preview.training":
+            from .aionnx_preview_training import load_op
+
+            return load_op(node.domain, node.op_type, version)
+
         # It has to be a function.
-        key = node.domain, node.op_type
         if key in self.functions_:
             from .aionnx import load_op
 
             impl = self.functions_[key]
             return load_op(node.domain, node.op_type, version, custom=impl)
-        if key in self.new_ops_:
-            return self.new_ops_[key]
         raise NotImplementedError(
             f"Node type {node.op_type!r} from domain {node.domain!r} "
             f"is unknown, known functions: {list(sorted(self.functions_))}."
