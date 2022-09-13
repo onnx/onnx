@@ -37,9 +37,9 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
 
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
-    storage_type = mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[tensor_dtype]
-    storage_np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[storage_type]
-    storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[storage_type]
+    storage_type = mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE.get(tensor_dtype, None)
+    storage_np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[storage_type] if storage_type else None
+    storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD.get(storage_type, None)
     dims = tensor.dims
 
     if tensor.data_type == TensorProto.STRING:
@@ -63,6 +63,12 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
             return bfloat16_to_float32(data, dims)
 
         return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)
+    elif storage_field is None:
+        raise ValueError(
+            f"Tensor has no field raw_data but this is the only way "
+            f"to store elements of type {np_dtype}, storage_type={storage_type}, "
+            f"tensor_dtype={tensor_dtype}."
+        )
     else:
         # float16 is stored as int32 (uint16 type); Need view to get the original value
         if tensor_dtype == TensorProto.FLOAT16:

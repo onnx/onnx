@@ -362,6 +362,8 @@ def make_tensor(
 
     # Check number of vals specified equals tensor size
     expected_size = 1
+    if isinstance(vals, np.ndarray) and len(vals.shape) > 1:
+        vals = vals.flatten()
     if raw:
         # NumPy doesn't have BFLOAT16. TENSOR_TYPE_TO_NP_TYPE maps it to float32,
         # which has the wrong itemsize.
@@ -370,37 +372,47 @@ def make_tensor(
         else:
             expected_size = np_dtype.itemsize
 
-    if type(vals) is np.ndarray and len(vals.shape) > 1:
-        vals = vals.flatten()
+    if not raw and np_dtype.itemsize < 4 and data_type != TensorProto.BFLOAT16:
+        # any type taking less 4 bytes should be using attribute raw
+        # and not int32_data or floor_data. It would take more memory
+        # and would produce an inconsistent tensor.
+        raw = True
+        expected_size = np_dtype.itemsize
+        if isinstance(vals, np.ndarray):
+            vals = vals.tobytes()
+        else:
+            vals = np.array(vals).astype(np_dtype).tobytes()
+
     for d in dims:
         expected_size *= d
 
     if len(vals) != expected_size:
         raise ValueError(
-            "Number of values does not match tensor's size. Expected {}, but it is {}. ".format(
-                expected_size, len(vals)
-            )
+            f"Number of values does not match tensor's size. Expected {expected_size}, "
+            f"but it is {len(vals)}, with raw={raw}, data_type={data_type}, np_dtype={np_dtype}."
         )
 
     if raw:
         tensor.raw_data = vals
     else:
-        if data_type == TensorProto.COMPLEX64 or data_type == TensorProto.COMPLEX128:
-            vals = split_complex_to_pairs(vals)
-        elif data_type == TensorProto.FLOAT16:
-            vals = (
-                np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
-            )
-        elif data_type == TensorProto.BFLOAT16:
+        if data_type == TensorProto.BFLOAT16:
             vals = list(
                 map(
                     float32_to_bfloat16,
                     np.array(vals).astype(np_dtype).flatten().tolist(),
                 )
             )
-        field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
-            mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]
-        ]
+            field = "float_data"
+        else:
+            field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD.get(
+                mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type],
+                None,
+            )
+            if field is None:
+                raise TypeError(
+                    f"Unable to create a tensor with element "
+                    f"type={np_dtype} (data_type={data_type})."
+                )
         getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)
     return tensor

@@ -36,18 +36,14 @@ NP_TYPE_TO_TENSOR_TYPE = {
 # TODO(https://github.com/onnx/onnx/issues/4261): Remove this.
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     int(TensorProto.FLOAT): int(TensorProto.FLOAT),
-    int(TensorProto.UINT8): int(TensorProto.INT32),
-    int(TensorProto.INT8): int(TensorProto.INT32),
-    int(TensorProto.UINT16): int(TensorProto.INT32),
-    int(TensorProto.INT16): int(TensorProto.INT32),
+    int(TensorProto.UINT8): int(TensorProto.UINT8),
+    int(TensorProto.INT8): int(TensorProto.INT8),
+    int(TensorProto.UINT16): int(TensorProto.UINT16),
+    int(TensorProto.INT16): int(TensorProto.INT16),
     int(TensorProto.INT32): int(TensorProto.INT32),
     int(TensorProto.INT64): int(TensorProto.INT64),
-    int(TensorProto.BOOL): int(TensorProto.INT32),
-    int(TensorProto.FLOAT16): int(TensorProto.UINT16),
-    int(TensorProto.BFLOAT16): int(TensorProto.UINT16),
+    int(TensorProto.FLOAT16): int(TensorProto.FLOAT16),
     int(TensorProto.DOUBLE): int(TensorProto.DOUBLE),
-    int(TensorProto.COMPLEX64): int(TensorProto.FLOAT),
-    int(TensorProto.COMPLEX128): int(TensorProto.DOUBLE),
     int(TensorProto.UINT32): int(TensorProto.UINT32),
     int(TensorProto.UINT64): int(TensorProto.UINT64),
     int(TensorProto.STRING): int(TensorProto.STRING),
@@ -57,14 +53,9 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
     int(TensorProto.FLOAT): "float_data",
     int(TensorProto.INT32): "int32_data",
     int(TensorProto.INT64): "int64_data",
-    int(TensorProto.UINT16): "int32_data",
     int(TensorProto.DOUBLE): "double_data",
-    int(TensorProto.COMPLEX64): "float_data",
-    int(TensorProto.COMPLEX128): "double_data",
-    int(TensorProto.UINT32): "uint64_data",
     int(TensorProto.UINT64): "uint64_data",
     int(TensorProto.STRING): "string_data",
-    int(TensorProto.BOOL): "int32_data",
 }
 
 STORAGE_ELEMENT_TYPE_TO_FIELD = {
