@@ -243,15 +243,10 @@ class Inference:
 
             return load_op(node.domain, node.op_type, version)
 
-        if node.domain == "ai.onnx.ml":
-            from .aionnxml import load_op
-
-            return load_op(node.domain, node.op_type, version)
-
         if node.domain == "ai.onnx.preview.training":
-            from .aionnx_preview_training import load_op
+            from .aionnx_preview_training import load_op_pt
 
-            return load_op(node.domain, node.op_type, version)
+            return load_op_pt(node.domain, node.op_type, version)
 
         # It has to be a function.
         if key in self.functions_:
