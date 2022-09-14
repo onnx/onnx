@@ -25,11 +25,10 @@ bool BuildContextDependentFunctionBodyQuantizeLinear(
   if (!input_type->has_tensor_type()) {
     fail_schema("Invalid x input type. Expected a tensor type");
   }
-  auto input_elt_type = input_type->tensor_type().elem_type();
+  auto input_elem_type = input_type->tensor_type().elem_type();
 
-  auto output_elt_type = TensorProto::UINT8;
+  auto output_elem_type = TensorProto::UINT8;
   float quantized_min = 0, quantized_max = 255;
-
   if (ctx.hasInput(2)) {
     auto* zero_point_type = ctx.getInputType(2);
     if (!zero_point_type->has_tensor_type()) {
@@ -38,11 +37,11 @@ bool BuildContextDependentFunctionBodyQuantizeLinear(
     if (zero_point_type->tensor_type().elem_type() == TensorProto::UINT8) {
       quantized_min = 0;
       quantized_max = 255;
-      output_elt_type = TensorProto::UINT8;
+      output_elem_type = TensorProto::UINT8;
     } else if (zero_point_type->tensor_type().elem_type() == TensorProto::INT8) {
       quantized_min = -128;
       quantized_max = 127;
-      output_elt_type = TensorProto::INT8;
+      output_elem_type = TensorProto::INT8;
     } else {
       fail_schema("Invalid zero_point_type. Expected TensorProto::UINT8 or TensorProto::INT8");
     }
@@ -63,15 +62,15 @@ bool BuildContextDependentFunctionBodyQuantizeLinear(
     builder.Add("y_scale_reshape = Reshape (y_scale, y_scale_shape)");
     builder.Add("x_s = Div (x, y_scale_reshape)");
     builder.Add("y_zero_point_reshape = Reshape (y_zero_point, y_scale_shape)");
-    builder.Add("y_zero_point_cast = Cast(y_zero_point_reshape)", "to", (int64_t)(input_elt_type));
+    builder.Add("y_zero_point_cast = Cast(y_zero_point_reshape)", "to", (int64_t)(input_elem_type));
   } else {
     builder.Add("x_s = Div (x, y_scale)");
-    builder.Add("y_zero_point_cast = Cast(y_zero_point)", "to", (int64_t)(input_elt_type));
+    builder.Add("y_zero_point_cast = Cast(y_zero_point)", "to", (int64_t)(input_elem_type));
   }
 
   builder.Add("x_s_z = Add (x_s, y_zero_point_cast)");
   builder.Add("x_s_z_clipped = Clip (x_s_z, quantized_min, quantized_max)");
-  builder.Add("y = Cast (x_s_z_clipped)", "to", (int64_t)(output_elt_type));
+  builder.Add("y = Cast (x_s_z_clipped)", "to", (int64_t)(output_elem_type));
 
   schema.BuildFunction(functionProto);
   return true;
@@ -135,20 +134,19 @@ bool BuildContextDependentFunctionBodyDequantizeLinear(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   FunctionBuilder builder(functionProto);
-
   auto* input_type = ctx.getInputType(0);
   if (!input_type->has_tensor_type()) {
     fail_schema("Invalid x input type. Expected a tensor type");
   }
-  auto output_elt_type = TensorProto::FLOAT;
+  auto output_elem_type = TensorProto::FLOAT;
 
   bool is_per_axis = ctx.getInputType(1)->tensor_type().shape().dim().size() == 1 &&
       ctx.getInputType(1)->tensor_type().shape().dim(0).dim_value() > 1;
 
   // need to cast to output element type first for cases
   // where quantized types are not accepted as input with some ops.
-  builder.Add("x_cast = Cast(x)", "to", (int64_t)(output_elt_type));
-  builder.Add("x_zero_point_cast = Cast(x_zero_point)", "to", (int64_t)(output_elt_type));
+  builder.Add("x_cast = Cast(x)", "to", (int64_t)(output_elem_type));
+  builder.Add("x_zero_point_cast = Cast(x_zero_point)", "to", (int64_t)(output_elem_type));
   if (is_per_axis) {
     auto* axis_attribute = ctx.getAttribute("axis");
     int axis = axis_attribute ? ctx.getAttribute("axis")->i() : 1;
