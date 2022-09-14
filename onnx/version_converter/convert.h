@@ -519,6 +519,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
     /******** 17 -> 18 ********/
     registerAdapter(make_unique<CompatibleAdapter>("Pad", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("Resize", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("OptionalGetElement", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("OptionalHasElement", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("ScatterND", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("ScatterElements", OpSetID(17), OpSetID(18)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

@@ -27,7 +27,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
 |<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
-|<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|
+|<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
 |<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
@@ -46,7 +46,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
 |<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-12">12</a>|
-|<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|
 |<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
@@ -64,7 +63,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-1">1</a>|
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
 |<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-16">16</a>|
-|<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
 |<a href="#If">If</a>|<a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
@@ -73,7 +71,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
 |<a href="#LRN">LRN</a>|<a href="Changelog.md#LRN-13">13</a>, <a href="Changelog.md#LRN-1">1</a>|
 |<a href="#LSTM">LSTM</a>|<a href="Changelog.md#LSTM-14">14</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-1">1</a>|
-|<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
 |<a href="#Log">Log</a>|<a href="Changelog.md#Log-13">13</a>, <a href="Changelog.md#Log-6">6</a>, <a href="Changelog.md#Log-1">1</a>|
 |<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-16">16</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
@@ -97,10 +94,9 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Not">Not</a>|<a href="Changelog.md#Not-1">1</a>|
 |<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
 |<a href="#Optional">Optional</a>|<a href="Changelog.md#Optional-15">15</a>|
-|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-15">15</a>|
-|<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-15">15</a>|
+|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
+|<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
-|<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
 |<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
@@ -122,7 +118,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
 |<a href="#ReduceSum">ReduceSum</a>|<a href="Changelog.md#ReduceSum-13">13</a>, <a href="Changelog.md#ReduceSum-11">11</a>, <a href="Changelog.md#ReduceSum-1">1</a>|
 |<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|
-|<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
 |<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
@@ -131,9 +126,8 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
-|<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
-|<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
-|<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|
+|<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
+|<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-18">18</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
 |<a href="#SequenceAt">SequenceAt</a>|<a href="Changelog.md#SequenceAt-11">11</a>|
 |<a href="#SequenceConstruct">SequenceConstruct</a>|<a href="Changelog.md#SequenceConstruct-11">11</a>|
 |<a href="#SequenceEmpty">SequenceEmpty</a>|<a href="Changelog.md#SequenceEmpty-11">11</a>|
@@ -141,15 +135,12 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SequenceInsert">SequenceInsert</a>|<a href="Changelog.md#SequenceInsert-11">11</a>|
 |<a href="#SequenceLength">SequenceLength</a>|<a href="Changelog.md#SequenceLength-11">11</a>|
 |<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
-|<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
 |<a href="#Sigmoid">Sigmoid</a>|<a href="Changelog.md#Sigmoid-13">13</a>, <a href="Changelog.md#Sigmoid-6">6</a>, <a href="Changelog.md#Sigmoid-1">1</a>|
 |<a href="#Sign">Sign</a>|<a href="Changelog.md#Sign-13">13</a>, <a href="Changelog.md#Sign-9">9</a>|
 |<a href="#Sin">Sin</a>|<a href="Changelog.md#Sin-7">7</a>|
 |<a href="#Sinh">Sinh</a>|<a href="Changelog.md#Sinh-9">9</a>|
 |<a href="#Size">Size</a>|<a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
-|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|
-|<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|
 |<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
 |<a href="#Split">Split</a>|<a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
 |<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-11">11</a>|
@@ -161,7 +152,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-7">7</a>|
 |<a href="#Tanh">Tanh</a>|<a href="Changelog.md#Tanh-13">13</a>, <a href="Changelog.md#Tanh-6">6</a>, <a href="Changelog.md#Tanh-1">1</a>|
 |<a href="#TfIdfVectorizer">TfIdfVectorizer</a>|<a href="Changelog.md#TfIdfVectorizer-9">9</a>|
-|<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-10">10</a>|
 |<a href="#Tile">Tile</a>|<a href="Changelog.md#Tile-13">13</a>, <a href="Changelog.md#Tile-6">6</a>, <a href="Changelog.md#Tile-1">1</a>|
 |<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
 |<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
@@ -177,21 +167,32 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|
+|<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
+|<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|
+|<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|
+|<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-18">18</a>|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|
+|<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|
+|<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
+|<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|
+|<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
 |<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|
+|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|
+|<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|
+|<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-10">10</a>|
 
 ### ai.onnx.preview.training
 |**Operator**|**Since version**|
@@ -3542,6 +3543,424 @@ node = onnx.helper.make_node(
 x = np.array([-1, 0, 1]).astype(np.int8)
 y = np.array([-1, 0, 1]).astype(np.int8)
 expect(node, inputs=[x], outputs=[y], name="test_clip_default_int8_inbounds")
+```
+
+</details>
+
+
+### <a name="Col2Im"></a><a name="col2im">**Col2Im**</a>
+
+  The operator rearranges column blocks back into a multidimensional image
+
+  Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/generated/torch.nn.Fold.html,
+  but it only supports *batched* multi-dimensional image tensors.
+  Another implementation in Python with N-dimension support can be found at https://github.com/f-dangel/unfoldNd/.
+
+  NOTE: Although specifying image_shape looks redundant because it could be calculated from
+        convolution formulas, it is required as input for more advanced scenarios as explained
+        at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
+
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>1-dimensional tensor with dilation value along each spatial axis of the image. If not present, the dilation defaults to 1 along each spatial axis of the image.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>1-dimensional tensor with padding value for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin is the number of pixels added at the beginning of axis `i` and xi_end is the number of pixels added at the end of axis `i`. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>1-dimensional tensor with stride value along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input data tensor to be rearranged from column blocks back into an image. This is a 3-dimensional tensor containing [N, C * n-ary-product(block_shape), L], where N is batch dimension, C is image channel dimension and L is number of blocks.The blocks are enumerated in increasing lexicographic-order of their indices.For example, with an image-size 10*20 and block-size 9*18, there would be 2*3 blocks, enumerated in the order block(0, 0), block(0, 1), block(0, 2), block(1, 0), block(1, 1), block(1, 2).</dd>
+<dt><tt>image_shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>The shape of the spatial dimensions of the image after rearranging the column blocks.This is a 1-dimensional tensor with size of at least 2, containing the value [H_img, W_img]  for a 2-D image or [dim_i1, dim_i2, ..., dim_iN] for a N-D image.</dd>
+<dt><tt>block_shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>The shape of the block to apply on the input.This is a 1-dimensional tensor of size of at least 2, containing the value [H_block, W_block]  for a 2-D image or [dim_b1, dim_b2, ..., dim_bN] for a N-D block.This is the block-shape before dilation is applied to it.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Output tensor produced by rearranging blocks into an image.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all numeric tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>col2im</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [1.0, 6.0, 11.0, 16.0, 21.0],  # (1, 5, 5)
+            [2.0, 7.0, 12.0, 17.0, 22.0],
+            [3.0, 8.0, 13.0, 18.0, 23.0],
+            [4.0, 9.0, 14.0, 19.0, 24.0],
+            [5.0, 0.0, 15.0, 20.0, 25.0],
+        ]
+    ]
+).astype(np.float32)
+
+image_shape = np.array([5, 5]).astype(np.int64)
+block_shape = np.array([1, 5]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Col2Im", ["input", "image_shape", "block_shape"], ["output"]
+)
+
+output = np.array(
+    [
+        [
+            [
+                [1.0, 2.0, 3.0, 4.0, 5.0],  # (1, 1, 5, 5)
+                [6.0, 7.0, 8.0, 9.0, 0.0],
+                [11.0, 12.0, 13.0, 14.0, 15.0],
+                [16.0, 17.0, 18.0, 19.0, 20.0],
+                [21.0, 22.0, 23.0, 24.0, 25.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im",
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_5d</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56],  # (1, 10, 12)
+            [2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, 57],
+            [3, 8, 13, 18, 23, 28, 33, 38, 43, 48, 53, 58],
+            [4, 9, 14, 19, 24, 29, 34, 39, 44, 49, 54, 59],
+            [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
+            [61, 66, 71, 76, 81, 86, 91, 96, 101, 106, 111, 116],
+            [62, 67, 72, 77, 82, 87, 92, 97, 102, 107, 112, 117],
+            [63, 68, 73, 78, 83, 88, 93, 98, 103, 108, 113, 118],
+            [64, 69, 74, 79, 84, 89, 94, 99, 104, 109, 114, 119],
+            [65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120],
+        ]
+    ]
+).astype(np.float32)
+image_shape = np.array([3, 4, 5]).astype(np.int64)
+block_shape = np.array([1, 1, 5]).astype(np.int64)
+
+output = np.array(
+    [
+        [
+            [
+                [
+                    [1, 2, 3, 4, 5],  # (1, 2, 3, 4, 5)
+                    [6, 7, 8, 9, 10],
+                    [11, 12, 13, 14, 15],
+                    [16, 17, 18, 19, 20],
+                ],
+                [
+                    [21, 22, 23, 24, 25],
+                    [26, 27, 28, 29, 30],
+                    [31, 32, 33, 34, 35],
+                    [36, 37, 38, 39, 40],
+                ],
+                [
+                    [41, 42, 43, 44, 45],
+                    [46, 47, 48, 49, 50],
+                    [51, 52, 53, 54, 55],
+                    [56, 57, 58, 59, 60],
+                ],
+            ],
+            [
+                [
+                    [61, 62, 63, 64, 65],
+                    [66, 67, 68, 69, 70],
+                    [71, 72, 73, 74, 75],
+                    [76, 77, 78, 79, 80],
+                ],
+                [
+                    [81, 82, 83, 84, 85],
+                    [86, 87, 88, 89, 90],
+                    [91, 92, 93, 94, 95],
+                    [96, 97, 98, 99, 100],
+                ],
+                [
+                    [101, 102, 103, 104, 105],
+                    [106, 107, 108, 109, 110],
+                    [111, 112, 113, 114, 115],
+                    [116, 117, 118, 119, 120],
+                ],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im", ["input", "image_shape", "block_shape"], ["output"]
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im_5d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_dilations</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [1.0, 5.0, 9.0, 13.0, 17],  # (1, 4, 5)
+            [2.0, 6.0, 10.0, 14.0, 18],
+            [3.0, 7.0, 11.0, 15.0, 19],
+            [4.0, 8.0, 12.0, 16.0, 20],
+        ]
+    ]
+).astype(np.float32)
+image_shape = np.array([6, 6]).astype(np.int64)
+block_shape = np.array([2, 2]).astype(np.int64)
+
+output = np.array(
+    [
+        [
+            [
+                [1.0, 0.0, 0.0, 0.0, 0.0, 2.0],  # (1, 1, 6, 6)
+                [8.0, 0.0, 0.0, 0.0, 0.0, 10.0],
+                [16.0, 0.0, 0.0, 0.0, 0.0, 18.0],
+                [24.0, 0.0, 0.0, 0.0, 0.0, 26.0],
+                [32.0, 0.0, 0.0, 0.0, 0.0, 34.0],
+                [19.0, 0.0, 0.0, 0.0, 0.0, 20.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"],
+    dilations=[1, 5],
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im_dilations",
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_pads</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [
+                1.0,
+                6.0,
+                11.0,
+                16.0,
+                21.0,
+                26,
+                31,
+                36,
+                41,
+                46,
+                51,
+                56,
+                61,
+                66,
+                71,
+            ],  # (1, 5, 15)
+            [
+                2.0,
+                7.0,
+                12.0,
+                17.0,
+                22.0,
+                27,
+                32,
+                37,
+                42,
+                47,
+                52,
+                57,
+                62,
+                67,
+                72,
+            ],
+            [
+                3.0,
+                8.0,
+                13.0,
+                18.0,
+                23.0,
+                28,
+                33,
+                38,
+                43,
+                48,
+                53,
+                58,
+                63,
+                68,
+                73,
+            ],
+            [
+                4.0,
+                9.0,
+                14.0,
+                19.0,
+                24.0,
+                29,
+                34,
+                39,
+                44,
+                49,
+                54,
+                59,
+                64,
+                69,
+                74,
+            ],
+            [
+                5.0,
+                10.0,
+                15.0,
+                20.0,
+                25.0,
+                30,
+                35,
+                40,
+                45,
+                50,
+                55,
+                60,
+                65,
+                70,
+                75,
+            ],
+        ]
+    ]
+).astype(np.float32)
+image_shape = np.array([5, 5]).astype(np.int64)
+block_shape = np.array([1, 5]).astype(np.int64)
+
+output = np.array(
+    [
+        [
+            [
+                [8.0, 21.0, 24.0, 27.0, 14.0],  # (1, 1, 5, 5)
+                [38.0, 66.0, 69.0, 72.0, 54.0],
+                [68.0, 111.0, 114.0, 117.0, 84.0],
+                [98.0, 156.0, 159.0, 162.0, 114.0],
+                [128.0, 201.0, 204.0, 207.0, 144.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"],
+    pads=[0, 1, 0, 1],
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im_pads",
+)
+```
+
+</details>
+
+
+<details>
+<summary>col2im_strides</summary>
+
+```python
+input = np.array(
+    [
+        [
+            [0.0, 0.0, 0.0, 0.0],  # (1, 9, 4)
+            [1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 0.0],
+        ]
+    ]
+).astype(np.float32)
+image_shape = np.array([5, 5]).astype(np.int64)
+block_shape = np.array([3, 3]).astype(np.int64)
+
+output = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 1.0, 1.0, 1.0],  # (1, 1, 5, 5)
+                [1.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 2.0, 1.0, 2.0, 1.0],
+                [1.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 1.0, 0.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Col2Im",
+    ["input", "image_shape", "block_shape"],
+    ["output"],
+    strides=[2, 2],
+)
+expect(
+    node,
+    inputs=[input, image_shape, block_shape],
+    outputs=[output],
+    name="test_col2im_strides",
+)
 ```
 
 </details>
@@ -15500,12 +15919,15 @@ This version of the operator has been available since version 15 of the default 
 
 ### <a name="OptionalGetElement"></a><a name="optionalgetelement">**OptionalGetElement**</a>
 
-  Outputs the element in the optional-type input. It is an error if the input value does not have an element
-  and the behavior is undefined in this case.
+  If the input is a tensor or sequence type, it returns the input.
+  If the input is an optional type, it outputs the element in the input.
+  It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
 
 #### Version
 
-This version of the operator has been available since version 15 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#OptionalGetElement-15">15</a>
 
 #### Inputs
 
@@ -15524,7 +15946,7 @@ This version of the operator has been available since version 15 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain input type to optional tensor and optional sequence types.</dd>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain output type to all tensor or sequence types.</dd>
@@ -15533,16 +15955,20 @@ This version of the operator has been available since version 15 of the default 
 
 ### <a name="OptionalHasElement"></a><a name="optionalhaselement">**OptionalHasElement**</a>
 
-  Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
+  Returns true if (1) the input is an optional-type and contains an element,
+  or, (2) the input is a tensor or sequence type.
+  If the input is not provided or is an empty optional-type, this op returns false.
 
 #### Version
 
-This version of the operator has been available since version 15 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-#### Inputs
+Other versions of this operator: <a href="Changelog.md#OptionalHasElement-15">15</a>
+
+#### Inputs (0 - 1)
 
 <dl>
-<dt><tt>input</tt> : O</dt>
+<dt><tt>input</tt> (optional) : O</dt>
 <dd>The optional input.</dd>
 </dl>
 
@@ -15556,7 +15982,7 @@ This version of the operator has been available since version 15 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain input type to optional tensor and optional sequence types.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Constrain output to a boolean tensor.</dd>
@@ -15570,21 +15996,45 @@ This version of the operator has been available since version 15 of the default 
 
 ```python
 optional = None
+
 tensor_type_proto = onnx.helper.make_tensor_type_proto(
     elem_type=onnx.TensorProto.INT32, shape=[]
 )
-input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
-node = onnx.helper.make_node(
-    "OptionalHasElement", inputs=["optional_input"], outputs=["output"]
-)
-output = optional_has_element_reference_implementation(optional)
-expect(
-    node,
-    inputs=[optional],
-    outputs=[output],
-    input_type_protos=[input_type_proto],
-    name="test_optional_has_element_empty",
-)
+optional_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+
+# OptionalHasElement takes a tensor or optional as input
+for input_type_proto in [tensor_type_proto, optional_type_proto]:
+    input_name_options = {
+        "empty": "optional_input",
+        "empty_no_input_name": "",
+        "empty_no_input": None,
+    }
+    for test_name_surfix, input_name in input_name_options.items():
+        if input_type_proto == tensor_type_proto and input_name:
+            # the input tensor cannot be empty if input name is provided.
+            continue
+        node = onnx.helper.make_node(
+            "OptionalHasElement",
+            inputs=[] if input_name is None else [input_name],
+            outputs=["output"],
+        )
+        output = optional_has_element_reference_implementation(optional)
+        test_name = (
+            "test_optional_has_element_"
+            + test_name_surfix
+            + (
+                "_optional_input"
+                if input_type_proto == optional_type_proto
+                else "_tensor_input"
+            )
+        )
+        expect(
+            node,
+            inputs=[optional] if input_name else [],
+            outputs=[output],
+            input_type_protos=[input_type_proto] if input_name else [],
+            name=test_name,
+        )
 ```
 
 </details>
@@ -15602,7 +16052,7 @@ tensor_type_proto = onnx.helper.make_tensor_type_proto(
     ],
 )
 seq_type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
-input_type_proto = onnx.helper.make_optional_type_proto(seq_type_proto)
+optional_type_proto = onnx.helper.make_optional_type_proto(seq_type_proto)
 
 node = onnx.helper.make_node(
     "OptionalGetElement", inputs=["optional_input"], outputs=["output"]
@@ -15612,7 +16062,14 @@ expect(
     node,
     inputs=[optional],
     outputs=[output],
-    input_type_protos=[input_type_proto],
+    input_type_protos=[optional_type_proto],
+    name="test_optional_get_element_optional_sequence",
+)
+expect(
+    node,
+    inputs=[optional],
+    outputs=[output],
+    input_type_protos=[seq_type_proto],
     name="test_optional_get_element_sequence",
 )
 ```
@@ -15631,7 +16088,7 @@ tensor_type_proto = onnx.helper.make_tensor_type_proto(
         4,
     ],
 )
-input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+optional_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
 
 node = onnx.helper.make_node(
     "OptionalGetElement", inputs=["optional_input"], outputs=["output"]
@@ -15641,8 +16098,15 @@ expect(
     node,
     inputs=[optional],
     outputs=[output],
-    input_type_protos=[input_type_proto],
-    name="test_optional_get_element",
+    input_type_protos=[optional_type_proto],
+    name="test_optional_get_element_optional_tensor",
+)
+expect(
+    node,
+    inputs=[optional],
+    outputs=[output],
+    input_type_protos=[tensor_type_proto],
+    name="test_optional_get_element_tensor",
 )
 ```
 
@@ -15660,18 +16124,26 @@ tensor_type_proto = onnx.helper.make_tensor_type_proto(
         4,
     ],
 )
-input_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
-node = onnx.helper.make_node(
-    "OptionalHasElement", inputs=["optional_input"], outputs=["output"]
-)
-output = optional_has_element_reference_implementation(optional)
-expect(
-    node,
-    inputs=[optional],
-    outputs=[output],
-    input_type_protos=[input_type_proto],
-    name="test_optional_has_element",
-)
+optional_type_proto = onnx.helper.make_optional_type_proto(tensor_type_proto)
+
+# OptionalHasElement takes a tensor or optional as input
+for input_type_protos in [tensor_type_proto, optional_type_proto]:
+    node = onnx.helper.make_node(
+        "OptionalHasElement", inputs=["optional_input"], outputs=["output"]
+    )
+    output = optional_has_element_reference_implementation(optional)
+    test_name = "test_optional_has_element_" + (
+        "optional_input"
+        if input_type_protos == optional_type_proto
+        else "tensor_input"
+    )
+    expect(
+        node,
+        inputs=[optional],
+        outputs=[output],
+        input_type_protos=[optional_type_proto],
+        name=test_name,
+    )
 ```
 
 </details>
@@ -22676,18 +23148,17 @@ expect(
     output[indices[i][j]][j] = updates[i][j] if axis = 0,
     output[i][indices[i][j]] = updates[i][j] if axis = 1,
   ```
-  When `reduction` is set to "add", the update corresponding to the [i][j] entry is performed as below:
+  When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
   ```
-    output[indices[i][j]][j] += updates[i][j] if axis = 0,
-    output[i][indices[i][j]] += updates[i][j] if axis = 1,
+    output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+    output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
   ```
-  When `reduction` is set to "mul", the update corresponding to the [i][j] entry is performed as below:
-  ```
-    output[indices[i][j]][j] *= updates[i][j] if axis = 0,
-    output[i][indices[i][j]] *= updates[i][j] if axis = 1,
-  ```
+  where the `f` is +/*/max/min as specified.
+
 
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+
+  (Opset 18 change): Adds max/min to the set of allowed reduction ops.
 
   Example 1:
   ```
@@ -22721,9 +23192,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 16 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a>, <a href="Changelog.md#ScatterElements-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-16">16</a>
 
 #### Attributes
 
@@ -22731,7 +23202,7 @@ Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.'max': reduction using the maximum operation.'min': reduction using the minimum operation.</dd>
 </dl>
 
 #### Inputs
@@ -22856,6 +23327,68 @@ expect(
 
 
 <details>
+<summary>scatter_elements_with_reduction_max</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="max",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="max")
+# print(y) produces
+# [[1.0, 2.1, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_max",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatter_elements_with_reduction_min</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="min",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="min")
+# print(y) produces
+# [[1.0, 1.1, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_min",
+)
+```
+
+</details>
+
+
+<details>
 <summary>scatter_elements_without_axis</summary>
 
 ```python
@@ -22923,21 +23456,18 @@ expect(
   tensor into `output` at the specified `indices`.
   In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
   then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
-  When `reduction` is set to "add", `output` is calculated as follows:
+  When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] += updates[idx]
+          output[indices[idx]] = f(output[indices[idx]], updates[idx])
 
-  When `reduction` is set to "mul", `output` is calculated as follows:
-
-      output = np.copy(data)
-      update_indices = indices.shape[:-1]
-      for idx in np.ndindex(update_indices):
-          output[indices[idx]] *= updates[idx]
+  where the `f` is +/*/max/min as specified.
 
   This operator is the inverse of GatherND.
+
+  (Opset 18 change): Adds max/min to the set of allowed reduction ops.
 
   Example 1:
   ```
@@ -22964,15 +23494,15 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 16 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a href="Changelog.md#ScatterND-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-16">16</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul':  reduction using the addition operation. 'max': reduction using the maximum operation.'min': reduction using the minimum operation.</dd>
 </dl>
 
 #### Inputs
@@ -23084,6 +23614,94 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_add",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_max</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="max",
+)
+data = np.array(
+    [
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+    ],
+    dtype=np.float32,
+)
+indices = np.array([[0], [0]], dtype=np.int64)
+updates = np.array(
+    [
+        [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+        [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+    ],
+    dtype=np.float32,
+)
+# Expecting output as np.array(
+#    [[[5, 5, 5, 5], [6, 6, 7, 8], [8, 7, 7, 7], [8, 8 ,8, 8]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="max")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_max",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_min</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="min",
+)
+data = np.array(
+    [
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+        [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+    ],
+    dtype=np.float32,
+)
+indices = np.array([[0], [0]], dtype=np.int64)
+updates = np.array(
+    [
+        [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+        [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+    ],
+    dtype=np.float32,
+)
+# Expecting output as np.array(
+#    [[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 3, 2, 1]],
+#     [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+#     [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+#     [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="min")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_min",
 )
 ```
 

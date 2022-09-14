@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Sequence
-
 import numpy as np  # type: ignore
 
 import onnx

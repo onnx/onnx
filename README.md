@@ -45,10 +45,6 @@ We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [
 Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
 
 
-
-
-
-
 # Installation
 
 ## Official Python packages
@@ -66,11 +62,11 @@ A binary build of ONNX is available from [Conda](https://conda.io), in [conda-fo
 conda install -c conda-forge onnx
 ```
 
-You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-dev) for a Linux-based installation without having to worry about dependency versioning.
-
 
 ## Build ONNX from Source
 Before building from source uninstall any existing versions of onnx `pip uninstall onnx`.
+
+c++17 or higher C++ compiler version is required to build ONNX from source on Windows. For other platforms, please use C++11 or higher versions.
 
 Generally speaking, you need to install [protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) before proceeding forward. Then depending on how you installed protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF".  For example, you may need to run the following command:
 

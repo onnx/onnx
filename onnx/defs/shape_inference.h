@@ -80,6 +80,15 @@ struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
+  virtual bool hasInput(size_t index) const {
+    // The default implementation below is used for backward-compatibility
+    // for implementations of InferenceContext that don't provide an explicit
+    // implementation. This works for normal usage, but may be imprecise in
+    // the edge-case where an input is supplied but has no known type.
+    // However, inference-methods work only under the assumption that the
+    // input-types of all inputs are known.
+    return ((index < getNumInputs()) && (getInputType(index) != nullptr));
+  }
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
@@ -368,7 +377,7 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
   }
 
   if (TypeProto::kTensorType == from_type_case || TypeProto::kSparseTensorType == from_type_case) {
-    // If input shape is "uknown", the corresponding should be "unknown" too.
+    // If input shape is "unknown", the corresponding should be "unknown" too.
     // The way to make output shape unknown is not to assign it any value.
     if (hasShape(*from_type)) {
       if (TypeProto::kTensorType == from_type_case) {

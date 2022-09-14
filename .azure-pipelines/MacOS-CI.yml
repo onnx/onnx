@@ -4,7 +4,7 @@ trigger:
 jobs:
 - job: 'Test'
   pool:
-    vmImage: 'macOS-10.15'
+    vmImage: 'macOS-11'
   strategy:
     matrix:
       py39:

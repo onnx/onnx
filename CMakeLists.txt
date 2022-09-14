@@ -55,10 +55,13 @@ else()
   set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
-# Set C++11 as standard for the whole project
+# Required to use /std:c++17 or higher on Windows
+# For other platforms, set C++11 as standard for the whole project
 if(NOT MSVC)
   set(CMAKE_CXX_STANDARD 11)
-endif(NOT MSVC)
+else()
+  string(APPEND CMAKE_CXX_FLAGS " /std:c++17")
+endif()
 
 include(GNUInstallDirs)
 
@@ -466,8 +469,10 @@ if(BUILD_ONNX_PYTHON)
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
                           PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+    # Only put double quotes around $<TARGET_FILE:onnx> for Mac
+    # Other platforms like Windows and Ubuntu originally work fine without double quotes
     target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -Wl,-force_load,$<TARGET_FILE:onnx>)
+                          PRIVATE -Wl,-force_load,"$<TARGET_FILE:onnx>")
   elseif(MSVC)
     # In MSVC, we will add whole archive in default
     target_link_libraries(onnx_cpp2py_export

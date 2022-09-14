@@ -39,6 +39,57 @@ static std::string ProtoBytesToText(const py::bytes& bytes) {
   return ProtoToString(proto);
 }
 
+template <typename T, typename Ts = typename std::remove_const<T>::type>
+std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> ParseProtoFromBytesMap(
+    std::unordered_map<std::string, py::bytes> bytesMap) {
+  std::unique_ptr<Ts[]> values(new Ts[bytesMap.size()]);
+  std::unordered_map<std::string, T*> result;
+  size_t i = 0;
+  for (auto kv : bytesMap) {
+    ParseProtoFromPyBytes(&values[i], kv.second);
+    result[kv.first] = &values[i];
+    i++;
+  }
+  return make_pair(move(values), result);
+}
+
+std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
+    OpSchema* schema,
+    const py::bytes& nodeBytes,
+    std::unordered_map<std::string, py::bytes> valueTypesByNameBytes,
+    std::unordered_map<std::string, py::bytes> inputDataByNameBytes,
+    std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes) {
+  NodeProto node{};
+  ParseProtoFromPyBytes(&node, nodeBytes);
+  // Early fail if node is badly defined - may throw ValidationError
+  schema->Verify(node);
+
+  // Convert arguments to C++ types, allocating memory
+  const auto& valueTypes = ParseProtoFromBytesMap<TypeProto>(valueTypesByNameBytes);
+  const auto& inputData = ParseProtoFromBytesMap<const TensorProto>(inputDataByNameBytes);
+  const auto& inputSparseData = ParseProtoFromBytesMap<const SparseTensorProto>(inputSparseDataByNameBytes);
+
+  // Construct inference context and get results - may throw InferenceError
+  shape_inference::InferenceContextImpl ctx(node, valueTypes.second, inputData.second, inputSparseData.second);
+  schema->GetTypeAndShapeInferenceFunction()(ctx);
+  // Verify the inference succeeded - may also throw ValidationError
+  // Note that input types were not validated until now (except that their count was correct)
+  schema->CheckInputOutputType(ctx);
+
+  // Convert back into bytes returned to Python
+  std::unordered_map<std::string, py::bytes> typeProtoBytes;
+  for (size_t i = 0; i < ctx.allOutputTypes_.size(); i++) {
+    const auto& proto = ctx.allOutputTypes_[i];
+    if (proto.IsInitialized()) {
+      std::string s;
+      proto.SerializeToString(&s);
+      typeProtoBytes[node.output(i)] = py::bytes(s);
+    }
+  }
+
+  return typeProtoBytes;
+}
+
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   onnx_cpp2py_export.doc() = "Python interface to onnx";
 
@@ -85,6 +136,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             return py::bytes(bytes);
           })
       .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
+      .def(
+          "_infer_node_outputs",
+          CallNodeInferenceFunction,
+          py::arg("nodeBytes"),
+          py::arg("valueTypesByNameBytes"),
+          py::arg("inputDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
+          py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{})
       .def(
           "get_context_dependent_function",
           [](OpSchema* op, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes) -> py::bytes {
