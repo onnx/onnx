@@ -18,7 +18,7 @@ def _unsqueeze(a, axis):  # type: ignore
 
 
 def _switch_axes(a, ax1, ax2):  # type: ignore
-    p = [i for i in range(len(a.shape))]
+    p = list(range(len(a.shape)))
     p[ax1], p[ax2] = p[ax2], p[ax1]
     return numpy.transpose(a, p)
 
