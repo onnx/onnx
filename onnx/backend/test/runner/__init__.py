@@ -165,7 +165,9 @@ class Runner:
             unittest.TextTestRunner().run(BackendTest(backend).test_suite)
         """
         suite = unittest.TestSuite()
-        for case in sorted(self.test_cases.values(), key=lambda cl: cl.__class__.__name__):
+        for case in sorted(
+            self.test_cases.values(), key=lambda cl: cl.__class__.__name__
+        ):
             suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))
         return suite
 
@@ -178,7 +180,9 @@ class Runner:
             onnx_backend_tests = BackendTest(backend).tests
         """
         tests = self._get_test_case("OnnxBackendTest")
-        for items_map in sorted(self._filtered_test_items.values(), key=lambda cl: cl.__class__.__name__):
+        for items_map in sorted(
+            self._filtered_test_items.values(), key=lambda cl: cl.__class__.__name__
+        ):
             for name, item in sorted(items_map.items()):
                 setattr(tests, name, item.func)
         return tests
