@@ -94,6 +94,10 @@ class LexicalScopeContext final {
   // instance with the default constructor and populate output_names with the
   // values from the parent scope so the values are copied instead.
   LexicalScopeContext(const LexicalScopeContext& parent_context) : parent_context_{&parent_context} {}
+  LexicalScopeContext& operator=(const LexicalScopeContext& parent_context) {
+    parent_context_ = &parent_context;
+    return *this;
+  }
 
   void add(const std::string& name) {
     output_names.insert(name);
