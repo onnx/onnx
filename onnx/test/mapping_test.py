@@ -34,21 +34,6 @@ class TestBasicFunctions(unittest.TestCase):
                 assert_almost_equal(t, u)
 
     def test_make_tensor(self):  # type: ignore
-        dtypes = [
-            np.float16,
-            np.float32,
-            np.float64,
-            np.int8,
-            np.int16,
-            np.int32,
-            np.int64,
-            np.uint8,
-            np.uint16,
-            np.uint32,
-            np.uint64,
-            np.complex64,
-            np.complex128,
-        ]
         for pt, dt in TENSOR_TYPE_TO_NP_TYPE.items():
             with self.subTest(dt=dt, pt=pt):
                 t = np.array([[0, 1, 2], [6, 7, 8]], dtype=dt)
