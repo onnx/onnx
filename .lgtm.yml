@@ -10,3 +10,8 @@ extraction:
       # Build protobuf from source with -fPIC
       - mkdir protobuf && cd protobuf
       - source ../workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc) $(pwd)/protobuf_install
+path_classifiers:
+    test:
+        - exclude: / # ignore our default classification for test code
+queries:
+  - exclude: py/import-and-import-from
