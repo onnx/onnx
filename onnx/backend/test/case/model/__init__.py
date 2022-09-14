@@ -5,7 +5,6 @@ from typing import List, Optional, Sequence
 
 import numpy as np  # type: ignore
 
-import onnx.defs
 from onnx import ModelProto
 
 from ..test_case import TestCase

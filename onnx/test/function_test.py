@@ -1,7 +1,7 @@
 import unittest
 
 import onnx
-from onnx import checker, parser, utils
+from onnx import checker, utils
 
 
 class TestFunction(unittest.TestCase):
