@@ -519,7 +519,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
             vals=np_array,
         )
         self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
+        np_tensor = numpy_helper.to_array(tensor)
+        np.testing.assert_equal(np_results, np_tensor)
 
     def test_make_bfloat16_tensor_raw(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually

@@ -37,9 +37,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
 
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
-    storage_type = mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE.get(tensor_dtype, None)
-    storage_np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[storage_type] if storage_type else None
-    storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD.get(storage_type, None)
+    storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD.get(tensor_dtype, None)
     dims = tensor.dims
 
     if tensor.data_type == TensorProto.STRING:
@@ -64,10 +62,14 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
 
         return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)
     elif storage_field is None:
+        tensor_dtype_name = "?"
+        for k in dir(TensorProto):
+            if tensor_dtype == getattr(TensorProto, k):
+                tensor_dtype_name = k
         raise ValueError(
-            f"Tensor has no field raw_data but this is the only way "
-            f"to store elements of type {np_dtype}, storage_type={storage_type}, "
-            f"tensor_dtype={tensor_dtype}."
+            f"Tensor has no field 'raw_data' but this is the only way "
+            f"to store onnx elements of type={tensor_dtype} "
+            f"({tensor_dtype_name})."
         )
     else:
         # float16 is stored as int32 (uint16 type); Need view to get the original value
@@ -90,7 +92,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         ):
             data = combine_pairs_to_complex(data)
 
-        return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
+        return np.asarray(data).astype(np_dtype).reshape(dims)
 
 
 def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:

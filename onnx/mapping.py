@@ -32,23 +32,6 @@ NP_TYPE_TO_TENSOR_TYPE = {
     v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16
 }
 
-# This is only used to get keys into STORAGE_TENSOR_TYPE_TO_FIELD.
-# TODO(https://github.com/onnx/onnx/issues/4261): Remove this.
-TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
-    int(TensorProto.FLOAT): int(TensorProto.FLOAT),
-    int(TensorProto.UINT8): int(TensorProto.UINT8),
-    int(TensorProto.INT8): int(TensorProto.INT8),
-    int(TensorProto.UINT16): int(TensorProto.UINT16),
-    int(TensorProto.INT16): int(TensorProto.INT16),
-    int(TensorProto.INT32): int(TensorProto.INT32),
-    int(TensorProto.INT64): int(TensorProto.INT64),
-    int(TensorProto.FLOAT16): int(TensorProto.FLOAT16),
-    int(TensorProto.DOUBLE): int(TensorProto.DOUBLE),
-    int(TensorProto.UINT32): int(TensorProto.UINT32),
-    int(TensorProto.UINT64): int(TensorProto.UINT64),
-    int(TensorProto.STRING): int(TensorProto.STRING),
-}
-
 STORAGE_TENSOR_TYPE_TO_FIELD = {
     int(TensorProto.FLOAT): "float_data",
     int(TensorProto.INT32): "int32_data",

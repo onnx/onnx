@@ -16,7 +16,7 @@ from typing import (
     cast,
 )
 
-import google.protobuf.message
+import google.protobuf.message  # type: ignore
 import numpy as np  # type: ignore
 
 from onnx import (
@@ -355,8 +355,8 @@ def make_tensor(
     tensor.data_type = data_type
     tensor.name = name
 
-    if data_type == TensorProto.STRING:
-        assert not raw, "Can not use raw_data to store string type"
+    if data_type == TensorProto.STRING and raw:
+        raise TypeError("Can not use raw_data to store string type.")
 
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[data_type]
 
@@ -372,16 +372,28 @@ def make_tensor(
         else:
             expected_size = np_dtype.itemsize
 
-    if not raw and np_dtype.itemsize < 4 and data_type != TensorProto.BFLOAT16:
-        # any type taking less 4 bytes should be using attribute raw
-        # and not int32_data or floor_data. It would take more memory
-        # and would produce an inconsistent tensor.
-        raw = True
-        expected_size = np_dtype.itemsize
-        if isinstance(vals, np.ndarray):
-            vals = vals.tobytes()
+    if not raw and data_type not in STORAGE_TENSOR_TYPE_TO_FIELD:
+        # any type not in STORAGE_TENSOR_TYPE_TO_FIELD has not explicit associated
+        # attribute (int32_data, floor_data, ...).
+        # It would take more memory (for short types) and would produce an inconsistent tensor.
+        if data_type == TensorProto.BFLOAT16:
+            expected_size = 2
+            if any(map(lambda t: not isinstance(t, np.float32), vals)):
+                raise TypeError(
+                    f"A BFLOAT32 tensor can be created only all values in vals are np.float32 element "
+                    f"but types are {set(map(lambda t: type(t), vals))}."
+                )
+            byte_vals = np.empty(len(vals), dtype=np.uint16)
+            for i, v in enumerate(vals):
+                byte_vals[i] = float32_to_bfloat16(v)
+            vals = byte_vals.tobytes()
         else:
-            vals = np.array(vals).astype(np_dtype).tobytes()
+            expected_size = np_dtype.itemsize
+            if isinstance(vals, np.ndarray):
+                vals = vals.tobytes()
+            else:
+                vals = np.array(vals).astype(np_dtype).tobytes()
+        raw = True
 
     for d in dims:
         expected_size *= d
@@ -404,16 +416,22 @@ def make_tensor(
             )
             field = "float_data"
         else:
-            field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD.get(
-                mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type],
-                None,
-            )
+            field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD.get(data_type, None)  # type: ignore
+            data_type_name = "?"
+            for k in dir(TensorProto):
+                if data_type == getattr(TensorProto, k):
+                    data_type_name = k
             if field is None:
                 raise TypeError(
                     f"Unable to create a tensor with element "
-                    f"type={np_dtype} (data_type={data_type})."
+                    f"type={np_dtype} (data_type={data_type}, {data_type_name})."
                 )
-        getattr(tensor, field).extend(vals)
+        if data_type == TensorProto.STRING:
+            getattr(tensor, field).extend(
+                map(lambda t: t.encode("utf-8") if isinstance(t, str) else t, vals)  # type: ignore
+            )
+        else:
+            getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)
     return tensor
 
