@@ -41,7 +41,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     dims = tensor.dims
 
     if tensor.data_type == TensorProto.STRING:
-        utf8_strings = getattr(tensor, storage_field)
+        utf8_strings = getattr(tensor, storage_field)  # type: ignore
         ss = list(s.decode("utf-8") for s in utf8_strings)
         return np.asarray(ss).astype(np_dtype).reshape(dims)
 
