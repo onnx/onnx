@@ -377,7 +377,7 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
   }
 
   if (TypeProto::kTensorType == from_type_case || TypeProto::kSparseTensorType == from_type_case) {
-    // If input shape is "uknown", the corresponding should be "unknown" too.
+    // If input shape is "unknown", the corresponding should be "unknown" too.
     // The way to make output shape unknown is not to assign it any value.
     if (hasShape(*from_type)) {
       if (TypeProto::kTensorType == from_type_case) {
