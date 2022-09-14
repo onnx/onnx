@@ -305,8 +305,21 @@ ext_modules = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
 # Packages
 ################################################################################
 
-# no need to do fancy stuff so far
-packages = setuptools.find_packages()
+# Add package directories here if you want to package them with the source
+include_dirs = [
+    "onnx.backend.test.cpp*",
+    "onnx.backend.test.data.*",
+    "onnx.common",
+    "onnx.defs.*",
+    "onnx.examples*",
+    "onnx.shape_inference",
+    "onnx.test.cpp",
+    "onnx.version_converter*",
+]
+
+packages = setuptools.find_packages() + setuptools.find_namespace_packages(
+    include=include_dirs
+)
 
 requirements_file = "requirements.txt"
 requirements_path = os.path.join(os.getcwd(), requirements_file)
