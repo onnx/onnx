@@ -36,10 +36,12 @@ class TestLoadExternalDataBase(unittest.TestCase):
     def get_temp_model_filename(self) -> str:
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + '.onnx')
 
-    def create_external_data_tensor(self, value: List[Any], tensor_name: str) -> TensorProto:
+    def create_external_data_tensor(
+        self, value: List[Any], tensor_name: str, location: str = ""
+    ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
-        tensor_filename = f"{tensor_name}.bin"
+        tensor_filename = location if location else f"{tensor_name}.bin"
         set_external_data(tensor, location=tensor_filename)
 
         with open(os.path.join(self.temp_dir, tensor_filename), 'wb') as data_file:
@@ -48,8 +50,7 @@ class TestLoadExternalDataBase(unittest.TestCase):
         tensor.data_location = onnx.TensorProto.EXTERNAL
         return tensor
 
-    def create_test_model(self) -> str:
-
+    def create_test_model(self, location: str = "") -> str:
         constant_node = onnx.helper.make_node(
             'Constant',
             inputs=[],
@@ -57,14 +58,24 @@ class TestLoadExternalDataBase(unittest.TestCase):
             value=self.create_external_data_tensor(self.attribute_value, "attribute_value")
         )
 
-        initializers = [self.create_external_data_tensor(self.initializer_value, "input_value")]
-        inputs = [helper.make_tensor_value_info("input_value",
-                                                onnx.TensorProto.FLOAT,
-                                                self.initializer_value.shape)]
+        initializers = [
+            self.create_external_data_tensor(
+                self.initializer_value, "input_value", location
+            )
+        ]
+        inputs = [
+            helper.make_tensor_value_info(
+                "input_value", onnx.TensorProto.FLOAT, self.initializer_value.shape
+            )
+        ]
 
-        graph = helper.make_graph([constant_node], "test_graph",
-                                  inputs=inputs, outputs=[],
-                                  initializer=initializers)
+        graph = helper.make_graph(
+            [constant_node],
+            "test_graph",
+            inputs=inputs,
+            outputs=[],
+            initializer=initializers,
+        )
         model = helper.make_model(graph)
 
         model_filename = os.path.join(self.temp_dir, "model.onnx")
@@ -226,7 +237,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         model_file_path = self.get_temp_model_filename()
         external_data_file = str(uuid.uuid4())
 
-        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=True, location=external_data_file)
+        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=True,
+                                       location=external_data_file)
         onnx.save_model(self.model, model_file_path)
 
         self.assertTrue(Path.isfile(os.path.join(self.temp_dir, external_data_file)))
@@ -260,7 +272,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
     def test_convert_model_to_external_data_one_file_per_tensor_without_attribute(self) -> None:
         model_file_path = self.get_temp_model_filename()
 
-        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=False, convert_attribute=False)
+        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=False,
+                                       convert_attribute=False)
         onnx.save_model(self.model, model_file_path)
 
         self.assertTrue(Path.isfile(model_file_path))
@@ -270,7 +283,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
     def test_convert_model_to_external_data_one_file_per_tensor_with_attribute(self) -> None:
         model_file_path = self.get_temp_model_filename()
 
-        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=False, convert_attribute=True)
+        convert_model_to_external_data(self.model, size_threshold=0, all_tensors_to_one_file=False,
+                                       convert_attribute=True)
         onnx.save_model(self.model, model_file_path)
 
         self.assertTrue(Path.isfile(model_file_path))
@@ -280,7 +294,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
     def test_convert_model_to_external_data_does_not_convert_attribute_values(self) -> None:
         model_file_path = self.get_temp_model_filename()
 
-        convert_model_to_external_data(self.model, size_threshold=0, convert_attribute=False, all_tensors_to_one_file=False)
+        convert_model_to_external_data(self.model, size_threshold=0, convert_attribute=False,
+                                       all_tensors_to_one_file=False)
         onnx.save_model(self.model, model_file_path)
 
         self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "input_value")))
@@ -399,11 +414,11 @@ class TestExternalDataToArray(unittest.TestCase):
     def create_test_model(self) -> ModelProto:
         X = helper.make_tensor_value_info('X', TensorProto.FLOAT, self.large_data.shape)
         input_init = helper.make_tensor(name='X', data_type=TensorProto.FLOAT,
-            dims=self.large_data.shape, vals=self.large_data.tobytes(), raw=True)
+                                        dims=self.large_data.shape, vals=self.large_data.tobytes(), raw=True)
 
         shape_data = np.array(self.small_data, np.int64)
         shape_init = helper.make_tensor(name='Shape', data_type=TensorProto.INT64,
-            dims=shape_data.shape, vals=shape_data.tobytes(), raw=True)
+                                        dims=shape_data.shape, vals=shape_data.tobytes(), raw=True)
         C = helper.make_tensor_value_info('C', TensorProto.INT64, self.small_data)
 
         reshape = onnx.helper.make_node(
@@ -432,13 +447,14 @@ class TestExternalDataToArray(unittest.TestCase):
         checker.check_model(self.model)
 
     def test_reshape_inference_with_external_data_fail(self) -> None:
-        onnx.save_model(self.model, self.model_file_path, save_as_external_data=True, all_tensors_to_one_file=False, size_threshold=0)
+        onnx.save_model(self.model, self.model_file_path, save_as_external_data=True, all_tensors_to_one_file=False,
+                        size_threshold=0)
         model_without_external_data = onnx.load(self.model_file_path, load_external_data=False)
         # Shape inference of Reshape uses ParseData
         # ParseData cannot handle external data and should throw the error as follows:
         # Cannot parse data from external tensors. Please load external data into raw data for tensor: Shape
         self.assertRaises(shape_inference.InferenceError, shape_inference.infer_shapes,
-            model_without_external_data, strict_mode=True)
+                          model_without_external_data, strict_mode=True)
 
     def test_to_array_with_external_data(self) -> None:
         onnx.save_model(self.model,
@@ -490,6 +506,68 @@ class TestExternalDataToArray(unittest.TestCase):
         small_shape_tensor = model_without_loading_external.graph.initializer[1]
         self.assertTrue(small_shape_tensor.HasField("data_location"))
         self.assertTrue(np.allclose(to_array(small_shape_tensor, self.temp_dir), self.small_data))
+
+
+class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBase):
+    """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
+    directory. """
+
+    def create_external_data_tensor(
+        self, value: List[Any], tensor_name: str, location: str = ""
+    ) -> TensorProto:
+        tensor = from_array(np.array(value))
+        tensor.name = tensor_name
+        tensor_filename = location if location else f"{tensor_name}.bin"
+
+        set_external_data(tensor, location=tensor_filename)
+
+        tensor.ClearField('raw_data')
+        tensor.data_location = onnx.TensorProto.EXTERNAL
+        return tensor
+
+    def test_check_model(self) -> None:
+        """We only test the model validation as onnxruntime uses this to load the model."""
+        self.model_filename = self.create_test_model("../../file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
+
+    def test_check_model_relative(self) -> None:
+        """More relative path test."""
+        self.model_filename = self.create_test_model("../test/../file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
+
+    def test_check_model_absolute(self) -> None:
+        """ONNX checker disallows using absolute path as location in external tensor."""
+        self.model_filename = self.create_test_model("//file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Skip Windows test")
+class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
+    TestNotAllowToLoadExternalDataOutsideModelDirectory
+):
+    """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
+    directory. """
+
+    def test_check_model(self) -> None:
+        """We only test the model validation as onnxruntime uses this to load the model."""
+        self.model_filename = self.create_test_model("..\\..\\file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
+
+    def test_check_model_relative(self) -> None:
+        """More relative path test."""
+        self.model_filename = self.create_test_model("..\\test\\..\\file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
+
+    def test_check_model_absolute(self) -> None:
+        """ONNX checker disallows using absolute path as location in external tensor."""
+        self.model_filename = self.create_test_model("C:/file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
 
 
 if __name__ == '__main__':
