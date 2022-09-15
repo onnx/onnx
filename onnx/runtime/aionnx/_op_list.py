@@ -95,6 +95,7 @@ from .op_max import Max
 
 # from .op_max_pool import MaxPool
 from .op_mean import Mean
+from .op_mel_weight_matrix import MelWeightMatrix
 from .op_min import Min
 from .op_mod import Mod
 from .op_mul import Mul
