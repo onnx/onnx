@@ -288,10 +288,9 @@ def cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.n
         x_3 = x * x_2
         if x <= 1:
             return (A + 2) * x_3 - (A + 3) * x_2 + 1
-        elif x > 1 and x < 2:
+        if x < 2:
             return A * x_3 - 5 * A * x_2 + 8 * A * x - 4 * A
-        else:
-            return 0.0
+        return 0.0
 
     i_start = int(np.floor(-2 / scale) + 1)
     i_end = 2 - i_start
