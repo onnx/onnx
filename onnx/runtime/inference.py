@@ -291,6 +291,10 @@ class Inference:
             else:
                 outputs = node.run(*inputs)
             for name, value in zip(node.output, outputs):
+                if isinstance(value, tuple):
+                    raise TypeError(
+                        f"Unexected type {type(value)} for output {name!r}."
+                    )
                 self._log(2, " + %s: %s", name, value)
                 results[name] = value
 

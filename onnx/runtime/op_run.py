@@ -251,6 +251,19 @@ class OpRun(ABC):
                 f"(operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
+        if not isinstance(res, tuple):
+            raise TypeError(
+                f"Method '_run' of class {self.__class__.__name__!r} does not return a tuple but {type(res)}."
+            )
+        if len(res) == 0:
+            raise ValueError(
+                f"Method '_run' of class {self.__class__.__name__!r} does not return any result."
+            )
+        if any(map(lambda t: isinstance(t, tuple), res)):
+            dtypes = [type(t) for t in res]
+            raise TypeError(
+                f"Method '_run' of class {self.__class__.__name__!r} must not return a tuple: {dtypes}."
+            )
         return res
 
 

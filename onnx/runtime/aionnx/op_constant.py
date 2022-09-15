@@ -36,6 +36,11 @@ class ConstantCommon(OpRun):
         "Defines this node as a constant."
         return True
 
+    def _check(self, cst):  # type: ignore
+        if isinstance(cst, tuple):
+            raise TypeError(f"Unexpected type {type(cst)} for a constant.")
+        return cst
+
 
 class Constant_1(ConstantCommon):
     def __init__(self, onnx_node, run_params):  # type: ignore
@@ -48,7 +53,7 @@ class Constant_1(ConstantCommon):
             raise RuntimeError(
                 "Function attributes are not implemented for opset <= 11. Use opset > 12."
             )
-        return (self.cst,)
+        return (self._check(self.cst),)
 
 
 class Constant_9(Constant_1):
@@ -70,7 +75,7 @@ class Constant_11(ConstantCommon):
             raise RuntimeError(
                 "Function attributes are not implemented for opset <= 11. Use opset > 12."
             )
-        return (self.cst,)
+        return (self._check(self.cst),)
 
 
 class Constant_12(ConstantCommon):
@@ -111,7 +116,7 @@ class Constant_12(ConstantCommon):
                     f"Cannot find attribute {self.cst!r} in {list(attributes)!r}."
                 )
             return (attributes[self.cst.name],)
-        return (self.cst,)
+        return (self._check(self.cst),)
 
 
 if onnx_opset_version() >= 12:

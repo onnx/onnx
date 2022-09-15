@@ -240,7 +240,7 @@ class OnnxBackendTest:
         elif isinstance(e, list):
             if not isinstance(o, list):
                 raise AssertionError(
-                    f"Expected result is list but output type is {type(o)} for output {i}."
+                    f"Expected result is 'list' but output type is {type(o)} for output {i}."
                 )
             if len(e) != len(o):
                 raise AssertionError(
@@ -558,6 +558,7 @@ class TestOnnxBackEnd(unittest.TestCase):
         decimal = {
             "test_adam_multiple": 2,
             "test_blackmanwindow_expanded": 4,
+            "test_blackmanwindow_symmetric_expanded": 4,
             "test_simple_rnn_batchwise": 2,
         }
 
@@ -569,9 +570,13 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_optional_get_element_sequence" in name,
+            lambda name: "test_range_float_type_positive_delta_expanded" in name,
             verbose=0,
-            decimal={"test_blackmanwindow_expanded": 4},
+            decimal={
+                "test_blackmanwindow_expanded": 4,
+                "test_blackmanwindow_symmetric": 4,
+                "test_blackmanwindow_symmetric_expanded": 4,
+            },
         )
 
 

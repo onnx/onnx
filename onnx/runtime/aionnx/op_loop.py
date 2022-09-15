@@ -32,6 +32,8 @@ class Loop(OpRun):
             args = args[1:]
         else:
             v_initial = None
+        if not hasattr(M, "dtype"):
+            raise TypeError(f"M must be an array or a numpy number not {type(M)}.")
         body = self.body  # type: ignore
         loop_inputs = body.input_names
         inputs = {name: None for name in loop_inputs}

@@ -6,4 +6,4 @@ from ..op_run import OpRun
 
 class SequenceConstruct(OpRun):
     def _run(self, *data):  # type: ignore
-        return (data,)
+        return (list(data),)
