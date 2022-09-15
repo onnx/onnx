@@ -1,10 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-from typing import Any, List
-
-import numpy as np  # type: ignore
-
 from ..op_run import OpRun
 
 
@@ -22,15 +18,15 @@ class SequenceMap(OpRun):
                     for s, i in zip(res, r):
                         s.append(i)
             return tuple(res)  # type: ignore
-        else:
-            feeds = dict(zip(body.input_names[1:], additional_inputs))
-            res = None
-            for obj in input_sequence:
-                feeds[body.input_names[0]] = obj
-                r = body.run(None, feeds)
-                if res is None:
-                    res = [[i] for i in r]
-                else:
-                    for s, i in zip(res, r):
-                        s.append(i)
-            return tuple(res)  # type: ignore
+
+        feeds = dict(zip(body.input_names[1:], additional_inputs))
+        res = None
+        for obj in input_sequence:
+            feeds[body.input_names[0]] = obj
+            r = body.run(None, feeds)
+            if res is None:
+                res = [[i] for i in r]
+            else:
+                for s, i in zip(res, r):
+                    s.append(i)
+        return tuple(res)  # type: ignore

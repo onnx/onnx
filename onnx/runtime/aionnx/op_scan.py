@@ -90,10 +90,10 @@ class Scan(OpRun):
         (
             num_loop_state_vars,
             num_scan_outputs,
-            output_directions,
-            max_dir_out,
+            output_directions,  # pylint: disable=W0612
+            max_dir_out,  # pylint: disable=W0612
             output_axes,
-            max_axe_out,
+            max_axe_out,  # pylint: disable=W0612
             state_names_in,
             state_names_out,
             scan_names_in,
@@ -105,12 +105,12 @@ class Scan(OpRun):
         max_iter = args[num_loop_state_vars].shape[self.input_axes_[0]]
         results = [[] for _ in scan_names_out]  # type: ignore
 
-        for iter in range(max_iter):
+        for it in range(max_iter):
             inputs = {}
             for name, value in zip(state_names_in, states):
                 inputs[name] = value
             for name, value in zip(scan_names_in, scan_values):
-                inputs[name] = value[iter]
+                inputs[name] = value[it]
 
             try:
                 outputs_list = self._run_body(inputs)  # type: ignore
