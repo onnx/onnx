@@ -16,5 +16,5 @@ class ReverseSequence(OpRun):
             index[self.time_axis] = slice(0, sl)  # type: ignore
             index_data[self.batch_axis] = i  # type: ignore
             index_data[self.time_axis] = slice(sl - 1, None, -1)  # type: ignore
-            result[index] = data[index_data]
+            result[tuple(index)] = data[tuple(index_data)]
         return (result,)

@@ -231,8 +231,15 @@ class OnnxBackendTest:
                         f"Output {i} of test {index} in folder {self.folder!r} failed "
                         f"(e.shape={e.shape}, o={o!r})."
                     )
+        elif isinstance(e, list):
+            if not isinstance(o, list):
+                raise AssertionError(f"Expected result is list but output type is {type(o)} for output {i}.")
+            if len(e) != len(o):
+                raise AssertionErro(f"Expected has {len(e)} but output has {len(o)} for output {i}.")
+            for a, b in zip(e, o):
+                self._compare_results(index, i, a, b, decimal)
         else:
-            raise NotImplementedError(f"Comparison not implemented for type {type(e)}.")
+            raise NotImplementedError(f"Comparison not implemented for type {type(e)} and output {i}.")
 
     def is_random(self):
         "Tells if a test is random or not."
@@ -550,7 +557,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_reversesequence_time" in name,
+            lambda name: "test_identity_opt" in name,
             verbose=0,
             decimal={"test_blackmanwindow_expanded": 4},
         )
