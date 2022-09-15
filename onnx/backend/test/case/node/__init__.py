@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
+from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np  # type: ignore
@@ -129,15 +130,16 @@ def function_expand_helper(
 def function_testcase_helper(
     node: NodeProto, input_types: List[TypeProto], name: str
 ) -> Tuple[List[NodeProto], List[OperatorSetIdProto]]:
-    test_op = node.op_type
+    node_copy = deepcopy(node)
+    test_op = node_copy.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, node.domain)
+    schema = onnx.defs.get_schema(test_op, node_copy.domain)
 
     if schema.has_function:  # type: ignore
         function_proto = schema.function_body  # type: ignore
     elif schema.has_context_dependent_function:  # type: ignore
         function_proto_str = schema.get_context_dependent_function(  # type: ignore
-            node.SerializeToString(), [t.SerializeToString() for t in input_types]
+            node_copy.SerializeToString(), [t.SerializeToString() for t in input_types]
         )
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
@@ -145,13 +147,13 @@ def function_testcase_helper(
         return [], []
 
     for attr in schema.attributes:
-        if attr in [a.name for a in node.attribute]:
+        if attr in [a.name for a in node_copy.attribute]:
             continue
         if schema.attributes[attr].default_value:
-            node.attribute.extend([schema.attributes[attr].default_value])
+            node_copy.attribute.extend([schema.attributes[attr].default_value])
 
     # function_proto.attributes
-    node_list = function_expand_helper(node, function_proto, op_prefix)
+    node_list = function_expand_helper(node_copy, function_proto, op_prefix)
     return node_list, function_proto.opset_import
 
 
