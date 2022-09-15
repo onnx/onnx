@@ -138,8 +138,7 @@ from .op_reverse_sequence import ReverseSequence
 # from .op_roi_align import RoiAlign
 from .op_rnn import RNN
 from .op_round import Round
-
-# from .op_scan import Scan
+from .op_scan import Scan
 from .op_scatter_elements import ScatterElements
 from .op_scatternd import ScatterND
 from .op_selu import Selu

@@ -510,8 +510,9 @@ class TestOnnxBackEnd(unittest.TestCase):
         # discrepancies
         skip_test |= {
             # deprecated
-            "test_scatter_with_axis",
-            "test_scatter_without_axis",
+            "test_scan_sum",  # opset 8
+            "test_scatter_with_axis",  # scatter is removed
+            "test_scatter_without_axis",  # scatter is removed
             # bug
             "test_gru_batchwise",
             # problem with constant pi
@@ -570,7 +571,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_range_float_type_positive_delta_expanded" in name,
+            lambda name: "test_scan9_sum" in name,
             verbose=0,
             decimal={
                 "test_blackmanwindow_expanded": 4,
