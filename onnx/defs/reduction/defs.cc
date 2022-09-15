@@ -22,7 +22,8 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit)
 }
 
 std::function<void(OpSchema&)>
-ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false, bool axes_input = false) {
+ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false, bool axes_input = false,
+const char* func_body = nullptr) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -74,6 +75,9 @@ False instead of True.)DOC";
         GetSupportedDataTypesForReductionOps(supports_8bit_datatypes),
         supports_8bit_datatypes ? "Constrain input and output types to high-precision and 8 bit numeric tensors."
                                 : "Constrain input and output types to high-precision numeric tensors.");
+    if (func_body) {
+      schema.FunctionBody(func_body);
+    }
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -139,13 +143,25 @@ False instead of True.)DOC";
   };
 }
 
+std::function<void(OpSchema&)>
+ReduceDocGenerator(const char* name, const char* func_body) {
+  return ReduceDocGenerator(name, false, false, func_body);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 13, OpSchema().FillUsing(ReduceDocGenerator("max", true)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 13, OpSchema().FillUsing(ReduceDocGenerator("min", true)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceDocGenerator("sum", false, true)));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 13, OpSchema().FillUsing(ReduceDocGenerator("sum square")));
+const char* reduce_sum_square_func_body = R"ONNX(
+  {
+    data_square = Mul(data, data)
+    axes = Constant <value_ints = @axes>()
+    reduced = ReduceSum<keepdims = @keepdims>(data_square, axes)
+  }
+  )ONNX";
+ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 13, OpSchema().FillUsing(ReduceDocGenerator("sum square", reduce_sum_square_func_body)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 13, OpSchema().FillUsing(ReduceDocGenerator("mean")));
 
@@ -155,8 +171,22 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 13, OpSchema().FillUsing(ReduceDocGenerat
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceLogSumExp, 13, OpSchema().FillUsing(ReduceDocGenerator("log sum exponent")));
 
+// const char* reduce_l1_func_body = R"ONNX(
+//   {
+//     data_abs = Abs(data)
+//     reduced = ReduceSum(data_square, axes, keepdims=keepdims)
+//   }
+//   )ONNX";
 ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 13, OpSchema().FillUsing(ReduceDocGenerator("L1 norm")));
 
+// const char* reduce_l2_func_body = R"ONNX(
+//   {
+//     sum_square = ReduceSumSquare(data, axes, keepdims=keepdims)
+//     sum_square_dbl = Cast (sum_square, to=1)
+//     sqrt = Sqrt(sum_square_dbl)
+//     reduced = CastLike(sqrt, data)
+//   }
+//   )ONNX";
 ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 13, OpSchema().FillUsing(ReduceDocGenerator("L2 norm")));
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
