@@ -6,6 +6,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import List
 
 import config
 
@@ -46,7 +47,7 @@ def run_lfs_prune():
     print(f"LFS prune completed with return code= {result.returncode}")
 
 
-def skip_model(error_message, skip_list, model_name):
+def skip_model(error_message: str, skip_list: List[str], model_name: str):
     print(error_message)
     skip_list.append(model_name)
 
@@ -64,7 +65,7 @@ def main():
     )
     args = parser.parse_args()
     parent_dir = []
-    # if not set, go throught each directory
+    # if not set, go through each directory
     if not args.test_dir:
         for file in os.listdir():
             if os.path.isdir(file):
@@ -86,7 +87,7 @@ def main():
     # run checker on each model
     failed_models = []
     failed_messages = []
-    skip_models_list = []
+    skip_models = []
     for model_path in model_list:
         start = time.time()
         model_name = model_path.split("/")[-1]
@@ -102,27 +103,47 @@ def main():
             else:
                 # stricter onnx.checker with onnx.shape_inference
                 onnx.checker.check_model(model, True)
-                print(f"[PASS]: {model_name} is checked by onnx checker with shape_inference. ")
+                print(
+                    f"[PASS]: {model_name} is checked by onnx checker with shape_inference. "
+                )
 
                 # 2) Test onnx version converter with upgrade functionality
                 original_version = model.opset_import[0].version
                 latest_opset_version = onnx.helper.VERSION_TABLE[-1][2]
                 if original_version < latest_opset_version:
-                    if model_path.replace("\\", "/") in config.SKIP_VERSION_CONVERTER_MODELS:
-                        skip_model(f"[SKIP]: model {model_path} is in the skip list for version converter. ",
-                            skip_models_list, model_name)
+                    if (
+                        model_path.replace("\\", "/")
+                        in config.SKIP_VERSION_CONVERTER_MODELS
+                    ):
+                        skip_model(
+                            f"[SKIP]: model {model_path} is in the skip list for version converter. ",
+                            skip_models,
+                            model_name,
+                        )
                     elif model_path.endswith("-int8.onnx"):
-                        skip_model(f"[SKIP]: model {model_path} is a quantized model using non-official ONNX domain. ",
-                            skip_models_list, model_name)
+                        skip_model(
+                            f"[SKIP]: model {model_path} is a quantized model using non-official ONNX domain. ",
+                            skip_models,
+                            model_name,
+                        )
                     else:
-                        converted = version_converter.convert_version(model, original_version + 1)
+                        converted = version_converter.convert_version(
+                            model, original_version + 1
+                        )
                         onnx.checker.check_model(converted, True)
-                        print(f"[PASS]: {model_name} can be version converted by original_version+1. ")
+                        print(
+                            f"[PASS]: {model_name} can be version converted by original_version+1. "
+                        )
                 elif original_version == latest_opset_version:
-                    skip_model(f"[SKIP]: {model_name} is already the latest opset version. ",
-                                                skip_models_list, model_name)
+                    skip_model(
+                        f"[SKIP]: {model_name} is already the latest opset version. ",
+                        skip_models,
+                        model_name,
+                    )
                 else:
-                    raise RuntimeError(f"{model_name} has unsupported opset_version {original_version}. ")
+                    raise RuntimeError(
+                        f"{model_name} has unsupported opset_version {original_version}. "
+                    )
 
             # remove the model to save space in CIs
             if os.path.exists(model_path):
@@ -141,11 +162,11 @@ def main():
 
     if len(failed_models) == 0:
         print(
-            f"{len(model_list)} models have been checked. {len(skip_models_list)} models were skipped."
+            f"{len(model_list)} models have been checked. {len(skip_models)} models were skipped."
         )
     else:
         print(
-            f"In all {len(model_list)} models, {len(failed_models)} models failed, {len(skip_models_list)} models were skipped"
+            f"In all {len(model_list)} models, {len(failed_models)} models failed, {len(skip_models)} models were skipped"
         )
         for model, error in failed_messages:
             print(f"{model} failed because: {error}")
