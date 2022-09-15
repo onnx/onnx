@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <functional>
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -23,7 +24,7 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit)
 
 std::function<void(OpSchema&)>
 ReduceDocGenerator(const char* name, bool supports_8bit_datatypes = false, bool axes_input = false,
-const char* func_body = nullptr) {
+const char* func_body = nullptr, ContextDependentFunctionBodyBuilder function_builder = nullptr) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -77,6 +78,10 @@ False instead of True.)DOC";
                                 : "Constrain input and output types to high-precision numeric tensors.");
     if (func_body) {
       schema.FunctionBody(func_body);
+    }
+    else if(function_builder) {
+      std::cout << "schema.SetContextDependentFunctionBodyBuilder(function_builder);" << std::endl;
+      schema.SetContextDependentFunctionBodyBuilder(function_builder);
     }
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -148,6 +153,12 @@ ReduceDocGenerator(const char* name, const char* func_body) {
   return ReduceDocGenerator(name, false, false, func_body);
 }
 
+std::function<void(OpSchema&)>
+ReduceDocGeneratorWithFunctionBuilder(const char* name, ContextDependentFunctionBodyBuilder functionBuilder) {
+  std::cout << "ReduceDocGenerator(name, false, false, nullptr, functionBuilder);" << std::endl;
+  return ReduceDocGenerator(name, false, false, nullptr, functionBuilder);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 13, OpSchema().FillUsing(ReduceDocGenerator("max", true)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 13, OpSchema().FillUsing(ReduceDocGenerator("min", true)));
@@ -161,7 +172,28 @@ const char* reduce_sum_square_func_body = R"ONNX(
     reduced = ReduceSum<keepdims = @keepdims>(data_square, axes)
   }
   )ONNX";
-ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 13, OpSchema().FillUsing(ReduceDocGenerator("sum square", reduce_sum_square_func_body)));
+
+bool BuildContextDependentFunctionBodyReduceSumSquare(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  FunctionBuilder builder(functionProto);
+  auto* axes_attr = ctx.getAttribute("axes");
+  if (axes_attr) {
+    builder.Add("data_square = Mul(data, data)");
+    builder.Add("axes = Constant <value_ints = @axes>()");
+    builder.Add("reduced = ReduceSum<keepdims = @keepdims>(data_square, axes)");
+  } else {
+    builder.Add("data_square = Mul(data, data)");
+    builder.Add("reduced = ReduceSum<keepdims = @keepdims>(data_square)");
+  }
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+// ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 13, OpSchema().FillUsing(ReduceDocGenerator("sum square", reduce_sum_square_func_body)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 13, OpSchema().FillUsing(
+  ReduceDocGeneratorWithFunctionBuilder("sum square", BuildContextDependentFunctionBodyReduceSumSquare)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 13, OpSchema().FillUsing(ReduceDocGenerator("mean")));
 
