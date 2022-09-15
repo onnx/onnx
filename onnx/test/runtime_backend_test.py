@@ -557,7 +557,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_identity_opt" in name,
+            lambda name: "test_abs" in name,
             verbose=0,
             decimal={"test_blackmanwindow_expanded": 4},
         )

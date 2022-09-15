@@ -170,6 +170,7 @@ from .op_sum import Sum
 from .op_tan import Tan
 from .op_tanh import Tanh
 from .op_thresholded_relu import ThresholdedRelu
+from .op_tile import Tile
 from .op_topk import TopK, TopK_1, TopK_10, TopK_11
 from .op_transpose import Transpose
 from .op_trilu import Trilu
