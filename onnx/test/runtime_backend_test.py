@@ -82,7 +82,7 @@ class OnnxBackendTest:
         try:
             loaded = to_array(load_tensor_from_string(serialized))
         except Exception as e:
-            proto_types = [OptionalProto, SequenceProto, TypeProto]
+            proto_types = [SequenceProto, TypeProto, OptionalProto]
             read_obj = None
             for pt in proto_types:
                 obj = pt()
@@ -99,7 +99,13 @@ class OnnxBackendTest:
                         ) from e
             if read_obj is not None:
                 if isinstance(obj, SequenceProto):
-                    loaded = to_list(read_obj)
+                    if obj.elem_type == 0:
+                        loaded = []
+                    else:
+                        try:
+                            loaded = to_list(read_obj)
+                        except Exception as e:
+                            raise AssertionError(f"Unable to read {full!r}.") from e
                 else:
                     loaded = read_obj
         return loaded
@@ -233,13 +239,19 @@ class OnnxBackendTest:
                     )
         elif isinstance(e, list):
             if not isinstance(o, list):
-                raise AssertionError(f"Expected result is list but output type is {type(o)} for output {i}.")
+                raise AssertionError(
+                    f"Expected result is list but output type is {type(o)} for output {i}."
+                )
             if len(e) != len(o):
-                raise AssertionErro(f"Expected has {len(e)} but output has {len(o)} for output {i}.")
+                raise AssertionError(
+                    f"Expected has {len(e)} but output has {len(o)} for output {i}."
+                )
             for a, b in zip(e, o):
                 self._compare_results(index, i, a, b, decimal)
         else:
-            raise NotImplementedError(f"Comparison not implemented for type {type(e)} and output {i}.")
+            raise NotImplementedError(
+                f"Comparison not implemented for type {type(e)} and output {i}."
+            )
 
     def is_random(self):
         "Tells if a test is random or not."
@@ -557,7 +569,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_abs" in name,
+            lambda name: "test_optional_get_element_sequence" in name,
             verbose=0,
             decimal={"test_blackmanwindow_expanded": 4},
         )
