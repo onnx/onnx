@@ -8,7 +8,7 @@ import numpy as np  # type: ignore
 
 from ..defs import get_all_schemas_with_history
 from ..numpy_helper import to_array
-from ..onnx_pb import AttributeProto, GraphProto, NodeProto
+from ..onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 
 
 class RuntimeTypeError(RuntimeError):
@@ -57,6 +57,16 @@ def _build_schemas() -> Dict[str, type]:
 _schemas = _build_schemas()
 
 
+class OnnxType:
+    def __init__(self, type_proto: TypeProto):
+        if not isinstance(type_proto, TypeProto):
+            raise TypeError(f"type_proto {type(type_proto)} must be of type TypeProto.")
+        self.type_proto = type_proto
+
+    def __repr__(self) -> str:
+        return f"OnnxType({self.type_proto!r})"
+
+
 class OpRun(ABC):
     """
     Ancestor to all operators in this subfolder.
@@ -72,11 +82,18 @@ class OpRun(ABC):
     _attribute_conversion_functions = {
         AttributeProto.FLOAT: lambda att: np.float32(att.f),
         AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
+        # AttributeProto.GRAPH(5)
+        # AttributeProto.GRAPHS(10)
         AttributeProto.INT: lambda att: int(att.i),
         AttributeProto.INTS: lambda att: [int(i) for i in att.ints],
-        AttributeProto.TENSOR: lambda att: to_array(att.t),
+        # AttributeProto.SPARSE_TENSOR(11)
+        # AttributeProto.SPARSE_TENSORS(12)
         AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
         AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
+        AttributeProto.TENSOR: lambda att: to_array(att.t),
+        # AttributeProto.TENSORS(9)
+        AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
+        # AttributeProto.TYPE_PROTOS(14)
     }
 
     def __init__(
@@ -111,7 +128,11 @@ class OpRun(ABC):
         if att.type == AttributeProto.GRAPH:
             from .inference import Inference  # type: ignore
 
-            return Inference(att.g, opsets=self.run_params["opsets"])
+            return Inference(
+                att.g,
+                opsets=self.run_params["opsets"],
+                verbose=max(0, self.run_params.get("verbose", 0) - 2),
+            )
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
         if ref_att is None:

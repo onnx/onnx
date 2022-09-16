@@ -240,11 +240,13 @@ class OnnxBackendTest:
         elif isinstance(e, list):
             if not isinstance(o, list):
                 raise AssertionError(
-                    f"Expected result is 'list' but output type is {type(o)} for output {i}."
+                    f"Expected result is 'list' but output type is {type(o)} for output {i}"
+                    f"\n--EXPECTED--\n{e}\n--GOT--\n{o}."
                 )
             if len(e) != len(o):
                 raise AssertionError(
-                    f"Expected has {len(e)} but output has {len(o)} for output {i}."
+                    f"Expected has {len(e)} but output has {len(o)} for output {i}"
+                    f"\n--EXPECTED--\n{e}\n--GOT--\n{o}."
                 )
             for a, b in zip(e, o):
                 self._compare_results(index, i, a, b, decimal)
@@ -345,8 +347,8 @@ class TestOnnxBackEnd(unittest.TestCase):
         self.assertEqual(len(code), 1)
 
     @staticmethod
-    def load_fct(obj):
-        return rt.Inference(obj)
+    def load_fct(obj, verbose=0):
+        return rt.Inference(obj, verbose=verbose)
 
     @staticmethod
     def run_fct(obj, *inputs, verbose=0):  # pylint: disable=W0613
@@ -393,20 +395,29 @@ class TestOnnxBackEnd(unittest.TestCase):
             with self.subTest(name=te.name):
                 if verbose > 7:
                     print("  check runtime")
-                    if verbose > 8:
-                        print(te.onnx_model)
                 self.assertIn(te.name, repr(te))
                 self.assertGreater(len(te), 0)
                 try:
                     if verbose > 7:
                         print("  run")
-                    te.run(
-                        TestOnnxBackEnd.load_fct,
-                        TestOnnxBackEnd.run_fct,
-                        decimal=decimal.get(te.name, None),
-                    )
+                    if verbose > 5:
+                        te.run(
+                            lambda *args, verbose=verbose: TestOnnxBackEnd.load_fct(
+                                *args, verbose
+                            ),
+                            TestOnnxBackEnd.run_fct,
+                            decimal=decimal.get(te.name, None),
+                        )
+                    else:
+                        te.run(
+                            TestOnnxBackEnd.load_fct,
+                            TestOnnxBackEnd.run_fct,
+                            decimal=decimal.get(te.name, None),
+                        )
                     if verbose > 7:
                         print("  end run")
+                        if verbose > 8:
+                            print(te.onnx_model)
                 except NotImplementedError as e:
                     if verbose > 7:
                         print("  ", e, type(e))
@@ -571,7 +582,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_matmulinteger" in name,
+            lambda name: "test_sin" in name,
             verbose=0,
             decimal={
                 "test_blackmanwindow_expanded": 4,
