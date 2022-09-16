@@ -12,6 +12,7 @@ did not change the implementation.
 import textwrap
 from typing import Any, Union
 
+from ...defs import get_schema
 from ..op_run import OpFunction, OpRun
 from .op_abs import Abs
 from .op_acos import Acos
@@ -205,6 +206,7 @@ def _build_registered_operators():  # type: ignore
             "cl",
             "clo",
             "class_name",
+            "get_schema",
             "textwrap",
             "Union",
         }:
@@ -246,7 +248,19 @@ def load_op(
         return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
     if domain != "":
         raise ValueError(f"Domain must be '' not {domain!r}.")
-    if op_type not in _registered_operators:  # type: ignore
+    if op_type in _registered_operators:  # type: ignore
+        found = True
+    else:
+        # maybe the operator can be replacted by a function
+        schema = get_schema(op_type, version, "")
+        if schema.has_function:
+            from ..inference import Inference
+
+            body = schema.function_body
+            sess = Inference(body)
+            return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
+        found = False
+    if not found:
         available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
         raise NotImplementedError(
             f"No registered implementation for operator {op_type!r} "

@@ -582,8 +582,8 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_sin" in name,
-            verbose=0,
+            lambda name: "test_mvn" == name,
+            verbose=10,
             decimal={
                 "test_blackmanwindow_expanded": 4,
                 "test_blackmanwindow_symmetric": 4,
