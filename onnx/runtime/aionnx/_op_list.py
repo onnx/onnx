@@ -78,6 +78,7 @@ from .op_hard_sigmoid import HardSigmoid
 from .op_hardmax import Hardmax
 from .op_identity import Identity
 from .op_if import If
+from .op_instance_normalization import InstanceNormalization
 from .op_isinf import IsInf
 from .op_isnan import IsNaN
 from .op_layer_normalization import LayerNormalization
