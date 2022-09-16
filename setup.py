@@ -313,7 +313,6 @@ include_dirs = [
     "onnx.defs.*",
     "onnx.examples*",
     "onnx.shape_inference",
-    "onnx.test.cpp",
     "onnx.version_converter*",
 ]
 
