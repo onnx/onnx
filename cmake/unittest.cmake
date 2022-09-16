@@ -2,29 +2,18 @@
 
 set(UT_NAME ${PROJECT_NAME}_gtests)
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
-set(ONNXIFI_TEST_DRIVER onnxifi_test_driver_gtests)
 
 include(${ONNX_ROOT}/cmake/Utils.cmake)
 
 find_package(Threads)
 
 set(${UT_NAME}_libs ${googletest_STATIC_LIBRARIES})
-set(${ONNXIFI_TEST_DRIVER}_libs ${googletest_STATIC_LIBRARIES})
 
 list(APPEND ${UT_NAME}_libs onnx)
 list(APPEND ${UT_NAME}_libs onnx_proto)
-list(APPEND ${UT_NAME}_libs onnxifi_loader)
-list(APPEND ${UT_NAME}_libs onnxifi)
 list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
-list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnx)
-list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnx_proto)
-list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnxifi_loader)
-list(APPEND ${ONNXIFI_TEST_DRIVER}_libs ${PROTOBUF_LIBRARIES})
-list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnxifi)
-
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
-file(GLOB_RECURSE ${ONNXIFI_TEST_DRIVER}_src "${ONNX_ROOT}/onnx/backend/test/cpp/*.h" "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc")
 
 function(AddTest)
   cmake_parse_arguments(_UT "" "TARGET" "LIBS;SOURCES" ${ARGN})
@@ -95,4 +84,3 @@ function(AddTest)
 endfunction(AddTest)
 
 addtest(TARGET ${UT_NAME} SOURCES ${${UT_NAME}_src} LIBS ${${UT_NAME}_libs})
-addtest(TARGET ${ONNXIFI_TEST_DRIVER} SOURCES ${${ONNXIFI_TEST_DRIVER}_src} LIBS ${${ONNXIFI_TEST_DRIVER}_libs})
