@@ -91,6 +91,7 @@ from .op_lp_normalization import LpNormalization
 from .op_lrn import LRN
 from .op_lstm import LSTM
 from .op_matmul import MatMul
+from .op_matmul_integer import MatMulInteger
 from .op_max import Max
 
 # from .op_max_pool import MaxPool
