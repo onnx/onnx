@@ -55,6 +55,14 @@ pip install onnx
 
 [Weekly packages](https://test.pypi.org/project/onnx-weekly/) are published in test pypi to enable experimentation and early testing.
 
+## vcpkg packages
+onnx is in the maintenance list of vcpkg, you can easily use vcpkg to build and install it.
+```
+git clone https://github.com/microsoft/vcpkg.git
+./bootstrap-vcpkg.bat # For powershell
+./bootstrap-vcpkg.sh # For bash
+./vcpkg install onnx
+```
 
 ## Conda packages
 A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
