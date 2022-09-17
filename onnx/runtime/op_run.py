@@ -152,13 +152,17 @@ class OpRun(ABC):
 
     def _load_attributes(self) -> None:
         "Checks and loads attributes."
+        self.has_linked_attribute = False
+        added_attributes = []
         for att in self.onnx_node.attribute:
             name = att.name
             if att.ref_attr_name:
                 value = RefAttrName(att.ref_attr_name)
+                self.has_linked_attribute = True
             else:
                 value = self._extract_attribute_value(att)
             setattr(self, name, value)
+            added_attributes.append(name)
             if att.type == AttributeProto.GRAPH:
                 setattr(
                     self,
@@ -181,6 +185,8 @@ class OpRun(ABC):
                         else:
                             value = self._extract_attribute_value(v.default_value, v)
                         setattr(self, k, value)
+                        added_attributes.append(k)
+        self.attributes_names_ = set(added_attributes)
 
     @staticmethod
     def local_inputs(graph: GraphProto) -> List[str]:
@@ -216,6 +222,23 @@ class OpRun(ABC):
     def output(self) -> Iterable[str]:
         "Returns node attribute `output`."
         return self.onnx_node.output  # type: ignore
+
+    def attr(
+        self, name: str, overriden_attributes: Optional[Dict[str, Any]] = None
+    ) -> Any:
+        """
+        Retrieves the value of an attribute. It is `self.<name>` unless
+        its value is linked to the function attribute it is part of.
+        """
+        value = getattr(self, name)
+        if isinstance(value, RefAttrName):
+            if overriden_attributes is None:
+                raise AttributeError(
+                    f"Attribute {name!r} of operator {type(self)} is linked but "
+                    f"overriden_attributes has no value for it."
+                )
+            return overriden_attributes[name]
+        return getattr(self, name)
 
     @property
     def op_type(self) -> str:
@@ -253,7 +276,7 @@ class OpRun(ABC):
         return "\n".join(atts)
 
     @abstractmethod
-    def _run(self, *args, **kwargs):  # type: ignore
+    def _run(self, *args, overriden_attributes=None, **kwargs):  # type: ignore
         """
         Should be overwritten.
         """
@@ -261,14 +284,36 @@ class OpRun(ABC):
             f"Method '_run' or 'to_python' should be overwritten for operator {self.__class__.__name__!r}."
         )
 
-    def run(self, *args, **kwargs):  # type: ignore
+    def run(self, *args, linked_attributes=None, **kwargs):  # type: ignore
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
         """
+        overriden_attributes = {}
+        if self.has_linked_attribute:
+            if linked_attributes is None:
+                raise AttributeError(
+                    f"One attribute is linked but no linked value is provided, "
+                    f"in class {type(self)}."
+                )
+            for att in self.attributes_names_:
+                v = getattr(self, att)
+                if isinstance(v, RefAttrName):
+                    if v.name not in linked_attributes:
+                        raise ValueError(
+                            f"Unable to find a value for linked attribute {att!r} in {linked_attributes!r} "
+                            f"in node {type(self)}."
+                        )
+                    overriden_attributes[att] = linked_attributes[v.name]
+
         self._log("-- begin %s.run(%d inputs)", self.__class__.__name__, len(args))
         try:
-            res = self._run(*args, **kwargs)
+            if len(overriden_attributes) > 0:
+                res = self._run(
+                    *args, overriden_attributes=overriden_attributes, **kwargs
+                )
+            else:
+                res = self._run(*args, **kwargs)
         except (TypeError, AttributeError) as e:
             raise TypeError(
                 f"Issues with types {[type(_) for _ in args]} "

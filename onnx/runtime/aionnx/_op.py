@@ -29,38 +29,9 @@ class OpRunUnary(OpRun):  # pylint: disable=W0223
         except TypeError as e:
             raise TypeError(
                 f"Issues with types {', '.join(str(type(_)) for _ in [x])} "
-                f"(binary operator {self.__class__.__name__!r})."
+                f"(unary operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
-        return res
-
-
-class OpRunArg(OpRunUnary):  # pylint: disable=W0223
-    """
-    Ancestor to all unary operators in this subfolder
-    and which produces position of extremas (ArgMax, ...).
-    Checks that input and output types are the same.
-    The class must have attributes *axis*, *keepdim*.
-    """
-
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunUnary.__init__(self, onnx_node, run_params)
-        if not hasattr(self, "keepdims"):
-            raise AttributeError("Attribute 'keepdims' is missing.")
-        if not hasattr(self, "axis"):
-            raise AttributeError("Attribute 'axis' is missing.")
-
-    def run(self, x):  # type: ignore # pylint: disable=W0221
-        """
-        Calls method ``OpRunUnary.run``, catches exceptions,
-        displays a longer error message.
-        """
-        res = OpRunUnary.run(self, x)
-        if res[0].dtype != np.int64:
-            raise RuntimeTypeError(
-                f"Output type mismatch: should be '{np.int64}' != output '{res[0].dtype}' "
-                f"(operator {self.__class__.__name__!r})."
-            )
         return res
 
 
@@ -178,14 +149,14 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         return (self.numpy_fct(a, b),)
 
 
-class OpRunReduceNumpy(OpRunUnaryNum):  # type: ignore
+class OpRunReduceNumpy(OpRun):  # type: ignore
     """
     Implements the reduce logic.
     It must have a parameter *axes*.
     """
 
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunUnaryNum.__init__(self, onnx_node, run_params)
+        OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "axes"):
             if isinstance(self.axes, np.ndarray):  # type: ignore # pylint: disable=E0203
                 if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:  # type: ignore # pylint: disable=E0203
@@ -196,3 +167,32 @@ class OpRunReduceNumpy(OpRunUnaryNum):  # type: ignore
                 self.axes = None
             elif isinstance(self.axes, list):
                 self.axes = tuple(self.axes)
+
+
+class OpRunArg(OpRunUnary):  # pylint: disable=W0223
+    """
+    Ancestor to all unary operators in this subfolder
+    and which produces position of extremas (ArgMax, ...).
+    Checks that input and output types are the same.
+    The class must have attributes *axis*, *keepdim*.
+    """
+
+    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+        OpRunUnary.__init__(self, onnx_node, run_params)
+        if not hasattr(self, "keepdims"):
+            raise AttributeError("Attribute 'keepdims' is missing.")
+        if not hasattr(self, "axis"):
+            raise AttributeError("Attribute 'axis' is missing.")
+
+    def run(self, x, linked_attributes=None):  # type: ignore # pylint: disable=W0221
+        """
+        Calls method ``OpRunUnary.run``, catches exceptions,
+        displays a longer error message.
+        """
+        res = OpRunUnary.run(self, x)
+        if res[0].dtype != np.int64:
+            raise RuntimeTypeError(
+                f"Output type mismatch: should be '{np.int64}' != output '{res[0].dtype}' "
+                f"(operator {self.__class__.__name__!r})."
+            )
+        return res
