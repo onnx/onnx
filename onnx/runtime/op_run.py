@@ -224,21 +224,25 @@ class OpRun(ABC):
         return self.onnx_node.output  # type: ignore
 
     def attr(
-        self, name: str, overriden_attributes: Optional[Dict[str, Any]] = None
+        self, *names: str, overriden_attributes: Optional[Dict[str, Any]] = None
     ) -> Any:
         """
         Retrieves the value of an attribute. It is `self.<name>` unless
         its value is linked to the function attribute it is part of.
         """
-        value = getattr(self, name)
-        if isinstance(value, RefAttrName):
-            if overriden_attributes is None:
-                raise AttributeError(
-                    f"Attribute {name!r} of operator {type(self)} is linked but "
-                    f"overriden_attributes has no value for it."
-                )
-            return overriden_attributes[name]
-        return getattr(self, name)
+        values = []
+        for name in names:
+            value = getattr(self, name)
+            if isinstance(value, RefAttrName):
+                if overriden_attributes is None:
+                    raise AttributeError(
+                        f"Attribute {name!r} of operator {type(self)} is linked but "
+                        f"overriden_attributes has no value for it."
+                    )
+                values.append(overriden_attributes[name])
+            else:
+                values.append(getattr(self, name))
+        return tuple(values)
 
     @property
     def op_type(self) -> str:

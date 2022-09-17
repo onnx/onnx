@@ -24,8 +24,11 @@ def _argmax_use_numpy_select_last_index(data, axis=0, keepdims=True):  # type: i
 
 
 class _ArgMax(OpRunArg):
-    def _run(self, data):  # type: ignore
-        return (_argmax(data, axis=self.axis, keepdims=self.keepdims),)  # type: ignore
+    def _run(self, data, overriden_attributes=None):  # type: ignore
+        axis, keepdims = self.attr(
+            "axis", "keepdims", overriden_attributes=overriden_attributes
+        )
+        return (_argmax(data, axis=axis, keepdims=keepdims),)
 
 
 class ArgMax_11(_ArgMax):
@@ -34,13 +37,14 @@ class ArgMax_11(_ArgMax):
 
 
 class ArgMax_12(_ArgMax):
-    def _run(self, data):  # type: ignore
+    def _run(self, data, overriden_attributes=None):  # type: ignore
         if self.select_last_index == 0:  # type: ignore
             return _ArgMax._run(self, data)
+        axis, keepdims = self.attr(
+            "axis", "keepdims", overriden_attributes=overriden_attributes
+        )
         return (
-            _argmax_use_numpy_select_last_index(
-                data, axis=self.axis, keepdims=self.keepdims  # type: ignore
-            ),
+            _argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims),
         )
 
 
