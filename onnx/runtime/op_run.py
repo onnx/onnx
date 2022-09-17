@@ -296,7 +296,7 @@ class OpRun(ABC):
         n_inputs: Optional[int] = None,
         n_outputs: Optional[int] = None,
         verbose: int = 0,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> NodeProto:  # type: ignore
         """
         Creates an ONNX node for this class based on the given information.
@@ -329,7 +329,7 @@ class OpRun(ABC):
         n_inputs: Optional[int] = None,
         n_outputs: Optional[int] = None,
         verbose: int = 0,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> Any:
         """
         Instantiates this class based on the given information.
@@ -341,7 +341,7 @@ class OpRun(ABC):
         :return: NodeProto
         """
 
-        def log_function(pattern, *args):
+        def log_function(pattern: str, *args: Any) -> None:
             if verbose > 1:
                 print(pattern % tuple(args))
 
@@ -356,7 +356,7 @@ class OpRun(ABC):
         *args: List[Any],
         n_outputs: Optional[int] = None,
         verbose: int = 0,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> Any:  # type: ignore
         """
         Evaluates this operator.

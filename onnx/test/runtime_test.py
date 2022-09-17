@@ -31,8 +31,8 @@ from onnx.numpy_helper import from_array
 from onnx.runtime.aionnx import load_op
 from onnx.runtime.aionnx._op_list import Celu
 from onnx.runtime.aionnx.op_celu import _vcelu1
-from onnx.runtime.op_run import OpRun
 from onnx.runtime.aionnx_preview_training._op_list import Adam
+from onnx.runtime.op_run import OpRun
 
 
 def make_sequence_value_info(name, elem_type, shape):
