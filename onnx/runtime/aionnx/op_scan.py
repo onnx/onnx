@@ -89,10 +89,10 @@ class Scan(OpRun):
     def _run(self, *args):  # type: ignore
         (
             num_loop_state_vars,
-            num_scan_outputs,
+            num_scan_outputs,  # pylint: disable=W0612
             output_directions,  # pylint: disable=W0612
             max_dir_out,  # pylint: disable=W0612
-            output_axes,
+            output_axes,  # pylint: disable=W0612
             max_axe_out,  # pylint: disable=W0612
             state_names_in,
             state_names_out,

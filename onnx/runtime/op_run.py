@@ -295,7 +295,6 @@ class OpRun(ABC):
         cls,
         n_inputs: Optional[int] = None,
         n_outputs: Optional[int] = None,
-        verbose: int = 0,
         **kwargs: Any,
     ) -> NodeProto:  # type: ignore
         """
@@ -367,7 +366,7 @@ class OpRun(ABC):
         :param kwargs: node attributes
         :return: NodeProto
         """
-        inst = cls.create(len(args), verbose=verbose, **kwargs)
+        inst = cls.create(len(args), n_outputs=n_outputs, verbose=verbose, **kwargs)
         res = inst.run(*args)
         if len(res) == 1:
             return res[0]

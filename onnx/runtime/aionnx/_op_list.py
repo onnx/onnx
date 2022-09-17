@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0611,W0603
+# pylint: disable=C0415,R0912,W0611,W0603
 """
 Every class imported in this module defines an implementation of
 an operator of the main domain. Any class name uses `_` to specify a

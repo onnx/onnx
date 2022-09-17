@@ -12,6 +12,6 @@ class OptionalGetElement(OpRun):
             return ([],)
         if isinstance(x, list):
             return (x,)
-        elif isinstance(x, numpy.ndarray):
+        if isinstance(x, numpy.ndarray):
             return (x,)
         raise RuntimeError("Input is empty.")
