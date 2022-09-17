@@ -38,7 +38,10 @@ class ArgMax_11(_ArgMax):
 
 class ArgMax_12(_ArgMax):
     def _run(self, data, overriden_attributes=None):  # type: ignore
-        if self.select_last_index == 0:  # type: ignore
+        select_last_index = self.attr(
+            "select_last_index", overriden_attributes=overriden_attributes
+        )
+        if select_last_index == 0:  # type: ignore
             return _ArgMax._run(self, data)
         axis, keepdims = self.attr(
             "axis", "keepdims", overriden_attributes=overriden_attributes

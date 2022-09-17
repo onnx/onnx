@@ -24,8 +24,11 @@ def _argmin_use_numpy_select_last_index(data, axis=0, keepdims=True):  # type: i
 
 
 class _ArgMin(OpRunArg):
-    def _run(self, data):  # type: ignore
-        return (_argmin(data, axis=self.axis, keepdims=self.keepdims),)  # type: ignore
+    def _run(self, data, overriden_attributes=None):  # type: ignore
+        axis, keepdims = self.attr(
+            "axis", "keepdims", overriden_attributes=overriden_attributes
+        )
+        return (_argmin(data, axis=axis, keepdims=keepdims),)
 
 
 class ArgMin_11(_ArgMin):
@@ -34,13 +37,17 @@ class ArgMin_11(_ArgMin):
 
 
 class ArgMin_12(_ArgMin):
-    def _run(self, data):  # type: ignore
-        if self.select_last_index == 0:  # type: ignore
+    def _run(self, data, overriden_attributes=None):  # type: ignore
+        select_last_index = self.attr(
+            "select_last_index", overriden_attributes=overriden_attributes
+        )
+        if select_last_index == 0:  # type: ignore
             return _ArgMin._run(self, data)
+        axis, keepdims = self.attr(
+            "axis", "keepdims", overriden_attributes=overriden_attributes
+        )
         return (
-            _argmin_use_numpy_select_last_index(
-                data, axis=self.axis, keepdims=self.keepdims  # type: ignore
-            ),
+            _argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims),
         )
 
 

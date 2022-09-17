@@ -283,6 +283,15 @@ class OpRun(ABC):
     def _run(self, *args, overriden_attributes=None, **kwargs):  # type: ignore
         """
         Should be overwritten.
+
+        :param args: operator inputs
+        :param overriden_attributes: some parameters may not be defined but
+            be linked to function parameters instead, this argument stores
+            the values for these attributes, since the same function is used
+            whereever it is called from, these attributes cannot be frozen when
+            the model is loaded, there may be different at every function call.
+        :param kwargs: optional inputs
+        :return: outputs
         """
         raise NotImplementedError(
             f"Method '_run' or 'to_python' should be overwritten for operator {self.__class__.__name__!r}."
