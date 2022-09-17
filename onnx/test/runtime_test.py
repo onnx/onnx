@@ -28,7 +28,11 @@ from onnx.helper import (
     make_value_info,
 )
 from onnx.numpy_helper import from_array
+from onnx.runtime.aionnx import load_op
+from onnx.runtime.aionnx._op_list import Celu
+from onnx.runtime.aionnx.op_celu import _vcelu1
 from onnx.runtime.op_run import OpRun
+from onnx.runtime.aionnx_preview_training._op_list import Adam
 
 
 def make_sequence_value_info(name, elem_type, shape):
@@ -853,6 +857,28 @@ class TestRuntimeInference(unittest.TestCase):
         got = sess.run(None, {"X": np.zeros((2, 4), dtype=np.float32)})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
+
+    def test_eval_celu(self):
+        inst = Celu.create(alpha=0.5)
+        self.assertEqual(inst.alpha, 0.5)
+        x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
+        y = Celu.eval(x, alpha=0.5)
+        expected = _vcelu1(x, alpha=0.5)
+        assert_almost_equal(expected, y)
+
+    def test_eval_celu_load_op(self):
+        celu = load_op("", "Celu")
+        self.assertEqual(celu.schema_domain, "")
+        inst = celu.create(alpha=0.5)
+        self.assertEqual(inst.alpha, 0.5)
+        x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
+        y = celu.eval(x, alpha=0.5)
+        expected = _vcelu1(x, alpha=0.5)
+        assert_almost_equal(expected, y)
+
+    def test_create_adam(self):
+        inst = Adam.create(alpha=0.5)
+        self.assertEqual(inst.alpha, 0.5)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 
 import numpy  # type: ignore
 
-from ..op_run import OpRun
+from ._op_run_training import OpRunTraining
 
 
 def _apply_adam(  # type: ignore
@@ -32,7 +32,7 @@ def _apply_adam(  # type: ignore
     return x_final, v_new, h_new
 
 
-class Adam(OpRun):
+class Adam(OpRunTraining):
     def _run(self, *data):  # type: ignore
         if len(data) == 6:
             return self._run1(*data)

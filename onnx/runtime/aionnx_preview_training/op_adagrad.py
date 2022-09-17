@@ -3,7 +3,7 @@
 
 import numpy  # type: ignore
 
-from ..op_run import OpRun
+from ._op_run_training import OpRunTraining
 
 
 def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # type: ignore
@@ -20,7 +20,7 @@ def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # t
     return (x_new, h_new)
 
 
-class Adagrad(OpRun):
+class Adagrad(OpRunTraining):
     def _run(self, *data):  # type: ignore
         if len(data) == 5:
             return self._run1(*data)

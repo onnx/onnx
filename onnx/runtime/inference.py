@@ -80,6 +80,37 @@ class Inference:
 
         sess = Inference(onnx_model, new_ops=[InvAlpha])
         got = sess.run(None, {"X": x})[0]
+
+    A specific node can be simply evaluated.
+
+    ::
+
+        import numpy as np
+        from onnx.runtime.aionnx._op_list import Celu
+
+        x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
+        y = Celu.eval(x, alpha=0.5)
+
+    This can also be expressed as:
+
+    ::
+
+        import numpy as np
+        from onnx.runtime.aionnx import load_op
+
+        Celu = load_op("", "Celu")  # domain is ""
+        x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
+        y = Celu.eval(x, alpha=0.5)
+
+    Method :meth:`eval <onnx.runtime.op_run.eval>` creates an onnx node
+    returned by method :meth:`make_node <onnx.runtime.op_run.make_node>`.
+
+    ::
+
+        import numpy as np
+        from onnx.runtime.aionnx._op_list import Celu
+
+        onnx_node = Celu.make_node(alpha=0.5)
     """
 
     def __init__(  # type: ignore

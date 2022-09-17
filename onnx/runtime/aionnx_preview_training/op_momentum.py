@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,W0221
 
-from ..op_run import OpRun
+from ._op_run_training import OpRunTraining
 
 
 def _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignore
@@ -16,7 +16,7 @@ def _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: igno
     return x_new, v_new
 
 
-class Momentum(OpRun):
+class Momentum(OpRunTraining):
     def _run(self, *data):  # type: ignore
         if len(data) == 5:
             return self._run1(*data)

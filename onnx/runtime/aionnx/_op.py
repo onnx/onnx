@@ -11,7 +11,7 @@ from ..op_run import OpRun, RuntimeTypeError
 class OpRunUnary(OpRun):  # pylint: disable=W0223
     """
     Ancestor to all unary operators in this subfolder.
-    Checks that inputs type are the same.
+    Checks that input and output types are the same.
     """
 
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
@@ -39,7 +39,7 @@ class OpRunArg(OpRunUnary):  # pylint: disable=W0223
     """
     Ancestor to all unary operators in this subfolder
     and which produces position of extremas (ArgMax, ...).
-    Checks that inputs type are the same.
+    Checks that input and output types are the same.
     The class must have attributes *axis*, *keepdim*.
     """
 
@@ -67,7 +67,7 @@ class OpRunArg(OpRunUnary):  # pylint: disable=W0223
 class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
     """
     Ancestor to all unary and numerical operators
-    in this subfolder. Checks that inputs type
+    in this subfolder. Checks that input and output types
     are the same.
     """
 
@@ -94,7 +94,7 @@ class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
 class OpRunBinary(OpRun):  # pylint: disable=W0223
     """
     Ancestor to all binary operators in this subfolder.
-    Checks that inputs type are the same.
+    Checks that input and output types are the same.
     """
 
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
@@ -141,7 +141,7 @@ class OpRunBinaryComparison(OpRunBinary):  # pylint: disable=W0223
 class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
     """
     Ancestor to all binary operators in this subfolder.
-    Checks that inputs type are the same.
+    Checks that input oud output types are the same.
     """
 
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):

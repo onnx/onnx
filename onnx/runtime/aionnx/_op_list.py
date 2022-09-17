@@ -12,7 +12,7 @@ did not change the implementation.
 import textwrap
 from typing import Any, Union
 
-from ...defs import get_schema
+from ...defs import get_schema, onnx_opset_version
 from ..op_run import OpFunction, OpRun
 from .op_abs import Abs
 from .op_acos import Acos
@@ -230,7 +230,7 @@ def _build_registered_operators():  # type: ignore
 
 
 def load_op(
-    domain: str, op_type: str, version: Union[None, int], custom: Any = None
+    domain: str, op_type: str, version: Union[None, int] = None, custom: Any = None
 ) -> Any:
     """
     Loads the implemented for a specified operator.
@@ -246,17 +246,19 @@ def load_op(
         _registered_operators = _build_registered_operators()
     if custom is not None:
         return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
+    if version is None:
+        version = onnx_opset_version()
     if domain != "":
         raise ValueError(f"Domain must be '' not {domain!r}.")
     if op_type in _registered_operators:  # type: ignore
         found = True
     else:
         # maybe the operator can be replacted by a function
-        schema = get_schema(op_type, version, "")
-        if schema.has_function:
+        schema = get_schema(op_type, version, "")  # type: ignore
+        if schema.has_function:  # type: ignore
             from ..inference import Inference
 
-            body = schema.function_body
+            body = schema.function_body  # type: ignore
             sess = Inference(body)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         found = False

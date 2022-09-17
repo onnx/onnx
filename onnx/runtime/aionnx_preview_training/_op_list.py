@@ -4,7 +4,8 @@
 import textwrap
 from typing import Any, Union
 
-from ..op_run import OpFunction, OpRun
+from ..op_run import OpFunction
+from ._op_run_training import OpRunTraining
 from .op_adagrad import Adagrad
 from .op_adam import Adam
 from .op_momentum import Momentum
@@ -37,7 +38,7 @@ def _build_registered_operators():  # type: ignore
         if isinstance(class_type, type(load_op)):
             continue
         try:
-            issub = issubclass(class_type, OpRun)
+            issub = issubclass(class_type, OpRunTraining)
         except TypeError as e:
             raise TypeError(
                 f"Unexpected variable type {class_type!r} and class_name={class_name!r}."

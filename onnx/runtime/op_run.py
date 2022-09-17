@@ -6,7 +6,8 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import numpy as np  # type: ignore
 
-from ..defs import get_all_schemas_with_history
+from ..defs import get_all_schemas_with_history, get_schema, onnx_opset_version
+from ..helper import make_node
 from ..numpy_helper import to_array
 from ..onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 
@@ -78,6 +79,8 @@ class OpRun(ABC):
     :param log_function: function used to log information while
         executing the onnx graph
     """
+
+    schema_domain = ""
 
     _attribute_conversion_functions = {
         AttributeProto.FLOAT: lambda att: np.float32(att.f),
@@ -285,6 +288,89 @@ class OpRun(ABC):
             raise TypeError(
                 f"Method '_run' of class {self.__class__.__name__!r} must not return a tuple: {dtypes}."
             )
+        return res
+
+    @classmethod
+    def make_node(
+        cls,
+        n_inputs: Optional[int] = None,
+        n_outputs: Optional[int] = None,
+        verbose: int = 0,
+        **kwargs: Dict[str, Any],
+    ) -> NodeProto:  # type: ignore
+        """
+        Creates an ONNX node for this class based on the given information.
+
+        :param n_inputs: number of inputs (default is defined by the operator schema)
+        :param n_outputs: number of outputs (default is defined by the operator schema)
+        :param verbose: verbosity
+        :param kwargs: node attributes
+        :return: NodeProto
+        """
+        domain = cls.schema_domain
+        schema = None
+        if n_inputs is None:
+            if schema is None:
+                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+            n_inputs = schema.min_input
+        if n_outputs is None:
+            if schema is None:
+                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+            n_outputs = schema.min_output
+
+        names_in = [f"x{i}" for i in range(n_inputs)]
+        names_out = [f"y{i}" for i in range(n_outputs)]
+        node = make_node(cls.__name__, names_in, names_out, **kwargs)
+        return node
+
+    @classmethod
+    def create(
+        cls,
+        n_inputs: Optional[int] = None,
+        n_outputs: Optional[int] = None,
+        verbose: int = 0,
+        **kwargs: Dict[str, Any],
+    ) -> Any:
+        """
+        Instantiates this class based on the given information.
+
+        :param n_inputs: number of inputs (default is defined by the operator schema)
+        :param n_outputs: number of outputs (default is defined by the operator schema)
+        :param verbose: verbosity
+        :param kwargs: node attributes
+        :return: NodeProto
+        """
+
+        def log_function(pattern, *args):
+            if verbose > 1:
+                print(pattern % tuple(args))
+
+        node = cls.make_node(n_inputs, n_outputs, **kwargs)
+        run_params = dict(verbose=verbose, log=log_function)
+        cl = cls(node, run_params)
+        return cl
+
+    @classmethod
+    def eval(
+        cls,
+        *args: List[Any],
+        n_outputs: Optional[int] = None,
+        verbose: int = 0,
+        **kwargs: Dict[str, Any],
+    ) -> Any:  # type: ignore
+        """
+        Evaluates this operator.
+
+        :param args: inputs
+        :param n_outputs: number of outputs (default is defined by the operator schema)
+        :param verbose: verbosity
+        :param kwargs: node attributes
+        :return: NodeProto
+        """
+        inst = cls.create(len(args), verbose=verbose, **kwargs)
+        res = inst.run(*args)
+        if len(res) == 1:
+            return res[0]
         return res
 
 
