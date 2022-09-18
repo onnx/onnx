@@ -8,6 +8,7 @@ from ..op_run import OpRun
 
 class InstanceNormalization(OpRun):
     def _run(self, x, s, bias):  # type: ignore
+        # TODO: support overridden attributes.
         dims_x = len(x.shape)
         axis = tuple(range(2, dims_x))
         mean = np.mean(x, axis=axis, keepdims=True)

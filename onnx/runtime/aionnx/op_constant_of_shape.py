@@ -30,6 +30,7 @@ class ConstantOfShape(OpRun):
             raise TypeError(f"cst must be a real not {type(self.cst)}")
 
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         try:
             res = numpy.full(tuple(data), self.cst)  # type: ignore
         except TypeError as e:

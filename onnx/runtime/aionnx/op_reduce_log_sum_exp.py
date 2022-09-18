@@ -8,6 +8,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceLogSumExp(OpRunReduceNumpy):
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         tax = tuple(self.axes) if self.axes else None  # type: ignore
         data_max = data.copy()
         ind = numpy.isinf(data_max)

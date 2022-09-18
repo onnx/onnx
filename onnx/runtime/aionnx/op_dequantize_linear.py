@@ -8,6 +8,7 @@ from ..op_run import OpRun
 
 class DequantizeLinear(OpRun):
     def _run(self, *args):  # type: ignore
+        # TODO: support overridden attributes.
         if len(args[1].shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
 

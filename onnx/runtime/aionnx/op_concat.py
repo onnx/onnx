@@ -15,6 +15,7 @@ class Concat(OpRun):
             return a.reshape(new_shape)
         return a
 
-    def _run(self, *args):  # type: ignore
+    def _run(self, *args, axis=None):  # type: ignore
+        axis = axis or self.axis  # type: ignore
         targs = tuple(self._preprocess(a) for a in args)
-        return (numpy.concatenate(targs, self.axis),)  # type: ignore
+        return (numpy.concatenate(targs, axis),)  # type: ignore

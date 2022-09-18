@@ -73,6 +73,7 @@ def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mea
 
 class NegativeLogLikelihoodLoss(OpRun):
     def _run(self, x, target, weight=None):  # type: ignore
+        # TODO: support overridden attributes.
         return _compute_negative_log_likelihood_loss(
             x,
             target,

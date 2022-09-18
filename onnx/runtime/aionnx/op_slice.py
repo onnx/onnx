@@ -63,6 +63,7 @@ class Slice_1(SliceCommon):
                 setattr(self, f, None)
 
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         return SliceCommon._run(self, data, self.starts, self.ends, self.axes)  # type: ignore
 
 

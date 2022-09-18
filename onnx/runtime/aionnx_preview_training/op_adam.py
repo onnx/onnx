@@ -34,6 +34,7 @@ def _apply_adam(  # type: ignore
 
 class Adam(OpRunTraining):
     def _run(self, *data):  # type: ignore
+        # TODO: support overridden attributes.
         if len(data) == 6:
             return self._run1(*data)
         n = (len(data) - 2) // 4

@@ -8,6 +8,7 @@ from ._op import OpRunUnary
 
 class IsInf(OpRunUnary):
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         if self.detect_negative:  # type: ignore
             if self.detect_positive:  # type: ignore
                 return (numpy.isinf(data),)

@@ -17,6 +17,7 @@ class HammingWindow(_CommonWindow):
     """
 
     def _run(self, size):  # type: ignore
+        # TODO: support overridden attributes.
         ni, N_1 = self._begin(size)
         alpha = 25.0 / 46.0
         beta = 1 - alpha

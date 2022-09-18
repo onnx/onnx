@@ -8,4 +8,5 @@ from ..op_run import OpRun
 
 class Compress(OpRun):
     def _run(self, x, condition):  # type: ignore
+        # TODO: support overridden attributes.
         return (numpy.compress(condition, x, axis=self.axis),)  # type: ignore

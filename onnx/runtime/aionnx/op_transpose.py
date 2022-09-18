@@ -12,6 +12,7 @@ class Transpose(OpRunUnaryNum):
         self.perm_ = None if (self.perm is None or len(self.perm) == 0) else self.perm  # type: ignore
 
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         if self.perm_ is None:
             return (numpy.transpose(data),)
         if len(self.perm_) != len(data.shape):

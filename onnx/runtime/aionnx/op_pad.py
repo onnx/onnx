@@ -36,6 +36,7 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
 
 class Pad_1(OpRun):
     def _run(self, data, pads, constant_value=None):  # type: ignore
+        # TODO: support overridden attributes.
         if constant_value is None:
             constant_value = 0
         return (_pad_impl(data, pads, mode=self.mode, constant_values=constant_value),)  # type: ignore
@@ -43,6 +44,7 @@ class Pad_1(OpRun):
 
 class Pad_18(OpRun):
     def _run(self, data, pads, constant_value=None, axes=None):  # type: ignore
+        # TODO: support overridden attributes.
         if constant_value is None:
             constant_value = 0
         return (

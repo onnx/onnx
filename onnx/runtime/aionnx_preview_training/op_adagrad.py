@@ -22,6 +22,7 @@ def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # t
 
 class Adagrad(OpRunTraining):
     def _run(self, *data):  # type: ignore
+        # TODO: support overridden attributes.
         if len(data) == 5:
             return self._run1(*data)
         n = (len(data) - 2) // 3

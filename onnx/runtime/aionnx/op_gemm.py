@@ -44,4 +44,5 @@ class Gemm(OpRun):
         return o
 
     def _run(self, a, b, c=None):  # type: ignore
+        # TODO: support overridden attributes.
         return (self._meth(a, b, c),)

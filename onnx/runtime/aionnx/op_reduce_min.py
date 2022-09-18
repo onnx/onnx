@@ -8,6 +8,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceMin(OpRunReduceNumpy):
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         axes = tuple(self.axes) if self.axes else None
         return (
             numpy.minimum.reduce(

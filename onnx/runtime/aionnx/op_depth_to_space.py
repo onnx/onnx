@@ -8,6 +8,7 @@ from ..op_run import OpRun
 
 class DepthToSpace(OpRun):
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         if len(data.shape) != 4:
             raise RuntimeError(f"Unexpected shape {data.shape!r}.")
         b, c, h, w = data.shape

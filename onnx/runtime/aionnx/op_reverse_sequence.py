@@ -6,6 +6,7 @@ from ..op_run import OpRun
 
 class ReverseSequence(OpRun):
     def _run(self, data, sequence_lens):  # type: ignore
+        # TODO: support overridden attributes.
         index = [slice(0, s) for s in data.shape]
         index_data = [slice(0, s) for s in data.shape]
         result = data.copy()

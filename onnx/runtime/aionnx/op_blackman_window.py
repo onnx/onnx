@@ -17,6 +17,7 @@ class BlackmanWindow(_CommonWindow):
     """
 
     def _run(self, size):  # type: ignore
+        # TODO: support overridden attributes.
         # ni, N_1 = self._begin(size)
         ni, N_1 = numpy.arange(size, dtype=self.dtype), size
         if self.periodic == 0:  # type: ignore

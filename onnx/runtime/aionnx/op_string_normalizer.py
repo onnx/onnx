@@ -38,6 +38,7 @@ class StringNormalizer(OpRunUnary):
         """
         Normalizes strings.
         """
+        # TODO: support overridden attributes.
         res = numpy.empty(x.shape, dtype=x.dtype)
         if len(x.shape) == 2:
             for i in range(0, x.shape[1]):

@@ -10,6 +10,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceSum_1(OpRunReduceNumpy):
     def _run(self, x):  # type: ignore # pylint: disable=W0221
+        # TODO: support overridden attributes.
         return (
             numpy.sum(x, axis=self.axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
         )
@@ -33,6 +34,7 @@ class ReduceSum_13(OpRunReduceNumpy):
         return res
 
     def _run(self, x, axes=None):  # type: ignore
+        # TODO: support overridden attributes.
         if (
             axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
         ) and self.noop_with_empty_axes:  # type: ignore

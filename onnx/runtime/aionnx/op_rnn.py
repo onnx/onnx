@@ -81,6 +81,7 @@ class CommonRNN(OpRun):
         return output, h_list[-1]
 
     def _run(self, X, W, R, B=None, sequence_lens=None, initial_h=None):  # type: ignore
+        # TODO: support overridden attributes.
         self.num_directions = W.shape[0]
 
         if self.num_directions == 1:

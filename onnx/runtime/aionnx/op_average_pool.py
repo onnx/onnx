@@ -178,6 +178,7 @@ def _pool(
 
 class AveragePool(OpRun):
     def _run(self, x):  # type: ignore
+        # TODO: support overridden attributes.
         if self.strides is None or len(self.strides) == 0:  # type: ignore
             strides = [1] * (len(x.shape) - 2)
         else:

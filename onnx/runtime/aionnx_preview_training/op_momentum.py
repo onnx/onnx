@@ -18,6 +18,7 @@ def _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: igno
 
 class Momentum(OpRunTraining):
     def _run(self, *data):  # type: ignore
+        # TODO: support overridden attributes.
         if len(data) == 5:
             return self._run1(*data)
         n = (len(data) - 2) // 3

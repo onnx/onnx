@@ -27,6 +27,7 @@ class CommonSplit(OpRun):
 
 class Split_2(CommonSplit):
     def _run(self, mat):  # type: ignore
+        # TODO: support overridden attributes.
         return self.common_run(mat, self.split)  # type: ignore
 
 
@@ -36,6 +37,7 @@ class Split_11(Split_2):
 
 class Split_13(CommonSplit):
     def _run(self, mat, split=None):  # type: ignore
+        # TODO: support overridden attributes.
         return self.common_run(mat, split)
 
 

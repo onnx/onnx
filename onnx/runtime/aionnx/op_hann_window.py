@@ -16,6 +16,7 @@ class HannWindow(_CommonWindow):
     """
 
     def _run(self, size):  # type: ignore
+        # TODO: support overridden attributes.
         ni, N_1 = self._begin(size)
         res = numpy.sin(ni * 3.1415 / N_1) ** 2
         return self._end(size, res)

@@ -19,6 +19,7 @@ class EyeLike(OpRun):
             self._dtype = TENSOR_TYPE_TO_NP_TYPE[self.dtype]  # type: ignore
 
     def _run(self, data, *args):  # type: ignore
+        # TODO: support overridden attributes.
         shape = data.shape
         if len(shape) == 1:
             sh = (shape[0], shape[0])

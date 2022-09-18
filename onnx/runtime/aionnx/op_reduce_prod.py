@@ -8,6 +8,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceProd(OpRunReduceNumpy):
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         return (
             numpy.prod(data, axis=self.axes, keepdims=self.keepdims, dtype=data.dtype),  # type: ignore
         )

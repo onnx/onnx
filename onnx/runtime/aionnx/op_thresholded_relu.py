@@ -7,5 +7,6 @@ from ._op import OpRunUnaryNum
 
 
 class ThresholdedRelu(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
-        return (numpy.where(x > self.alpha, x, 0),)  # type: ignore
+    def _run(self, x, alpha=None):  # type: ignore
+        alpha = alpha or self.alpha  # type: ignore
+        return (numpy.where(x > alpha, x, 0),)  # type: ignore

@@ -7,6 +7,7 @@ from ..op_run import OpRun
 
 class Optional(OpRun):
     def _run(self, x=None):  # type: ignore
+        # TODO: support overridden attributes.
         if x is not None and hasattr(self, "type_proto"):
             tp = self.type_proto  # type: ignore
             dt = TENSOR_TYPE_TO_NP_TYPE[tp]

@@ -21,6 +21,7 @@ def _concat_from_sequence(
 
 class ConcatFromSequence(OpRun):
     def _run(self, seq):  # type: ignore
+        # TODO: support overridden attributes.
         if seq is None:
             raise RuntimeError("A sequence cannot be null.")
         res = _concat_from_sequence(seq, self.axis, new_axis=self.new_axis)  # type: ignore

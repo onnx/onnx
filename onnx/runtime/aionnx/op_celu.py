@@ -14,4 +14,5 @@ def _vcelu1(x: numpy.ndarray, alpha: float = 1.0) -> numpy.ndarray:
 
 class Celu(OpRunUnaryNum):
     def _run(self, x):  # type: ignore
+        # TODO: support overridden attributes.
         return (_vcelu1(x, self.alpha),)  # type: ignore

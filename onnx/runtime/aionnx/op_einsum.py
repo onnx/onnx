@@ -16,6 +16,7 @@ class Einsum(OpRun):
             raise TypeError("equation is empty.")
 
     def _run(self, *args):  # type: ignore
+        # TODO: support overridden attributes.
         try:
             return (numpy.einsum(self.equation, *args, optimize=True),)  # type: ignore
         except TypeError:

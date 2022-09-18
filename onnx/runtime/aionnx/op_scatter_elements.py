@@ -77,6 +77,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
 
 class ScatterElements(OpRun):
     def _run(self, data, indices, updates):  # type: ignore
+        # TODO: support overridden attributes.
         res = scatter_elements(
             data, indices, updates, axis=self.axis, reduction=self.reduction  # type: ignore
         )

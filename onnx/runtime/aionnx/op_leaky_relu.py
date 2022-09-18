@@ -13,5 +13,6 @@ def _leaky_relu(x: numpy.ndarray, alpha: float) -> numpy.ndarray:
 
 
 class LeakyRelu(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
-        return (_leaky_relu(x, self.alpha),)  # type: ignore
+    def _run(self, x, alpha=None):  # type: ignore
+        alpha = alpha or self.alpha  # type: ignore
+        return (_leaky_relu(x, alpha),)

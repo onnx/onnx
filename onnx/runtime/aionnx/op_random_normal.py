@@ -6,6 +6,7 @@ from ._op_random_common import _CommonRandom
 
 class RandomNormal(_CommonRandom):
     def _run(self):  # type: ignore
+        # TODO: support overridden attributes.
         state = self._get_state()
         res = state.randn(*self.shape).astype(self.numpy_type)  # type: ignore
         res *= self.scale  # type: ignore

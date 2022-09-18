@@ -16,6 +16,7 @@ def _specify_int64(indices, inverse_indices, counts):  # type: ignore
 
 class Unique(OpRun):
     def _run(self, x):  # type: ignore
+        # TODO: support overridden attributes.
         if self.axis is None or numpy.isnan(self.axis):  # type: ignore
             y, indices, inverse_indices, counts = numpy.unique(x, True, True, True)
         else:

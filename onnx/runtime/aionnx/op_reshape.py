@@ -31,8 +31,11 @@ class Reshape_5(CommonReshape):
 
 
 class Reshape_14(CommonReshape):
-    def _run(self, data, shape):  # type: ignore
-        allowzero = getattr(self, "allowzero", 0) == 1
+    def _run(self, data, shape, allowzero=None):  # type: ignore
+        if allowzero is None:
+            allowzero = getattr(self, "allowzero", 0) == 1
+        else:
+            allowzero = allowzero == 1
         return (reshape_reference_implementation(data, shape, allowzero),)
 
 

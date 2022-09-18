@@ -64,5 +64,6 @@ def _layer_normalization(
 
 class LayerNormalization(OpRun):
     def _run(self, X, Scale, B=None):  # type: ignore
+        # TODO: support overridden attributes.
         res = _layer_normalization(X, Scale, B, axis=self.axis, epsilon=self.epsilon)  # type: ignore
         return res

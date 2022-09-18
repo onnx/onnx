@@ -74,6 +74,7 @@ class CommonLSTM(OpRun):
         return Y, Y_h  # type: ignore
 
     def _run(self, X, W, R, B=None, sequence_lens=None, initial_h=None, initial_c=None, P=None):  # type: ignore
+        # TODO: support overridden attributes.
         n_gates = 4
         number_of_peepholes = 3
 

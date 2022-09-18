@@ -17,5 +17,8 @@ class Cast(OpRun):  # type: ignore
             self._dtype = TENSOR_TYPE_TO_NP_TYPE[self.to]  # type: ignore
         self._cast = lambda x: x.astype(self._dtype)
 
-    def _run(self, x):  # type: ignore
-        return (self._cast(x),)
+    def _run(self, x, to=None):  # type: ignore
+        if to is None:
+            return (self._cast(x),)
+        dtype = TENSOR_TYPE_TO_NP_TYPE[to]  # type: ignore
+        return (x.astype(dtype),)

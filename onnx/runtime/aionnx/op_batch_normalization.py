@@ -57,6 +57,7 @@ class BatchNormalization_9(OpRun):
 
 class BatchNormalization_14(OpRun):
     def _run(self, x, scale, bias, mean, var):  # type: ignore
+        # TODO: support overridden attributes.
         if self.training_mode == 0:  # type: ignore
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=self.epsilon)  # type: ignore
             return (res,)

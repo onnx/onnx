@@ -29,6 +29,7 @@ class Shape_15(Shape_1):
         return (self.start, self.end)  # type: ignore
 
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         ab = self._interval(len(data.shape))
         if ab is None:
             return (numpy.array(data.shape, dtype=numpy.int64),)

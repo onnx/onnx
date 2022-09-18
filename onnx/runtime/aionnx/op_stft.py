@@ -158,6 +158,7 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
 
 class STFT(OpRun):
     def _run(self, x, frame_step, window=None, frame_length=None):  # type: ignore
+        # TODO: support overridden attributes.
         if frame_length is None:
             frame_length = x.shape[-2]
         hop_length = frame_length // 4

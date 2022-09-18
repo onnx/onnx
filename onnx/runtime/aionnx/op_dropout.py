@@ -56,6 +56,7 @@ class Dropout_7(DropoutBase):
 
 class Dropout_12(DropoutBase):
     def _run(self, *inputs):  # type: ignore
+        # TODO: support overridden attributes.
         X = inputs[0]
         ratio = 0.5 if len(inputs) <= 1 else inputs[1]
         training_mode = False if len(inputs) <= 2 else inputs[2]

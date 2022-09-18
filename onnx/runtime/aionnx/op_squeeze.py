@@ -19,6 +19,7 @@ class Squeeze_1(OpRunUnaryNum):
             self.axes = tuple(self.axes)
 
     def _run(self, data):  # type: ignore
+        # TODO: support overridden attributes.
         if isinstance(self.axes, (tuple, list)):
             sq = data
             for a in reversed(self.axes):

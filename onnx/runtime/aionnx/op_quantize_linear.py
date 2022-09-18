@@ -42,4 +42,5 @@ class _CommonQuantizeLinear(OpRun):
 class QuantizeLinear(_CommonQuantizeLinear):
     def _run(self, *args):  # type: ignore
         # args: x, y_scale, zero_point
+        # TODO: support overridden attributes.
         return self.common_run(*args, axis=self.axis)  # type: ignore

@@ -55,4 +55,5 @@ def _gather_nd_impl(
 
 class GatherND(OpRun):
     def _run(self, data, indices):  # type: ignore
+        # TODO: support overridden attributes.
         return _gather_nd_impl(data, indices, self.batch_dims)  # type: ignore

@@ -95,6 +95,7 @@ def _cifft(
 
 class DFT(OpRun):
     def _run(self, x, dft_length=None):  # type: ignore
+        # TODO: support overridden attributes.
         if dft_length is None:
             dft_length = numpy.array([x.shape[self.axis]], dtype=numpy.int64)  # type: ignore
         if self.inverse:  # type: ignore

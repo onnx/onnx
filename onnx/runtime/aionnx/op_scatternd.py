@@ -24,5 +24,6 @@ def _scatter_nd_impl(data, indices, updates, reduction=None):  # type: ignore
 
 class ScatterND(OpRun):
     def _run(self, data, indices, updates):  # type: ignore
+        # TODO: support overridden attributes.
         y = _scatter_nd_impl(data, indices, updates, reduction=self.reduction)  # type: ignore
         return (y,)

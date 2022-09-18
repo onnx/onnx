@@ -6,6 +6,7 @@ from ._op_random_common import _CommonRandom
 
 class RandomUniform(_CommonRandom):
     def _run(self):  # type: ignore
+        # TODO: support overridden attributes.
         dtype = self._dtype()
         state = self._get_state()
         res = state.rand(*self.shape).astype(dtype)  # type: ignore

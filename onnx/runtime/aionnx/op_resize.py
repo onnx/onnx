@@ -230,6 +230,7 @@ class Resize(OpRun):
             raise ValueError(f"Unexpected value {self.mode!r} for mode.")  # type: ignore
 
     def _run(self, X, roi, scales=None, sizes=None):  # type: ignore
+        # TODO: support overridden attributes.
         output = _interpolate_nd(
             X,
             self.fct,

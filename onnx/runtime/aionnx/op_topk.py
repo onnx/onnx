@@ -81,6 +81,7 @@ class TopK_1(_CommonTopK):
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
+        # TODO: support overridden attributes.
         return _CommonTopK._common_run(self, data, [self.k])  # type: ignore
 
 
@@ -120,6 +121,7 @@ class TopK_11(_CommonTopK):
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
+        # TODO: support overridden attributes.
         return _CommonTopK._common_run(self, data, ink, self.largest)  # type: ignore
 
 

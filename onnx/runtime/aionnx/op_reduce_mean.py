@@ -8,6 +8,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceMean(OpRunReduceNumpy):
     def _run(self, data, **overridden_attributes):  # type: ignore
+        # TODO: support overridden attributes.
         axes, keepdims = self.attr(
             "axes", "keepdims", overridden_attributes=overridden_attributes
         )

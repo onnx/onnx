@@ -8,7 +8,6 @@ from ..op_run import OpRun
 
 class MelWeightMatrix(OpRun):
     def _run(self, num_mel_bins, dft_length, sample_rate, lower_edge_hertz, upper_edge_hertz):  # type: ignore
-
         num_spectrogram_bins = dft_length // 2 + 1
         frequency_bins = np.arange(0, num_mel_bins + 2)
 

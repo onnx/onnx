@@ -7,10 +7,11 @@ from ._op import OpRunUnaryNum
 
 
 class Hardmax(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
-        x_argmax = numpy.argmax(x, axis=self.axis)  # type: ignore
+    def _run(self, x, axis=None):  # type: ignore
+        axis = axis or self.axis  # type: ignore
+        x_argmax = numpy.argmax(x, axis=axis)  # type: ignore
         y = numpy.zeros_like(x)
         numpy.put_along_axis(
-            y, numpy.expand_dims(x_argmax, axis=self.axis), 1, axis=self.axis  # type: ignore
+            y, numpy.expand_dims(x_argmax, axis=axis), 1, axis=axis  # type: ignore
         )
         return (y,)
