@@ -224,7 +224,7 @@ class OpRun(ABC):
         return self.onnx_node.output  # type: ignore
 
     def attr(
-        self, *names: str, overriden_attributes: Optional[Dict[str, Any]] = None
+        self, *names: str, overridden_attributes: Optional[Dict[str, Any]] = None
     ) -> Any:
         """
         Retrieves the value of an attribute. It is `self.<name>` unless
@@ -234,12 +234,12 @@ class OpRun(ABC):
         for name in names:
             value = getattr(self, name)
             if isinstance(value, RefAttrName):
-                if overriden_attributes is None:
+                if overridden_attributes is None:
                     raise AttributeError(
                         f"Attribute {name!r} of operator {type(self)} is linked but "
-                        f"overriden_attributes has no value for it."
+                        f"'overridden_attributes' has no value for it."
                     )
-                values.append(overriden_attributes[name])
+                values.append(overridden_attributes[name])
             else:
                 values.append(getattr(self, name))
         return tuple(values)
@@ -263,12 +263,6 @@ class OpRun(ABC):
         """
         return False
 
-    def is_constant(self) -> bool:
-        """
-        Tells if the node is a constant.
-        """
-        return False
-
     def __str__(self) -> str:
         atts = [self.__class__.__name__ + "(", f"    op_type={self.onnx_node.op_type}"]
         for k, v in sorted(self.__dict__.items()):
@@ -280,16 +274,11 @@ class OpRun(ABC):
         return "\n".join(atts)
 
     @abstractmethod
-    def _run(self, *args, overriden_attributes=None, **kwargs):  # type: ignore
+    def _run(self, *args, **kwargs):  # type: ignore
         """
         Should be overwritten.
 
         :param args: operator inputs
-        :param overriden_attributes: some parameters may not be defined but
-            be linked to function parameters instead, this argument stores
-            the values for these attributes, since the same function is used
-            whereever it is called from, these attributes cannot be frozen when
-            the model is loaded, there may be different at every function call.
         :param kwargs: optional inputs
         :return: outputs
         """
@@ -302,7 +291,15 @@ class OpRun(ABC):
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
         """
-        overriden_attributes = {}
+        if self.has_linked_attribute and linked_attributes is None:
+            raise ValueError(
+                f"This node {type(self)} has linked attributes but None are given in parameter 'linked_attributes'."
+            )
+        if not self.has_linked_attribute and linked_attributes is not None:
+            raise ValueError(
+                f"This node {type(self)} has no linked attribute but some are given in parameter 'linked_attributes' {set(linked_attributes)}."
+            )
+        overridden_attributes = {}
         if self.has_linked_attribute:
             if linked_attributes is None:
                 raise AttributeError(
@@ -317,14 +314,12 @@ class OpRun(ABC):
                             f"Unable to find a value for linked attribute {att!r} in {linked_attributes!r} "
                             f"in node {type(self)}."
                         )
-                    overriden_attributes[att] = linked_attributes[v.name]
+                    overridden_attributes[att] = linked_attributes[v.name]
 
         self._log("-- begin %s.run(%d inputs)", self.__class__.__name__, len(args))
         try:
-            if len(overriden_attributes) > 0:
-                res = self._run(
-                    *args, overriden_attributes=overriden_attributes, **kwargs
-                )
+            if len(overridden_attributes) > 0:
+                res = self._run(*args, **overridden_attributes, **kwargs)
             else:
                 res = self._run(*args, **kwargs)
         except (TypeError, AttributeError) as e:

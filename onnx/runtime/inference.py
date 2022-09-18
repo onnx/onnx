@@ -317,10 +317,7 @@ class Inference:
             linked_attributes = {}
             if node.has_linked_attribute and attributes:
                 linked_attributes["linked_attributes"] = attributes
-            if node.is_constant():
-                # A constant may be using attributes if the node is part of a FunctionProto.
-                outputs = node.run(*inputs, attributes)
-            elif node.need_context():
+            if node.need_context():
                 outputs = node.run(*inputs, context=results, **linked_attributes)
             else:
                 outputs = node.run(*inputs, **linked_attributes)
