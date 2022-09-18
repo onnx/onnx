@@ -622,9 +622,6 @@ class TestRuntimeInference(unittest.TestCase):
                 return (1 / (x + self.alpha),)
 
         class InvAlpha_(OpRun):
-            def __init__(self, onnx_node, run_params):  # type: ignore
-                OpRun.__init__(self, onnx_node, run_params)
-
             def _run(self, x):  # type: ignore
                 return (1 / (x + self.alpha),)
 
@@ -632,11 +629,9 @@ class TestRuntimeInference(unittest.TestCase):
 
             op_domain = "custom"
 
-            def __init__(self, onnx_node, run_params):  # type: ignore
-                OpRun.__init__(self, onnx_node, run_params)
-
-            def _run(self, x):  # type: ignore
-                return (1 / (x + self.alpha),)
+            def _run(self, x, alpha=None):  # type: ignore
+                alpha = alpha or self.alpha  # type: ignore
+                return (1 / (x + alpha),)
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
@@ -646,10 +641,22 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
         with self.assertRaises(NotImplementedError):
             rt.Inference(onnx_model)
+
+        node1 = make_node("_InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(TypeError):
             rt.Inference(onnx_model, new_ops=[_InvAlpha])
-        with self.assertRaises(AttributeError):
+
+        node1 = make_node("InvAlpha_", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        with self.assertRaises(NotImplementedError):
             rt.Inference(onnx_model, new_ops=[InvAlpha_])
+
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(ValueError):
             rt.Inference(onnx_model, new_ops=[InvAlpha, InvAlpha])
         sess = rt.Inference(onnx_model, new_ops=[InvAlpha])
@@ -868,7 +875,7 @@ class TestRuntimeInference(unittest.TestCase):
 
     def test_eval_celu_load_op(self):
         celu = load_op("", "Celu")
-        self.assertEqual(celu.schema_domain, "")
+        self.assertEqual(celu.op_domain, "")
         inst = celu.create(alpha=0.5)
         self.assertEqual(inst.alpha, 0.5)
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)

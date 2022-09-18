@@ -67,12 +67,16 @@ class Inference:
 
             op_domain = "custom"
 
-            def __init__(self, onnx_node, run_params):  # type: ignore
-                OpRun.__init__(self, onnx_node, run_params)
+            def _run(self, x, alpha=None):  # type: ignore
+                alpha = alpha or self.alpha  # type: ignore
+                return (1 / (x + alpha),)
 
-            def _run(self, x):  # type: ignore
-                return (1 / (x + self.alpha),)
-
+    `alpha` is an attribute. It can be defined by the onnx node or
+    be defined by the function used this node. It is possible
+    Line `alpha = alpha or self.alpha` selects first the value defined
+    the onnx function if that's the case of falls back to the default
+    value defined by the onnx node.
+    to link a function attribute to a node attribute. In that case,
     Class `Inference` must know about this new implementation
     and this can be done by specified argument *new_ops*.
 

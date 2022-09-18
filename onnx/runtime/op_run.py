@@ -80,7 +80,7 @@ class OpRun(ABC):
         executing the onnx graph
     """
 
-    schema_domain = ""
+    op_domain = ""
 
     _attribute_conversion_functions = {
         AttributeProto.FLOAT: lambda att: np.float32(att.f),
@@ -359,7 +359,7 @@ class OpRun(ABC):
         :param kwargs: node attributes
         :return: NodeProto
         """
-        domain = cls.schema_domain
+        domain = cls.op_domain
         schema = None
         if n_inputs is None:
             if schema is None:

@@ -5,4 +5,4 @@ from ..op_run import OpRun
 
 
 class OpRunTraining(OpRun):
-    schema_domain = "ai.onnx.preview.training"
+    op_domain = "ai.onnx.preview.training"
