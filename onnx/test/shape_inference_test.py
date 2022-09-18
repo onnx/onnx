@@ -8425,6 +8425,39 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)],
         )
 
+    def test_category_mapper(self) -> None:
+        cat = make_node(
+            "CategoryMapper", 
+            ["x"],
+            ["y"], 
+            domain=ONNX_ML_DOMAIN, 
+        )
+        graph_int = self._make_graph(
+            [("x", TensorProto.INT64, (30, 4, 5))],
+            [cat],
+            [],
+        )
+        self._assert_inferred(
+            graph_int, [make_tensor_value_info("y", TensorProto.STRING, (30, 4, 5))],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 1),
+                make_opsetid(ONNX_DOMAIN, 11),
+            ],
+        )
+        graph_str = self._make_graph(
+            [("x", TensorProto.STRING, (30, 5, 4))],
+            [cat],
+            [],
+        )
+        self._assert_inferred(
+            graph_str, [make_tensor_value_info("y", TensorProto.INT64, (30, 5, 4))],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 1),
+                make_opsetid(ONNX_DOMAIN, 11),
+            ],
+        )
+
+
 
 if __name__ == "__main__":
     unittest.main()

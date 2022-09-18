@@ -141,12 +141,16 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (nullptr == ctx.getInputType(0)) 
+            return;
           auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           if (TensorProto::STRING == input_elem_type) {
-            output_elem_type->set_elem_type(TensorProto::INT64);
+            updateOutputElemType(ctx, 0, TensorProto::INT64);
           } else if (TensorProto::INT64 == input_elem_type) {
-            output_elem_type->set_elem_type(TensorProto::STRING);
+            updateOutputElemType(ctx, 0, TensorProto::STRING);
+          }
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
           }
         }));
 
