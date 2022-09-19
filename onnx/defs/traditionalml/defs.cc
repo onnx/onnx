@@ -141,7 +141,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (nullptr == ctx.getInputType(0)) 
+          if (nullptr == ctx.getInputType(0))
             return;
           auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
           if (TensorProto::STRING == input_elem_type) {
@@ -954,6 +954,24 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             fail_shape_inference(
                 "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
           }
+
+          // First axis for output - N (examples)
+          auto fst_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+          if (nullptr != ctx.getInputType(0)) {
+            auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+            if (input_shape.dim_size() != 2) {
+              fail_shape_inference("Input of TreeEnsembleRegressor is expected to be a matrix.");
+            }
+            *fst_dim = input_shape.dim(0);
+          }
+
+          // Second axis for output
+          auto snd_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+          if (nullptr != ctx.getAttribute("n_targets")) {
+            snd_dim->set_dim_value(ctx.getAttribute("n_targets")->i());
+          }
+
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::FLOAT);
         }));
 
 static const char* ZipMap_ver1_doc = R"DOC(

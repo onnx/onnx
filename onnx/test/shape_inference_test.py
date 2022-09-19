@@ -8427,10 +8427,10 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_category_mapper(self) -> None:
         cat = make_node(
-            "CategoryMapper", 
+            "CategoryMapper",
             ["x"],
-            ["y"], 
-            domain=ONNX_ML_DOMAIN, 
+            ["y"],
+            domain=ONNX_ML_DOMAIN,
         )
         graph_int = self._make_graph(
             [("x", TensorProto.INT64, (30, 4, 5))],
@@ -8457,6 +8457,26 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_tree_ensemble_regressor(self) -> None:
+        tree = make_node(
+            "TreeEnsembleRegressor",
+            ["x"],
+            ["y"],
+            domain=ONNX_ML_DOMAIN,
+            n_targets=5,
+        )
+        graph = self._make_graph(
+            [("x", TensorProto.DOUBLE, (30, 3))],
+            [tree],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (30, 5))],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 3),
+                make_opsetid(ONNX_DOMAIN, 11),
+            ],
+        )
 
 
 if __name__ == "__main__":
