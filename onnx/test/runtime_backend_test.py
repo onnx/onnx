@@ -582,7 +582,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_conv_with_autopad_same" == name,
+            lambda name: "test_basic_convinteger" == name,
             verbose=0,
             decimal={
                 "test_blackmanwindow_expanded": 4,

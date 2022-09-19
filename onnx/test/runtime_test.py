@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C3001,R0904,R0914,W0221
+# pylint: disable=C3001,C0415,R0904,R0914,W0221
 
 import unittest
 from contextlib import redirect_stdout
@@ -888,6 +888,12 @@ class TestRuntimeInference(unittest.TestCase):
         self.assertEqual(inst.alpha, 0.5)
 
     def test_conv(self):
+        try:
+            import onnxruntime as ort
+        except ImportError:
+            # onnxruntime is not available
+            return
+
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None, None, None])
@@ -902,8 +908,6 @@ class TestRuntimeInference(unittest.TestCase):
         )
         graph = make_graph([node], "g", [X, W, B], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-
-        import onnxruntime as ort
 
         sess1 = ort.InferenceSession(onnx_model.SerializeToString())
         sess2 = rt.Inference(onnx_model)
@@ -920,18 +924,7 @@ class TestRuntimeInference(unittest.TestCase):
 
                 expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
                 got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
-                try:
-                    assert_almost_equal(expected, got)
-                except AssertionError as e:
-                    print(i, j)
-                    print(X)
-                    print(W)
-                    print(B)
-                    print("*", expected.shape, got.shape)
-                    print(expected)
-                    print("*")
-                    print(got)
-                    raise e
+                assert_almost_equal(expected, got)
 
 
 if __name__ == "__main__":

@@ -41,6 +41,7 @@ from .op_concat_from_sequence import ConcatFromSequence
 from .op_constant import Constant, Constant_1, Constant_9, Constant_11, Constant_12
 from .op_constant_of_shape import ConstantOfShape
 from .op_conv import Conv
+from .op_conv_integer import ConvInteger
 
 # from .op_conv_transpose import ConvTranspose
 from .op_cos import Cos
