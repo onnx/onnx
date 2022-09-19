@@ -887,6 +887,47 @@ class TestRuntimeInference(unittest.TestCase):
         inst = Adam.create(alpha=0.5)
         self.assertEqual(inst.alpha, 0.5)
 
+    def test_conv(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None, None, None])
+        W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
+        node = make_node("Conv", ["X", "W", "B"], ["Y"], pads=[1, 1, 1, 1], dilations=[2, 3])
+        graph = make_graph([node], "g", [X, W, B], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+
+        import onnxruntime as ort
+
+        sess1 = ort.InferenceSession(onnx_model.SerializeToString())
+        sess2 = rt.Inference(onnx_model)
+
+        for i in range(8):
+            for j in range(14):
+                X = np.zeros((1, 1, 8, 14), dtype=np.float32)
+                if i == 0 and j == 0:
+                    X[0, 0, 4, 8] = 1.
+                else:
+                    X[0, 0, i, j] = 1.
+                W = np.zeros((1, 1, 3, 3), dtype=np.float32)
+                W[0, 0, :, :] = 2 ** np.arange(9).reshape((3, 3))
+
+                B = np.array([[[[0]]]], dtype=np.float32)
+
+                expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
+                got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
+                try:
+                    assert_almost_equal(expected, got)
+                except AssertionError as e:
+                    print(i,j)
+                    print(X)
+                    print(W)
+                    print(B)
+                    print("*", expected.shape, got.shape)
+                    print(expected)
+                    print("*")
+                    print(got)
+                    raise e
+
 
 if __name__ == "__main__":
     # TestRuntimeInference().test_custom_node()

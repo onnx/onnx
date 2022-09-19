@@ -498,7 +498,7 @@ class TestOnnxBackEnd(unittest.TestCase):
             raise AssertionError(
                 f"Mismatch in test {te.name!r}\n{te.onnx_model}."
             ) from e
-        if success > 30 and coverage < 0.8:
+        if success > 30 and coverage < 0.9:
             raise AssertionError(
                 f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
                 f"the runtime among has decreased. New operators were added with no "
@@ -582,8 +582,8 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_softplus_expanded" == name,
-            verbose=0,
+            lambda name: "test_qlinearmatmul_2D" == name,
+            verbose=10,
             decimal={
                 "test_blackmanwindow_expanded": 4,
                 "test_blackmanwindow_symmetric": 4,
