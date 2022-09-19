@@ -56,12 +56,12 @@ jobs:
     # Install onnx so that it is found by the linters
     - name: Install ONNX
       run: |
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
+        apt-get install libprotobuf-dev protobuf-compiler
         python -m pip install --quiet -r requirements-release.txt
         git submodule update --init --recursive
-        export ONNX_BUILD_TESTS=0
         export ONNX_ML=1
-        python setup.py install
+        export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+        pip install -e .
 
 
     # ℹ️ Command-line programs to run using the OS shell.
