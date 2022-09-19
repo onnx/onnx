@@ -53,10 +53,16 @@ jobs:
         # queries: security-extended,security-and-quality
 
         
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+    # Install onnx so that it is found by the linters
+    - name: Install ONNX
+      run: |
+        source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
+        python -m pip install --quiet -r requirements-release.txt
+        git submodule update --init --recursive
+        export ONNX_BUILD_TESTS=0
+        export ONNX_ML=1
+        python setup.py install
+
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
