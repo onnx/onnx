@@ -34,6 +34,7 @@ from .op_cast import Cast
 from .op_cast_like import CastLike
 from .op_ceil import Ceil
 from .op_celu import Celu
+from .op_center_crop_pad import CenterCropPad
 from .op_clip import Clip, Clip_6, Clip_11
 from .op_compress import Compress
 from .op_concat import Concat
