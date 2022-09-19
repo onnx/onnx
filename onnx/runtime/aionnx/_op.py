@@ -184,7 +184,7 @@ class OpRunArg(OpRunUnary):  # pylint: disable=W0223
         if not hasattr(self, "axis"):
             raise AttributeError("Attribute 'axis' is missing.")
 
-    def run(self, x, linked_attributes=None):  # type: ignore # pylint: disable=W0221
+    def run(self, x, linked_attributes=None):  # type: ignore # pylint: disable=W0613,W0221
         """
         Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.

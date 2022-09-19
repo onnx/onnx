@@ -4,7 +4,7 @@
 import numpy  # type: ignore
 
 from ...defs import onnx_opset_version
-from ..op_run import OpRun, RefAttrName
+from ..op_run import OpRun
 
 
 def _check_dtype(val):  # type: ignore

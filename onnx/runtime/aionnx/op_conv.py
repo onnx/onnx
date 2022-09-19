@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0914,R1702,W0221
+# pylint: disable=R0912,R0913,R0914,R1702,W0221
 
 import numpy as np  # type: ignore
 
@@ -9,7 +9,8 @@ from ..op_run import OpRun
 def _conv_implementation(  # type: ignore
     X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
 ):
-
+    if group != 1:
+        raise RuntimeError(f"group={group} != 1 is not implemented yet.")
     if dilations is None:
         dilations = [1 for s in X.shape[2:]]
     if kernel_shape is None:
@@ -42,8 +43,6 @@ def _conv_implementation(  # type: ignore
         # M, C_group, kH, kW = W.shape
         kh, kw = kernel_shape
         sth, stw = strides
-
-        dh, dw = dilations
 
         if auto_pad in {"SAME_LOWER", "SAME_UPPER", "VALID"}:
             head = []
