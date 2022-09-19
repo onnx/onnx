@@ -892,7 +892,14 @@ class TestRuntimeInference(unittest.TestCase):
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None, None, None])
         W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
-        node = make_node("Conv", ["X", "W", "B"], ["Y"], pads=[1, 1, 1, 1], dilations=[2, 3])
+        node = make_node(
+            "Conv",
+            ["X", "W", "B"],
+            ["Y"],
+            pads=[1, 1, 1, 1],
+            dilations=[1, 1],
+            strides=[2, 2],
+        )
         graph = make_graph([node], "g", [X, W, B], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
 
@@ -901,15 +908,13 @@ class TestRuntimeInference(unittest.TestCase):
         sess1 = ort.InferenceSession(onnx_model.SerializeToString())
         sess2 = rt.Inference(onnx_model)
 
-        for i in range(8):
-            for j in range(14):
-                X = np.zeros((1, 1, 8, 14), dtype=np.float32)
-                if i == 0 and j == 0:
-                    X[0, 0, 4, 8] = 1.
-                else:
-                    X[0, 0, i, j] = 1.
+        sH, sW = 5, 6
+        for i in range(sH):
+            for j in range(sW):
+                X = np.zeros((1, 1, sH, sW), dtype=np.float32)
+                X[0, 0, i, j] = 1.0
                 W = np.zeros((1, 1, 3, 3), dtype=np.float32)
-                W[0, 0, :, :] = 2 ** np.arange(9).reshape((3, 3))
+                W[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 256)
 
                 B = np.array([[[[0]]]], dtype=np.float32)
 
@@ -918,7 +923,7 @@ class TestRuntimeInference(unittest.TestCase):
                 try:
                     assert_almost_equal(expected, got)
                 except AssertionError as e:
-                    print(i,j)
+                    print(i, j)
                     print(X)
                     print(W)
                     print(B)
