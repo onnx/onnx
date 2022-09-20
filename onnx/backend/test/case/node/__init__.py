@@ -225,7 +225,7 @@ def expect(
     **kwargs: Any,
 ) -> None:
     # skip if the node_op's op_type is not same as the given one
-    if _TargetOpType and node.op_type != _TargetOpType:
+    if _TargetOpType and node_op.op_type != _TargetOpType:
         return
 
     # in case node_op is modified
