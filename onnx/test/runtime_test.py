@@ -921,12 +921,144 @@ class TestRuntimeInference(unittest.TestCase):
                 W[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 256)
 
                 B = np.array([[[[0]]]], dtype=np.float32)
-
                 expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
                 got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
                 assert_almost_equal(expected, got)
 
+    def test_qlinearconv(self):
+        try:
+            import onnxruntime as ort
+        except ImportError:
+            # onnxruntime is not available
+            return
+
+        x = make_tensor_value_info("x", TensorProto.UINT8, [None, None, None, None])
+        w = make_tensor_value_info("w", TensorProto.UINT8, [None, None, None, None])
+        y = make_tensor_value_info("y", TensorProto.UINT8, [None, None, None, None])
+        x_scale = make_tensor_value_info("x_scale", TensorProto.FLOAT, [None])
+        w_scale = make_tensor_value_info("w_scale", TensorProto.FLOAT, [None])
+        y_scale = make_tensor_value_info("y_scale", TensorProto.FLOAT, [None])
+        x_zero_point = make_tensor_value_info("x_zero_point", TensorProto.UINT8, [None])
+        w_zero_point = make_tensor_value_info("w_zero_point", TensorProto.UINT8, [None])
+        y_zero_point = make_tensor_value_info("y_zero_point", TensorProto.UINT8, [None])
+
+        node = make_node(
+            "QLinearConv",
+            [
+                "x",
+                "x_scale",
+                "x_zero_point",
+                "w",
+                "w_scale",
+                "w_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ],
+            ["y"],
+        )
+        graph = make_graph(
+            [node],
+            "g",
+            [x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point],
+            [y],
+        )
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+
+        sess1 = ort.InferenceSession(onnx_model.SerializeToString())
+        sess2 = rt.Inference(onnx_model)
+
+        sH, sW = 3, 3
+        for i in range(sH):
+            for j in range(sW):
+                x = np.zeros((1, 1, sH, sW), dtype=np.uint8)
+                x[0, 0, i, j] = 1.0
+                with self.subTest(w="1x1", i=i, j=j):
+                    w = np.zeros((1, 1, 1, 1), dtype=np.uint8)
+                    w[0, 0, :, :] = 1
+                    feeds = {
+                        "x": x,
+                        "x_scale": np.array([1], dtype=np.float32),
+                        "x_zero_point": np.array([0], dtype=np.uint8),
+                        "w": w,
+                        "w_scale": np.array([1], dtype=np.float32),
+                        "w_zero_point": np.array([0], dtype=np.uint8),
+                        "y_scale": np.array([1], dtype=np.float32),
+                        "y_zero_point": np.array([0], np.uint8),
+                    }
+                    expected = sess1.run(None, feeds)[0]
+                    got = sess2.run(None, feeds)[0]
+                    try:
+                        assert_almost_equal(expected, got)
+                    except AssertionError as e:
+                        raise e
+                with self.subTest(w="3x3", i=i, j=j):
+                    w = np.zeros((1, 1, 3, 3), dtype=np.uint8)
+                    w[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 128)
+                    feeds = {
+                        "x": x,
+                        "x_scale": np.array([1], dtype=np.float32),
+                        "x_zero_point": np.array([0], dtype=np.uint8),
+                        "w": w,
+                        "w_scale": np.array([1], dtype=np.float32),
+                        "w_zero_point": np.array([0], dtype=np.uint8),
+                        "y_scale": np.array([1], dtype=np.float32),
+                        "y_zero_point": np.array([0], np.uint8),
+                    }
+                    expected = sess1.run(None, feeds)[0]
+                    got = sess2.run(None, feeds)[0]
+                    assert_almost_equal(expected, got)
+                with self.subTest(w="1x1", i=i, j=j):
+                    w = np.zeros((1, 1, 1, 1), dtype=np.uint8)
+                    w[0, 0, :, :] = 0
+                    feeds = {
+                        "x": x,
+                        "x_scale": np.array([0.00369204697], dtype=np.float32),
+                        "x_zero_point": np.array([132], dtype=np.uint8),
+                        "w": w,
+                        "w_scale": np.array([100.001727945750], dtype=np.float32),
+                        "w_zero_point": np.array([255], dtype=np.uint8),
+                        "y_scale": np.array([0.00162681262], dtype=np.float32),
+                        "y_zero_point": np.array([132], np.uint8),
+                    }
+                    expected = sess1.run(None, feeds)[0]
+                    got = sess2.run(None, feeds)[0]
+                    assert_almost_equal(expected, got)
+
+        x = np.array(
+            [
+                [255, 174, 162, 25, 203, 168, 58],
+                [15, 59, 237, 95, 129, 0, 64],
+                [56, 242, 153, 221, 168, 12, 166],
+                [232, 178, 186, 195, 237, 162, 237],
+                [188, 39, 124, 77, 80, 102, 43],
+                [127, 230, 21, 83, 41, 40, 134],
+                [255, 154, 92, 141, 42, 148, 247],
+            ],
+            dtype=np.uint8,
+        ).reshape((1, 1, 7, 7))
+        x_scale = np.array([0.00369204697], dtype=np.float32)
+        x_zero_point = np.array([132], dtype=np.uint8)
+        w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
+        w_scale = np.array([0.00172794575], dtype=np.float32)
+        w_zero_point = np.array([255], dtype=np.uint8)
+        y_scale = np.array([0.00162681262], dtype=np.float32)
+        y_zero_point = np.array([123], dtype=np.uint8)
+
+        feeds = {
+            "x": x,
+            "x_scale": x_scale,
+            "x_zero_point": x_zero_point,
+            "w": w,
+            "w_scale": w_scale,
+            "w_zero_point": w_zero_point,
+            "y_scale": y_scale,
+            "y_zero_point": y_zero_point,
+        }
+        expected = sess1.run(None, feeds)[0]
+        got = sess2.run(None, feeds)[0]
+        assert_almost_equal(expected, got)
+
 
 if __name__ == "__main__":
-    # TestRuntimeInference().test_custom_node()
+    TestRuntimeInference().test_conv()
     unittest.main(verbosity=2)
