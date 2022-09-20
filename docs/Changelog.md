@@ -21234,33 +21234,33 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>float</tt> : float</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The float attribute.</dd>
 <dt><tt>floats</tt> : list of floats</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The floats attribute.</dd>
 <dt><tt>graph</tt> : graph</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The graph attribute.</dd>
 <dt><tt>graphs</tt> : list of graphs</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The graphs attribute.</dd>
 <dt><tt>int</tt> : int</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The int attribute.</dd>
 <dt><tt>ints</tt> : list of ints</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The ints attribute.</dd>
 <dt><tt>sparse_tensor</tt> : sparse_tensor</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The sparse_tensor attribute.</dd>
 <dt><tt>sparse_tensors</tt> : list of sparse_tensors</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The sparse_tensors attribute.</dd>
 <dt><tt>string</tt> : string</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The string attribute.</dd>
 <dt><tt>strings</tt> : list of strings</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The strings attribute.</dd>
 <dt><tt>tensor</tt> : tensor</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The tensor attribute.</dd>
 <dt><tt>tensors</tt> : list of tensors</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The tensors attribute.</dd>
 <dt><tt>type_proto</tt> : type_proto</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The type_proto attribute.</dd>
 <dt><tt>type_protos</tt> : list of type_protos</dt>
-<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dd>The type_protos attribute.</dd>
 </dl>
 
 #### Inputs

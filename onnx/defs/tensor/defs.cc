@@ -3731,7 +3731,7 @@ bool BuildContextDependentFunctionBodyAttributeHasValue(
   bool has_int = (nullptr != int_attr_proto) && int_attr_proto->has_i();
 
   // ToTensor does not work with boolean element type. Need to create a Constant int
-  // and then Cast to tensor of boolean. 
+  // and then Cast to tensor of boolean.
   if (has_ints) {
     builder.Const("output0", 1);
   } else if (has_int) {
@@ -3739,7 +3739,7 @@ bool BuildContextDependentFunctionBodyAttributeHasValue(
   } else {
     builder.Const("output0", 0);
   }
-    
+
   builder.Add("output = Cast (output0)", "to", (int64_t)(TensorProto_DataType_BOOL));
   schema.BuildFunction(functionProto);
   return true;
@@ -3750,81 +3750,21 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema()
         .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
-        .Attr(
-            "float",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::FLOAT,
-            false)
-        .Attr(
-            "int",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::INT,
-            false)
-        .Attr(
-            "string",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::STRING,
-            false)
-        .Attr(
-            "tensor",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::TENSOR,
-            false)
-        .Attr(
-            "graph",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::GRAPH,
-            false)
-        .Attr(
-            "sparse_tensor",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::SPARSE_TENSOR,
-            false)
-        .Attr(
-            "type_proto",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::TYPE_PROTO,
-            false)
-        .Attr(
-            "floats",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::FLOATS,
-            false)
-        .Attr(
-            "ints",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "strings",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::STRINGS,
-            false)
-        .Attr(
-            "tensors",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::TENSORS,
-            false)
-        .Attr(
-            "graphs",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::GRAPHS,
-            false)
-        .Attr(
-            "sparse_tensors",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::SPARSE_TENSORS,
-            false)
-        .Attr(
-            "type_protos",
-            "The value for the elements of the output tensor in sparse format.",
-            AttributeProto::TYPE_PROTOS,
-            false)
-        .Output(
-            0,
-            "output",
-            "A scalar boolean tensor. If true, it indicates that an attribute is provided.",
-            "B")
+        .Attr("float", "The float attribute.", AttributeProto::FLOAT, false)
+        .Attr("int", "The int attribute.", AttributeProto::INT, false)
+        .Attr("string", "The string attribute.", AttributeProto::STRING, false)
+        .Attr("tensor", "The tensor attribute.", AttributeProto::TENSOR, false)
+        .Attr("graph", "The graph attribute.", AttributeProto::GRAPH, false)
+        .Attr("sparse_tensor", "The sparse_tensor attribute.", AttributeProto::SPARSE_TENSOR, false)
+        .Attr("type_proto", "The type_proto attribute.", AttributeProto::TYPE_PROTO, false)
+        .Attr("floats", "The floats attribute.", AttributeProto::FLOATS, false)
+        .Attr("ints", "The ints attribute.", AttributeProto::INTS, false)
+        .Attr("strings", "The strings attribute.", AttributeProto::STRINGS, false)
+        .Attr("tensors", "The tensors attribute.", AttributeProto::TENSORS, false)
+        .Attr("graphs", "The graphs attribute.", AttributeProto::GRAPHS, false)
+        .Attr("sparse_tensors", "The sparse_tensors attribute.", AttributeProto::SPARSE_TENSORS, false)
+        .Attr("type_protos", "The type_protos attribute.", AttributeProto::TYPE_PROTOS, false)
+        .Output(0, "output", "A scalar boolean tensor. If true, it indicates that an attribute is provided.", "B")
         .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyAttributeHasValue)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
