@@ -7,6 +7,8 @@ import importlib
 import inspect
 import re
 import keyword
+from difflib import HtmlDiff
+import numpy as np
 import onnx
 import onnx.defs
 from onnx.backend.test.case.base import _Exporter
@@ -113,6 +115,22 @@ def _get_doc_template():
 _template_operator = _get_doc_template()
 __get_all_schemas_with_history = None
 
+_attribute_conversion_functions = {
+    onnx.AttributeProto.FLOAT: lambda att: np.float32(att.f),
+    onnx.AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
+    # AttributeProto.GRAPH(5)
+    # AttributeProto.GRAPHS(10)
+    onnx.AttributeProto.INT: lambda att: int(att.i),
+    onnx.AttributeProto.INTS: lambda att: [int(i) for i in att.ints],
+    # AttributeProto.SPARSE_TENSOR(11)
+    # AttributeProto.SPARSE_TENSORS(12)
+    onnx.AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
+    onnx.AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
+    onnx.AttributeProto.TENSOR: lambda att: to_array(att.t),
+    # AttributeProto.TENSORS(9)
+    # onnx.AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
+    # AttributeProto.TYPE_PROTOS(14)
+}
 
 def _populate__get_all_schemas_with_history():
     res = {}
@@ -125,34 +143,6 @@ def _populate__get_all_schemas_with_history():
         if name not in res[domain]:
             res[domain][name] = {}
         res[domain][name][version] = schema
-
-    try:
-        import onnxruntime.capi.onnxruntime_pybind11_state as rtpy
-    except ImportError:  # pragma: no cover
-        rtpy = None
-
-    if rtpy is not None:
-        # If onnxruntime is available, it is being populated with these operators as well.
-        from .xop import _CustomSchema
-        try:
-            get_schemas = rtpy.get_all_operator_schema
-        except AttributeError:
-            # onnxruntime must be compiled with flag --gen_doc.
-            # a local copy is retrieved.
-            from .xop import _get_all_operator_schema
-            get_schemas = _get_all_operator_schema
-        for op in get_schemas():
-            sch = _CustomSchema(op)
-            domain, name = sch.domain, sch.name
-            if domain in res and name in res[domain]:
-                # already handled
-                continue
-            version = sch.since_version
-            if domain not in res:
-                res[domain] = {}
-            if name not in res[domain]:
-                res[domain][name] = {}
-            res[domain][name][version] = sch
 
     return res
 
@@ -236,7 +226,6 @@ def get_rst_doc(op_name=None, domain=None, version='last', clean=True,
     The function relies on module :epkg:`jinja2` or replaces it
     with a simple rendering if not present.
     """
-    from ..onnx_tools.onnx2py_helper import _var_as_dict
     schemas = get_operator_schemas(op_name, domain=domain, version=version)
 
     # from onnx.backend.sample.ops import collect_sample_implementations
@@ -336,16 +325,11 @@ def get_rst_doc(op_name=None, domain=None, version='last', clean=True,
         return doc_url
 
     def clean_default_value(value):
-        dvar = _var_as_dict(value)
-        if 'value' in dvar:
-            v = dvar['value']
-            if isinstance(v, bytes):
-                return f"Default value is ``'{v.decode('ascii')}'``."
-            return f"Default value is ``{v}``."
-        else:
-            res = str(value).replace('\n', ' ').strip()
-            if len(res) > 0:
-                return f"Default value is ``{res}``."
+        if isinstance(value, onnx.AttributeProto) and hasattr(value, "default_value"):
+            att = value.default_value
+            if att.type in _attribute_conversion_functions:
+                sval = _attribute_conversion_functions[att.type](att)
+                return f"Default value is ``{sval}``."
         return ""
 
     def text_wrap(text, indent):
@@ -400,9 +384,6 @@ def _insert_diff(docs, split='.. tag-diff-insert.'):
     if len(spl) <= 1:
         return docs
 
-    from pyquickhelper.texthelper.edit_text_diff import (
-        edit_distance_text, diff2html)
-
     pieces = [spl[0]]
     for i in range(1, len(spl)):
         spl1 = spl[i - 1].strip('\n ')
@@ -415,9 +396,8 @@ def _insert_diff(docs, split='.. tag-diff-insert.'):
             pieces.append(spl[i])
             continue
 
-        _, aligned, final = edit_distance_text(  # pylint: disable=W0632
-            spl2, spl1, threshold=0.5)
-        ht = diff2html(spl2, spl1, aligned, final, two_columns=True)
+        diff_html = HtmlDiff(tabsize=4)
+        ht = diff_html.make_table(spl2.split("\n"), spl1.split("\n"))
         ht = ht.replace(">``<", "><")
         ht = '    ' + '\n    '.join(ht.split('\n'))
         pieces.extend(['', '**Differences**', '', '.. raw:: html',

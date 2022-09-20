@@ -6,14 +6,21 @@
 ONNX static content generation
 =======================================
 
-This is a developer usage guide to the ONNX Python API and Operator Schemas. It contains the following information for the latest release:
+This is a developer usage guide to the ONNX Python API and Operator Schemas.
+It contains the following information for the latest release:
 
-** API Overview **
-For all modules involved in the different tools part of the API, this usage guide pulls the functions and defines them. All information is auto-generated and will update every time the docs are re-built.
+**API Overview**
 
-** Operators and Op Schemas **
-Lists out all the ONNX operators. For each operator, lists out the usage guide, parameters, examples, and line-by-line version history.
-This section also includes tables detailing each operator with its versions, as done in Operators.md.
+For all modules involved in the different tools part of the API,
+this usage guide pulls the functions and defines them.
+All information is auto-generated and will update every time the docs are re-built.
+
+**Operators and Op Schemas**
+
+Lists out all the ONNX operators. For each operator, lists out the usage guide,
+parameters, examples, and line-by-line version history.
+This section also includes tables detailing each operator
+with its versions, as done in Operators.md.
 
 
 .. toctree::
@@ -23,10 +30,9 @@ This section also includes tables detailing each operator with its versions, as 
    
    onnx-api/modules/*
 
-
 .. toctree::
 	:glob:
 	:maxdepth: 1
 	:caption: Operators + OpSchemas
 
-	include
+	onnx_doc_folder/index

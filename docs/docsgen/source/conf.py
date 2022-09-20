@@ -1,7 +1,6 @@
 import os
 import sys
 import warnings
-import skl2onnx
 import onnx
 import sphinx_bootstrap_theme
 
@@ -32,7 +31,6 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.coverage',
     'sphinx.ext.doctest',
-    'sphinxcontrib.blockdiag',
     'onnx_sphinx',
 ]
 
