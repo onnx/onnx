@@ -3720,4 +3720,65 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
+bool BuildContextDependentFunctionBodyAttributeHasValue(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  FunctionBuilder builder(functionProto);
+  auto ints_attr_proto = ctx.getAttribute("ints");
+  bool has_ints = (nullptr != ints_attr_proto) && ints_attr_proto->ints_size() > 0;
+  auto int_attr_proto = ctx.getAttribute("int");
+  bool has_int = (nullptr != int_attr_proto) && int_attr_proto->has_i();
+
+  // ToTensor does not work with boolean element type. Need to create a Constant int
+  // and then Cast to tensor of boolean.
+  if (has_ints) {
+    builder.Const("output0", 1);
+  } else if (has_int) {
+    builder.Const("output0", 1);
+  } else {
+    builder.Const("output0", 0);
+  }
+
+  builder.Add("output = Cast (output0)", "to", (int64_t)(TensorProto_DataType_BOOL));
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    AttributeHasValue,
+    18,
+    OpSchema()
+        .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
+        .Attr("float", "The float attribute.", AttributeProto::FLOAT, false)
+        .Attr("int", "The int attribute.", AttributeProto::INT, false)
+        .Attr("string", "The string attribute.", AttributeProto::STRING, false)
+        .Attr("tensor", "The tensor attribute.", AttributeProto::TENSOR, false)
+        .Attr("graph", "The graph attribute.", AttributeProto::GRAPH, false)
+        .Attr("sparse_tensor", "The sparse_tensor attribute.", AttributeProto::SPARSE_TENSOR, false)
+        .Attr("type_proto", "The type_proto attribute.", AttributeProto::TYPE_PROTO, false)
+        .Attr("floats", "The floats attribute.", AttributeProto::FLOATS, false)
+        .Attr("ints", "The ints attribute.", AttributeProto::INTS, false)
+        .Attr("strings", "The strings attribute.", AttributeProto::STRINGS, false)
+        .Attr("tensors", "The tensors attribute.", AttributeProto::TENSORS, false)
+        .Attr("graphs", "The graphs attribute.", AttributeProto::GRAPHS, false)
+        .Attr("sparse_tensors", "The sparse_tensors attribute.", AttributeProto::SPARSE_TENSORS, false)
+        .Attr("type_protos", "The type_protos attribute.", AttributeProto::TYPE_PROTOS, false)
+        .Output(0, "output", "A scalar boolean tensor. If true, it indicates that an attribute is provided.", "B")
+        .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyAttributeHasValue)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          const size_t numInputs = ctx.getNumInputs();
+          if (numInputs != 0) {
+            fail_type_inference("AttributeHasValue does not expected any input.");
+          }
+          const size_t numOutputs = ctx.getNumOutputs();
+          if (numOutputs != 1) {
+            fail_type_inference("AttributeHasValue is expected to have 1 output.");
+          }
+
+          auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+          output_tensor_type->set_elem_type(TensorProto::BOOL);
+          output_tensor_type->mutable_shape()->Clear();
+        }));
 } // namespace ONNX_NAMESPACE
