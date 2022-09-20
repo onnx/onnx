@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath('exts'))
 
 project = 'ONNX'
 copyright = '2022'
-author = 'Yesha Thakkar'
+author = 'ONNX'
 version = "0.1"
 release = version
 
@@ -33,7 +33,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.doctest',
     'sphinxcontrib.blockdiag',
-    'mlprodict.npy.xop_sphinx',
+    'onnx_sphinx',
 ]
 
 templates_path = ['_templates']
@@ -49,7 +49,7 @@ coverage_show_missing_items = True
 
 html_theme = "bootstrap"
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-html_logo = "_static/onnx_logo.png"
+html_logo = "../../_static/ONNX_logo_main.png"
 
 # Navbar
 html_theme_options = {
