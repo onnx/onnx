@@ -30,13 +30,3 @@ This section also includes tables detailing each operator with its versions, as 
 	:caption: Operators + OpSchemas
 
 	include
-
-.. toctree::
-	:glob:
-	:maxdepth: 1
-	:caption: Version History
-
-.. toctree::
-	:glob:
-	:maxdepth: 1
-	:caption: Notes

@@ -3,16 +3,10 @@
 
 .. automodule:: onnx.numpy_helper
 
-   
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
-   
+
       bfloat16_to_float32
       combine_pairs_to_complex
       convert_endian
@@ -24,16 +18,3 @@
       to_dict
       to_list
       to_optional
-   
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

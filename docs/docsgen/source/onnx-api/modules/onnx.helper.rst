@@ -3,16 +3,10 @@
 
 .. automodule:: onnx.helper
 
-   
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
-   
+
       create_op_set_id_version_map
       find_min_ir_version_for
       float32_to_bfloat16
@@ -50,16 +44,3 @@
       set_model_props
       split_complex_to_pairs
       strip_doc_string
-   
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-
