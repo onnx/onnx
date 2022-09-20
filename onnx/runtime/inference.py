@@ -283,6 +283,11 @@ class Inference:
 
             return load_op_pt(node.domain, node.op_type, version)
 
+        if node.domain == "experimental":
+            from .experimental import load_op as load_op_exp
+
+            return load_op_exp(node.domain, node.op_type, version)
+
         # It has to be a function.
         if key in self.functions_:
             from .aionnx import load_op

@@ -1058,7 +1058,43 @@ class TestRuntimeInference(unittest.TestCase):
         got = sess2.run(None, feeds)[0]
         assert_almost_equal(expected, got)
 
+    def test_im2col(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        Y1 = make_tensor_value_info("Y1", TensorProto.FLOAT, [None, None, None, None])
+        Y2 = make_tensor_value_info("Y2", TensorProto.FLOAT, [None, None, None, None])
+        W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
+        node = make_node("Conv", ["X", "W"], ["Y1"], pads=[1, 1, 1, 1])
+        node_shape = make_node("Shape", ["W"], ["shape"])
+        node_im = make_node("Im2Col", ["X", "shape"], ["xim"], domain="experimental")
+        node_flat = make_node("Flatten", ["W"], ["wflat"])
+        node_axes = make_node(
+            "Constant", [], ["axes"], value=from_array(np.array([0], dtype=np.int64))
+        )
+        node_qu = make_node("Squeeze", ["wflat", "axes"], ["wsqu"])
+        node_gem = make_node("MatMul", ["xim", "wsqu"], ["Y2"])
+        graph = make_graph(
+            [node, node_shape, node_im, node_axes, node_flat, node_qu, node_gem],
+            "g",
+            [X, W],
+            [Y1, Y2],
+        )
+        onnx_model = make_model(
+            graph, opset_imports=[make_opsetid("", 16), make_opsetid("experimental", 1)]
+        )
+        sess = rt.Inference(onnx_model)
+
+        sH, sW = 5, 6
+        for i in range(sH):
+            for j in range(sW):
+                X = np.zeros((1, 1, sH, sW), dtype=np.float32)
+                X[0, 0, i, j] = 1.0
+                W = np.zeros((1, 1, 3, 3), dtype=np.float32)
+                W[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 256)
+
+                got = sess.run(None, {"X": X, "W": W})
+                assert_almost_equal(got[0], got[1])
+
 
 if __name__ == "__main__":
-    TestRuntimeInference().test_conv()
+    TestRuntimeInference().test_im2col()
     unittest.main(verbosity=2)

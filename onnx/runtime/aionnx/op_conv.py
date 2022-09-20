@@ -20,7 +20,7 @@ def _conv_implementation(  # type: ignore
     if strides is None:
         strides = [1 for s in X.shape[2:]]
 
-    if min(dilations) != max(dilations):
+    if dilations[0] != 1 or min(dilations) != max(dilations):
         # Let's compute the dilated kernel.
         nd = len(dilations)
         new_kernel_shape = []
