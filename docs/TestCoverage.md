@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 165/180 (91.67%, 5 generators excluded) common operators.
+Node tests have covered 166/181 (91.71%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1035,6 +1035,52 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh_example")
 x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
 y = np.arctanh(x)
 expect(node, inputs=[x], outputs=[y], name="test_atanh")
+```
+
+</details>
+
+
+### AttributeHasValue
+There are 1 test cases, listed as following:
+<details>
+<summary>attributehasvalue</summary>
+
+```python
+def test_one_attribute(name, **kwargs):
+    node = onnx.helper.make_node(
+        "AttributeHasValue",
+        inputs=[],
+        outputs=["output"],
+    )
+
+    output = np.array(False)
+    expect(
+        node,
+        inputs=[],
+        outputs=[output],
+        name="test_attribute_has_value_{name}_false".format(name=name),
+    )
+
+    node = onnx.helper.make_node(
+        "AttributeHasValue",
+        inputs=[],
+        outputs=["output"],
+        **kwargs,
+    )
+
+    output = np.array(True)
+    expect(
+        node,
+        inputs=[],
+        outputs=[output],
+        name="test_attribute_has_value_{name}_true".format(name=name),
+    )
+
+ints = [0, 1]
+test_one_attribute("ints", ints=ints)
+
+int = 1
+test_one_attribute("int", int=int)
 ```
 
 </details>

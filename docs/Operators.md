@@ -162,6 +162,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|
+|<a href="#AttributeHasValue">AttributeHasValue</a>|<a href="Changelog.md#AttributeHasValue-18">18</a>|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|
@@ -1457,6 +1458,111 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh_example")
 x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
 y = np.arctanh(x)
 expect(node, inputs=[x], outputs=[y], name="test_atanh")
+```
+
+</details>
+
+
+### <a name="AttributeHasValue"></a><a name="attributehasvalue">**AttributeHasValue**</a>
+
+  Returns which elements of the input are NaN.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>float</tt> : float</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>floats</tt> : list of floats</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>graph</tt> : graph</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>graphs</tt> : list of graphs</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>int</tt> : int</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>ints</tt> : list of ints</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>sparse_tensor</tt> : sparse_tensor</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>sparse_tensors</tt> : list of sparse_tensors</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>string</tt> : string</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>strings</tt> : list of strings</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>tensor</tt> : tensor</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>tensors</tt> : list of tensors</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>type_proto</tt> : type_proto</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>type_protos</tt> : list of type_protos</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : B</dt>
+<dd>A scalar boolean tensor. If true, it indicates that an attribute is provided.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrain output to a boolean tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>attributehasvalue</summary>
+
+```python
+def test_one_attribute(name, **kwargs):
+    node = onnx.helper.make_node(
+        "AttributeHasValue",
+        inputs=[],
+        outputs=["output"],
+    )
+
+    output = np.array(False)
+    expect(
+        node,
+        inputs=[],
+        outputs=[output],
+        name="test_attribute_has_value_{name}_false".format(name=name),
+    )
+
+    node = onnx.helper.make_node(
+        "AttributeHasValue",
+        inputs=[],
+        outputs=["output"],
+        **kwargs,
+    )
+
+    output = np.array(True)
+    expect(
+        node,
+        inputs=[],
+        outputs=[output],
+        name="test_attribute_has_value_{name}_true".format(name=name),
+    )
+
+ints = [0, 1]
+test_one_attribute("ints", ints=ints)
+
+int = 1
+test_one_attribute("int", int=int)
 ```
 
 </details>
