@@ -28,32 +28,44 @@ def _is_out(ind, shape):  # type: ignore
     return False
 
 
-def im2col_naive_implementation(data, kernel_shape, fill_value=0):  # type: ignore
+def im2col_naive_implementation(data, kernel_shape, pads):  # type: ignore
     """
     Naive implementation for `im2col` (but with `padding=1`).
 
     :param image: image (float)
     :param kernel_shape: kernel shape
-    :param fill_value: fill value
+    :param pads: pads
     :return: result
     """
     if not isinstance(kernel_shape, tuple):
         raise TypeError(f"Unexpected type {type(kernel_shape)!r} for kernel_shape.")
     if len(data.shape) != len(kernel_shape):
         raise ValueError(f"Shape mismatch {data.shape!r} and {kernel_shape!r}.")
-    output_shape = data.shape + kernel_shape
-    res = numpy.empty(output_shape, dtype=data.dtype)
-    middle = numpy.array([-m / 2 for m in kernel_shape], dtype=numpy.int64)
+    n_dims = len(pads) // 2
+    new_pads = numpy.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
+    fill_value = 0
+    output_shape = list(data.shape + kernel_shape)
+    for d in range(n_dims):
+        output_shape[d] += new_pads[d,0] + new_pads[d,1] - kernel_shape[d] + 1
+    print(n_dims, data.shape, kernel_shape, output_shape)
+    output_shape = tuple(output_shape)
+
+    res = numpy.zeros(output_shape, dtype=data.dtype)
+    middle = numpy.array([-(m // 2) for m in kernel_shape], dtype=numpy.int64)
     kernel_size = numpy.prod(kernel_shape)
     data_size = numpy.prod(data.shape)
     for i in range(data_size):
         for j in range(kernel_size):
             i_data = _get_indices(i, data.shape)
             i_kernel = _get_indices(j, kernel_shape)
+            i_result = i_data + new_pads[:, 0]
+            
             ind = i_data + i_kernel + middle
-            t_data = tuple(i_data)
+            t_result = tuple(i_result)
             t_kernel = tuple(i_kernel)
-            i_out = t_data + t_kernel
+            i_out = t_result + t_kernel
+            print(data.shape, ind)
+            print(res.shape, i_out, kernel_shape)
             res[i_out] = fill_value if _is_out(ind, data.shape) else data[tuple(ind)]
     return res
 
@@ -72,30 +84,19 @@ class Im2Col(OpRunExperimental):
             strides = [1 for s in img.shape[2:]]
 
         if dilations[0] != 1 or min(dilations) != max(dilations):
-            # Let's compute the dilated kernel.
-            nd = len(dilations)
-            new_kernel_shape = []
-            for i, d in enumerate(dilations):
-                di = len(kernel_shape) - nd + i
-                new_kernel_shape.append(
-                    kernel_shape[i] + (kernel_shape[i] - 1) * (d - 1)
-                )
-            kernel_shape = new_kernel_shape
-
-            if pads[0] != 1 or min(pads) != max(pads):
-                raise RuntimeError(
-                    f"Not yet implemented for padding != 1 (pads={pads})."
-                )
-            if strides[0] != 1 or min(strides) != max(strides):
-                raise RuntimeError(
-                    f"Not yet implemented for strides != 1 (strides={strides})."
-                )
+            raise RuntimeError(
+                f"Not yet implemented for dilations != 1 (dilations={dilations})."
+            )
+        if strides[0] != 1 or min(strides) != max(strides):
+            raise RuntimeError(
+                f"Not yet implemented for strides != 1 (strides={strides})."
+            )
 
         ks = tuple(kernel_shape[2:])
         res = None
         for n in range(img.shape[0]):
             for c in range(img.shape[1]):
-                out = im2col_naive_implementation(img[n, c, ...], ks)
+                out = im2col_naive_implementation(img[n, c, ...], ks, pads)
                 if res is None:
                     new_shape = img.shape[:2] + out.shape
                     res = numpy.empty(new_shape, dtype=img.dtype)
