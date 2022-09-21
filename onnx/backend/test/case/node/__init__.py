@@ -165,12 +165,12 @@ def _extract_value_info(
                 "_extract_value_info: both input and type_proto arguments cannot be None."
             )
         elif isinstance(input, list):
-            elem_type = onnx.helper.np_type_to_tensor_dtype(input[0].dtype)
+            elem_type = onnx.helper.np_dtype_to_tensor_dtype(input[0].dtype)
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
             type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
         else:
-            elem_type = onnx.helper.np_type_to_tensor_dtype(input.dtype)
+            elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
             shape = input.shape
             type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
 

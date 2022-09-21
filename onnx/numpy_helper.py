@@ -36,7 +36,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         raise TypeError("The element type in the input tensor is not defined.")
 
     tensor_dtype = tensor.data_type
-    np_dtype = helper.tensor_dtype_to_np_type(tensor_dtype)
+    np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
     storage_np_dtype = helper.tensor_dtype_to_storage_numpy_type(tensor_dtype)
     storage_field = helper.tensor_dtype_to_field(tensor_dtype)
     dims = tensor.dims
@@ -102,7 +102,7 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
 
     if arr.dtype == object:
         # Special care for strings.
-        tensor.data_type = helper.np_type_to_tensor_dtype(arr.dtype)
+        tensor.data_type = helper.np_dtype_to_tensor_dtype(arr.dtype)
         # TODO: Introduce full string support.
         # We flatten the array in case there are 2-D arrays are specified
         # We throw the error below if we have a 3-D array or some kind of other
@@ -133,7 +133,7 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
 
     # For numerical types, directly use numpy raw bytes.
     try:
-        dtype = helper.np_type_to_tensor_dtype(arr.dtype)
+        dtype = helper.np_dtype_to_tensor_dtype(arr.dtype)
     except KeyError:
         raise RuntimeError(f"Numpy data type not understood yet: {str(arr.dtype)}")
     tensor.data_type = dtype
@@ -263,7 +263,7 @@ def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
         map.name = name
     keys = list(dict.keys())
     raw_key_type = np.array(keys[0]).dtype
-    key_type = helper.np_type_to_tensor_dtype(raw_key_type)
+    key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
 
     valid_key_int_types = [
         TensorProto.INT8,
@@ -386,7 +386,7 @@ def convert_endian(tensor: TensorProto) -> None:
         tensor (TensorProto): TensorProto to be converted.
     """
     tensor_dtype = tensor.data_type
-    np_dtype = helper.tensor_dtype_to_np_type(tensor_dtype)
+    np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
     tensor.raw_data = (
         np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
     )

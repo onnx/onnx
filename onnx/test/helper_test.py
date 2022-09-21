@@ -693,7 +693,7 @@ class TestPrintableGraph(unittest.TestCase):
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
     np_array = np.random.randn(2, 3).astype(
-        helper.tensor_dtype_to_np_type(tensor_dtype)
+        helper.tensor_dtype_to_np_dtype(tensor_dtype)
     )
     tensor = helper.make_tensor(
         name="test", data_type=tensor_dtype, dims=np_array.shape, vals=np_array
@@ -712,7 +712,7 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
 )
 def test_make_tensor_raw(tensor_dtype: int) -> None:
     np_array = np.random.randn(2, 3).astype(
-        helper.tensor_dtype_to_np_type(tensor_dtype)
+        helper.tensor_dtype_to_np_dtype(tensor_dtype)
     )
     tensor = helper.make_tensor(
         name="test",

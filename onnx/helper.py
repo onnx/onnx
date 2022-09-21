@@ -358,7 +358,7 @@ def make_tensor(
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
 
-    np_dtype = tensor_dtype_to_np_type(data_type)
+    np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     # Check number of vals specified equals tensor size
     expected_size = 1
@@ -1098,7 +1098,7 @@ def make_training_info(
 
 
 # Following functions are used for mapping
-def tensor_dtype_to_np_type(tensor_dtype: int) -> np.dtype:
+def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
     """
     Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
 
@@ -1108,7 +1108,7 @@ def tensor_dtype_to_np_type(tensor_dtype: int) -> np.dtype:
     return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].np_type
 
 
-def tensor_dtype_to_storage_tensor_type(tensor_dtype: int) -> int:
+def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
     """
     Convert a TensorProto's data_type to corresponding data_type for storage. It can be used for tensor_dtype_to_storage_numpy_type.
 
@@ -1136,7 +1136,7 @@ def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> np.dtype:
     :param tensor_dtype: TensorProto's data_type
     :return: numpy's data_type
     """
-    return tensor_dtype_to_np_type(tensor_dtype_to_storage_tensor_type(tensor_dtype))
+    return tensor_dtype_to_np_dtype(tensor_dtype_to_storage_tensor_dtype(tensor_dtype))
 
 
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
@@ -1154,7 +1154,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     )
 
 
-def np_type_to_tensor_dtype(np_type: np.dtype) -> int:
+def np_dtype_to_tensor_dtype(np_type: np.dtype) -> int:
     """
     Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 

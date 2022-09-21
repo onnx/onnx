@@ -88,8 +88,8 @@ class DeprecatedWarningDict(dict):  # type: ignore
     def __getitem__(self, key: Union[int, str]) -> Any:
         warnings.warn(
             str(
-                f"`mapping.{self._origin_function}` is deprecated in ONNX 1.13 and will "
-                + "be removed in next release. To silence this warning, please use `helper.{_self.future_function}` instead."
+                f"`mapping.{self._origin_function}` is now deprecated and will be removed in the next release or so."
+                + "To silence this warning, please use `helper.{_self.future_function}` instead."
             ),
             DeprecationWarning,
             stacklevel=2,
@@ -101,7 +101,7 @@ class DeprecatedWarningDict(dict):  # type: ignore
 TENSOR_TYPE_TO_NP_TYPE = DeprecatedWarningDict(
     {tensor_dtype: value.np_type for tensor_dtype, value in TENSOR_TYPE_MAP.items()},
     "TENSOR_TYPE_TO_NP_TYPE",
-    "tensor_dtype_to_np_typeto_storage_tensor_type",
+    "tensor_dtype_to_np_dtype",
 )
 # This is only used to get keys into STORAGE_TENSOR_TYPE_TO_FIELD.
 # TODO(https://github.com/onnx/onnx/issues/4261): Remove this.
@@ -112,7 +112,7 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = DeprecatedWarningDict(
         for tensor_dtype, value in TENSOR_TYPE_MAP.items()
     },
     "TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE",
-    "tensor_dtype_to_storage_tensor_type",
+    "tensor_dtype_to_storage_tensor_dtype",
 )
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
@@ -120,7 +120,7 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = DeprecatedWarningDict(
 NP_TYPE_TO_TENSOR_TYPE = DeprecatedWarningDict(
     {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16},
     "NP_TYPE_TO_TENSOR_TYPE",
-    "np_type_to_tensor_dtype",
+    "np_dtype_to_tensor_dtype",
 )
 
 STORAGE_TENSOR_TYPE_TO_FIELD = DeprecatedWarningDict(

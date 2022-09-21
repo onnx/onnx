@@ -84,7 +84,7 @@ class Cast(Base):
                     )
             elif "STRING" != from_type:
                 input = np.random.random_sample(shape).astype(
-                    helper.tensor_dtype_to_np_type(getattr(TensorProto, from_type))
+                    helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
                 )
                 if "STRING" == to_type:
                     # Converting input to str, then give it object dtype for generating script
@@ -97,7 +97,7 @@ class Cast(Base):
                     output = np.array(ss).astype(object).reshape([3, 4])
                 else:
                     output = input.astype(
-                        helper.tensor_dtype_to_np_type(getattr(TensorProto, to_type))
+                        helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
                     )
             else:
                 input = np.array(
@@ -118,7 +118,7 @@ class Cast(Base):
                     dtype=np.dtype(object),
                 ).reshape([3, 4])
                 output = input.astype(
-                    helper.tensor_dtype_to_np_type(getattr(TensorProto, to_type))
+                    helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
                 )
             node = onnx.helper.make_node(
                 "Cast",
