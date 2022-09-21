@@ -67,7 +67,7 @@ def _conv_implementation(  # type: ignore
         h1, w1 = pads[2], pads[3]
         oh, ow = -1 * (kh % 2), -1 * (kw % 2)
         bh, bw = -h0, -w0
-        eh, ew = (h_out * sth) - h1, (w_out * stw) - w1
+        eh, ew = h_out * sth, w_out * stw
         res = np.zeros((X.shape[:2] + (h_out, w_out)))
         if B is not None:
             res[:, :, :, :] = B

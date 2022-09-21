@@ -1058,15 +1058,23 @@ class TestRuntimeInference(unittest.TestCase):
         got = sess2.run(None, feeds)[0]
         assert_almost_equal(expected, got)
 
-    def test_im2col_3x3(self):
+    def common_test_im2col(self, kernel_shape, pads, strides, dilations):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y1 = make_tensor_value_info("Y1", TensorProto.FLOAT, [None, None, None, None])
         Y2 = make_tensor_value_info("Y2", TensorProto.FLOAT, [None, None, None, None])
         W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
-        node = make_node("Conv", ["X", "W"], ["Y1"], pads=[1, 1, 1, 2])
+        node = make_node(
+            "Conv", ["X", "W"], ["Y1"], pads=pads, strides=strides, dilations=dilations
+        )
         node_shape = make_node("Shape", ["W"], ["shape"])
         node_im = make_node(
-            "Im2Col", ["X", "shape"], ["xim"], pads=[1, 1, 1, 2], domain="experimental"
+            "Im2Col",
+            ["X", "shape"],
+            ["xim"],
+            pads=pads,
+            strides=strides,
+            dilations=dilations,
+            domain="experimental",
         )
         node_flat = make_node("Flatten", ["W"], ["wflat"])
         node_axes = make_node(
@@ -1083,58 +1091,84 @@ class TestRuntimeInference(unittest.TestCase):
         onnx_model = make_model(
             graph, opset_imports=[make_opsetid("", 16), make_opsetid("experimental", 1)]
         )
+        graph_conv = make_graph([node], "g", [X, W], [Y1])
+        onnx_model_conv = make_model(graph_conv, opset_imports=[make_opsetid("", 16)])
         sess = rt.Inference(onnx_model)
 
-        sH, sW = 5, 6
-        for i in range(sH):
-            for j in range(sW):
-                X = np.zeros((1, 1, sH, sW), dtype=np.float32)
-                X[0, 0, i, j] = 1.0
-                W = np.zeros((1, 1, 3, 3), dtype=np.float32)
-                W[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 256)
+        try:
+            import onnxruntime as ort
 
-                got = sess.run(None, {"X": X, "W": W})
-                assert_almost_equal(got[0], got[1])
-
-    def test_im2col_5x5(self):
-        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
-        Y1 = make_tensor_value_info("Y1", TensorProto.FLOAT, [None, None, None, None])
-        Y2 = make_tensor_value_info("Y2", TensorProto.FLOAT, [None, None, None, None])
-        W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
-        node = make_node("Conv", ["X", "W"], ["Y1"], pads=[1, 1, 1, 2])
-        node_shape = make_node("Shape", ["W"], ["shape"])
-        node_im = make_node(
-            "Im2Col", ["X", "shape"], ["xim"], pads=[1, 1, 1, 2], domain="experimental"
-        )
-        node_flat = make_node("Flatten", ["W"], ["wflat"])
-        node_axes = make_node(
-            "Constant", [], ["axes"], value=from_array(np.array([0], dtype=np.int64))
-        )
-        node_qu = make_node("Squeeze", ["wflat", "axes"], ["wsqu"])
-        node_gem = make_node("MatMul", ["xim", "wsqu"], ["Y2"])
-        graph = make_graph(
-            [node, node_shape, node_im, node_axes, node_flat, node_qu, node_gem],
-            "g",
-            [X, W],
-            [Y1, Y2],
-        )
-        onnx_model = make_model(
-            graph, opset_imports=[make_opsetid("", 16), make_opsetid("experimental", 1)]
-        )
-        sess = rt.Inference(onnx_model)
+            sess_conv = ort.InferenceSession(onnx_model_conv.SerializeToString())
+        except ImportError:
+            sess_conv = None
 
         sH, sW = 7, 7
+        nker = np.prod(kernel_shape)
         for i in range(sH):
             for j in range(sW):
                 X = np.zeros((1, 1, sH, sW), dtype=np.float32)
                 X[0, 0, i, j] = 1.0
-                W = np.zeros((1, 1, 5, 5), dtype=np.float32)
-                W[0, 0, :, :] = np.minimum(2 ** np.arange(25).reshape((5, -1)), 256)
+                W = np.zeros(
+                    (
+                        1,
+                        1,
+                    )
+                    + kernel_shape,
+                    dtype=np.float32,
+                )
+                W[0, 0, :, :] = np.minimum(
+                    2 ** np.arange(nker).reshape((kernel_shape[0], -1)), 256
+                )
 
                 got = sess.run(None, {"X": X, "W": W})
-                assert_almost_equal(got[0], got[1])
+                if sess_conv is not None:
+                    ort_res = sess_conv.run(None, {"X": X, "W": W})[0]
+                    assert_almost_equal(got[1], ort_res)
+                try:
+                    assert_almost_equal(got[0], got[1])
+                except AssertionError as e:
+                    raise AssertionError(
+                        f"Discrepancies: pads={pads}, dilations={dilations}, strides={strides}, "
+                        f"kernel_shape={kernel_shape}"
+                        f"\n{got[0]}\n!=\n{got[1]}"
+                    ) from e
+
+    def test_im2col_1x1(self):
+        self.common_test_im2col(
+            (1, 1), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 1]
+        )
+
+    def test_im2col_2x2(self):
+        self.common_test_im2col(
+            (2, 2), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 1]
+        )
+
+    def test_im2col_3x3(self):
+        self.common_test_im2col(
+            (3, 3), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 1]
+        )
+
+    def test_im2col_3x3_pads(self):
+        self.common_test_im2col(
+            (3, 3), pads=[0, 1, 2, 3], strides=[1, 1], dilations=[1, 1]
+        )
+
+    def test_im2col_3x3_strides(self):
+        self.common_test_im2col(
+            (3, 3), pads=[0, 1, 1, 1], strides=[1, 2], dilations=[1, 1]
+        )
+
+    def test_im2col_3x3_dilations(self):
+        self.common_test_im2col(
+            (3, 3), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 2]
+        )
+
+    def test_im2col_5x5(self):
+        self.common_test_im2col(
+            (5, 5), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 1]
+        )
 
 
 if __name__ == "__main__":
-    TestRuntimeInference().test_im2col_5x5()
+    TestRuntimeInference().test_im2col_3x3_strides()
     unittest.main(verbosity=2)
