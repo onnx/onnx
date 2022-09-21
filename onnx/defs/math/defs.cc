@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <functional>
+#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
@@ -358,6 +359,14 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to signed numeric tensors.")
+        .FunctionBody(R"ONNX(
+          {
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            Y = Max (X, ZeroCast)
+          }
+        )ONNX")
+        .FunctionAddOpset("", 18)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* LeakyRelu_ver16_doc = R"DOC(
@@ -381,7 +390,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike(Zero, X)
+            XLessThanZero = Less(X, ZeroCast)
+            AlphaMulX = Mul (AlphaCast, X)
+            Y = Where (XLessThanZero, AlphaMulX, X)
+          }
+        )ONNX"));
 
 static const char* ThresholdedRelu_ver10_doc = R"DOC(
 ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
@@ -401,7 +421,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            AlphaLessThanX = Less(AlphaCast, X)
+            Y = Where(AlphaLessThanX, X, ZeroCast)
+          }
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* Selu_ver6_doc = R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
@@ -433,7 +464,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Gamma = Constant <value_float: float = @gamma>()
+            GammaCast = CastLike (Gamma, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            ExpX = Exp (X)
+            AlphaMulExpX = Mul(AlphaCast, ExpX)
+            AlphaMulExpXSubAlpha = Sub (AlphaMulExpX, AlphaCast)
+            Neg = Mul (GammaCast, AlphaMulExpXSubAlpha)
+            Pos = Mul (GammaCast, X)
+            XLessThanZero = Less (X, ZeroCast)
+            Y = Where(XLessThanZero, Neg, Pos)
+          }
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* Elu_ver6_doc = R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
@@ -454,7 +503,23 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            One = Constant <value = float {1.0}>()
+            OneCast = CastLike (One, X)
+            XLessThanZero = Less (X, ZeroCast)
+            ExpX = Exp (X)
+            ExpXSubOne = Sub (ExpX, OneCast)
+            AlphaMulExpXSubOne = Mul (AlphaCast, ExpXSubOne)
+            Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
+          }
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* mish_ver18_doc = R"DOC(
 Mish: A Self Regularized Non-Monotonic Neural Activation Function.
@@ -547,10 +612,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input X and output types to float tensors.")
         .FunctionBody(R"ONNX(
           {
-			Softplus_X = Softplus (X)
-			TanHSoftplusX = Tanh (Softplus_X)
-			Y = Mul (X, TanHSoftplusX)
-		   }
+            Softplus_X = Softplus (X)
+            TanHSoftplusX = Tanh (Softplus_X)
+            Y = Mul (X, TanHSoftplusX)
+           }
         )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
@@ -725,7 +790,16 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int32)",
              "tensor(int64)"},
             "Constrain input and output types to float/int tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+        {
+          Zero = Constant <value = float {0.0}>()
+          ZeroCast = CastLike(Zero, X)    
+          XLessThanZero = Less (X, ZeroCast)
+          SlopeMulX = Mul (slope, X)
+          Y = Where(XLessThanZero, SlopeMulX, X)
+        }
+        )ONNX"));
 
 static const char* Sigmoid_ver13_doc = R"DOC(
 Sigmoid takes one input data (Tensor<T>) and produces one output data
@@ -765,7 +839,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Beta = Constant <value_float: float = @beta>()
+            BetaCast = CastLike (Beta, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            One = Constant <value = float {1.0}>()
+            OneCast = CastLike (One, X)
+            AlphaMulX = Mul (X, AlphaCast)
+            AlphaMulXAddBeta = Add (AlphaMulX, BetaCast)
+            MinOneOrAlphaMulXAddBeta = Min (AlphaMulXAddBeta, OneCast)
+            Y = Max(MinOneOrAlphaMulXAddBeta, ZeroCast)
+          }
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* HardSwish_ver14_doc = R"DOC(
 HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
@@ -879,6 +970,33 @@ specified by the inputs 'min' and 'max'. They default to
 numeric_limits::lowest() and numeric_limits::max(), respectively.
 )DOC";
 
+bool BuildContextDependentFunctionBodyClip(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  bool has_min = ctx.hasInput(1);
+  bool has_max = ctx.hasInput(2);
+
+  FunctionBuilder builder(functionProto);
+  if (!has_min && !has_max) {
+    builder.Add("output = Identity (input)");
+  } else if (has_min && !has_max) {
+    builder.Add("input_less_than_min = Less (input, min)");
+    builder.Add("output = Where (input_less_than_min, min, input)");
+  } else if (!has_min && has_max) {
+    builder.Add("input_large_than_max = Less (max, input)");
+    builder.Add("output = Where (input_large_than_max, max, input)");
+  } else {
+    builder.Add("input_less_than_min = Less (input, min)");
+    builder.Add("tmp = Where (input_less_than_min, min, input)");
+    builder.Add("output_large_than_max = Less (max, tmp)");
+    builder.Add("output = Where (output_large_than_max, max, tmp)");
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
     13,
@@ -926,6 +1044,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_numeric_types_with_bfloat(),
             "Constrain input and output types to all numeric tensors.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyClip)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1010,7 +1129,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+          {
+            One = Constant <value = float {1.0}>()
+            OneCast = CastLike (One, input)
+            AbsInput = Abs(input)
+            OneAddAbsInput = Add (OneCast, AbsInput)
+            output = Div(input, OneAddAbsInput)
+          }
+        )ONNX")
+        .FunctionAddOpset("", 18));
 
 static const char* Softplus_ver1_doc = R"DOC(
 Softplus takes one input data (Tensor<T>) and produces one output data
@@ -1029,7 +1158,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+        {
+          exp_x = Exp (X)
+          one = Constant <value = float {1.0}>()
+          exp_x_add_one = Add (exp_x, one)
+          Y = Log (exp_x_add_one)
+        }
+        )ONNX"));
 
 static const char* Gemm_ver13_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
@@ -2815,7 +2952,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Set the output dimension to match the dft_length on the axis.
           // If onesided this will be adjusted later on...
           const TensorProto* dft_length = nullptr;
-          if (ctx.getNumInputs() >= 2 && ctx.getInputType(1) != nullptr) {
+          if (ctx.hasInput(1)) {
             dft_length = ctx.getInputData(1);
             if (dft_length == nullptr) {
               // If we cannot read the dft_length, we cannot infer shape
@@ -3264,7 +3401,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // One must be set.
           int64_t dft_size = -1;
           const TensorProto* frame_length = nullptr;
-          if (ctx.getNumInputs() >= 4 && ctx.getInputType(3) != nullptr) {
+          if (ctx.hasInput(3)) {
             frame_length = ctx.getInputData(3);
             if (frame_length == nullptr) {
               // If we cannot read the frame_length, we cannot infer shape

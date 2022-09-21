@@ -3,7 +3,7 @@
 import numpy as np  # type: ignore
 
 import onnx
-from onnx.defs import AI_ONNX_PREVIEW_TRAINING_DOMAIN, ONNX_DOMAIN
+from onnx.defs import AI_ONNX_PREVIEW_TRAINING_DOMAIN
 
 from ..base import Base
 from . import expect

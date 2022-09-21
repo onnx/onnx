@@ -345,7 +345,7 @@ def make_tensor(
         data_type (int): a value such as onnx.TensorProto.FLOAT
         dims (List[int]): shape
         vals: values
-        raw (bool): if True, vals contains the seralized content of the tensor,
+        raw (bool): if True, vals contains the serialized content of the tensor,
             otherwise, vals should be a list of values of the type defined by *data_type*
 
     Returns:

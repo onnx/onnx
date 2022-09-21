@@ -3,7 +3,7 @@
 import inspect
 from collections import defaultdict
 from textwrap import dedent
-from typing import Any, Dict, List, Sequence, Tuple, Type
+from typing import Any, Dict, List, Tuple, Type
 
 import numpy as np  # type: ignore
 

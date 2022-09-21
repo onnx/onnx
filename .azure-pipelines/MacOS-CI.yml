@@ -4,7 +4,7 @@ trigger:
 jobs:
 - job: 'Test'
   pool:
-    vmImage: 'macOS-10.15'
+    vmImage: 'macOS-11'
   strategy:
     matrix:
       py39:
@@ -54,7 +54,7 @@ jobs:
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
       fi
-      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+      export CMAKE_ARGS="-DONNX_WERROR=ON"
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
@@ -93,12 +93,6 @@ jobs:
       ./.setuptools-cmake-build/onnx_gtests
       if [ $? -ne 0 ]; then
         echo "onnx_gtests failed"
-        exit 1
-      fi
-
-      ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
-      if [ $? -ne 0 ]; then
-        echo "onnxifi_test_driver_gtests failed"
         exit 1
       fi
 
