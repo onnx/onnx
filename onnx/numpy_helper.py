@@ -38,6 +38,12 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
     storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD.get(tensor_dtype, None)
+    if storage_field is None:
+        storage_type = mapping.deprecated_TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[
+            tensor_dtype
+        ]
+        storage_np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[storage_type]
+        storage_field = mapping.deprecated_STORAGE_TENSOR_TYPE_TO_FIELD[storage_type]
     dims = tensor.dims
 
     if tensor.data_type == TensorProto.STRING:

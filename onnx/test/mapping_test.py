@@ -4,7 +4,7 @@ import numpy as np  # type: ignore
 from numpy.testing import assert_almost_equal  # type: ignore
 
 from onnx import TensorProto
-from onnx.helper import make_tensor
+from onnx.helper import deprecated_make_tensor, make_tensor
 from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
 from onnx.numpy_helper import from_array, to_array
 
@@ -34,6 +34,32 @@ class TestBasicFunctions(unittest.TestCase):
                 self.assertEqual(t.dtype, u.dtype)
                 assert_almost_equal(t, u)
 
+    def test_deprecated_make_tensor(self):  # type: ignore
+        for pt, dt in TENSOR_TYPE_TO_NP_TYPE.items():
+            if pt == TensorProto.BFLOAT16:
+                continue
+            with self.subTest(dt=dt, pt=pt, raw=False):
+                if pt == TensorProto.STRING:
+                    t = np.array([["i0", "i1", "i2"], ["i6", "i7", "i8"]], dtype=dt)
+                else:
+                    t = np.array([[0, 1, 2], [6, 7, 8]], dtype=dt)
+                ot = deprecated_make_tensor("test", pt, t.shape, t, raw=False)
+                self.assertFalse(ot is None)
+                if pt != TensorProto.STRING:
+                    u = to_array(ot)
+                    self.assertEqual(t.dtype, u.dtype)
+                    self.assertEqual(t.tolist(), u.tolist())
+            with self.subTest(dt=dt, pt=pt, raw=True):
+                if pt != TensorProto.STRING:
+                    t = np.array([[0, 1, 2], [6, 7, 8]], dtype=dt)
+                    ot = deprecated_make_tensor(
+                        "test", pt, t.shape, t.tobytes(), raw=True
+                    )
+                    self.assertFalse(ot is None)
+                    u = to_array(ot)
+                    self.assertEqual(t.dtype, u.dtype)
+                    assert_almost_equal(t, u)
+
     def test_make_tensor(self):  # type: ignore
         for pt, dt in TENSOR_TYPE_TO_NP_TYPE.items():
             if pt == TensorProto.BFLOAT16:
@@ -44,6 +70,7 @@ class TestBasicFunctions(unittest.TestCase):
                 else:
                     t = np.array([[0, 1, 2], [6, 7, 8]], dtype=dt)
                 ot = make_tensor("test", pt, t.shape, t, raw=False)
+                self.assertFalse(ot is None)
                 u = to_array(ot)
                 self.assertEqual(t.dtype, u.dtype)
                 self.assertEqual(t.tolist(), u.tolist())
@@ -54,6 +81,7 @@ class TestBasicFunctions(unittest.TestCase):
                         make_tensor("test", pt, t.shape, t.tobytes(), raw=True)
                 else:
                     ot = make_tensor("test", pt, t.shape, t.tobytes(), raw=True)
+                    self.assertFalse(ot is None)
                     u = to_array(ot)
                     self.assertEqual(t.dtype, u.dtype)
                     assert_almost_equal(t, u)

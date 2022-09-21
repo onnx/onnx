@@ -330,6 +330,80 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + round) >> 16
 
 
+def deprecated_make_tensor(
+    name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
+) -> TensorProto:
+    """
+    Make a TensorProto with specified arguments.  If raw is False, this
+    function will choose the corresponding proto field to store the
+    values based on data_type. If raw is True, use "raw_data" proto
+    field to store the values, and values should be of type bytes in
+    this case.
+    Arguments:
+        name (string): tensor name
+        data_type (int): a value such as onnx.TensorProto.FLOAT
+        dims (List[int]): shape
+        vals: values
+        raw (bool): if True, vals contains the serialized content of the tensor,
+            otherwise, vals should be a list of values of the type defined by *data_type*
+    Returns:
+        TensorProto
+    """
+    tensor = TensorProto()
+    tensor.data_type = data_type
+    tensor.name = name
+
+    if data_type == TensorProto.STRING:
+        assert not raw, "Can not use raw_data to store string type"
+
+    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[data_type]
+
+    # Check number of vals specified equals tensor size
+    expected_size = 1
+    if raw:
+        # NumPy doesn't have BFLOAT16. TENSOR_TYPE_TO_NP_TYPE maps it to float32,
+        # which has the wrong itemsize.
+        if data_type == TensorProto.BFLOAT16:
+            expected_size = 2
+        else:
+            expected_size = np_dtype.itemsize
+
+    if type(vals) is np.ndarray and len(vals.shape) > 1:
+        vals = vals.flatten()
+    for d in dims:
+        expected_size *= d
+
+    if len(vals) != expected_size:
+        raise ValueError(
+            "Number of values does not match tensor's size. Expected {}, but it is {}. ".format(
+                expected_size, len(vals)
+            )
+        )
+
+    if raw:
+        tensor.raw_data = vals
+    else:
+        if data_type == TensorProto.COMPLEX64 or data_type == TensorProto.COMPLEX128:
+            vals = split_complex_to_pairs(vals)
+        elif data_type == TensorProto.FLOAT16:
+            vals = (
+                np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
+            )
+        elif data_type == TensorProto.BFLOAT16:
+            vals = list(
+                map(
+                    float32_to_bfloat16,
+                    np.array(vals).astype(np_dtype).flatten().tolist(),
+                )
+            )
+        field = mapping.deprecated_STORAGE_TENSOR_TYPE_TO_FIELD[
+            mapping.deprecated_TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]
+        ]
+        getattr(tensor, field).extend(vals)
+    tensor.dims.extend(dims)
+    return tensor
+
+
 def make_tensor(
     name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
