@@ -8,7 +8,7 @@ import numpy as np  # type: ignore
 from onnx import OptionalProto, SequenceProto, TensorProto
 
 TensorDtypeMap = NamedTuple(
-    "TensorDtypeMap", [("np_type", np.dtype), ("storage_type", int), ("name", str)]
+    "TensorDtypeMap", [("np_dtype", np.dtype), ("storage_dtype", int), ("name", str)]
 )
 
 # tensor_dtype: (numpy type, storage type, string name)
@@ -99,7 +99,7 @@ class DeprecatedWarningDict(dict):  # type: ignore
 
 # This map is used for converting TensorProto values into numpy arrays
 TENSOR_TYPE_TO_NP_TYPE = DeprecatedWarningDict(
-    {tensor_dtype: value.np_type for tensor_dtype, value in TENSOR_TYPE_MAP.items()},
+    {tensor_dtype: value.np_dtype for tensor_dtype, value in TENSOR_TYPE_MAP.items()},
     "TENSOR_TYPE_TO_NP_TYPE",
     "tensor_dtype_to_np_dtype",
 )
@@ -108,7 +108,7 @@ TENSOR_TYPE_TO_NP_TYPE = DeprecatedWarningDict(
 
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = DeprecatedWarningDict(
     {
-        tensor_dtype: value.storage_type
+        tensor_dtype: value.storage_dtype
         for tensor_dtype, value in TENSOR_TYPE_MAP.items()
     },
     "TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE",

@@ -1105,7 +1105,7 @@ def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
     :param tensor_dtype: TensorProto's data_type
     :return: numpy's data_type
     """
-    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].np_type
+    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
@@ -1115,7 +1115,7 @@ def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
     :param tensor_dtype: TensorProto's data_type
     :return: data_type for storage
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_type
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
@@ -1149,19 +1149,19 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     return cast(
         str,
         mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
-            mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].storage_type
+            mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].storage_dtype
         ],
     )
 
 
-def np_dtype_to_tensor_dtype(np_type: np.dtype) -> int:
+def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     """
     Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 
-    :param np_type: numpy's data_type
+    :param np_dtype: numpy's data_type
     :return: TensorsProto's data_type
     """
-    return cast(int, mapping.NP_TYPE_TO_TENSOR_TYPE[np_type])
+    return cast(int, mapping.NP_TYPE_TO_TENSOR_TYPE[np_dtype])
 
 
 def sequence_type_to_field(elem_type: int) -> str:
