@@ -36,6 +36,7 @@ from .op_ceil import Ceil
 from .op_celu import Celu
 from .op_center_crop_pad import CenterCropPad
 from .op_clip import Clip, Clip_6, Clip_11
+from .op_col2im import Col2Im
 from .op_compress import Compress
 from .op_concat import Concat
 from .op_concat_from_sequence import ConcatFromSequence

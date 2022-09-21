@@ -30,7 +30,7 @@ def _is_out(ind, shape):  # type: ignore
 
 def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  # type: ignore
     """
-    Naive implementation for `im2col` (but with `padding=1`).
+    Naive implementation for `im2col`.
 
     :param image: image (float)
     :param kernel_shape: kernel shape
