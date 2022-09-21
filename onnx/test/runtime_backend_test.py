@@ -104,8 +104,8 @@ class OnnxBackendTest:
                     else:
                         try:
                             loaded = to_list(read_obj)
-                        except Exception as e:
-                            raise AssertionError(f"Unable to read {full!r}.") from e
+                        except Exception as ee:
+                            raise AssertionError(f"Unable to read {full!r}.") from ee
                 else:
                     loaded = read_obj
         return loaded
@@ -510,7 +510,7 @@ class TestOnnxBackEnd(unittest.TestCase):
             raise AssertionError(
                 f"Mismatch in test {te.name!r}\n{te.onnx_model}."
             ) from e
-        if success > 30 and success < 907:
+        if 30 < success < 907:
             raise AssertionError(
                 f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
                 f"the runtime among has decreased. New operators were added with no "

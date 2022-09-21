@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0415
+# pylint: disable=C0415,R0912
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional
