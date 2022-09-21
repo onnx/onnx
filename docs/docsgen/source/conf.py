@@ -4,7 +4,7 @@ import warnings
 import onnx
 import sphinx_bootstrap_theme
 
-sys.path.append(os.path.abspath('exts'))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # from github_link import make_linkcode_resolve  # noqa
 
 
@@ -42,12 +42,13 @@ language = "en"
 exclude_patterns = []
 pygments_style = 'default'
 coverage_show_missing_items = True
+onnx_doc_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "onnx_doc_folder")
 
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = "bootstrap"
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-html_logo = "../../_static/ONNX_logo_main.png"
+html_logo = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png")
 
 # Navbar
 html_theme_options = {
