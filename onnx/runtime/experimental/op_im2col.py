@@ -55,7 +55,6 @@ def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  
 
     res = numpy.zeros(output_shape, dtype=data.dtype)
     kernel_size = numpy.prod(kernel_shape)
-    kernel_shape2 = numpy.array(kernel_shape) // 2
     res_size = numpy.prod(res.shape[:-n_dims])
     for i in range(res_size):
         i_res = _get_indices(i, res.shape[:-n_dims])

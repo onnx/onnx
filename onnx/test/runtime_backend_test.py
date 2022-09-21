@@ -385,11 +385,15 @@ class TestOnnxBackEnd(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             list(enumerate_onnx_tests("NNN"))
         missed = []
+        skipped = []
         load_failed = []
         exec_failed = []
         mismatch = []
         success = 0
-        for te in enumerate_onnx_tests("node", valid):
+        for te in enumerate_onnx_tests("node"):
+            if not valid(te.name):
+                skipped.append((te,))
+                continue
             if verbose > 6:
                 print("TEST:", te.name)
             with self.subTest(name=te.name):
@@ -448,14 +452,20 @@ class TestOnnxBackEnd(unittest.TestCase):
                 if verbose > 7:
                     print("  end example.")
 
-        failed = [len(missed), len(load_failed), len(exec_failed), len(mismatch)]
+        failed = [
+            len(missed),
+            len(skipped),
+            len(load_failed),
+            len(exec_failed),
+            len(mismatch),
+        ]
         coverage = success / (success + sum(failed))
 
         if verbose:
             path = os.path.dirname(onnx_file)
             print("-----------")
             print(
-                f"success={success}, missed={len(missed)}, load_failed={len(load_failed)}, "
+                f"success={success}, skipped={len(skipped)}, missed={len(missed)}, load_failed={len(load_failed)}, "
                 f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
             )
             print(
@@ -480,12 +490,14 @@ class TestOnnxBackEnd(unittest.TestCase):
                 for t in sorted(mismatch, key=lambda m: m[0].name):
                     print("mismatch", _print(t[0], path))
                 for t in sorted(missed, key=lambda m: m[0].name):
-                    print("missed", _print(t[0], path))
+                    print("missed ", _print(t[0], path))
+                for t in sorted(skipped, key=lambda m: m[0].name):
+                    print("skipped", _print(t[0], path))
 
                 if success > 30:
                     print("-----------")
                     print(
-                        f"success={success}, missed={len(missed)}, load_failed={len(load_failed)}, "
+                        f"success={success}, skipped={len(skipped)}, missed={len(missed)}, load_failed={len(load_failed)}, "
                         f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
                     )
                     print(
@@ -498,7 +510,7 @@ class TestOnnxBackEnd(unittest.TestCase):
             raise AssertionError(
                 f"Mismatch in test {te.name!r}\n{te.onnx_model}."
             ) from e
-        if success > 30 and coverage < 0.9:
+        if success > 30 and success < 907:
             raise AssertionError(
                 f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
                 f"the runtime among has decreased. New operators were added with no "
@@ -526,7 +538,7 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_scatter_without_axis",  # scatter is removed
             # bug
             "test_gru_batchwise",
-            # problem with constant pi
+            # mismatches, problem with constant pi
             "test_blackmanwindow_expanded",
             "test_blackmanwindow_symmetric_expanded",
             "test_center_crop_pad_crop_axes_hwc_expanded",
@@ -582,7 +594,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_conv_with_strides_padding" == name,
+            lambda name: "test_abs" == name,
             verbose=0,
             decimal={
                 "test_blackmanwindow_expanded": 4,

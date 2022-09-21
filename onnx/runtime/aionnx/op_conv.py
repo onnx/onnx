@@ -64,7 +64,6 @@ def _conv_implementation(  # type: ignore
         w_out = int(((sW - kw + pads[1] + pads[3]) / stw) + 1)
 
         h0, w0 = pads[0], pads[1]
-        h1, w1 = pads[2], pads[3]
         oh, ow = -1 * (kh % 2), -1 * (kw % 2)
         bh, bw = -h0, -w0
         eh, ew = h_out * sth, w_out * stw
