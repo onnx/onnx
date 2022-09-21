@@ -40,7 +40,7 @@ class TestBasicFunctions(unittest.TestCase):
                 continue
             with self.subTest(dt=dt, pt=pt, raw=False):
                 if pt == TensorProto.STRING:
-                    t = np.array([["i0", "i1", "i2"], ["i6", "i7", "i8"]], dtype=dt)
+                    t = np.array([[b"i0", b"i1", b"i2"], [b"i6", b"i7", b"i8"]], dtype=dt)
                 else:
                     t = np.array([[0, 1, 2], [6, 7, 8]], dtype=dt)
                 ot = deprecated_make_tensor("test", pt, t.shape, t, raw=False)
