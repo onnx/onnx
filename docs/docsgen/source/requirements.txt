@@ -5,8 +5,6 @@ joblib
 loky
 markupsafe
 matplotlib
-mlinsights
-mlprodict
 myst-parser
 nbsphinx
 onnx
@@ -14,15 +12,12 @@ onnxruntime
 pillow
 py-spy
 pandas
+pydata_sphinx_theme
 pyinstrument
-pyquickhelper>=1.9.3359
 pytest
 pytest-cov
 scikit-learn
 skl2onnx
 sphinx
-sphinxcontrib-blockdiag
-sphinx_bootstrap_theme
 sphinx-gallery
 tqdm
-wheel

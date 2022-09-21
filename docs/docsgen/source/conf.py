@@ -2,7 +2,7 @@ import os
 import sys
 import warnings
 import onnx
-import sphinx_bootstrap_theme
+import pydata_sphinx_theme
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # from github_link import make_linkcode_resolve  # noqa
@@ -46,8 +46,7 @@ onnx_doc_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "onnx
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = "bootstrap"
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+html_theme = "pydata_sphinx_theme"
 html_logo = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png")
 
 # Navbar
@@ -94,13 +93,6 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # -- Setup actions -----------------------------------------------------------
 
 
-def setup(app):
-    # Placeholder to initialize the folder before
-    # generating the documentation.
-    return app
-
-
-
 blog_root = ""
 
 html_css_files = ['sample.css']
@@ -116,8 +108,6 @@ mathdef_link_only = True
 
 intersphinx_mapping.update({
     'torch': ('https://pytorch.org/docs/stable/', None),
-    'mlprodict':
-        ('http://www.xavierdupre.fr/app/mlprodict/helpsphinx/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'python': (
