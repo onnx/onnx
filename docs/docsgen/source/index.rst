@@ -22,13 +22,30 @@ parameters, examples, and line-by-line version history.
 This section also includes tables detailing each operator
 with its versions, as done in Operators.md.
 
+**First option**
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: Module Overview
+
+   onnx-api/index
 
 .. toctree::
    :glob:
    :maxdepth: 1
    :caption: API Overview
-   
+
    onnx-api/modules/*
+
+**Second option**
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: API Overview
+
+   onnx_python/index
 
 .. toctree::
 	:glob:
