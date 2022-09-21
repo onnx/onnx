@@ -42,7 +42,6 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         storage_type = mapping.deprecated_TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[
             tensor_dtype
         ]
-        storage_np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[storage_type]
         storage_field = mapping.deprecated_STORAGE_TENSOR_TYPE_TO_FIELD[storage_type]
     dims = tensor.dims
 
