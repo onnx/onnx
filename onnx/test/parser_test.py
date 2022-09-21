@@ -7,10 +7,10 @@ from onnx import GraphProto
 
 class TestBasicFunctions(unittest.TestCase):
     def check_graph(self, graph: GraphProto) -> None:
-        self.assertTrue(len(graph.node) == 3)
-        self.assertTrue(graph.node[0].op_type == "MatMul")
-        self.assertTrue(graph.node[1].op_type == "Add")
-        self.assertTrue(graph.node[2].op_type == "Softmax")
+        self.assertEqual(len(graph.node), 3)
+        self.assertEqual(graph.node[0].op_type, "MatMul")
+        self.assertEqual(graph.node[1].op_type, "Add")
+        self.assertEqual(graph.node[2].op_type, "Softmax")
 
     def test_parse_graph(self) -> None:
         input = """
@@ -38,8 +38,8 @@ class TestBasicFunctions(unittest.TestCase):
            }
            """
         model = onnx.parser.parse_model(input)
-        self.assertTrue(model.ir_version == 7)
-        self.assertTrue(len(model.opset_import) == 2)
+        self.assertEqual(model.ir_version, 7)
+        self.assertEqual(len(model.opset_import), 2)
         self.check_graph(model.graph)
 
     def test_parse_graph_error(self) -> None:
