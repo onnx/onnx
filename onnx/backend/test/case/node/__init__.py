@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
+from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np  # type: ignore
@@ -206,26 +207,29 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
     return onnx.helper.make_model_gen_version(graph, **kwargs)
 
 
-# In the case of ops with optional inputs and outputs, node.input and node.output indicate
+# In the case of ops with optional inputs and outputs, node_op.input and node_op.output indicate
 # which inputs/outputs are present and which are omitted. However, the parameter inputs
 # and outputs of this function include values only for inputs/outputs that are present.
 # E.g., for an op with 3 inputs, if the second parameter is optional and we wish to omit it,
-# node.inputs would look like ["Param1", "", "Param3"], while inputs would look like
+# node_op.inputs would look like ["Param1", "", "Param3"], while inputs would look like
 # [input-1-value, input-3-value]
 # Instead of creating model with latest version, it now generates models for since_version by default.
 # Thus it can make every model uses the same opset version after every opset change.
 # Besides, user can specify "use_max_opset_version" to generate models for
 # the latest opset vesion that supports before targeted opset version
 def expect(
-    node: onnx.NodeProto,
+    node_op: onnx.NodeProto,
     inputs: Sequence[np.ndarray],
     outputs: Sequence[np.ndarray],
     name: str,
     **kwargs: Any,
 ) -> None:
-    # skip if the node's op_type is not same as the given one
-    if _TargetOpType and node.op_type != _TargetOpType:
+    # skip if the node_op's op_type is not same as the given one
+    if _TargetOpType and node_op.op_type != _TargetOpType:
         return
+
+    # in case node_op is modified
+    node = deepcopy(node_op)
     present_inputs = [x for x in node.input if (x != "")]
     present_outputs = [x for x in node.output if (x != "")]
     input_type_protos = [None] * len(inputs)
