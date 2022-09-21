@@ -399,7 +399,13 @@ def deprecated_make_tensor(
         field = mapping.deprecated_STORAGE_TENSOR_TYPE_TO_FIELD[
             mapping.deprecated_TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]
         ]
-        getattr(tensor, field).extend(vals)
+        try:
+            getattr(tensor, field).extend(vals)
+        except TypeError as e:
+            raise TypeError(
+                f"Unable to create tensor with data_type={data_type}, raw={raw}, "
+                f"field={field!r}, vals={vals}."
+            ) from e
     tensor.dims.extend(dims)
     return tensor
 
