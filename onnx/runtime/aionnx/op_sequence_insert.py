@@ -9,7 +9,7 @@ from ..op_run import OpRun
 
 
 def sequence_insert_reference_implementation(
-    sequence: List[Any], tensor: np.ndarray, position: np.ndarray = None
+    sequence: Union[List|np.ndarray], tensor: np.ndarray, position: np.ndarray = None
 ) -> List[Any]:
     # make a copy of input sequence
     if sequence is None:
