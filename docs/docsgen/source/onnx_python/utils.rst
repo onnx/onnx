@@ -43,5 +43,3 @@ dimension
 .. autofunction:: onnx.compose.expand_out_dim
 
 .. autofunction:: onnx.compose.expand_out_dim_graph
-
-.. autofunction:: onnx.tools.update_model_dims

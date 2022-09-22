@@ -45,8 +45,6 @@ All functions uses to create an ONNX graph.
 
 .. autofunction:: onnx.helper.make_sequence_type_proto
 
-.. autofunction:: onnx.helper.make_sequence_value_info
-
 .. autofunction:: onnx.helper.make_sparse_tensor
 
 .. autofunction:: onnx.helper.make_sparse_tensor_type_proto

@@ -19,5 +19,6 @@ pytest-cov
 scikit-learn
 skl2onnx
 sphinx
+sphinx-exec-code
 sphinx-gallery
 tqdm

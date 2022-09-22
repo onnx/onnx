@@ -5,15 +5,14 @@ Summary of onnx API
 ===================
 
 This section gathers many functions or
-classes from :epkg:`onnx` used when generated ONNX files
+classes from `onnx <https://onnx.ai/>`_ used when generated ONNX files
 from machine learned models. Most of the examples
 are executed during the generation of the documenation
-with this version of :epkg:`onnx`.
+with this version of *onnx*.
 
 .. autofunction:: onnx.defs.onnx_opset_version
 
-.. runpython::
-    :showcode:
+.. exec_code::
 
     from onnx import __version__
     from onnx.defs import onnx_opset_version
@@ -29,7 +28,7 @@ Other functions are dispatched accress following sections.
     numpy_helper
     classes
     shape_inference
-    potting
+    plotting
     spec
     hub
     utils

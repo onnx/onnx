@@ -31,6 +31,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.coverage',
     'sphinx.ext.doctest',
+    'sphinx_exec_code',
     'onnx_sphinx',
 ]
 
@@ -50,13 +51,6 @@ html_theme = "pydata_sphinx_theme"
 html_logo = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png")
 
 # Navbar
-html_theme_options = {
-    'navbar_title': "ONNX Docs",
-    'navbar_links': [
-        ("API Overview", "onnx-api/index"),
-        ("Op Schemas", "operators/index"),
-    ],
-}
 html_static_path = ["_static"]
 
 # -- Options for graphviz ----------------------------------------------------
