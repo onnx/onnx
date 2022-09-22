@@ -3,23 +3,23 @@
 
 from typing import Optional, Tuple
 
-import numpy  # type: ignore
-from numpy.random import RandomState  # type: ignore
+import numpy as np  # type: ignore
+from np.random import RandomState  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
 
 
 def _dropout(
-    X: numpy.ndarray,
+    X: np.ndarray,
     drop_probability: float = 0.5,
     seed: Optional[int] = None,
     training_mode: bool = False,
     return_mask: bool = False,
-) -> Tuple[numpy.ndarray]:
+) -> Tuple[np.ndarray]:
     if drop_probability == 0 or not training_mode:
         if return_mask:
-            return X, numpy.ones(X.shape, dtype=bool)  # type: ignore
+            return X, np.ones(X.shape, dtype=bool)  # type: ignore
         return (X,)
 
     rnd = RandomState(seed)
@@ -35,11 +35,11 @@ class DropoutBase(OpRun):
 
     def _private_run(
         self,
-        X: numpy.ndarray,
+        X: np.ndarray,
         seed: Optional[int] = None,
         ratio: float = 0.5,
         training_mode: bool = False,
-    ) -> Tuple[numpy.ndarray]:
+    ) -> Tuple[np.ndarray]:
         return _dropout(
             X,
             ratio,

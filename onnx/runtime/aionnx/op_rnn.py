@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
@@ -62,22 +62,22 @@ class CommonRNN(OpRun):
         raise RuntimeError(f"Unknown activation function {name!r}.")
 
     def _f_tanh(self, x):  # type: ignore
-        return numpy.tanh(x)
+        return np.tanh(x)
 
     def _step(self, X, R, B, W, H_0):  # type: ignore
         h_list = []
         H_t = H_0
-        for x in numpy.split(X, X.shape[0], axis=0):
+        for x in np.split(X, X.shape[0], axis=0):
             H = self.f1(
-                numpy.dot(x, numpy.transpose(W))
-                + numpy.dot(H_t, numpy.transpose(R))
-                + numpy.add(*numpy.split(B, 2))
+                np.dot(x, np.transpose(W))
+                + np.dot(H_t, np.transpose(R))
+                + np.add(*np.split(B, 2))
             )
             h_list.append(H)
             H_t = H
-        concatenated = numpy.concatenate(h_list)
+        concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
-            output = numpy.expand_dims(concatenated, 1)
+            output = np.expand_dims(concatenated, 1)
         return output, h_list[-1]
 
     def _run(self, X, W, R, B=None, sequence_lens=None, initial_h=None):  # type: ignore
@@ -85,23 +85,23 @@ class CommonRNN(OpRun):
         self.num_directions = W.shape[0]
 
         if self.num_directions == 1:
-            R = numpy.squeeze(R, axis=0)
-            W = numpy.squeeze(W, axis=0)
+            R = np.squeeze(R, axis=0)
+            W = np.squeeze(W, axis=0)
             if B is not None:
-                B = numpy.squeeze(B, axis=0)
+                B = np.squeeze(B, axis=0)
             if sequence_lens is not None:
-                sequence_lens = numpy.squeeze(sequence_lens, axis=0)
+                sequence_lens = np.squeeze(sequence_lens, axis=0)
             if initial_h is not None:
-                initial_h = numpy.squeeze(initial_h, axis=0)
+                initial_h = np.squeeze(initial_h, axis=0)
 
             hidden_size = R.shape[-1]
             batch_size = X.shape[1]
 
-            b = B if B is not None else numpy.zeros(2 * hidden_size, dtype=X.dtype)
+            b = B if B is not None else np.zeros(2 * hidden_size, dtype=X.dtype)
             h_0 = (
                 initial_h
                 if initial_h is not None
-                else numpy.zeros((batch_size, hidden_size), dtype=X.dtype)
+                else np.zeros((batch_size, hidden_size), dtype=X.dtype)
             )
 
             B = b
@@ -113,7 +113,7 @@ class CommonRNN(OpRun):
 
         Y, Y_h = self._step(X, R, B, W, H_0)
         # if self.layout == 1:
-        #    #Y = numpy.transpose(Y, [2, 0, 1, 3])
+        #    #Y = np.transpose(Y, [2, 0, 1, 3])
         #    Y_h = Y[:, :, -1, :]
 
         return (Y,) if self.n_outputs == 1 else (Y, Y_h)

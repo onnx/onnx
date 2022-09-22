@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0914,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -54,7 +54,7 @@ class Loop(OpRun):
         while cond and it < M:
             self._log("  -- loop> {%r}", context)
             if len(body.input_names) > 0 and body.input_names[0] is not None:
-                inputs[body.input_names[0]] = numpy.array(it, dtype=M.dtype)
+                inputs[body.input_names[0]] = np.array(it, dtype=M.dtype)
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
             outputs = self._run_body(inputs)  # type: ignore
@@ -80,7 +80,7 @@ class Loop(OpRun):
             outputs = outputs[1 : 1 + self.N]
         outputs.extend(k_carried_away)
         while len(outputs) < len(self.onnx_node.output):
-            outputs.append(numpy.empty(shape=tuple()))
+            outputs.append(np.empty(shape=tuple()))
         res = tuple(outputs)
         if any(r is None for r in res):
             raise TypeError("Operator Loop produces a None value.")

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=E0203,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
@@ -11,7 +11,7 @@ from ._op import OpRunUnaryNum
 class Squeeze_1(OpRunUnaryNum):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRunUnaryNum.__init__(self, onnx_node, run_params)
-        if isinstance(self.axes, numpy.ndarray):  # type: ignore
+        if isinstance(self.axes, np.ndarray):  # type: ignore
             self.axes = tuple(self.axes)  # type: ignore
         elif self.axes in [[], tuple()]:
             self.axes = None  # type: ignore
@@ -23,9 +23,9 @@ class Squeeze_1(OpRunUnaryNum):
         if isinstance(self.axes, (tuple, list)):
             sq = data
             for a in reversed(self.axes):
-                sq = numpy.squeeze(sq, axis=a)
+                sq = np.squeeze(sq, axis=a)
         else:
-            sq = numpy.squeeze(data, axis=self.axes)
+            sq = np.squeeze(data, axis=self.axes)
         return (sq,)
 
 
@@ -41,11 +41,11 @@ class Squeeze_13(OpRun):
     def _run(self, data, axes=None):  # type: ignore
         if axes is not None:
             if hasattr(axes, "__iter__"):
-                sq = numpy.squeeze(data, axis=tuple(axes))
+                sq = np.squeeze(data, axis=tuple(axes))
             else:
-                sq = numpy.squeeze(data, axis=axes)
+                sq = np.squeeze(data, axis=axes)
         else:
-            sq = numpy.squeeze(data)
+            sq = np.squeeze(data)
         return (sq,)
 
 

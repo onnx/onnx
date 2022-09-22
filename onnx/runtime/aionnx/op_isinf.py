@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ._op import OpRunUnary
 
@@ -11,9 +11,9 @@ class IsInf(OpRunUnary):
         # TODO: support overridden attributes.
         if self.detect_negative:  # type: ignore
             if self.detect_positive:  # type: ignore
-                return (numpy.isinf(data),)
-            return (numpy.isneginf(data),)
+                return (np.isinf(data),)
+            return (np.isneginf(data),)
         if self.detect_positive:  # type: ignore
-            return (numpy.isposinf(data),)
-        res = numpy.full(data.shape, dtype=numpy.bool_, fill_value=False)
+            return (np.isposinf(data),)
+        res = np.full(data.shape, dtype=np.bool_, fill_value=False)
         return (res,)

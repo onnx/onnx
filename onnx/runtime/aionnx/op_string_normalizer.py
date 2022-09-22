@@ -5,7 +5,7 @@ import locale
 import unicodedata
 import warnings
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import RuntimeTypeError
 from ._op import OpRunUnary
@@ -39,7 +39,7 @@ class StringNormalizer(OpRunUnary):
         Normalizes strings.
         """
         # TODO: support overridden attributes.
-        res = numpy.empty(x.shape, dtype=x.dtype)
+        res = np.empty(x.shape, dtype=x.dtype)
         if len(x.shape) == 2:
             for i in range(0, x.shape[1]):
                 self._run_column(x[:, i], res[:, i])
@@ -48,13 +48,13 @@ class StringNormalizer(OpRunUnary):
         else:
             raise RuntimeTypeError("x must be a matrix or a vector.")
         if len(res.shape) == 2 and res.shape[0] == 1:
-            res = numpy.array([[w for w in res.tolist()[0] if len(w) > 0]])
+            res = np.array([[w for w in res.tolist()[0] if len(w) > 0]])
             if res.shape[1] == 0:
-                res = numpy.array([[""]])
+                res = np.array([[""]])
         elif len(res.shape) == 1:
-            res = numpy.array([w for w in res.tolist() if len(w) > 0])
+            res = np.array([w for w in res.tolist() if len(w) > 0])
             if len(res) == 0:
-                res = numpy.array([""])
+                res = np.array([""])
         return (res,)
 
     def _run_column(self, cin, cout):  # type: ignore

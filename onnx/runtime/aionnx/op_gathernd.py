@@ -3,14 +3,14 @@
 
 from typing import Tuple
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
 
 def _gather_nd_impl(
-    data: numpy.ndarray, indices: numpy.ndarray, batch_dims: int
-) -> Tuple[numpy.ndarray]:
+    data: np.ndarray, indices: np.ndarray, batch_dims: int
+) -> Tuple[np.ndarray]:
     # Note the data rank - will be reused multiple times later
     data_rank = len(data.shape)
 
@@ -50,7 +50,7 @@ def _gather_nd_impl(
         for outer_dim in range(reshaped_indices.shape[1]):
             gather_index = tuple(reshaped_indices[batch_dim][outer_dim])
             output_data_buffer.append(reshaped_data[(batch_dim,) + gather_index])
-    return (numpy.asarray(output_data_buffer, dtype=data.dtype).reshape(output_shape),)
+    return (np.asarray(output_data_buffer, dtype=data.dtype).reshape(output_shape),)
 
 
 class GatherND(OpRun):

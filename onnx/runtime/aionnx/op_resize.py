@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0123,R0912,R0913,R0914,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -38,15 +38,15 @@ def _cartesian(arrays, out=None):  # type: ignore
            [3, 5, 7]])
     """
 
-    arrays = [numpy.asarray(x) for x in arrays]
+    arrays = [np.asarray(x) for x in arrays]
     dtype = arrays[0].dtype
 
-    n = numpy.prod([x.size for x in arrays])
+    n = np.prod([x.size for x in arrays])
     if out is None:
-        out = numpy.zeros([n, len(arrays)], dtype=dtype)
+        out = np.zeros([n, len(arrays)], dtype=dtype)
 
     m = n // arrays[0].size
-    out[:, 0] = numpy.repeat(arrays[0], m)
+    out[:, 0] = np.repeat(arrays[0], m)
     if arrays[1:]:
         _cartesian(arrays[1:], out=out[0:m, 1:])
         for j in range(1, arrays[0].size):
@@ -56,15 +56,15 @@ def _cartesian(arrays, out=None):  # type: ignore
 
 def _nearest_coeffs(ratio, mode="round_prefer_floor"):  # type: ignore
     if type(ratio) == int or ratio.is_integer():
-        return numpy.array([0, 1])
+        return np.array([0, 1])
     if mode == "round_prefer_floor":
-        return numpy.array([ratio <= 0.5, ratio > 0.5])
+        return np.array([ratio <= 0.5, ratio > 0.5])
     if mode == "round_prefer_ceil":
-        return numpy.array([ratio < 0.5, ratio >= 0.5])
+        return np.array([ratio < 0.5, ratio >= 0.5])
     if mode == "floor":
-        return numpy.array([1, 0])
+        return np.array([1, 0])
     if mode == "ceil":
-        return numpy.array([0, 1])
+        return np.array([0, 1])
     raise ValueError(f"Unexpected value {mode!r}.")
 
 
@@ -78,22 +78,22 @@ def _cubic_coeffs(ratio, A=-0.75):  # type: ignore
         - 4 * A,
     ]
 
-    return numpy.array(coeffs)
+    return np.array(coeffs)
 
 
 def _linear_coeffs(ratio):  # type: ignore
-    return numpy.array([1 - ratio, ratio])
+    return np.array([1 - ratio, ratio])
 
 
 def _get_neighbor_idxes(x, n, limit):  # type: ignore
     idxes = sorted(range(limit), key=lambda idx: (abs(x - idx), idx))[:n]
     idxes = sorted(idxes)
-    return numpy.array(idxes)
+    return np.array(idxes)
 
 
 def _get_neighbor(x, n, data):  # type: ignore
-    pad_width = numpy.ceil(n / 2).astype(int)
-    padded = numpy.pad(data, pad_width, mode="edge")
+    pad_width = np.ceil(n / 2).astype(int)
+    padded = np.pad(data, pad_width, mode="edge")
     x += pad_width
 
     idxes = _get_neighbor_idxes(x, n, len(padded))
@@ -141,7 +141,7 @@ def _interpolate_1d_with_x(  # type: ignore
         raise ValueError(
             f"Invalid coordinate_transformation_mode: {coordinate_transformation_mode!r}."
         )
-    x_ori_int = numpy.floor(x_ori).astype(int).item()
+    x_ori_int = np.floor(x_ori).astype(int).item()
 
     # ratio must be in (0, 1] since we prefer the pixel on the left of `x_ori`
     if x_ori.is_integer():
@@ -160,7 +160,7 @@ def _interpolate_1d_with_x(  # type: ignore
                 coeffs[i] = 0
         coeffs /= sum(coeffs)
 
-    return numpy.dot(coeffs, points).item()
+    return np.dot(coeffs, points).item()
 
 
 def _interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, roi=None, **kwargs):  # type: ignore
@@ -178,7 +178,7 @@ def _interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, roi=None, **kw
                 get_coeffs,
                 roi=None
                 if roi is None
-                else numpy.concatenate([roi[1:n], roi[n + 1 :]]),
+                else np.concatenate([roi[1:n], roi[n + 1 :]]),
                 **kwargs,
             )
             for i in range(data.shape[0])
@@ -201,12 +201,12 @@ def _interpolate_nd(  # type: ignore
 
     assert output_size is not None or scale_factors is not None
     if output_size is not None:
-        scale_factors = numpy.array(output_size) / numpy.array(data.shape)
+        scale_factors = np.array(output_size) / np.array(data.shape)
     else:
-        output_size = (scale_factors * numpy.array(data.shape)).astype(int)
+        output_size = (scale_factors * np.array(data.shape)).astype(int)
     assert scale_factors is not None
 
-    ret = numpy.zeros(output_size)
+    ret = np.zeros(output_size)
     for x in _get_all_coords(ret):
         ret[tuple(x)] = _interpolate_nd_with_x(
             data, len(data.shape), scale_factors, x, get_coeffs, roi=roi, **kwargs

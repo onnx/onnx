@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -12,8 +12,8 @@ class OptionalHasElement(OpRun):
             return ([],)
         if isinstance(x, list):
             if len(x) > 0:
-                return (numpy.array([e is not None for e in x]),)
-        elif isinstance(x, numpy.ndarray):
+                return (np.array([e is not None for e in x]),)
+        elif isinstance(x, np.ndarray):
             if len(x.shape) > 0 and x.shape[0] > 0:
-                return (numpy.array([e is not None for e in x]),)
+                return (np.array([e is not None for e in x]),)
         return ([],)

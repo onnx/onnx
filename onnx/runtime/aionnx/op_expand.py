@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
 
 def common_reference_implementation(
-    data: numpy.ndarray, shape: numpy.ndarray
-) -> numpy.ndarray:
-    ones = numpy.ones(shape, dtype=data.dtype)
+    data: np.ndarray, shape: np.ndarray
+) -> np.ndarray:
+    ones = np.ones(shape, dtype=data.dtype)
     return data * ones
 
 

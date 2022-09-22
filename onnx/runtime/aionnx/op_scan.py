@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0914,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -122,9 +122,9 @@ class Scan(OpRun):
             outputs = dict(zip(self.output_names, outputs_list))
             states = [outputs[name] for name in state_names_out]
             for i, name in enumerate(scan_names_out):
-                results[i].append(numpy.expand_dims(outputs[name], axis=0))
+                results[i].append(np.expand_dims(outputs[name], axis=0))
 
         for res in results:
-            conc = numpy.vstack(res)
+            conc = np.vstack(res)
             states.append(conc)
         return tuple(states)

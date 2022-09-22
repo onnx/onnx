@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ._op_run_training import OpRunTraining
 
@@ -16,12 +16,12 @@ def _apply_adam(  # type: ignore
     # Update second-order momentum.
     h_new = beta * h + (1 - beta) * (g_regularized * g_regularized)
     # Compute element-wise square root.
-    h_sqrt = numpy.sqrt(h_new) + epsilon
+    h_sqrt = np.sqrt(h_new) + epsilon
     # Adjust learning rate.
     r_adjusted = None
     if t > 0:
         # Consider bias correction on momentums.
-        r_adjusted = r * numpy.sqrt(1 - beta**t) / (1 - alpha**t)
+        r_adjusted = r * np.sqrt(1 - beta**t) / (1 - alpha**t)
     else:
         # No bias correction on momentums.
         r_adjusted = r
@@ -49,9 +49,9 @@ class Adam(OpRunTraining):
                 data[2 + n * 2 + i],
                 data[2 + n * 3 + i],
             )
-            xs.append(a.astype(numpy.float32))
-            vs.append(b.astype(numpy.float32))
-            hs.append(c.astype(numpy.float32))
+            xs.append(a.astype(np.float32))
+            vs.append(b.astype(np.float32))
+            hs.append(c.astype(np.float32))
         return tuple(xs + vs + hs)
 
     def _run1(self, r, t, x, g, v, h):  # type: ignore

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=E0203,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -18,6 +18,6 @@ class Einsum(OpRun):
     def _run(self, *args):  # type: ignore
         # TODO: support overridden attributes.
         try:
-            return (numpy.einsum(self.equation, *args, optimize=True),)  # type: ignore
+            return (np.einsum(self.equation, *args, optimize=True),)  # type: ignore
         except TypeError:
-            return (numpy.einsum(self.equation, *args),)  # type: ignore
+            return (np.einsum(self.equation, *args),)  # type: ignore

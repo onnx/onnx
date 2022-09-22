@@ -1,26 +1,26 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ._op import OpRunArg
 
 
 def _argmin(data, axis=0, keepdims=True):  # type: ignore
-    result = numpy.argmin(data, axis=axis)
+    result = np.argmin(data, axis=axis)
     if keepdims and len(result.shape) < len(data.shape):
-        result = numpy.expand_dims(result, axis)
-    return result.astype(numpy.int64)
+        result = np.expand_dims(result, axis)
+    return result.astype(np.int64)
 
 
 def _argmin_use_numpy_select_last_index(data, axis=0, keepdims=True):  # type: ignore
-    data = numpy.flip(data, axis)
-    result = numpy.argmin(data, axis=axis)
+    data = np.flip(data, axis)
+    result = np.argmin(data, axis=axis)
     result = data.shape[axis] - result - 1
     if keepdims:
-        result = numpy.expand_dims(result, axis)
-    return result.astype(numpy.int64)
+        result = np.expand_dims(result, axis)
+    return result.astype(np.int64)
 
 
 class _ArgMin(OpRunArg):

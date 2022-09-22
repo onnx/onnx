@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -18,26 +18,26 @@ def softmaxcrossentropy(  # type: ignore
     C = input_shape[1]
 
     # compute log_softmax
-    max_x = numpy.max(x, axis=1, keepdims=True)
-    exp_x = numpy.exp(x - max_x)
-    p = exp_x / numpy.sum(exp_x, axis=1, keepdims=True)
-    inp = numpy.log(p)
+    max_x = np.max(x, axis=1, keepdims=True)
+    exp_x = np.exp(x - max_x)
+    p = exp_x / np.sum(exp_x, axis=1, keepdims=True)
+    inp = np.log(p)
     log_prob = None
     if get_log_prob is True:
-        log_prob = numpy.copy(inp)
+        log_prob = np.copy(inp)
 
     # initialize the positional weights when required
     gather_weight = None
     if weight is not None:
-        gather_weight = numpy.take(
-            weight, numpy.array(target, dtype=numpy.int32), mode="clip"
+        gather_weight = np.take(
+            weight, np.array(target, dtype=np.int32), mode="clip"
         )
         if ignore_index is not None:
-            gather_weight = numpy.where(
+            gather_weight = np.where(
                 target == ignore_index, 0, gather_weight
             ).astype(dtype=x.dtype)
     elif ignore_index is not None:
-        gather_weight = numpy.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
+        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
 
     # if input is 4-d and above, make it 3-d
     if len(input_shape) != 3:
@@ -49,7 +49,7 @@ def softmaxcrossentropy(  # type: ignore
     # the D here should be H * W because we reshape
     # [N, C, H, W] to [N, C, H * W].
     D = inp.shape[2]
-    neg_gather_element_input = numpy.zeros((N, D), dtype=x.dtype)
+    neg_gather_element_input = np.zeros((N, D), dtype=x.dtype)
     for i in range(N):
         for d in range(D):
             if target[i, d] != ignore_index:
@@ -71,9 +71,9 @@ def softmaxcrossentropy(  # type: ignore
             return (loss,)
 
     if reduction == "mean":
-        loss = numpy.mean(loss)
+        loss = np.mean(loss)
     elif reduction == "sum":
-        loss = numpy.sum(loss)
+        loss = np.sum(loss)
 
     if get_log_prob is True:
         return loss, log_prob

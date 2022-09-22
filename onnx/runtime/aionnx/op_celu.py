@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ._op import OpRunUnaryNum
 
 
-def _vcelu1(x: numpy.ndarray, alpha: float = 1.0) -> numpy.ndarray:
-    positive_input = numpy.maximum(0, x)
-    negative_input = numpy.minimum(0, alpha * (numpy.exp(x / alpha) - 1))
+def _vcelu1(x: np.ndarray, alpha: float = 1.0) -> np.ndarray:
+    positive_input = np.maximum(0, x)
+    negative_input = np.minimum(0, alpha * (np.exp(x / alpha) - 1))
     return positive_input + negative_input
 
 

@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
 
 class Det(OpRun):
     def _run(self, x):  # type: ignore
-        res = numpy.linalg.det(x)
-        if not isinstance(res, numpy.ndarray):
-            res = numpy.array([res])
+        res = np.linalg.det(x)
+        if not isinstance(res, np.ndarray):
+            res = np.array([res])
         return (res,)

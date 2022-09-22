@@ -3,7 +3,7 @@
 
 from typing import Tuple
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -14,43 +14,43 @@ class CommonLSTM(OpRun):
         self.n_outputs = len(onnx_node.output)
         self.n_gates = 3
 
-    def f(self, x: numpy.ndarray) -> numpy.ndarray:
-        return 1 / (1 + numpy.exp(-x))
+    def f(self, x: np.ndarray) -> np.ndarray:
+        return 1 / (1 + np.exp(-x))
 
-    def g(self, x: numpy.ndarray) -> numpy.ndarray:
-        return numpy.tanh(x)
+    def g(self, x: np.ndarray) -> np.ndarray:
+        return np.tanh(x)
 
-    def h(self, x: numpy.ndarray) -> numpy.ndarray:
-        return numpy.tanh(x)
+    def h(self, x: np.ndarray) -> np.ndarray:
+        return np.tanh(x)
 
     def _step(
         self,
-        X: numpy.ndarray,
-        R: numpy.ndarray,
-        B: numpy.ndarray,
-        W: numpy.ndarray,
-        H_0: numpy.ndarray,
-        C_0: numpy.ndarray,
-        P: numpy.ndarray,
+        X: np.ndarray,
+        R: np.ndarray,
+        B: np.ndarray,
+        W: np.ndarray,
+        H_0: np.ndarray,
+        C_0: np.ndarray,
+        P: np.ndarray,
         num_directions: int,
-    ) -> Tuple[numpy.ndarray, numpy.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]
 
-        Y = numpy.empty([seq_length, num_directions, batch_size, hidden_size])
+        Y = np.empty([seq_length, num_directions, batch_size, hidden_size])
         h_list = []
 
-        [p_i, p_o, p_f] = numpy.split(P, 3)
+        [p_i, p_o, p_f] = np.split(P, 3)
         H_t = H_0
         C_t = C_0
-        for x in numpy.split(X, X.shape[0], axis=0):
+        for x in np.split(X, X.shape[0], axis=0):
             gates = (
-                numpy.dot(x, numpy.transpose(W))
-                + numpy.dot(H_t, numpy.transpose(R))
-                + numpy.add(*numpy.split(B, 2))
+                np.dot(x, np.transpose(W))
+                + np.dot(H_t, np.transpose(R))
+                + np.add(*np.split(B, 2))
             )
-            i, o, f, c = numpy.split(gates, 4, -1)
+            i, o, f, c = np.split(gates, 4, -1)
             i = self.f(i + p_i * C_t)
             f = self.f(f + p_f * C_t)
             c = self.g(c)
@@ -61,14 +61,14 @@ class CommonLSTM(OpRun):
             H_t = H
             C_t = C
 
-        concatenated = numpy.concatenate(h_list)
+        concatenated = np.concatenate(h_list)
         if num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
         if self.layout == 0:  # type: ignore
             Y_h = Y[-1]
         else:
-            Y = numpy.transpose(Y, [2, 0, 1, 3])
+            Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
 
         return Y, Y_h  # type: ignore
@@ -81,44 +81,44 @@ class CommonLSTM(OpRun):
         num_directions = W.shape[0]
 
         if num_directions == 1:
-            R = numpy.squeeze(R, axis=0)
-            W = numpy.squeeze(W, axis=0)
+            R = np.squeeze(R, axis=0)
+            W = np.squeeze(W, axis=0)
             if B is not None and len(B.shape) > 0 and B.shape[0] == 1:
-                B = numpy.squeeze(B, axis=0)
+                B = np.squeeze(B, axis=0)
             if (
                 sequence_lens is not None
                 and len(sequence_lens.shape) > 0
                 and sequence_lens.shape[0] == 1
             ):
-                sequence_lens = numpy.squeeze(sequence_lens, axis=0)
+                sequence_lens = np.squeeze(sequence_lens, axis=0)
             if (
                 initial_h is not None
                 and len(initial_h.shape) > 0
                 and initial_h.shape[0] == 1
             ):
-                initial_h = numpy.squeeze(initial_h, axis=0)
+                initial_h = np.squeeze(initial_h, axis=0)
             if (
                 initial_c is not None
                 and len(initial_c.shape) > 0
                 and initial_c.shape[0] == 1
             ):
-                initial_c = numpy.squeeze(initial_c, axis=0)
+                initial_c = np.squeeze(initial_c, axis=0)
             if P is not None and len(P.shape) > 0 and P.shape[0] == 1:
-                P = numpy.squeeze(P, axis=0)
+                P = np.squeeze(P, axis=0)
 
             hidden_size = R.shape[-1]
             batch_size = X.shape[1]
 
             if self.layout != 0:  # type: ignore
-                X = numpy.swapaxes(X, 0, 1)
+                X = np.swapaxes(X, 0, 1)
             if B is None:
-                B = numpy.zeros(2 * n_gates * hidden_size, dtype=numpy.float32)
+                B = np.zeros(2 * n_gates * hidden_size, dtype=np.float32)
             if P is None:
-                P = numpy.zeros(number_of_peepholes * hidden_size, dtype=numpy.float32)
+                P = np.zeros(number_of_peepholes * hidden_size, dtype=np.float32)
             if initial_h is None:
-                initial_h = numpy.zeros((batch_size, hidden_size), dtype=numpy.float32)
+                initial_h = np.zeros((batch_size, hidden_size), dtype=np.float32)
             if initial_c is None:
-                initial_c = numpy.zeros((batch_size, hidden_size), dtype=numpy.float32)
+                initial_c = np.zeros((batch_size, hidden_size), dtype=np.float32)
         else:
             raise NotImplementedError(  # pragma: no cover
                 f"Unsupported value {num_directions!r} for num_directions "

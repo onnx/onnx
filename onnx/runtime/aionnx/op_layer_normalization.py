@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0914,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
 
 def _layer_normalization(
-    X: numpy.ndarray,
-    W: numpy.ndarray,
-    B: numpy.ndarray,
+    X: np.ndarray,
+    W: np.ndarray,
+    B: np.ndarray,
     axis: int = -1,
     epsilon: float = 1e-5,
-) -> numpy.ndarray:
+) -> np.ndarray:
     X_shape = X.shape
     X_rank = len(X_shape)
     if axis < 0:
@@ -37,27 +37,27 @@ def _layer_normalization(
     # layer normalization is equivalent to conducting
     # standardization on each column vector (s.t. each
     # column has zero mean and unit variance).
-    x_mat = numpy.reshape(X, (row_number, col_number))
+    x_mat = np.reshape(X, (row_number, col_number))
     # This computes mean for every x_mat's column.
-    x_mean = numpy.sum(x_mat, axis=1, keepdims=True) / col_number
+    x_mean = np.sum(x_mat, axis=1, keepdims=True) / col_number
     x_diff = x_mat - x_mean
     x_squared_diff = x_diff * x_diff
     # This computes variance for every x_mat's column.
-    variance = numpy.sum(x_squared_diff, axis=1, keepdims=True) / col_number
+    variance = np.sum(x_squared_diff, axis=1, keepdims=True) / col_number
     variance_eps = variance + epsilon
-    std_dev = numpy.sqrt(variance_eps)
-    inv_std_dev = numpy.reciprocal(std_dev)
+    std_dev = np.sqrt(variance_eps)
+    inv_std_dev = np.reciprocal(std_dev)
     # Standardization step. y_mat is zero-mean and unit-variance.
     y_mat = x_diff * inv_std_dev
     # Apply affine transform on normalization outcome.
     # W is linear coefficient while B is bias.
-    Y = numpy.reshape(y_mat, X_shape) * W
+    Y = np.reshape(y_mat, X_shape) * W
     if B is not None:
         Y = Y + B
     # Matrix-level operations' outputs should be reshaped
     # to compensate the initial tensor-to-matrix reshape.
-    X_mean = numpy.reshape(x_mean, reduction_shape)
-    X_inv_std_dev = numpy.reshape(inv_std_dev, reduction_shape)
+    X_mean = np.reshape(x_mean, reduction_shape)
+    X_inv_std_dev = np.reshape(inv_std_dev, reduction_shape)
 
     return (Y.astype(X.dtype), X_mean.astype(X.dtype), X_inv_std_dev.astype(X.dtype))
 

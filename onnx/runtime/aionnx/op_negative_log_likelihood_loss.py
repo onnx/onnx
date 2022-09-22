@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -21,19 +21,19 @@ def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mea
         # setting mode='clip' to deal with ignore_index > C or < 0 cases.
         # when the target value is > C or < 0, it doesn't matter which value we are
         # taking in gather_weight, since it will be set to 0 in the following if-block
-        # use numpy.int32 to make it compatible with x86 machines
-        gather_weight = numpy.take(
-            weight, numpy.array(target, dtype=numpy.int32), mode="clip"
+        # use np.int32 to make it compatible with x86 machines
+        gather_weight = np.take(
+            weight, np.array(target, dtype=np.int32), mode="clip"
         )
         # set `ignore_index`'s loss weight to 0.
         # The loss tensor will be multiplied by this weight tensor,
         # so `ingore_index`'s loss value will be eliminated.
         if ignore_index is not None:
-            gather_weight = numpy.where(
+            gather_weight = np.where(
                 target == ignore_index, 0, gather_weight
             ).astype(dtype=x.dtype)
     elif ignore_index != -1:
-        gather_weight = numpy.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
+        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
 
     # if input is 4-d and above, make it 3-d
     if len(input_shape) != 3:
@@ -45,7 +45,7 @@ def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mea
     # the D here should be H * W because we reshape
     # [N, C, H, W] to [N, C, H * W].
     D = x.shape[2]
-    neg_gather_element_input = numpy.zeros((N, D), dtype=x.dtype)
+    neg_gather_element_input = np.zeros((N, D), dtype=x.dtype)
     for i in range(N):
         for d in range(D):
             if target[i][d] != ignore_index:
@@ -65,9 +65,9 @@ def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mea
             return (loss,)
 
     if reduction == "mean":
-        loss = numpy.mean(loss)
+        loss = np.mean(loss)
     elif reduction == "sum":
-        loss = numpy.sum(loss)
+        loss = np.sum(loss)
     return (loss,)
 
 

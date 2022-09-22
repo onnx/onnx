@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -24,18 +24,18 @@ class _CommonQuantizeLinear(OpRun):
                 x += zero_point.reshape(new_shape)
             else:
                 x += zero_point
-            numpy.around(x, 1, out=x)
-            if dtype == numpy.uint8:
-                numpy.clip(x, 0, 255, out=x)
-            elif dtype == numpy.int8:
-                numpy.clip(x, -128, 127, out=x)
+            np.around(x, 1, out=x)
+            if dtype == np.uint8:
+                np.clip(x, 0, 255, out=x)
+            elif dtype == np.int8:
+                np.clip(x, -128, 127, out=x)
             else:
                 raise RuntimeError(f"Unexpected dtype for input 2 {dtype}.")
-            return (numpy.ceil(x).astype(dtype),)
+            return (np.ceil(x).astype(dtype),)
 
-        dtype = numpy.uint8
-        numpy.around(x, 1, out=x)
-        numpy.clip(x, 0, 255, out=x)
+        dtype = np.uint8
+        np.around(x, 1, out=x)
+        np.clip(x, 0, 255, out=x)
         return (x.astype(dtype),)
 
 

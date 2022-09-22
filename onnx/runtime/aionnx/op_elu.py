@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ._op import OpRunUnaryNum
 
@@ -9,4 +9,4 @@ from ._op import OpRunUnaryNum
 class Elu(OpRunUnaryNum):
     def _run(self, x, alpha=None):  # type: ignore
         alpha = alpha or self.alpha  # type: ignore
-        return (numpy.where(x > 0, x, alpha * (numpy.exp(x) - 1)),)
+        return (np.where(x > 0, x, alpha * (np.exp(x) - 1)),)

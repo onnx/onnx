@@ -3,19 +3,19 @@
 
 from typing import Any, List
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
 
 def _concat_from_sequence(
     seq: List[Any], axis: int, new_axis: int = 0
-) -> numpy.ndarray:
+) -> np.ndarray:
     if new_axis == 1:
-        seq2 = [s[..., numpy.newaxis] for s in seq]
-        res = numpy.concatenate(seq2, axis=-1)
+        seq2 = [s[..., np.newaxis] for s in seq]
+        res = np.concatenate(seq2, axis=-1)
     else:
-        res = numpy.concatenate(seq, axis=axis)
+        res = np.concatenate(seq, axis=axis)
     return res
 
 

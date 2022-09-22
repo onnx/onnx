@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -13,43 +13,43 @@ class CommonGRU(OpRun):
         self.number_of_gates = 3
 
     def f(self, x):  # type: ignore
-        return 1 / (1 + numpy.exp(-x))
+        return 1 / (1 + np.exp(-x))
 
     def g(self, x):  # type: ignore
-        return numpy.tanh(x)
+        return np.tanh(x)
 
     def _step(self, X, R, B, W, H_0, num_directions):  # type: ignore
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]
 
-        Y = numpy.empty([seq_length, num_directions, batch_size, hidden_size])
+        Y = np.empty([seq_length, num_directions, batch_size, hidden_size])
         h_list = []
 
-        [w_z, w_r, w_h] = numpy.split(W, 3)
-        [r_z, r_r, r_h] = numpy.split(R, 3)
-        [w_bz, w_br, w_bh, r_bz, r_br, r_bh] = numpy.split(B, 6)
-        gates_w = numpy.transpose(numpy.concatenate((w_z, w_r)))
-        gates_r = numpy.transpose(numpy.concatenate((r_z, r_r)))
-        gates_b = numpy.add(
-            numpy.concatenate((w_bz, w_br)), numpy.concatenate((r_bz, r_br))
+        [w_z, w_r, w_h] = np.split(W, 3)
+        [r_z, r_r, r_h] = np.split(R, 3)
+        [w_bz, w_br, w_bh, r_bz, r_br, r_bh] = np.split(B, 6)
+        gates_w = np.transpose(np.concatenate((w_z, w_r)))
+        gates_r = np.transpose(np.concatenate((r_z, r_r)))
+        gates_b = np.add(
+            np.concatenate((w_bz, w_br)), np.concatenate((r_bz, r_br))
         )
 
         H_t = H_0
-        for x in numpy.split(X, X.shape[0], axis=0):
-            gates = numpy.dot(x, gates_w) + numpy.dot(H_t, gates_r) + gates_b
-            z, r = numpy.split(gates, 2, -1)  # pylint: disable=W0632
+        for x in np.split(X, X.shape[0], axis=0):
+            gates = np.dot(x, gates_w) + np.dot(H_t, gates_r) + gates_b
+            z, r = np.split(gates, 2, -1)  # pylint: disable=W0632
             z = self.f(z)
             r = self.f(r)
             h_default = self.g(
-                numpy.dot(x, numpy.transpose(w_h))
-                + numpy.dot(r * H_t, numpy.transpose(r_h))
+                np.dot(x, np.transpose(w_h))
+                + np.dot(r * H_t, np.transpose(r_h))
                 + w_bh
                 + r_bh
             )
             h_linear = self.g(
-                numpy.dot(x, numpy.transpose(w_h))
-                + r * (numpy.dot(H_t, numpy.transpose(r_h)) + r_bh)
+                np.dot(x, np.transpose(w_h))
+                + r * (np.dot(H_t, np.transpose(r_h)) + r_bh)
                 + w_bh
             )
             h = h_linear if self.linear_before_reset else h_default  # type: ignore
@@ -57,14 +57,14 @@ class CommonGRU(OpRun):
             h_list.append(H)
             H_t = H
 
-        concatenated = numpy.concatenate(h_list)
+        concatenated = np.concatenate(h_list)
         if num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
         if self.layout == 0:  # type: ignore
             Y_h = Y[-1]
         else:
-            Y = numpy.transpose(Y, [2, 0, 1, 3])
+            Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
 
         return Y, Y_h
@@ -74,14 +74,14 @@ class CommonGRU(OpRun):
         num_directions = W.shape[0]
 
         if num_directions == 1:
-            R = numpy.squeeze(R, axis=0)
-            W = numpy.squeeze(W, axis=0)
+            R = np.squeeze(R, axis=0)
+            W = np.squeeze(W, axis=0)
             if B is not None:
-                B = numpy.squeeze(B, axis=0)
+                B = np.squeeze(B, axis=0)
             if sequence_lens is not None:
-                sequence_lens = numpy.squeeze(sequence_lens, axis=0)
+                sequence_lens = np.squeeze(sequence_lens, axis=0)
             if initial_h is not None:
-                initial_h = numpy.squeeze(initial_h, axis=0)
+                initial_h = np.squeeze(initial_h, axis=0)
 
             hidden_size = R.shape[-1]
             batch_size = X.shape[1]
@@ -89,12 +89,12 @@ class CommonGRU(OpRun):
             b = (
                 B
                 if B is not None
-                else numpy.zeros(2 * self.number_of_gates * hidden_size, dtype=X.dtype)
+                else np.zeros(2 * self.number_of_gates * hidden_size, dtype=X.dtype)
             )
             h_0 = (
                 initial_h
                 if initial_h is not None
-                else numpy.zeros((batch_size, hidden_size), dtype=X.dtype)
+                else np.zeros((batch_size, hidden_size), dtype=X.dtype)
             )
 
             B = b

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
@@ -13,37 +13,37 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
     <https://github.com/scikit-learn/scikit-learn/tree/master/
     sklearn/neighbors/base.py#L304>`_.
     """
-    if isinstance(k, numpy.ndarray):
+    if isinstance(k, np.ndarray):
         if k.size != 1:
             raise RuntimeError(f"k must be an integer not {k!r}.")
         k = k[0]
     if len(X.shape) == 2 and axis == 1:
-        sample_range = numpy.arange(X.shape[0])[:, None]
+        sample_range = np.arange(X.shape[0])[:, None]
         if largest == 0:
-            sorted_indices = numpy.argpartition(X, axis=axis, kth=k - 1)
+            sorted_indices = np.argpartition(X, axis=axis, kth=k - 1)
             sorted_indices = sorted_indices[:, :k]
             # argpartition doesn't guarantee sorted order, so we sort again
             sorted_indices = sorted_indices[
-                sample_range, numpy.argsort(X[sample_range, sorted_indices])
+                sample_range, np.argsort(X[sample_range, sorted_indices])
             ]
         else:
-            sorted_indices = numpy.argpartition(-X, axis=axis, kth=k - 1)
+            sorted_indices = np.argpartition(-X, axis=axis, kth=k - 1)
             sorted_indices = sorted_indices[:, :k]
             # argpartition doesn't guarantee sorted order, so we sort again
             sorted_indices = sorted_indices[
-                sample_range, numpy.argsort(-X[sample_range, sorted_indices])
+                sample_range, np.argsort(-X[sample_range, sorted_indices])
             ]
         sorted_distances = X[sample_range, sorted_indices]
         return sorted_distances, sorted_indices
 
-    sorted_indices = numpy.argsort(X, axis=axis)
-    sorted_values = numpy.sort(X, axis=axis)
+    sorted_indices = np.argsort(X, axis=axis)
+    sorted_values = np.sort(X, axis=axis)
     if largest:
-        sorted_indices = numpy.flip(sorted_indices, axis=axis)
-        sorted_values = numpy.flip(sorted_values, axis=axis)
-    ark = numpy.arange(k)
-    topk_sorted_indices = numpy.take(sorted_indices, ark, axis=axis)
-    topk_sorted_values = numpy.take(sorted_values, ark, axis=axis)
+        sorted_indices = np.flip(sorted_indices, axis=axis)
+        sorted_values = np.flip(sorted_values, axis=axis)
+    ark = np.arange(k)
+    topk_sorted_indices = np.take(sorted_indices, ark, axis=axis)
+    topk_sorted_values = np.take(sorted_values, ark, axis=axis)
     return topk_sorted_values, topk_sorted_indices
 
 
@@ -64,7 +64,7 @@ class _CommonTopK(OpRun):
         k = ink[0]
         axis = self.axis if self.axis >= 0 else (self.axis + len(data.shape))  # type: ignore
         sort, sorti = topk_sorted_implementation(data, k, axis, largest)
-        return (sort, sorti.astype(numpy.int64))
+        return (sort, sorti.astype(np.int64))
 
 
 class TopK_1(_CommonTopK):
