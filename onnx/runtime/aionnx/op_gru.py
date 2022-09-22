@@ -31,9 +31,7 @@ class CommonGRU(OpRun):
         [w_bz, w_br, w_bh, r_bz, r_br, r_bh] = np.split(B, 6)
         gates_w = np.transpose(np.concatenate((w_z, w_r)))
         gates_r = np.transpose(np.concatenate((r_z, r_r)))
-        gates_b = np.add(
-            np.concatenate((w_bz, w_br)), np.concatenate((r_bz, r_br))
-        )
+        gates_b = np.add(np.concatenate((w_bz, w_br)), np.concatenate((r_bz, r_br)))
 
         H_t = H_0
         for x in np.split(X, X.shape[0], axis=0):

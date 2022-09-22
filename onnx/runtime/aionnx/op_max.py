@@ -8,11 +8,11 @@ from ._op import OpRunBinaryNumpy
 
 class Max(OpRunBinaryNumpy):
     def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunBinarynp.__init__(self, np.maximum, onnx_node, run_params)
+        OpRunBinaryNumpy.__init__(self, np.maximum, onnx_node, run_params)
 
     def run(self, *data):  # type: ignore
         if len(data) == 2:
-            return OpRunBinarynp.run(self, *data)
+            return OpRunBinaryNumpy.run(self, *data)
         if len(data) == 1:
             return (data[0].copy(),)
         if len(data) > 2:

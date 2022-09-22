@@ -18,9 +18,9 @@ class DynamicQuantizeLinear(OpRun):
         minx = np.minimum(0, np.min(x))
         y_scale = (maxx - minx) / (qmax - qmin)
         intermediate_zero_point = np.round(qmin - minx) / y_scale
-        y_zero_point = np.round(
-            np.clip(intermediate_zero_point, qmin, qmax)
-        ).astype(self.dtype)
+        y_zero_point = np.round(np.clip(intermediate_zero_point, qmin, qmax)).astype(
+            self.dtype
+        )
         y = np.clip(np.round(x / y_scale) + y_zero_point, qmin, qmax)
         return (
             y.astype(self.dtype),

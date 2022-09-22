@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-from typing import Any, List
+from typing import Any, List, Union
 
 import numpy as np  # type: ignore
 
@@ -9,16 +9,17 @@ from ..op_run import OpRun
 
 
 def sequence_insert_reference_implementation(
-    sequence: Union[List|np.ndarray], tensor: np.ndarray, position: np.ndarray = None
+    sequence: Union[List[Any], np.ndarray],
+    tensor: np.ndarray,
+    position: np.ndarray = None,
 ) -> List[Any]:
     # make a copy of input sequence
-    if sequence is None:
-        seq = []
-    elif isinstance(sequence, np.ndarray) and len(sequence.shape) == 0:
-        seq = []
-    else:
+    seq: List[Any] = []
+    if sequence is not None and (
+        not isinstance(sequence, np.ndarray) or len(sequence.shape) > 0
+    ):
         try:
-            seq = list(sequence)
+            seq.extend(sequence)
         except TypeError as e:
             raise TypeError(
                 f"Unable to iterate on type {type(sequence)}: {sequence}."

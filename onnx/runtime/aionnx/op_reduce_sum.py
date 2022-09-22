@@ -46,9 +46,7 @@ class ReduceSum_13(OpRunReduceNumpy):
                 axes = int(axes)
             else:
                 axes = tuple(axes.ravel().tolist()) if len(axes) > 0 else None
-        if isinstance(axes, np.ndarray) and (
-            len(axes.shape) == 0 or 0 in axes.shape
-        ):
+        if isinstance(axes, np.ndarray) and (len(axes.shape) == 0 or 0 in axes.shape):
             axes = None
         try:
             return (

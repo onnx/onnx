@@ -29,13 +29,11 @@ def softmaxcrossentropy(  # type: ignore
     # initialize the positional weights when required
     gather_weight = None
     if weight is not None:
-        gather_weight = np.take(
-            weight, np.array(target, dtype=np.int32), mode="clip"
-        )
+        gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode="clip")
         if ignore_index is not None:
-            gather_weight = np.where(
-                target == ignore_index, 0, gather_weight
-            ).astype(dtype=x.dtype)
+            gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
+                dtype=x.dtype
+            )
     elif ignore_index is not None:
         gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
 

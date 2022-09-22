@@ -1,13 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0640,W0703
+"""
+These test evaluates the python runtime (class Inference) against
+all the backend tests (in onnx/backend/test/case/node) and checks
+the runtime produces the expected outputs.
+"""
 
 import os
 import unittest
 
 import numpy as np
 from numpy import object_ as dtype_object
-from numpy.testing import assert_almost_equal  # type: ignore
+from numpy.testing import assert_allclose  # type: ignore
 
 import onnx.runtime as rt
 from onnx import (
@@ -26,7 +31,7 @@ from onnx.mapping import OPTIONAL_ELEMENT_TYPE_TO_FIELD, TENSOR_TYPE_TO_NP_TYPE
 from onnx.numpy_helper import to_array, to_list, to_optional
 
 
-def assert_almost_equal_string(expected, value):
+def assert_allclose_string(expected, value):
     """
     Compares two arrays knowing they contain strings.
     Raises an exception if the test fails.
@@ -45,7 +50,7 @@ def assert_almost_equal_string(expected, value):
     if all(map(is_float, expected.ravel())):
         expected_float = expected.astype(np.float32)
         value_float = value.astype(np.float32)
-        assert_almost_equal(expected_float, value_float)
+        assert_allclose(expected_float, value_float)
     else:
         if expected.tolist() != value.tolist():
             raise AssertionError(f"Mismatches {expected} != {value}.")
@@ -213,14 +218,14 @@ class OnnxBackendTest:
                     deci = decimal
                 if e.dtype == dtype_object:
                     try:
-                        assert_almost_equal_string(e, o)
+                        assert_allclose_string(e, o)
                     except AssertionError as ex:
                         raise AssertionError(
                             f"Output {i} of test {index} in folder {self.folder!r} failed."
                         ) from ex
                 else:
                     try:
-                        assert_almost_equal(e, o, decimal=deci)
+                        assert_allclose(e, o, decimal=deci)
                     except AssertionError as ex:
                         raise AssertionError(
                             f"Output {i} of test {index} in folder {self.folder!r} failed (decimal={deci})."

@@ -176,9 +176,7 @@ def _interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, roi=None, **kw
                 scale_factors[1:],
                 x[1:],
                 get_coeffs,
-                roi=None
-                if roi is None
-                else np.concatenate([roi[1:n], roi[n + 1 :]]),
+                roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
                 **kwargs,
             )
             for i in range(data.shape[0])

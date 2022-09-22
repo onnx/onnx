@@ -22,16 +22,14 @@ def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mea
         # when the target value is > C or < 0, it doesn't matter which value we are
         # taking in gather_weight, since it will be set to 0 in the following if-block
         # use np.int32 to make it compatible with x86 machines
-        gather_weight = np.take(
-            weight, np.array(target, dtype=np.int32), mode="clip"
-        )
+        gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode="clip")
         # set `ignore_index`'s loss weight to 0.
         # The loss tensor will be multiplied by this weight tensor,
         # so `ingore_index`'s loss value will be eliminated.
         if ignore_index is not None:
-            gather_weight = np.where(
-                target == ignore_index, 0, gather_weight
-            ).astype(dtype=x.dtype)
+            gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
+                dtype=x.dtype
+            )
     elif ignore_index != -1:
         gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
 

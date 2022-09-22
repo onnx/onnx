@@ -4,12 +4,13 @@
 
 import unittest
 from contextlib import redirect_stdout
+from functools import wraps
 from io import StringIO
 from textwrap import dedent
 from typing import Any, List
 
 import numpy as np  # type: ignore
-from numpy.testing import assert_almost_equal  # type: ignore
+from numpy.testing import assert_allclose  # type: ignore
 
 import onnx.runtime as rt
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
@@ -33,6 +34,18 @@ from onnx.runtime.aionnx._op_list import Celu
 from onnx.runtime.aionnx.op_celu import _vcelu1
 from onnx.runtime.aionnx_preview_training._op_list import Adam
 from onnx.runtime.op_run import OpRun
+
+
+def skip_if_no_onnxruntime(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            import onnxruntime
+        except ImportError:
+            raise unittest.SkipTest("onnxruntime not installed")
+        fn(*args, **kwargs)
+
+    return wrapper
 
 
 def make_sequence_value_info(name, elem_type, shape):
@@ -137,7 +150,7 @@ class TestRuntimeInference(unittest.TestCase):
         z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
         res = sess.run(None, {"B01": x, "B11": y, "B21": z})[0]
         expected = (x + y) * (y - z)
-        assert_almost_equal(expected, res)
+        assert_allclose(expected, res)
 
     def test_inference_no_attribute_bytes(self):
         m = TestRuntimeInference._load_model(TestRuntimeInference.m2_def)
@@ -151,7 +164,7 @@ class TestRuntimeInference(unittest.TestCase):
         z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
         res = sess.run(None, {"B01": x, "B11": y, "B21": z})[0]
         expected = (x + y) * (y - z)
-        assert_almost_equal(expected, res)
+        assert_allclose(expected, res)
 
     def test_inference_no_attribute_verbose(self):
         m = TestRuntimeInference._load_model(TestRuntimeInference.m2_def)
@@ -236,7 +249,7 @@ class TestRuntimeInference(unittest.TestCase):
         expected = f(x, a, b)
         sess = rt.Inference(lr)
         got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-        assert_almost_equal(expected, got)
+        assert_allclose(expected, got)
 
     def test_inference_lr_clip(self):
         with self.subTest(opt="min+max"):
@@ -249,7 +262,7 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_almost_equal(expected, got)
+            assert_allclose(expected, got)
 
         with self.subTest(opt="max"):
             lr, f = TestRuntimeInference._linear_regression(clip=True, min_value=None)
@@ -261,7 +274,7 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_almost_equal(expected, got)
+            assert_allclose(expected, got)
 
         with self.subTest(opt="min"):
             lr, f = TestRuntimeInference._linear_regression(clip=True, max_value=None)
@@ -273,7 +286,7 @@ class TestRuntimeInference(unittest.TestCase):
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_almost_equal(expected, got)
+            assert_allclose(expected, got)
 
     def test_inference_lr_clip_6(self):
         with self.subTest(opt="min+max"):
@@ -288,7 +301,7 @@ class TestRuntimeInference(unittest.TestCase):
             self.assertEqual(last_node.min, -1)
             self.assertEqual(last_node.max, 1)
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_almost_equal(expected, got)
+            assert_allclose(expected, got)
 
         with self.subTest(opt="max"):
             lr, f = TestRuntimeInference._linear_regression(
@@ -304,7 +317,7 @@ class TestRuntimeInference(unittest.TestCase):
             self.assertEqual(last_node.max, 1)
             self.assertEqual(last_node.min, -3.4028234663852886e38)
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_almost_equal(expected, got)
+            assert_allclose(expected, got)
 
         with self.subTest(opt="min"):
             lr, f = TestRuntimeInference._linear_regression(
@@ -320,7 +333,7 @@ class TestRuntimeInference(unittest.TestCase):
             self.assertEqual(last_node.min, -1)
             self.assertEqual(last_node.max, 3.4028234663852886e38)
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_almost_equal(expected, got)
+            assert_allclose(expected, got)
 
     def test_nested_local_functions(self):
         m = parser.parse_model(
@@ -372,7 +385,7 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.array([0, 1, 3], dtype=np.uint8).reshape((1, 1, 3))
         result = sess.run(None, {"x": x})[0]
         expected = x
-        assert_almost_equal(expected, result)
+        assert_allclose(expected, result)
 
     def test_reduce_sum_11(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -385,7 +398,7 @@ class TestRuntimeInference(unittest.TestCase):
         expected = x.sum(axis=1, keepdims=1)
         sess = rt.Inference(onnx_model)
         got = sess.run(None, {"X": x})[0]
-        assert_almost_equal(expected, got)
+        assert_allclose(expected, got)
 
     def test_reduce_sum_13(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -400,7 +413,7 @@ class TestRuntimeInference(unittest.TestCase):
         expected = x.sum(axis=1, keepdims=1)
         sess = rt.Inference(onnx_model)
         got = sess.run(None, {"X": x, "A": a})[0]
-        assert_almost_equal(expected, got)
+        assert_allclose(expected, got)
 
     def test_reduce_sum_13_empty_axes(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -415,7 +428,7 @@ class TestRuntimeInference(unittest.TestCase):
         expected = x.sum(keepdims=1)
         sess = rt.Inference(onnx_model)
         got = sess.run(None, {"X": x, "A": a})[0]
-        assert_almost_equal(expected, got)
+        assert_allclose(expected, got)
 
     def test_reduce_sum_13_empty_axes_noop(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -427,7 +440,7 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
         sess = rt.Inference(onnx_model)
         got = sess.run(None, {"X": x})[0]
-        assert_almost_equal(x, got)
+        assert_allclose(x, got)
 
     def test_reduce_greater(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -442,7 +455,7 @@ class TestRuntimeInference(unittest.TestCase):
         expected = x > y
         sess = rt.Inference(onnx_model)
         got = sess.run(None, {"X": x, "Y": y})[0]
-        assert_almost_equal(expected, got)
+        assert_allclose(expected, got)
 
     def test_reduce_greater_or_equal(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -457,7 +470,7 @@ class TestRuntimeInference(unittest.TestCase):
         expected = x >= y
         sess = rt.Inference(onnx_model)
         got = sess.run(None, {"X": x, "Y": y})[0]
-        assert_almost_equal(expected, got)
+        assert_allclose(expected, got)
 
     def test_if(self):
         C = make_tensor_value_info("C", TensorProto.FLOAT, [None])
@@ -497,11 +510,11 @@ class TestRuntimeInference(unittest.TestCase):
 
         x = np.array([1, 2], dtype=np.float32)
         got = sess.run(None, {"X": x})[0]
-        assert_almost_equal(np.array([1], dtype=np.float32), got)
+        assert_allclose(np.array([1], dtype=np.float32), got)
 
         x = np.array([-1, -2], dtype=np.float32)
         got = sess.run(None, {"X": x})[0]
-        assert_almost_equal(np.array([0], dtype=np.float32), got)
+        assert_allclose(np.array([0], dtype=np.float32), got)
 
     def test_if_function(self):
         then_out = make_tensor_value_info("then_out", TensorProto.FLOAT, [5])
@@ -552,7 +565,7 @@ class TestRuntimeInference(unittest.TestCase):
         sess = rt.Inference(m)
         result = sess.run(None, {"cond": np.array(True)})
         expected = np.array([1, 2, 3, 4, 5], dtype=np.float32)
-        assert_almost_equal(expected, result[0])
+        assert_allclose(expected, result[0])
 
     def test_function_attribute(self):
         opset = onnx_opset_version()
@@ -607,7 +620,7 @@ class TestRuntimeInference(unittest.TestCase):
         a = np.array([1, -1], dtype=np.float32)
         result = sess.run(None, {"X": x, "A": a})[0]
         expected = np.abs(x @ a + 0.67)
-        assert_almost_equal(expected, result)
+        assert_allclose(expected, result)
 
     def test_custom_node(self):
         class _InvAlpha:
@@ -662,7 +675,7 @@ class TestRuntimeInference(unittest.TestCase):
         sess = rt.Inference(onnx_model, new_ops=[InvAlpha])
         got = sess.run(None, {"X": x})[0]
         expected = 1 / (x + 0.5)
-        assert_almost_equal(expected, got)
+        assert_allclose(expected, got)
 
     def test_loop(self):
         # Given a tensor x of values [x1, ..., xN],
@@ -799,7 +812,7 @@ class TestRuntimeInference(unittest.TestCase):
         oinf = rt.Inference(model_def)
         inputs = {"trip_count": trip_count, "cond": cond, "seq_empty": seq_empty}
         got = oinf.run(None, inputs)
-        assert_almost_equal(expected, got[0])
+        assert_allclose(expected, got[0])
 
     def test_onnxt_runtime_bernoulli(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -871,7 +884,7 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Celu.eval(x, alpha=0.5)
         expected = _vcelu1(x, alpha=0.5)
-        assert_almost_equal(expected, y)
+        assert_allclose(expected, y)
 
     def test_eval_celu_load_op(self):
         celu = load_op("", "Celu")
@@ -881,18 +894,15 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = celu.eval(x, alpha=0.5)
         expected = _vcelu1(x, alpha=0.5)
-        assert_almost_equal(expected, y)
+        assert_allclose(expected, y)
 
     def test_create_adam(self):
         inst = Adam.create(alpha=0.5)
         self.assertEqual(inst.alpha, 0.5)
 
+    @skip_if_no_onnxruntime
     def test_conv(self):
-        try:
-            import onnxruntime as ort
-        except ImportError:
-            # onnxruntime is not available
-            return
+        import onnxruntime as ort
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
@@ -923,14 +933,11 @@ class TestRuntimeInference(unittest.TestCase):
                 B = np.array([[[[0]]]], dtype=np.float32)
                 expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
                 got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
-                assert_almost_equal(expected, got)
+                assert_allclose(expected, got)
 
+    @skip_if_no_onnxruntime
     def test_qlinearconv(self):
-        try:
-            import onnxruntime as ort
-        except ImportError:
-            # onnxruntime is not available
-            return
+        import onnxruntime as ort
 
         x = make_tensor_value_info("x", TensorProto.UINT8, [None, None, None, None])
         w = make_tensor_value_info("w", TensorProto.UINT8, [None, None, None, None])
@@ -988,7 +995,7 @@ class TestRuntimeInference(unittest.TestCase):
                     expected = sess1.run(None, feeds)[0]
                     got = sess2.run(None, feeds)[0]
                     try:
-                        assert_almost_equal(expected, got)
+                        assert_allclose(expected, got)
                     except AssertionError as e:
                         raise e
                 with self.subTest(w="3x3", i=i, j=j):
@@ -1006,7 +1013,7 @@ class TestRuntimeInference(unittest.TestCase):
                     }
                     expected = sess1.run(None, feeds)[0]
                     got = sess2.run(None, feeds)[0]
-                    assert_almost_equal(expected, got)
+                    assert_allclose(expected, got)
                 with self.subTest(w="1x1", i=i, j=j):
                     w = np.zeros((1, 1, 1, 1), dtype=np.uint8)
                     w[0, 0, :, :] = 0
@@ -1022,7 +1029,7 @@ class TestRuntimeInference(unittest.TestCase):
                     }
                     expected = sess1.run(None, feeds)[0]
                     got = sess2.run(None, feeds)[0]
-                    assert_almost_equal(expected, got)
+                    assert_allclose(expected, got)
 
         x = np.array(
             [
@@ -1056,7 +1063,7 @@ class TestRuntimeInference(unittest.TestCase):
         }
         expected = sess1.run(None, feeds)[0]
         got = sess2.run(None, feeds)[0]
-        assert_almost_equal(expected, got)
+        assert_allclose(expected, got)
 
     def common_test_im2col(self, kernel_shape, pads, strides, dilations):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
@@ -1123,9 +1130,9 @@ class TestRuntimeInference(unittest.TestCase):
                 got = sess.run(None, {"X": X, "W": W})
                 if sess_conv is not None:
                     ort_res = sess_conv.run(None, {"X": X, "W": W})[0]
-                    assert_almost_equal(got[1], ort_res)
+                    assert_allclose(got[1], ort_res)
                 try:
-                    assert_almost_equal(got[0], got[1])
+                    assert_allclose(got[0], got[1])
                 except AssertionError as e:
                     raise AssertionError(
                         f"Discrepancies: pads={pads}, dilations={dilations}, strides={strides}, "
