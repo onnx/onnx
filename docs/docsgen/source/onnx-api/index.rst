@@ -1,4 +1,4 @@
-Submodules Summary
+ONNX tools API
 ==================
 
 .. doctest
