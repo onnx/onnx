@@ -194,70 +194,75 @@ class OnnxBackendTest:
         "Returns the number of tests."
         return len(self.tests)
 
-    def _compare_results(self, index, i, e, o, decimal=None):
+    def _compare_results(self, index, i_output, desired, output, rtol=0, atol=0):
         """
         Compares the expected output and the output produced
         by the runtime. Raises an exception if not equal.
 
         :param index: test index
-        :param i: output index
-        :param e: expected output
-        :param o: output
-        :param decimal: precision
+        :param i_output: output index
+        :param desired: expected output
+        :param output: output
+        :param rtol: relative tolerance
+        :param atol: absolute tolerance
         """
-        if isinstance(e, np.ndarray):
-            if isinstance(o, np.ndarray):
-                if decimal is None:
-                    if e.dtype == np.float32:
-                        deci = 5
-                    elif e.dtype == np.float64:
-                        deci = 12
+        if atol is None:
+            atol = 0
+        if rtol is None:
+            rtol = 0
+        if isinstance(desired, np.ndarray):
+            if isinstance(output, np.ndarray):
+                if rtol == 0:
+                    if desired.dtype == np.float32:
+                        rt = 1e-5
+                    elif desired.dtype == np.float64:
+                        rt = 1e-12
                     else:
-                        deci = 7
+                        rt = rtol
                 else:
-                    deci = decimal
-                if e.dtype == dtype_object:
+                    rt = rtol
+                if desired.dtype == dtype_object:
                     try:
-                        assert_allclose_string(e, o)
+                        assert_allclose_string(desired, output)
                     except AssertionError as ex:
                         raise AssertionError(
-                            f"Output {i} of test {index} in folder {self.folder!r} failed."
+                            f"Output {i_output} of test {index} in folder {self.folder!r} failed."
                         ) from ex
                 else:
                     try:
-                        assert_allclose(e, o, decimal=deci)
+                        assert_allclose(desired, output, atol=atol, rtol=rt)
                     except AssertionError as ex:
                         raise AssertionError(
-                            f"Output {i} of test {index} in folder {self.folder!r} failed (decimal={deci})."
+                            f"Output {i_output} of test {index} in folder {self.folder!r} failed (rtol={rt}, atol={atol})."
                         ) from ex
-            elif hasattr(o, "is_compatible"):
+            elif hasattr(output, "is_compatible"):
                 # A shape
-                if e.dtype != o.dtype:
+                if desired.dtype != output.dtype:
                     raise AssertionError(
-                        f"Output {i} of test {index} in folder {self.folder!r} failed "
-                        f"(e.dtype={e.dtype!r}, o={o!r})."
+                        f"Output {i_output} of test {index} in folder {self.folder!r} failed "
+                        f"(desired.dtype={desired.dtype!r}, output={output!r})."
                     )
-                if not o.is_compatible(e.shape):
+                if not output.is_compatible(desired.shape):
                     raise AssertionError(
-                        f"Output {i} of test {index} in folder {self.folder!r} failed "
-                        f"(e.shape={e.shape}, o={o!r})."
+                        f"Output {i_output} of test {index} in folder {self.folder!r} failed "
+                        f"(desired.shape={desired.shape}, output={output!r})."
                     )
-        elif isinstance(e, list):
-            if not isinstance(o, list):
+        elif isinstance(desired, list):
+            if not isinstance(output, list):
                 raise AssertionError(
-                    f"Expected result is 'list' but output type is {type(o)} for output {i}"
-                    f"\n--EXPECTED--\n{e}\n--GOT--\n{o}."
+                    f"Expected result is 'list' but output type is {type(output)} for output {i_output}"
+                    f"\n--EXPECTED--\n{desired}\n--GOT--\n{output}."
                 )
-            if len(e) != len(o):
+            if len(desired) != len(output):
                 raise AssertionError(
-                    f"Expected has {len(e)} but output has {len(o)} for output {i}"
-                    f"\n--EXPECTED--\n{e}\n--GOT--\n{o}."
+                    f"Expected has {len(desired)} but output has {len(output)} for output {i_output}"
+                    f"\n--EXPECTED--\n{desired}\n--GOT--\n{output}."
                 )
-            for a, b in zip(e, o):
-                self._compare_results(index, i, a, b, decimal)
+            for a, b in zip(desired, output):
+                self._compare_results(index, i_output, a, b, rtol=rtol, atol=atol)
         else:
             raise NotImplementedError(
-                f"Comparison not implemented for type {type(e)} and output {i}."
+                f"Comparison not implemented for type {type(desired)} and output {i_output}."
             )
 
     def is_random(self):
@@ -266,7 +271,7 @@ class OnnxBackendTest:
             return True
         return False
 
-    def run(self, load_fct, run_fct, index=None, decimal=None):
+    def run(self, load_fct, run_fct, index=None, rtol=1e-07, atol=0):
         """
         Executes a tests or all tests if index is None.
         The function crashes if the tests fails.
@@ -276,11 +281,12 @@ class OnnxBackendTest:
         :param run_fct: running function, takes the result of previous
             function, the inputs, and returns the outputs
         :param index: index of the test to run or all.
-        :param decimal: requested precision to compare results
+        :param rtol: relative tolerance
+        :param atol: absolute tolerance
         """
         if index is None:
             for i in range(len(self)):
-                self.run(load_fct, run_fct, index=i, decimal=decimal)
+                self.run(load_fct, run_fct, index=i, atol=atol, rtol=rtol)
             return
 
         obj = load_fct(self.onnx_model)
@@ -305,7 +311,7 @@ class OnnxBackendTest:
                         f"(shape mismatch {e.shape} != {o.shape})."
                     )
             else:
-                self._compare_results(index, i, e, o, decimal=decimal)
+                self._compare_results(index, i, e, o, atol=atol, rtol=rtol)
 
 
 def enumerate_onnx_tests(series, fct_filter=None):
@@ -383,10 +389,12 @@ class TestOnnxBackEnd(unittest.TestCase):
         self.assertEqual(done, 1)
 
     def common_test_enumerate_onnx_tests_run(
-        self, valid, verbose=0, decimal=None, check_ort_mismath=False
+        self, valid, verbose=0, rtol=None, atol=None, check_ort_mismath=False
     ):
-        if decimal is None:
-            decimal = {}
+        if rtol is None:
+            rtol = {}
+        if atol is None:
+            atol = {}
         with self.assertRaises(FileNotFoundError):
             list(enumerate_onnx_tests("NNN"))
         missed = []
@@ -415,13 +423,15 @@ class TestOnnxBackEnd(unittest.TestCase):
                                 *args, verbose
                             ),
                             TestOnnxBackEnd.run_fct,
-                            decimal=decimal.get(te.name, None),
+                            atol=atol.get(te.name, None),
+                            rtol=rtol.get(te.name, None),
                         )
                     else:
                         te.run(
                             TestOnnxBackEnd.load_fct,
                             TestOnnxBackEnd.run_fct,
-                            decimal=decimal.get(te.name, None),
+                            atol=atol.get(te.name, None),
+                            rtol=rtol.get(te.name, None),
                         )
                     if verbose > 7:
                         print("  end run")
@@ -584,27 +594,27 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_stft_with_window",
             "test_stft",
         }
-        decimal = {
-            "test_adam_multiple": 2,
-            "test_blackmanwindow_expanded": 4,
-            "test_blackmanwindow_symmetric_expanded": 4,
-            "test_simple_rnn_batchwise": 2,
+        rtol = {
+            "test_adam_multiple": 0,
+            "test_blackmanwindow_expanded": 0,
+            "test_blackmanwindow_symmetric_expanded": 0,
+            "test_simple_rnn_batchwise": 0,
         }
+        atol = {}
 
         self.common_test_enumerate_onnx_tests_run(
             valid=lambda name: name not in skip_test,
             verbose=4 if __name__ == "__main__" else 0,
-            decimal=decimal,
+            rtol=rtol,
+            atol=atol,
         )
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
             lambda name: "test_col2im" == name,
             verbose=0,
-            decimal={
-                "test_blackmanwindow_expanded": 4,
-                "test_blackmanwindow_symmetric": 4,
-                "test_blackmanwindow_symmetric_expanded": 4,
+            atol={
+                "test_blackmanwindow_expanded": 1e-4,
             },
         )
 
