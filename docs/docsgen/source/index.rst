@@ -24,6 +24,5 @@ linked below.
 .. toctree::
     :maxdepth: 1
 
-    expect
     onnx_doc_folder/index
-
+    expect
