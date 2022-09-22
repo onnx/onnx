@@ -8648,7 +8648,8 @@ This version of the operator has been available since version 9 of the default O
   Returns the indices of the elements that are non-zero
       (in row-major order - by dimension).
       NonZero behaves similar to numpy.nonzero:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
+      but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 
 #### Version
 
@@ -16905,7 +16906,8 @@ This version of the operator has been available since version 13 of the default 
   Returns the indices of the elements that are non-zero
       (in row-major order - by dimension).
       NonZero behaves similar to numpy.nonzero:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
+      but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 
 #### Version
 
@@ -20815,6 +20817,170 @@ This version of the operator has been available since version 16 of the default 
 </dl>
 
 ## Version 17 of the default ONNX operator set
+### <a name="BlackmanWindow-17"></a>**BlackmanWindow-17**</a>
+
+  Generates a Blackman window as described in the paper https://ieeexplore.ieee.org/document/1455106.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Blackman window with length: size. The output has the shape: [size].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
+</dl>
+
+### <a name="DFT-17"></a>**DFT-17**</a>
+
+  Computes the discrete Fourier transform of input.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index.</dd>
+<dt><tt>inverse</tt> : int (default is 0)</dt>
+<dd>Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to false.</dd>
+<dt><tt>onesided</tt> : int (default is 0)</dt>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input</tt> (non-differentiable) : T1</dt>
+<dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimentions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
+<dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
+<dd>The length of the signal.If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T1</dt>
+<dd>The Fourier Transform of the input vector.If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=0 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N-1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain scalar length types to int64_t.</dd>
+</dl>
+
+### <a name="HammingWindow-17"></a>**HammingWindow-17**</a>
+
+  Generates a Hamming window as described in the paper https://ieeexplore.ieee.org/document/1455106.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Hamming window with length: size. The output has the shape: [size].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
+</dl>
+
+### <a name="HannWindow-17"></a>**HannWindow-17**</a>
+
+  Generates a Hann window as described in the paper https://ieeexplore.ieee.org/document/1455106.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T2. The default value is 1 = FLOAT. </dd>
+<dt><tt>periodic</tt> : int (default is 1)</dt>
+<dd>If 1, returns a window to be used as periodic function. If 0, return a symmetric window. When 'periodic' is specified, hann computes a window of length size + 1 and returns the first size points. The default value is 1. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>A scalar value indicating the length of the window.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>A Hann window with length: size. The output has the shape: [size].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain the input size to int64_t.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output types to numeric tensors.</dd>
+</dl>
+
 ### <a name="LayerNormalization-17"></a>**LayerNormalization-17**</a>
 
   This is layer normalization defined in ONNX as function.
@@ -20901,6 +21067,105 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain input types and output Y type to float tensors.</dd>
 <dt><tt>U</tt> : tensor(float), tensor(bfloat16)</dt>
 <dd>Type of Mean and InvStdDev tensors.</dd>
+</dl>
+
+### <a name="MelWeightMatrix-17"></a>**MelWeightMatrix-17**</a>
+
+  Generate a MelWeightMatrix that can be used to re-weight a Tensor containing a linearly sampled frequency spectra (from DFT or STFT) into num_mel_bins frequency information based on the [lower_edge_hertz, upper_edge_hertz] range on the mel scale.
+  This function defines the mel scale in terms of a frequency in hertz according to the following formula:
+
+      mel(f) = 2595 * log10(1 + f/700)
+
+  In the returned matrix, all the triangles (filterbanks) have a peak value of 1.0.
+
+  The returned MelWeightMatrix can be used to right-multiply a spectrogram S of shape [frames, num_spectrogram_bins] of linear scale spectrum values (e.g. STFT magnitudes) to generate a "mel spectrogram" M of shape [frames, num_mel_bins].
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>output_datatype</tt> : int (default is 1)</dt>
+<dd>The data type of the output tensor. Strictly must be one of the values from DataType enum in TensorProto whose values correspond to T3. The default value is 1 = FLOAT. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>num_mel_bins</tt> (non-differentiable) : T1</dt>
+<dd>The number of bands in the mel spectrum.</dd>
+<dt><tt>dft_length</tt> (non-differentiable) : T1</dt>
+<dd>The size of the original DFT. The size of the original DFT is used to infer the size of the onesided DFT, which is understood to be floor(dft_length/2) + 1, i.e. the spectrogram only contains the nonredundant DFT bins.</dd>
+<dt><tt>sample_rate</tt> (non-differentiable) : T1</dt>
+<dd>Samples per second of the input signal used to create the spectrogram. Used to figure out the frequencies corresponding to each spectrogram bin, which dictates how they are mapped into the mel scale.</dd>
+<dt><tt>lower_edge_hertz</tt> (non-differentiable) : T2</dt>
+<dd>Lower bound on the frequencies to be included in the mel spectrum. This corresponds to the lower edge of the lowest triangular band.</dd>
+<dt><tt>upper_edge_hertz</tt> (non-differentiable) : T2</dt>
+<dd>The desired top edge of the highest frequency band.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T3</dt>
+<dd>The Mel Weight Matrix. The output has the shape: [floor(dft_length/2) + 1][num_mel_bins].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain to integer tensors.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain to float tensors</dd>
+<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain to any numerical types.</dd>
+</dl>
+
+### <a name="STFT-17"></a>**STFT-17**</a>
+
+  Computes the Short-time Fourier Transform of the signal.
+
+#### Version
+
+This version of the operator has been available since version 17 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>onesided</tt> : int (default is 1)</dt>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT).When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>signal</tt> (non-differentiable) : T1</dt>
+<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal.</dd>
+<dt><tt>frame_step</tt> (non-differentiable) : T2</dt>
+<dd>The number of samples to step between successive DFTs.</dd>
+<dt><tt>window</tt> (optional, non-differentiable) : T1</dt>
+<dd>A tensor representing the window that will be slid over the signal.The window must have rank 1 with shape: [window_shape]. It's an optional value. </dd>
+<dt><tt>frame_length</tt> (optional, non-differentiable) : T2</dt>
+<dd>A scalar representing the size of the DFT. It's an optional value.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T1</dt>
+<dd>The Short-time Fourier Transform of the signals.If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT) If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain signal and output to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain scalar length types to int64_t.</dd>
 </dl>
 
 ### <a name="SequenceMap-17"></a>**SequenceMap-17**</a>

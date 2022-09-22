@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 
-from typing import List, Sequence, Text
+from typing import Sequence
 import numpy as np  # type: ignore
 
 from onnx import checker, helper, numpy_helper, shape_inference
@@ -26,7 +26,7 @@ class TestChecker(unittest.TestCase):
                     values: Sequence[int],
                     indices_shape: Sequence[int],
                     indices: Sequence[int],
-                    name: Text = 'spval'
+                    name: str = 'spval'
                     ) -> SparseTensorProto:
         sparse = SparseTensorProto()
         sparse.dims.extend(shape)
@@ -285,11 +285,11 @@ class TestChecker(unittest.TestCase):
         tensor = TensorProto()
         tensor.data_type = TensorProto.STRING
         tensor.dims.append(1)
-        tensor.string_data.append('Test'.encode('utf-8'))
+        tensor.string_data.append(b'Test')
         checker.check_tensor(tensor)
 
         del tensor.string_data[:]
-        tensor.raw_data = 'Test'.encode('utf-8')
+        tensor.raw_data = b'Test'
         # string data should not be stored in raw_data field
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
@@ -659,124 +659,6 @@ class TestChecker(unittest.TestCase):
             ),
         )
         self.assertRaises(shape_inference.InferenceError, checker.check_model, model, True)
-
-    def _contruct_loop_model(self, inputs_list: List[Text], outputs_list: List[Text]) -> onnx.ModelProto:
-        y_in = onnx.helper.make_tensor_value_info('y_in', onnx.TensorProto.FLOAT, [1])
-        y_out = onnx.helper.make_tensor_value_info('y_out', onnx.TensorProto.FLOAT, [1])
-        scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [1])
-        cond_in = onnx.helper.make_tensor_value_info('cond_in', onnx.TensorProto.BOOL, [])
-        cond_out = onnx.helper.make_tensor_value_info('cond_out', onnx.TensorProto.BOOL, [])
-        iter_count = onnx.helper.make_tensor_value_info('iter_count', onnx.TensorProto.INT64, [])
-
-        x_const_node = onnx.helper.make_node(
-            'Constant',
-            inputs=[],
-            outputs=['x'],
-            value=onnx.helper.make_tensor(
-                name='const_tensor_x',
-                data_type=onnx.TensorProto.FLOAT,
-                dims=[5],
-                vals=[1., 2., 3., 4., 5.],
-            )
-        )
-
-        one_const_node = onnx.helper.make_node(
-            'Constant',
-            inputs=[],
-            outputs=['one'],
-            value=onnx.helper.make_tensor(
-                name='const_tensor_one',
-                data_type=onnx.TensorProto.INT64,
-                dims=(),
-                vals=[1]
-            )
-        )
-
-        i_add_node = onnx.helper.make_node(
-            'Add',
-            inputs=['iter_count', 'one'],
-            outputs=['end']
-        )
-
-        start_unsqueeze_node = onnx.helper.make_node(
-            'Unsqueeze',
-            inputs=['iter_count'],
-            outputs=['slice_start'],
-            axes=[0]
-        )
-
-        end_unsqueeze_node = onnx.helper.make_node(
-            'Unsqueeze',
-            inputs=['end'],
-            outputs=['slice_end'],
-            axes=[0]
-        )
-
-        slice_node = onnx.helper.make_node(
-            'Slice',
-            inputs=['x', 'slice_start', 'slice_end'],
-            outputs=['slice_out']
-        )
-
-        y_add_node = onnx.helper.make_node(
-            'Add',
-            inputs=['y_in', 'slice_out'],
-            outputs=['y_out']
-        )
-
-        identity_node = onnx.helper.make_node(
-            'Identity',
-            inputs=['cond_in'],
-            outputs=['cond_out']
-        )
-
-        scan_identity_node = onnx.helper.make_node(
-            'Identity',
-            inputs=['y_out'],
-            outputs=['scan_out']
-        )
-
-        loop_body = onnx.helper.make_graph(
-            [identity_node, x_const_node, one_const_node, i_add_node,
-             start_unsqueeze_node, end_unsqueeze_node, slice_node, y_add_node,
-             scan_identity_node],
-            'loop_body',
-            [iter_count, cond_in, y_in],
-            [cond_out, y_out, scan_out]
-        )
-
-        node = onnx.helper.make_node(
-            'Loop',
-            inputs=inputs_list,
-            outputs=outputs_list,
-            body=loop_body
-        )
-
-        model = helper.make_model(
-            opset_imports=[onnx.helper.make_opsetid("", 11)],
-            graph=helper.make_graph(
-                name='test-loop',
-                inputs=[
-                    helper.make_tensor_value_info('trip_count', TensorProto.INT64, shape=[5]),
-                    helper.make_tensor_value_info('cond', TensorProto.BOOL, shape=[1]),
-                    helper.make_tensor_value_info('y', TensorProto.FLOAT, shape=[1]),
-                ],
-                outputs=[
-                    helper.make_tensor_value_info('cond', TensorProto.FLOAT, shape=[13]),
-                    helper.make_tensor_value_info('res_scan', TensorProto.FLOAT, shape=[5, 1])
-                ],
-                nodes=[node],
-            ),
-        )
-        return model
-
-    def test_loop_with_empty_input(self) -> None:
-        model = self._contruct_loop_model(['trip_count', 'cond', ''], ['res_y', 'res_scan'])
-        self.assertRaises(checker.ValidationError, checker.check_model, model)
-
-    def test_loop_with_empty_output(self) -> None:
-        model = self._contruct_loop_model(['trip_count', 'cond', 'y'], ['', 'res_scan'])
-        self.assertRaises(checker.ValidationError, checker.check_model, model)
 
 
 if __name__ == '__main__':

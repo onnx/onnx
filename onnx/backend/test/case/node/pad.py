@@ -77,4 +77,4 @@ class Pad(Base):
             )
 
             expect(node, inputs=[x, pads], outputs=[y],
-                   name='test_{}_pad'.format(mode))
+                   name=f'test_{mode}_pad')

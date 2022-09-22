@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import random
+import struct
 
 import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto, ModelProto, OptionalProto, TypeProto, SequenceProto
-from typing import Text, Any, List, Tuple
+from typing import Any, List, Tuple
 
 import unittest
 
@@ -67,7 +68,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.s, b"test")
         checker.check_attribute(attr)
         # unicode
-        attr = helper.make_attribute("str", u"test")
+        attr = helper.make_attribute("str", "test")
         self.assertEqual(attr.name, "str")
         self.assertEqual(attr.s, b"test")
         checker.check_attribute(attr)
@@ -199,7 +200,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
 
     def test_is_attr_legal_verbose(self) -> None:
 
-        def _set(attr: AttributeProto, type: AttributeProto.AttributeType, var: Text, value: Any) -> None:
+        def _set(attr: AttributeProto, type: AttributeProto.AttributeType, var: str, value: Any) -> None:
             setattr(attr, var, value)
             setattr(attr, 'type', type)
 
@@ -328,13 +329,13 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
     def test_model_irversion(self) -> None:
-        def mk_model(opset_versions: List[Tuple[Text, int]]) -> ModelProto:
+        def mk_model(opset_versions: List[Tuple[str, int]]) -> ModelProto:
             graph = helper.make_graph([], "my graph", [], [])
             return helper.make_model_gen_version(
                 graph,
                 opset_imports=[helper.make_opsetid(*pair) for pair in opset_versions])
 
-        def test(opset_versions: List[Tuple[Text, int]], ir_version: int) -> None:
+        def test(opset_versions: List[Tuple[str, int]], ir_version: int) -> None:
             model = mk_model(opset_versions)
             self.assertEqual(model.ir_version, ir_version)
         # opset version 9 requires minimum ir_version 4
@@ -346,6 +347,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 14)], 7)
         test([("", 15)], 8)
         test([("", 16)], 8)
+        test([("", 17)], 8)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
@@ -390,6 +392,28 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(string_list, list(tensor.string_data))
 
+    def test_make_int8_tensor(self) -> None:
+        np_array = np.random.randn(2, 3).astype(np.int8)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.INT8,
+            dims=(2, 3),
+            vals=np_array
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+        # use raw_data field to store the data
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.INT8,
+            dims=(2, 3),
+            vals=np_array.tobytes(),
+            raw=True,
+        )
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
     def test_make_float16_tensor(self) -> None:
         np_array = np.random.randn(2, 3).astype(np.float16)
 
@@ -402,7 +426,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         self.assertEqual(tensor.name, 'test')
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
-    def test_make_float16_tensor_with_raw(self) -> None:
+    def test_make_float16_tensor_raw(self) -> None:
         np_array = np.random.randn(2, 3).astype(np.float16)
 
         tensor = helper.make_tensor(
@@ -416,7 +440,21 @@ class TestHelperTensorFunctions(unittest.TestCase):
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
     def test_make_bfloat16_tensor(self) -> None:
-        np_array = np.random.randn(8, 7).astype(np.float16)
+        # numpy doesn't support bf16, so we have to compute the correct result manually
+        np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]],
+            dtype=np.float32)
+        np_results = np.array([
+            [struct.unpack('!f', bytes.fromhex('3F800000'))[0],   # 1.0
+             struct.unpack('!f', bytes.fromhex('40000000'))[0]],  # 2.0
+            [struct.unpack('!f', bytes.fromhex('40400000'))[0],   # 3.0
+             struct.unpack('!f', bytes.fromhex('40800000'))[0]],  # 4.0
+            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # round-to-nearest-even rounds down (0x8000)
+             struct.unpack('!f', bytes.fromhex('3DCC0000'))[0]],  # round-to-nearest-even rounds up   (0x8000)
+            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # round-to-nearest-even rounds down (0x7fff)
+             struct.unpack('!f', bytes.fromhex('3DCD0000'))[0]],  # round-to-nearest-even rounds up   (0xCCCD)
+            [struct.unpack('!f', bytes.fromhex('7FC00000'))[0],   # NaN
+             struct.unpack('!f', bytes.fromhex('7F800000'))[0]],  # inf
+        ])
 
         tensor = helper.make_tensor(
             name='test',
@@ -425,20 +463,38 @@ class TestHelperTensorFunctions(unittest.TestCase):
             vals=np_array
         )
         self.assertEqual(tensor.name, 'test')
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+        np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
-    def test_make_bfloat16_tensor_with_raw(self) -> None:
-        np_array = np.random.randn(8, 7).astype(np.float16)
+    def test_make_bfloat16_tensor_raw(self) -> None:
+        # numpy doesn't support bf16, so we have to compute the correct result manually
+        np_array = np.array([[1.0, 2.0], [3.0, 4.0], [0.099853515625, 0.099365234375], [0.0998535081744, 0.1], [np.nan, np.inf]],
+            dtype=np.float32)
+        np_results = np.array([
+            [struct.unpack('!f', bytes.fromhex('3F800000'))[0],   # 1.0
+             struct.unpack('!f', bytes.fromhex('40000000'))[0]],  # 2.0
+            [struct.unpack('!f', bytes.fromhex('40400000'))[0],   # 3.0
+             struct.unpack('!f', bytes.fromhex('40800000'))[0]],  # 4.0
+            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # truncated
+             struct.unpack('!f', bytes.fromhex('3DCB0000'))[0]],  # truncated
+            [struct.unpack('!f', bytes.fromhex('3DCC0000'))[0],   # truncated
+             struct.unpack('!f', bytes.fromhex('3DCC0000'))[0]],  # truncated
+            [struct.unpack('!f', bytes.fromhex('7FC00000'))[0],   # NaN
+             struct.unpack('!f', bytes.fromhex('7F800000'))[0]],  # inf
+        ])
 
+        # write out 16-bit of fp32 to create bf16 using truncation, no rounding
+        truncate = lambda x: x >> 16  # noqa: E731
+        values_as_ints = np_array.astype(np.float32).view(np.uint32).flatten()
+        packed_values = truncate(values_as_ints).astype(np.uint16).tobytes()
         tensor = helper.make_tensor(
             name='test',
             data_type=TensorProto.BFLOAT16,
             dims=np_array.shape,
-            vals=np_array.view(dtype=np.uint16).flatten().tobytes(),
+            vals=packed_values,
             raw=True
         )
         self.assertEqual(tensor.name, 'test')
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+        np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]

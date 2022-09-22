@@ -1,9 +1,9 @@
-from typing import Text, Tuple
+from typing import Tuple
 
 
-def parse_model(model: Text) -> Tuple[bool, bytes, bytes]:
+def parse_model(model: str) -> Tuple[bool, bytes, bytes]:
     ...
 
 
-def parse_graph(graph: Text) -> Tuple[bool, bytes, bytes]:
+def parse_graph(graph: str) -> Tuple[bool, bytes, bytes]:
     ...
