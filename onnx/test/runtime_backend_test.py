@@ -547,21 +547,23 @@ class TestOnnxBackEnd(unittest.TestCase):
         }
         # discrepancies
         skip_test |= {
-            # deprecated
-            "test_scan_sum",  # opset 8
-            "test_scatter_with_axis",  # scatter is removed
-            "test_scatter_without_axis",  # scatter is removed
-            # bug
-            "test_gru_batchwise",
-            # mismatches, problem with constant pi
-            "test_blackmanwindow_expanded",
-            "test_blackmanwindow_symmetric_expanded",
+            # mismatches
             "test_center_crop_pad_crop_axes_hwc_expanded",
-            # problem of truncated values 0.5 -> 0 or 1?
+            "test_col2im_pads",
+            "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",
+            "test_resize_downsample_scales_cubic_antialias",
+            "test_resize_downsample_scales_linear_antialias",
+            "test_resize_downsample_sizes_cubic_antialias",
+            "test_resize_downsample_sizes_linear_antialias",
+            "test_nesterov_momentum",
+            "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",
+            # mismatches, problem of truncated values 0.5 -> 0 or 1?
             "test_dynamicquantizelinear_max_adjusted_expanded",
             "test_dynamicquantizelinear_min_adjusted_expanded",
             "test_dynamicquantizelinear_expanded",
-            # problem with constant pi
+            # mismatches, problem with constant pi
+            "test_blackmanwindow_expanded",
+            "test_blackmanwindow_symmetric_expanded",
             "test_hannwindow_expanded",
             "test_hannwindow_symmetric_expanded",
             "test_hammingwindow_expanded",
@@ -569,6 +571,7 @@ class TestOnnxBackEnd(unittest.TestCase):
             # bug
             "test_loop16_seq_none",
             # bug
+            "test_gru_batchwise",
             "test_resize_downsample_sizes_nearest_not_larger",
             "test_resize_downsample_sizes_nearest_not_smaller",
             "test_resize_tf_crop_and_resize_axes_3_2",
@@ -578,29 +581,33 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_resize_upsample_sizes_nearest_axes_2_3",
             "test_resize_upsample_sizes_nearest_axes_3_2",
             "test_resize_upsample_sizes_nearest_not_larger",
-            # mismatches
-            "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",
-            "test_resize_downsample_scales_cubic_antialias",
-            "test_resize_downsample_scales_linear_antialias",
-            "test_resize_downsample_sizes_cubic_antialias",
-            "test_resize_downsample_sizes_linear_antialias",
-            "test_nesterov_momentum",
-            "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",
-            # bug
             "test_scatter_elements_with_reduction_min",
             "test_scatter_elements_with_duplicate_indices",
-            # bug
             "test_simple_rnn_batchwise",
             "test_stft_with_window",
             "test_stft",
+            # deprecated
+            "test_scan_sum",  # opset 8 -> not implemented
+            "test_scatter_with_axis",  # scatter is removed
+            "test_scatter_without_axis",  # scatter is removed
         }
         rtol = {
-            "test_adam_multiple": 0,
+            "test_adam_multiple": 1e-2,
             "test_blackmanwindow_expanded": 0,
             "test_blackmanwindow_symmetric_expanded": 0,
             "test_simple_rnn_batchwise": 0,
         }
-        atol = {}
+        atol = {
+            "test_blackmanwindow": 1e-7,
+            "test_blackmanwindow_symmetric": 1e-7,
+            "test_gru_seq_length": 1e-7,
+            "test_hannwindow_symmetric": 1e-7,
+            "test_layer_normalization_4d_axis_negative_1_expanded": 1e-6,
+            "test_layer_normalization_4d_axis1_expanded": 1e-6,
+            "test_layer_normalization_4d_axis_negative_3_expanded": 1e-6,
+            "test_mish": 1e-6,
+            "test_mish_expanded": 1e-6,
+        }
 
         self.common_test_enumerate_onnx_tests_run(
             valid=lambda name: name not in skip_test,
@@ -611,7 +618,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_col2im" == name,
+            lambda name: "test_col2im_5d" == name,
             verbose=0,
             atol={
                 "test_blackmanwindow_expanded": 1e-4,

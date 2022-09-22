@@ -48,6 +48,18 @@ def skip_if_no_onnxruntime(fn):
     return wrapper
 
 
+def skip_if_no_torch(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            import torch
+        except ImportError:
+            raise unittest.SkipTest("onnxruntime not installed")
+        fn(*args, **kwargs)
+
+    return wrapper
+
+
 def make_sequence_value_info(name, elem_type, shape):
     if isinstance(elem_type, int):
         return make_tensor_sequence_value_info(name, elem_type, shape)
@@ -1175,7 +1187,103 @@ class TestRuntimeInference(unittest.TestCase):
             (5, 5), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 1]
         )
 
+    @skip_if_no_torch
+    def test_col2im(self):
+        import torch
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+        IS = make_tensor_value_info("I", TensorProto.INT64, [None])
+        BS = make_tensor_value_info("B", TensorProto.INT64, [None])
+        node = make_node(
+            "Col2Im",
+            ["X", "I", "B"],
+            ["Y"],
+            pads=[0, 0, 0, 0],
+            strides=[1, 1],
+            dilations=[1, 1],
+        )
+        graph = make_graph([node], "g", [X, IS, BS], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        sess = rt.Inference(onnx_model)
+
+        X = np.array(
+            [
+                [
+                    [1.0, 6.0, 11.0, 16.0, 21.0],
+                    [2.0, 7.0, 12.0, 17.0, 22.0],
+                    [3.0, 8.0, 13.0, 18.0, 23.0],
+                    [4.0, 9.0, 14.0, 19.0, 24.0],
+                    [5.0, 0.0, 15.0, 20.0, 25.0],
+                ]
+            ]
+        ).astype(np.float32)
+        image_shape = np.array([5, 5]).astype(np.int64)
+        block_shape = np.array([1, 5]).astype(np.int64)
+
+        fold = torch.nn.Fold(output_size=tuple(image_shape), kernel_size=block_shape)
+
+        got = sess.run(None, {"X": X, "B": block_shape, "I": image_shape})
+        output = fold(torch.from_numpy(X)).numpy()
+        assert_allclose(output, got[0])
+
+    def common_test_col2im(
+        self, size, image_shape, block_shape, pads, strides, dilations
+    ):
+        import torch
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+        IS = make_tensor_value_info("I", TensorProto.INT64, [None])
+        BS = make_tensor_value_info("B", TensorProto.INT64, [None])
+        node = make_node(
+            "Col2Im",
+            ["X", "I", "B"],
+            ["Y"],
+            pads=pads,
+            strides=strides,
+            dilations=dilations,
+        )
+        graph = make_graph([node], "g", [X, IS, BS], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        sess = rt.Inference(onnx_model)
+
+        fold = torch.nn.Fold(
+            output_size=tuple(image_shape),
+            kernel_size=tuple(block_shape),
+            dilation=tuple(dilations),
+            padding=min(pads),
+            stride=tuple(strides),
+        )
+
+        nker = np.prod(block_shape)
+        for i in range(nker):
+            for j in range(size):
+                X = np.zeros((1, nker, size), dtype=np.float32)
+                X[0, i, j] = 1.0
+                i_shape = np.array(image_shape, dtype=np.int64)
+                b_shape = np.array(block_shape, dtype=np.int64)
+
+                output = fold(torch.from_numpy(X)).numpy()
+                got = sess.run(None, {"X": X, "B": b_shape, "I": i_shape})
+                # print(output)
+                # print(got)
+                assert_allclose(output, got[0])
+
+    @skip_if_no_torch
+    def test_col2im_2x3(self):
+        self.common_test_col2im(
+            10, (6, 4), (2, 3), pads=[0, 0, 0, 0], strides=[1, 1], dilations=[1, 1]
+        )
+
+    @skip_if_no_torch
+    def test_col2im_2x3_pads(self):
+        self.common_test_col2im(
+            28, (6, 4), (2, 3), pads=[1, 1, 1, 1], strides=[1, 1], dilations=[1, 1]
+        )
+
 
 if __name__ == "__main__":
-    TestRuntimeInference().test_im2col_3x3_strides()
+    # TestRuntimeInference().test_col2im()
+    TestRuntimeInference().test_col2im_2x3_pads()
     unittest.main(verbosity=2)
