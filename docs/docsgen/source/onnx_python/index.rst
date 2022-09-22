@@ -7,7 +7,7 @@ Functions
 This section gathers many functions or
 classes from `onnx <https://onnx.ai/>`_ used when generated ONNX files
 from machine learned models. Most of the examples
-are executed during the generation of the documenation
+are executed during the generation of the documentation
 with this version of *onnx*.
 
 .. autofunction:: onnx.defs.onnx_opset_version
