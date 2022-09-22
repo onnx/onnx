@@ -4,7 +4,7 @@ Function expect
 Many examples from the documentation end by calling
 function ``expect`` to check a runtime returns the expected
 outputs for the given example. Here is one implementation
-based on `onnxruntime <https://onnxruntime.ai/>`.
+based on `onnxruntime <https://onnxruntime.ai/>`_.
 
 ::
 
