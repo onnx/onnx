@@ -7,10 +7,10 @@ from onnx import parser, printer
 
 class TestBasicFunctions(unittest.TestCase):
     def check_graph(self, graph: onnx.GraphProto) -> None:
-        self.assertTrue(len(graph.node) == 3)
-        self.assertTrue(graph.node[0].op_type == "MatMul")
-        self.assertTrue(graph.node[1].op_type == "Add")
-        self.assertTrue(graph.node[2].op_type == "Softmax")
+        self.assertEqual(len(graph.node), 3)
+        self.assertEqual(graph.node[0].op_type, "MatMul")
+        self.assertEqual(graph.node[1].op_type, "Add")
+        self.assertEqual(graph.node[2].op_type, "Softmax")
 
     def test_parse_graph(self) -> None:
         text0 = """
