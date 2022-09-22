@@ -20,6 +20,7 @@
 #include "onnx/version_converter/adapters/extend_supported_types.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
+#include "onnx/version_converter/adapters/lppool_17_18.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -523,6 +524,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("OptionalHasElement", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("ScatterND", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("ScatterElements", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("LpPool", OpSetID(17), OpSetID(18)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
