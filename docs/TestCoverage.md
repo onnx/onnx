@@ -8541,7 +8541,7 @@ expect(
 
 </details>
 <details>
-<summary>maxpool_with_argmax_2d_precomputed_strides</summary>
+<summary>maxpool_with_argmax_2d_precomputed_strides_opset12</summary>
 
 ```python
 """
@@ -8577,6 +8577,7 @@ expect(
     inputs=[x],
     outputs=[y, z],
     name="test_maxpool_with_argmax_2d_precomputed_strides",
+    opset_imports=[onnx.helper.make_opsetid("", 12)]
 )
 ```
 
@@ -20287,14 +20288,13 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 7 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 dilations: 0
 kernel_shape: 1
 pads: 2
-storage_order: 0
 strides: 1
 </details>
 </details>
@@ -20362,14 +20362,13 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 7 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 dilations: 0
 kernel_shape: 1
 pads: 3
-storage_order: 0
 strides: 1
 </details>
 <details>
@@ -20441,14 +20440,13 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 7 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 dilations: 0
 kernel_shape: 1
 pads: 3
-storage_order: 0
 strides: 2
 </details>
 <details>
@@ -20520,14 +20518,13 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 7 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 dilations: 0
 kernel_shape: 1
 pads: 3
-storage_order: 0
 strides: 2
 </details>
 <details>
@@ -20599,14 +20596,13 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 7 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 dilations: 0
 kernel_shape: 1
 pads: 3
-storage_order: 0
 strides: 2
 </details>
 <details>
@@ -20678,14 +20674,13 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 7 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 dilations: 0
 kernel_shape: 1
 pads: 3
-storage_order: 0
 strides: 2
 </details>
 <details>
@@ -20762,14 +20757,13 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 7 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 dilations: 0
 kernel_shape: 1
 pads: 3
-storage_order: 0
 strides: 2
 </details>
 <details>
@@ -20846,14 +20840,13 @@ bias: 1
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 7 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 dilations: 0
 kernel_shape: 2
 pads: 3
-storage_order: 0
 strides: 2
 </details>
 <details>
@@ -20930,14 +20923,13 @@ bias: 2
 size: 1
 </details>
 <details>
-<summary>MaxPool: 3 out of 7 attributes covered</summary>
+<summary>MaxPool: 3 out of 6 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 dilations: 0
 kernel_shape: 2
 pads: 3
-storage_order: 0
 strides: 2
 </details>
 <details>

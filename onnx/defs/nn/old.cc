@@ -709,6 +709,42 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64"));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxPool,
+    12,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator_10(
+            "MaxPool",
+            "max",
+            "The output of each pooling window is maximum number of elements exclude pad. ",
+            true,
+            true))
+        .Attr(
+            "storage_order",
+            "The storage order of the tensor. 0 is row major, and 1 is column major.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "dilations",
+            "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Output(
+            1,
+            "Indices",
+            "Indices tensor from max pooling across the input tensor. "
+            "The dimensions of indices are the same as output tensor. "
+            "The values in indices of are the indices of the selected values during pooling. "
+            "The indices are computed as flatten 1-D tensor, "
+            "and the indices do not consider padding. "
+            "So the values in indices are in [0, N x C x D1 x ... x Dn).",
+            "I",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64"));
+
 void maxUnpoolShapeInference1(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.
   if (ctx.getNumInputs() != 2 && ctx.getNumInputs() != 3) {

@@ -326,7 +326,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
-    12,
+    18,
     OpSchema()
         .FillUsing(PoolOpSchemaGenerator(
             "MaxPool",
@@ -334,11 +334,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The output of each pooling window is maximum number of elements exclude pad. ",
             true,
             true))
-        .Attr(
-            "storage_order",
-            "The storage order of the tensor. 0 is row major, and 1 is column major.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
         .Attr(
             "dilations",
             "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",

@@ -79,7 +79,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#MatMul">MatMul</a>|<a href="Changelog.md#MatMul-13">13</a>, <a href="Changelog.md#MatMul-9">9</a>, <a href="Changelog.md#MatMul-1">1</a>|
 |<a href="#MatMulInteger">MatMulInteger</a>|<a href="Changelog.md#MatMulInteger-10">10</a>|
 |<a href="#Max">Max</a>|<a href="Changelog.md#Max-13">13</a>, <a href="Changelog.md#Max-12">12</a>, <a href="Changelog.md#Max-8">8</a>, <a href="Changelog.md#Max-6">6</a>, <a href="Changelog.md#Max-1">1</a>|
-|<a href="#MaxPool">MaxPool</a>|<a href="Changelog.md#MaxPool-12">12</a>, <a href="Changelog.md#MaxPool-11">11</a>, <a href="Changelog.md#MaxPool-10">10</a>, <a href="Changelog.md#MaxPool-8">8</a>, <a href="Changelog.md#MaxPool-1">1</a>|
+|<a href="#MaxPool">MaxPool</a>|<a href="Changelog.md#MaxPool-18">18</a>, <a href="Changelog.md#MaxPool-12">12</a>, <a href="Changelog.md#MaxPool-11">11</a>, <a href="Changelog.md#MaxPool-10">10</a>, <a href="Changelog.md#MaxPool-8">8</a>, <a href="Changelog.md#MaxPool-1">1</a>|
 |<a href="#MaxRoiPool">MaxRoiPool</a>|<a href="Changelog.md#MaxRoiPool-1">1</a>|
 |<a href="#MaxUnpool">MaxUnpool</a>|<a href="Changelog.md#MaxUnpool-11">11</a>, <a href="Changelog.md#MaxUnpool-9">9</a>|
 |<a href="#Mean">Mean</a>|<a href="Changelog.md#Mean-13">13</a>, <a href="Changelog.md#Mean-8">8</a>, <a href="Changelog.md#Mean-6">6</a>, <a href="Changelog.md#Mean-1">1</a>|
@@ -12545,9 +12545,9 @@ for op_dtype in all_numeric_dtypes:
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href="Changelog.md#MaxPool-8">8</a>, <a href="Changelog.md#MaxPool-10">10</a>, <a href="Changelog.md#MaxPool-11">11</a>
+Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href="Changelog.md#MaxPool-8">8</a>, <a href="Changelog.md#MaxPool-10">10</a>, <a href="Changelog.md#MaxPool-11">11</a>, <a href="Changelog.md#MaxPool-12">12</a>
 
 #### Attributes
 
@@ -12562,8 +12562,6 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
-<dt><tt>storage_order</tt> : int (default is 0)</dt>
-<dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
@@ -13140,7 +13138,7 @@ expect(
 
 
 <details>
-<summary>maxpool_with_argmax_2d_precomputed_strides</summary>
+<summary>maxpool_with_argmax_2d_precomputed_strides_opset12</summary>
 
 ```python
 """
@@ -13176,6 +13174,7 @@ expect(
     inputs=[x],
     outputs=[y, z],
     name="test_maxpool_with_argmax_2d_precomputed_strides",
+    opset_imports=[onnx.helper.make_opsetid("", 12)]
 )
 ```
 

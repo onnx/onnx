@@ -186,7 +186,7 @@ class MaxPool(Base):
         )
 
     @staticmethod
-    def export_maxpool_with_argmax_2d_precomputed_strides() -> None:
+    def export_maxpool_with_argmax_2d_precomputed_strides_opset12() -> None:
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 2, 2]
@@ -220,6 +220,7 @@ class MaxPool(Base):
             inputs=[x],
             outputs=[y, z],
             name="test_maxpool_with_argmax_2d_precomputed_strides",
+            opset_imports=[onnx.helper.make_opsetid("", 12)],
         )
 
     @staticmethod
