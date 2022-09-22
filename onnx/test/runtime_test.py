@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C3001,C0302,C0415,R0904,R0914,W0221
+# pylint: disable=C3001,C0302,C0415,R0904,R0914,R0915,W0221,W0707
 
 import unittest
 from contextlib import redirect_stdout
@@ -40,7 +40,7 @@ def skip_if_no_onnxruntime(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import onnxruntime
+            import onnxruntime  # pylint: disable=W0611
         except ImportError:
             raise unittest.SkipTest("onnxruntime not installed")
         fn(*args, **kwargs)
@@ -52,7 +52,7 @@ def skip_if_no_torch(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import torch
+            import torch  # pylint: disable=W0611
         except ImportError:
             raise unittest.SkipTest("onnxruntime not installed")
         fn(*args, **kwargs)

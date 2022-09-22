@@ -214,13 +214,13 @@ class OnnxBackendTest:
             if isinstance(output, np.ndarray):
                 if rtol == 0:
                     if desired.dtype == np.float32:
-                        rt = 1e-5
+                        rtl = 1e-5
                     elif desired.dtype == np.float64:
-                        rt = 1e-12
+                        rtl = 1e-12
                     else:
-                        rt = rtol
+                        rtl = rtol
                 else:
-                    rt = rtol
+                    rtl = rtol
                 if desired.dtype == dtype_object:
                     try:
                         assert_allclose_string(desired, output)
@@ -230,10 +230,10 @@ class OnnxBackendTest:
                         ) from ex
                 else:
                     try:
-                        assert_allclose(desired, output, atol=atol, rtol=rt)
+                        assert_allclose(desired, output, atol=atol, rtol=rtl)
                     except AssertionError as ex:
                         raise AssertionError(
-                            f"Output {i_output} of test {index} in folder {self.folder!r} failed (rtol={rt}, atol={atol})."
+                            f"Output {i_output} of test {index} in folder {self.folder!r} failed (rtol={rtl}, atol={atol})."
                         ) from ex
             elif hasattr(output, "is_compatible"):
                 # A shape

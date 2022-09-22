@@ -33,7 +33,6 @@ def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strid
     output_height, output_width = output_shape
     kernel_height, kernel_width = kernel_shape
     dilation_height, dilation_width = dilations
-    pad_height, pad_width = pads[:, 0]
     stride_height, stride_width = strides
 
     ndim = len(X.shape)
