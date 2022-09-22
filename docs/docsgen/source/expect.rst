@@ -1,5 +1,5 @@
-Function expect
-===============
+Sample operator test code
+=========================
 
 Many examples from the documentation end by calling
 function ``expect`` to check a runtime returns the expected
