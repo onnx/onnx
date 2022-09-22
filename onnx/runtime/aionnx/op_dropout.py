@@ -4,7 +4,7 @@
 from typing import Optional, Tuple
 
 import numpy as np  # type: ignore
-from np.random import RandomState  # type: ignore
+from numpy.random import RandomState  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
