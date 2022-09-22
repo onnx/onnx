@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 ONNX static content generation
-=======================================
+==============================
 
 This is a developer usage guide to the ONNX Python API and Operator Schemas.
 It contains the following information for the latest release:
@@ -20,9 +20,34 @@ All information is auto-generated and will update every time the docs are re-bui
 Lists out all the ONNX operators. For each operator, lists out the usage guide,
 parameters, examples, and line-by-line version history.
 This section also includes tables detailing each operator
-with its versions, as done in Operators.md.
+with its versions, as done in `Operators.md
+<https://github.com/onnx/onnx/blob/main/docs/Operators.md>`_.
 
-**First option**
+**API Overview**
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: API Overview
+
+   onnx_python/index
+
+**Available Operators**
+
+All examples end by calling function ``expect`` which
+checks a runtime produces the expected output for this example.
+One implementation can be found in the first page
+linked below.
+
+.. toctree::
+	:glob:
+	:maxdepth: 1
+	:caption: Operators + OpSchemas
+
+   expect
+	onnx_doc_folder/index
+
+**Should we keep it?**
 
 .. toctree::
    :glob:
@@ -37,19 +62,3 @@ with its versions, as done in Operators.md.
    :caption: API Overview
 
    onnx-api/modules/*
-
-**Second option**
-
-.. toctree::
-   :glob:
-   :maxdepth: 1
-   :caption: API Overview
-
-   onnx_python/index
-
-.. toctree::
-	:glob:
-	:maxdepth: 1
-	:caption: Operators + OpSchemas
-
-	onnx_doc_folder/index

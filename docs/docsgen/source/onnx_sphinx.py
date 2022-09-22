@@ -437,6 +437,16 @@ def change_style(name):
     return s2 if not keyword.iskeyword(s2) else s2 + "_"
 
 
+def _process_example(code):
+    """
+    Add necessary imports to make the example work.
+    """
+    code = code.replace("  # type: ignore", "")
+    missing_imports = ["import numpy as np", "import onnx"]
+    elements = missing_imports + ["", "", code.strip("\n"), ""]
+    return "\n".join(elements)
+
+
 def get_onnx_example(op_name):
     """
     Retrieves examples associated to one operator
@@ -488,7 +498,7 @@ def get_onnx_example(op_name):
                 key = 'default'
                 if key in results:
                     key = f'example {len(results) + 1}'
-            results[key] = found
+            results[key] = _process_example(found)
     return results
 
 
