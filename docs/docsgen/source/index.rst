@@ -23,15 +23,6 @@ This section also includes tables detailing each operator
 with its versions, as done in `Operators.md
 <https://github.com/onnx/onnx/blob/main/docs/Operators.md>`_.
 
-**API Overview**
-
-.. toctree::
-   :glob:
-   :maxdepth: 1
-   :caption: API Overview
-
-   onnx_python/index
-
 **Available Operators**
 
 All examples end by calling function ``expect`` which
@@ -40,25 +31,15 @@ One implementation can be found in the first page
 linked below.
 
 .. toctree::
-	:glob:
-	:maxdepth: 1
-	:caption: Operators + OpSchemas
+    :maxdepth: 1
 
-   expect
-	onnx_doc_folder/index
+    expect
+    onnx_doc_folder/index
 
-**Should we keep it?**
+**API Overview**
 
 .. toctree::
-   :glob:
-   :maxdepth: 1
-   :caption: Module Overview
+    :maxdepth: 1
 
-   onnx-api/index
-
-.. toctree::
-   :glob:
-   :maxdepth: 1
-   :caption: API Overview
-
-   onnx-api/modules/*
+    onnx-api/index
+    onnx_python/index

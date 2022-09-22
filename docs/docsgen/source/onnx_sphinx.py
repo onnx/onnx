@@ -7,19 +7,22 @@ import importlib
 import inspect
 import re
 import keyword
-from difflib import HtmlDiff
+from difflib import Differ
 import numpy as np
 import onnx
 import onnx.defs
 from onnx.backend.test.case.base import _Exporter
-from onnx.onnx_cpp2py_export.defs import SchemaError  # pylint: disable=E1101,E0611,E0401
+from onnx.onnx_cpp2py_export.defs import (
+    SchemaError,
+)  # pylint: disable=E1101,E0611,E0401
 from onnx.defs import OpSchema
 
 
-def _get_doc_template():
+def get_template():
     try:
         from jinja2 import Template
     except ImportError:  # pragma no cover
+
         class Template:
             "Docstring template"
 
@@ -28,18 +31,63 @@ def _get_doc_template():
 
             def render(self, **context):
                 "render"
-                schemas = context['schemas']
+                schemas = context["schemas"]
                 rows = []
                 for sch in schemas:
-                    doc = sch.doc or ''
+                    doc = sch.doc or ""
                     name = sch.name
                     if name is None:
                         raise RuntimeError("An operator must have a name.")
-                    rows.extend([name, "=" * len(name),
-                                 "", doc, ""])
+                    rows.extend([name, "=" * len(name), "", doc, ""])
                 return "\n".join(rows)
 
-    return Template(textwrap.dedent("""
+    return Template
+
+
+def _get_diff_template():
+    Template = get_template()
+    return Template(
+        textwrap.dedent(
+            """
+        <div id="{{ div_name }}"></div>
+        <link rel="stylesheet" type="text/css" href="../_static/diff2html.min.css" />
+        <script type="text/javascript" src="../_static/diff2html-ui.min.js"></script>
+        <script>
+        const diffString = `
+        --- a/{{ op_name }}{{ version1 }}
+        +++ b/{{ op_name }}{{ version2 }}
+        @@ -1 +1 @@
+        {{ diff_content }}
+        `;
+
+        document.addEventListener('DOMContentLoaded', function () {
+        var targetElement = document.getElementById('{{ div_name }}');
+        var configuration = {
+            drawFileList: true,
+            fileListToggle: false,
+            fileListStartVisible: false,
+            fileContentToggle: false,
+            matching: 'lines',
+            outputFormat: 'line-by-line',
+            synchronisedScroll: true,
+            highlight: true,
+            renderNothingWhenEmpty: false,
+        };
+        var diff2htmlUi = new Diff2HtmlUI(targetElement, diffString, configuration);
+        diff2htmlUi.draw();
+        diff2htmlUi.highlightCode();
+        });
+        </script>
+        """
+        )
+    )
+
+
+def _get_doc_template():
+    Template = get_template()
+    return Template(
+        textwrap.dedent(
+            """
         {% for sch in schemas %}
         
         .. tag-diff-insert.
@@ -129,11 +177,15 @@ def _get_doc_template():
         {% endfor %}
         {% endif %}
         {% endfor %}
-    """))
+    """
+        )
+    )
 
 
+_template_diff = _get_diff_template()
 _template_operator = _get_doc_template()
 __get_all_schemas_with_history = None
+print(_template_diff)
 
 _attribute_conversion_functions = {
     onnx.AttributeProto.FLOAT: lambda att: np.float32(att.f),
@@ -151,6 +203,7 @@ _attribute_conversion_functions = {
     # onnx.AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
     # AttributeProto.TYPE_PROTOS(14)
 }
+
 
 def _populate__get_all_schemas_with_history():
     res = {}
@@ -178,8 +231,9 @@ def get_domain_list():
     """
     Returns the list of available domains.
     """
-    return list(sorted(set(map(lambda s: s.domain,
-                               onnx.defs.get_all_schemas_with_history()))))
+    return list(
+        sorted(set(map(lambda s: s.domain, onnx.defs.get_all_schemas_with_history())))
+    )
 
 
 def get_operator_schemas(op_name, version=None, domain=None):
@@ -190,7 +244,7 @@ def get_operator_schemas(op_name, version=None, domain=None):
     :param domain: domain
     :return: list of schemas
     """
-    if version == 'last' and op_name is not None:
+    if version == "last" and op_name is not None:
         if domain is not None:
             return [onnx.defs.get_schema(op_name, domain=domain)]
     all_schemas = _get_all_schemas_with_history()
@@ -210,12 +264,12 @@ def get_operator_schemas(op_name, version=None, domain=None):
             for op, v in ops.items():
                 if version is None:
                     sch.extend(v.values())
-                elif version == 'last' and (dom == '' or 'onnx' in dom):
+                elif version == "last" and (dom == "" or "onnx" in dom):
                     try:
                         sch.append(onnx.defs.get_schema(op, domain=dom))
                     except SchemaError:  # pragma: no cover
                         sch.append(v[max(v)])
-                elif version == 'last':
+                elif version == "last":
                     sch.append(v[max(v)])
                 else:
                     sch.append(v[version])
@@ -231,11 +285,19 @@ def get_operator_schemas(op_name, version=None, domain=None):
     return [v[-1] for v in vals]
 
 
-def get_rst_doc(op_name=None, domain=None, version='last', clean=True,
-                diff=False, example=False):
+def get_rst_doc(
+    folder,
+    op_name=None,
+    domain=None,
+    version="last",
+    clean=True,
+    diff=False,
+    example=False,
+):
     """
     Returns a documentation in RST format
     for all :class:`OnnxOperator`.
+
     :param op_name: operator name of None for all
     :param domain: domain
     :param version: version, None for all, `'last'` for the most recent one
@@ -253,28 +315,28 @@ def get_rst_doc(op_name=None, domain=None, version='last', clean=True,
     # SNIPPETS = collect_snippets()
     # SAMPLE_IMPLEMENTATIONS = collect_sample_implementations()
     def format_name_with_domain(sch):
-        if version == 'last':
+        if version == "last":
             if sch.domain:
-                return f'{sch.name} ({sch.domain})'
+                return f"{sch.name} ({sch.domain})"
             return sch.name
         if sch.domain:
-            return f'{sch.name} - {sch.since_version} ({sch.domain})'
-        return '%s - %d' % (sch.name, sch.since_version)
+            return f"{sch.name} - {sch.since_version} ({sch.domain})"
+        return "%s - %d" % (sch.name, sch.since_version)
 
     def format_option(obj):
         opts = []
         if OpSchema.FormalParameterOption.Optional == obj.option:
-            opts.append('optional')
+            opts.append("optional")
         elif OpSchema.FormalParameterOption.Variadic == obj.option:
-            opts.append('variadic')
-        if getattr(obj, 'isHomogeneous', False):
-            opts.append('heterogeneous')
+            opts.append("variadic")
+        if getattr(obj, "isHomogeneous", False):
+            opts.append("heterogeneous")
         if opts:
             return f" ({', '.join(opts)})"
         return ""
 
     def format_example(code):
-        code = textwrap.indent(code, '    ')
+        code = textwrap.indent(code, "    ")
         return code
 
     def get_constraint(const, ii):
@@ -296,31 +358,31 @@ def get_rst_doc(op_name=None, domain=None, version='last', clean=True,
 
     def process_documentation(doc):
         if doc is None:
-            doc = ''
+            doc = ""
         if not isinstance(doc, str):
             raise TypeError(  # pragma: no cover
-                f"doc must be a string not {type(doc)!r} - {doc + 42!r}.")
+                f"doc must be a string not {type(doc)!r} - {doc + 42!r}."
+            )
         doc = textwrap.dedent(doc)
         main_docs_url = "https://github.com/onnx/onnx/blob/master/"
         rep = {
-            '[the doc](IR.md)': '`ONNX <{0}docs/IR.md>`_',
-            '[the doc](Broadcasting.md)':
-                '`Broadcasting in ONNX <{0}docs/Broadcasting.md>`_',
-            '<dl>': '',
-            '</dl>': '',
-            '<dt>': '* ',
-            '<dd>': '  ',
-            '</dt>': '',
-            '</dd>': '',
-            '<tt>': '``',
-            '</tt>': '``',
-            '<br>': '\n',
+            "[the doc](IR.md)": "`ONNX <{0}docs/IR.md>`_",
+            "[the doc](Broadcasting.md)": "`Broadcasting in ONNX <{0}docs/Broadcasting.md>`_",
+            "<dl>": "",
+            "</dl>": "",
+            "<dt>": "* ",
+            "<dd>": "  ",
+            "</dt>": "",
+            "</dd>": "",
+            "<tt>": "``",
+            "</tt>": "``",
+            "<br>": "\n",
         }
         for k, v in rep.items():
             doc = doc.replace(k, v.format(main_docs_url))
         move = 0
         lines = []
-        for line in doc.split('\n'):
+        for line in doc.split("\n"):
             if line.startswith("```"):
                 if move > 0:
                     move -= 4
@@ -340,7 +402,7 @@ def get_rst_doc(op_name=None, domain=None, version='last', clean=True,
             doc_url += "-ml"
         doc_url += ".md"
         doc_url += "#"
-        if sch.domain not in (None, '', 'ai.onnx'):
+        if sch.domain not in (None, "", "ai.onnx"):
             doc_url += sch.domain + "."
         return doc_url
 
@@ -353,49 +415,59 @@ def get_rst_doc(op_name=None, domain=None, version='last', clean=True,
         return ""
 
     def text_wrap(text, indent):
-        s = ' ' * indent
+        s = " " * indent
         lines = textwrap.wrap(text, initial_indent=s, subsequent_indent=s)
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     fnwd = format_name_with_domain
     tmpl = _template_operator
-    docs = tmpl.render(schemas=schemas, OpSchema=OpSchema,
-                       len=len, getattr=getattr, sorted=sorted,
-                       format_option=format_option,
-                       get_constraint=get_constraint,
-                       getname=getname, enumerate=enumerate,
-                       format_name_with_domain=fnwd,
-                       process_documentation=process_documentation,
-                       build_doc_url=build_doc_url, text_wrap=text_wrap,
-                       str=str, clean_default_value=clean_default_value,
-                       get_onnx_example=get_onnx_example if example else None,
-                       format_example=format_example,
-                       is_last_schema=is_last_schema)
+    docs = tmpl.render(
+        schemas=schemas,
+        OpSchema=OpSchema,
+        len=len,
+        getattr=getattr,
+        sorted=sorted,
+        format_option=format_option,
+        get_constraint=get_constraint,
+        getname=getname,
+        enumerate=enumerate,
+        format_name_with_domain=fnwd,
+        process_documentation=process_documentation,
+        build_doc_url=build_doc_url,
+        text_wrap=text_wrap,
+        str=str,
+        clean_default_value=clean_default_value,
+        get_onnx_example=get_onnx_example if example else None,
+        format_example=format_example,
+        is_last_schema=is_last_schema,
+    )
     if diff:
-        lines = docs.split('\n')
-        new_lines = ['']
+        lines = docs.split("\n")
+        new_lines = [""]
         for line in lines:
-            line = line.rstrip('\r\t ')
+            line = line.rstrip("\r\t ")
             if len(line) == 0 and len(new_lines[-1]) == 0:
                 continue
             new_lines.append(line)
-        docs = '\n'.join(new_lines)
-        docs = _insert_diff(docs, '.. tag-diff-insert.')
+        docs = "\n".join(new_lines)
+        docs = _insert_diff(
+            folder, docs, ".. tag-diff-insert.", op_name=op_name, version=version
+        )
 
     if clean:
-        lines = docs.split('\n')
-        new_lines = ['']
+        lines = docs.split("\n")
+        new_lines = [""]
         for line in lines:
-            line = line.rstrip('\r\t ')
+            line = line.rstrip("\r\t ")
             if len(line) == 0 and len(new_lines[-1]) == 0:
                 continue
             new_lines.append(line)
-        docs = '\n'.join(new_lines)
+        docs = "\n".join(new_lines)
 
     return docs
 
 
-def _insert_diff(docs, split='.. tag-diff-insert.'):
+def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None):
     """
     Splits a using `split`, insert HTML differences between pieces.
     The function relies on package :epkg:`pyquickhelper`.
@@ -404,26 +476,73 @@ def _insert_diff(docs, split='.. tag-diff-insert.'):
     if len(spl) <= 1:
         return docs
 
+    reg = re.compile("([A-Z][A-Za-z0-9_]*) - ([0-9]+)")
+
     pieces = [spl[0]]
     for i in range(1, len(spl)):
-        spl1 = spl[i - 1].strip('\n ')
-        spl2 = spl[i].strip('\n ')
-        spl1 = spl1.split('**Examples**')[0].replace('`', '')
-        spl2 = spl2.split('**Examples**')[0].replace('`', '')
-        spl1 = spl1.split('**Summary**')[-1].strip('\n ')
-        spl2 = spl2.split('**Summary**')[-1].strip('\n ')
+        spl1 = spl[i - 1].strip("\n ")
+        spl2 = spl[i].strip("\n ")
+        vers1 = reg.findall(spl1)
+        vers2 = reg.findall(spl2)
+
+        spl1 = spl1.split("**Examples**")[0].replace("`", "")
+        spl2 = spl2.split("**Examples**")[0].replace("`", "")
+        spl1 = spl1.split("**Summary**")[-1].strip("\n ")
+        spl2 = spl2.split("**Summary**")[-1].strip("\n ")
         if len(spl1) < 5 or len(spl2) < 5:
             pieces.append(spl[i])
             continue
+        if len(vers1) == 0:
+            raise ValueError(f"Unable to find version in\n{spl1}")
+        if len(vers2) == 0:
+            raise ValueError(f"Unable to find version in\n{spl2}")
+        v1 = vers1[0][1]
+        v2 = vers2[0][1]
 
-        diff_html = HtmlDiff(tabsize=4)
-        ht = diff_html.make_table(spl2.split("\n"), spl1.split("\n"))
-        ht = ht.replace(">``<", "><")
-        ht = '    ' + '\n    '.join(ht.split('\n'))
-        pieces.extend(['', '**Differences**', '', '.. raw:: html',
-                       '', ht, '', spl[i]])
+        d = Differ()
+        result = list(
+            d.compare(
+                textwrap.dedent(spl2.strip(" \n\r\t")).splitlines(keepends=True),
+                textwrap.dedent(spl1.strip(" \n\r\t")).splitlines(keepends=True),
+            )
+        )
+        raw = "".join(result)
 
-    return '\n'.join(pieces)
+        tmpl = _template_diff
+        diff = tmpl.render(
+            op_name=op_name,
+            version1=v2,
+            version2=v1,
+            div_name=f"div_{op_name}_{i}",
+            diff_content=raw,
+        )
+
+        title = f"{op_name} - {v2} vs {v1}"
+
+        name = f"diff_{op_name}_{v2}_{v1}"
+        with open(os.path.join(folder, name + ".rst"), "w", encoding="utf-8") as f:
+            f.write(
+                "\n".join(
+                    [
+                        title,
+                        "=" * len(title),
+                        "",
+                        ".. raw:: html",
+                        "",
+                        textwrap.indent(diff, "    "),
+                    ]
+                )
+            )
+        pieces.extend(
+            [
+                ".. toctree::" "",
+                f"    {name}",
+                "",
+                spl[i],
+            ]
+        )
+
+    return "\n".join(pieces)
 
 
 def change_style(name):
@@ -432,8 +551,8 @@ def change_style(name):
     :param name: name to convert
     :return: converted name
     """
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    s2 = re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+    s2 = re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
     return s2 if not keyword.iskeyword(s2) else s2 + "_"
 
 
@@ -456,8 +575,8 @@ def get_onnx_example(op_name):
     :return: dictionary
     """
     modules = [
-        f'onnx.backend.test.case.node.{op_name.lower()}',
-        f'onnx.backend.test.case.node.{change_style(op_name).lower()}',
+        f"onnx.backend.test.case.node.{op_name.lower()}",
+        f"onnx.backend.test.case.node.{change_style(op_name).lower()}",
     ]
     module = None
     for m in modules:
@@ -474,30 +593,31 @@ def get_onnx_example(op_name):
         if not isinstance(v, _Exporter):
             continue
         code_cls = inspect.getsource(v)
-        codes = code_cls.split('@staticmethod')
+        codes = code_cls.split("@staticmethod")
         for me in v.__dict__:
-            if not me.startswith('export'):
+            if not me.startswith("export"):
                 continue
-            sub = f' {me}()'
+            sub = f" {me}()"
             found = None
             for code in codes:
                 if sub in code:
                     found = code
             if found is None:
                 raise RuntimeError(  # pragma: no cover
-                    f"Unable to find {sub!r} in\n{code_cls}")
+                    f"Unable to find {sub!r} in\n{code_cls}"
+                )
             found = textwrap.dedent(found)
-            lines = found.split('\n')
+            lines = found.split("\n")
             first = 0
             for i in range(len(lines)):  # pylint: disable=C0200
-                if lines[i].startswith('def '):
+                if lines[i].startswith("def "):
                     first = i + 1
-            found = textwrap.dedent('\n'.join(lines[first:]))
-            key = me[len('export'):]
-            if key == '':
-                key = 'default'
+            found = textwrap.dedent("\n".join(lines[first:]))
+            key = me[len("export") :]
+            if key == "":
+                key = "default"
                 if key in results:
-                    key = f'example {len(results) + 1}'
+                    key = f"example {len(results) + 1}"
             results[key] = _process_example(found)
     return results
 
@@ -518,8 +638,7 @@ def is_last_schema(sch):
     return last.since_version == sch.since_version
 
 
-def onnx_documentation_folder(folder, ops=None, title='ONNX operators',
-                              fLOG=None):
+def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=None):
     """
     Creates documentation in a folder for all known
     ONNX operators or a subset.
@@ -532,28 +651,34 @@ def onnx_documentation_folder(folder, ops=None, title='ONNX operators',
     all_schemas = _get_all_schemas_with_history()
     if not os.path.exists(folder):
         os.makedirs(folder)
-    index = ['', title, '=' * len(title), '', '.. contents::',
-             '    :local:', '']
+    index = ["", title, "=" * len(title), "", ".. contents::", "    :local:", ""]
     pages = []
     tables_domain_pages = []
 
     if ops is not None:
         ops = set(ops)
     for dom in sorted(all_schemas):
-        sdom = 'main' if dom == '' else dom
+        sdom = "main" if dom == "" else dom
 
-        index_dom = [sdom, '+' * len(sdom), '', '.. toctree::',
-                     '    :maxdepth: 1', '']
+        index_dom = [sdom, "+" * len(sdom), "", ".. toctree::", "    :maxdepth: 1", ""]
 
-        table_dom = ["", f".. _l-table-operator-{sdom.replace('.', '-')}:", "",
-                     f"operator table for domain {sdom}"]
+        table_dom = [
+            "",
+            f".. _l-table-operator-{sdom.replace('.', '-')}:",
+            "",
+            f"operator table for domain {sdom}",
+        ]
         table_dom.extend(["=" * len(table_dom[-1]), ""])
-        table_dom.extend([f".. list-table:: operators for domain {sdom}",
-                          "    :widths: 10 10",
-                          "    :header-rows: 1",
-                          "",
-                          "    * - operator",
-                          "      - versions"])
+        table_dom.extend(
+            [
+                f".. list-table:: operators for domain {sdom}",
+                "    :widths: 10 10",
+                "    :header-rows: 1",
+                "",
+                "    * - operator",
+                "      - versions",
+            ]
+        )
 
         sub = all_schemas[dom]
         do = []
@@ -569,22 +694,32 @@ def onnx_documentation_folder(folder, ops=None, title='ONNX operators',
 
         for op in sorted(do):
             if fLOG is not None:
-                fLOG(  # pragma: no cover
-                    f'generate page for onnx {dom!r} - {op!r}')
+                fLOG(f"generate page for onnx {dom!r} - {op!r}")  # pragma: no cover
             page_name = f"onnx_{dom.replace('.', '')}_{op}"
-            index_dom.append(f'    {page_name}')
-            doc = get_rst_doc(op, domain=dom, version=None, example=True,
-                              diff=True)
-            if dom == '':
+            index_dom.append(f"    {page_name}")
+            doc = get_rst_doc(
+                folder, op, domain=dom, version=None, example=True, diff=True
+            )
+            if dom == "":
                 main = op
             else:
-                main = f'{dom} - {op}'
-            rows = ['', f'.. _l-onnx-doc{dom}-{op}:', '',
-                    '=' * len(main), main, '=' * len(main), '',
-                    '.. contents::', '    :local:', '', doc]
+                main = f"{dom} - {op}"
+            rows = [
+                "",
+                f".. _l-onnx-doc{dom}-{op}:",
+                "",
+                "=" * len(main),
+                main,
+                "=" * len(main),
+                "",
+                ".. contents::",
+                "    :local:",
+                "",
+                doc,
+            ]
 
-            full = os.path.join(folder, page_name + '.rst')
-            with open(full, 'w', encoding='utf-8') as f:
+            full = os.path.join(folder, page_name + ".rst")
+            with open(full, "w", encoding="utf-8") as f:
                 f.write("\n".join(rows))
             pages.append(full)
 
@@ -592,41 +727,41 @@ def onnx_documentation_folder(folder, ops=None, title='ONNX operators',
             schemas = get_operator_schemas(op, domain=dom, version=None)
             links = []
             for sch in schemas:
-                link = (
-                    ':ref:`{sver} <l-onnx-op{lname_}-{lname}-{sver}>`').format(
-                        sver=str(sch.since_version), lname=sch.name.lower(),
-                        lname_=sch.domain.lower().replace(".", "-"))
+                link = (":ref:`{sver} <l-onnx-op{lname_}-{lname}-{sver}>`").format(
+                    sver=str(sch.since_version),
+                    lname=sch.name.lower(),
+                    lname_=sch.domain.lower().replace(".", "-"),
+                )
                 links.append(link)
-            table_dom.extend([f"    * - {op}",
-                              f"      - {', '.join(links)}"])
+            table_dom.extend([f"    * - {op}", f"      - {', '.join(links)}"])
 
-        sdom_clean = sdom.replace('.', '_')
-        page_name = os.path.join(folder, f'table_{sdom_clean}.rst')
-        tables_domain_pages.append(f'table_{sdom_clean}')
+        sdom_clean = sdom.replace(".", "_")
+        page_name = os.path.join(folder, f"table_{sdom_clean}.rst")
+        tables_domain_pages.append(f"table_{sdom_clean}")
         pages.append(page_name)
         with open(page_name, "w", encoding="utf-8") as f:
             f.write("\n".join(table_dom))
 
         index.extend(index_dom)
-        index.append('')
+        index.append("")
 
     # adding pages
-    index.extend(["", "Tables", "++++++", "",
-                 ".. toctree::", "    :maxdepth: 1", ""])
+    index.extend(["", "Tables", "++++++", "", ".. toctree::", "    :maxdepth: 1", ""])
     for page in tables_domain_pages:
         index.append(f"    {page}")
-    index.append('')
+    index.append("")
 
     # creating a big index
-    page_name = os.path.join(folder, 'index.rst')
-    with open(page_name, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(index))
+    page_name = os.path.join(folder, "index.rst")
+    with open(page_name, "w", encoding="utf-8") as f:
+        f.write("\n".join(index))
     pages.append(page_name)
     return pages
 
 
 def _generate_op_doc(app):
     from sphinx.util import logging
+
     logger = logging.getLogger(__name__)
     folder = app.config.onnx_doc_folder
     onnx_documentation_folder(folder, fLOG=logger.info)
@@ -638,6 +773,7 @@ def setup(app):
     on ONN Operators.
     """
     import sphinx
-    app.add_config_value('onnx_doc_folder', 'onnx_doc_folder', 'env')
-    app.connect('builder-inited', _generate_op_doc)
-    return {'version': sphinx.__display_version__, 'parallel_read_safe': True}
+
+    app.add_config_value("onnx_doc_folder", "onnx_doc_folder", "env")
+    app.connect("builder-inited", _generate_op_doc)
+    return {"version": sphinx.__display_version__, "parallel_read_safe": True}

@@ -1,8 +1,8 @@
 
 .. _l-python-onnx-api:
 
-Summary of onnx API
-===================
+Functions
+=========
 
 This section gathers many functions or
 classes from `onnx <https://onnx.ai/>`_ used when generated ONNX files

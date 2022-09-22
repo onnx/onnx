@@ -1,5 +1,5 @@
-Modules
-=======
+Submodules Summary
+==================
 
 .. doctest
 	from onnx.defs import onnx_opset_version
