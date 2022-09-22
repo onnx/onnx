@@ -56,7 +56,7 @@ pip install onnx
 [Weekly packages](https://test.pypi.org/project/onnx-weekly/) are published in test pypi to enable experimentation and early testing.
 
 ## vcpkg packages
-onnx is in the maintenance list of vcpkg, you can easily use vcpkg to build and install it.
+onnx is in the maintenance list of [vcpkg](https://github.com/microsoft/vcpkg), you can easily use vcpkg to build and install it.
 ```
 git clone https://github.com/microsoft/vcpkg.git
 ./bootstrap-vcpkg.bat # For powershell
