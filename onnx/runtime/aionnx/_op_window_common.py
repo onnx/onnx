@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0613,W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...mapping import TENSOR_TYPE_TO_NP_TYPE
 from ..op_run import OpRun
@@ -17,7 +17,7 @@ class _CommonWindow(OpRun):
             N_1 = size
         else:
             N_1 = size - 1
-        ni = numpy.arange(size, dtype=self.dtype)
+        ni = np.arange(size, dtype=self.dtype)
         return ni, N_1
 
     def _end(self, size, res):  # type: ignore

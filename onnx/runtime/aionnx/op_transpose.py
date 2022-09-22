@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ._op import OpRunUnaryNum
 
@@ -14,9 +14,9 @@ class Transpose(OpRunUnaryNum):
     def _run(self, data):  # type: ignore
         # TODO: support overridden attributes.
         if self.perm_ is None:
-            return (numpy.transpose(data),)
+            return (np.transpose(data),)
         if len(self.perm_) != len(data.shape):
             raise RuntimeError(
                 f"Inconsistent permutation {self.perm_!r} with shape {data.shape!r}."
             )
-        return (numpy.transpose(data, axes=self.perm_),)
+        return (np.transpose(data, axes=self.perm_),)

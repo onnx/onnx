@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ._op_window_common import _CommonWindow
 
@@ -19,13 +19,13 @@ class BlackmanWindow(_CommonWindow):
     def _run(self, size):  # type: ignore
         # TODO: support overridden attributes.
         # ni, N_1 = self._begin(size)
-        ni, N_1 = numpy.arange(size, dtype=self.dtype), size
+        ni, N_1 = np.arange(size, dtype=self.dtype), size
         if self.periodic == 0:  # type: ignore
             N_1 = N_1 - 1
         alpha = 0.42
         beta = 0.08
         pi = 3.1415
-        y = numpy.cos((ni * (pi * 2)) / N_1) * (-0.5)
-        y += numpy.cos((ni * (pi * 4)) / N_1) * beta
+        y = np.cos((ni * (pi * 2)) / N_1) * (-0.5)
+        y += np.cos((ni * (pi * 4)) / N_1) * beta
         y += alpha
         return self._end(size, y)

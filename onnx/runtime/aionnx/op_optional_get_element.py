@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -12,6 +12,6 @@ class OptionalGetElement(OpRun):
             return ([],)
         if isinstance(x, list):
             return (x,)
-        if isinstance(x, numpy.ndarray):
+        if isinstance(x, np.ndarray):
             return (x,)
         raise RuntimeError("Input is empty.")

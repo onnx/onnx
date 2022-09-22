@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...mapping import TENSOR_TYPE_TO_NP_TYPE
 from ..op_run import OpRun
@@ -41,8 +41,8 @@ class _CommonRandom(OpRun):
         return res
 
     def _get_state(self):  # type: ignore
-        if self.seed is None or numpy.isnan(self.seed):  # type: ignore
-            state = numpy.random.RandomState()
+        if self.seed is None or np.isnan(self.seed):  # type: ignore
+            state = np.random.RandomState()
         else:
-            state = numpy.random.RandomState(seed=int(self.seed))  # type: ignore
+            state = np.random.RandomState(seed=int(self.seed))  # type: ignore
         return state

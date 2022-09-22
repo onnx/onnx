@@ -8,7 +8,7 @@ from ._op import OpRunBinaryNum
 
 def numpy_matmul(a, b):  # type: ignore
     """
-    Implements a matmul product. See :func:`numpy.matmul`.
+    Implements a matmul product. See :func:`np.matmul`.
     Handles sparse matrices.
     """
     try:

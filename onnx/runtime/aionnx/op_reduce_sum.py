@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import RuntimeTypeError
@@ -12,7 +12,7 @@ class ReduceSum_1(OpRunReduceNumpy):
     def _run(self, x):  # type: ignore # pylint: disable=W0221
         # TODO: support overridden attributes.
         return (
-            numpy.sum(x, axis=self.axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
+            np.sum(x, axis=self.axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
         )
 
 
@@ -24,8 +24,8 @@ class ReduceSum_11(ReduceSum_1):
 class ReduceSum_13(OpRunReduceNumpy):
     def run(self, x, axes=None):  # type: ignore
         res = self._run(x, axes=axes)
-        if not self.keepdims and not isinstance(res[0], numpy.ndarray):  # type: ignore
-            res = (numpy.array([res[0]], dtype=res[0].dtype),)
+        if not self.keepdims and not isinstance(res[0], np.ndarray):  # type: ignore
+            res = (np.array([res[0]], dtype=res[0].dtype),)
         if res[0].dtype != x.dtype:
             raise RuntimeTypeError(
                 f"Output type mismatch: input {x.dtype} != output {res[0].dtype} "
@@ -42,17 +42,17 @@ class ReduceSum_13(OpRunReduceNumpy):
         if (
             axes is not None and len(axes.shape) > 0 and axes.shape[0] > 0
         ) and not isinstance(axes, int):
-            if isinstance(axes, numpy.ndarray) and len(axes.shape) == 0:
+            if isinstance(axes, np.ndarray) and len(axes.shape) == 0:
                 axes = int(axes)
             else:
                 axes = tuple(axes.ravel().tolist()) if len(axes) > 0 else None
-        if isinstance(axes, numpy.ndarray) and (
+        if isinstance(axes, np.ndarray) and (
             len(axes.shape) == 0 or 0 in axes.shape
         ):
             axes = None
         try:
             return (
-                numpy.sum(x, axis=axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
+                np.sum(x, axis=axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
             )
         except TypeError as e:
             raise TypeError(

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ._op_window_common import _CommonWindow
 
@@ -21,5 +21,5 @@ class HammingWindow(_CommonWindow):
         ni, N_1 = self._begin(size)
         alpha = 25.0 / 46.0
         beta = 1 - alpha
-        res = alpha - numpy.cos(ni * 3.1415 * 2 / N_1) * beta
+        res = alpha - np.cos(ni * 3.1415 * 2 / N_1) * beta
         return self._end(size, res)

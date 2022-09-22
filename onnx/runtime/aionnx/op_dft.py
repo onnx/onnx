@@ -3,22 +3,22 @@
 
 from typing import Sequence
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
 
-def _fft(x: numpy.ndarray, fft_length: Sequence[int], axis: int) -> numpy.ndarray:
+def _fft(x: np.ndarray, fft_length: Sequence[int], axis: int) -> np.ndarray:
     if fft_length is None:
         fft_length = [x.shape[axis]]
-    ft = numpy.fft.fft(x, fft_length[0], axis=axis)
-    r = numpy.real(ft)
-    i = numpy.imag(ft)
-    merged = numpy.vstack([r[numpy.newaxis, ...], i[numpy.newaxis, ...]])
-    perm = numpy.arange(len(merged.shape))
+    ft = np.fft.fft(x, fft_length[0], axis=axis)
+    r = np.real(ft)
+    i = np.imag(ft)
+    merged = np.vstack([r[np.newaxis, ...], i[np.newaxis, ...]])
+    perm = np.arange(len(merged.shape))
     perm[:-1] = perm[1:]
     perm[-1] = 0
-    tr = numpy.transpose(merged, list(perm))
+    tr = np.transpose(merged, list(perm))
     if tr.shape[-1] != 2:
         raise RuntimeError(
             f"Unexpected shape {tr.shape}, x.shape={x.shape} "
@@ -28,12 +28,12 @@ def _fft(x: numpy.ndarray, fft_length: Sequence[int], axis: int) -> numpy.ndarra
 
 
 def _cfft(
-    x: numpy.ndarray,
+    x: np.ndarray,
     fft_length: Sequence[int],
     axis: int,
     onesided: bool = False,
     normalize: bool = False,
-) -> numpy.ndarray:
+) -> np.ndarray:
     if normalize:
         raise RuntimeError("DFT is not implemented when normalize is True.")
     if x.shape[-1] == 1:
@@ -45,7 +45,7 @@ def _cfft(
         slices[-1] = slice(1, x.shape[-1], 2)
         imag = x[tuple(slices)]
         tmp = real + 1j * imag
-    c = numpy.squeeze(tmp, -1)
+    c = np.squeeze(tmp, -1)
     res = _fft(c, fft_length, axis=axis)
     if onesided:
         slices = [slice(0, a) for a in res.shape]
@@ -55,16 +55,16 @@ def _cfft(
 
 
 def _ifft(
-    x: numpy.ndarray, fft_length: Sequence[int], axis: int = -1, onesided: bool = False
-) -> numpy.ndarray:
-    ft = numpy.fft.ifft(x, fft_length[0], axis=axis)
-    r = numpy.real(ft)
-    i = numpy.imag(ft)
-    merged = numpy.vstack([r[numpy.newaxis, ...], i[numpy.newaxis, ...]])
-    perm = numpy.arange(len(merged.shape))
+    x: np.ndarray, fft_length: Sequence[int], axis: int = -1, onesided: bool = False
+) -> np.ndarray:
+    ft = np.fft.ifft(x, fft_length[0], axis=axis)
+    r = np.real(ft)
+    i = np.imag(ft)
+    merged = np.vstack([r[np.newaxis, ...], i[np.newaxis, ...]])
+    perm = np.arange(len(merged.shape))
     perm[:-1] = perm[1:]
     perm[-1] = 0
-    tr = numpy.transpose(merged, list(perm))
+    tr = np.transpose(merged, list(perm))
     if tr.shape[-1] != 2:
         raise RuntimeError(
             f"Unexpected shape {tr.shape}, x.shape={x.shape} "
@@ -78,8 +78,8 @@ def _ifft(
 
 
 def _cifft(
-    x: numpy.ndarray, fft_length: Sequence[int], axis: int = -1, onesided: bool = False
-) -> numpy.ndarray:
+    x: np.ndarray, fft_length: Sequence[int], axis: int = -1, onesided: bool = False
+) -> np.ndarray:
     if x.shape[-1] == 1:
         tmp = x
     else:
@@ -89,7 +89,7 @@ def _cifft(
         slices[-1] = slice(1, x.shape[-1], 2)
         imag = x[tuple(slices)]
         tmp = real + 1j * imag
-    c = numpy.squeeze(tmp, -1)
+    c = np.squeeze(tmp, -1)
     return _ifft(c, fft_length, axis=axis, onesided=onesided)
 
 
@@ -97,7 +97,7 @@ class DFT(OpRun):
     def _run(self, x, dft_length=None):  # type: ignore
         # TODO: support overridden attributes.
         if dft_length is None:
-            dft_length = numpy.array([x.shape[self.axis]], dtype=numpy.int64)  # type: ignore
+            dft_length = np.array([x.shape[self.axis]], dtype=np.int64)  # type: ignore
         if self.inverse:  # type: ignore
             res = _cifft(x, dft_length, axis=self.axis, onesided=self.onesided)  # type: ignore
         else:

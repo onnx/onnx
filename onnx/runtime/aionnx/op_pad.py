@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
@@ -18,7 +18,7 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
                 pos += 2
             else:
                 raw_pads.extend([0, 0])
-        raw_pads = numpy.array(raw_pads)
+        raw_pads = np.array(raw_pads)
 
     input_rank = data.ndim
     if input_rank * 2 != raw_pads.size:
@@ -28,10 +28,10 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
     pad_width = tuple((raw_pads[i], raw_pads[i + half]) for i in range(0, half))
 
     if mode == "constant":
-        return numpy.pad(
+        return np.pad(
             data, pad_width=pad_width, mode=mode, constant_values=constant_values
         )
-    return numpy.pad(data, pad_width=pad_width, mode=mode)
+    return np.pad(data, pad_width=pad_width, mode=mode)
 
 
 class Pad_1(OpRun):

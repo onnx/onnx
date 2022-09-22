@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ._op import OpRunReduceNumpy
 
@@ -11,13 +11,13 @@ class ReduceLogSumExp(OpRunReduceNumpy):
         # TODO: support overridden attributes.
         tax = tuple(self.axes) if self.axes else None  # type: ignore
         data_max = data.copy()
-        ind = numpy.isinf(data_max)
-        data_max[ind] = -numpy.inf
+        ind = np.isinf(data_max)
+        data_max[ind] = -np.inf
         mx = data_max.max(axis=tax, keepdims=True)
-        sub = numpy.subtract(data, mx)
-        exp = numpy.exp(sub, out=sub)
-        mxs = numpy.sum(exp, axis=tax, keepdims=True, dtype=data.dtype)
-        res = numpy.log(mxs) + mx
+        sub = np.subtract(data, mx)
+        exp = np.exp(sub, out=sub)
+        mxs = np.sum(exp, axis=tax, keepdims=True, dtype=data.dtype)
+        res = np.log(mxs) + mx
         if not self.keepdims:  # type: ignore
-            res = numpy.squeeze(res, axis=tax)
+            res = np.squeeze(res, axis=tax)
         return (res,)

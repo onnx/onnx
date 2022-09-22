@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -16,7 +16,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
         // and so on
     """
     if len(data.shape) == 1 and axis == 0:
-        scattered = numpy.copy(data)
+        scattered = np.copy(data)
         for pos, up in zip(indices, updates):
             scattered[pos] = up
         return scattered
@@ -42,12 +42,12 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
     # indices for scattering of updates param. in data
     idx = [
         [
-            unpack(numpy.indices(idx_xsection_shape).reshape(indices.ndim - 1, -1)),
+            unpack(np.indices(idx_xsection_shape).reshape(indices.ndim - 1, -1)),
             indices[tuple(make_slice(indices, axis, i))].reshape(1, -1)[0],
         ]
         for i in range(indices.shape[axis])
     ]
-    idx = list(numpy.concatenate(idx, axis=1))
+    idx = list(np.concatenate(idx, axis=1))
     idx.insert(axis, idx.pop())
 
     # updates_idx is a NumPy advanced indices for indexing
@@ -56,16 +56,16 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
     updates_idx.pop(axis)
     updates_idx.insert(
         axis,
-        numpy.repeat(numpy.arange(indices.shape[axis]), numpy.prod(idx_xsection_shape)),
+        np.repeat(np.arange(indices.shape[axis]), np.prod(idx_xsection_shape)),
     )
 
-    scattered = numpy.copy(data)
+    scattered = np.copy(data)
     if reduction == "min":
-        scattered[tuple(idx)] = numpy.minimum(
+        scattered[tuple(idx)] = np.minimum(
             scattered[tuple(idx)], updates[tuple(updates_idx)]
         )
     elif reduction == "max":
-        scattered[tuple(idx)] = numpy.maximum(
+        scattered[tuple(idx)] = np.maximum(
             scattered[tuple(idx)], updates[tuple(updates_idx)]
         )
     elif reduction == "add":

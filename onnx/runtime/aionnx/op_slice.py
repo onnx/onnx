@@ -3,23 +3,23 @@
 
 from typing import Optional
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ._op import OpRun
 
 
 def _slice(
-    data: numpy.ndarray,
-    starts: numpy.ndarray,
-    ends: numpy.ndarray,
-    axes: Optional[numpy.ndarray] = None,
-    steps: Optional[numpy.ndarray] = None,
-) -> numpy.ndarray:
+    data: np.ndarray,
+    starts: np.ndarray,
+    ends: np.ndarray,
+    axes: Optional[np.ndarray] = None,
+    steps: Optional[np.ndarray] = None,
+) -> np.ndarray:
     if len(starts.shape) == 0:
-        starts = numpy.array([starts])
+        starts = np.array([starts])
     if len(ends.shape) == 0:
-        ends = numpy.array([ends])
+        ends = np.array([ends])
     if axes is None:
         if steps is None:
             slices = [slice(s, e) for s, e in zip(starts, ends)]

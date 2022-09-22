@@ -1,40 +1,40 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221,R0913
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
 
 
 def _batchnorm_test_mode(
-    x: numpy.ndarray,
-    s: numpy.ndarray,
-    bias: numpy.ndarray,
-    mean: numpy.ndarray,
-    var: numpy.ndarray,
+    x: np.ndarray,
+    s: np.ndarray,
+    bias: np.ndarray,
+    mean: np.ndarray,
+    var: np.ndarray,
     epsilon: float = 1e-5,
-) -> numpy.ndarray:
+) -> np.ndarray:
     dims_x = len(x.shape)
     dim_ones = (1,) * (dims_x - 2)
     s = s.reshape(-1, *dim_ones)
     bias = bias.reshape(-1, *dim_ones)
     mean = mean.reshape(-1, *dim_ones)
     var = var.reshape(-1, *dim_ones)
-    y = s * (x - mean) / numpy.sqrt(var + epsilon) + bias
+    y = s * (x - mean) / np.sqrt(var + epsilon) + bias
     return y.astype(x.dtype)
 
 
 def _batchnorm_training_mode(
-    x: numpy.ndarray,
-    s: numpy.ndarray,
-    bias: numpy.ndarray,
-    mean: numpy.ndarray,
-    var: numpy.ndarray,
+    x: np.ndarray,
+    s: np.ndarray,
+    bias: np.ndarray,
+    mean: np.ndarray,
+    var: np.ndarray,
     momentum: float = 0.9,
     epsilon: float = 1e-5,
-) -> numpy.ndarray:
-    axis = tuple(numpy.delete(numpy.arange(len(x.shape)), 1))
+) -> np.ndarray:
+    axis = tuple(np.delete(np.arange(len(x.shape)), 1))
     saved_mean = x.mean(axis=axis)
     saved_var = x.var(axis=axis)
     output_mean = mean * momentum + saved_mean * (1 - momentum)

@@ -4,7 +4,7 @@
 import itertools
 from typing import Optional, Tuple
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -46,12 +46,12 @@ def _get_output_shape_no_ceil(
     if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
         for i in range(len(input_spatial_shape)):  # pylint: disable=C0200
             out_shape[i] = int(
-                numpy.ceil(float(input_spatial_shape[i]) / float(strides_spatial[i]))
+                np.ceil(float(input_spatial_shape[i]) / float(strides_spatial[i]))
             )
     elif auto_pad == "VALID":
         for i in range(len(input_spatial_shape)):  # pylint: disable=C0200
             out_shape[i] = int(
-                numpy.ceil(
+                np.ceil(
                     float(input_spatial_shape[i] - (kernel_spatial_shape[i] - 1))
                     / float(strides_spatial[i])
                 )
@@ -72,7 +72,7 @@ def _get_output_shape(
             auto_pad, input_spatial_shape, kernel_spatial_shape, strides_spatial
         )
     else:
-        round_fct = numpy.ceil if ceil_mode else numpy.floor
+        round_fct = np.ceil if ceil_mode else np.floor
         out_shape = [0] * len(input_spatial_shape)  # type: ignore
         if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
             for i in range(len(input_spatial_shape)):  # pylint: disable=C0200
@@ -115,7 +115,7 @@ def _get_output_shape(
 
 
 def _pool(
-    padded: numpy.ndarray,
+    padded: np.ndarray,
     x_shape: Tuple[int],
     kernel_shape: Tuple[int],
     strides_shape: Tuple[int],
@@ -124,18 +124,18 @@ def _pool(
     pooling_type: str,
     count_include_pad: Optional[int] = 0,
     ceil_mode: Optional[int] = 0,
-) -> numpy.ndarray:
+) -> np.ndarray:
     if pooling_type == "AVG":
-        fpool = numpy.average
+        fpool = np.average
     elif pooling_type == "MAX":
-        fpool = numpy.max
+        fpool = np.max
     else:
         raise NotImplementedError(
             f"Pooling type {pooling_type!r} does not support. Should be AVG, MAX."
         )
     spatial_size = len(x_shape) - 2
-    y = numpy.zeros([x_shape[0], x_shape[1]] + list(out_shape))  # type: ignore
-    round_fct = numpy.ceil if ceil_mode else numpy.floor
+    y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))  # type: ignore
+    round_fct = np.ceil if ceil_mode else np.floor
 
     def loop_range():  # type: ignore
         return [
@@ -167,13 +167,13 @@ def _pool(
                 values.append(window[i])
             except IndexError:
                 continue
-        window_vals = numpy.array(values)
+        window_vals = np.array(values)
 
         if count_include_pad == 1 and pooling_type == "AVG":
             y[shape] = fpool(window_vals)
         else:
-            y[shape] = fpool(window_vals[numpy.where(~numpy.isnan(window_vals))])
-    return y.astype(numpy.float32)
+            y[shape] = fpool(window_vals[np.where(~np.isnan(window_vals))])
+    return y.astype(np.float32)
 
 
 class AveragePool(OpRun):
@@ -195,9 +195,9 @@ class AveragePool(OpRun):
         elif len(self.pads) == 4:  # type: ignore
             pad_top, pad_bottom, pad_left, pad_right = self.pads  # type: ignore
             pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-            x_shape = numpy.array(x.shape[2:]) + numpy.array(pad_shape)
-            const = numpy.nan if self.count_include_pad == 0 else 0  # type: ignore
-            padded = numpy.pad(
+            x_shape = np.array(x.shape[2:]) + np.array(pad_shape)
+            const = np.nan if self.count_include_pad == 0 else 0  # type: ignore
+            padded = np.pad(
                 x,
                 ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
                 mode="constant",
@@ -209,7 +209,7 @@ class AveragePool(OpRun):
             padded = x
 
         if auto_pad in ("SAME_LOWER", "SAME_UPPER"):
-            const = numpy.nan if self.count_include_pad == 0 else 0  # type: ignore
+            const = np.nan if self.count_include_pad == 0 else 0  # type: ignore
             out_shape = _get_output_shape(
                 auto_pad, x_shape, kernel_shape, strides, pad_shape, self.ceil_mode  # type: ignore
             )
@@ -226,7 +226,7 @@ class AveragePool(OpRun):
                 pad_bottom = pad_shape[0] - pad_top
                 pad_left = pad_shape[1] // 2
                 pad_right = pad_shape[1] - pad_left
-            padded = numpy.pad(
+            padded = np.pad(
                 padded,
                 ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
                 mode="constant",

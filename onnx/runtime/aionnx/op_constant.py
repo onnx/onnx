@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
@@ -9,20 +9,20 @@ from ..op_run import OpRun
 
 def _check_dtype(val):  # type: ignore
     a = val.dtype
-    if not isinstance(a, numpy.dtype) and a not in {
-        numpy.int8,
-        numpy.uint8,
-        numpy.float16,
-        numpy.float32,
-        numpy.float64,
-        numpy.int32,
-        numpy.int64,
-        numpy.int16,
-        numpy.uint16,
-        numpy.uint32,
-        numpy.bool_,
-        numpy.str_,
-        numpy.uint64,
+    if not isinstance(a, np.dtype) and a not in {
+        np.int8,
+        np.uint8,
+        np.float16,
+        np.float32,
+        np.float64,
+        np.int32,
+        np.int64,
+        np.int16,
+        np.uint16,
+        np.uint32,
+        np.bool_,
+        np.str_,
+        np.uint64,
         bool,
         str,
     }:
@@ -82,22 +82,22 @@ class Constant_12(ConstantCommon):
             self.cst = self.sparse_value  # type: ignore
         elif hasattr(self, "value_float") and self.value_float is not None:  # type: ignore
             self.cst_name = "value_float"
-            self.cst = numpy.array(self.value_float, dtype=numpy.float32)  # type: ignore
+            self.cst = np.array(self.value_float, dtype=np.float32)  # type: ignore
         elif hasattr(self, "value_floats") and self.value_floats is not None:  # type: ignore
             self.cst_name = "value_floats"
-            self.cst = numpy.array(self.value_floats, dtype=numpy.float32)  # type: ignore
+            self.cst = np.array(self.value_floats, dtype=np.float32)  # type: ignore
         elif hasattr(self, "value_int") and self.value_int is not None:  # type: ignore
             self.cst_name = "value_int"
-            self.cst = numpy.array(self.value_int, dtype=numpy.int64)  # type: ignore
+            self.cst = np.array(self.value_int, dtype=np.int64)  # type: ignore
         elif hasattr(self, "value_ints") and self.value_ints is not None:  # type: ignore
             self.cst_name = "value_ints"
-            self.cst = numpy.array(self.value_ints, dtype=numpy.int64)  # type: ignore
+            self.cst = np.array(self.value_ints, dtype=np.int64)  # type: ignore
         elif hasattr(self, "value_string") and self.value_string is not None:  # type: ignore
             self.cst_name = "value_string"
-            self.cst = numpy.array(self.value_string)  # type: ignore
+            self.cst = np.array(self.value_string)  # type: ignore
         elif hasattr(self, "value_strings") and self.value_strings is not None:  # type: ignore
             self.cst_name = "value_strings"
-            self.cst = numpy.array(self.value_strings)  # type: ignore
+            self.cst = np.array(self.value_strings)  # type: ignore
         elif hasattr(self, "value") and self.value is not None:  # type: ignore
             self.cst_name = "value"
             self.cst = self.value  # type: ignore

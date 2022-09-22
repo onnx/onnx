@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -24,15 +24,15 @@ class DequantizeLinear(OpRun):
             if len(x_scale.shape) > 0:
                 new_shape = [1 for s in args[0].shape]
                 new_shape[self.axis] = len(x_scale)  # type: ignore
-                x = args[0].astype(numpy.float32) - x_scale.reshape(new_shape)
+                x = args[0].astype(np.float32) - x_scale.reshape(new_shape)
                 y = x * args[1].reshape(new_shape)
             else:
-                x = args[0].astype(numpy.float32) - x_scale
+                x = args[0].astype(np.float32) - x_scale
                 y = x * args[1]
         elif len(args[1].shape) > 0:
             new_shape = [1 for s in args[0].shape]
             new_shape[self.axis] = len(x_scale)  # type: ignore
-            y = args[0].astype(numpy.float32) * x_scale.reshape(new_shape)
+            y = args[0].astype(np.float32) * x_scale.reshape(new_shape)
         else:
-            y = args[0].astype(numpy.float32) * x_scale
-        return (y.astype(numpy.float32),)
+            y = args[0].astype(np.float32) * x_scale
+        return (y.astype(np.float32),)

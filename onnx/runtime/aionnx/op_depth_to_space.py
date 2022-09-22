@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy  # type: ignore
+import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
@@ -22,7 +22,7 @@ class DepthToSpace(OpRun):
                 w,
             )
             reshaped = data.reshape(tmpshape)
-            transposed = numpy.transpose(reshaped, [0, 3, 4, 1, 5, 2])
+            transposed = np.transpose(reshaped, [0, 3, 4, 1, 5, 2])
         else:
             # assert mode == "CRD"
             tmpshape = (
@@ -34,12 +34,12 @@ class DepthToSpace(OpRun):
                 w,
             )
             reshaped = data.reshape(tmpshape)
-            transposed = numpy.transpose(reshaped, [0, 1, 4, 2, 5, 3])
+            transposed = np.transpose(reshaped, [0, 1, 4, 2, 5, 3])
         finalshape = (
             b,
             c // (self.blocksize * self.blocksize),  # type: ignore
             h * self.blocksize,  # type: ignore
             w * self.blocksize,  # type: ignore
         )
-        y = numpy.reshape(transposed, finalshape)
+        y = np.reshape(transposed, finalshape)
         return (y,)
