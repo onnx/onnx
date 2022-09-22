@@ -42,3 +42,4 @@ linked below.
     :maxdepth: 1
 
     onnx-api/index
+    onnx_python/index

@@ -50,8 +50,8 @@ def _get_diff_template():
         textwrap.dedent(
             """
         <div id="{{ div_name }}"></div>
-        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
-        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="../_static/diff2html.min.css" />
+        <script type="text/javascript" src="../_static/diff2html-ui.min.js"></script>
         <script>
         const diffString = `
         --- a/{{ op_name }}{{ version1 }}
@@ -286,7 +286,13 @@ def get_operator_schemas(op_name, version=None, domain=None):
 
 
 def get_rst_doc(
-    op_name=None, domain=None, version="last", clean=True, diff=False, example=False
+    folder,
+    op_name=None,
+    domain=None,
+    version="last",
+    clean=True,
+    diff=False,
+    example=False,
 ):
     """
     Returns a documentation in RST format
@@ -445,7 +451,7 @@ def get_rst_doc(
             new_lines.append(line)
         docs = "\n".join(new_lines)
         docs = _insert_diff(
-            docs, ".. tag-diff-insert.", op_name=op_name, version=version
+            folder, docs, ".. tag-diff-insert.", op_name=op_name, version=version
         )
 
     if clean:
@@ -461,7 +467,7 @@ def get_rst_doc(
     return docs
 
 
-def _insert_diff(docs, split=".. tag-diff-insert.", op_name=None, version=None):
+def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None):
     """
     Splits a using `split`, insert HTML differences between pieces.
     The function relies on package :epkg:`pyquickhelper`.
@@ -511,14 +517,26 @@ def _insert_diff(docs, split=".. tag-diff-insert.", op_name=None, version=None):
             diff_content=raw,
         )
 
+        title = f"{op_name} - {v2} vs {v1}"
+
+        name = f"diff_{op_name}_{v2}_{v1}"
+        with open(os.path.join(folder, name + ".rst"), "w", encoding="utf-8") as f:
+            f.write(
+                "\n".join(
+                    [
+                        title,
+                        "=" * len(title),
+                        "",
+                        ".. raw:: html",
+                        "",
+                        textwrap.indent(diff, "    "),
+                    ]
+                )
+            )
         pieces.extend(
             [
-                "",
-                "**Differences**",
-                "",
-                ".. raw:: html",
-                "",
-                textwrap.indent(diff, "    "),
+                ".. toctree::" "",
+                f"    {name}",
                 "",
                 spl[i],
             ]
@@ -679,7 +697,9 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=Non
                 fLOG(f"generate page for onnx {dom!r} - {op!r}")  # pragma: no cover
             page_name = f"onnx_{dom.replace('.', '')}_{op}"
             index_dom.append(f"    {page_name}")
-            doc = get_rst_doc(op, domain=dom, version=None, example=True, diff=True)
+            doc = get_rst_doc(
+                folder, op, domain=dom, version=None, example=True, diff=True
+            )
             if dom == "":
                 main = op
             else:
