@@ -59,6 +59,7 @@ pip install onnx
 onnx is in the maintenance list of [vcpkg](https://github.com/microsoft/vcpkg), you can easily use vcpkg to build and install it.
 ```
 git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
 ./bootstrap-vcpkg.bat # For powershell
 ./bootstrap-vcpkg.sh # For bash
 ./vcpkg install onnx
