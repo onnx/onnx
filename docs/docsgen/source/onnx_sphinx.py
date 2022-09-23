@@ -519,7 +519,7 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
 
         title = f"{op_name} - {v2} vs {v1}"
 
-        name = f"diff_{op_name}_{v2}_{v1}"
+        name = f"text_diff_{op_name}_{v2}_{v1}"
         with open(os.path.join(folder, name + ".rst"), "w", encoding="utf-8") as f:
             f.write(
                 "\n".join(
@@ -648,10 +648,22 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=Non
     :param fLOG: logging function
     :return: list of creates files
     """
+    header = textwrap.dedent("""
+        Lists out all the ONNX operators. For each operator, lists out the usage guide,
+        parameters, examples, and line-by-line version history.
+        This section also includes tables detailing each operator
+        with its versions, as done in `Operators.md
+        <https://github.com/onnx/onnx/blob/main/docs/Operators.md>`_.
+
+        All examples end by calling function :ref:`expect <l-function-expect>`
+        which checks a runtime produces the expected output for this example.
+        One implementation can be found in the first page
+        linked below.
+    """)
     all_schemas = _get_all_schemas_with_history()
     if not os.path.exists(folder):
         os.makedirs(folder)
-    index = ["", title, "=" * len(title), "", ".. contents::", "    :local:", ""]
+    index = ["", title, "=" * len(title), "", ".. contents::", "    :local:", "", header, ""]
     pages = []
     tables_domain_pages = []
 
@@ -660,7 +672,7 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=Non
     for dom in sorted(all_schemas):
         sdom = "main" if dom == "" else dom
 
-        index_dom = [sdom, "+" * len(sdom), "", ".. toctree::", "    :maxdepth: 1", ""]
+        index_dom = [sdom, "+" * len(sdom), "", ".. toctree::", "    :maxdepth: 1", "", "    ../expect"]
 
         table_dom = [
             "",

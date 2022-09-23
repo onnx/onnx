@@ -1,6 +1,6 @@
 
-Specifications
-==============
+onnx.mapping
+============
 
 .. contents::
     :local:
