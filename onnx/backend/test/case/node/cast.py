@@ -3,7 +3,7 @@
 
 import sys
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from onnx import TensorProto
