@@ -14,7 +14,7 @@ from . import expect
 class AttributeHasValue(Base):
     @staticmethod
     def export() -> None:
-        def test_one_attribute(name: str, **kwargs: any) -> None:
+        def test_one_attribute(name: str, **kwargs: Any) -> None:
             node = onnx.helper.make_node(
                 "AttributeHasValue",
                 inputs=[],
