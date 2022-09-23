@@ -1058,7 +1058,7 @@ def test_one_attribute(name, **kwargs):
         node,
         inputs=[],
         outputs=[output],
-        name="test_attribute_has_value_{name}_false".format(name=name),
+        name=f"test_attribute_has_value_{name}_false",
     )
 
     node = onnx.helper.make_node(
@@ -1073,7 +1073,7 @@ def test_one_attribute(name, **kwargs):
         node,
         inputs=[],
         outputs=[output],
-        name="test_attribute_has_value_{name}_true".format(name=name),
+        name=f"test_attribute_has_value_{name}_true",
     )
 
 ints = [0, 1]

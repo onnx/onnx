@@ -1465,7 +1465,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 ### <a name="AttributeHasValue"></a><a name="attributehasvalue">**AttributeHasValue**</a>
 
-  Returns which elements of the input are NaN.
+  Returns true if at least one of the attribute-value is specified.
 
 #### Version
 
@@ -1540,7 +1540,7 @@ def test_one_attribute(name, **kwargs):
         node,
         inputs=[],
         outputs=[output],
-        name="test_attribute_has_value_{name}_false".format(name=name),
+        name=f"test_attribute_has_value_{name}_false",
     )
 
     node = onnx.helper.make_node(
@@ -1555,7 +1555,7 @@ def test_one_attribute(name, **kwargs):
         node,
         inputs=[],
         outputs=[output],
-        name="test_attribute_has_value_{name}_true".format(name=name),
+        name=f"test_attribute_has_value_{name}_true",
     )
 
 ints = [0, 1]

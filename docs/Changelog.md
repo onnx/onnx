@@ -21224,7 +21224,7 @@ This version of the operator has been available since version 17 of the default 
 ## Version 18 of the default ONNX operator set
 ### <a name="AttributeHasValue-18"></a>**AttributeHasValue-18**</a>
 
-  Returns which elements of the input are NaN.
+  Returns true if at least one of the attribute-value is specified.
 
 #### Version
 
