@@ -638,7 +638,7 @@ def is_last_schema(sch):
     return last.since_version == sch.since_version
 
 
-def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=None):
+def onnx_documentation_folder(folder, ops=None, title="Operators and Op Schemas", fLOG=None):
     """
     Creates documentation in a folder for all known
     ONNX operators or a subset.
