@@ -77,7 +77,7 @@ def _get_output_shape(
         if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
             for i in range(len(input_spatial_shape)):  # pylint: disable=C0200
                 out_shape[i] = int(  # type: ignore
-                    round_fct(float(input_spatial_shape[i]) / float(strides_spatial[i]))
+                    round_fct(float(input_spatial_shape[i]) / float(strides_spatial[i]))  # type: ignore
                 )
         elif auto_pad == "VALID":
             if pad_shape is None:
@@ -87,7 +87,7 @@ def _get_output_shape(
                 )
             for i in range(len(input_spatial_shape)):  # pylint: disable=C0200
                 out_shape[i] = int(  # type: ignore
-                    round_fct(
+                    round_fct(  # type: ignore
                         float(
                             input_spatial_shape[i]
                             + pad_shape[i]
@@ -141,7 +141,7 @@ def _pool(
         return [
             range(
                 int(
-                    round_fct(
+                    round_fct(  # type: ignore
                         float(x_shape[i + 2] + pad_shape[i] - kernel_shape[i])
                         / float(strides_shape[i])
                         + 1

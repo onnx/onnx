@@ -35,7 +35,7 @@ def _slice(
             for s, e, a, d in zip(starts, ends, axes, steps):
                 slices[a] = slice(s, e, d)
     try:
-        return data[tuple(slices)]
+        return data[tuple(slices)]  # type: ignore
     except TypeError as e:  # pragma: no cover
         raise TypeError(
             f"Unable to extract slice {slices!r} for shape {data.shape!r}."

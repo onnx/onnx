@@ -14,7 +14,7 @@ class Clip_6(OpRunUnaryNum):
         amax = getattr(self, "max", None)
         if amin is None and amax is None:
             return (data,)
-        res = np.clip(data, amin, amax)
+        res = np.clip(data, amin, amax)  # type: ignore
         return (res,) if res.dtype == data.dtype else (res.astype(data.dtype),)
 
 

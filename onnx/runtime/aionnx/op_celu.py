@@ -9,7 +9,7 @@ from ._op import OpRunUnaryNum
 def _vcelu1(x: np.ndarray, alpha: float = 1.0) -> np.ndarray:
     positive_input = np.maximum(0, x)
     negative_input = np.minimum(0, alpha * (np.exp(x / alpha) - 1))
-    return positive_input + negative_input
+    return positive_input + negative_input  # type: ignore
 
 
 class Celu(OpRunUnaryNum):

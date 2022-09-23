@@ -9,7 +9,7 @@ from ._op import OpRunUnaryNum
 def _leaky_relu(x: np.ndarray, alpha: float) -> np.ndarray:
     sign = (x > 0).astype(x.dtype)
     sign -= ((sign - 1) * alpha).astype(x.dtype)
-    return x * sign
+    return x * sign  # type: ignore
 
 
 class LeakyRelu(OpRunUnaryNum):

@@ -233,7 +233,8 @@ class OnnxBackendTest:
                         assert_allclose(desired, output, atol=atol, rtol=rtl)
                     except AssertionError as ex:
                         raise AssertionError(
-                            f"Output {i_output} of test {index} in folder {self.folder!r} failed (rtol={rtl}, atol={atol})."
+                            f"Output {i_output} of test {index} in folder {self.folder!r} failed "
+                            f"(rtol={rtl}, atol={atol})\n---\n{desired}\n----\n{output}."
                         ) from ex
             elif hasattr(output, "is_compatible"):
                 # A shape
@@ -618,7 +619,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_convtranspose_1d" == name,
+            lambda name: "test_convtranspose" == name,
             verbose=0,
             atol={
                 "test_blackmanwindow_expanded": 1e-4,

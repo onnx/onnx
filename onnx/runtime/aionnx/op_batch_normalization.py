@@ -40,7 +40,7 @@ def _batchnorm_training_mode(
     output_mean = mean * momentum + saved_mean * (1 - momentum)
     output_var = var * momentum + saved_var * (1 - momentum)
     y = _batchnorm_test_mode(x, s, bias, saved_mean, saved_var, epsilon=epsilon)
-    return (
+    return (  # type: ignore
         y.astype(x.dtype),
         saved_mean.astype(x.dtype),
         saved_var.astype(x.dtype),

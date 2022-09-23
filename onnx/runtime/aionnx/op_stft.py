@@ -39,7 +39,7 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
     for fs in range(n_frames):
         begin = fs * hop_length
         end = begin + window_size
-        sliced_x = _slice(x, np.array([begin]), np.array([end]), axis)
+        sliced_x = _slice(x, np.array([begin]), np.array([end]), axis)  # type: ignore
 
         # sliced_x may be smaller
         new_dim = sliced_x.shape[-2:-1]
@@ -135,9 +135,9 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
     redc = _concat_from_sequence(seqc, axis=-1, new_axis=0)
 
     # unweight
-    resr = redr.sum(axis=-1, keepdims=0)
-    resi = redi.sum(axis=-1, keepdims=0)
-    resc = redc.sum(axis=-1, keepdims=0)
+    resr = redr.sum(axis=-1, keepdims=0)  # type: ignore
+    resi = redi.sum(axis=-1, keepdims=0)  # type: ignore
+    resc = redc.sum(axis=-1, keepdims=0)  # type: ignore
     rr = resr / resc
     ri = resi / resc
 
