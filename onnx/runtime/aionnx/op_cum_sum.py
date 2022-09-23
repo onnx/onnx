@@ -30,9 +30,9 @@ class CumSum(OpRun):
             indices_c[axis] = slice(0, -1)  # type: ignore
             indices_d[axis] = slice(1, x.shape[axis])  # type: ignore
             res = np.zeros(x.shape, dtype=x.dtype)
-            np.cumsum(x[tuple(indices_c)], axis=axis, out=res[tuple(indices_d)])
+            np.cumsum(x[tuple(indices_c)], axis=axis, out=res[tuple(indices_d)])  # type: ignore
         else:
-            res = np.cumsum(x, axis=axis)
+            res = np.cumsum(x, axis=axis)  # type: ignore
         if self.reverse:  # type: ignore
             res = res[tuple(rev_indices)]
         return (res,)

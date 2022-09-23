@@ -14,7 +14,7 @@ def _concat_from_sequence(seq: List[Any], axis: int, new_axis: int = 0) -> np.nd
         res = np.concatenate(seq2, axis=-1)
     else:
         res = np.concatenate(seq, axis=axis)
-    return res
+    return res  # type: ignore
 
 
 class ConcatFromSequence(OpRun):

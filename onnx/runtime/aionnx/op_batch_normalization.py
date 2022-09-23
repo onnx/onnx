@@ -22,7 +22,7 @@ def _batchnorm_test_mode(
     mean = mean.reshape(-1, *dim_ones)
     var = var.reshape(-1, *dim_ones)
     y = s * (x - mean) / np.sqrt(var + epsilon) + bias
-    return y.astype(x.dtype)
+    return y.astype(x.dtype)  # type: ignore
 
 
 def _batchnorm_training_mode(

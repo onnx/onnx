@@ -618,7 +618,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_col2im_5d" == name,
+            lambda name: "test_convtranspose_1d" == name,
             verbose=0,
             atol={
                 "test_blackmanwindow_expanded": 1e-4,

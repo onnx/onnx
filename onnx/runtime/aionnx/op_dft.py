@@ -50,7 +50,7 @@ def _cfft(
     if onesided:
         slices = [slice(0, a) for a in res.shape]
         slices[axis] = slice(0, res.shape[axis] // 2 + 1)
-        return res[tuple(slices)]
+        return res[tuple(slices)]  # type: ignore
     return res
 
 
@@ -73,7 +73,7 @@ def _ifft(
     if onesided:
         slices = [slice(a) for a in tr.shape]
         slices[axis] = slice(0, tr.shape[axis] // 2 + 1)
-        return tr[tuple(slices)]
+        return tr[tuple(slices)]  # type: ignore
     return tr
 
 
