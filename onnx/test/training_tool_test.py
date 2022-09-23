@@ -2,7 +2,7 @@
 
 import unittest
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from onnx import TensorProto, helper, numpy_helper, shape_inference

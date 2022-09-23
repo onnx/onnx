@@ -3,7 +3,7 @@
 import sys
 from typing import List, Optional, Sequence
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from onnx import ModelProto
 

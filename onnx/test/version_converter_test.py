@@ -3,7 +3,7 @@
 import struct
 import unittest
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx.version_converter
 from onnx import (

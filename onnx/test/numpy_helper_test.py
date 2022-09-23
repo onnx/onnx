@@ -2,7 +2,7 @@
 
 import unittest
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from onnx import numpy_helper
 

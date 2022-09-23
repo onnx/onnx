@@ -5,7 +5,7 @@ from __future__ import annotations
 import typing
 from typing import List, Optional, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from onnx import TensorProto
