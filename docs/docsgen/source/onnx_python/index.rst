@@ -4,6 +4,12 @@
 onnx API Overview
 =================
 
+This section gathers many functions or
+classes from `onnx <https://onnx.ai/>`_ used when generated ONNX files
+from machine learned models. Most of the examples
+are executed during the generation of the documentation
+with this version of *onnx*.
+
 Following example shows how to retrieve onnx version
 and onnx opset. Every new major release increments the opset version.
 

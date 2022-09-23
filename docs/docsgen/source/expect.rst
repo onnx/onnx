@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 .. _l-function-expect:
 
 Function expect
 ===============
+=======
+Sample operator test code
+=========================
+>>>>>>> cdfba48f5c6a8c5f17efebbab3b5c0f258c70202
 
 Many examples from the documentation end by calling
 function ``expect`` to check a runtime returns the expected
