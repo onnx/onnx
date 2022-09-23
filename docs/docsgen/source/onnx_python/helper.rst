@@ -5,6 +5,68 @@ onnx.helper
 .. contents::
     :local:
 
+.. currentmodule:: onnx.helper
+
+.. autosummary::
+
+    find_min_ir_version_for
+    get_attribute_value
+    make_attribute
+    make_empty_tensor_value_info
+    make_function
+    make_graph
+    make_map
+    make_model
+    make_node
+    make_operatorsetid
+    make_opsetid
+    make_optional
+    make_optional_type_proto
+    make_sequence
+    make_sequence_type_proto
+    make_sparse_tensor
+    make_sparse_tensor_type_proto
+    make_sparse_tensor_value_info
+    make_tensor
+    make_tensor_sequence_value_info
+    make_tensor_type_proto
+    make_training_info
+    make_tensor_type_proto
+    make_tensor_value_info
+    make_value_info
+    printable_attribute
+    printable_dim
+    printable_graph
+    printable_node
+    printable_tensor_proto
+    printable_type
+    printable_value_info
+    split_complex_to_pairs
+
+getter
+++++++
+
+.. autofunction:: onnx.helper.get_attribute_value
+
+print
++++++
+
+.. autofunction:: onnx.helper.printable_attribute
+
+.. autofunction:: onnx.helper.printable_dim
+
+.. autofunction:: onnx.helper.printable_graph
+
+.. autofunction:: onnx.helper.printable_node
+
+.. autofunction:: onnx.helper.printable_tensor_proto
+
+.. autofunction:: onnx.helper.printable_type
+
+.. autofunction:: onnx.helper.printable_value_info
+
+
+
 tools
 +++++
 

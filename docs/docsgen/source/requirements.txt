@@ -13,6 +13,7 @@ pillow
 py-spy
 pandas
 pydata_sphinx_theme
+pydot
 pyinstrument
 pytest
 pytest-cov
