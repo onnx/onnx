@@ -33,8 +33,8 @@ from onnx.runtime.aionnx import load_op
 from onnx.runtime.aionnx._op_list import Celu
 from onnx.runtime.aionnx.op_celu import _vcelu1
 from onnx.runtime.aionnx.op_col2im import (
+    _col2im_naive_implementation_2d,
     col2im_naive_implementation,
-    col2im_naive_implementation_2d,
 )
 from onnx.runtime.aionnx_preview_training._op_list import Adam
 from onnx.runtime.op_run import OpRun
@@ -1479,7 +1479,7 @@ class TestRuntimeInference(unittest.TestCase):
             np.array([1, 1, 1, 1]),
             np.array([1, 1]),
         )
-        r1 = col2im_naive_implementation_2d(
+        r1 = _col2im_naive_implementation_2d(
             data, image_shape, kernel_shape, dilations, pads, stride
         )
         r2 = col2im_naive_implementation(

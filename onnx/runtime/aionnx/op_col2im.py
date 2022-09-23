@@ -82,7 +82,7 @@ def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strid
         )
 
 
-def col2im_naive_implementation_2d(res, image_shape, kernel_shape, dilations, pads, strides):  # type: ignore
+def _col2im_naive_implementation_2d(res, image_shape, kernel_shape, dilations, pads, strides):  # type: ignore
     # source: https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/im2col.h
 
     n_dims = len(pads) // 2
