@@ -6,7 +6,7 @@ import platform
 import unittest
 from typing import Any, Optional, Sequence, Tuple
 
-import numpy  # type: ignore
+import numpy
 
 import onnx.backend.base
 import onnx.backend.test
