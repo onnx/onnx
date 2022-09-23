@@ -11,7 +11,7 @@ def _global_average_pool(x: np.ndarray) -> np.ndarray:
     y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
     for _ in range(spatial_shape):
         y = np.expand_dims(y, -1)
-    return y
+    return y  # type: ignore
 
 
 class GlobalAveragePool(OpRun):

@@ -11,7 +11,7 @@ def _global_max_pool(x: np.ndarray) -> np.ndarray:
     y = x.max(axis=tuple(range(spatial_shape, spatial_shape + 2)))
     for _ in range(spatial_shape):
         y = np.expand_dims(y, -1)
-    return y
+    return y  # type: ignore
 
 
 class GlobalMaxPool(OpRun):

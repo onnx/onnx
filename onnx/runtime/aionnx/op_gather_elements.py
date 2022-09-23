@@ -10,8 +10,7 @@ def gather_numpy_2(self: np.ndarray, index: np.ndarray) -> np.ndarray:
     res = []
     for a, b in zip(self, index):
         res.append(a[b[0]])
-    res = np.array(res, dtype=self.dtype).reshape(index.shape)
-    return res
+    return np.array(res, dtype=self.dtype).reshape(index.shape)
 
 
 def gather_numpy(self: np.ndarray, dim: int, index: np.ndarray) -> np.ndarray:

@@ -12,9 +12,9 @@ class EyeLike(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         if self.dtype is None:  # type: ignore
-            self._dtype = np.float32
+            self._dtype = np.float32  # type: ignore
         elif self.dtype == TensorProto.STRING:  # type: ignore
-            self._dtype = np.str_
+            self._dtype = np.str_  # type: ignore
         else:
             self._dtype = TENSOR_TYPE_TO_NP_TYPE[self.dtype]  # type: ignore
 

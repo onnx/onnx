@@ -20,7 +20,7 @@ def _gather_nd_impl(
     # The number of elements in the batch_dims for data/indice array.
     batch_dims_size = 1
 
-    # Check the shape of indice and data are identicial for batch dims.
+    # Check the shape of indice and data are identical for batch dims.
     for i in range(batch_dims):
         batch_dims_shape.append(indices.shape[i])
         batch_dims_size *= indices.shape[i]

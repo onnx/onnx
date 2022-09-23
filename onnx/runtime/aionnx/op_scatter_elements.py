@@ -54,7 +54,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
     # of elements in the updates
     updates_idx = list(idx)
     updates_idx.pop(axis)
-    updates_idx.insert(
+    updates_idx.insert(  # type: ignore
         axis,
         np.repeat(np.arange(indices.shape[axis]), np.prod(idx_xsection_shape)),
     )

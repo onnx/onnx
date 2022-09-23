@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0914,W0221
 
+from typing import Tuple
+
 import numpy as np  # type: ignore
 
 from ..op_run import OpRun
@@ -12,7 +14,7 @@ def _layer_normalization(
     B: np.ndarray,
     axis: int = -1,
     epsilon: float = 1e-5,
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     X_shape = X.shape
     X_rank = len(X_shape)
     if axis < 0:

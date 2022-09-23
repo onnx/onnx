@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-from typing import Any, List, Union
+from typing import Any, List, Optional, Union
 
 import numpy as np  # type: ignore
 
@@ -11,7 +11,7 @@ from ..op_run import OpRun
 def sequence_insert_reference_implementation(
     sequence: Union[List[Any], np.ndarray],
     tensor: np.ndarray,
-    position: np.ndarray = None,
+    position: Optional[np.ndarray] = None,
 ) -> List[Any]:
     # make a copy of input sequence
     seq: List[Any] = []
