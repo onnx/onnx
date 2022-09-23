@@ -156,7 +156,6 @@ The tensor type is an integer (= 1). The following array gives the
 equivalent type with numpy.
 
 .. exec_code::
-    :showcode:
 
     import pprint
     from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
@@ -522,7 +521,7 @@ It is usually better to avoid them as they are not as efficient
 as the matrix operation are much faster and optimized.
 
 If
-~~
+++
 
 A test can be implemented with operator :ref:`l-onnx-doc-If`.
 It executes one subgraph or another depending on one
@@ -630,7 +629,7 @@ that would be faster. It becomes interesting when both branches
 are bigger and skipping one is more efficient.
 
 Scan
-~~~~
+++++
 
 :ref:`l-onnx-doc-Scan` seems quite complex when reading the specifications.
 It is useful to loop over one dimension of a tensor and store
@@ -1008,7 +1007,7 @@ in a single function, less easy when the graph is built from many
 different functions converting each piece of a machine learning
 pipeline.
 
-.. exec_code::
+::
 
     import onnx.parser
     from onnx.checker import check_model
@@ -1016,7 +1015,7 @@ pipeline.
     input = '''
         <
             ir_version: 8,
-            opset_import: [ "" : 15]
+            opset_import: [ '' : 15]
         >
         agraph (float[I,J] X, float[I] A, float[I] B) => (float[I] Y) {
             XA = MatMul(X, A)
@@ -1027,6 +1026,86 @@ pipeline.
     check_model(onnx_model)
 
     print(onnx_model)
+
+::
+
+    ir_version: 8
+    graph {
+    node {
+        input: "X"
+        input: "A"
+        output: "XA"
+        op_type: "MatMul"
+        domain: ""
+    }
+    node {
+        input: "XA"
+        input: "B"
+        output: "Y"
+        op_type: "Add"
+        domain: ""
+    }
+    name: "agraph"
+    input {
+        name: "X"
+        type {
+        tensor_type {
+            elem_type: 1
+            shape {
+            dim {
+                dim_param: "I"
+            }
+            dim {
+                dim_param: "J"
+            }
+            }
+        }
+        }
+    }
+    input {
+        name: "A"
+        type {
+        tensor_type {
+            elem_type: 1
+            shape {
+            dim {
+                dim_param: "I"
+            }
+            }
+        }
+        }
+    }
+    input {
+        name: "B"
+        type {
+        tensor_type {
+            elem_type: 1
+            shape {
+            dim {
+                dim_param: "I"
+            }
+            }
+        }
+        }
+    }
+    output {
+        name: "Y"
+        type {
+        tensor_type {
+            elem_type: 1
+            shape {
+            dim {
+                dim_param: "I"
+            }
+            }
+        }
+        }
+    }
+    }
+    opset_import {
+    domain: ""
+    version: 15
+    }    
 
 This way is used to create small models but it is rarely used
 in converting libraries.
@@ -1054,8 +1133,8 @@ which is not allowed.
             Y = Add(XA, B)
         }
         '''
-    onnx_model = onnx.parser.parse_model(input)
     try:
+        onnx_model = onnx.parser.parse_model(input)
         onnx.checker.check_model(onnx_model)
     except Exception as e:
         print(e)

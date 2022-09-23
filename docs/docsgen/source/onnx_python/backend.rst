@@ -20,7 +20,6 @@ collect_snippets
 ++++++++++++++++
 
 .. autofunction:: onnx.backend.test.case.collect_snippets
-    :members:
 
 Device
 ++++++
@@ -38,7 +37,6 @@ load_model_tests
 ++++++++++++++++
 
 .. autofunction:: onnx.backend.test.loader.load_model_tests
-    :members:
 
 Runner
 ++++++

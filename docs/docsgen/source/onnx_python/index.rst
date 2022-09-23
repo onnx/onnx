@@ -33,5 +33,6 @@ Other functions are dispatched accress following sections.
     printer
     shape_inference
     tools
+    utils
     version_converter
     version
