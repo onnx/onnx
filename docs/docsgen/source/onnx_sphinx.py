@@ -674,6 +674,8 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=Non
         os.makedirs(folder)
     index = [
         "",
+        ".. _l-onnx-operators:"
+        "",
         title,
         "=" * len(title),
         "",

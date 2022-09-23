@@ -20,4 +20,5 @@ It contains the following information for the latest release:
     :maxdepth: 2
 
     onnx_doc_folder/index
+    tutorial_python/index
     onnx_python/index

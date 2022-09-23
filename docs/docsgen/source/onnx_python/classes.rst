@@ -187,6 +187,8 @@ This method has the following signature.
 .. autoclass:: onnx.ModelProto
     :members: SerializeToString
 
+.. _l-onnx-load-data:
+
 Load data
 +++++++++
 
