@@ -12,9 +12,5 @@ ONNX documentation
     :maxdepth: 2
 
     onnx_doc_folder/index
-<<<<<<< HEAD
-    expect
-=======
     tutorial_python/index
     onnx_python/index
->>>>>>> 6e531cf8ccfe6484c73e6af1f4ccfe92392e56a3
