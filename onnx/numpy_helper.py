@@ -3,7 +3,7 @@
 import sys
 from typing import Any, Dict, List, Optional, Sequence, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, mapping
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data

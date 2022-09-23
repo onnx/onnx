@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Optional, Sequence, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 

@@ -3,7 +3,7 @@
 from collections import namedtuple
 from typing import Any, Dict, NewType, Optional, Sequence, Tuple, Type
 
-import numpy  # type: ignore
+import numpy
 
 import onnx.checker
 import onnx.onnx_cpp2py_export.checker as c_checker

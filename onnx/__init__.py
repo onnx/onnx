@@ -77,7 +77,7 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
                     "Please use save_as_external_data to save tensors separately from the model file."
                 ) from e
             raise
-        return result
+        return result  # type: ignore
     raise TypeError(
         f"No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}"
     )

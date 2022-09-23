@@ -17,7 +17,7 @@ import json
 from collections import defaultdict
 from typing import Any, Callable, Dict, Optional
 
-import pydot  # type: ignore
+import pydot
 
 from onnx import GraphProto, ModelProto, NodeProto
 
