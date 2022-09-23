@@ -29,9 +29,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = [
-    'setup',
-]
+module = ['setup']
 ignore_errors = true
 
 [tool.black]
@@ -46,4 +44,16 @@ extend_skip_glob = [
     "*_pb2*",
     ".setuptools-cmake-build/*",
     "venv",
+]
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+    "missing-docstring",
+    "import-error",
+    "no-member",
+    "line-too-long",
+    "fixme",
+    "too-few-public-methods",
+    "no-name-in-module",
+    "invalid-name",           # TODO: Add naming guidance and enable this check.
 ]
