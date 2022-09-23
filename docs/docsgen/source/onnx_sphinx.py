@@ -1,21 +1,23 @@
 """
 Automates the generation of ONNX operators.
 """
-import os
-import textwrap
 import importlib
 import inspect
-import re
 import keyword
+import os
+import re
+import textwrap
 from difflib import Differ
+
 import numpy as np
+
 import onnx
 import onnx.defs
 from onnx.backend.test.case.base import _Exporter
-from onnx.onnx_cpp2py_export.defs import (
-    SchemaError,
-)  # pylint: disable=E1101,E0611,E0401
 from onnx.defs import OpSchema
+from onnx.onnx_cpp2py_export.defs import (  # pylint: disable=E1101,E0611,E0401
+    SchemaError,
+)
 
 
 def get_template():
@@ -638,7 +640,7 @@ def is_last_schema(sch):
     return last.since_version == sch.since_version
 
 
-def onnx_documentation_folder(folder, ops=None, title="Operators and Op Schemas", fLOG=None):
+def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", fLOG=None):
     """
     Creates documentation in a folder for all known
     ONNX operators or a subset.
