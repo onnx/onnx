@@ -3726,11 +3726,11 @@ bool BuildContextDependentFunctionBodyAttributeHasValue(
     FunctionProto& functionProto) {
   bool has_attribute = false;
   auto& attributes = schema.attributes();
-  for (auto& name_attr: attributes) {
+  for (auto& name_attr : attributes) {
     auto* attr_proto = ctx.getAttribute(name_attr.first);
     if (attr_proto) {
       has_attribute = true;
-      break;      
+      break;
     }
   }
 

@@ -48,7 +48,7 @@ class AttributeHasValue(Base):
         value_int = 1
         test_one_attribute("value_int", value_int=value_int)
 
-        value_string = 'test'
+        value_string = "test"
         test_one_attribute("value_string", value_string=value_string)
 
         tensor_values = np.random.randn(5, 5).astype(np.float32)
@@ -56,7 +56,8 @@ class AttributeHasValue(Base):
             name="const_tensor",
             data_type=onnx.TensorProto.FLOAT,
             dims=tensor_values.shape,
-            vals=tensor_values.flatten().astype(float))
+            vals=tensor_values.flatten().astype(float),
+        )
         test_one_attribute("value_tensor", value_tensor=value_tensor)
 
         value_graph = onnx.parser.parse_graph("agraph (X) => (Y) {Y = Identity(X)}")
@@ -67,17 +68,24 @@ class AttributeHasValue(Base):
                 name="",
                 data_type=onnx.TensorProto.FLOAT,
                 dims=(5,),
-                vals=[1.1, 2.2, 3.3, 4.4, 5.5]),
+                vals=[1.1, 2.2, 3.3, 4.4, 5.5],
+            ),
             onnx.helper.make_tensor(
                 name="",
                 data_type=onnx.TensorProto.INT64,
                 dims=(5,),
-                vals=[1, 3, 5, 7, 9]),
-            [10])
+                vals=[1, 3, 5, 7, 9],
+            ),
+            [10],
+        )
 
-        test_one_attribute("value_sparse_tensor", value_sparse_tensor=value_sparse_tensor)
+        test_one_attribute(
+            "value_sparse_tensor", value_sparse_tensor=value_sparse_tensor
+        )
 
-        value_type_proto = onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape=[5])
+        value_type_proto = onnx.helper.make_tensor_type_proto(
+            onnx.TensorProto.FLOAT, shape=[5]
+        )
         test_one_attribute("value_type_proto", value_type_proto=value_type_proto)
 
         value_floats = [0.0, 1.1]
@@ -96,7 +104,9 @@ class AttributeHasValue(Base):
         test_one_attribute("value_graphs", value_graphs=value_graphs)
 
         value_sparse_tensors = [value_sparse_tensor, value_sparse_tensor]
-        test_one_attribute("value_sparse_tensors", value_sparse_tensors=value_sparse_tensors)
+        test_one_attribute(
+            "value_sparse_tensors", value_sparse_tensors=value_sparse_tensors
+        )
 
         value_type_protos = [value_type_proto, value_type_proto]
         test_one_attribute("value_type_protos", value_type_protos=value_type_protos)
