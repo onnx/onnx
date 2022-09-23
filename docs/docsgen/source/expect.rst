@@ -1,3 +1,5 @@
+.. _l-function-expect:
+
 Sample operator test code
 =========================
 

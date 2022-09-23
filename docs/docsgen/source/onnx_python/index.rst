@@ -1,14 +1,17 @@
 
 .. _l-python-onnx-api:
 
-Functions
-=========
+onnx API Overview
+=================
 
 This section gathers many functions or
 classes from `onnx <https://onnx.ai/>`_ used when generated ONNX files
 from machine learned models. Most of the examples
 are executed during the generation of the documentation
 with this version of *onnx*.
+
+Following example shows how to retrieve onnx version
+and onnx opset. Every new major release increments the opset version.
 
 .. autofunction:: onnx.defs.onnx_opset_version
 
@@ -23,12 +26,19 @@ Other functions are dispatched accress following sections.
 .. toctree::
     :maxdepth: 1
 
-    serialize
-    helper
-    numpy_helper
     classes
-    shape_inference
-    plotting
-    spec
+    backend
+    checker
+    compose
+    external_data_helper
+    helper
     hub
+    mapping
+    numpy_helper
+    parser
+    printer
+    shape_inference
+    tools
     utils
+    version_converter
+    version

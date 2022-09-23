@@ -5,14 +5,28 @@ onnx.numpy_helper
 .. contents::
     :local:
 
+.. currentmodule:: onnx.numpy_helper
+
+.. autosummary::
+
+    from_array
+    from_dict
+    from_list
+    from_optional
+    to_array
+    to_dict
+    to_list
+    to_optional
+
+
 .. _l-numpy-helper-onnx-array:
 
 array
 +++++
 
-.. autofunction:: onnx.numpy_helper.to_array
-
 .. autofunction:: onnx.numpy_helper.from_array
+
+.. autofunction:: onnx.numpy_helper.to_array
 
 sequence
 ++++++++

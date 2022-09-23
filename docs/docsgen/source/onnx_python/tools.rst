@@ -1,12 +1,12 @@
 
-onnx.helper
-===========
+onnx.tools
+==========
 
 .. contents::
     :local:
 
-Graphs
-++++++
+net_drawer
+++++++++++
 
 .. autofunction:: onnx.tools.net_drawer.GetPydotGraph
 
@@ -22,3 +22,8 @@ Graphs
         rankdir="TP",
         node_producer=GetOpNodeProducer("docstring"))
     pydot_graph.write_dot("graph.dot")
+
+update_inputs_outputs_dims
+++++++++++++++++++++++++++
+
+.. autofunction:: onnx.tools.update_model_dims.update_inputs_outputs_dims
