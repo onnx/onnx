@@ -648,7 +648,8 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=Non
     :param fLOG: logging function
     :return: list of creates files
     """
-    header = textwrap.dedent("""
+    header = textwrap.dedent(
+        """
         Lists out all the ONNX operators. For each operator, lists out the usage guide,
         parameters, examples, and line-by-line version history.
         This section also includes tables detailing each operator
@@ -659,11 +660,29 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=Non
         which checks a runtime produces the expected output for this example.
         One implementation can be found in the first page
         linked below.
-    """)
+
+        expect
+        ++++++
+
+        .. toctree::
+
+            ../expect
+        """
+    )
     all_schemas = _get_all_schemas_with_history()
     if not os.path.exists(folder):
         os.makedirs(folder)
-    index = ["", title, "=" * len(title), "", ".. contents::", "    :local:", "", header, ""]
+    index = [
+        "",
+        title,
+        "=" * len(title),
+        "",
+        ".. contents::",
+        "    :local:",
+        "",
+        header,
+        "",
+    ]
     pages = []
     tables_domain_pages = []
 
@@ -672,7 +691,7 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=Non
     for dom in sorted(all_schemas):
         sdom = "main" if dom == "" else dom
 
-        index_dom = [sdom, "+" * len(sdom), "", ".. toctree::", "    :maxdepth: 1", "", "    ../expect"]
+        index_dom = [sdom, "+" * len(sdom), "", ".. toctree::", "    :maxdepth: 1", ""]
 
         table_dom = [
             "",
@@ -758,7 +777,17 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX operators", fLOG=Non
         index.append("")
 
     # adding pages
-    index.extend(["", "Tables", "++++++", "", ".. toctree::", "    :maxdepth: 1", ""])
+    index.extend(
+        [
+            "",
+            "Tables",
+            "++++++",
+            "",
+            ".. toctree::",
+            "    :maxdepth: 1",
+            "",
+        ]
+    )
     for page in tables_domain_pages:
         index.append(f"    {page}")
     index.append("")

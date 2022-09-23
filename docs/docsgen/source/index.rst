@@ -12,7 +12,9 @@ It contains the following information for the latest release:
 .. exec_code::
 
     import onnx
-    print(f"onnx.__version__={onnx.__version__}")
+    from onnx.defs import onnx_opset_version
+    print(f"onnx.__version__: {onnx.__version__!r}")
+    print(f"onnx opset: {onnx_opset_version()}")
 
 .. toctree::
     :maxdepth: 2

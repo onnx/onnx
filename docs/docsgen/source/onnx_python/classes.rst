@@ -197,7 +197,8 @@ a sparse tensor...
 
 .. autofunction:: onnx.load_tensor_from_string
 
-:epkg:`protobuf` does not store any information about the class
+`protobuf <https://developers.google.com/protocol-buffers>`_
+does not store any information about the class
 of the saved data. Therefore, this class must be known before
 restoring an object.
 
@@ -205,7 +206,7 @@ Save data
 +++++++++
 
 Any `Proto` class includes a method called `SerializeToString`.
-It must be called to serialize any :epkg:`onnx` object into
+It must be called to serialize any proto object into
 an array of bytes.
 
 .. autoclass:: onnx.TensorProto

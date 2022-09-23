@@ -5,6 +5,13 @@ onnx.compose
 .. contents::
     :local:
 
+.. currentmodule:: onnx.compose
+
+.. autosummary::
+
+    merge_graphs
+    merge_models
+
 merge_graphs
 ++++++++++++
 

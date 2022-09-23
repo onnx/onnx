@@ -4,6 +4,9 @@
 onnx API Overview
 =================
 
+Following example shows how to retrieve onnx version
+and onnx opset. Every new major release increments the opset version.
+
 .. autofunction:: onnx.defs.onnx_opset_version
 
 .. exec_code::
@@ -32,13 +35,3 @@ Other functions are dispatched accress following sections.
     tools
     version_converter
     version
-
-
-
-    classes
-    
-    shape_inference
-    plotting
-    spec
-    hub
-    utils
