@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Any
+
 import numpy as np  # type: ignore
 
 import onnx
@@ -12,7 +14,7 @@ from . import expect
 class AttributeHasValue(Base):
     @staticmethod
     def export() -> None:
-        def test_one_attribute(name, **kwargs):
+        def test_one_attribute(name: str, **kwargs: any) -> None:
             node = onnx.helper.make_node(
                 "AttributeHasValue",
                 inputs=[],
