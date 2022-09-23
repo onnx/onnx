@@ -2,7 +2,7 @@
 
 import itertools
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 

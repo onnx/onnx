@@ -2,7 +2,7 @@
 
 from typing import Any, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 
