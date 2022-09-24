@@ -3,7 +3,6 @@ from typing import Any, Dict, NamedTuple, Union
 
 import numpy as np
 
-
 from onnx import OptionalProto, SequenceProto, TensorProto
 
 TensorDtypeMap = NamedTuple(

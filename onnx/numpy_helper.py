@@ -37,7 +37,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
 
     tensor_dtype = tensor.data_type
     np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    storage_np_dtype = helper.tensor_dtype_to_storage_numpy_type(tensor_dtype)
+    storage_np_dtype = helper.tensor_dtype_to_np_dtype(helper.tensor_dtype_to_storage_tensor_dtype(tensor_dtype))
     storage_field = helper.tensor_dtype_to_field(tensor_dtype)
     dims = tensor.dims
 
@@ -309,23 +309,21 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
     Returns:
         opt: the converted optional.
     """
-    opt: Optional[Any] = None
     elem_type = optional.elem_type
     if elem_type == OptionalProto.UNDEFINED:
-        return opt
-    value = helper.get_attr_from_optional_elem_type(optional, elem_type)
-    # TODO: create a map and replace conditional branches
-    if elem_type in (OptionalProto.TENSOR, OptionalProto.SPARSE_TENSOR):
-        opt = to_array(value)
+        return None
+    if elem_type in OptionalProto.TENSOR:
+        return to_array(optional.tensor_value)
+    elif elem_type == OptionalProto.SPARSE_TENSOR:
+        return to_array(optional.sparse_tensor_value)
     elif elem_type == OptionalProto.SEQUENCE:
-        opt = to_list(value)
+        return to_list(optional.sequence_value)
     elif elem_type == OptionalProto.MAP:
-        opt = to_dict(value)
+        return to_dict(optional.map_value)
     elif elem_type == OptionalProto.OPTIONAL:
-        return to_optional(value)
+        return to_optional(optional.optional_value)
     else:
         raise TypeError("The element type in the input optional is not supported.")
-    return opt
 
 
 def from_optional(

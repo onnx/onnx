@@ -1110,7 +1110,7 @@ def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
     """
-    Convert a TensorProto's data_type to corresponding data_type for storage. It can be used for tensor_dtype_to_storage_numpy_type.
+    Convert a TensorProto's data_type to corresponding data_type for storage.
 
     :param tensor_dtype: TensorProto's data_type
     :return: data_type for storage
@@ -1126,17 +1126,6 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     :return: the name of data_type
     """
     return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].name
-
-
-def tensor_dtype_to_storage_numpy_type(tensor_dtype: int) -> np.dtype:
-    """
-    Convert a TensorProto's data_type to the data_type for storage.
-    Then further convert such a data_type for storage to corresponding numpy dtype. It can be used while to_array.
-
-    :param tensor_dtype: TensorProto's data_type
-    :return: numpy's data_type
-    """
-    return tensor_dtype_to_np_dtype(tensor_dtype_to_storage_tensor_dtype(tensor_dtype))
 
 
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
