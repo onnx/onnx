@@ -603,6 +603,7 @@ class TestOnnxBackEnd(unittest.TestCase):
         atol = {
             "test_blackmanwindow": 1e-7,
             "test_blackmanwindow_symmetric": 1e-7,
+            "test_gridsample_bicubic": 1e-4,
             "test_gru_seq_length": 1e-7,
             "test_hannwindow_symmetric": 1e-7,
             "test_layer_normalization_4d_axis_negative_1_expanded": 1e-6,
@@ -621,11 +622,9 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_gridsample" == name,
+            lambda name: "test_gridsample_nearest" == name,
             verbose=0,
-            atol={
-                "test_blackmanwindow_expanded": 1e-4,
-            },
+            atol={"test_gridsample_bicubic": 1e-4},
         )
 
 
