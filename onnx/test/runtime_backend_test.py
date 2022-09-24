@@ -410,63 +410,62 @@ class TestOnnxBackEnd(unittest.TestCase):
                 continue
             if verbose > 6:
                 print("TEST:", te.name)
-            with self.subTest(name=te.name):
+            if verbose > 7:
+                print("  check runtime")
+            self.assertIn(te.name, repr(te))
+            self.assertGreater(len(te), 0)
+            try:
                 if verbose > 7:
-                    print("  check runtime")
-                self.assertIn(te.name, repr(te))
-                self.assertGreater(len(te), 0)
-                try:
-                    if verbose > 7:
-                        print("  run")
-                    if verbose > 5:
-                        te.run(
-                            lambda *args, verbose=verbose: TestOnnxBackEnd.load_fct(
-                                *args, verbose
-                            ),
-                            TestOnnxBackEnd.run_fct,
-                            atol=atol.get(te.name, None),
-                            rtol=rtol.get(te.name, None),
-                        )
-                    else:
-                        te.run(
-                            TestOnnxBackEnd.load_fct,
-                            TestOnnxBackEnd.run_fct,
-                            atol=atol.get(te.name, None),
-                            rtol=rtol.get(te.name, None),
-                        )
-                    if verbose > 7:
-                        print("  end run")
-                        if verbose > 8:
-                            print(te.onnx_model)
-                except NotImplementedError as e:
-                    if verbose > 7:
-                        print("  ", e, type(e))
-                    missed.append((te, e))
-                    continue
-                except AssertionError as e:
-                    if verbose > 7:
-                        print("  ", e, type(e))
-                    mismatch.append((te, e))
-
-                    if check_ort_mismath:
-                        from onnxruntime import InferenceSession
-
-                        te.run(
-                            lambda obj: InferenceSession(obj.SerializeToString()),
-                            lambda *a, **b: TestOnnxBackEnd.run_fct(*a, verbose=1, **b),
-                        )
-                    continue
-                except Exception as e:
-                    if verbose > 7:
-                        print("  ", e, type(e))
-                    with open(f"issue_{te.name}.onnx", "wb") as f:
-                        f.write(te.onnx_model.SerializeToString())
-                    raise AssertionError(
-                        f"Unable to run model due to {e}\n{str(te.onnx_model)}"
-                    ) from e
-                success += 1
+                    print("  run")
+                if verbose > 5:
+                    te.run(
+                        lambda *args, verbose=verbose: TestOnnxBackEnd.load_fct(
+                            *args, verbose
+                        ),
+                        TestOnnxBackEnd.run_fct,
+                        atol=atol.get(te.name, None),
+                        rtol=rtol.get(te.name, None),
+                    )
+                else:
+                    te.run(
+                        TestOnnxBackEnd.load_fct,
+                        TestOnnxBackEnd.run_fct,
+                        atol=atol.get(te.name, None),
+                        rtol=rtol.get(te.name, None),
+                    )
                 if verbose > 7:
-                    print("  end example.")
+                    print("  end run")
+                    if verbose > 8:
+                        print(te.onnx_model)
+            except NotImplementedError as e:
+                if verbose > 7:
+                    print("  ", e, type(e))
+                missed.append((te, e))
+                continue
+            except AssertionError as e:
+                if verbose > 7:
+                    print("  ", e, type(e))
+                mismatch.append((te, e))
+
+                if check_ort_mismath:
+                    from onnxruntime import InferenceSession
+
+                    te.run(
+                        lambda obj: InferenceSession(obj.SerializeToString()),
+                        lambda *a, **b: TestOnnxBackEnd.run_fct(*a, verbose=1, **b),
+                    )
+                continue
+            except Exception as e:
+                if verbose > 7:
+                    print("  ", e, type(e))
+                with open(f"issue_{te.name}.onnx", "wb") as f:
+                    f.write(te.onnx_model.SerializeToString())
+                raise AssertionError(
+                    f"Unable to run model due to {e}\n{str(te.onnx_model)}"
+                ) from e
+            success += 1
+            if verbose > 7:
+                print("  end example.")
 
         failed = [
             len(missed),
@@ -622,7 +621,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_gridsample_nearest" == name,
+            lambda name: "test_upsample_nearest" == name,
             verbose=0,
             atol={"test_gridsample_bicubic": 1e-4},
         )

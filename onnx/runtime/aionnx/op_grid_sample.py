@@ -63,10 +63,8 @@ class GridSample(OpRun):
         coeffs = np.empty((4,), dtype=p.dtype)
         self._gs_get_cubic_coeffs(x, coeffs)
         for i in range(4):
-            # v[i] = coeffs[0] * p[i,0] + coeffs[1] * p[i,1] + coeffs[2] * p[i,2] + coeffs[3] * p[i,3]
             v[i] = coeffs @ p[i, :]
         self._gs_get_cubic_coeffs(y, coeffs)
-        # return coeffs[0] * v[0] + coeffs[1] * v[1] + coeffs[2] * v[2] + coeffs[3] * v[3]
         return coeffs @ v
 
     def _clamp(self, val, lo, hi):
@@ -95,10 +93,10 @@ class GridSample(OpRun):
 
     def _run(
         self, X, grid, mode=None, padding_mode=None, align_corners=None
-    ):  # type ignore
-        mode = mode or self.mode  # type ignore
-        padding_mode = padding_mode or self.padding_mode  # type ignore
-        align_corners = align_corners or self.align_corners  # type ignore
+    ):  # type: ignore
+        mode = mode or self.mode  # type: ignore
+        padding_mode = padding_mode or self.padding_mode  # type: ignore
+        align_corners = align_corners or self.align_corners  # type: ignore
 
         x_dims = X.shape
         grid_dims = grid.shape
@@ -137,22 +135,15 @@ class GridSample(OpRun):
         border = (x_min, y_min, x_max, y_max)
 
         for n in range(N):
-            # grid_data = grid_data_0 + n * (H_out * W_out) * 2
-            # grid shape is [1, H, W, 2]
             grid_data = grid[n]
 
             for c in range(C):
-                # X_data = X_data_0 + (n * C + c) * (H_in * W_in);
                 X_data = X[n, c]
-                # Y_data = Y_data_0 + (n * C + c) * (H_out * W_out);
-                Y_data = Y[n, c]
 
                 for oy in range(H_out):
                     for ox in range(W_out):
-                        # gridpoint = grid_data + (oy * W_out + ox) * 2;
                         gridpoint = grid_data[oy, ox]
-                        # Y_gridpoint = Y_data + oy * W_out + ox;
-                        Y_gridpoint = Y_data[oy, ox]
+
                         nx = gridpoint[0]  # normalized location
                         ny = gridpoint[1]
                         x = self._gs_denormalize(
@@ -177,7 +168,6 @@ class GridSample(OpRun):
 
                         if mode == "nearest":
                             # x, y are integers in all padding modes
-                            # *Y_gridpoint = PixelAtGrid(X_data, static_cast<int64_t>(y), static_cast<int64_t>(x), H_in, W_in, border);
                             Y[n, c, oy, ox] = self._pixel_at_grid(
                                 X_data, int(y), int(x), border, padding_mode
                             )
@@ -206,7 +196,6 @@ class GridSample(OpRun):
                             dx1 = x - x1
                             dy2 = y2 - y
                             dy1 = y - y1
-                            # *Y_gridpoint = dy2 * (dx2 * p11 + dx1 * p12) + dy1 * (dx2 * p21 + dx1 * p22);
                             Y[n, c, oy, ox] = dy2 * (dx2 * p11 + dx1 * p12) + dy1 * (
                                 dx2 * p21 + dx1 * p22
                             )
@@ -222,6 +211,5 @@ class GridSample(OpRun):
                                     )
                             dx = x - x0 - 1
                             dy = y - y0 - 1
-                            # *Y_gridpoint = GsBicubicInterpolate(p, static_cast<T>(dx), static_cast<T>(dy));
                             Y[n, c, oy, ox] = self._gs_bicubic_interpolate(p, dx, dy)
         return (Y,)

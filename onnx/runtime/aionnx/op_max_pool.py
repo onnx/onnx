@@ -1,35 +1,38 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221,R0913,R0914
+# pylint: disable=R0913,R0914,W0221
 
 import itertools
-from typing import Optional, Tuple
 
 import numpy as np  # type: ignore
 
 from ._op_common_pool import CommonPool
 
 
-class AveragePool(CommonPool):
+class MaxPool(CommonPool):
     def _run(  # type: ignore
         self,
         x,
         auto_pad=None,
         ceil_mode=None,
+        dilations=None,
         kernel_shape=None,
         pads=None,
+        storage_order=None,
         strides=None,
-        count_include_pad=None,
     ):
-        count_include_pad = count_include_pad or self.count_include_pad  # type: ignore
+        dilations = dilations or self.dilations  # type: ignore
+        storage_order = storage_order or self.storage_order  # type: ignore
+
         return CommonPool._run(
             self,
-            "AVG",
-            count_include_pad,
+            "MAX",
+            0,
             x,
             auto_pad=auto_pad,
             ceil_mode=ceil_mode,
-            dilations=None,
+            dilations=dilations,
             kernel_shape=kernel_shape,
             pads=pads,
+            storage_order=storage_order,
             strides=strides,
         )
