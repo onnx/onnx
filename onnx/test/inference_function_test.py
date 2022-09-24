@@ -1,7 +1,7 @@
 import unittest
 from typing import Dict, List, Optional, Tuple, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 import onnx.numpy_helper

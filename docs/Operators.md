@@ -266,7 +266,7 @@ expect(node, inputs=[x], outputs=[y], name="test_abs")
 ```python
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
+import numpy as np
 
 
 def abs(input: np.ndarray) -> np.ndarray:

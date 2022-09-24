@@ -1,9 +1,8 @@
-# SPDX-License-Identifier: Apache-2.0
-
 import warnings
 from typing import Any, Dict, NamedTuple, Union
 
-import numpy as np  # type: ignore
+import numpy as np
+
 
 from onnx import OptionalProto, SequenceProto, TensorProto
 

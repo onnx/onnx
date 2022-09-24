@@ -4,7 +4,7 @@ import os
 import unittest
 from os.path import join
 
-import pytest  # type: ignore
+import pytest
 
 import onnx.hub as hub
 from onnx import ModelProto

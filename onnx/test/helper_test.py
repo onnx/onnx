@@ -5,8 +5,8 @@ import struct
 import unittest
 from typing import Any, List, Tuple
 
-import numpy as np  # type: ignore
-import pytest  # type: ignore
+import numpy as np
+import pytest
 
 from onnx import (
     AttributeProto,
