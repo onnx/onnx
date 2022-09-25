@@ -41,7 +41,8 @@ jobs:
 
   - script: |
       conda create --yes --quiet --name py$(python.version) python=$(python.version)
-      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf=3.18.3
+      # 3.18.3 is missing in conda-forge
+      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf=3.19
     displayName: Create Anaconda environment
 
   - script: |
