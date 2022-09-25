@@ -92,7 +92,7 @@ The ON/OFF depends on what kind of protobuf library you have. Shared libraries a
 
 
 ### Windows
-If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.16.0.
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.18.3.
 
 The instructions in this README assume you are using Visual Studio.  It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
 
@@ -100,7 +100,7 @@ You can get protobuf by running the following commands:
 ```bat
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v3.16.0
+git checkout v3.18.3
 cd cmake
 cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=Release
@@ -148,7 +148,7 @@ A more general way is to build and install it from source. See the instructions 
   ```bash
     git clone https://github.com/protocolbuffers/protobuf.git
     cd protobuf
-    git checkout v3.16.0
+    git checkout v3.18.3
     git submodule update --init --recursive
     mkdir build_source && cd build_source
     cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
@@ -160,7 +160,7 @@ A more general way is to build and install it from source. See the instructions 
   ```bash
     git clone https://github.com/protocolbuffers/protobuf.git
     cd protobuf
-    git checkout v3.16.0
+    git checkout v3.18.3
     git submodule update --init --recursive
     mkdir build_source && cd build_source
     cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
@@ -191,9 +191,9 @@ pip install -e .
 export NUM_CORES=`sysctl -n hw.ncpu`
 brew update
 brew install autoconf && brew install automake
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz
-tar -xvf protobuf-cpp-3.16.0.tar.gz
-cd protobuf-3.16.0
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.18.3/protobuf-cpp-3.18.3.tar.gz
+tar -xvf protobuf-cpp-3.18.3.tar.gz
+cd protobuf-3.18.3
 mkdir build_source && cd build_source
 cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j${NUM_CORES}
