@@ -26,7 +26,7 @@ def _is_out(ind, shape):  # type: ignore
     return False
 
 
-def _get_index(indices, shape):
+def _get_index(indices, shape):  # type: ignore
     ind = 0
     mul = 1
     for pos, sh in zip(reversed(indices), reversed(shape)):

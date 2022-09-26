@@ -1,9 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0913,R0914,W0221
-
-import itertools
-
-import numpy as np  # type: ignore
+# pylint: disable=R0913,R0914,R0916,W0221
 
 from ._op_common_pool import CommonPool
 

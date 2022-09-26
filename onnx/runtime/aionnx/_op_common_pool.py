@@ -188,8 +188,8 @@ def _pool(
                 new_arg = _get_index(coordinates, x_shape[2:])
                 z[shape] = new_arg
     if indices:
-        return y.astype(padded.dtype), z
-    return y.astype(padded.dtype)
+        return y.astype(padded.dtype), z  # type: ignore
+    return y.astype(padded.dtype)  # type: ignore
 
 
 class CommonPool(OpRun):
@@ -203,7 +203,7 @@ class CommonPool(OpRun):
         dilations=None,
         kernel_shape=None,
         pads=None,
-        storage_order=None,
+        storage_order=None,  # pylint: disable=W0613
         strides=None,
     ):
 
