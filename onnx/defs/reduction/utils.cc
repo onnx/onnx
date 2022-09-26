@@ -19,11 +19,11 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit)
 }
 
 std::function<void(OpSchema&)> ReduceDocGenerator_opset13_18(
-  const char* name,
-  bool supports_8bit_datatypes,
-  bool axes_input,
-  const char* func_body,
-  ContextDependentFunctionBodyBuilder function_builder) {
+    const char* name,
+    bool supports_8bit_datatypes,
+    bool axes_input,
+    const char* func_body,
+    ContextDependentFunctionBodyBuilder function_builder) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -77,7 +77,7 @@ False instead of True.)DOC";
                                 : "Constrain input and output types to high-precision numeric tensors.");
     if (func_body) {
       schema.FunctionBody(func_body);
-    } else if(function_builder) {
+    } else if (function_builder) {
       std::cout << "schema.SetContextDependentFunctionBodyBuilder(function_builder);" << std::endl;
       schema.SetContextDependentFunctionBodyBuilder(function_builder);
     }
