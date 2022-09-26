@@ -1,3 +1,3 @@
 numpy >= 1.16.6 # TODO: update once TensorFlow 2.6 is end of life
-protobuf >= 3.16.0, <= 3.20.1
+protobuf >= 3.19.5, <= 3.20.1
 typing-extensions >= 3.6.2.1

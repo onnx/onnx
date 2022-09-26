@@ -115,7 +115,7 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.16.0
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.19.5
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
