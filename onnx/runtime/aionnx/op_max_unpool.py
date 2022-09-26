@@ -7,7 +7,7 @@ from ..op_run import OpRun
 
 
 class MaxUnpool(OpRun):
-    def _run(self, X, I, output_shape=None, kernel_shape=None, pads=None, strides=None):  # type: ignore
+    def _run(self, X, indices, output_shape=None, kernel_shape=None, pads=None, strides=None):  # type: ignore
 
         pooling_dims = len(X.shape) - 2
         if pooling_dims > 3:
@@ -42,7 +42,7 @@ class MaxUnpool(OpRun):
         total_elements = np.prod(X.shape)
         Y = np.zeros((np.prod(inferred_shape),), dtype=X.dtype)
 
-        I_data = I.flatten()
+        I_data = indices.flatten()
         X_data = X.flatten()
 
         for cur_elem in range(total_elements):
