@@ -1,3 +1,4 @@
+# pylint: disable=R0912,R0913,R0914,R0915
 """
 Automates the generation of ONNX operators.
 """
@@ -495,9 +496,9 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             pieces.append(spl[i])
             continue
         if len(vers1) == 0:
-            raise ValueError(f"Unable to find version in\n{spl1}")
+            raise ValueError(f"Unable to find version {version!r} in\n{spl1}")
         if len(vers2) == 0:
-            raise ValueError(f"Unable to find version in\n{spl2}")
+            raise ValueError(f"Unable to find version {version!r} in\n{spl2}")
         v1 = vers1[0][1]
         v2 = vers2[0][1]
 

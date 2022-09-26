@@ -1,3 +1,4 @@
+# pylint: disable=W0622
 # type: ignore
 import os
 import sys
@@ -93,7 +94,7 @@ intersphinx_mapping.update(
         "torch": ("https://pytorch.org/docs/stable/", None),
         "numpy": ("https://docs.scipy.org/doc/numpy/", None),
         "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-        "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
+        "python": (f"https://docs.python.org/{sys.version_info.major}", None),
         "scikit-learn": ("https://scikit-learn.org/stable/", None),
         "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
         "sklearn": ("https://scikit-learn.org/stable/", None),
