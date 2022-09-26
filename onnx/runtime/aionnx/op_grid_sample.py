@@ -7,14 +7,14 @@ from ..op_run import OpRun
 
 
 class GridSample(OpRun):
-    def _gs_denormalize(self, n, length: int, align_corners: bool):
+    def _gs_denormalize(self, n, length: int, align_corners: bool):  # type: ignore
         if align_corners:
             x = (n + 1) / 2.0 * (length - 1)
         else:
             x = ((n + 1) * length - 1) / 2.0
         return x
 
-    def _gs_reflect(self, x, x_min, x_max):
+    def _gs_reflect(self, x, x_min, x_max):  # type: ignore
         """
         Reflect by the near border till within the borders
         Use float for borders to avoid potential issues with integer T
@@ -39,7 +39,7 @@ class GridSample(OpRun):
                 fx = x_min + r
         return fx
 
-    def _gs_get_cubic_coeffs(self, x, coeffs):
+    def _gs_get_cubic_coeffs(self, x, coeffs):  # type: ignore
         """
         Calculate cubic convolution interpolation coefficients
         ROBERT G. KEYS https://ieeexplore.ieee.org/document/1163711
@@ -58,7 +58,7 @@ class GridSample(OpRun):
             (cubic_alpha * (2 - x) - 5 * cubic_alpha) * (2 - x) + 8 * cubic_alpha
         ) * (2 - x) - 4 * cubic_alpha
 
-    def _gs_bicubic_interpolate(self, p, x, y):
+    def _gs_bicubic_interpolate(self, p, x, y):  # type: ignore
         v = np.empty((4,), dtype=p.dtype)
         coeffs = np.empty((4,), dtype=p.dtype)
         self._gs_get_cubic_coeffs(x, coeffs)
@@ -67,14 +67,14 @@ class GridSample(OpRun):
         self._gs_get_cubic_coeffs(y, coeffs)
         return coeffs @ v
 
-    def _clamp(self, val, lo, hi):
+    def _clamp(self, val, lo, hi):  # type: ignore
         if val < lo:
             return lo
         if val > hi:
             return hi
         return val
 
-    def _pixel_at_grid(self, image, r: int, c: int, border, padding_mode):
+    def _pixel_at_grid(self, image, r: int, c: int, border, padding_mode):  # type: ignore
         H, W = image.shape
         if padding_mode == "zeros":
             if c >= 0 and c < W and r >= 0 and r < H:
@@ -91,9 +91,9 @@ class GridSample(OpRun):
             pixel = image[r, c]  # image[r * W + c]
         return pixel
 
-    def _run(
+    def _run(  # type: ignore
         self, X, grid, mode=None, padding_mode=None, align_corners=None
-    ):  # type: ignore
+    ):
         mode = mode or self.mode  # type: ignore
         padding_mode = padding_mode or self.padding_mode  # type: ignore
         align_corners = align_corners or self.align_corners  # type: ignore

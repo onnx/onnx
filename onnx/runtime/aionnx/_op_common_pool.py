@@ -140,7 +140,6 @@ def _pool(
     y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))  # type: ignore
     if indices:
         z = np.full(y.shape, fill_value=-1, dtype=np.int64)
-        np_out_shape = np.array(out_shape)
     round_fct = np.ceil if ceil_mode else np.floor
 
     def loop_range():  # type: ignore
@@ -184,7 +183,7 @@ def _pool(
                 window_vals_min = np.nan_to_num(window_vals, nan=no_nan.min())
                 arg = np.argmax(window_vals_min)
                 coordinates = _get_indices(arg, out_shape)
-                delta = shape[2:] - pads[:, 0]
+                delta = shape[2:] - pads[:, 0]  # type: ignore
                 coordinates += delta
                 new_arg = _get_index(coordinates, x_shape[2:])
                 z[shape] = new_arg
@@ -285,7 +284,7 @@ class CommonPool(OpRun):
             pooling_type,
             count_include_pad=count_include_pad,
             ceil_mode=ceil_mode,
-            indices=len(self.output) > 1,
+            indices=len(self.output) > 1,  # type: ignore
             pads=new_pads,
         )
         if isinstance(res, tuple):

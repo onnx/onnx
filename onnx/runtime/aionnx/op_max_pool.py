@@ -30,7 +30,7 @@ class MaxPool(CommonPool):
             strides is not None and (min(strides) != max(strides) or min(strides) != 1)
         ):
             raise NotImplementedError(
-                f"Only default dilations or strides are implemented for MaxPool."
+                "Only default dilations or strides are implemented for MaxPool."
             )
 
         return CommonPool._run(

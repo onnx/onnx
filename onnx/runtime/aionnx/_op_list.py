@@ -97,6 +97,7 @@ from .op_matmul import MatMul
 from .op_matmul_integer import MatMulInteger
 from .op_max import Max
 from .op_max_pool import MaxPool
+from .op_max_unpool import MaxUnpool
 from .op_mean import Mean
 from .op_mel_weight_matrix import MelWeightMatrix
 from .op_min import Min
