@@ -1,3 +1,4 @@
+# pylint: disable=R0912,R0913,R0914,R0915
 """
 Automates the generation of ONNX operators.
 """
@@ -12,20 +13,20 @@ from difflib import Differ
 import numpy as np
 
 import onnx
-import onnx.defs
 from onnx.backend.test.case.base import _Exporter
-from onnx.defs import OpSchema
+from onnx.defs import OpSchema, get_all_schemas_with_history, get_schema
+from onnx.numpy_helper import to_array
 from onnx.onnx_cpp2py_export.defs import (  # pylint: disable=E1101,E0611,E0401
     SchemaError,
 )
 
 
-def get_template():
+def get_template():  # type: ignore
     try:
         from jinja2 import Template
     except ImportError:  # pragma no cover
 
-        class Template:
+        class Template:  # type: ignore
             "Docstring template"
 
             def __init__(self, *args):
@@ -46,7 +47,7 @@ def get_template():
     return Template
 
 
-def _get_diff_template():
+def _get_diff_template():  # type: ignore
     Template = get_template()
     return Template(
         textwrap.dedent(
@@ -81,32 +82,33 @@ def _get_diff_template():
         });
         </script>
         """
-        )
+        ),
+        autoescape=True,
     )
 
 
-def _get_doc_template():
+def _get_doc_template():  # type: ignore
     Template = get_template()
     return Template(
         textwrap.dedent(
             """
         {% for sch in schemas %}
-        
+
         .. tag-diff-insert.
         .. _l-onnx-op{{sch.domain.lower().replace(".", "-")}}-{{sch.name.lower()}}-{{str(sch.since_version)}}:
-        
+
         {{format_name_with_domain(sch)}}
         {{'=' * len(format_name_with_domain(sch))}}
 
         **Version**
-        
+
         * **name**: `{{sch.name}} (GitHub) <{{build_doc_url(sch)}}{{sch.name}}>`_
         * **domain**: **{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}**
         * **since_version**: **{{sch.since_version}}**
         * **function**: {{sch.has_function}}
         * **support_level**: {{sch.support_level}}
         * **shape inference**: {{sch.has_type_and_shape_inference_function}}
-        
+
         {% if sch.support_level == OpSchema.SupportType.EXPERIMENTAL %}
         No versioning maintained for experimental ops.
         {% else %}
@@ -119,14 +121,14 @@ def _get_doc_template():
         {% for v in sch.version[:-1] %} {{v}} {% endfor %}
         {% endif %}
         {% endif %}
-        
+
         **Summary**
-        
+
         {{process_documentation(sch.doc)}}
         {% if sch.attributes %}
-        
+
         **Attributes**
-        
+
         {% for _, attr in sorted(sch.attributes.items()) %}* **{{attr.name}}**{%
           if attr.required %} (required){% endif %}:
         {{text_wrap(attr.description, 2)}} {%
@@ -135,9 +137,9 @@ def _get_doc_template():
         {% endfor %}
         {% endif %}
         {% if sch.inputs %}
-        
+
         **Inputs**
-        
+
         {% if sch.min_input != sch.max_input %}Between {{sch.min_input
         }} and {{sch.max_input}} inputs.
         {% endif %}
@@ -146,9 +148,9 @@ def _get_doc_template():
         {{text_wrap(inp.description, 2)}}{% endfor %}
         {% endif %}
         {% if sch.outputs %}
-        
+
         **Outputs**
-        
+
         {% if sch.min_output != sch.max_output %}Between {{sch.min_output
         }} and {{sch.max_output}} outputs.
         {% endif %}
@@ -159,35 +161,36 @@ def _get_doc_template():
         {% if sch.type_constraints %}
 
         **Type Constraints**
-        
+
         {% for ii, type_constraint in enumerate(sch.type_constraints)
         %}* {{get_constraint(type_constraint, ii)}}:
         {{text_wrap(type_constraint.description, 2)}}
         {% endfor %}
         {% endif %}
         {% if get_onnx_example and is_last_schema(sch): %}
-        
+
         **Examples**
-        
+
         {% for example, code in get_onnx_example(sch.name).items(): %}
-        
+
         **{{ example }}**
-        
+
         ::
-        
+
         {{ format_example(code) }}
         {% endfor %}
         {% endif %}
         {% endfor %}
     """
-        )
+        ),
+        autoescape=True,
     )
 
 
 _template_diff = _get_diff_template()
 _template_operator = _get_doc_template()
 __get_all_schemas_with_history = None
-print(_template_diff)
+
 
 _attribute_conversion_functions = {
     onnx.AttributeProto.FLOAT: lambda att: np.float32(att.f),
@@ -207,9 +210,9 @@ _attribute_conversion_functions = {
 }
 
 
-def _populate__get_all_schemas_with_history():
-    res = {}
-    for schema in onnx.defs.get_all_schemas_with_history():
+def _populate__get_all_schemas_with_history():  # type: ignore
+    res = {}  # type: ignore
+    for schema in get_all_schemas_with_history():
         domain = schema.domain
         version = schema.since_version
         name = schema.name
@@ -222,23 +225,21 @@ def _populate__get_all_schemas_with_history():
     return res
 
 
-def _get_all_schemas_with_history():
+def _get_all_schemas_with_history():  # type: ignore
     global __get_all_schemas_with_history  # pylint: disable=W0603
     if __get_all_schemas_with_history is None:
         __get_all_schemas_with_history = _populate__get_all_schemas_with_history()
     return __get_all_schemas_with_history
 
 
-def get_domain_list():
+def get_domain_list():  # type: ignore
     """
     Returns the list of available domains.
     """
-    return list(
-        sorted(set(map(lambda s: s.domain, onnx.defs.get_all_schemas_with_history())))
-    )
+    return list(sorted(set(map(lambda s: s.domain, get_all_schemas_with_history()))))
 
 
-def get_operator_schemas(op_name, version=None, domain=None):
+def get_operator_schemas(op_name, version=None, domain=None):  # type: ignore
     """
     Returns all schemas mapped to an operator name.
     :param op_name: name of the operator
@@ -248,7 +249,7 @@ def get_operator_schemas(op_name, version=None, domain=None):
     """
     if version == "last" and op_name is not None:
         if domain is not None:
-            return [onnx.defs.get_schema(op_name, domain=domain)]
+            return [get_schema(op_name, domain=domain)]
     all_schemas = _get_all_schemas_with_history()
     if domain is None:
         domains = []
@@ -268,7 +269,7 @@ def get_operator_schemas(op_name, version=None, domain=None):
                     sch.extend(v.values())
                 elif version == "last" and (dom == "" or "onnx" in dom):
                     try:
-                        sch.append(onnx.defs.get_schema(op, domain=dom))
+                        sch.append(get_schema(op, domain=dom))
                     except SchemaError:  # pragma: no cover
                         sch.append(v[max(v)])
                 elif version == "last":
@@ -287,7 +288,7 @@ def get_operator_schemas(op_name, version=None, domain=None):
     return [v[-1] for v in vals]
 
 
-def get_rst_doc(
+def get_rst_doc(  # type: ignore
     folder,
     op_name=None,
     domain=None,
@@ -469,7 +470,7 @@ def get_rst_doc(
     return docs
 
 
-def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None):
+def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None):  # type: ignore
     """
     Splits a using `split`, insert HTML differences between pieces.
     The function relies on package :epkg:`pyquickhelper`.
@@ -495,9 +496,9 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             pieces.append(spl[i])
             continue
         if len(vers1) == 0:
-            raise ValueError(f"Unable to find version in\n{spl1}")
+            raise ValueError(f"Unable to find version {version!r} in\n{spl1}")
         if len(vers2) == 0:
-            raise ValueError(f"Unable to find version in\n{spl2}")
+            raise ValueError(f"Unable to find version {version!r} in\n{spl2}")
         v1 = vers1[0][1]
         v2 = vers2[0][1]
 
@@ -529,6 +530,11 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
                         title,
                         "=" * len(title),
                         "",
+                        "Next section compares an older to a newer version of the same operator ",
+                        "after both definition are converted into markdown text.",
+                        "Green means an addition to the newer version, red means a deletion.",
+                        "Anything else is unchanged.",
+                        "",
                         ".. raw:: html",
                         "",
                         textwrap.indent(diff, "    "),
@@ -537,7 +543,8 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             )
         pieces.extend(
             [
-                ".. toctree::" "",
+                ".. toctree::",
+                "",
                 f"    {name}",
                 "",
                 spl[i],
@@ -547,7 +554,7 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
     return "\n".join(pieces)
 
 
-def change_style(name):
+def change_style(name: str) -> str:
     """
     Switches from *AaBb* into *aa_bb*.
     :param name: name to convert
@@ -558,7 +565,7 @@ def change_style(name):
     return s2 if not keyword.iskeyword(s2) else s2 + "_"
 
 
-def _process_example(code):
+def _process_example(code: str) -> str:
     """
     Add necessary imports to make the example work.
     """
@@ -568,7 +575,7 @@ def _process_example(code):
     return "\n".join(elements)
 
 
-def get_onnx_example(op_name):
+def get_onnx_example(op_name):  # type: ignore
     """
     Retrieves examples associated to one operator
     stored in onnx packages.
@@ -590,7 +597,7 @@ def get_onnx_example(op_name):
     if module is None:
         # Unable to find an example for 'op_name'.
         return {}
-    results = {}
+    results = {}  # type: ignore
     for v in mod.__dict__.values():
         if not isinstance(v, _Exporter):
             continue
@@ -624,14 +631,14 @@ def get_onnx_example(op_name):
     return results
 
 
-def is_last_schema(sch):
+def is_last_schema(sch: OpSchema) -> bool:
     """
     Tells if this is the most recent schema for this operator.
     :param sch: schema
     :return: True
     """
     try:
-        last = onnx.defs.get_schema(sch.name, domain=sch.domain)
+        last = get_schema(sch.name, domain=sch.domain)
     except SchemaError:  # pragma: no cover
         # raise RuntimeError(
         #     "Unable to find schema for operator %r and domain %r."
@@ -640,14 +647,14 @@ def is_last_schema(sch):
     return last.since_version == sch.since_version
 
 
-def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", fLOG=None):
+def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=None):  # type: ignore
     """
     Creates documentation in a folder for all known
     ONNX operators or a subset.
     :param folder: folder where to write the documentation
     :param ops: None for all operators or a subset of them
     :param title: index title
-    :param fLOG: logging function
+    :param flog: logging function
     :return: list of creates files
     """
     header = textwrap.dedent(
@@ -676,7 +683,7 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", fLOG=Non
         os.makedirs(folder)
     index = [
         "",
-        ".. _l-onnx-operators:"
+        ".. _l-onnx-operators:",
         "",
         title,
         "=" * len(title),
@@ -728,8 +735,8 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", fLOG=Non
             continue
 
         for op in sorted(do):
-            if fLOG is not None:
-                fLOG(f"generate page for onnx {dom!r} - {op!r}")  # pragma: no cover
+            if flog is not None:
+                flog(f"generate page for onnx {dom!r} - {op!r}")  # pragma: no cover
             page_name = f"onnx_{dom.replace('.', '')}_{op}"
             index_dom.append(f"    {page_name}")
             doc = get_rst_doc(
@@ -809,7 +816,7 @@ def _generate_op_doc(app):
 
     logger = logging.getLogger(__name__)
     folder = app.config.onnx_doc_folder
-    onnx_documentation_folder(folder, fLOG=logger.info)
+    onnx_documentation_folder(folder, flog=logger.info)
 
 
 def setup(app):
