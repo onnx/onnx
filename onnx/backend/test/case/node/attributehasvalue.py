@@ -26,7 +26,7 @@ class AttributeHasValue(Base):
                 node,
                 inputs=[],
                 outputs=[output],
-                name=f"test_attribute_has_value_{name}_false",
+                name=f"test_attribute_has_{name}_false",
             )
 
             node = onnx.helper.make_node(
@@ -41,7 +41,7 @@ class AttributeHasValue(Base):
                 node,
                 inputs=[],
                 outputs=[output],
-                name=f"test_attribute_has_value_{name}_true",
+                name=f"test_attribute_has_{name}_true",
             )
 
         value_float = 0.1

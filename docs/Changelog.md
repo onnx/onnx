@@ -21233,33 +21233,33 @@ This version of the operator has been available since version 18 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>float</tt> : float</dt>
+<dt><tt>value_float</tt> : float</dt>
 <dd>The float attribute.</dd>
-<dt><tt>floats</tt> : list of floats</dt>
+<dt><tt>value_floats</tt> : list of floats</dt>
 <dd>The floats attribute.</dd>
-<dt><tt>graph</tt> : graph</dt>
+<dt><tt>value_graph</tt> : graph</dt>
 <dd>The graph attribute.</dd>
-<dt><tt>graphs</tt> : list of graphs</dt>
+<dt><tt>value_graphs</tt> : list of graphs</dt>
 <dd>The graphs attribute.</dd>
-<dt><tt>int</tt> : int</dt>
+<dt><tt>value_int</tt> : int</dt>
 <dd>The int attribute.</dd>
-<dt><tt>ints</tt> : list of ints</dt>
+<dt><tt>value_ints</tt> : list of ints</dt>
 <dd>The ints attribute.</dd>
-<dt><tt>sparse_tensor</tt> : sparse_tensor</dt>
+<dt><tt>value_sparse_tensor</tt> : sparse_tensor</dt>
 <dd>The sparse_tensor attribute.</dd>
-<dt><tt>sparse_tensors</tt> : list of sparse_tensors</dt>
+<dt><tt>value_sparse_tensors</tt> : list of sparse_tensors</dt>
 <dd>The sparse_tensors attribute.</dd>
-<dt><tt>string</tt> : string</dt>
+<dt><tt>value_string</tt> : string</dt>
 <dd>The string attribute.</dd>
-<dt><tt>strings</tt> : list of strings</dt>
+<dt><tt>value_strings</tt> : list of strings</dt>
 <dd>The strings attribute.</dd>
-<dt><tt>tensor</tt> : tensor</dt>
+<dt><tt>value_tensor</tt> : tensor</dt>
 <dd>The tensor attribute.</dd>
-<dt><tt>tensors</tt> : list of tensors</dt>
+<dt><tt>value_tensors</tt> : list of tensors</dt>
 <dd>The tensors attribute.</dd>
-<dt><tt>type_proto</tt> : type_proto</dt>
+<dt><tt>value_type_proto</tt> : type_proto</dt>
 <dd>The type_proto attribute.</dd>
-<dt><tt>type_protos</tt> : list of type_protos</dt>
+<dt><tt>value_type_protos</tt> : list of type_protos</dt>
 <dd>The type_protos attribute.</dd>
 </dl>
 
