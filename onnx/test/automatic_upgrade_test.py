@@ -3,7 +3,7 @@ import string
 import unittest
 from typing import Any, Dict, List, Optional, Union, cast
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
