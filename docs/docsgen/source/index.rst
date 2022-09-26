@@ -10,7 +10,7 @@ It defines an extensible computation graph model,
 as well as definitions of built-in operators and standard data types.
 
 This documentation introduces the Python package
-`onnx <https://github.com/onnx/onnx>_`. A tutorial shows how
+`onnx <https://github.com/onnx/onnx>`_. A tutorial shows how
 to build an ONNX graph through the Python API. This graph can then
 be consumed by any runtime implementing ONNX specifications
 described in last section. It lists all existing operators

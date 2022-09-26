@@ -28,9 +28,14 @@ an operator, :ref:`l-tensorproto` defines a tensor. Next page lists all of them.
     :maxdepth: 1
 
     classes
+    serialization
 
 Functions
 +++++++++
+
+An ONNX model can be directly from the classes described
+in previous section but it is faster to create and
+verify a model with the following helpers.
 
 .. toctree::
     :maxdepth: 1

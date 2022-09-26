@@ -1,14 +1,11 @@
 
-.. _l-onnx-classes:
+.. _l-serialization:
 
 Serialization
 =============
 
 .. contents::
     :local:
-
-Serialization
-=============
 
 Save a model and any Proto class
 ++++++++++++++++++++++++++++++++

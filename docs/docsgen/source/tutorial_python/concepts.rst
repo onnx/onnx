@@ -234,8 +234,6 @@ What is an opset version?
 The opset is mapped to the version of the *onnx* package.
 It is incremented every time the minor version increases.
 Every version brings updated or new operators.
-Pages :ref:`l-md-change-logs` keeps tracks of these changes.
-The current version is the following.
 
 .. exec_code::
 
@@ -314,8 +312,7 @@ Extensibility
 +++++++++++++
 
 ONNX defines a list of operators as the standard: :ref:`l-onnx-operators`.
-It extends this list with other operators specific to standard
-machine learning :ref:`l-onnx-operators-ml`. However it is very possible
+However it is very possible
 to define your own operators under this domain or a new one.
 *onnxruntime* defines custom operators to improve inference.
 Every node has a type, a name,
