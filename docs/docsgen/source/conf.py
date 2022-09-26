@@ -47,13 +47,18 @@ pygments_style = 'default'
 coverage_show_missing_items = True
 onnx_doc_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "onnx_doc_folder")
 
+# Navbar
+html_static_path = ["_static"]
+
 # -- Options for HTML output -------------------------------------------------
 html_favicon = 'onnx-favicon.png'
 html_theme = "pydata_sphinx_theme"
-html_logo = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png")
-
-# Navbar
-html_static_path = ["_static"]
+html_logo = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../onnx-horizontal-color.png")
+html_theme_options = {
+   "logo": {
+      "image_dark": "onnx-horizontal-white.png",
+   }
+}
 
 # -- Options for graphviz ----------------------------------------------------
 
