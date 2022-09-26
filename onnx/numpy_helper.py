@@ -310,7 +310,7 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
     elem_type = optional.elem_type
     if elem_type == OptionalProto.UNDEFINED:
         return None
-    if elem_type in OptionalProto.TENSOR:
+    elif elem_type == OptionalProto.TENSOR:
         return to_array(optional.tensor_value)
     elif elem_type == OptionalProto.SPARSE_TENSOR:
         return to_array(optional.sparse_tensor_value)
