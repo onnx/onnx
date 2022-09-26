@@ -93,7 +93,7 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
         begin = fs
         end = fs + 1
         frame_x = np.squeeze(
-            _slice(x, np.array([begin]), np.array([end]), axisf), axis=axisf[0]
+            _slice(x, np.array([begin]), np.array([end]), axisf), axis=axisf[0]  # type: ignore
         )
 
         # ifft
@@ -102,7 +102,7 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
 
         # real part
         n_dims_1 = n_dims - 1
-        sliced = _slice(ift, np.array(zero), np.array(one), [n_dims_1])
+        sliced = _slice(ift, np.array(zero), np.array(one), [n_dims_1])  # type: ignore
         ytmp = np.squeeze(sliced, axis=n_dims_1)
         ctmp = np.full(ytmp.shape, fill_value=1, dtype=x.dtype) * window
 
@@ -120,7 +120,7 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
         yc = _concat(left, ctmp, right, axis=-1)
 
         # imaginary part
-        sliced = _slice(ift, np.array(one), np.array(two), [n_dims_1])
+        sliced = _slice(ift, np.array(one), np.array(two), [n_dims_1])  # type: ignore
         itmp = np.squeeze(sliced, axis=n_dims_1)
         yi = _concat(left, itmp, right, axis=-1)
 

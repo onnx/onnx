@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0611,W0603
+# pylint: disable=C0415,R0912,W0611,W0603
 
 import textwrap
 from typing import Any, Union
@@ -102,6 +102,7 @@ def load_op(
             )
         cl = impl[best]
     if cl is None:
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
         raise ValueError(
             f"Not registered implementation for operator {op_type!r}, "
             f"domain {domain!r}, and {version!r} in\n{available}"
