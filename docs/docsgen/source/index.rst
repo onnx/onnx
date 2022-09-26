@@ -11,6 +11,6 @@ ONNX documentation
 .. toctree::
     :maxdepth: 2
 
-    onnx_doc_folder/index
     tutorial_python/index
     onnx_python/index
+    onnx_doc_folder/index

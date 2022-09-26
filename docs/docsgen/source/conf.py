@@ -1,8 +1,10 @@
 import os
 import sys
 import warnings
-import onnx
+
 import pydata_sphinx_theme
+
+import onnx
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # from github_link import make_linkcode_resolve  # noqa
@@ -46,7 +48,7 @@ coverage_show_missing_items = True
 onnx_doc_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "onnx_doc_folder")
 
 # -- Options for HTML output -------------------------------------------------
-
+html_favicon = 'onnx-favicon.png'
 html_theme = "pydata_sphinx_theme"
 html_logo = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png")
 
