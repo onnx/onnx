@@ -7,7 +7,6 @@ import warnings
 import onnx
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-# from github_link import make_linkcode_resolve  # noqa
 
 
 # -- Project information -----------------------------------------------------
