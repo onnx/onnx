@@ -93,7 +93,7 @@ jobs:
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
       if: ${{ always() }}
       run: |
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.14.0
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.16.0
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
 
