@@ -42,18 +42,21 @@ jobs:
   - script: |
       # Install Protobuf from source
       export NUM_CORES=`sysctl -n hw.logicalcpu`
-      source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
+      if [ '$(onnx_debug)' == '1' ]; then
+        export DEBUG=1
+        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install Debug
+      else
+        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
+      fi
 
       git submodule update --init --recursive
       python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt
-      export ONNX_BUILD_TESTS=1
-      if [ '$(onnx_debug)' == '1' ]; then
-        export DEBUG=1
-      fi
+
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
       fi
+      export ONNX_BUILD_TESTS=1
       export CMAKE_ARGS="-DONNX_WERROR=ON"
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
