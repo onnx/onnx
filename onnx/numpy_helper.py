@@ -37,7 +37,9 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
 
     tensor_dtype = tensor.data_type
     np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    storage_np_dtype = helper.tensor_dtype_to_np_dtype(helper.tensor_dtype_to_storage_tensor_dtype(tensor_dtype))
+    storage_np_dtype = helper.tensor_dtype_to_np_dtype(
+        helper.tensor_dtype_to_storage_tensor_dtype(tensor_dtype)
+    )
     storage_field = helper.tensor_dtype_to_field(tensor_dtype)
     dims = tensor.dims
 
@@ -153,19 +155,15 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     Returns:
         list: the converted list.
     """
-    lst: List[Any] = []
     elem_type = sequence.elem_type
-    values = helper.get_attr_from_sequence_elem_type(sequence, elem_type)
-    for value in values:
-        if elem_type in (SequenceProto.TENSOR, SequenceProto.SPARSE_TENSOR):
-            lst.append(to_array(value))
-        elif elem_type == SequenceProto.SEQUENCE:
-            lst.append(to_list(value))
-        elif elem_type == SequenceProto.MAP:
-            lst.append(to_dict(value))
-        else:
-            raise TypeError("The element type in the input sequence is not supported.")
-    return lst
+    if elem_type == SequenceProto.TENSOR:
+        return [to_array(v) for v in sequence.tensor_values]
+    elif elem_type == SequenceProto.SPARSE_TENSOR:
+        return [to_array(v) for v in sequence.sparse_tensor_values]
+    elif elem_type == SequenceProto.SEQUENCE:
+        return [to_list(v) for v in sequence.sequence_values]
+    else:
+        raise TypeError("The element type in the input sequence is not supported.")
 
 
 def from_list(

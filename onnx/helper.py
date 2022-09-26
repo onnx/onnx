@@ -3,6 +3,7 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
+from inspect import Attribute
 from typing import (
     Any,
     Callable,
@@ -437,7 +438,23 @@ def make_sequence(
     sequence = SequenceProto()
     sequence.name = name
     sequence.elem_type = elem_type
-    get_attr_from_sequence_elem_type(sequence, elem_type).extend(values)
+
+    if elem_type == SequenceProto.UNDEFINED:
+        return sequence
+    elif elem_type == SequenceProto.TENSOR:
+        attribute = sequence.tensor_values
+    elif elem_type == SequenceProto.SPARSE_TENSOR:
+        attribute = sequence.sparse_tensor_values
+    elif elem_type == SequenceProto.SEQUENCE:
+        attribute = sequence.sequence_values
+    elif elem_type == SequenceProto.MAP:
+        attribute = sequence.map_values
+    elif elem_type == OptionalProto.OPTIONAL:
+        attribute = sequence.optional_values
+    else:
+        raise TypeError("The element type in the input sequence is not supported.")
+
+    attribute.extend(values)
     return sequence
 
 
@@ -484,8 +501,23 @@ def make_optional(
     optional = OptionalProto()
     optional.name = name
     optional.elem_type = elem_type
-    if elem_type != 0:
-        get_attr_from_optional_elem_type(optional, elem_type).CopyFrom(value)
+
+    if elem_type == OptionalProto.UNDEFINED:
+        return optional
+    elif elem_type == OptionalProto.TENSOR:
+        attribute = optional.tensor_value
+    elif elem_type == OptionalProto.SPARSE_TENSOR:
+        attribute = optional.sparse_tensor_value
+    elif elem_type == OptionalProto.SEQUENCE:
+        attribute = optional.sequence_value
+    elif elem_type == OptionalProto.MAP:
+        attribute = optional.map_value
+    elif elem_type == OptionalProto.OPTIONAL:
+        attribute = optional.optional_value
+    else:
+        raise TypeError("The element type in the input optional is not supported.")
+
+    attribute.CopyFrom(value)
     return optional
 
 
@@ -1151,48 +1183,6 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     :return: TensorsProto's data_type
     """
     return cast(int, mapping.NP_TYPE_TO_TENSOR_TYPE[np_dtype])
-
-
-def sequence_type_to_field(elem_type: int) -> str:
-    """
-    Convert a SequenceProto's elem_type to corresponding field name.
-
-    :param tensor_dtype: SequenceProto's elem_type
-    :return: field name
-    """
-    return cast(str, mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type])
-
-
-def get_attr_from_sequence_elem_type(tensor: SequenceProto, elem_type: int) -> Any:
-    """
-    Get the attribute from SequenceProto based on the given elem_type. It can be used while making SequenceProto.
-
-    :param tensor: target SequenceProto
-    :param elem_type: SequenceProto's elem_type
-    :return: the target attribute from SequenceProto
-    """
-    return getattr(tensor, sequence_type_to_field(elem_type))
-
-
-def optional_type_to_field(elem_type: int) -> str:
-    """
-    Convert a OptionalProto's data_type to corresponding field name.
-
-    param elem_type: OptionalProto's data_type
-    return field name
-    """
-    return cast(str, mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type])
-
-
-def get_attr_from_optional_elem_type(tensor: OptionalProto, elem_type: int) -> Any:
-    """
-    Get the attribute from OptionalProto based on the given element type. It can be used while making OptionalProto.
-
-    :param tensor: target OptionalProto
-    :param elem_type: OptionalProto's elem_type
-    :return: the target attribute from OptionalProto
-    """
-    return getattr(tensor, optional_type_to_field(elem_type))
 
 
 def get_all_tensor_types() -> KeysView[int]:

@@ -69,7 +69,7 @@ class DeprecatedWarningDict(dict):  # type: ignore
         self,
         dictionary: Dict[int, Union[int, str]],
         original_function: str,
-        future_function: str,
+        future_function: str = "",
     ) -> None:
         super().__init__(dictionary)
         self._origin_function = original_function
@@ -84,14 +84,24 @@ class DeprecatedWarningDict(dict):  # type: ignore
         )
 
     def __getitem__(self, key: Union[int, str]) -> Any:
-        warnings.warn(
-            str(
-                f"`mapping.{self._origin_function}` is now deprecated and will be removed in the next release or so."
-                + "To silence this warning, please use `helper.{_self.future_function}` instead."
-            ),
-            DeprecationWarning,
-            stacklevel=2,
-        )
+        if not self._future_function:
+            warnings.warn(
+                str(
+                    f"`mapping.{self._origin_function}` is now deprecated and will be removed in the next release or so."
+                    + "To silence this warning, please simply use if-else statement to check the type of the key."
+                ),
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        else:
+            warnings.warn(
+                str(
+                    f"`mapping.{self._origin_function}` is now deprecated and will be removed in the next release or so."
+                    + "To silence this warning, please use `helper.{self._future_function}` instead."
+                ),
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return super().__getitem__(key)
 
 
@@ -140,6 +150,7 @@ STORAGE_TENSOR_TYPE_TO_FIELD = DeprecatedWarningDict(
 )
 
 
+# This map will be removed and there is no replacement for it
 STORAGE_ELEMENT_TYPE_TO_FIELD = DeprecatedWarningDict(
     {
         int(SequenceProto.TENSOR): "tensor_values",
@@ -149,9 +160,10 @@ STORAGE_ELEMENT_TYPE_TO_FIELD = DeprecatedWarningDict(
         int(OptionalProto.OPTIONAL): "optional_value",
     },
     "STORAGE_ELEMENT_TYPE_TO_FIELD",
-    "sequence_type_to_field",
 )
 
+
+# This map will be removed and there is no replacement for it
 OPTIONAL_ELEMENT_TYPE_TO_FIELD = DeprecatedWarningDict(
     {
         int(OptionalProto.TENSOR): "tensor_value",
@@ -161,5 +173,4 @@ OPTIONAL_ELEMENT_TYPE_TO_FIELD = DeprecatedWarningDict(
         int(OptionalProto.OPTIONAL): "optional_value",
     },
     "OPTIONAL_ELEMENT_TYPE_TO_FIELD",
-    "optional_type_to_field",
 )
