@@ -105,8 +105,7 @@ from .op_mod import Mod
 from .op_mul import Mul
 from .op_neg import Neg
 from .op_negative_log_likelihood_loss import NegativeLogLikelihoodLoss
-
-# from .op_non_max_suppression import NonMaxSuppression
+from .op_non_max_suppression import NonMaxSuppression
 from .op_non_zero import NonZero
 from .op_not import Not
 from .op_one_hot import OneHot
