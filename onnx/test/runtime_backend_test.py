@@ -461,7 +461,7 @@ class TestOnnxBackEnd(unittest.TestCase):
                 with open(f"issue_{te.name}.onnx", "wb") as f:
                     f.write(te.onnx_model.SerializeToString())
                 raise AssertionError(
-                    f"Unable to run model due to {e}\n{str(te.onnx_model)}"
+                    f"Unable to run test {te.name!r} due to {e}\n{str(te.onnx_model)}"
                 ) from e
             success += 1
             if verbose > 7:
@@ -621,7 +621,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_upsample_nearest" == name,
+            lambda name: "test_maxpool_with_argmax_2d_precomputed_pads" == name,
             verbose=0,
             atol={"test_gridsample_bicubic": 1e-4},
         )

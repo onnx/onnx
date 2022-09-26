@@ -4,28 +4,7 @@
 import numpy as np  # type: ignore
 
 from ..op_run import OpRun
-
-
-def _get_indices(i, shape):  # type: ignore
-    res = np.empty((len(shape),), dtype=np.int64)
-    k = len(shape) - 1
-    while k > 0:
-        m = i % shape[k]
-        res[k] = m
-        i -= m
-        i /= shape[k]
-        k -= 1
-    res[0] = i
-    return res
-
-
-def _is_out(ind, shape):  # type: ignore
-    for i, s in zip(ind, shape):
-        if i < 0:
-            return True
-        if i >= s:
-            return True
-    return False
+from ._op_common_indices import _get_indices, _is_out
 
 
 def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strides):  # type: ignore

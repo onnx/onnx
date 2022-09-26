@@ -7,6 +7,7 @@ from typing import Optional, Tuple
 import numpy as np  # type: ignore
 
 from ..op_run import OpRun
+from ._op_common_indices import _get_index, _get_indices
 
 
 def _get_pad_shape(
@@ -124,6 +125,8 @@ def _pool(
     pooling_type: str,
     count_include_pad: Optional[int] = 0,
     ceil_mode: Optional[int] = 0,
+    indices: bool = False,
+    pads: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     if pooling_type == "AVG":
         fpool = np.average
@@ -135,6 +138,9 @@ def _pool(
         )
     spatial_size = len(x_shape) - 2
     y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))  # type: ignore
+    if indices:
+        z = np.full(y.shape, fill_value=-1, dtype=np.int64)
+        np_out_shape = np.array(out_shape)
     round_fct = np.ceil if ceil_mode else np.floor
 
     def loop_range():  # type: ignore
@@ -172,8 +178,19 @@ def _pool(
         if count_include_pad == 1 and pooling_type == "AVG":
             y[shape] = fpool(window_vals)
         else:
-            y[shape] = fpool(window_vals[np.where(~np.isnan(window_vals))])
-    return y.astype(np.float32)
+            no_nan = window_vals[np.where(~np.isnan(window_vals))]
+            y[shape] = fpool(no_nan)
+            if indices:
+                window_vals_min = np.nan_to_num(window_vals, nan=no_nan.min())
+                arg = np.argmax(window_vals_min)
+                coordinates = _get_indices(arg, out_shape)
+                delta = shape[2:] - pads[:, 0]
+                coordinates += delta
+                new_arg = _get_index(coordinates, x_shape[2:])
+                z[shape] = new_arg
+    if indices:
+        return y.astype(padded.dtype), z
+    return y.astype(padded.dtype)
 
 
 class CommonPool(OpRun):
@@ -256,7 +273,8 @@ class CommonPool(OpRun):
                 auto_pad, x_shape, kernel_shape, strides, pad_shape, ceil_mode  # type: ignore
             )
 
-        pooling_type = "AVG"
+        n_dims = len(pads) // 2
+        new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
         res = _pool(
             padded,
             x.shape,
@@ -267,5 +285,9 @@ class CommonPool(OpRun):
             pooling_type,
             count_include_pad=count_include_pad,
             ceil_mode=ceil_mode,
+            indices=len(self.output) > 1,
+            pads=new_pads,
         )
+        if isinstance(res, tuple):
+            return res
         return (res,)
