@@ -3,6 +3,7 @@
  */
 
 #include "onnx/defs/reduction/utils.h"
+#include <algorithm>
 
 namespace ONNX_NAMESPACE {
 std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit) {
