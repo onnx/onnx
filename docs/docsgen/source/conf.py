@@ -1,22 +1,27 @@
+# pylint: disable=W0622
+# type: ignore
 import os
 import sys
 import warnings
 
-import pydata_sphinx_theme
-
 import onnx
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-# from github_link import make_linkcode_resolve  # noqa
 
 
 # -- Project information -----------------------------------------------------
 
+<<<<<<< HEAD
 project = "ONNX"
 copyright = "2022"
 author = "ONNX"
+=======
+author = "ONNX"
+copyright = "2022"
+project = "ONNX"
+release = onnx.__version__
+>>>>>>> 58668ea56eebc482d0d49af45cd240be3f56e7f3
 version = onnx.__version__
-release = version
 
 # -- General configuration ---------------------------------------------------
 
@@ -37,46 +42,42 @@ extensions = [
     "onnx_sphinx",
 ]
 
-templates_path = ["_templates"]
-source_suffix = [".rst"]
-
-master_doc = "index"
-language = "en"
-exclude_patterns = []
-pygments_style = "default"
 coverage_show_missing_items = True
-onnx_doc_folder = os.path.join(
-    os.path.abspath(os.path.dirname(__file__)), "onnx_doc_folder"
-)
-
-# Navbar
-html_static_path = ["_static"]
-
-# -- Options for HTML output -------------------------------------------------
+exclude_patterns = []
+graphviz_output_format = "svg"
+html_css_files = ["sample.css"]
 html_favicon = "onnx-favicon.png"
-html_theme = "pydata_sphinx_theme"
 html_logo = os.path.join(
-    os.path.abspath(os.path.dirname(__file__)), "../../onnx-horizontal-color.png"
+    os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png"
 )
 html_theme_options = {
     "logo": {
         "image_dark": "onnx-horizontal-white.png",
     }
 }
-
-# -- Options for graphviz ----------------------------------------------------
-
-graphviz_output_format = "svg"
-
-# -- Options for intersphinx extension ---------------------------------------
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://docs.python.org/": None}
-
-# The name of the Pygments (syntax highlighting) style to use ----------------
+html_sidebars = {}
+html_static_path = ["_static"]
+html_theme = "pydata_sphinx_theme"
+language = "en"
+mathdef_link_only = True
+master_doc = "index"
+onnx_doc_folder = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), "onnx_doc_folder"
+)
 pygments_style = "sphinx"
+source_suffix = [".rst"]
+templates_path = ["_templates"]
 
-# -- Options for Sphinx Gallery ----------------------------------------------
+html_context = {
+    "default_mode": "auto",  # auto: the documentation theme will follow the system default that you have set (light or dark)
+}
+
+html_theme_options = {
+    "page_sidebar_items": [],  # default setting is: ["page-toc", "edit-this-page", "sourcelink"],
+}
+
+
+intersphinx_mapping = {"https://docs.python.org/": None}
 
 sphinx_gallery_conf = {
     "examples_dirs": ["examples"],
@@ -95,20 +96,17 @@ sphinx_gallery_conf = {
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# -- Setup actions -----------------------------------------------------------
-
-
-blog_root = ""
-
-html_css_files = ["sample.css"]
-
-html_sidebars = {}
-language = "en"
-
-mathdef_link_only = True
-
-# \\usepackage{eepic}
-
+intersphinx_mapping.update(
+    {
+        "torch": ("https://pytorch.org/docs/stable/", None),
+        "numpy": ("https://docs.scipy.org/doc/numpy/", None),
+        "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+        "python": (f"https://docs.python.org/{sys.version_info.major}", None),
+        "scikit-learn": ("https://scikit-learn.org/stable/", None),
+        "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+        "sklearn": ("https://scikit-learn.org/stable/", None),
+    }
+)
 
 intersphinx_mapping.update(
     {
@@ -121,8 +119,5 @@ intersphinx_mapping.update(
         "sklearn": ("https://scikit-learn.org/stable/", None),
     }
 )
-
-
-nblinks = {}
 
 warnings.filterwarnings("ignore", category=FutureWarning)

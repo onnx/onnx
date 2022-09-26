@@ -1193,8 +1193,7 @@ object of type `ModelProto`. But it is not. According to
 this is no longer possible after version 4 and it is safer to assume the
 only way to get a hold on the content is to serialize the model
 into bytes, give it the C function, then deserialize it.
-It is inefficient (see :ref:`l-benchmark-onnx-serialize`),
-so it should be avoided. Functions like `check_model` or
+Functions like `check_model` or
 `shape_inference` are calling `SerializeToString` then
 `ParseFromString` before checking the model with a C code.
 
