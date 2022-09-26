@@ -11,16 +11,10 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 # -- Project information -----------------------------------------------------
 
-<<<<<<< HEAD
-project = "ONNX"
-copyright = "2022"
-author = "ONNX"
-=======
 author = "ONNX"
 copyright = "2022"
 project = "ONNX"
 release = onnx.__version__
->>>>>>> 58668ea56eebc482d0d49af45cd240be3f56e7f3
 version = onnx.__version__
 
 # -- General configuration ---------------------------------------------------
@@ -48,7 +42,7 @@ graphviz_output_format = "svg"
 html_css_files = ["sample.css"]
 html_favicon = "onnx-favicon.png"
 html_logo = os.path.join(
-    os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png"
+    os.path.abspath(os.path.dirname(__file__)), "../../onnx-horizontal-color.png"
 )
 html_theme_options = {
     "logo": {
