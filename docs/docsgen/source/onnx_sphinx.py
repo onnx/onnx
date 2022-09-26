@@ -93,22 +93,22 @@ def _get_doc_template():  # type: ignore
         textwrap.dedent(
             """
         {% for sch in schemas %}
-        
+
         .. tag-diff-insert.
         .. _l-onnx-op{{sch.domain.lower().replace(".", "-")}}-{{sch.name.lower()}}-{{str(sch.since_version)}}:
-        
+
         {{format_name_with_domain(sch)}}
         {{'=' * len(format_name_with_domain(sch))}}
 
         **Version**
-        
+
         * **name**: `{{sch.name}} (GitHub) <{{build_doc_url(sch)}}{{sch.name}}>`_
         * **domain**: **{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}**
         * **since_version**: **{{sch.since_version}}**
         * **function**: {{sch.has_function}}
         * **support_level**: {{sch.support_level}}
         * **shape inference**: {{sch.has_type_and_shape_inference_function}}
-        
+
         {% if sch.support_level == OpSchema.SupportType.EXPERIMENTAL %}
         No versioning maintained for experimental ops.
         {% else %}
@@ -121,14 +121,14 @@ def _get_doc_template():  # type: ignore
         {% for v in sch.version[:-1] %} {{v}} {% endfor %}
         {% endif %}
         {% endif %}
-        
+
         **Summary**
-        
+
         {{process_documentation(sch.doc)}}
         {% if sch.attributes %}
-        
+
         **Attributes**
-        
+
         {% for _, attr in sorted(sch.attributes.items()) %}* **{{attr.name}}**{%
           if attr.required %} (required){% endif %}:
         {{text_wrap(attr.description, 2)}} {%
@@ -137,9 +137,9 @@ def _get_doc_template():  # type: ignore
         {% endfor %}
         {% endif %}
         {% if sch.inputs %}
-        
+
         **Inputs**
-        
+
         {% if sch.min_input != sch.max_input %}Between {{sch.min_input
         }} and {{sch.max_input}} inputs.
         {% endif %}
@@ -148,9 +148,9 @@ def _get_doc_template():  # type: ignore
         {{text_wrap(inp.description, 2)}}{% endfor %}
         {% endif %}
         {% if sch.outputs %}
-        
+
         **Outputs**
-        
+
         {% if sch.min_output != sch.max_output %}Between {{sch.min_output
         }} and {{sch.max_output}} outputs.
         {% endif %}
@@ -161,22 +161,22 @@ def _get_doc_template():  # type: ignore
         {% if sch.type_constraints %}
 
         **Type Constraints**
-        
+
         {% for ii, type_constraint in enumerate(sch.type_constraints)
         %}* {{get_constraint(type_constraint, ii)}}:
         {{text_wrap(type_constraint.description, 2)}}
         {% endfor %}
         {% endif %}
         {% if get_onnx_example and is_last_schema(sch): %}
-        
+
         **Examples**
-        
+
         {% for example, code in get_onnx_example(sch.name).items(): %}
-        
+
         **{{ example }}**
-        
+
         ::
-        
+
         {{ format_example(code) }}
         {% endfor %}
         {% endif %}
