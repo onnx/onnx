@@ -30,7 +30,7 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceDocGenerator_
 
 const char* reduce_sum_square_func_body = R"ONNX(
   {
-    has_axes = AttributeHasValue <ints = @axes>()
+    has_axes = AttributeHasValue <value_ints = @axes>()
     reduced = If (has_axes) <
       then_branch = g1 () => (reduced_then)
       {
@@ -56,7 +56,7 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 13, OpSchema().FillUsing(ReduceDocGenerator
 
 const char* reduce_log_sum_func_body = R"ONNX(
   {
-    has_axes = AttributeHasValue <ints = @axes>()
+    has_axes = AttributeHasValue <value_ints = @axes>()
     reduced = If (has_axes) <
       then_branch = g1 () => (reduced_then)
       {
@@ -77,7 +77,7 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 18, OpSchema().FillUsing(
 
 const char* reduce_log_sum_exp_func_body = R"ONNX(
   {
-    has_axes = AttributeHasValue <ints = @axes>()
+    has_axes = AttributeHasValue <value_ints = @axes>()
     reduced = If (has_axes) <
       then_branch = g1 () => (reduced_then)
       {
@@ -100,7 +100,7 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceLogSumExp, 18, OpSchema().FillUsing(
 
 const char* reduce_l1_func_body = R"ONNX(
   {
-    has_axes = AttributeHasValue <ints = @axes>()
+    has_axes = AttributeHasValue <value_ints = @axes>()
     reduced = If (has_axes) <
       then_branch = g1 () => (reduced_then)
       {
