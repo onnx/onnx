@@ -83,7 +83,7 @@ def _get_diff_template():  # type: ignore
         </script>
         """
         ),
-        autoescape=False,
+        autoescape=True,
     )
 
 
@@ -183,7 +183,7 @@ def _get_doc_template():  # type: ignore
         {% endfor %}
     """
         ),
-        autoescape=False,
+        autoescape=True,
     )
 
 

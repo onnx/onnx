@@ -4,8 +4,6 @@ import os
 import sys
 import warnings
 
-import pydata_sphinx_theme
-
 import onnx
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
