@@ -1,8 +1,8 @@
 
 .. _l-python-onnx-api:
 
-ONNX API
-========
+API Reference
+=============
 
 The following example shows how to retrieve onnx version
 and onnx opset. Every new major release increments the opset version.
@@ -15,10 +15,26 @@ and onnx opset. Every new major release increments the opset version.
     from onnx.defs import onnx_opset_version
     print("onnx", __version__, "opset", onnx_opset_version())
 
+Data Structures
++++++++++++++++
+
+Every ONNX object is defined based on a `protobuf message
+<https://googleapis.dev/python/protobuf/latest/google/protobuf/message.html>`_
+and has a name ended with suffix `Proto`. For example, :ref:`l-nodeproto` defines
+an operator, :ref:`l-tensorproto` defines a tensor. Next page lists all of them.
+
+
 .. toctree::
     :maxdepth: 1
 
     classes
+
+Functions
++++++++++
+
+.. toctree::
+    :maxdepth: 1
+
     backend
     checker
     compose
