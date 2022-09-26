@@ -12,13 +12,13 @@
 namespace ONNX_NAMESPACE {
 
 
-std::function<void(OpSchema&)>
-ReduceDocGeneratorWithFunctionBody(const char* name, const char* func_body) {
+std::function<void(OpSchema&)> ReduceDocGeneratorWithFunctionBody(const char* name, const char* func_body) {
   return ReduceDocGenerator_opset13_18(name, false, false, func_body);
 }
 
-std::function<void(OpSchema&)>
-ReduceDocGeneratorWithFunctionBuilder(const char* name, ContextDependentFunctionBodyBuilder functionBuilder) {
+std::function<void(OpSchema&)> ReduceDocGeneratorWithFunctionBuilder(
+  const char* name,
+  ContextDependentFunctionBodyBuilder functionBuilder) {
   return ReduceDocGenerator_opset13_18(name, false, false, nullptr, functionBuilder);
 }
 
@@ -47,8 +47,10 @@ const char* reduce_sum_square_func_body = R"ONNX(
   }
   )ONNX";
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 18, OpSchema().FillUsing(
-  ReduceDocGeneratorWithFunctionBody("sum square", reduce_sum_square_func_body)));
+ONNX_OPERATOR_SET_SCHEMA(
+  ReduceSumSquare,
+  18,
+  OpSchema().FillUsing(ReduceDocGeneratorWithFunctionBody("sum square", reduce_sum_square_func_body)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("mean")));
 
@@ -72,8 +74,9 @@ const char* reduce_log_sum_func_body = R"ONNX(
     >
   }
   )ONNX";
-ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 18, OpSchema().FillUsing(
-  ReduceDocGeneratorWithFunctionBody("log sum", reduce_log_sum_func_body)));
+ONNX_OPERATOR_SET_SCHEMA(
+  ReduceLogSum,
+  18, OpSchema().FillUsing(ReduceDocGeneratorWithFunctionBody("log sum", reduce_log_sum_func_body)));
 
 const char* reduce_log_sum_exp_func_body = R"ONNX(
   {
@@ -95,8 +98,10 @@ const char* reduce_log_sum_exp_func_body = R"ONNX(
     >
   }
   )ONNX";
-ONNX_OPERATOR_SET_SCHEMA(ReduceLogSumExp, 18, OpSchema().FillUsing(
-  ReduceDocGeneratorWithFunctionBody("log sum exponent", reduce_log_sum_exp_func_body)));
+ONNX_OPERATOR_SET_SCHEMA(
+  ReduceLogSumExp,
+  18,
+  OpSchema().FillUsing(ReduceDocGeneratorWithFunctionBody("log sum exponent", reduce_log_sum_exp_func_body)));
 
 const char* reduce_l1_func_body = R"ONNX(
   {
@@ -116,8 +121,10 @@ const char* reduce_l1_func_body = R"ONNX(
     >
   }
   )ONNX";
-ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 18, OpSchema().FillUsing(
-  ReduceDocGeneratorWithFunctionBody("L1 norm", reduce_l1_func_body)));
+ONNX_OPERATOR_SET_SCHEMA(
+  ReduceL1,
+  18,
+  OpSchema().FillUsing(ReduceDocGeneratorWithFunctionBody("L1 norm", reduce_l1_func_body)));
 
 const char* reduce_l2_func_body = R"ONNX(
   {
@@ -127,8 +134,10 @@ const char* reduce_l2_func_body = R"ONNX(
     reduced = CastLike(sqrt, data)
   }
   )ONNX";
-ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 18, OpSchema().FillUsing(
-  ReduceDocGeneratorWithFunctionBody("L2 norm", reduce_l2_func_body)));
+ONNX_OPERATOR_SET_SCHEMA(
+  ReduceL2,
+  18,
+  OpSchema().FillUsing(ReduceDocGeneratorWithFunctionBody("L2 norm", reduce_l2_func_body)));
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {

@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <functional>
-#include "onnx/defs/schema.h"
 #include "onnx/defs/reduction/utils.h"
+#include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 
