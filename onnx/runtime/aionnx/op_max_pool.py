@@ -21,7 +21,17 @@ class MaxPool(CommonPool):
         strides=None,
     ):
         dilations = dilations or self.dilations  # type: ignore
+        strides = strides or self.strides  # type: ignore
         storage_order = storage_order or self.storage_order  # type: ignore
+        if (
+            dilations is not None
+            and (min(dilations) != max(dilations) or min(dilations) != 1)
+        ) or (
+            strides is not None and (min(strides) != max(strides) or min(strides) != 1)
+        ):
+            raise NotImplementedError(
+                f"Only default dilations or strides are implemented for MaxPool."
+            )
 
         return CommonPool._run(
             self,
