@@ -3,7 +3,6 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
-from inspect import Attribute
 from typing import (
     Any,
     Callable,
@@ -441,7 +440,7 @@ def make_sequence(
 
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
-    elif elem_type == SequenceProto.TENSOR:
+    if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
         attribute = sequence.sparse_tensor_values
@@ -504,7 +503,7 @@ def make_optional(
 
     if elem_type == OptionalProto.UNDEFINED:
         return optional
-    elif elem_type == OptionalProto.TENSOR:
+    if elem_type == OptionalProto.TENSOR:
         attribute = optional.tensor_value
     elif elem_type == OptionalProto.SPARSE_TENSOR:
         attribute = optional.sparse_tensor_value

@@ -67,7 +67,7 @@ TENSOR_TYPE_MAP = {
 class DeprecatedWarningDict(dict):  # type: ignore
     def __init__(
         self,
-        dictionary: Dict[int, Union[int, str]],
+        dictionary: Dict[int, Union[int, str, np.dtype]],
         original_function: str,
         future_function: str = "",
     ) -> None:
