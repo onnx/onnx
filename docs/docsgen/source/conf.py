@@ -62,7 +62,18 @@ html_context = {
 }
 
 html_theme_options = {
+    "collapse_navigation": True,
+    "external_links": [
+        {"name": "ONNX", "url": "https://onnx.ai/"},
+        {"name": "github", "url": "https://github.com/onnx/onnx"},
+    ],
+    "github_url": "https://github.com/onnx/onnx",
+    "navbar_center": [],
+    "navigation_depth": 4,
     "page_sidebar_items": [],  # default setting is: ["page-toc", "edit-this-page", "sourcelink"],
+    "show_nav_level": 0,
+    "show_prev_next": True,
+    "show_toc_level": 1,
 }
 
 

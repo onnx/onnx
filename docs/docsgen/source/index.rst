@@ -1,5 +1,5 @@
-ONNX documentation
-==================
+ONNX
+====
 
 `Open Neural Network Exchange (ONNX) <https://onnx.ai/>`_
 is an open ecosystem that empowers
@@ -9,16 +9,40 @@ both deep learning and traditional ML.
 It defines an extensible computation graph model,
 as well as definitions of built-in operators and standard data types.
 
-This documentation introduces the Python package
-`onnx <https://github.com/onnx/onnx>`_. A tutorial shows how
-to build an ONNX graph through the Python API. This graph can then
-be consumed by any runtime implementing ONNX specifications
-described in last section. It lists all existing operators
-in following version and below.
+.. panels::
+
+    ---
+    :img-top: _static/ONNX-Logo.svg
+
+    ONNX WebSite
+    ^^^^^^^^^^^^
+
+    Main Entry point to ONNX
+
+    +++
+
+    .. link-button:: getting_started
+            :text: ONNX WebSite
+            :classes: btn-block btn-secondary stretched-link
+
+    ---
+    :img-top: _static/ONNX_logo_main.png
+
+    Python Documentation
+    ^^^^^^^^^^^^^^^^^^^^
+
+    Create your own ONNX models with the Python API.
+
+    +++
+
+    .. link-button:: l-main-doc-page
+            :type: ref
+            :text: Python Documentation
+            :classes: btn-block btn-secondary stretched-link
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
+    :hidden:
+    :titlesonly:
 
-    tutorial_python/index
-    onnx_python/index
-    onnx_doc_folder/index
+    onnx_docs
