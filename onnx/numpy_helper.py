@@ -158,12 +158,11 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     elem_type = sequence.elem_type
     if elem_type == SequenceProto.TENSOR:
         return [to_array(v) for v in sequence.tensor_values]
-    elif elem_type == SequenceProto.SPARSE_TENSOR:
+    if elem_type == SequenceProto.SPARSE_TENSOR:
         return [to_array(v) for v in sequence.sparse_tensor_values]
-    elif elem_type == SequenceProto.SEQUENCE:
+    if elem_type == SequenceProto.SEQUENCE:
         return [to_list(v) for v in sequence.sequence_values]
-    else:
-        raise TypeError("The element type in the input sequence is not supported.")
+    raise TypeError("The element type in the input sequence is not supported.")
 
 
 def from_list(
@@ -310,18 +309,17 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
     elem_type = optional.elem_type
     if elem_type == OptionalProto.UNDEFINED:
         return None
-    elif elem_type == OptionalProto.TENSOR:
+    if elem_type == OptionalProto.TENSOR:
         return to_array(optional.tensor_value)
-    elif elem_type == OptionalProto.SPARSE_TENSOR:
+    if elem_type == OptionalProto.SPARSE_TENSOR:
         return to_array(optional.sparse_tensor_value)
-    elif elem_type == OptionalProto.SEQUENCE:
+    if elem_type == OptionalProto.SEQUENCE:
         return to_list(optional.sequence_value)
-    elif elem_type == OptionalProto.MAP:
+    if elem_type == OptionalProto.MAP:
         return to_dict(optional.map_value)
-    elif elem_type == OptionalProto.OPTIONAL:
+    if elem_type == OptionalProto.OPTIONAL:
         return to_optional(optional.optional_value)
-    else:
-        raise TypeError("The element type in the input optional is not supported.")
+    raise TypeError("The element type in the input optional is not supported.")
 
 
 def from_optional(

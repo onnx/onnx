@@ -83,7 +83,7 @@ class DeprecatedWarningDict(dict):  # type: ignore
             and self._future_function == other._future_function
         )
 
-    def __getitem__(self, key: Union[int, str]) -> Any:
+    def __getitem__(self, key: Union[int, str, np.dtype]) -> Any:
         if not self._future_function:
             warnings.warn(
                 str(
