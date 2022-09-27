@@ -188,7 +188,7 @@ def _get_doc_template():  # type: ignore
 
 
 def _clean_unicode(text):
-    text = text.replace("&#34;", "\"")
+    text = text.replace("&#34;", '"')
     text = text.replace("&#8212;", "-")
     text = text.replace("&#160;", " ")
     text = text.replace("&#39;", "'")
