@@ -187,6 +187,14 @@ def _get_doc_template():  # type: ignore
     )
 
 
+def _clean_unicode(text):
+    text = text.replace("&#34;", "\"")
+    text = text.replace("&#8212;", "-")
+    text = text.replace("&#160;", " ")
+    text = text.replace("&#39;", "'")
+    return text
+
+
 _template_diff = _get_diff_template()
 _template_operator = _get_doc_template()
 __get_all_schemas_with_history = None
@@ -444,6 +452,7 @@ def get_rst_doc(  # type: ignore
         format_example=format_example,
         is_last_schema=is_last_schema,
     )
+    docs = _clean_unicode(docs)
     if diff:
         lines = docs.split("\n")
         new_lines = [""]
@@ -519,6 +528,7 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             div_name=f"div_{op_name}_{i}",
             diff_content=raw,
         )
+        diff = _clean_unicode(diff)
 
         title = f"{op_name} - {v2} vs {v1}"
 
