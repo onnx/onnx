@@ -44,7 +44,6 @@ html_favicon = "onnx-favicon.png"
 html_logo = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png"
 )
-html_sidebars = {}
 html_static_path = ["_static"]
 html_theme = "pydata_sphinx_theme"
 language = "en"

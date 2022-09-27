@@ -700,7 +700,7 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
     if ops is not None:
         ops = set(ops)
     for dom in sorted(all_schemas):
-        sdom = "main" if dom == "" else dom
+        sdom = "ai.onnx" if dom == "" else dom
 
         index_dom = [sdom, "+" * len(sdom), "", ".. toctree::", "    :maxdepth: 1", ""]
 

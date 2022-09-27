@@ -16,11 +16,6 @@ be consumed by any runtime implementing ONNX specifications
 described in last section. It lists all existing operators
 in following version and below.
 
-.. exec_code::
-
-    import onnx
-    print(f"onnx.__version__: {onnx.__version__!r}, onnx opset: {onnx.defs.onnx_opset_version()}")
-
 .. toctree::
     :maxdepth: 2
 
