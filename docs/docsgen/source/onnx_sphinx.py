@@ -676,6 +676,10 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
         which checks a runtime produces the expected output for this example.
         One implementation can be found in the first page
         linked below.
+        """
+    )
+    footer = textwrap.dedent(
+        """
 
         expect
         ++++++
@@ -817,6 +821,7 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
     for page in tables_domain_pages:
         index.append(f"    {page}")
     index.append("")
+    index.append(footer)
 
     # creating a big index
     page_name = os.path.join(folder, "index.rst")

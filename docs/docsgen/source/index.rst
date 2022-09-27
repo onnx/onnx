@@ -25,6 +25,13 @@ as well as definitions of built-in operators and standard data types.
 
         Create your own ONNX models with the Python API.
 
+    .. grid-item-card:: Operators
+        :img-top: _static/operator.png
+        :link: l-onnx-operators
+        :link-type: ref
+
+        Create your own ONNX models with the Python API.
+
 .. toctree::
     :maxdepth: 3
     :titlesonly:
