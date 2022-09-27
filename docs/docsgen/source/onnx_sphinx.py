@@ -523,21 +523,21 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
         title = f"{op_name} - {v2} vs {v1}"
 
         name = f"text_diff_{op_name}_{v2}_{v1}"
-        content =  "\n".join(
-                    [
-                        title,
-                        "=" * len(title),
-                        "",
-                        "Next section compares an older to a newer version of the same operator ",
-                        "after both definition are converted into markdown text.",
-                        "Green means an addition to the newer version, red means a deletion.",
-                        "Anything else is unchanged.",
-                        "",
-                        ".. raw:: html",
-                        "",
-                        textwrap.indent(diff, "    "),
-                    ]
-                )
+        content = "\n".join(
+            [
+                title,
+                "=" * len(title),
+                "",
+                "Next section compares an older to a newer version of the same operator ",
+                "after both definition are converted into markdown text.",
+                "Green means an addition to the newer version, red means a deletion.",
+                "Anything else is unchanged.",
+                "",
+                ".. raw:: html",
+                "",
+                textwrap.indent(diff, "    "),
+            ]
+        )
         filename = os.path.join(folder, name + ".rst")
         if os.path.exists(filename):
             with open(filename, "r", encoding="utf-8") as f:

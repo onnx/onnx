@@ -14,6 +14,7 @@ class DeviceType:
     """
     Describes device type.
     """
+
     _Type = NewType("_Type", int)
     CPU: _Type = _Type(0)
     CUDA: _Type = _Type(1)
@@ -57,6 +58,7 @@ class BackendRep:
     a model repeatedly. Users will then pass inputs to the run function of
     BackendRep to retrieve the corresponding results.
     """
+
     def run(self, inputs: Any, **kwargs: Any) -> Tuple[Any, ...]:
         pass
 
@@ -72,6 +74,7 @@ class Backend:
     does all of the preparation work for executing the model repeatedly
     (e.g., loading initializers), and returns a BackendRep handle.
     """
+
     @classmethod
     def is_compatible(
         cls, model: ModelProto, device: str = "CPU", **kwargs: Any
