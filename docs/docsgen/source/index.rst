@@ -9,40 +9,25 @@ both deep learning and traditional ML.
 It defines an extensible computation graph model,
 as well as definitions of built-in operators and standard data types.
 
-.. panels::
+.. grid:: 2
+    :outline:
 
-    ---
-    :img-top: _static/ONNX-Logo.svg
+    .. grid-item-card:: ONNX WebSite
+        :link: https://onnx.ai/
+        :img-top: _static/ONNX-Logo.svg
+        
+        Main Entry point to ONNX ecosystem.
 
-    ONNX WebSite
-    ^^^^^^^^^^^^
+    .. grid-item-card:: Python Documentation
+        :img-top: _static/ONNX_logo_main.png
+        :link: l-main-doc-page
+        :link-type: ref
 
-    Main Entry point to ONNX
-
-    +++
-
-    .. link-button:: getting_started
-            :text: ONNX WebSite
-            :classes: btn-block btn-secondary stretched-link
-
-    ---
-    :img-top: _static/ONNX_logo_main.png
-
-    Python Documentation
-    ^^^^^^^^^^^^^^^^^^^^
-
-    Create your own ONNX models with the Python API.
-
-    +++
-
-    .. link-button:: l-main-doc-page
-            :type: ref
-            :text: Python Documentation
-            :classes: btn-block btn-secondary stretched-link
+        Create your own ONNX models with the Python API.
 
 .. toctree::
     :maxdepth: 3
-    :hidden:
     :titlesonly:
+    :hidden:
 
     onnx_docs

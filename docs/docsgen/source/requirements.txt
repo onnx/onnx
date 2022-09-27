@@ -21,5 +21,6 @@ scikit-learn
 skl2onnx
 sphinx
 sphinx-exec-code
+sphinx-design
 sphinx-gallery
 tqdm

@@ -523,9 +523,7 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
         title = f"{op_name} - {v2} vs {v1}"
 
         name = f"text_diff_{op_name}_{v2}_{v1}"
-        with open(os.path.join(folder, name + ".rst"), "w", encoding="utf-8") as f:
-            f.write(
-                "\n".join(
+        content =  "\n".join(
                     [
                         title,
                         "=" * len(title),
@@ -540,7 +538,16 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
                         textwrap.indent(diff, "    "),
                     ]
                 )
-            )
+        filename = os.path.join(folder, name + ".rst")
+        if os.path.exists(filename):
+            with open(filename, "r", encoding="utf-8") as f:
+                old_content = f.read()
+                write = old_content != content
+        else:
+            write = True
+        if write:
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(content)
         pieces.extend(
             [
                 ".. toctree::",
@@ -761,8 +768,16 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
             ]
 
             full = os.path.join(folder, page_name + ".rst")
-            with open(full, "w", encoding="utf-8") as f:
-                f.write("\n".join(rows))
+            content = "\n".join(rows)
+            if os.path.exists(full):
+                with open(full, "r", encoding="utf-8") as f:
+                    old_content = f.read()
+                write = old_content != content
+            else:
+                write = True
+            if write:
+                with open(full, "w", encoding="utf-8") as f:
+                    f.write(content)
             pages.append(full)
 
             # table

@@ -54,4 +54,3 @@ verify a model with the following helpers.
     tools
     utils
     version_converter
-    version

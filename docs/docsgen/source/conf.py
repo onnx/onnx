@@ -34,6 +34,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx_exec_code",
     "onnx_sphinx",
+    "sphinx_design",
 ]
 
 coverage_show_missing_items = True
