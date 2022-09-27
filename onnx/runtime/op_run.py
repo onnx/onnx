@@ -2,7 +2,7 @@
 # pylint: disable=C0415,R0912
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np  # type: ignore
 
@@ -68,6 +68,37 @@ class OnnxType:
         return f"OnnxType({self.type_proto!r})"
 
 
+class SparseTensor:
+    """
+    Simple representation of a sparse tensor.
+    It is based on numpy but does not require scipy.
+    """
+
+    def __init__(
+        self, values: np.ndarray, indices: np.ndarray, shape: Tuple[int]
+    ) -> None:
+        self.values = values
+        self.indices = indices
+        self.shape = shape
+
+    @property
+    def dtype(self) -> Any:
+        return self.values.dtype
+
+
+def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
+    """
+    Hosts a sparse tensor.
+    """
+    shape = tuple(d for d in att.dims)
+    return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
+
+
+class Graph:
+    def __init__(self, g: GraphProto) -> None:
+        self.g = g
+
+
 class OpRun(ABC):
     """
     Ancestor to all operators in this subfolder.
@@ -85,18 +116,20 @@ class OpRun(ABC):
     _attribute_conversion_functions = {
         AttributeProto.FLOAT: lambda att: np.float32(att.f),
         AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
-        # AttributeProto.GRAPH(5)
-        # AttributeProto.GRAPHS(10)
+        AttributeProto.GRAPH: lambda att: Graph(att.g),
+        AttributeProto.GRAPHS: lambda att: [Graph(g) for g in att.graphs],
         AttributeProto.INT: lambda att: int(att.i),
         AttributeProto.INTS: lambda att: [int(i) for i in att.ints],
-        # AttributeProto.SPARSE_TENSOR(11)
-        # AttributeProto.SPARSE_TENSORS(12)
+        AttributeProto.SPARSE_TENSOR: lambda att: to_sparse_tensor(att.sparse_tensor),
+        AttributeProto.SPARSE_TENSORS: lambda att: [
+            to_sparse_tensor(t) for t in att.sparse_tensors
+        ],
         AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
         AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
         AttributeProto.TENSOR: lambda att: to_array(att.t),
-        # AttributeProto.TENSORS(9)
+        AttributeProto.TENSORS: lambda att: [to_array(t) for t in att.tensors],
         AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
-        # AttributeProto.TYPE_PROTOS(14)
+        AttributeProto.TYPE_PROTOS: lambda att: [OnnxType(t) for t in att.type_protos],
     }
 
     def __init__(

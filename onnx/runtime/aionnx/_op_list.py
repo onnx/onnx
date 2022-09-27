@@ -25,6 +25,7 @@ from .op_asin import Asin
 from .op_asinh import Asinh
 from .op_atan import Atan
 from .op_atanh import Atanh
+from .op_attribute_has_value import AttributeHasValue
 from .op_average_pool import AveragePool
 from .op_batch_normalization import BatchNormalization, BatchNormalization_14
 from .op_bernoulli import Bernoulli
@@ -294,6 +295,7 @@ def load_op(
             )
         cl = impl[best]
     if cl is None:
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
         raise ValueError(
             f"Not registered implementation for operator {op_type!r}, "
             f"domain {domain!r}, and {version!r} in\n{available}"

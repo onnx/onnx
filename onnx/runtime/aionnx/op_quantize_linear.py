@@ -18,6 +18,7 @@ class _CommonQuantizeLinear(OpRun):
             x = x / y_scale.reshape(new_shape)
         else:
             x = x / y_scale
+            new_shape = x.shape  # unused
         if zero_point is not None:
             dtype = zero_point.dtype
             if len(y_scale.shape) > 0:
