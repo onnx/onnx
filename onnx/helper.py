@@ -1184,7 +1184,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     return cast(int, mapping.NP_TYPE_TO_TENSOR_TYPE[np_dtype])
 
 
-def get_all_tensor_types() -> KeysView[int]:
+def get_all_tensor_dtypes() -> KeysView[int]:
     """
     Get all tensor types from TensorProto.
 

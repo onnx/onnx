@@ -680,7 +680,7 @@ class TestPrintableGraph(unittest.TestCase):
     "tensor_dtype",
     [
         t
-        for t in helper.get_all_tensor_types()
+        for t in helper.get_all_tensor_dtypes()
         if t
         not in {
             TensorProto.BFLOAT16,
@@ -705,7 +705,7 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
     "tensor_dtype",
     [
         t
-        for t in helper.get_all_tensor_types()
+        for t in helper.get_all_tensor_dtypes()
         if t not in {TensorProto.BFLOAT16, TensorProto.STRING}
     ],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
