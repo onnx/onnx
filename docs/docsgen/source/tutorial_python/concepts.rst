@@ -34,6 +34,7 @@ from the learning framework used to build the model.
 
 .. contents::
     :local:
+    :depth: 1
 
 Input, Output, Node, Initializer, Attributes
 ++++++++++++++++++++++++++++++++++++++++++++

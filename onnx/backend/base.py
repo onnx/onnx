@@ -11,6 +11,9 @@ from onnx import IR_VERSION, ModelProto, NodeProto
 
 
 class DeviceType:
+    """
+    Describes device type.
+    """
     _Type = NewType("_Type", int)
     CPU: _Type = _Type(0)
     CUDA: _Type = _Type(1)
@@ -49,11 +52,26 @@ def namedtupledict(
 
 
 class BackendRep:
+    """
+    BackendRep is the handle that a Backend returns after preparing to execute
+    a model repeatedly. Users will then pass inputs to the run function of
+    BackendRep to retrieve the corresponding results.
+    """
     def run(self, inputs: Any, **kwargs: Any) -> Tuple[Any, ...]:
         pass
 
 
 class Backend:
+    """
+    Backend is the entity that will take an ONNX model with inputs,
+    perform a computation, and then return the output.
+
+    For one-off execution, users can use run_node and run_model to obtain results quickly.
+
+    For repeated execution, users should use prepare, in which the Backend
+    does all of the preparation work for executing the model repeatedly
+    (e.g., loading initializers), and returns a BackendRep handle.
+    """
     @classmethod
     def is_compatible(
         cls, model: ModelProto, device: str = "CPU", **kwargs: Any

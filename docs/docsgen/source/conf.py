@@ -70,7 +70,7 @@ html_theme_options = {
     ],
     "github_url": "https://github.com/onnx/onnx",
     "navbar_center": [],
-    "navigation_depth": 4,
+    "navigation_depth": 5,
     "page_sidebar_items": [],  # default setting is: ["page-toc", "edit-this-page", "sourcelink"],
     "show_nav_level": 0,
     "show_prev_next": True,

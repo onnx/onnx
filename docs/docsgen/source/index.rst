@@ -33,7 +33,7 @@ as well as definitions of built-in operators and standard data types.
         Create your own ONNX models with the Python API.
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 4
     :titlesonly:
     :hidden:
 

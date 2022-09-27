@@ -92,7 +92,7 @@ of the saved data. Therefore, this class must be known before
 restoring an object.
 
 .. autoclass:: onnx.ModelProto
-    :members: SerializeToString
+    :members: ParseFromString
 
 Next example shows how to restore a :ref:`l-nodeproto`.
 
