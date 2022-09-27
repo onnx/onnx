@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0913,R0914,R0916,W0221
+# pylint: disable=C0200,R0912,R0913,R0914,R0916,R1702,W0221
 
 import numpy as np
 
@@ -156,8 +156,8 @@ class MaxPool(CommonPool):
     def _max_pool_2d(  # type: ignore
         self,
         x,
-        auto_pad,
-        ceil_mode,
+        auto_pad,  # pylint: disable=W0613
+        ceil_mode,  # pylint: disable=W0613
         dilations,
         kernel_shape,
         new_pads,
