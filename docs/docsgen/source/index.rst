@@ -19,7 +19,7 @@ as well as definitions of built-in operators and standard data types.
         Main Entry point to ONNX ecosystem.
 
     .. grid-item-card:: Python Documentation
-        :img-top: _static/ONNX_logo_main.png
+        :img-top: ../../ONNX_logo_main.png
         :link: l-main-doc-page
         :link-type: ref
 
@@ -33,7 +33,7 @@ as well as definitions of built-in operators and standard data types.
         Create your own ONNX models with the Python API.
 
 .. toctree::
-    :maxdepth: 4
+    :maxdepth: 5
     :titlesonly:
     :hidden:
 
