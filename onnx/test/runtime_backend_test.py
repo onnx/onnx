@@ -9,6 +9,7 @@ the runtime produces the expected outputs.
 
 import os
 import unittest
+import warnings
 
 import numpy as np
 from numpy import object_ as dtype_object
@@ -85,7 +86,9 @@ class OnnxBackendTest:
         with open(full, "rb") as f:
             serialized = f.read()
         try:
-            loaded = to_array(load_tensor_from_string(serialized))
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning) 
+                loaded = to_array(load_tensor_from_string(serialized))
         except Exception as e:
             proto_types = [SequenceProto, TypeProto, OptionalProto]
             read_obj = None
@@ -108,7 +111,9 @@ class OnnxBackendTest:
                         loaded = []
                     else:
                         try:
-                            loaded = to_list(read_obj)
+                            with warnings.catch_warnings():
+                                warnings.simplefilter("ignore", DeprecationWarning) 
+                                loaded = to_list(read_obj)
                         except Exception as ee:
                             raise AssertionError(f"Unable to read {full!r}.") from ee
                 else:

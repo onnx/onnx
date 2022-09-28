@@ -3,7 +3,7 @@
 
 import numpy as np  # type: ignore
 
-from ...mapping import TENSOR_TYPE_TO_NP_TYPE
+from ...mapping import TENSOR_TYPE_MAP
 from ...onnx_pb import TensorProto
 from ..op_run import OpRun
 
@@ -14,7 +14,7 @@ class Cast(OpRun):  # type: ignore
         if self.to == TensorProto.STRING:  # type: ignore
             self._dtype = np.str_
         else:
-            self._dtype = TENSOR_TYPE_TO_NP_TYPE[self.to]  # type: ignore
+            self._dtype = TENSOR_TYPE_MAP[self.to].np_dtype  # type: ignore
         self._cast = lambda x: x.astype(self._dtype)
 
     def _run(self, x, to=None):  # type: ignore

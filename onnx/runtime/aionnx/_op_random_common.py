@@ -3,7 +3,7 @@
 
 import numpy as np  # type: ignore
 
-from ...mapping import TENSOR_TYPE_TO_NP_TYPE
+from ...mapping import TENSOR_TYPE_MAP
 from ..op_run import OpRun
 
 
@@ -14,7 +14,7 @@ class _CommonRandom(OpRun):
             raise ValueError(  # pragma: no cover
                 f"shape cannot be empty for operator {self.__class__.__name__}."
             )
-        self.numpy_type = TENSOR_TYPE_TO_NP_TYPE[self.dtype] if (hasattr(self, "dtype") and self.dtype is not None) else None  # type: ignore
+        self.numpy_type = TENSOR_TYPE_MAP[self.dtype].np_dtype if (hasattr(self, "dtype") and self.dtype is not None) else None  # type: ignore
 
     def _dtype(self, *data, dtype_first=False):  # type: ignore
         if dtype_first and self.numpy_type is not None:

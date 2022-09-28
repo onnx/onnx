@@ -3,7 +3,7 @@
 
 import numpy as np  # type: ignore
 
-from ...mapping import TENSOR_TYPE_TO_NP_TYPE
+from ...mapping import TENSOR_TYPE_MAP
 from ...onnx_pb import TensorProto
 from ..op_run import OpRun
 
@@ -16,7 +16,7 @@ class EyeLike(OpRun):
         elif self.dtype == TensorProto.STRING:  # type: ignore
             self._dtype = np.str_  # type: ignore
         else:
-            self._dtype = TENSOR_TYPE_TO_NP_TYPE[self.dtype]  # type: ignore
+            self._dtype = TENSOR_TYPE_MAP[self.dtype].np_dtype  # type: ignore
 
     def _run(self, data, *args):  # type: ignore
         # TODO: support overridden attributes.
