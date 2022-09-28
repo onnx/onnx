@@ -219,4 +219,99 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
+std::function<void(OpSchema&)> BinaryBitwiseDocGenerator(const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
+Returns the tensor resulting from performing the bitwise `{name}` operation
+elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+{broadcast_doc}
+)DOC";
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    schema.SetDoc(doc);
+    schema.Input(
+        0,
+        "A",
+        "First input operand for the bitwise operator.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+    schema.Input(
+        1,
+        "B",
+        "Second input operand for the bitwise operator.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+    schema.Output(0, "C", "Result tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable);
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // Type inference
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      // Shape inference
+      if (hasNInputShapes(ctx, 2))
+        bidirectionalBroadcastShapeInference(
+            ctx.getInputType(0)->tensor_type().shape(),
+            ctx.getInputType(1)->tensor_type().shape(),
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    });
+  };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BitwiseAnd,
+    18,
+    OpSchema()
+        .FillUsing(BinaryBitwiseDocGenerator("and"))
+        .TypeConstraint(
+            "T",
+            {"tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input to integer tensors."));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BitwiseOr,
+    18,
+    OpSchema()
+        .FillUsing(BinaryBitwiseDocGenerator("or"))
+        .TypeConstraint(
+            "T",
+            {"tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input to integer tensors."));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BitwiseXor,
+    18,
+    OpSchema()
+        .FillUsing(BinaryBitwiseDocGenerator("xor"))
+        .TypeConstraint(
+            "T",
+            {"tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input to integer tensors."));
+
 } // namespace ONNX_NAMESPACE

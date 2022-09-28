@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 166/181 (91.71%, 5 generators excluded) common operators.
+Node tests have covered 169/184 (91.85%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1942,6 +1942,165 @@ x = np.array([16, 4, 1]).astype(np.uint8)
 y = np.array([1, 2, 3]).astype(np.uint8)
 z = x >> y  # expected output [8, 1, 0]
 expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_uint8")
+```
+
+</details>
+
+
+### BitwiseAnd
+There are 2 test cases, listed as following:
+<details>
+<summary>bitwiseand</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseAnd",
+    inputs=["x", "y"],
+    outputs=["bitwiseand"],
+)
+
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.random.randn(3, 4).astype(np.int32)
+z = np.bitwise_and(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i32_2d")
+
+# 3d
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.bitwise_and(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i16_3d")
+```
+
+</details>
+<details>
+<summary>bitwiseand_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseAnd",
+    inputs=["x", "y"],
+    outputs=["bitwiseand"],
+)
+
+# 3d vs 1d
+x = np.random.randn(3, 4, 5).astype(np.uint64)
+y = np.random.randn(5).astype(np.uint64)
+z = np.bitwise_and(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui64_bcast_3v1d"
+)
+
+# 4d vs 3d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.random.randn(4, 5, 6).astype(np.uint8)
+z = np.bitwise_and(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui8_bcast_4v3d")
+```
+
+</details>
+
+
+### BitwiseOr
+There are 2 test cases, listed as following:
+<details>
+<summary>bitwiseor</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseOr",
+    inputs=["x", "y"],
+    outputs=["bitwiseor"],
+)
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.random.randn(3, 4).astype(np.int32)
+z = np.bitwise_or(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_i32_2d")
+
+# 4d
+x = np.random.randn(3, 4, 5, 6).astype(np.int8)
+y = np.random.randn(3, 4, 5, 6).astype(np.int8)
+z = np.bitwise_or(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_i16_4d")
+```
+
+</details>
+<details>
+<summary>bitwiseor_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseOr",
+    inputs=["x", "y"],
+    outputs=["bitwiseor"],
+)
+
+# 3d vs 1d
+x = np.random.randn(3, 4, 5).astype(np.uint64)
+y = np.random.randn(5).astype(np.uint64)
+z = np.bitwise_or(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui64_bcast_3v1d")
+
+# 4d vs 3d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.random.randn(4, 5, 6).astype(np.uint8)
+z = np.bitwise_or(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui8_bcast_4v3d")
+```
+
+</details>
+
+
+### BitwiseXor
+There are 2 test cases, listed as following:
+<details>
+<summary>bitwiseor_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseXor",
+    inputs=["x", "y"],
+    outputs=["bitwisexor"],
+)
+
+# 3d vs 1d
+x = np.random.randn(3, 4, 5).astype(np.uint64)
+y = np.random.randn(5).astype(np.uint64)
+z = np.bitwise_xor(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui64_bcast_3v1d"
+)
+
+# 4d vs 3d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.random.randn(4, 5, 6).astype(np.uint8)
+z = np.bitwise_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui8_bcast_4v3d")
+```
+
+</details>
+<details>
+<summary>bitwisexor</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseXor",
+    inputs=["x", "y"],
+    outputs=["bitwisexor"],
+)
+
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.random.randn(3, 4).astype(np.int32)
+z = np.bitwise_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i32_2d")
+
+# 3d
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.bitwise_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i16_3d")
 ```
 
 </details>
