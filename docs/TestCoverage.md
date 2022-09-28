@@ -2064,7 +2064,7 @@ for from_type, to_type in test_cases:
             )
     elif "STRING" != from_type:
         input = np.random.random_sample(shape).astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
         if "STRING" == to_type:
             # Converting input to str, then give it object dtype for generating script
@@ -2077,7 +2077,7 @@ for from_type, to_type in test_cases:
             output = np.array(ss).astype(object).reshape([3, 4])
         else:
             output = input.astype(
-                TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+                helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
             )
     else:
         input = np.array(
@@ -2098,7 +2098,7 @@ for from_type, to_type in test_cases:
             dtype=np.dtype(object),
         ).reshape([3, 4])
         output = input.astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
         )
     node = onnx.helper.make_node(
         "Cast",
@@ -2202,7 +2202,7 @@ for from_type, to_type in test_cases:
             )
     elif "STRING" != from_type:
         input = np.random.random_sample(shape).astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
         if "STRING" == to_type:
             # Converting input to str, then give it np.object dtype for generating script
@@ -2215,7 +2215,7 @@ for from_type, to_type in test_cases:
             output = np.array(ss).astype(np.object).reshape([3, 4])
         else:
             output = input.astype(
-                TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+                helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
             )
     else:
         input = np.array(
@@ -2236,7 +2236,7 @@ for from_type, to_type in test_cases:
             dtype=np.dtype(np.object),
         ).reshape([3, 4])
         output = input.astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
         )
     like = output.flatten()[0:1]
     node = onnx.helper.make_node(
