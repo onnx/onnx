@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Dict, NamedTuple, Union
+from typing import Any, Dict, NamedTuple, Union, cast
 
 import numpy as np
 
@@ -148,7 +148,7 @@ _STORAGE_TENSOR_TYPE_TO_FIELD = {
 # STORAGE_TENSOR_TYPE_TO_FIELD will be eventually removed in the future
 # and _STORAGE_TENSOR_TYPE_TO_FIELD will only be used internally
 STORAGE_TENSOR_TYPE_TO_FIELD = DeprecatedWarningDict(
-    _STORAGE_TENSOR_TYPE_TO_FIELD,
+    cast(Dict[int, Union[int, str, Any]], _STORAGE_TENSOR_TYPE_TO_FIELD),
     "STORAGE_TENSOR_TYPE_TO_FIELD",
 )
 

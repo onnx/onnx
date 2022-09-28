@@ -1167,12 +1167,9 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     :param tensor_dtype: TensorProto's data_type
     :return: field name
     """
-    return cast(
-        str,
-        mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
-            mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
-        ],
-    )
+    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
+        mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    ]
 
 
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
