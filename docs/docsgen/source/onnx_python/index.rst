@@ -4,16 +4,28 @@
 API Reference
 =============
 
-The following example shows how to retrieve onnx version
-and onnx opset. Every new major release increments the opset version.
+Versioning
+++++++++++
+
+The following example shows how to retrieve onnx version,
+the onnx opset, the IR version. Every new major release increments the opset version.
 
 .. autofunction:: onnx.defs.onnx_opset_version
 
 .. exec_code::
 
-    from onnx import __version__
+    from onnx import __version__, IR_VERSION
     from onnx.defs import onnx_opset_version
-    print("onnx", __version__, "opset", onnx_opset_version())
+    print(f"onnx.__version__={__version__!r}, opset={onnx_opset_version()}, IR_VERSION={IR_VERSION}")
+
+The intermediate representation (IR) specification is the abstract model for
+graphs and operators and the concrete format that represents them.
+Adding a structure, modifying one them increases the IR version.
+
+The opset version increases when an operator is added or removed or modified.
+A higher opset means a longer list of operators and more options to
+implement an ONNX functions. An operator is usually modified because it
+supports more input and output type, or an attribute becomes an input.
 
 Data Structures
 +++++++++++++++
@@ -22,7 +34,6 @@ Every ONNX object is defined based on a `protobuf message
 <https://googleapis.dev/python/protobuf/latest/google/protobuf/message.html>`_
 and has a name ended with suffix `Proto`. For example, :ref:`l-nodeproto` defines
 an operator, :ref:`l-tensorproto` defines a tensor. Next page lists all of them.
-
 
 .. toctree::
     :maxdepth: 1

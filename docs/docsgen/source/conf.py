@@ -34,7 +34,6 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx_exec_code",
     "onnx_sphinx",
-    "sphinx_design",
 ]
 
 coverage_show_missing_items = True
@@ -74,11 +73,20 @@ html_theme_options = {
     "page_sidebar_items": [],  # default setting is: ["page-toc", "edit-this-page", "sourcelink"],
     "show_nav_level": 0,
     "show_prev_next": True,
-    "show_toc_level": 1,
+    "show_toc_level": 0,
 }
 
 
-intersphinx_mapping = {"https://docs.python.org/": None}
+intersphinx_mapping = {
+    "https://docs.python.org/": None,
+    "torch": ("https://pytorch.org/docs/stable/", None),
+    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "python": (f"https://docs.python.org/{sys.version_info.major}", None),
+    "scikit-learn": ("https://scikit-learn.org/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+}
 
 sphinx_gallery_conf = {
     "examples_dirs": ["examples"],
@@ -94,20 +102,5 @@ sphinx_gallery_conf = {
         "dependencies": "./requirements.txt",
     },
 }
-
-warnings.filterwarnings("ignore", category=FutureWarning)
-
-intersphinx_mapping.update(
-    {
-        "torch": ("https://pytorch.org/docs/stable/", None),
-        "numpy": ("https://docs.scipy.org/doc/numpy/", None),
-        "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-        "python": (f"https://docs.python.org/{sys.version_info.major}", None),
-        "scikit-learn": ("https://scikit-learn.org/stable/", None),
-        "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
-        "sklearn": ("https://scikit-learn.org/stable/", None),
-    }
-)
-
 
 warnings.filterwarnings("ignore", category=FutureWarning)
