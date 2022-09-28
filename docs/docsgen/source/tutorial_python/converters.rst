@@ -1,6 +1,6 @@
 
 ==========
-Challenges
+Converters
 ==========
 
 Using ONNX in production means the prediction function
@@ -16,6 +16,7 @@ That may be very time consuming.
 
 .. contents::
     :local:
+    :depth: 1
 
 What is a converting library?
 =============================

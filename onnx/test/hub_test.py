@@ -94,3 +94,7 @@ class TestModelHub(unittest.TestCase):
         self.assertRaises(
             AssertionError, lambda: hub.get_model_info("mnist", self.repo, opset=-1)
         )
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -9,6 +9,7 @@ an ONNX graph with the :ref:`Python API <l-python-onnx-api>`
 
 .. contents::
     :local:
+    :depth: 1
 
 .. _l-onnx-linear-regression-onnx-api:
 
