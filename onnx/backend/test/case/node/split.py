@@ -342,7 +342,7 @@ class Split(Base):
             node,
             inputs=[node_input],
             outputs=expected_outputs,
-            name="test_1d_uneven_split_opset18",
+            name="test_split_1d_uneven_split_opset18",
         )
 
     @staticmethod
@@ -372,5 +372,5 @@ class Split(Base):
             node,
             inputs=[node_input],
             outputs=expected_outputs,
-            name="test_2d_uneven_split_opset18",
+            name="test_split_2d_uneven_split_opset18",
         )
