@@ -19,6 +19,13 @@ def generate_data(args: argparse.Namespace) -> None:
             shutil.rmtree(path)
         os.makedirs(path)
 
+    # Clean the output directory before generating data for node testcases
+    # It is used to check new generated data is correct in CIs
+    node_root = os.path.join(args.output, "node")
+    if args.clean and os.path.exists(node_root):
+        shutil.rmtree(node_root)
+        os.makedirs(node_root)
+
     cases = model_test.collect_testcases()
     # If op_type is specified, only include those testcases including the given operator
     # Otherwise, include all of the testcases
@@ -112,7 +119,13 @@ def parse_args() -> argparse.Namespace:
     subparsers = parser.add_subparsers()
 
     subparser = subparsers.add_parser(
-        "generate-data", help="convert testcases to test data"
+        "generate-data", help="convert testcases to test data."
+    )
+    subparser.add_argument(
+        "-c",
+        "--clean",
+        default=None,
+        help="Clean the output directory before generating data for node testcases.",
     )
     subparser.add_argument(
         "-o",
