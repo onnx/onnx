@@ -123,7 +123,7 @@ jobs:
       fi
       git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
       if [ $? -ne 0 ]; then
-        echo "Please check the generated number of node test files (input_*.pb or output_*.pb or or additional test cases)"
+        echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
         exit 1
       fi
 
