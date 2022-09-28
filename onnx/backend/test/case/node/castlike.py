@@ -6,8 +6,7 @@ import sys
 import numpy as np
 
 import onnx
-from onnx import TensorProto
-from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
+from onnx import TensorProto, helper
 
 from ..base import Base
 from . import expect
@@ -85,7 +84,7 @@ class CastLike(Base):
                     )
             elif "STRING" != from_type:
                 input = np.random.random_sample(shape).astype(
-                    TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)]
+                    helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
                 )
                 if "STRING" == to_type:
                     # Converting input to str, then give it np.object dtype for generating script
@@ -98,7 +97,7 @@ class CastLike(Base):
                     output = np.array(ss).astype(np.object).reshape([3, 4])
                 else:
                     output = input.astype(
-                        TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+                        helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
                     )
             else:
                 input = np.array(
@@ -119,7 +118,7 @@ class CastLike(Base):
                     dtype=np.dtype(np.object),
                 ).reshape([3, 4])
                 output = input.astype(
-                    TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+                    helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
                 )
             like = output.flatten()[0:1]
             node = onnx.helper.make_node(
