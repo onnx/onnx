@@ -124,7 +124,8 @@ def parse_args() -> argparse.Namespace:
     subparser.add_argument(
         "-c",
         "--clean",
-        default=None,
+        default=False,
+        action="store_true",
         help="Clean the output directory before generating data for node testcases.",
     )
     subparser.add_argument(
