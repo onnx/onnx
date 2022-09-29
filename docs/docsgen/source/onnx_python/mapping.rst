@@ -4,83 +4,30 @@
 onnx.mapping
 ============
 
+This module defines the correspondance between onnx numerical types
+and numpy numerical types. This information can be accessed
+through attribute :ref:`l-onnx-types-mapping` or through the functions 
+defined in :ref:`l-mod-onnx-helper`.
+
 .. contents::
     :local:
 
-Type Mappings
-+++++++++++++
+TensorDtypeMap
+++++++++++++++
+
+.. autoclass:: onnx.mapping.TensorDtypeMap
 
 .. _l-onnx-types-mapping:
 
-NP_TYPE_TO_TENSOR_TYPE
-~~~~~~~~~~~~~~~~~~~~~~
+TENSOR_TYPE_MAP
++++++++++++++++
 
 .. exec_code::
 
     import pprint
-    from onnx.mapping import NP_TYPE_TO_TENSOR_TYPE
+    from onnx.mapping import TENSOR_TYPE_MAP
 
-    pprint.pprint(NP_TYPE_TO_TENSOR_TYPE)
-
-OP_SET_ID_VERSION_MAP
-~~~~~~~~~~~~~~~~~~~~~
-
-.. exec_code::
-
-    import pprint
-    from onnx.helper import OP_SET_ID_VERSION_MAP
-
-    pprint.pprint(OP_SET_ID_VERSION_MAP)
-
-OPTIONAL_ELEMENT_TYPE_TO_FIELD
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. exec_code::
-
-    import pprint
-    from onnx.mapping import OPTIONAL_ELEMENT_TYPE_TO_FIELD
-
-    pprint.pprint(OPTIONAL_ELEMENT_TYPE_TO_FIELD)
-
-STORAGE_ELEMENT_TYPE_TO_FIELD
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. exec_code::
-
-    import pprint
-    from onnx.mapping import STORAGE_ELEMENT_TYPE_TO_FIELD
-
-    pprint.pprint(STORAGE_ELEMENT_TYPE_TO_FIELD)
-
-STORAGE_TENSOR_TYPE_TO_FIELD
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. exec_code::
-
-    import pprint
-    from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
-
-    pprint.pprint(STORAGE_TENSOR_TYPE_TO_FIELD)
-
-TENSOR_TYPE_TO_NP_TYPE
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. exec_code::
-
-    import pprint
-    from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
-
-    pprint.pprint(TENSOR_TYPE_TO_NP_TYPE)
-
-TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. exec_code::
-
-    import pprint
-    from onnx.mapping import TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE
-
-    pprint.pprint(TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE)
+    pprint.pprint(TENSOR_TYPE_MAP)
 
 Opset Version
 +++++++++++++

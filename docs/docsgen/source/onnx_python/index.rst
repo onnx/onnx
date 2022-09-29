@@ -54,6 +54,7 @@ verify a model with the following helpers.
     backend
     checker
     compose
+    defs
     external_data_helper
     helper
     hub

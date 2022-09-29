@@ -192,6 +192,8 @@ def _clean_unicode(text):
     text = text.replace("&#8212;", "-")
     text = text.replace("&#160;", " ")
     text = text.replace("&#39;", "'")
+    text = text.replace("&gt;", ">")
+    text = text.replace("&lt;", "<")
     return text
 
 
@@ -682,21 +684,27 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
         with its versions, as done in `Operators.md
         <https://github.com/onnx/onnx/blob/main/docs/Operators.md>`_.
 
-        All examples end by calling function :ref:`expect <l-function-expect>`
+        All examples end by calling function `expect`.
         which checks a runtime produces the expected output for this example.
-        One implementation can be found in the first page
-        linked below.
+        One implementation based on `onnxruntime <https://onnxruntime.ai/>`_
+        can be found at :ref:`expect <l-function-expect-onnxruntime>`.
         """
     )
     footer = textwrap.dedent(
         """
 
-        expect
-        ++++++
+        Samples and runtime
+        +++++++++++++++++++
+
+        Samples require a runtime for onnx to be fully executed.
+        Function `expect` used in many examples can be implemented in
+        such a way that it executes a runtime and compares the outputs
+        with the expected ones. Next sections propose an implementation
+        for this function.
 
         .. toctree::
 
-            ../expect
+            ../expect_onnxruntime
         """
     )
     all_schemas = _get_all_schemas_with_history()

@@ -32,6 +32,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
+    "sphinx_toolbox.collapse",
     "sphinx_exec_code",
     "onnx_sphinx",
 ]
@@ -39,7 +40,7 @@ extensions = [
 coverage_show_missing_items = True
 exclude_patterns = []
 graphviz_output_format = "svg"
-html_css_files = ["sample.css"]
+html_css_files = ["css/custom.css"]
 html_favicon = "onnx-favicon.png"
 html_logo = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png"

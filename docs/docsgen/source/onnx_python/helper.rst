@@ -12,6 +12,7 @@ onnx.helper
 .. autosummary::
 
     find_min_ir_version_for
+    get_all_tensor_dtypes
     get_attribute_value
     make_attribute
     make_empty_tensor_value_info
@@ -36,6 +37,7 @@ onnx.helper
     make_tensor_type_proto
     make_tensor_value_info
     make_value_info
+    np_dtype_to_tensor_dtype
     printable_attribute
     printable_dim
     printable_graph
@@ -44,6 +46,10 @@ onnx.helper
     printable_type
     printable_value_info
     split_complex_to_pairs
+    tensor_dtype_to_np_dtype
+    tensor_dtype_to_storage_tensor_dtype
+    tensor_dtype_to_string
+    tensor_dtype_to_field
 
 getter
 ++++++
@@ -66,8 +72,6 @@ print
 .. autofunction:: onnx.helper.printable_type
 
 .. autofunction:: onnx.helper.printable_value_info
-
-
 
 tools
 +++++
@@ -150,3 +154,18 @@ print
 .. autofunction:: onnx.helper.printable_type
 
 .. autofunction:: onnx.helper.printable_value_info
+
+type mappings
++++++++++++++
+
+.. autofunction:: onnx.helper.get_all_tensor_dtypes
+
+.. autofunction:: onnx.helper.np_dtype_to_tensor_dtype
+
+.. autofunction:: onnx.helper.tensor_dtype_to_field
+
+.. autofunction:: onnx.helper.tensor_dtype_to_np_dtype
+
+.. autofunction:: onnx.helper.tensor_dtype_to_storage_tensor_dtype
+
+.. autofunction:: onnx.helper.tensor_dtype_to_string
