@@ -56,7 +56,11 @@ COVERAGE = bool(os.getenv("COVERAGE", "0") == "1")
 ################################################################################
 
 try:
-    git_version = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=TOP_DIR).decode("ascii").strip()
+    git_version = (
+        subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=TOP_DIR)
+        .decode("ascii")
+        .strip()
+    )
 except (OSError, subprocess.CalledProcessError):
     git_version = None
 
@@ -67,7 +71,9 @@ with open(os.path.join(TOP_DIR, "VERSION_NUMBER")) as version_file:
         VERSION_NUMBER += ".dev" + today_number
         PACKAGE_NAME = "onnx-weekly"
         sys.argv.remove("--weekly_build")
-    VersionInfo = namedtuple("VersionInfo", ["version", "git_version"])(version=VERSION_NUMBER, git_version=git_version)
+    VersionInfo = namedtuple("VersionInfo", ["version", "git_version"])(
+        version=VERSION_NUMBER, git_version=git_version
+    )
 
 ################################################################################
 # Pre Check
@@ -226,9 +232,9 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command("create_version")
         self.run_command("cmake_build")
 
-        generated_python_files = glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")) + glob.glob(
-            os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi")
-        )
+        generated_python_files = glob.glob(
+            os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")
+        ) + glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi"))
 
         for src in generated_python_files:
             dst = os.path.join(TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
@@ -271,7 +277,11 @@ class mypy_type_check(ONNXCommand):
 
     def run(self):
         """Run command."""
-        onnx_script = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools/mypy-onnx.py"))
+        onnx_script = os.path.realpath(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "tools/mypy-onnx.py"
+            )
+        )
         returncode = subprocess.call([sys.executable, onnx_script])
         sys.exit(returncode)
 
@@ -307,7 +317,9 @@ include_dirs = [
     "onnx.version_converter*",
 ]
 
-packages = setuptools.find_packages() + setuptools.find_namespace_packages(include=include_dirs)
+packages = setuptools.find_packages() + setuptools.find_namespace_packages(
+    include=include_dirs
+)
 
 requirements_file = "requirements.txt"
 requirements_path = os.path.join(os.getcwd(), requirements_file)
