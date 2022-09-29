@@ -23,4 +23,5 @@ sphinx
 sphinx-exec-code
 sphinx-design
 sphinx-gallery
+sphinx-tabs
 tqdm

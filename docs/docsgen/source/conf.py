@@ -32,8 +32,8 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
-    "sphinx_toolbox.collapse",
     "sphinx_exec_code",
+    "sphinx_tabs.tabs",
     "onnx_sphinx",
 ]
 
