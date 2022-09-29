@@ -595,6 +595,18 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   }
 }
 
+void print_warning_if_has_experimental(const std::unordered_set<std::string>& existed_experimental_ops) {
+  if (!existed_experimental_ops.empty()) {
+    std::string all_experimental_ops;
+    for (const auto& op : existed_experimental_ops) {
+      all_experimental_ops += " " + op + ",";
+    }
+    // Remove the last comma which is unnecessary
+    all_experimental_ops.pop_back();
+    std::cout << "Warning: Checker does not support models with experimental ops:" + all_experimental_ops << std::endl;
+  }
+}
+
 void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(node, op_type);
 
@@ -765,15 +777,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       lex_ctx.add(output);
     }
   }
-  if (!existed_experimental_ops.empty()) {
-    std::string all_experimental_ops;
-    for (const auto& op : existed_experimental_ops) {
-      all_experimental_ops += " " + op + ",";
-    }
-    // remove the last unnecessary comma
-    all_experimental_ops.pop_back();
-    std::cout << "Warning: Checker does not support models with experimental ops:" + all_experimental_ops << std::endl;
-  }
+  print_warning_if_has_experimental(existed_experimental_ops);
 }
 
 // Utilify function to get the imported version of domain from opset imports
@@ -904,7 +908,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }
-
+  std::unordered_set<std::string> existed_experimental_ops;
   for (const auto& node : function.node()) {
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
@@ -928,7 +932,9 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     // check whether the opset version imported for a domain by function and model are
     // compatible
     check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
-
+    if (check_is_experimental_op(node.op_type())) {
+      existed_experimental_ops.insert(node.op_type());
+    }
     check_node(node, ctx_copy, lex_ctx);
 
     // check for SSA form
@@ -946,6 +952,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       lex_ctx.add(output);
     }
   }
+  print_warning_if_has_experimental(existed_experimental_ops);
 }
 
 void check_model(const ModelProto& model, CheckerContext& ctx) {
