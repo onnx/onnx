@@ -208,7 +208,7 @@ IsolationForest Trick
 +++++++++++++++++++++
 
 ONNX only implements a :ref:`TreeEnsembleRegressor
-<l-onnx-docai.onnx.ml-TreeEnsembleRegressor>` but
+<l-onnx-docai-onnx-ml-TreeEnsembleRegressor>` but
 it does not offer the possibility to retrieve any information
 about the path the decision followed or statistics to the graph.
 The trick is to used one forest to predict the leave index and map

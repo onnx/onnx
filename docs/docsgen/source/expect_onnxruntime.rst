@@ -1,4 +1,4 @@
-.. _l-function-expect-onnxruntime:
+.. _l-function-expect:
 
 Sample operator test code
 =========================

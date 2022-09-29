@@ -2,13 +2,14 @@
 """
 Automates the generation of ONNX operators.
 """
+from difflib import Differ
 import importlib
 import inspect
 import keyword
 import os
 import re
 import textwrap
-from difflib import Differ
+import sys
 
 import numpy as np
 
@@ -87,7 +88,7 @@ def _get_diff_template():  # type: ignore
     )
 
 
-def _get_doc_template():  # type: ignore
+def _get_ops_template():  # type: ignore
     Template = get_template()
     return Template(
         textwrap.dedent(
@@ -187,6 +188,45 @@ def _get_doc_template():  # type: ignore
     )
 
 
+def _get_main_template():  # type: ignore
+    Template = get_template()
+    return Template(
+        textwrap.dedent(
+            """
+        .. _l-onnx-operators:
+
+        {{ title }}
+        {{ "=" * len(title) }}
+
+        Lists out all the ONNX operators. For each operator, lists out the usage guide,
+        parameters, examples, and line-by-line version history.
+        This section also includes tables detailing each operator
+        with its versions, as done in `Operators.md
+        <https://github.com/onnx/onnx/blob/main/docs/Operators.md>`_.
+
+        All examples end by calling function `expect`.
+        which checks a runtime produces the expected output for this example.
+        One implementation based on `onnxruntime <https://onnxruntime.ai/>`_
+        can be found at :ref:`expect <l-function-expect>`.
+
+        .. toctree::
+            :hidden:
+
+            ../expect_onnxruntime
+            {% for p in pages %}{{ os.path.split(p)[-1] }}
+            {% endfor %}
+        
+        .. tabs::
+
+            {% for t in tabs %}.. tab:: {{ t.domain_name }}
+                {{ t.render(indent="        ") }}
+            {% endfor %}
+    """
+        ),
+        autoescape=True,
+    )
+
+
 def _clean_unicode(text):
     text = text.replace("&#34;", '"')
     text = text.replace("&#8212;", "-")
@@ -198,7 +238,8 @@ def _clean_unicode(text):
 
 
 _template_diff = _get_diff_template()
-_template_operator = _get_doc_template()
+_template_operator = _get_ops_template()
+_template_main = _get_main_template()
 __get_all_schemas_with_history = None
 
 
@@ -455,6 +496,14 @@ def get_rst_doc(  # type: ignore
         is_last_schema=is_last_schema,
     )
     docs = _clean_unicode(docs)
+
+    d_links = {}
+    for schema in schemas:
+        sdom = schema.domain.replace(".", "-")
+        d_links[
+            schema.since_version
+        ] = f"l-onnx-op{sdom}-{schema.name.lower()}-{schema.since_version}"
+
     if diff:
         lines = docs.split("\n")
         new_lines = [""]
@@ -464,9 +513,15 @@ def get_rst_doc(  # type: ignore
                 continue
             new_lines.append(line)
         docs = "\n".join(new_lines)
-        docs = _insert_diff(
-            folder, docs, ".. tag-diff-insert.", op_name=op_name, version=version
+        docs, d_links_diff = _insert_diff(
+            folder,
+            docs,
+            ".. tag-diff-insert.",
+            op_name=op_name,
+            version=version,
+            domain=domain,
         )
+        d_links.update(d_links_diff)
 
     if clean:
         lines = docs.split("\n")
@@ -478,10 +533,10 @@ def get_rst_doc(  # type: ignore
             new_lines.append(line)
         docs = "\n".join(new_lines)
 
-    return docs
+    return docs, d_links
 
 
-def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None):  # type: ignore
+def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None, domain=None):  # type: ignore
     """
     Splits a using `split`, insert HTML differences between pieces.
     The function relies on package :epkg:`pyquickhelper`.
@@ -492,7 +547,9 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
 
     reg = re.compile("([A-Z][A-Za-z0-9_]*) - ([0-9]+)")
 
+    d_links = {}
     pieces = [spl[0]]
+    mds = []
     for i in range(1, len(spl)):
         spl1 = spl[i - 1].strip("\n ")
         spl2 = spl[i].strip("\n ")
@@ -513,64 +570,75 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
         v1 = vers1[0][1]
         v2 = vers2[0][1]
 
-        d = Differ()
-        result = list(
-            d.compare(
-                textwrap.dedent(spl2.strip(" \n\r\t")).splitlines(keepends=True),
-                textwrap.dedent(spl1.strip(" \n\r\t")).splitlines(keepends=True),
+        if len(mds) == 0:
+            mds.append(
+                (v1, textwrap.dedent(spl1.strip(" \n\r\t")).splitlines(keepends=True))
             )
-        )
-        raw = "".join(result)
-
-        tmpl = _template_diff
-        diff = tmpl.render(
-            op_name=op_name,
-            version1=v2,
-            version2=v1,
-            div_name=f"div_{op_name}_{i}",
-            diff_content=raw,
-        )
-        diff = _clean_unicode(diff)
-
-        title = f"{op_name} - {v2} vs {v1}"
-
-        name = f"text_diff_{op_name}_{v2}_{v1}"
-        content = "\n".join(
-            [
-                title,
-                "=" * len(title),
-                "",
-                "Next section compares an older to a newer version of the same operator ",
-                "after both definition are converted into markdown text.",
-                "Green means an addition to the newer version, red means a deletion.",
-                "Anything else is unchanged.",
-                "",
-                ".. raw:: html",
-                "",
-                textwrap.indent(diff, "    "),
-            ]
-        )
-        filename = os.path.join(folder, name + ".rst")
-        if os.path.exists(filename):
-            with open(filename, "r", encoding="utf-8") as f:
-                old_content = f.read()
-                write = old_content != content
-        else:
-            write = True
-        if write:
-            with open(filename, "w", encoding="utf-8") as f:
-                f.write(content)
-        pieces.extend(
-            [
-                ".. toctree::",
-                "",
-                f"    {name}",
-                "",
-                spl[i],
-            ]
+        mds.append(
+            (v2, textwrap.dedent(spl2.strip(" \n\r\t")).splitlines(keepends=True))
         )
 
-    return "\n".join(pieces)
+        if len(mds) > 1:
+            pieces.extend([".. toctree::", ""])
+
+        for di in range(len(mds) - 1):
+            dj = len(mds) - 1
+
+            v1, s1 = mds[di]
+            v2, s2 = mds[dj]
+            d = Differ()
+            result = list(d.compare(s1, s2))
+            raw = "".join(result)
+
+            tmpl = _template_diff
+            diff = tmpl.render(
+                op_name=op_name,
+                version1=v2,
+                version2=v1,
+                div_name=f"div_{op_name}_{i}",
+                diff_content=raw,
+            )
+            diff = _clean_unicode(diff)
+
+            title = f"{op_name} - {v2} vs {v1}"
+
+            name = f"text_diff_{op_name}_{v2}_{v1}"
+            sdom = domain.replace(".", "-")
+            link = f"l-onnx-op{sdom}-{op_name.lower()}-d{v2}-{v1}"
+            d_links[int(v2), int(v1)] = link
+            content = "\n".join(
+                [
+                    "",
+                    f".. _{link}:",
+                    "",
+                    title,
+                    "=" * len(title),
+                    "",
+                    "Next section compares an older to a newer version of the same operator ",
+                    "after both definition are converted into markdown text.",
+                    "Green means an addition to the newer version, red means a deletion.",
+                    "Anything else is unchanged.",
+                    "",
+                    ".. raw:: html",
+                    "",
+                    textwrap.indent(diff, "    "),
+                ]
+            )
+            filename = os.path.join(folder, name + ".rst")
+            if os.path.exists(filename):
+                with open(filename, "r", encoding="utf-8") as f:
+                    old_content = f.read()
+                    write = old_content != content
+            else:
+                write = True
+            if write:
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(content)
+            pieces.append(f"    {name}")
+
+        pieces.extend(["", spl[i]])
+
+    return "\n".join(pieces), d_links
 
 
 def change_style(name: str) -> str:
@@ -676,80 +744,80 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
     :param flog: logging function
     :return: list of creates files
     """
-    header = textwrap.dedent(
-        """
-        Lists out all the ONNX operators. For each operator, lists out the usage guide,
-        parameters, examples, and line-by-line version history.
-        This section also includes tables detailing each operator
-        with its versions, as done in `Operators.md
-        <https://github.com/onnx/onnx/blob/main/docs/Operators.md>`_.
 
-        All examples end by calling function `expect`.
-        which checks a runtime produces the expected output for this example.
-        One implementation based on `onnxruntime <https://onnxruntime.ai/>`_
-        can be found at :ref:`expect <l-function-expect-onnxruntime>`.
-        """
-    )
-    footer = textwrap.dedent(
-        """
+    class _Table:
+        def __init__(self, ops, domain, title=None):
+            self.title = title or domain
+            self.domain = domain
+            self.ops = ops
 
-        Samples and runtime
-        +++++++++++++++++++
+        @property
+        def domain_name(self):
+            title = self.domain
+            if title == "":
+                title = "ai.onnx"
+            return title
 
-        Samples require a runtime for onnx to be fully executed.
-        Function `expect` used in many examples can be implemented in
-        such a way that it executes a runtime and compares the outputs
-        with the expected ones. Next sections propose an implementation
-        for this function.
+        def render(self, indent=""):
+            table_dom = [""]
+            table_dom.extend(
+                [
+                    ".. list-table::",
+                    "    :widths: 10 10 10",
+                    "    :header-rows: 1",
+                    "",
+                    "    * - operator",
+                    "      - versions",
+                    "      - differences",
+                ]
+            )
 
-        .. toctree::
+            for op in self.ops:
+                name = op["name"]
+                dom = self.domain.replace(".", "-")
+                table_dom.append(f"    * - :ref:`l-onnx-doc{dom}-{name}`")
+                versions = list(
+                    reversed(
+                        sorted(
+                            (k, v) for k, v in op["links"].items() if isinstance(k, int)
+                        )
+                    )
+                )
+                col1 = ", ".join(f":ref:`{k} <{v}>`" for k, v in versions)
+                diffs = list(
+                    reversed(
+                        sorted(
+                            (k, v)
+                            for k, v in op["links"].items()
+                            if isinstance(k, tuple)
+                        )
+                    )
+                )
+                col2 = ", ".join(f":ref:`{k[1]}/{k[0]} <{v}>`" for k, v in diffs)
+                table_dom.append(f"      - {col1}")
+                table_dom.append(f"      - {col2}")
+            table_dom.append("")
+            if indent != "":
+                for i in range(len(table_dom)):
+                    table_dom[i] = indent + table_dom[i]
+            res = "\n".join(table_dom)
+            return res
 
-            ../expect_onnxruntime
-        """
-    )
+    global _template_main
     all_schemas = _get_all_schemas_with_history()
     if not os.path.exists(folder):
         os.makedirs(folder)
-    index = [
-        "",
-        ".. _l-onnx-operators:",
-        "",
-        title,
-        "=" * len(title),
-        "",
-        ".. contents::",
-        "    :local:",
-        "",
-        header,
-        "",
-    ]
+
     pages = []
-    tables_domain_pages = []
+    tables = []
 
     if ops is not None:
         ops = set(ops)
+
+    # loop on domains
     for dom in sorted(all_schemas):
         sdom = "ai.onnx" if dom == "" else dom
-
-        index_dom = [sdom, "+" * len(sdom), "", ".. toctree::", "    :maxdepth: 1", ""]
-
-        table_dom = [
-            "",
-            f".. _l-table-operator-{sdom.replace('.', '-')}:",
-            "",
-            f"operator table for domain {sdom}",
-        ]
-        table_dom.extend(["=" * len(table_dom[-1]), ""])
-        table_dom.extend(
-            [
-                f".. list-table:: operators for domain {sdom}",
-                "    :widths: 10 10",
-                "    :header-rows: 1",
-                "",
-                "    * - operator",
-                "      - versions",
-            ]
-        )
+        dom_pages = []
 
         sub = all_schemas[dom]
         do = []
@@ -763,21 +831,23 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
         if len(do) == 0:
             continue
 
+        # loop on operators
         for op in sorted(do):
             if flog is not None:
                 flog(f"generate page for onnx {dom!r} - {op!r}")  # pragma: no cover
             page_name = f"onnx_{dom.replace('.', '')}_{op}"
-            index_dom.append(f"    {page_name}")
-            doc = get_rst_doc(
+            doc, d_links = get_rst_doc(
                 folder, op, domain=dom, version=None, example=True, diff=True
             )
             if dom == "":
                 main = op
             else:
                 main = f"{dom} - {op}"
+            sdom = dom.replace(".", "-")
+            ref_link = f".. _l-onnx-doc{sdom}-{op}:"
             rows = [
                 "",
-                f".. _l-onnx-doc{dom}-{op}:",
+                ref_link,
                 "",
                 "=" * len(main),
                 main,
@@ -801,50 +871,17 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
                 with open(full, "w", encoding="utf-8") as f:
                     f.write(content)
             pages.append(full)
+            dom_pages.append({"name": op, "links": d_links})
 
-            # table
-            schemas = get_operator_schemas(op, domain=dom, version=None)
-            links = []
-            for sch in schemas:
-                link = (":ref:`{sver} <l-onnx-op{lname_}-{lname}-{sver}>`").format(
-                    sver=str(sch.since_version),
-                    lname=sch.name.lower(),
-                    lname_=sch.domain.lower().replace(".", "-"),
-                )
-                links.append(link)
-            table_dom.extend([f"    * - {op}", f"      - {', '.join(links)}"])
+        tables.append(_Table(dom_pages, dom, sdom))
 
-        sdom_clean = sdom.replace(".", "_")
-        page_name = os.path.join(folder, f"table_{sdom_clean}.rst")
-        tables_domain_pages.append(f"table_{sdom_clean}")
-        pages.append(page_name)
-        with open(page_name, "w", encoding="utf-8") as f:
-            f.write("\n".join(table_dom))
-
-        index.extend(index_dom)
-        index.append("")
-
-    # adding pages
-    index.extend(
-        [
-            "",
-            "Tables",
-            "++++++",
-            "",
-            ".. toctree::",
-            "    :maxdepth: 1",
-            "",
-        ]
-    )
-    for page in tables_domain_pages:
-        index.append(f"    {page}")
-    index.append("")
-    index.append(footer)
-
-    # creating a big index
+    # final
+    tmpl = _template_main
+    index = tmpl.render(pages=pages, tabs=tables, os=os, len=len, title=title)
+    index = _clean_unicode(index)
     page_name = os.path.join(folder, "index.rst")
     with open(page_name, "w", encoding="utf-8") as f:
-        f.write("\n".join(index))
+        f.write(index)
     pages.append(page_name)
     return pages
 
@@ -867,3 +904,9 @@ def setup(app):
     app.add_config_value("onnx_doc_folder", "onnx_doc_folder", "env")
     app.connect("builder-inited", _generate_op_doc)
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
+
+
+if "debug" in sys.argv:
+    print("DEBUG")
+    onnx_documentation_folder("_debug", flog=print)
+    print("END")
