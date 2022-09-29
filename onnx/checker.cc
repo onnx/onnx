@@ -602,12 +602,6 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
     fail_check("NodeProto (name: ", node.name(), ", type: ", node.op_type(), ") has zero input and zero output.");
   }
 
-  // If encounter experimental op, stop checking
-  if (check_is_experimental_op(node.op_type())) {
-    std::cerr << "Warning: Checker does not support models with experimental ops: " << node.op_type() << std::endl;
-    return;
-  }
-
   // Resolve domain for node
   const auto& opset_imports = ctx.get_opset_imports();
   auto dit = opset_imports.find(node.domain());
@@ -618,6 +612,11 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
 
   for (const auto& attr : node.attribute()) {
     check_attribute(attr, ctx, lex_ctx);
+  }
+
+  // This issue will be caught by check_graph instead
+  if (check_is_experimental_op(node.op_type())) {
+    return;
   }
 
   const auto* schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
@@ -712,7 +711,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     check_sparse_tensor(sparse_init, ctx);
     lex_ctx.add(name);
   }
-
+  std::unordered_set<std::string> existed_experimental_ops;
   for (const auto& node : graph.node()) {
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
@@ -731,6 +730,10 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
             node.op_type(),
             "\n is not output of any previous nodes.");
       }
+    }
+
+    if (check_is_experimental_op(node.op_type())) {
+      existed_experimental_ops.insert(node.op_type());
     }
 
     // This needs to happen before SSA check since we don't want to recurse and
@@ -761,6 +764,15 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       }
       lex_ctx.add(output);
     }
+  }
+  if (!existed_experimental_ops.empty()) {
+    std::string all_experimental_ops;
+    for (const auto& op : existed_experimental_ops) {
+      all_experimental_ops += " " + op + ",";
+    }
+    // remove the last unnecessary comma
+    all_experimental_ops.pop_back();
+    std::cout << "Warning: Checker does not support models with experimental ops:" + all_experimental_ops << std::endl;
   }
 }
 
