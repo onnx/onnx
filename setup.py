@@ -346,6 +346,7 @@ extras_require["lint"] = [
     "mypy>=0.971",
     "types-protobuf==3.18.4",
     "black>=22.3",
+    # TODO: use isort[colors]>=5.10.1 after Py3.7 is deprecated
     "isort>=5.10.1",
     "colorama>=0.4.5",
 ]
