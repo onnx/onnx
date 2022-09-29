@@ -42,8 +42,14 @@ graphviz_output_format = "svg"
 html_css_files = ["sample.css"]
 html_favicon = "onnx-favicon.png"
 html_logo = os.path.join(
-    os.path.abspath(os.path.dirname(__file__)), "../../ONNX_logo_main.png"
+    os.path.abspath(os.path.dirname(__file__)), "../../onnx-horizontal-color.png"
 )
+html_theme_options = {
+    "logo": {
+        "image_dark": "onnx-horizontal-white.png",
+    }
+}
+html_sidebars = {}
 html_static_path = ["_static"]
 html_theme = "pydata_sphinx_theme"
 language = "en"
@@ -55,7 +61,6 @@ onnx_doc_folder = os.path.join(
 pygments_style = "sphinx"
 source_suffix = [".rst"]
 templates_path = ["_templates"]
-
 
 html_context = {
     "default_mode": "auto",  # auto: the documentation theme will follow the system default that you have set (light or dark)
