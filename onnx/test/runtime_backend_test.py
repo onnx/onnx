@@ -626,7 +626,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_maxpool_2d_precomputed_same_upper" == name,
+            lambda name: "test_roialign_aligned_false" == name,
             verbose=0,
             atol={"test_gridsample_bicubic": 1e-4},
         )
