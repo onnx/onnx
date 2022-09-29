@@ -207,7 +207,7 @@ def _get_main_template():  # type: ignore
         All examples end by calling function `expect`.
         which checks a runtime produces the expected output for this example.
         One implementation based on `onnxruntime <https://onnxruntime.ai/>`_
-        can be found at :ref:`expect <l-function-expect>`.
+        can be found at :ref:`l-function-expect`.
 
         .. toctree::
             :hidden:
