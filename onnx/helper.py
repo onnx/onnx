@@ -1179,7 +1179,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     :param np_dtype: numpy's data_type
     :return: TensorsProto's data_type
     """
-    return cast(int, mapping.NP_TYPE_TO_TENSOR_TYPE[np_dtype])
+    return cast(int, mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype])
 
 
 def get_all_tensor_dtypes() -> KeysView[int]:
