@@ -2,14 +2,14 @@
 """
 Automates the generation of ONNX operators.
 """
-from difflib import Differ
 import importlib
 import inspect
 import keyword
 import os
 import re
-import textwrap
 import sys
+import textwrap
+from difflib import Differ
 
 import numpy as np
 
@@ -547,9 +547,9 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
 
     reg = re.compile("([A-Z][A-Za-z0-9_]*) - ([0-9]+)")
 
-    d_links = {}
-    pieces = [spl[0]]
-    mds = []
+    d_links = {}  # type: ignore
+    pieces = [spl[0]]  # type: ignore
+    mds = []  # type: ignore
     for i in range(1, len(spl)):
         spl1 = spl[i - 1].strip("\n ")
         spl2 = spl[i].strip("\n ")
