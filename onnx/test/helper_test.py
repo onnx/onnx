@@ -743,6 +743,17 @@ class TestHelperMappingFunctions(unittest.TestCase):
     def test_np_dtype_to_tensor_dtype_not_throw_warning(self) -> None:
         _ = helper.np_dtype_to_tensor_dtype(np.dtype("float32"))
 
+    def test_tensor_dtype_to_np_dtype_bfloat16(self) -> None:
+        self.assertEqual(
+            helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16), np.dtype("float32")
+        )
+
+    def test_tensor_dtype_to_storage_tensor_dtype_bfloat16(self) -> None:
+        self.assertEqual(
+            helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.BFLOAT16),
+            TensorProto.UINT16,
+        )
+
     # BFloat16 tensor uses TensorProto.UINT16 as storage type;
     # And the field name for TensorProto.UINT16 is int32_data
     def test_tensor_dtype_to_field_bfloat16(self) -> None:
