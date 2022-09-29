@@ -1,4 +1,6 @@
 
+.. _l-mod-onnx-helper:
+
 onnx.helper
 ===========
 

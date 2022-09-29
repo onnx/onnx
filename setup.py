@@ -306,13 +306,14 @@ ext_modules = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
 ################################################################################
 
 # Add package directories here if you want to package them with the source
+# TODO try to remove unnecessary .cpp files
 include_dirs = [
-    "onnx.backend.test.cpp*",
     "onnx.backend.test.data.*",
     "onnx.common",
     "onnx.defs.*",
     "onnx.examples*",
     "onnx.shape_inference",
+    "onnx.test.cpp",
     "onnx.version_converter*",
 ]
 

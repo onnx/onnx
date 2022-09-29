@@ -187,6 +187,14 @@ def _get_doc_template():  # type: ignore
     )
 
 
+def _clean_unicode(text):
+    text = text.replace("&#34;", '"')
+    text = text.replace("&#8212;", "-")
+    text = text.replace("&#160;", " ")
+    text = text.replace("&#39;", "'")
+    return text
+
+
 _template_diff = _get_diff_template()
 _template_operator = _get_doc_template()
 __get_all_schemas_with_history = None
@@ -444,6 +452,7 @@ def get_rst_doc(  # type: ignore
         format_example=format_example,
         is_last_schema=is_last_schema,
     )
+    docs = _clean_unicode(docs)
     if diff:
         lines = docs.split("\n")
         new_lines = [""]
@@ -519,28 +528,36 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             div_name=f"div_{op_name}_{i}",
             diff_content=raw,
         )
+        diff = _clean_unicode(diff)
 
         title = f"{op_name} - {v2} vs {v1}"
 
         name = f"text_diff_{op_name}_{v2}_{v1}"
-        with open(os.path.join(folder, name + ".rst"), "w", encoding="utf-8") as f:
-            f.write(
-                "\n".join(
-                    [
-                        title,
-                        "=" * len(title),
-                        "",
-                        "Next section compares an older to a newer version of the same operator ",
-                        "after both definition are converted into markdown text.",
-                        "Green means an addition to the newer version, red means a deletion.",
-                        "Anything else is unchanged.",
-                        "",
-                        ".. raw:: html",
-                        "",
-                        textwrap.indent(diff, "    "),
-                    ]
-                )
-            )
+        content = "\n".join(
+            [
+                title,
+                "=" * len(title),
+                "",
+                "Next section compares an older to a newer version of the same operator ",
+                "after both definition are converted into markdown text.",
+                "Green means an addition to the newer version, red means a deletion.",
+                "Anything else is unchanged.",
+                "",
+                ".. raw:: html",
+                "",
+                textwrap.indent(diff, "    "),
+            ]
+        )
+        filename = os.path.join(folder, name + ".rst")
+        if os.path.exists(filename):
+            with open(filename, "r", encoding="utf-8") as f:
+                old_content = f.read()
+                write = old_content != content
+        else:
+            write = True
+        if write:
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(content)
         pieces.extend(
             [
                 ".. toctree::",
@@ -669,6 +686,10 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
         which checks a runtime produces the expected output for this example.
         One implementation can be found in the first page
         linked below.
+        """
+    )
+    footer = textwrap.dedent(
+        """
 
         expect
         ++++++
@@ -700,7 +721,7 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
     if ops is not None:
         ops = set(ops)
     for dom in sorted(all_schemas):
-        sdom = "main" if dom == "" else dom
+        sdom = "ai.onnx" if dom == "" else dom
 
         index_dom = [sdom, "+" * len(sdom), "", ".. toctree::", "    :maxdepth: 1", ""]
 
@@ -761,8 +782,16 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
             ]
 
             full = os.path.join(folder, page_name + ".rst")
-            with open(full, "w", encoding="utf-8") as f:
-                f.write("\n".join(rows))
+            content = "\n".join(rows)
+            if os.path.exists(full):
+                with open(full, "r", encoding="utf-8") as f:
+                    old_content = f.read()
+                write = old_content != content
+            else:
+                write = True
+            if write:
+                with open(full, "w", encoding="utf-8") as f:
+                    f.write(content)
             pages.append(full)
 
             # table
@@ -802,6 +831,7 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
     for page in tables_domain_pages:
         index.append(f"    {page}")
     index.append("")
+    index.append(footer)
 
     # creating a big index
     page_name = os.path.join(folder, "index.rst")
