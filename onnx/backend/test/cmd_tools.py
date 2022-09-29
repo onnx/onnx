@@ -39,7 +39,7 @@ def generate_data(args: argparse.Namespace) -> None:
     for case in cases:
         output_dir = os.path.join(args.output, case.kind, case.name)
         prepare_dir(output_dir)
-        if case.node == "node":
+        if case.kind == "node":
             node_number += 1
         if case.kind == "real":
             with open(os.path.join(output_dir, "data.json"), "w") as fi:
