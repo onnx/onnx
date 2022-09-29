@@ -215,7 +215,7 @@ def _get_main_template():  # type: ignore
             ../expect_onnxruntime
             {% for p in pages %}{{ os.path.split(p)[-1] }}
             {% endfor %}
-        
+
         .. tabs::
 
             {% for t in tabs %}.. tab:: {{ t.domain_name }}
