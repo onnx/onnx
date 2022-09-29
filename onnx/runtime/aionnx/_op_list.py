@@ -142,8 +142,8 @@ from .op_relu import Relu
 from .op_reshape import Reshape, Reshape_5, Reshape_14
 from .op_resize import Resize
 from .op_reverse_sequence import ReverseSequence
-from .op_roi_align import RoiAlign
 from .op_rnn import RNN
+from .op_roi_align import RoiAlign
 from .op_round import Round
 from .op_scan import Scan
 from .op_scatter_elements import ScatterElements

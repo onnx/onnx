@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,W0221
 
-from typing import List
+from typing import Tuple
 
 import numpy as np  # type: ignore
 
@@ -9,7 +9,7 @@ from ..op_run import OpRun
 
 
 class PreCalc:
-    def __init__(self, pos1=0, pos2=0, pos3=0, pos4=0, w1=0, w2=0, w3=0, w4=0):
+    def __init__(self, pos1=0, pos2=0, pos3=0, pos4=0, w1=0, w2=0, w3=0, w4=0):  # type: ignore
         self.pos1 = pos1
         self.pos2 = pos2
         self.pos3 = pos3
@@ -19,9 +19,12 @@ class PreCalc:
         self.w3 = w3
         self.w4 = w4
 
+    def __repr__(self) -> str:
+        return f"PreCalc({self.pos1},{self.pos2},{self.pos3},{self.pos4},{self.w1},{self.w2},{self.w3},{self.w4})"
+
 
 class RoiAlign(OpRun):
-    def PreCalcForBilinearInterpolate(
+    def PreCalcForBilinearInterpolate(  # type: ignore
         self,
         height: int,
         width: int,
@@ -112,9 +115,9 @@ class RoiAlign(OpRun):
 
                         pre_calc_index += 1
 
-    def RoiAlignForward(
+    def RoiAlignForward(  # type: ignore
         self,
-        output_shape: List[int],
+        output_shape: Tuple[int, int, int, int],
         bottom_data,
         spatial_scale,
         height: int,
@@ -209,7 +212,7 @@ class RoiAlign(OpRun):
                         index = index_n_c + ph * pooled_width + pw
 
                         output_val = 0.0
-                        if mode == "AVG":  # avg pooling
+                        if mode == "avg":  # avg pooling
                             for iy in range(roi_bin_grid_h):
                                 for ix in range(roi_bin_grid_w):
                                     pc = pre_calc[pre_calc_index]
@@ -294,8 +297,8 @@ class RoiAlign(OpRun):
             rois.flatten(),
             num_roi_cols,
             Y,
-            mode,
-            coordinate_transformation_mode == "half_pixel",
+            mode.lower(),
+            coordinate_transformation_mode.lower() == "half_pixel",
             batch_indices.flatten(),
         )
         return (Y.reshape((y_dims)),)

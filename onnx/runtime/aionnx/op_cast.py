@@ -20,5 +20,5 @@ class Cast(OpRun):  # type: ignore
     def _run(self, x, to=None):  # type: ignore
         if to is None:
             return (self._cast(x),)
-        dtype = TENSOR_TYPE_TO_NP_TYPE[to]  # type: ignore
+        dtype = TENSOR_TYPE_MAP[self.to].np_dtype  # type: ignore
         return (x.astype(dtype),)

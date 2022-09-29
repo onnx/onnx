@@ -87,7 +87,7 @@ class OnnxBackendTest:
             serialized = f.read()
         try:
             with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning) 
+                warnings.simplefilter("ignore", DeprecationWarning)
                 loaded = to_array(load_tensor_from_string(serialized))
         except Exception as e:
             proto_types = [SequenceProto, TypeProto, OptionalProto]
@@ -112,7 +112,7 @@ class OnnxBackendTest:
                     else:
                         try:
                             with warnings.catch_warnings():
-                                warnings.simplefilter("ignore", DeprecationWarning) 
+                                warnings.simplefilter("ignore", DeprecationWarning)
                                 loaded = to_list(read_obj)
                         except Exception as ee:
                             raise AssertionError(f"Unable to read {full!r}.") from ee
@@ -199,7 +199,9 @@ class OnnxBackendTest:
         "Returns the number of tests."
         return len(self.tests)
 
-    def _compare_results(self, index, i_output, desired, output, rtol=0, atol=0):
+    def _compare_results(
+        self, index, i_output, desired, output, rtol=0, atol=0, comment=""
+    ):
         """
         Compares the expected output and the output produced
         by the runtime. Raises an exception if not equal.
@@ -210,7 +212,10 @@ class OnnxBackendTest:
         :param output: output
         :param rtol: relative tolerance
         :param atol: absolute tolerance
+        :param comment: addition text to give more insights to the user
         """
+        if comment == "":
+            raise RuntimeError("Argument comment should be filled.")
         if atol is None:
             atol = 0
         if rtol is None:
@@ -231,7 +236,7 @@ class OnnxBackendTest:
                         assert_allclose_string(desired, output)
                     except AssertionError as ex:
                         raise AssertionError(
-                            f"Output {i_output} of test {index} in folder {self.folder!r} failed."
+                            f"Output {i_output} of test {index} in folder {self.folder!r} failed, comment={comment}."
                         ) from ex
                 else:
                     try:
@@ -239,36 +244,38 @@ class OnnxBackendTest:
                     except AssertionError as ex:
                         raise AssertionError(
                             f"Output {i_output} of test {index} in folder {self.folder!r} failed "
-                            f"(rtol={rtl}, atol={atol})\n---\n{desired}\n----\n{output}."
+                            f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----\n{output}."
                         ) from ex
             elif hasattr(output, "is_compatible"):
                 # A shape
                 if desired.dtype != output.dtype:
                     raise AssertionError(
                         f"Output {i_output} of test {index} in folder {self.folder!r} failed "
-                        f"(desired.dtype={desired.dtype!r}, output={output!r})."
+                        f"(desired.dtype={desired.dtype!r}, output={output!r}), comment={comment}."
                     )
                 if not output.is_compatible(desired.shape):
                     raise AssertionError(
                         f"Output {i_output} of test {index} in folder {self.folder!r} failed "
-                        f"(desired.shape={desired.shape}, output={output!r})."
+                        f"(desired.shape={desired.shape}, output={output!r}), comment={comment}."
                     )
         elif isinstance(desired, list):
             if not isinstance(output, list):
                 raise AssertionError(
                     f"Expected result is 'list' but output type is {type(output)} for output {i_output}"
-                    f"\n--EXPECTED--\n{desired}\n--GOT--\n{output}."
+                    f", comment={comment}\n--EXPECTED--\n{desired}\n--GOT--\n{output}."
                 )
             if len(desired) != len(output):
                 raise AssertionError(
                     f"Expected has {len(desired)} but output has {len(output)} for output {i_output}"
-                    f"\n--EXPECTED--\n{desired}\n--GOT--\n{output}."
+                    f", comment={comment}\n--EXPECTED--\n{desired}\n--GOT--\n{output}."
                 )
             for a, b in zip(desired, output):
-                self._compare_results(index, i_output, a, b, rtol=rtol, atol=atol)
+                self._compare_results(
+                    index, i_output, a, b, rtol=rtol, atol=atol, comment=comment
+                )
         else:
             raise NotImplementedError(
-                f"Comparison not implemented for type {type(desired)} and output {i_output}."
+                f"Comparison not implemented for type {type(desired)} and output {i_output}, comment={comment}."
             )
 
     def is_random(self):
@@ -277,7 +284,7 @@ class OnnxBackendTest:
             return True
         return False
 
-    def run(self, load_fct, run_fct, index=None, rtol=1e-07, atol=0):
+    def run(self, load_fct, run_fct, index=None, rtol=1e-07, atol=0, comment=""):
         """
         Executes a tests or all tests if index is None.
         The function crashes if the tests fails.
@@ -289,11 +296,22 @@ class OnnxBackendTest:
         :param index: index of the test to run or all.
         :param rtol: relative tolerance
         :param atol: absolute tolerance
+        :param comment: additional information for the user
         """
         if index is None:
+            res = []
             for i in range(len(self)):
-                self.run(load_fct, run_fct, index=i, atol=atol, rtol=rtol)
-            return
+                res.append(
+                    self.run(
+                        load_fct,
+                        run_fct,
+                        index=i,
+                        atol=atol,
+                        rtol=rtol,
+                        comment=comment,
+                    )
+                )
+            return res
 
         obj = load_fct(self.onnx_model)
 
@@ -304,6 +322,11 @@ class OnnxBackendTest:
                 f"Unexpected number of output (test {index}, folder {self.folder!r}), "
                 f"got {len(got)}, expected {len(expected)}."
             )
+        res = dict(
+            inputs=self.tests[index]["inputs"],
+            expected=self.tests[index]["inputs"],
+            results=got,
+        )
         for i, (e, o) in enumerate(zip(expected, got)):
             if self.is_random():
                 if e.dtype != o.dtype:
@@ -317,7 +340,10 @@ class OnnxBackendTest:
                         f"(shape mismatch {e.shape} != {o.shape})."
                     )
             else:
-                self._compare_results(index, i, e, o, atol=atol, rtol=rtol)
+                self._compare_results(
+                    index, i, e, o, atol=atol, rtol=rtol, comment=comment
+                )
+        return res
 
 
 def enumerate_onnx_tests(series, fct_filter=None):
@@ -390,12 +416,16 @@ class TestOnnxBackEnd(unittest.TestCase):
         for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
             self.assertIn(te.name, repr(te))
             self.assertGreater(len(te), 0)
-            te.run(TestOnnxBackEnd.load_fct, TestOnnxBackEnd.run_fct)
+            te.run(
+                TestOnnxBackEnd.load_fct,
+                TestOnnxBackEnd.run_fct,
+                comment="[runtime=Inference]",
+            )
             done += 1
         self.assertEqual(done, 1)
 
     def common_test_enumerate_onnx_tests_run(
-        self, valid, verbose=0, rtol=None, atol=None, check_ort_mismath=False
+        self, valid, verbose=0, rtol=None, atol=None, check_other_runtime=None
     ):
         if rtol is None:
             rtol = {}
@@ -430,6 +460,7 @@ class TestOnnxBackEnd(unittest.TestCase):
                         TestOnnxBackEnd.run_fct,
                         atol=atol.get(te.name, None),
                         rtol=rtol.get(te.name, None),
+                        comment=f"[runtime=Inference, verbose={verbose}]",
                     )
                 else:
                     te.run(
@@ -437,6 +468,7 @@ class TestOnnxBackEnd(unittest.TestCase):
                         TestOnnxBackEnd.run_fct,
                         atol=atol.get(te.name, None),
                         rtol=rtol.get(te.name, None),
+                        comment="[runtime=Inference]",
                     )
                 if verbose > 7:
                     print("  end run")
@@ -451,13 +483,39 @@ class TestOnnxBackEnd(unittest.TestCase):
                 if verbose > 7:
                     print("  ", e, type(e))
                 mismatch.append((te, e))
-
-                if check_ort_mismath:
+                if check_other_runtime is None:
+                    continue
+                if "onnxruntime" in check_other_runtime:
                     from onnxruntime import InferenceSession
 
                     te.run(
                         lambda obj: InferenceSession(obj.SerializeToString()),
                         lambda *a, **b: TestOnnxBackEnd.run_fct(*a, verbose=1, **b),
+                        atol=atol.get(te.name, None),
+                        rtol=rtol.get(te.name, None),
+                        comment="[runtime=onnxruntime]",
+                    )
+                if "mlprodict" in check_other_runtime:
+                    from mlprodict.onnxrt import OnnxInference
+
+                    class _Wrap:
+                        def __init__(self, sess):
+                            self.sess = sess
+
+                        @property
+                        def input_names(self):
+                            return [i.name for i in self.sess.obj.graph.input]
+
+                        def run(self, unused, feeds, *args, **kwargs):
+                            res = self.sess.run(feeds)
+                            return [res[o.name] for o in self.sess.obj.graph.output]
+
+                    te.run(
+                        lambda obj: _Wrap(OnnxInference(obj)),
+                        lambda *a, **b: TestOnnxBackEnd.run_fct(*a, verbose=1, **b),
+                        atol=atol.get(te.name, None),
+                        rtol=rtol.get(te.name, None),
+                        comment="[runtime=mlprodict]",
                     )
                 continue
             except Exception as e:
@@ -615,6 +673,8 @@ class TestOnnxBackEnd(unittest.TestCase):
             "test_layer_normalization_4d_axis_negative_3_expanded": 1e-6,
             "test_mish": 1e-6,
             "test_mish_expanded": 1e-6,
+            "test_roialign_aligned_false": 1e-4,
+            "test_roialign_aligned_true": 1e-4,
         }
 
         self.common_test_enumerate_onnx_tests_run(
@@ -628,7 +688,8 @@ class TestOnnxBackEnd(unittest.TestCase):
         self.common_test_enumerate_onnx_tests_run(
             lambda name: "test_roialign_aligned_false" == name,
             verbose=0,
-            atol={"test_gridsample_bicubic": 1e-4},
+            atol={"test_roialign_aligned_false": 1e-4},
+            check_other_runtime="onnxruntime",
         )
 
 

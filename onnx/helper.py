@@ -2,6 +2,7 @@
 import collections.abc
 import numbers
 import struct
+import warnings
 from cmath import isnan
 from typing import (
     Any,
@@ -16,7 +17,6 @@ from typing import (
     Union,
     cast,
 )
-import warnings
 
 import google.protobuf.message
 import numpy as np
@@ -1168,7 +1168,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     :return: field name
     """
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning) 
+        warnings.simplefilter("ignore", DeprecationWarning)
         return cast(
             str,
             mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
