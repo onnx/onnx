@@ -3,9 +3,9 @@
 import sys
 from typing import Any, Dict, List, Optional, Sequence, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
-from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, mapping
+from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 
 
@@ -36,10 +36,11 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         raise TypeError("The element type in the input tensor is not defined.")
 
     tensor_dtype = tensor.data_type
-    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
-    storage_type = mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[tensor_dtype]
-    storage_np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[storage_type]
-    storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[storage_type]
+    np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
+    storage_np_dtype = helper.tensor_dtype_to_np_dtype(
+        helper.tensor_dtype_to_storage_tensor_dtype(tensor_dtype)
+    )
+    storage_field = helper.tensor_dtype_to_field(tensor_dtype)
     dims = tensor.dims
 
     if tensor.data_type == TensorProto.STRING:
@@ -103,7 +104,7 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
 
     if arr.dtype == object:
         # Special care for strings.
-        tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
+        tensor.data_type = helper.np_dtype_to_tensor_dtype(arr.dtype)
         # TODO: Introduce full string support.
         # We flatten the array in case there are 2-D arrays are specified
         # We throw the error below if we have a 3-D array or some kind of other
@@ -134,7 +135,7 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
 
     # For numerical types, directly use numpy raw bytes.
     try:
-        dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
+        dtype = helper.np_dtype_to_tensor_dtype(arr.dtype)
     except KeyError:
         raise RuntimeError(f"Numpy data type not understood yet: {str(arr.dtype)}")
     tensor.data_type = dtype
@@ -154,23 +155,14 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     Returns:
         list: the converted list.
     """
-    lst: List[Any] = []
     elem_type = sequence.elem_type
-    value_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
-    values = getattr(sequence, value_field)
-    for value in values:
-        if (
-            elem_type == SequenceProto.TENSOR
-            or elem_type == SequenceProto.SPARSE_TENSOR
-        ):
-            lst.append(to_array(value))
-        elif elem_type == SequenceProto.SEQUENCE:
-            lst.append(to_list(value))
-        elif elem_type == SequenceProto.MAP:
-            lst.append(to_dict(value))
-        else:
-            raise TypeError("The element type in the input sequence is not supported.")
-    return lst
+    if elem_type == SequenceProto.TENSOR:
+        return [to_array(v) for v in sequence.tensor_values]
+    if elem_type == SequenceProto.SPARSE_TENSOR:
+        return [to_array(v) for v in sequence.sparse_tensor_values]
+    if elem_type == SequenceProto.SEQUENCE:
+        return [to_list(v) for v in sequence.sequence_values]
+    raise TypeError("The element type in the input sequence is not supported.")
 
 
 def from_list(
@@ -268,7 +260,7 @@ def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
         map.name = name
     keys = list(dict.keys())
     raw_key_type = np.array(keys[0]).dtype
-    key_type = mapping.NP_TYPE_TO_TENSOR_TYPE[raw_key_type]
+    key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
 
     valid_key_int_types = [
         TensorProto.INT8,
@@ -314,24 +306,20 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
     Returns:
         opt: the converted optional.
     """
-    opt: Optional[Any] = None
     elem_type = optional.elem_type
     if elem_type == OptionalProto.UNDEFINED:
-        return opt
-    value_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
-    value = getattr(optional, value_field)
-    # TODO: create a map and replace conditional branches
-    if elem_type == OptionalProto.TENSOR or elem_type == OptionalProto.SPARSE_TENSOR:
-        opt = to_array(value)
-    elif elem_type == OptionalProto.SEQUENCE:
-        opt = to_list(value)
-    elif elem_type == OptionalProto.MAP:
-        opt = to_dict(value)
-    elif elem_type == OptionalProto.OPTIONAL:
-        return to_optional(value)
-    else:
-        raise TypeError("The element type in the input optional is not supported.")
-    return opt
+        return None
+    if elem_type == OptionalProto.TENSOR:
+        return to_array(optional.tensor_value)
+    if elem_type == OptionalProto.SPARSE_TENSOR:
+        return to_array(optional.sparse_tensor_value)
+    if elem_type == OptionalProto.SEQUENCE:
+        return to_list(optional.sequence_value)
+    if elem_type == OptionalProto.MAP:
+        return to_dict(optional.map_value)
+    if elem_type == OptionalProto.OPTIONAL:
+        return to_optional(optional.optional_value)
+    raise TypeError("The element type in the input optional is not supported.")
 
 
 def from_optional(
@@ -392,7 +380,7 @@ def convert_endian(tensor: TensorProto) -> None:
         tensor (TensorProto): TensorProto to be converted.
     """
     tensor_dtype = tensor.data_type
-    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
+    np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
     tensor.raw_data = (
         np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
     )

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-import collections.abc  # type: ignore
+import collections.abc
 import numbers
 import struct
 from cmath import isnan
@@ -7,6 +7,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    KeysView,
     List,
     Optional,
     Sequence,
@@ -17,7 +18,7 @@ from typing import (
 )
 
 import google.protobuf.message
-import numpy as np  # type: ignore
+import numpy as np
 
 from onnx import (
     IR_VERSION,
@@ -39,7 +40,6 @@ from onnx import (
     defs,
     mapping,
 )
-from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
 VersionTableType = List[VersionRowType]
@@ -358,7 +358,7 @@ def make_tensor(
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
 
-    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[data_type]
+    np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     # Check number of vals specified equals tensor size
     expected_size = 1
@@ -398,9 +398,9 @@ def make_tensor(
                     np.array(vals).astype(np_dtype).flatten().tolist(),
                 )
             )
-        field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
-            mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]
-        ]
+        elif data_type == TensorProto.BOOL:
+            vals = np.array(vals).astype(int)
+        field = tensor_dtype_to_field(data_type)
         getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)
     return tensor
@@ -437,8 +437,23 @@ def make_sequence(
     sequence = SequenceProto()
     sequence.name = name
     sequence.elem_type = elem_type
-    values_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
-    getattr(sequence, values_field).extend(values)
+
+    if elem_type == SequenceProto.UNDEFINED:
+        return sequence
+    if elem_type == SequenceProto.TENSOR:
+        attribute = sequence.tensor_values
+    elif elem_type == SequenceProto.SPARSE_TENSOR:
+        attribute = sequence.sparse_tensor_values
+    elif elem_type == SequenceProto.SEQUENCE:
+        attribute = sequence.sequence_values
+    elif elem_type == SequenceProto.MAP:
+        attribute = sequence.map_values
+    elif elem_type == OptionalProto.OPTIONAL:
+        attribute = sequence.optional_values
+    else:
+        raise TypeError("The element type in the input sequence is not supported.")
+
+    attribute.extend(values)
     return sequence
 
 
@@ -485,9 +500,23 @@ def make_optional(
     optional = OptionalProto()
     optional.name = name
     optional.elem_type = elem_type
-    if elem_type != 0:
-        values_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
-        getattr(optional, values_field).CopyFrom(value)
+
+    if elem_type == OptionalProto.UNDEFINED:
+        return optional
+    if elem_type == OptionalProto.TENSOR:
+        attribute = optional.tensor_value
+    elif elem_type == OptionalProto.SPARSE_TENSOR:
+        attribute = optional.sparse_tensor_value
+    elif elem_type == OptionalProto.SEQUENCE:
+        attribute = optional.sequence_value
+    elif elem_type == OptionalProto.MAP:
+        attribute = optional.map_value
+    elif elem_type == OptionalProto.OPTIONAL:
+        attribute = optional.optional_value
+    else:
+        raise TypeError("The element type in the input optional is not supported.")
+
+    attribute.CopyFrom(value)
     return optional
 
 
@@ -873,8 +902,7 @@ def printable_attribute(
             content.append("<Tensor>")
         else:
             # special case to print scalars
-            field = STORAGE_TENSOR_TYPE_TO_FIELD[attr.t.data_type]
-            content.append(f"<Scalar Tensor {str(getattr(attr.t, field))}>")
+            content.append("<Scalar Tensor>")
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)
@@ -1098,3 +1126,68 @@ def make_training_info(
             binding.value = v
 
     return training_info
+
+
+# Following functions are used for mapping
+def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
+    """
+    Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: numpy's data_type
+    """
+    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].np_dtype
+
+
+def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
+    """
+    Convert a TensorProto's data_type to corresponding data_type for storage.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: data_type for storage
+    """
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+
+
+def tensor_dtype_to_string(tensor_dtype: int) -> str:
+    """
+    Get the name of given TensorProto's data_type.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: the name of data_type
+    """
+    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].name
+
+
+def tensor_dtype_to_field(tensor_dtype: int) -> str:
+    """
+    Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: field name
+    """
+    return cast(
+        str,
+        mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
+            mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].storage_dtype
+        ],
+    )
+
+
+def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
+    """
+    Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
+
+    :param np_dtype: numpy's data_type
+    :return: TensorsProto's data_type
+    """
+    return cast(int, mapping.NP_TYPE_TO_TENSOR_TYPE[np_dtype])
+
+
+def get_all_tensor_dtypes() -> KeysView[int]:
+    """
+    Get all tensor types from TensorProto.
+
+    :return: all tensor types from TensorProto
+    """
+    return mapping.TENSOR_TYPE_MAP.keys()

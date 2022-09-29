@@ -2,7 +2,7 @@
 import unittest
 from typing import Sequence
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx.defs
 import onnx.onnx_cpp2py_export.checker as C
