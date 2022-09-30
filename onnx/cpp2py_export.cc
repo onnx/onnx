@@ -106,7 +106,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.doc() = "Schema submodule";
   py::register_exception<SchemaError>(defs, "SchemaError");
 
-  py::class_<OpSchema> op_schema(defs, "OpSchema");
+  py::class_<OpSchema> op_schema(defs, "OpSchema", "Schema of an operator.");
   op_schema.def_property_readonly("file", &OpSchema::file)
       .def_property_readonly("line", &OpSchema::line)
       .def_property_readonly("support_level", &OpSchema::support_level)
@@ -244,7 +244,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           },
           "op_type"_a,
           "max_inclusive_version"_a,
-          "domain"_a = ONNX_DOMAIN)
+          "domain"_a = ONNX_DOMAIN,
+          "Return the schema of the operator *op_type* and for a specific version.")
       .def(
           "get_schema",
           [](const std::string& op_type, const std::string& domain) -> OpSchema {
@@ -255,13 +256,18 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             return *schema;
           },
           "op_type"_a,
-          "domain"_a = ONNX_DOMAIN);
+          "domain"_a = ONNX_DOMAIN,
+          "Return the schema of the operator *op_type* and for a specific version.");
 
-  defs.def("get_all_schemas", []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas(); });
+  defs.def(
+      "get_all_schemas",
+      []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas(); },
+      "Return the schema of all existing operators for the latest version.");
 
-  defs.def("get_all_schemas_with_history", []() -> const std::vector<OpSchema> {
-    return OpSchemaRegistry::get_all_schemas_with_history();
-  });
+  defs.def(
+      "get_all_schemas_with_history",
+      []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
+      "Return the schema of all existing operators and all versions.");
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");

@@ -6,7 +6,7 @@ import os
 from collections import defaultdict
 from typing import Any, Dict, List, NamedTuple, Sequence, Set, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from onnx import defs, helper
 from onnx.backend.sample.ops import collect_sample_implementations
