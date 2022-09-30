@@ -11,22 +11,27 @@ jobs:
         python.version: '3.9'
         onnx_ml: 1
         onnx_debug: 1
+        documentation: 1
       py38:
         python.version: '3.8'
         onnx_ml: 0
         onnx_debug: 0
+        documentation: 0
       py38-ml:
         python.version: '3.8'
         onnx_ml: 1
         onnx_debug: 0
+        documentation: 0
       py37:
         python.version: '3.7'
         onnx_ml: 0
         onnx_debug: 0
+        documentation: 0
       py37-ml:
         python.version: '3.7'
         onnx_ml: 1
         onnx_debug: 0
+        documentation: 0
     maxParallel: 6
 
   steps:
@@ -123,3 +128,9 @@ jobs:
       fi
 
     displayName: Test backend test data
+
+  - script: |
+      if [ '$(documentation)' == '1' ]; then
+        cd docs/docsgen && make html
+      fi
+    displayName: Builds documentation
