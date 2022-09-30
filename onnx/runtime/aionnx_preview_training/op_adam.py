@@ -43,7 +43,7 @@ class Adam(OpRunTraining):
         norm_coefficient_post=None,
     ):
         if len(data) == 6:
-            return self._run1(
+            return self._run1(  # type: ignore
                 *data,
                 alpha=alpha,
                 beta=beta,

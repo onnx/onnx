@@ -26,10 +26,10 @@ class Shape_15(Shape_1):
                 return (0, n + end)
             return (0, end)
         if end is None or np.isnan(end):
-            return (start, n)
+            return (start, n)  # type: ignore
         if end < 0:
-            return (start, n + end)
-        return (start, end)
+            return (start, n + end)  # type: ignore
+        return (start, end)  # type: ignore
 
     def _run(self, data, end=None, start=None):  # type: ignore
         ab = self._interval(len(data.shape), start=start, end=end)

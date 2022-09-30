@@ -7,7 +7,7 @@ from ..op_run import OpRun
 
 
 class TfIdfVectorizer(OpRun):
-    def _run(
+    def _run(  # type: ignore
         self,
         X,
         max_gram_length=None,

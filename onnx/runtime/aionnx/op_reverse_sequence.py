@@ -10,9 +10,9 @@ class ReverseSequence(OpRun):
         index_data = [slice(0, s) for s in data.shape]
         result = data.copy()
         for i, sl in enumerate(sequence_lens):
-            index[batch_axis] = i
+            index[batch_axis] = i  # type: ignore
             index[time_axis] = slice(0, sl)
-            index_data[batch_axis] = i
+            index_data[batch_axis] = i  # type: ignore
             index_data[time_axis] = slice(sl - 1, None, -1)  # type: ignore
             result[tuple(index)] = data[tuple(index_data)]
         return (result,)

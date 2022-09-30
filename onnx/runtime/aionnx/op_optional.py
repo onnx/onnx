@@ -11,6 +11,6 @@ class Optional(OpRun):
             dt = tensor_dtype_to_np_dtype(type)
             if dt != x.dtype:
                 raise TypeError(
-                    f"Input dtype {x.dtype} ({dt}) and parameter type_proto {tp} disagree"
+                    f"Input dtype {x.dtype} ({dt}) and parameter type_proto {type} disagree"
                 )
         return ([x],)

@@ -2,7 +2,7 @@
 # pylint: disable=W0221
 
 from ...helper import np_dtype_to_tensor_dtype
-from ._op_random_common import _CommonRandom
+from ._op_common_random import _CommonRandom
 
 
 class RandomUniformLike(_CommonRandom):

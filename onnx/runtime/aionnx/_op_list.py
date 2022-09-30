@@ -176,7 +176,7 @@ from .op_sum import Sum
 from .op_tan import Tan
 from .op_tanh import Tanh
 
-# from .op_tfidf_vectorizer import op_tfidf_vectorizer
+# from .op_tfidf_vectorizer import TfIdfVectorizer
 from .op_thresholded_relu import ThresholdedRelu
 from .op_tile import Tile
 from .op_topk import TopK, TopK_1, TopK_10, TopK_11

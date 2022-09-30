@@ -21,9 +21,9 @@ def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # t
 
 
 class Adagrad(OpRunTraining):
-    def _run(self, *data, decay_factor=None, epsilon=None, norm_coefficient=None):
+    def _run(self, *data, decay_factor=None, epsilon=None, norm_coefficient=None):  # type: ignore
         if len(data) == 5:
-            return self._run1(
+            return self._run1(  # type: ignore
                 *data,
                 decay_factor=decay_factor,
                 epsilon=epsilon,

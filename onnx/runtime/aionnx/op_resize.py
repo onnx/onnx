@@ -232,7 +232,7 @@ class Resize(OpRun):
 
         if mode == "nearest":  # type: ignore
             if nearest_mode is not None:
-                fct = lambda x: _nearest_coeffs(x, mode=nearest_mode)
+                fct = lambda x: _nearest_coeffs(x, mode=nearest_mode)  # noqa
             else:
                 fct = _nearest_coeffs
         elif mode == "cubic":

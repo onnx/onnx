@@ -3,7 +3,7 @@
 
 import numpy as np  # type: ignore
 
-from ._op_window_common import _CommonWindow
+from ._op_common_window import _CommonWindow
 
 
 class HammingWindow(_CommonWindow):

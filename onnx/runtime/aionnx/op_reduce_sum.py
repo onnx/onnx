@@ -19,7 +19,7 @@ class ReduceSum_11(ReduceSum_1):
 
 class ReduceSum_13(OpRunReduceNumpy):
     def run(self, x, axes=None, keepdims=None):  # type: ignore
-        keepdims = keepdims or self.keepdims
+        keepdims = keepdims or self.keepdims  # type: ignore
         res = self._run(x, axes=axes, keepdims=keepdims)
         if not keepdims and not isinstance(res[0], np.ndarray):
             res = (np.array([res[0]], dtype=res[0].dtype),)

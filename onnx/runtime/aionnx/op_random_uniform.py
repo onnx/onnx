@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-from ._op_random_common import _CommonRandom
+from ._op_common_random import _CommonRandom
 
 
 class RandomUniform(_CommonRandom):

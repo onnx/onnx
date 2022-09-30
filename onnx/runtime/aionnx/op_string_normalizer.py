@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np  # type: ignore
 
-from ..op_run import RuntimeTypeError, OpRun
+from ..op_run import OpRun, RuntimeTypeError
 
 
 class StringNormalizer(OpRun):

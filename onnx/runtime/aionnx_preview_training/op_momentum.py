@@ -22,7 +22,7 @@ class Momentum(OpRunTraining):
             raise NotImplementedError(f"Momentum not implemented for mode={mode!r}.")
         if len(data) == 5:
             return self._run1(
-                *data, norm_coefficient=norm_coefficient, alpha=alpha, beta=beta
+                *data, norm_coefficient=norm_coefficient, alpha=alpha, beta=beta  # type: ignore
             )
         n = (len(data) - 2) // 3
         xs = []

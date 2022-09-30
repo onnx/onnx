@@ -16,7 +16,7 @@ class _CommonRandom(OpRun):
             )
 
     @staticmethod
-    def numpy_type(dtype):
+    def numpy_type(dtype):  # type: ignore
         return TENSOR_TYPE_MAP[dtype].np_dtype
 
     @staticmethod
@@ -40,8 +40,7 @@ class _CommonRandom(OpRun):
             res = data[0].dtype
         if res is None:
             raise RuntimeError(
-                f"dtype cannot be None for operator {self.__class__.__name__!r}, "
-                f"self.numpy_type={numpy_type}, type(data[0])={type(data[0])}."
+                f"dtype cannot be None, numpy_type={numpy_type}, type(data[0])={type(data[0])}."
             )
         return res
 
