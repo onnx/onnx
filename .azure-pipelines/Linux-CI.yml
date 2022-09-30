@@ -131,9 +131,8 @@ jobs:
 
   - script: |
       if [ '$(documentation)' == '1' ]; then
+        source venv/bin/activate
         pip install -r docs/docsgen/source/requirements.txt
-        pip uninstall -y onnx
-        python setup.py install
         cd docs/docsgen && make html
       fi
     displayName: Test documentation
