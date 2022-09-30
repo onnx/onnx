@@ -26,10 +26,10 @@ referenced as an **ONNX graph**.
 
 ONNX aims at providing a common language any machine learning framework
 can use to describe its models. The first scenario is to make it easier
-to deploy a machine learning model in production. An ONNX interpretor
+to deploy a machine learning model in production. An ONNX interpreter
 (or **runtime**) can be specifically implemented and optimized for this task
 in the environment where it is deployed. With ONNX, it is possible
-to build a unique process to deploy a model in production and independant
+to build a unique process to deploy a model in production and independent
 from the learning framework used to build the model.
 
 .. contents::
@@ -95,7 +95,7 @@ usually requires to replicate the entire ecosystem used to
 train the model, most of the time with a *docker*.
 Once a model is converted into ONNX, the production environment
 only needs a runtime to execute the graph defined with ONNX
-operators. This runtime can be developped in any language
+operators. This runtime can be developed in any language
 suitable for the production application, C, java, python, javascript,
 C#, Webassembly, ARM...
 
@@ -179,7 +179,7 @@ full array with no stride.
 Element Type
 ~~~~~~~~~~~~
 
-ONNX was initially developped to help deploying deep learning model.
+ONNX was initially developed to help deploying deep learning model.
 That's why the specifications was initially designed for floats (32 bits).
 The current version supports all common types. Dictionary
 :ref:`l-onnx-types-mapping` gives the correspondance between *ONNX*

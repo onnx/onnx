@@ -48,7 +48,7 @@ Here is a short list:
 * `torch.onnx <https://pytorch.org/docs/master/onnx.html>`_:
   converts model from `pytorch <https://pytorch.org/>`_.
 
-The main challenge for all these libraries is to keep up the rythm.
+The main challenge for all these libraries is to keep up the rhythm.
 They must be updated everytime ONNX or the library they support
 have a new released version. That means three to five new releases
 per year.
