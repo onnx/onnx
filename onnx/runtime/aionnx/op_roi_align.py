@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0913,W0221
+# pylint: disable=R0902,R0912,R0913,R0914,R0915,R1702,W0221
 
 from typing import Tuple
 
@@ -72,10 +72,8 @@ class RoiAlign(OpRun):
                             pre_calc_index += 1
                             continue
 
-                        if y <= 0:
-                            y = 0
-                        if x <= 0:
-                            x = 0
+                        y = max(y, 0)
+                        x = max(x, 0)
 
                         y_low = int(y)
                         x_low = int(x)
@@ -213,8 +211,8 @@ class RoiAlign(OpRun):
 
                         output_val = 0.0
                         if mode == "avg":  # avg pooling
-                            for iy in range(roi_bin_grid_h):
-                                for ix in range(roi_bin_grid_w):
+                            for iy in range(roi_bin_grid_h):  # pylint: disable=W0612
+                                for ix in range(roi_bin_grid_w):  # pylint: disable=W0612
                                     pc = pre_calc[pre_calc_index]
                                     output_val += (
                                         pc.w1
@@ -231,8 +229,8 @@ class RoiAlign(OpRun):
                             output_val /= count
                         else:  # max pooling
                             max_flag = False
-                            for iy in range(roi_bin_grid_h):
-                                for ix in range(roi_bin_grid_w):
+                            for iy in range(roi_bin_grid_h):  # pylint: disable=W0612
+                                for ix in range(roi_bin_grid_w):  # pylint: disable=W0612
                                     pc = pre_calc[pre_calc_index]
                                     val = max(
                                         max(
