@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=W0613
 
 from collections import namedtuple
 from typing import Any, Dict, NewType, Optional, Sequence, Tuple, Type
