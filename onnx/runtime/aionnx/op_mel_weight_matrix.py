@@ -3,11 +3,20 @@
 
 import numpy as np  # type: ignore
 
+from ...helper import tensor_dtype_to_np_dtype
 from ..op_run import OpRun
 
 
 class MelWeightMatrix(OpRun):
-    def _run(self, num_mel_bins, dft_length, sample_rate, lower_edge_hertz, upper_edge_hertz):  # type: ignore
+    def _run(  # type: ignore
+        self,
+        num_mel_bins,
+        dft_length,
+        sample_rate,
+        lower_edge_hertz,
+        upper_edge_hertz,
+        output_datatype=None,
+    ):
         num_spectrogram_bins = dft_length // 2 + 1
         frequency_bins = np.arange(0, num_mel_bins + 2)
 
@@ -42,5 +51,9 @@ class MelWeightMatrix(OpRun):
                         center_to_high
                     )
 
-        output = output.astype(np.float32)
+        if output_datatype is None:
+            output = output.astype(np.float32)
+        else:
+            dtype = tensor_dtype_to_np_dtype(output_datatype)
+            output = output.astype(dtype)
         return (output,)

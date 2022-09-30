@@ -157,18 +157,17 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
 
 
 class STFT(OpRun):
-    def _run(self, x, frame_step, window=None, frame_length=None):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, x, frame_step, window=None, frame_length=None, onesided=True, inverse=True):  # type: ignore
         if frame_length is None:
             frame_length = x.shape[-2]
         hop_length = frame_length // 4
         if window is None:
             window = np.ones(x.shape[-2], dtype=x.dtype)
-        if hasattr(self, "inverse") and self.inverse:  # type: ignore
-            res = _istft(x, [frame_length], hop_length, window, onesided=self.onesided)  # type: ignore
+        if inverse:
+            res = _istft(x, [frame_length], hop_length, window, onesided=onesided)
         else:
             n_frames = 1  # int(1 + (x.shape[-2] - frame_length) / hop_length)
             res = _stft(
-                x, [frame_length], hop_length, n_frames, window, onesided=self.onesided  # type: ignore
+                x, [frame_length], hop_length, n_frames, window, onesided=onesided
             )
         return (res.astype(x.dtype),)

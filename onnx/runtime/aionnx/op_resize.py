@@ -213,29 +213,42 @@ def _interpolate_nd(  # type: ignore
 
 
 class Resize(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-        if self.mode == "nearest":  # type: ignore
-            if self.nearest_mode is not None:  # type: ignore
-                self.fct = lambda x: _nearest_coeffs(x, mode=self.nearest_mode)  # type: ignore
-            else:
-                self.fct = _nearest_coeffs
-        elif self.mode == "cubic":  # type: ignore
-            self.fct = _cubic_coeffs
-        elif self.mode == "linear":  # type: ignore
-            self.fct = _linear_coeffs
-        else:
-            raise ValueError(f"Unexpected value {self.mode!r} for mode.")  # type: ignore
+    def _run(  # type: ignore
+        self,
+        X,
+        roi,
+        scales=None,
+        sizes=None,
+        antialias=None,
+        axes=None,
+        coordinate_transformation_mode=None,
+        cubic_coeff_a=None,
+        exclude_outside=None,
+        extrapolation_value=None,
+        keep_aspect_ratio_policy=None,
+        mode=None,
+        nearest_mode=None,
+    ):
 
-    def _run(self, X, roi, scales=None, sizes=None):  # type: ignore
-        # TODO: support overridden attributes.
+        if mode == "nearest":  # type: ignore
+            if nearest_mode is not None:
+                fct = lambda x: _nearest_coeffs(x, mode=nearest_mode)
+            else:
+                fct = _nearest_coeffs
+        elif mode == "cubic":
+            fct = _cubic_coeffs
+        elif mode == "linear":
+            fct = _linear_coeffs
+        else:
+            raise ValueError(f"Unexpected value {mode!r} for mode.")
+
         output = _interpolate_nd(
             X,
-            self.fct,
+            fct,
             scale_factors=scales,
             output_size=sizes,
             roi=roi,
-            coordinate_transformation_mode=self.coordinate_transformation_mode,  # type: ignore
-            extrapolation_value=self.extrapolation_value,  # type: ignore
+            coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
+            extrapolation_value=extrapolation_value,  # type: ignore
         ).astype(X.dtype)
         return (output,)

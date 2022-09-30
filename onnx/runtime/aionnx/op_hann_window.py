@@ -15,8 +15,7 @@ class HannWindow(_CommonWindow):
     <https://pytorch.org/docs/stable/generated/torch.hann_window.html>`_
     """
 
-    def _run(self, size):  # type: ignore
-        # TODO: support overridden attributes.
-        ni, N_1 = self._begin(size)
+    def _run(self, size, output_datatype=None, periodic=None):  # type: ignore
+        ni, N_1 = self._begin(size, periodic, output_datatype)
         res = np.sin(ni * 3.1415 / N_1) ** 2
-        return self._end(size, res)
+        return self._end(size, res, output_datatype)

@@ -120,8 +120,6 @@ from .op_prelu import PRelu
 from .op_qlinear_conv import QLinearConv
 from .op_qlinear_matmul import QLinearMatMul
 from .op_quantize_linear import QuantizeLinear
-
-# from .op_qlinear_conv import QLinearConv
 from .op_random_normal import RandomNormal
 from .op_random_normal_like import RandomNormalLike
 from .op_random_uniform import RandomUniform
@@ -177,6 +175,8 @@ from .op_sub import Sub
 from .op_sum import Sum
 from .op_tan import Tan
 from .op_tanh import Tanh
+
+# from .op_tfidf_vectorizer import op_tfidf_vectorizer
 from .op_thresholded_relu import ThresholdedRelu
 from .op_tile import Tile
 from .op_topk import TopK, TopK_1, TopK_10, TopK_11

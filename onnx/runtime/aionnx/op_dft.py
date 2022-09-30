@@ -94,12 +94,11 @@ def _cifft(
 
 
 class DFT(OpRun):
-    def _run(self, x, dft_length=None):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, x, dft_length=None, axis=None, inverse=None, onesided=None):  # type: ignore
         if dft_length is None:
-            dft_length = np.array([x.shape[self.axis]], dtype=np.int64)  # type: ignore
-        if self.inverse:  # type: ignore
-            res = _cifft(x, dft_length, axis=self.axis, onesided=self.onesided)  # type: ignore
+            dft_length = np.array([x.shape[axis]], dtype=np.int64)
+        if inverse:  # type: ignore
+            res = _cifft(x, dft_length, axis=axis, onesided=onesided)
         else:
-            res = _cfft(x, dft_length, axis=self.axis, onesided=self.onesided)  # type: ignore
+            res = _cfft(x, dft_length, axis=axis, onesided=onesided)
         return (res.astype(x.dtype),)

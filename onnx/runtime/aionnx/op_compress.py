@@ -7,6 +7,5 @@ from ..op_run import OpRun
 
 
 class Compress(OpRun):
-    def _run(self, x, condition):  # type: ignore
-        # TODO: support overridden attributes.
-        return (np.compress(condition, x, axis=self.axis),)  # type: ignore
+    def _run(self, x, condition, axis=None):  # type: ignore
+        return (np.compress(condition, x, axis=axis),)  # type: ignore

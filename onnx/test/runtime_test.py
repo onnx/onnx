@@ -1489,6 +1489,5 @@ class TestRuntimeInference(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # TestRuntimeInference().test_col2im()
-    TestRuntimeInference().test_col2im_2x3_pads()
+    TestRuntimeInference().test_function_attribute()
     unittest.main(verbosity=2)

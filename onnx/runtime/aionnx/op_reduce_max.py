@@ -7,7 +7,6 @@ from ._op import OpRunReduceNumpy
 
 
 class ReduceMax(OpRunReduceNumpy):
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
-        axes = tuple(self.axes) if self.axes else None  # type: ignore
-        return (np.maximum.reduce(data, axis=axes, keepdims=self.keepdims == 1),)  # type: ignore
+    def _run(self, data, axes=None, keepdims=None):  # type: ignore
+        axes = tuple(axes) if axes else None
+        return (np.maximum.reduce(data, axis=axes, keepdims=keepdims == 1),)

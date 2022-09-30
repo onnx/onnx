@@ -3,20 +3,16 @@
 
 import numpy as np  # type: ignore
 
-from ._op import OpRunUnaryNum
+from ..op_run import OpRun
 
 
-class Transpose(OpRunUnaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnaryNum.__init__(self, onnx_node, run_params)
-        self.perm_ = None if (self.perm is None or len(self.perm) == 0) else self.perm  # type: ignore
-
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
-        if self.perm_ is None:
+class Transpose(OpRun):
+    def _run(self, data, perm=None):  # type: ignore
+        perm_ = None if (perm is None or len(perm) == 0) else perm
+        if perm_ is None:
             return (np.transpose(data),)
-        if len(self.perm_) != len(data.shape):
+        if len(perm_) != len(data.shape):
             raise RuntimeError(
-                f"Inconsistent permutation {self.perm_!r} with shape {data.shape!r}."
+                f"Inconsistent permutation {perm_!r} with shape {data.shape!r}."
             )
-        return (np.transpose(data, axes=self.perm_),)
+        return (np.transpose(data, axes=perm_),)

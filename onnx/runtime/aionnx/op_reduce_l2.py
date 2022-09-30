@@ -7,10 +7,9 @@ from ._op import OpRunReduceNumpy
 
 
 class ReduceL2(OpRunReduceNumpy):
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, data, axes=None, keepdims=None):  # type: ignore
         return (
-            np.sqrt(
-                np.sum(np.square(data), axis=self.axes, keepdims=self.keepdims)  # type: ignore
-            ).astype(dtype=data.dtype),
+            np.sqrt(np.sum(np.square(data), axis=axes, keepdims=keepdims)).astype(
+                dtype=data.dtype
+            ),
         )

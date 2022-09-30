@@ -68,7 +68,9 @@ class Inference:
             op_domain = "custom"
 
             def _run(self, x, alpha=None):  # type: ignore
-                alpha = alpha or self.alpha  # type: ignore
+                # None must be the default value, it is automatically
+                # replaced by class OpRun with either the default value
+                # defined by ONNX or the value specified in the NodeProto.
                 return (1 / (x + alpha),)
 
     `alpha` is an attribute. It can be defined by the onnx node or

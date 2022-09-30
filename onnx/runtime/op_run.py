@@ -316,7 +316,7 @@ class OpRun(ABC):
         :return: outputs
         """
         raise NotImplementedError(
-            f"Method '_run' or 'to_python' should be overwritten for operator {self.__class__.__name__!r}."
+            f"Method '_run' must be overwritten for operator {self.__class__.__name__!r}."
         )
 
     def run(self, *args, linked_attributes=None, **kwargs):  # type: ignore
@@ -350,6 +350,15 @@ class OpRun(ABC):
                     overridden_attributes[att] = linked_attributes[v.name]
 
         self._log("-- begin %s.run(%d inputs)", self.__class__.__name__, len(args))
+        kwargs = kwargs.copy()
+        for att in self.attributes_names_:
+            if att in overridden_attributes or att in kwargs:
+                continue
+            if not hasattr(self, att):
+                raise NameError(
+                    f"Attribute {att!r} is missing in operator {self.__class__.__name__!r}."
+                )
+            kwargs[att] = getattr(self, att)
         try:
             if len(overridden_attributes) > 0:
                 res = self._run(*args, **overridden_attributes, **kwargs)
@@ -357,7 +366,8 @@ class OpRun(ABC):
                 res = self._run(*args, **kwargs)
         except (TypeError, AttributeError) as e:
             raise TypeError(
-                f"Issues with types {[type(_) for _ in args]} "
+                f"Issues with types {[type(_) for _ in args]} and attributes "
+                f"{list(sorted(kwargs))} and linked attributes={list(sorted(overridden_attributes))} "
                 f"(operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
@@ -478,7 +488,7 @@ class OpFunction(OpRun):
             name: getattr(self, name) for name in self.impl_.attributes_
         }
 
-    def _run(self, *inputs):  # type: ignore # pylint: disable=W0221
+    def _run(self, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
         if len(self.impl_.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
@@ -486,7 +496,9 @@ class OpFunction(OpRun):
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         feeds = dict(zip(self.impl_.input_names, inputs))
-        results = self.impl_.run(None, feeds, attributes=self.attributes_)
+        attributes = self.attributes_.copy()
+        attributes.update(kwargs)
+        results = self.impl_.run(None, feeds, attributes=attributes)
         if len(self.impl_.output_names) != len(results):
             raise RuntimeError(
                 f"Mismatch lengths between the number of outputs {len(results)} "

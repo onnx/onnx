@@ -21,7 +21,7 @@ class If(OpRun):
         """
         return True
 
-    def _run(self, cond, context=None):  # type: ignore
+    def _run(self, cond, context=None, else_branch=None, then_branch=None):  # type: ignore
 
         if len(cond.shape) > 0:
             if all(cond):

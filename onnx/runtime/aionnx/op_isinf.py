@@ -3,17 +3,16 @@
 
 import numpy as np  # type: ignore
 
-from ._op import OpRunUnary
+from ..op_run import OpRun
 
 
-class IsInf(OpRunUnary):
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
-        if self.detect_negative:  # type: ignore
-            if self.detect_positive:  # type: ignore
+class IsInf(OpRun):
+    def _run(self, data, detect_negative=None, detect_positive=None):  # type: ignore
+        if detect_negative:
+            if detect_positive:
                 return (np.isinf(data),)
             return (np.isneginf(data),)
-        if self.detect_positive:  # type: ignore
+        if detect_positive:
             return (np.isposinf(data),)
         res = np.full(data.shape, dtype=np.bool_, fill_value=False)
         return (res,)

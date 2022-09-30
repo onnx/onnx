@@ -80,7 +80,22 @@ class CommonRNN(OpRun):
             output = np.expand_dims(concatenated, 1)
         return output, h_list[-1]
 
-    def _run(self, X, W, R, B=None, sequence_lens=None, initial_h=None):  # type: ignore
+    def _run(  # type: ignore
+        self,
+        X,
+        W,
+        R,
+        B=None,
+        sequence_lens=None,
+        initial_h=None,
+        activation_alpha=None,
+        activation_beta=None,
+        activations=None,
+        clip=None,
+        direction=None,
+        hidden_size=None,
+        layout=None,
+    ):
         # TODO: support overridden attributes.
         self.num_directions = W.shape[0]
 

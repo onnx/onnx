@@ -5,10 +5,10 @@ from ._op_random_common import _CommonRandom
 
 
 class RandomNormal(_CommonRandom):
-    def _run(self):  # type: ignore
-        # TODO: support overridden attributes.
-        state = self._get_state()
-        res = state.randn(*self.shape).astype(self.numpy_type)  # type: ignore
-        res *= self.scale  # type: ignore
-        res += self.mean  # type: ignore
-        return (res.astype(self.numpy_type),)
+    def _run(self, dtype=None, mean=None, scale=None, seed=None, shape=None):  # type: ignore
+        state = self._get_state(seed)
+        numpy_type = self.numpy_type(dtype)
+        res = state.randn(*shape).astype(numpy_type)  # type: ignore
+        res *= scale  # type: ignore
+        res += mean  # type: ignore
+        return (res.astype(numpy_type),)

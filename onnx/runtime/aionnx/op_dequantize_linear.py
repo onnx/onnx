@@ -7,8 +7,7 @@ from ..op_run import OpRun
 
 
 class DequantizeLinear(OpRun):
-    def _run(self, *args):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, *args, axis=None):  # type: ignore
         if len(args[1].shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
 
@@ -23,7 +22,7 @@ class DequantizeLinear(OpRun):
 
             if len(x_scale.shape) > 0:
                 new_shape = [1 for s in args[0].shape]
-                new_shape[self.axis] = len(x_scale)  # type: ignore
+                new_shape[axis] = len(x_scale)
                 x = args[0].astype(np.float32) - x_scale.reshape(new_shape)
                 y = x * args[1].reshape(new_shape)
             else:
@@ -31,7 +30,7 @@ class DequantizeLinear(OpRun):
                 y = x * args[1]
         elif len(args[1].shape) > 0:
             new_shape = [1 for s in args[0].shape]
-            new_shape[self.axis] = len(x_scale)  # type: ignore
+            new_shape[axis] = len(x_scale)
             y = args[0].astype(np.float32) * x_scale.reshape(new_shape)
         else:
             y = args[0].astype(np.float32) * x_scale

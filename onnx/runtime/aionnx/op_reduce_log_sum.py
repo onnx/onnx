@@ -7,10 +7,9 @@ from ._op import OpRunReduceNumpy
 
 
 class ReduceLogSum(OpRunReduceNumpy):
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
-        tax = tuple(self.axes) if self.axes else None  # type: ignore
-        res = np.sum(data, axis=tax, keepdims=self.keepdims)  # type: ignore
+    def _run(self, data, axes=None, keepdims=None):  # type: ignore
+        tax = tuple(axes) if axes else None
+        res = np.sum(data, axis=tax, keepdims=keepdims)
         if len(res.shape) > 0:
             return (np.log(res, out=res),)
         return (np.log(res),)

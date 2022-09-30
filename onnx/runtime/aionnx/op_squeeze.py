@@ -9,23 +9,19 @@ from ._op import OpRunUnaryNum
 
 
 class Squeeze_1(OpRunUnaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnaryNum.__init__(self, onnx_node, run_params)
-        if isinstance(self.axes, np.ndarray):  # type: ignore
-            self.axes = tuple(self.axes)  # type: ignore
-        elif self.axes in [[], tuple()]:
-            self.axes = None  # type: ignore
-        elif isinstance(self.axes, list):
-            self.axes = tuple(self.axes)
-
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
-        if isinstance(self.axes, (tuple, list)):
+    def _run(self, data, axes=None):  # type: ignore
+        if isinstance(axes, np.ndarray):
+            axes = tuple(axes)
+        elif axes in [[], tuple()]:
+            axes = None
+        elif isinstance(axes, list):
+            axes = tuple(axes)
+        if isinstance(axes, (tuple, list)):
             sq = data
-            for a in reversed(self.axes):
+            for a in reversed(axes):
                 sq = np.squeeze(sq, axis=a)
         else:
-            sq = np.squeeze(data, axis=self.axes)
+            sq = np.squeeze(data, axis=axes)
         return (sq,)
 
 

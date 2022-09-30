@@ -183,10 +183,6 @@ def col2im_naive_implementation(data, image_shape, kernel_shape, dilations, pads
 
 class Col2Im(OpRun):
     def _run(self, data, image_shape, block_shape, dilations=None, pads=None, strides=None):  # type: ignore
-        dilations = dilations or getattr(self, "dilations", None)
-        pads = pads or getattr(self, "pads", None)
-        strides = strides or getattr(self, "strides", None)
-
         if dilations is None:
             dilations = [1 for s in image_shape]
         if pads is None:

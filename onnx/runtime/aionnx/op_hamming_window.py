@@ -16,10 +16,9 @@ class HammingWindow(_CommonWindow):
     `alpha=0.54, beta=0.46`
     """
 
-    def _run(self, size):  # type: ignore
-        # TODO: support overridden attributes.
-        ni, N_1 = self._begin(size)
+    def _run(self, size, output_datatype=None, periodic=None):  # type: ignore
+        ni, N_1 = self._begin(size, periodic, output_datatype)
         alpha = 25.0 / 46.0
         beta = 1 - alpha
         res = alpha - np.cos(ni * 3.1415 * 2 / N_1) * beta
-        return self._end(size, res)
+        return self._end(size, res, output_datatype)

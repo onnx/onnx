@@ -26,7 +26,7 @@ class Loop(OpRun):
         """
         return True
 
-    def _run(self, M, cond, *args, context=None):  # type: ignore
+    def _run(self, M, cond, *args, context=None, body=None):  # type: ignore
         if len(args) > 0:
             v_initial = args[0]
             args = args[1:]

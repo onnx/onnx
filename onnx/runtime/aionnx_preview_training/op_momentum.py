@@ -17,23 +17,30 @@ def _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: igno
 
 
 class Momentum(OpRunTraining):
-    def _run(self, *data):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, *data, alpha=None, beta=None, mode=None, norm_coefficient=None):  # type: ignore
+        if mode != "standard":
+            raise NotImplementedError(f"Momentum not implemented for mode={mode!r}.")
         if len(data) == 5:
-            return self._run1(*data)
+            return self._run1(
+                *data, norm_coefficient=norm_coefficient, alpha=alpha, beta=beta
+            )
         n = (len(data) - 2) // 3
         xs = []
         vs = []
         for i in range(0, n):
             a, b = self._run1(  # type: ignore
-                *data[:2], data[2 + i], data[2 + n + i], data[2 + n * 2 + i]
+                *data[:2],
+                data[2 + i],
+                data[2 + n + i],
+                data[2 + n * 2 + i],
+                norm_coefficient=norm_coefficient,
+                alpha=alpha,
+                beta=beta,
             )
             xs.append(a)
             vs.append(b)
         return tuple(xs + vs)
 
-    def _run1(self, r, t, x, g, v):  # type: ignore
-        x_new, v_new = _apply_momentum(
-            r, t, x, g, v, self.norm_coefficient, self.alpha, self.beta  # type: ignore
-        )
+    def _run1(self, r, t, x, g, v, norm_coefficient=None, alpha=None, beta=None):  # type: ignore
+        x_new, v_new = _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta)
         return x_new, v_new

@@ -15,22 +15,24 @@ class Shape_1(OpRun):
 
 
 class Shape_15(Shape_1):
-    def _interval(self, n: int) -> Optional[Tuple[int, int]]:
-        if self.start == 0:  # type: ignore
-            if self.end is None or np.isnan(self.end):  # type: ignore
+    @staticmethod
+    def _interval(
+        n: int, start: Optional[int], end: Optional[int]
+    ) -> Optional[Tuple[int, int]]:
+        if start == 0:
+            if end is None or np.isnan(end):
                 return None
-            if self.end < 0:  # type: ignore
-                return (0, n + self.end)  # type: ignore
-            return (0, self.end)  # type: ignore
-        if self.end is None or np.isnan(self.end):  # type: ignore
-            return (self.start, n)  # type: ignore
-        if self.end < 0:  # type: ignore
-            return (self.start, n + self.end)  # type: ignore
-        return (self.start, self.end)  # type: ignore
+            if end < 0:
+                return (0, n + end)
+            return (0, end)
+        if end is None or np.isnan(end):
+            return (start, n)
+        if end < 0:
+            return (start, n + end)
+        return (start, end)
 
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
-        ab = self._interval(len(data.shape))
+    def _run(self, data, end=None, start=None):  # type: ignore
+        ab = self._interval(len(data.shape), start=start, end=end)
         if ab is None:
             return (np.array(data.shape, dtype=np.int64),)
         return (np.array(data.shape[ab[0] : ab[1]], dtype=np.int64),)

@@ -7,17 +7,13 @@ from ..op_run import OpRun
 
 
 class Einsum(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-        if not isinstance(self.equation, (str, bytes)):  # type: ignore
-            raise TypeError(f"equation must be string but is {type(self.equation)!r}.")  # type: ignore
-        self.equation = self.equation.strip()  # type: ignore
-        if len(self.equation) == 0:  # type: ignore
+    def _run(self, *args, equation=None):  # type: ignore
+        if not isinstance(equation, str):
+            raise TypeError(f"equation must be string but is {type(equation)!r}.")
+        equation = equation.strip()
+        if len(equation) == 0:
             raise TypeError("equation is empty.")
-
-    def _run(self, *args):  # type: ignore
-        # TODO: support overridden attributes.
         try:
-            return (np.einsum(self.equation, *args, optimize=True),)  # type: ignore
+            return (np.einsum(equation, *args, optimize=True),)
         except TypeError:
-            return (np.einsum(self.equation, *args),)  # type: ignore
+            return (np.einsum(equation, *args),)

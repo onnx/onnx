@@ -15,7 +15,6 @@ class AveragePool(CommonPool):
         strides=None,
         count_include_pad=None,
     ):
-        count_include_pad = count_include_pad or self.count_include_pad  # type: ignore
         return CommonPool._run(
             self,
             "AVG",

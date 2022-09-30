@@ -48,7 +48,7 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
 
 
 class _CommonTopK(OpRun):
-    def _common_run(self, data, ink, largest=1):  # type: ignore
+    def _common_run(self, data, ink, axis, largest=1):  # type: ignore
         """
         Runtime for operator *TopK*.
         The implementation is not the most efficient
@@ -62,13 +62,13 @@ class _CommonTopK(OpRun):
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
         k = ink[0]
-        axis = self.axis if self.axis >= 0 else (self.axis + len(data.shape))  # type: ignore
+        axis = axis if axis >= 0 else (axis + len(data.shape))  # type: ignore
         sort, sorti = topk_sorted_implementation(data, k, axis, largest)
         return (sort, sorti.astype(np.int64))
 
 
 class TopK_1(_CommonTopK):
-    def _run(self, data):  # type: ignore
+    def _run(self, data, k=None, axis=None):  # type: ignore
         """
         Runtime for operator *TopK*.
         The implementation is not the most efficient
@@ -81,12 +81,11 @@ class TopK_1(_CommonTopK):
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
-        # TODO: support overridden attributes.
-        return _CommonTopK._common_run(self, data, [self.k])  # type: ignore
+        return _CommonTopK._common_run(self, data, [k], axis=axis)  # type: ignore
 
 
 class TopK_10(_CommonTopK):
-    def _run(self, data, ink):  # type: ignore
+    def _run(self, data, ink, axis=None):  # type: ignore
         """
         Runtime for operator *TopK*.
         The implementation is not the most efficient
@@ -99,16 +98,11 @@ class TopK_10(_CommonTopK):
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
-        return _CommonTopK._common_run(self, data, ink)
+        return _CommonTopK._common_run(self, data, ink, axis=axis)
 
 
 class TopK_11(_CommonTopK):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        _CommonTopK.__init__(self, onnx_node, run_params)
-        if self.sorted not in (True, 1):  # type: ignore
-            raise RuntimeError("TopK does not implement anything for sorted=0.")
-
-    def _run(self, data, ink):  # type: ignore
+    def _run(self, data, ink, axis=None, largest=None, sorted=None):  # type: ignore
         """
         Runtime for operator *TopK*.
         The implementation is not the most efficient
@@ -121,8 +115,9 @@ class TopK_11(_CommonTopK):
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
-        # TODO: support overridden attributes.
-        return _CommonTopK._common_run(self, data, ink, self.largest)  # type: ignore
+        if sorted not in (True, 1):
+            raise RuntimeError("TopK does not implement anything for sorted=0.")
+        return _CommonTopK._common_run(self, data, ink, axis=axis, largest=largest)
 
 
 if onnx_opset_version() >= 11:

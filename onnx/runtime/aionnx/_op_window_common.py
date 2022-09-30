@@ -3,22 +3,22 @@
 
 import numpy as np  # type: ignore
 
-from ...mapping import TENSOR_TYPE_MAP
+from ...helper import tensor_dtype_to_np_dtype
 from ..op_run import OpRun
 
 
 class _CommonWindow(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-        self.dtype = TENSOR_TYPE_MAP[self.output_datatype].np_dtype  # type: ignore
-
-    def _begin(self, size):  # type: ignore
-        if self.periodic == 1:  # type: ignore
+    @staticmethod
+    def _begin(size, periodic, output_datatype):  # type: ignore
+        dtype = tensor_dtype_to_np_dtype(output_datatype)
+        if periodic == 1:
             N_1 = size
         else:
             N_1 = size - 1
-        ni = np.arange(size, dtype=self.dtype)
+        ni = np.arange(size, dtype=dtype)
         return ni, N_1
 
-    def _end(self, size, res):  # type: ignore
-        return (res.astype(self.dtype),)
+    @staticmethod
+    def _end(size, res, output_datatype):  # type: ignore
+        dtype = tensor_dtype_to_np_dtype(output_datatype)
+        return (res.astype(dtype),)

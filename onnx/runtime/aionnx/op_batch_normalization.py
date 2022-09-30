@@ -50,19 +50,20 @@ def _batchnorm_training_mode(
 
 
 class BatchNormalization_9(OpRun):
-    def _run(self, x, scale, bias, mean, var):  # type: ignore
-        res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=self.epsilon)  # type: ignore
+    def _run(self, x, scale, bias, mean, var, epsilon=None):  # type: ignore
+        res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
         return (res,)
 
 
 class BatchNormalization_14(OpRun):
-    def _run(self, x, scale, bias, mean, var):  # type: ignore
-        # TODO: support overridden attributes.
-        if self.training_mode == 0:  # type: ignore
-            res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=self.epsilon)  # type: ignore
+    def _run(  # type: ignore
+        self, x, scale, bias, mean, var, epsilon=None, momentum=None, training_mode=None
+    ):
+        if training_mode == 0:  # type: ignore
+            res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
             return (res,)
         res, __, _, output_mean, output_var = _batchnorm_training_mode(
-            x, scale, bias, mean, var, self.momentum, self.epsilon  # type: ignore
+            x, scale, bias, mean, var, momentum, epsilon
         )
         return res, output_mean, output_var
 

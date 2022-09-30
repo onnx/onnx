@@ -9,22 +9,19 @@ from ._op import OpRunReduceNumpy
 
 
 class ReduceSum_1(OpRunReduceNumpy):
-    def _run(self, x):  # type: ignore # pylint: disable=W0221
-        # TODO: support overridden attributes.
-        return (
-            np.sum(x, axis=self.axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
-        )
+    def _run(self, x, axes=None, keepdims=None):  # type: ignore # pylint: disable=W0221
+        return (np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype),)
 
 
 class ReduceSum_11(ReduceSum_1):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        ReduceSum_1.__init__(self, onnx_node, run_params)
+    pass
 
 
 class ReduceSum_13(OpRunReduceNumpy):
-    def run(self, x, axes=None):  # type: ignore
-        res = self._run(x, axes=axes)
-        if not self.keepdims and not isinstance(res[0], np.ndarray):  # type: ignore
+    def run(self, x, axes=None, keepdims=None):  # type: ignore
+        keepdims = keepdims or self.keepdims
+        res = self._run(x, axes=axes, keepdims=keepdims)
+        if not keepdims and not isinstance(res[0], np.ndarray):
             res = (np.array([res[0]], dtype=res[0].dtype),)
         if res[0].dtype != x.dtype:
             raise RuntimeTypeError(
@@ -33,8 +30,7 @@ class ReduceSum_13(OpRunReduceNumpy):
             )
         return res
 
-    def _run(self, x, axes=None):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, x, axes=None, keepdims=None):  # type: ignore
         if (
             axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
         ) and self.noop_with_empty_axes:  # type: ignore
@@ -50,11 +46,11 @@ class ReduceSum_13(OpRunReduceNumpy):
             axes = None
         try:
             return (
-                np.sum(x, axis=axes, keepdims=self.keepdims, dtype=x.dtype),  # type: ignore
+                np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype),  # type: ignore
             )
         except TypeError as e:
             raise TypeError(
-                f"Unable to reduce shape {x.shape!r} with axes={axes!r}."
+                f"Unable to reduce shape {x.shape!r} with axes={axes!r} and keepdims={keepdims}."
             ) from e
 
 

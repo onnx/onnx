@@ -1,17 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,W0221
 
-import locale
+import locale as pylocale
 import unicodedata
 import warnings
 
 import numpy as np  # type: ignore
 
-from ..op_run import RuntimeTypeError
-from ._op import OpRunUnary
+from ..op_run import RuntimeTypeError, OpRun
 
 
-class StringNormalizer(OpRunUnary):
+class StringNormalizer(OpRun):
     """
     The operator is not really threadsafe as python cannot
     play with two locales at the same time. stop words
@@ -19,32 +18,48 @@ class StringNormalizer(OpRunUnary):
     usually happens after this steps.
     """
 
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnary.__init__(self, onnx_node, run_params)
-        self.slocale = self.locale  # type: ignore
-        if self.stopwords is None:  # type: ignore
-            self.raw_stops = set()
-            self.stops = set()
+    def _run(  # type: ignore
+        self,
+        x,
+        case_change_action=None,
+        is_case_sensitive=None,
+        locale=None,
+        stopwords=None,
+    ):
+        slocale = locale
+        if stopwords is None:
+            raw_stops = set()
+            stops = set()
         else:
-            self.raw_stops = set(self.stopwords)  # type: ignore
-            if self.case_change_action == "LOWER":  # type: ignore
-                self.stops = set(w.lower() for w in self.stopwords)  # type: ignore
-            elif self.case_change_action == "UPPER":  # type: ignore
-                self.stops = set(w.upper() for w in self.stopwords)  # type: ignore
+            raw_stops = set(stopwords)
+            if case_change_action == "LOWER":
+                stops = set(w.lower() for w in stopwords)
+            elif case_change_action == "UPPER":
+                stops = set(w.upper() for w in stopwords)
             else:
-                self.stops = set(self.stopwords)  # type: ignore
-
-    def _run(self, x):  # type: ignore
-        """
-        Normalizes strings.
-        """
-        # TODO: support overridden attributes.
+                stops = set(stopwords)
         res = np.empty(x.shape, dtype=x.dtype)
         if len(x.shape) == 2:
             for i in range(0, x.shape[1]):
-                self._run_column(x[:, i], res[:, i])
+                self._run_column(
+                    x[:, i],
+                    res[:, i],
+                    slocale=slocale,
+                    stops=stops,
+                    raw_stops=raw_stops,
+                    is_case_sensitive=is_case_sensitive,
+                    case_change_action=case_change_action,
+                )
         elif len(x.shape) == 1:
-            self._run_column(x, res)
+            self._run_column(
+                x,
+                res,
+                slocale=slocale,
+                stops=stops,
+                raw_stops=raw_stops,
+                is_case_sensitive=is_case_sensitive,
+                case_change_action=case_change_action,
+            )
         else:
             raise RuntimeTypeError("x must be a matrix or a vector.")
         if len(res.shape) == 2 and res.shape[0] == 1:
@@ -57,52 +72,60 @@ class StringNormalizer(OpRunUnary):
                 res = np.array([""])
         return (res,)
 
-    def _run_column(self, cin, cout):  # type: ignore
-        """
-        Normalizes string in a columns.
-        """
-        if locale.getlocale() != self.slocale:
+    @staticmethod
+    def _run_column(  # type: ignore
+        cin,
+        cout,
+        slocale=None,
+        stops=None,
+        raw_stops=None,
+        is_case_sensitive=None,
+        case_change_action=None,
+    ):
+        if pylocale.getlocale() != slocale:
             try:
-                locale.setlocale(locale.LC_ALL, self.slocale)
-            except locale.Error as e:
+                pylocale.setlocale(pylocale.LC_ALL, slocale)
+            except pylocale.Error as e:
                 warnings.warn(
-                    f"Unknown local setting {self.slocale!r} (current: {locale.getlocale()!r}) - {e!r}."
+                    f"Unknown local setting {slocale!r} (current: {pylocale.getlocale()!r}) - {e!r}."
                 )
         cout[:] = cin[:]
 
         for i in range(0, cin.shape[0]):
             if isinstance(cout[i], float):
                 # nan
-                cout[i] = ""  # pragma: no cover
+                cout[i] = ""
             else:
-                cout[i] = self.strip_accents_unicode(cout[i])
+                cout[i] = StringNormalizer.strip_accents_unicode(cout[i])
 
-        if self.is_case_sensitive and len(self.stops) > 0:  # type: ignore
+        if is_case_sensitive and len(stops) > 0:
             for i in range(0, cin.shape[0]):
-                cout[i] = self._remove_stopwords(cout[i], self.raw_stops)
+                cout[i] = StringNormalizer._remove_stopwords(cout[i], raw_stops)
 
-        if self.case_change_action == "LOWER":  # type: ignore
+        if case_change_action == "LOWER":
             for i in range(0, cin.shape[0]):
                 cout[i] = cout[i].lower()
-        elif self.case_change_action == "UPPER":  # type: ignore
+        elif case_change_action == "UPPER":
             for i in range(0, cin.shape[0]):
                 cout[i] = cout[i].upper()
-        elif self.case_change_action != "NONE":  # type: ignore
+        elif case_change_action != "NONE":
             raise RuntimeError(
-                f"Unknown option for case_change_action: {self.case_change_action!r}."  # type: ignore
+                f"Unknown option for case_change_action: {case_change_action!r}."
             )
 
-        if not self.is_case_sensitive and len(self.stops) > 0:  # type: ignore
+        if not is_case_sensitive and len(stops) > 0:
             for i in range(0, cin.shape[0]):
-                cout[i] = self._remove_stopwords(cout[i], self.stops)
+                cout[i] = StringNormalizer._remove_stopwords(cout[i], stops)
 
         return cout
 
-    def _remove_stopwords(self, text, stops):  # type: ignore
+    @staticmethod
+    def _remove_stopwords(text, stops):  # type: ignore
         spl = text.split(" ")
         return " ".join(filter(lambda s: s not in stops, spl))
 
-    def strip_accents_unicode(self, s):  # type: ignore
+    @staticmethod
+    def strip_accents_unicode(s):  # type: ignore
         """
         Transforms accentuated unicode symbols into their simple counterpart.
         Source: `sklearn/feature_extraction/text.py

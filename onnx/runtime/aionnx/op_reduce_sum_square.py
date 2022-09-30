@@ -7,6 +7,5 @@ from ._op import OpRunReduceNumpy
 
 
 class ReduceSumSquare(OpRunReduceNumpy):
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
-        return (np.sum(np.square(data), axis=self.axes, keepdims=self.keepdims),)  # type: ignore
+    def _run(self, data, axes=None, keepdims=None):  # type: ignore
+        return (np.sum(np.square(data), axis=axes, keepdims=keepdims),)

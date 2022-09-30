@@ -35,9 +35,8 @@ def gather_numpy(self: np.ndarray, dim: int, index: np.ndarray) -> np.ndarray:
 
 
 class GatherElements(OpRun):
-    def _run(self, data, indices):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, data, indices, axis=None):  # type: ignore
         if indices.size == 0:
             return (np.empty((0,), dtype=data.dtype),)
-        y = gather_numpy(data, self.axis, indices)  # type: ignore
+        y = gather_numpy(data, axis, indices)
         return (y,)

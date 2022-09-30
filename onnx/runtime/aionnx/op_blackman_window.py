@@ -16,11 +16,9 @@ class BlackmanWindow(_CommonWindow):
     <https://pytorch.org/docs/stable/generated/torch.blackman_window.html>`_
     """
 
-    def _run(self, size):  # type: ignore
-        # TODO: support overridden attributes.
-        # ni, N_1 = self._begin(size)
-        ni, N_1 = np.arange(size, dtype=self.dtype), size
-        if self.periodic == 0:  # type: ignore
+    def _run(self, size, output_datatype=None, periodic=None):  # type: ignore
+        ni, N_1 = np.arange(size), size
+        if periodic == 0:
             N_1 = N_1 - 1
         alpha = 0.42
         beta = 0.08
@@ -28,4 +26,4 @@ class BlackmanWindow(_CommonWindow):
         y = np.cos((ni * (pi * 2)) / N_1) * (-0.5)
         y += np.cos((ni * (pi * 4)) / N_1) * beta
         y += alpha
-        return self._end(size, y)
+        return self._end(size, y, output_datatype)

@@ -5,11 +5,10 @@ from ._op_random_common import _CommonRandom
 
 
 class RandomUniform(_CommonRandom):
-    def _run(self):  # type: ignore
-        # TODO: support overridden attributes.
-        dtype = self._dtype()
-        state = self._get_state()
-        res = state.rand(*self.shape).astype(dtype)  # type: ignore
-        res *= self.high - self.low  # type: ignore
-        res += self.low  # type: ignore
+    def _run(self, dtype=None, high=None, low=None, seed=None, shape=None):  # type: ignore
+        dtype = self._dtype(dtype=dtype)
+        state = self._get_state(seed)
+        res = state.rand(*shape).astype(dtype)  # type: ignore
+        res *= high - low  # type: ignore
+        res += low  # type: ignore
         return (res.astype(dtype),)

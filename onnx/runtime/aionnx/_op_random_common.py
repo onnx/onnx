@@ -14,35 +14,41 @@ class _CommonRandom(OpRun):
             raise ValueError(  # pragma: no cover
                 f"shape cannot be empty for operator {self.__class__.__name__}."
             )
-        self.numpy_type = TENSOR_TYPE_MAP[self.dtype].np_dtype if (hasattr(self, "dtype") and self.dtype is not None) else None  # type: ignore
 
-    def _dtype(self, *data, dtype_first=False):  # type: ignore
-        if dtype_first and self.numpy_type is not None:
-            if self.dtype != 0:  # type: ignore
-                return self.numpy_type
+    @staticmethod
+    def numpy_type(dtype):
+        return TENSOR_TYPE_MAP[dtype].np_dtype
+
+    @staticmethod
+    def _dtype(*data, dtype=None, dtype_first=False):  # type: ignore
+        numpy_type = _CommonRandom.numpy_type(dtype)
+        if dtype_first and numpy_type is not None:
+            if dtype != 0:  # type: ignore
+                return numpy_type
             if len(data) > 0:
                 return data[0].dtype
             raise RuntimeError(
-                f"dtype cannot be None for operator {self.__class__.__name__!r}, "
-                f"self.numpy_type={self.numpy_type}, len(data)={len(data)}."
+                f"dtype cannot be None for a random operator {_CommonRandom.__name__!r}, "
+                f"numpy_type={numpy_type}, len(data)={len(data)}."
             )
         res = None
         if len(data) == 0:
-            res = self.numpy_type
-        elif self.numpy_type is not None:
-            res = self.numpy_type
+            res = numpy_type
+        elif numpy_type is not None:
+            res = numpy_type
         elif hasattr(data[0], "dtype"):
             res = data[0].dtype
         if res is None:
             raise RuntimeError(
                 f"dtype cannot be None for operator {self.__class__.__name__!r}, "
-                f"self.numpy_type={self.numpy_type}, type(data[0])={type(data[0])}."
+                f"self.numpy_type={numpy_type}, type(data[0])={type(data[0])}."
             )
         return res
 
-    def _get_state(self):  # type: ignore
-        if self.seed is None or np.isnan(self.seed):  # type: ignore
+    @staticmethod
+    def _get_state(seed):  # type: ignore
+        if seed is None or np.isnan(seed):  # type: ignore
             state = np.random.RandomState()
         else:
-            state = np.random.RandomState(seed=int(self.seed))  # type: ignore
+            state = np.random.RandomState(seed=int(seed))  # type: ignore
         return state

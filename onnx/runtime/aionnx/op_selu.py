@@ -3,11 +3,9 @@
 
 import numpy as np  # type: ignore
 
-from ._op import OpRunUnaryNum
+from ..op_run import OpRun
 
 
-class Selu(OpRunUnaryNum):
+class Selu(OpRun):
     def _run(self, x, alpha=None, gamma=None):  # type: ignore
-        alpha = alpha or self.alpha  # type: ignore
-        gamma = gamma or self.gamma  # type: ignore
         return (np.where(x > 0, x, np.exp(x) * alpha - alpha) * gamma,)

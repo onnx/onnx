@@ -18,9 +18,8 @@ def _concat_from_sequence(seq: List[Any], axis: int, new_axis: int = 0) -> np.nd
 
 
 class ConcatFromSequence(OpRun):
-    def _run(self, seq):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, seq, axis=None, new_axis=None):  # type: ignore
         if seq is None:
             raise RuntimeError("A sequence cannot be null.")
-        res = _concat_from_sequence(seq, self.axis, new_axis=self.new_axis)  # type: ignore
+        res = _concat_from_sequence(seq, axis, new_axis=new_axis)
         return (res,)

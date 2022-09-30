@@ -3,16 +3,15 @@
 
 import numpy as np  # type: ignore
 
-from ._op import OpRunUnaryNum
+from ..op_run import OpRun
 
 
-class Shrink(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
-        # TODO: support overridden attributes.
+class Shrink(OpRun):
+    def _run(self, x, bias=None, lambd=None):  # type: ignore
         return (
             np.where(
-                x < -self.lambd,  # type: ignore
-                x + self.bias,  # type: ignore
-                np.where(x > self.lambd, x - self.bias, 0),  # type: ignore
+                x < -lambd,
+                x + bias,
+                np.where(x > lambd, x - bias, 0),
             ),
         )

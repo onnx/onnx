@@ -33,10 +33,24 @@ def _apply_adam(  # type: ignore
 
 
 class Adam(OpRunTraining):
-    def _run(self, *data):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(  # type: ignore
+        self,
+        *data,
+        alpha=None,
+        beta=None,
+        epsilon=None,
+        norm_coefficient=None,
+        norm_coefficient_post=None,
+    ):
         if len(data) == 6:
-            return self._run1(*data)
+            return self._run1(
+                *data,
+                alpha=alpha,
+                beta=beta,
+                epsilon=epsilon,
+                norm_coefficient=norm_coefficient,
+                norm_coefficient_post=norm_coefficient_post,
+            )
         n = (len(data) - 2) // 4
         xs = []
         vs = []
@@ -48,13 +62,31 @@ class Adam(OpRunTraining):
                 data[2 + n + i],
                 data[2 + n * 2 + i],
                 data[2 + n * 3 + i],
+                alpha=alpha,
+                beta=beta,
+                epsilon=epsilon,
+                norm_coefficient=norm_coefficient,
+                norm_coefficient_post=norm_coefficient_post,
             )
             xs.append(a.astype(np.float32))
             vs.append(b.astype(np.float32))
             hs.append(c.astype(np.float32))
         return tuple(xs + vs + hs)
 
-    def _run1(self, r, t, x, g, v, h):  # type: ignore
+    def _run1(  # type: ignore
+        self,
+        r,
+        t,
+        x,
+        g,
+        v,
+        h,
+        alpha=None,
+        beta=None,
+        epsilon=None,
+        norm_coefficient=None,
+        norm_coefficient_post=None,
+    ):
         x_new, v_new, h_new = _apply_adam(
             r,
             t,
@@ -62,10 +94,10 @@ class Adam(OpRunTraining):
             g,
             v,
             h,
-            self.norm_coefficient,  # type: ignore
-            self.norm_coefficient_post,  # type: ignore
-            self.alpha,  # type: ignore
-            self.beta,  # type: ignore
-            self.epsilon,  # type: ignore
+            norm_coefficient,
+            norm_coefficient_post,
+            alpha,
+            beta,
+            epsilon,
         )
         return x_new, v_new, h_new

@@ -1,16 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-from ...mapping import TENSOR_TYPE_TO_NP_TYPE
+from ...helper import tensor_dtype_to_np_dtype
 from ..op_run import OpRun
 
 
 class Optional(OpRun):
-    def _run(self, x=None):  # type: ignore
-        # TODO: support overridden attributes.
-        if x is not None and hasattr(self, "type_proto"):
-            tp = self.type_proto  # type: ignore
-            dt = TENSOR_TYPE_TO_NP_TYPE[tp]
+    def _run(self, x=None, type=None):  # type: ignore
+        if x is not None and type is not None:
+            dt = tensor_dtype_to_np_dtype(type)
             if dt != x.dtype:
                 raise TypeError(
                     f"Input dtype {x.dtype} ({dt}) and parameter type_proto {tp} disagree"

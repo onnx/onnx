@@ -5,24 +5,19 @@ import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
-from ._op import OpRunUnaryNum
 
 
-class Unsqueeze_1(OpRunUnaryNum):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRunUnaryNum.__init__(self, onnx_node, run_params)
-        if isinstance(self.axes, np.ndarray):  # type: ignore
-            self.axes = tuple(self.axes)  # type: ignore
-        elif self.axes in [[], tuple()]:
-            self.axes = None  # type: ignore
-        elif isinstance(self.axes, list):
-            self.axes = tuple(self.axes)  # type: ignore
-
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
-        if isinstance(self.axes, (tuple, list)):  # type: ignore
+class Unsqueeze_1(OpRun):
+    def _run(self, data, axes=None):  # type: ignore
+        if isinstance(axes, np.ndarray):
+            axes = tuple(axes)
+        elif axes in [[], tuple()]:
+            axes = None
+        elif isinstance(axes, list):
+            axes = tuple(axes)
+        if isinstance(axes, (tuple, list)):
             sq = data
-            for a in self.axes:  # type: ignore
+            for a in axes:
                 sq = np.expand_dims(sq, axis=a)
         else:
             raise RuntimeError(
@@ -36,10 +31,6 @@ class Unsqueeze_11(Unsqueeze_1):
 
 
 class Unsqueeze_13(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-        self.axes = None
-
     def _run(self, data, axes=None):  # type: ignore
         if axes is not None:
             if hasattr(axes, "__iter__") and len(axes.shape) > 0:

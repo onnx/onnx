@@ -29,13 +29,12 @@ class ConstantOfShape(OpRun):
         ):
             raise TypeError(f"cst must be a real not {type(self.cst)}")
 
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, data, value=None):  # type: ignore
         try:
             res = np.full(tuple(data), self.cst)  # type: ignore
         except TypeError as e:
             raise RuntimeError(
                 f"Unable to create a constant of shape {data!r} with value {self.cst!r} "  # type: ignore
-                f"(raw value={self.value!r})."  # type: ignore
+                f"(raw value={value!r})."  # type: ignore
             ) from e
         return (res,)

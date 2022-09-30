@@ -7,17 +7,16 @@ from ..op_run import OpRun
 
 
 class DepthToSpace(OpRun):
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, data, blocksize=None, mode=None):  # type: ignore
         if len(data.shape) != 4:
             raise RuntimeError(f"Unexpected shape {data.shape!r}.")
         b, c, h, w = data.shape
-        if self.mode == "DCR":  # type: ignore
+        if mode == "DCR":
             tmpshape = (
                 b,
-                self.blocksize,  # type: ignore
-                self.blocksize,  # type: ignore
-                c // (self.blocksize * self.blocksize),  # type: ignore
+                blocksize,
+                blocksize,
+                c // (blocksize * blocksize),
                 h,
                 w,
             )
@@ -27,9 +26,9 @@ class DepthToSpace(OpRun):
             # assert mode == "CRD"
             tmpshape = (
                 b,
-                c // (self.blocksize * self.blocksize),  # type: ignore
-                self.blocksize,  # type: ignore
-                self.blocksize,  # type: ignore
+                c // (blocksize * blocksize),
+                blocksize,
+                blocksize,
                 h,
                 w,
             )
@@ -37,9 +36,9 @@ class DepthToSpace(OpRun):
             transposed = np.transpose(reshaped, [0, 1, 4, 2, 5, 3])
         finalshape = (
             b,
-            c // (self.blocksize * self.blocksize),  # type: ignore
-            h * self.blocksize,  # type: ignore
-            w * self.blocksize,  # type: ignore
+            c // (blocksize * blocksize),
+            h * blocksize,
+            w * blocksize,
         )
         y = np.reshape(transposed, finalshape)
         return (y,)

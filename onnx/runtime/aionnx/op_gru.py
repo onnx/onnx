@@ -67,7 +67,23 @@ class CommonGRU(OpRun):
 
         return Y, Y_h
 
-    def _run(self, X, W, R, B=None, sequence_lens=None, initial_h=None):  # type: ignore
+    def _run(  # type: ignore
+        self,
+        X,
+        W,
+        R,
+        B=None,
+        sequence_lens=None,
+        initial_h=None,
+        activation_alpha=None,
+        activation_beta=None,
+        activations=None,
+        clip=None,
+        direction=None,
+        hidden_size=None,
+        layout=None,
+        linear_before_reset=None,
+    ):
         # TODO: support overridden attributes.
         num_directions = W.shape[0]
 

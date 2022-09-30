@@ -3,7 +3,7 @@
 
 import numpy as np  # type: ignore
 
-from ._op import OpRunUnaryNum
+from ..op_run import OpRun
 
 
 def _vcelu1(x: np.ndarray, alpha: float = 1.0) -> np.ndarray:
@@ -12,7 +12,6 @@ def _vcelu1(x: np.ndarray, alpha: float = 1.0) -> np.ndarray:
     return positive_input + negative_input  # type: ignore
 
 
-class Celu(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
-        # TODO: support overridden attributes.
-        return (_vcelu1(x, self.alpha),)  # type: ignore
+class Celu(OpRun):
+    def _run(self, x, alpha=None):  # type: ignore
+        return (_vcelu1(x, alpha),)

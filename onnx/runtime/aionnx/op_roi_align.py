@@ -24,8 +24,8 @@ class PreCalc:
 
 
 class RoiAlign(OpRun):
+    @staticmethod
     def PreCalcForBilinearInterpolate(  # type: ignore
-        self,
         height: int,
         width: int,
         pooled_height: int,
@@ -113,8 +113,8 @@ class RoiAlign(OpRun):
 
                         pre_calc_index += 1
 
+    @staticmethod
     def RoiAlignForward(  # type: ignore
-        self,
         output_shape: Tuple[int, int, int, int],
         bottom_data,
         spatial_scale,
@@ -181,7 +181,7 @@ class RoiAlign(OpRun):
                     roi_bin_grid_h * roi_bin_grid_w * pooled_width * pooled_height
                 )
             ]
-            self.PreCalcForBilinearInterpolate(
+            RoiAlign.PreCalcForBilinearInterpolate(
                 height,
                 width,
                 pooled_height,
@@ -212,7 +212,9 @@ class RoiAlign(OpRun):
                         output_val = 0.0
                         if mode == "avg":  # avg pooling
                             for iy in range(roi_bin_grid_h):  # pylint: disable=W0612
-                                for ix in range(roi_bin_grid_w):  # pylint: disable=W0612
+                                for ix in range(
+                                    roi_bin_grid_w
+                                ):  # pylint: disable=W0612
                                     pc = pre_calc[pre_calc_index]
                                     output_val += (
                                         pc.w1
@@ -230,7 +232,9 @@ class RoiAlign(OpRun):
                         else:  # max pooling
                             max_flag = False
                             for iy in range(roi_bin_grid_h):  # pylint: disable=W0612
-                                for ix in range(roi_bin_grid_w):  # pylint: disable=W0612
+                                for ix in range(
+                                    roi_bin_grid_w
+                                ):  # pylint: disable=W0612
                                     pc = pre_calc[pre_calc_index]
                                     val = max(
                                         max(

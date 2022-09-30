@@ -79,14 +79,13 @@ def softmaxcrossentropy(  # type: ignore
 
 
 class SoftmaxCrossEntropyLoss(OpRun):
-    def _run(self, x, target, weight=None):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, x, target, weight=None, ignore_index=None, reduction=None):  # type: ignore
         n_outputs = len(self.onnx_node.output)  # type: ignore
         return softmaxcrossentropy(
             x,
             target,
             weight=weight,
-            reduction=self.reduction,  # type: ignore
-            ignore_index=self.ignore_index,  # type: ignore
+            reduction=reduction,
+            ignore_index=ignore_index,
             get_log_prob=n_outputs == 2,
         )

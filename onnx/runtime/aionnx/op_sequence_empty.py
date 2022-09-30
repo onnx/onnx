@@ -5,5 +5,5 @@ from ..op_run import OpRun
 
 
 class SequenceEmpty(OpRun):
-    def _run(self):  # type: ignore
+    def _run(self, dtype=None):  # type: ignore
         return ([],)

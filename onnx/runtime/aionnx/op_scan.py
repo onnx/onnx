@@ -86,7 +86,17 @@ class Scan(OpRun):
             states,
         )
 
-    def _run(self, *args):  # type: ignore
+    def _run(  # type:ignore
+        self,
+        *args,
+        body=None,
+        num_scan_inputs=None,
+        scan_input_axes=None,
+        scan_input_directions=None,
+        scan_output_axes=None,
+        scan_output_directions,
+    ):
+        # TODO: support overridden attributes.
         (
             num_loop_state_vars,
             num_scan_outputs,  # pylint: disable=W0612

@@ -21,23 +21,33 @@ def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # t
 
 
 class Adagrad(OpRunTraining):
-    def _run(self, *data):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, *data, decay_factor=None, epsilon=None, norm_coefficient=None):
         if len(data) == 5:
-            return self._run1(*data)
+            return self._run1(
+                *data,
+                decay_factor=decay_factor,
+                epsilon=epsilon,
+                norm_coefficient=norm_coefficient,
+            )
         n = (len(data) - 2) // 3
         xs = []
         hs = []
         for i in range(0, n):
             a, b = self._run1(  # type: ignore
-                *data[:2], data[2 + i], data[2 + n + i], data[2 + n * 2 + i]
+                *data[:2],
+                data[2 + i],
+                data[2 + n + i],
+                data[2 + n * 2 + i],
+                decay_factor=decay_factor,
+                epsilon=epsilon,
+                norm_coefficient=norm_coefficient,
             )
             xs.append(a)
             hs.append(b)
         return tuple(xs + hs)
 
-    def _run1(self, r, t, x, g, h):  # type: ignore
+    def _run1(self, r, t, x, g, h, decay_factor=None, epsilon=None, norm_coefficient=None):  # type: ignore
         x_new, h_new = _apply_adagrad(
-            r, t, x, g, h, self.norm_coefficient, self.epsilon, self.decay_factor  # type: ignore
+            r, t, x, g, h, norm_coefficient, epsilon, decay_factor  # type: ignore
         )
         return x_new, h_new

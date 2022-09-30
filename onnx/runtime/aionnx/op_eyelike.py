@@ -3,23 +3,19 @@
 
 import numpy as np  # type: ignore
 
-from ...mapping import TENSOR_TYPE_MAP
+from ...helper import tensor_dtype_to_np_dtype
 from ...onnx_pb import TensorProto
 from ..op_run import OpRun
 
 
 class EyeLike(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
-        if self.dtype is None:  # type: ignore
-            self._dtype = np.float32  # type: ignore
-        elif self.dtype == TensorProto.STRING:  # type: ignore
-            self._dtype = np.str_  # type: ignore
+    def _run(self, data, *args, dtype=None, k=None):  # type: ignore
+        if dtype is None:
+            _dtype = np.float32
+        elif dtype == TensorProto.STRING:
+            _dtype = np.str_
         else:
-            self._dtype = TENSOR_TYPE_MAP[self.dtype].np_dtype  # type: ignore
-
-    def _run(self, data, *args):  # type: ignore
-        # TODO: support overridden attributes.
+            _dtype = tensor_dtype_to_np_dtype(dtype)
         shape = data.shape
         if len(shape) == 1:
             sh = (shape[0], shape[0])
@@ -27,4 +23,4 @@ class EyeLike(OpRun):
             sh = shape
         else:
             raise RuntimeError(f"EyeLike only accept 1D or 2D tensors not {shape!r}.")
-        return (np.eye(*sh, k=self.k, dtype=self._dtype),)  # type: ignore
+        return (np.eye(*sh, k=k, dtype=_dtype),)  # type: ignore

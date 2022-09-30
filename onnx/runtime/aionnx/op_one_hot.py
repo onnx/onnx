@@ -21,9 +21,8 @@ def _one_hot(indices, depth, axis=-1, dtype=np.float32):  # type: ignore
 
 
 class OneHot(OpRun):
-    def _run(self, indices, depth, values):  # type: ignore
-        # TODO: support overridden attributes.
+    def _run(self, indices, depth, values, axis=None):  # type: ignore
         off_value, on_value = values
-        y = _one_hot(indices, depth, axis=self.axis, dtype=values.dtype)  # type: ignore
+        y = _one_hot(indices, depth, axis=axis, dtype=values.dtype)  # type: ignore
         y = y * (on_value - off_value) + off_value
         return (y,)

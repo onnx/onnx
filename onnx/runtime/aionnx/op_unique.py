@@ -15,18 +15,17 @@ def _specify_int64(indices, inverse_indices, counts):  # type: ignore
 
 
 class Unique(OpRun):
-    def _run(self, x):  # type: ignore
-        # TODO: support overridden attributes.
-        if self.axis is None or np.isnan(self.axis):  # type: ignore
+    def _run(self, x, axis=None, sorted=None):  # type: ignore
+        if axis is None or np.isnan(axis):
             y, indices, inverse_indices, counts = np.unique(x, True, True, True)
         else:
             y, indices, inverse_indices, counts = np.unique(
-                x, True, True, True, axis=self.axis  # type: ignore
+                x, True, True, True, axis=axis
             )
         if len(self.onnx_node.output) == 1:
             return (y,)
 
-        if not self.sorted:  # type: ignore
+        if not sorted:
             argsorted_indices = np.argsort(indices)
             inverse_indices_map = dict(
                 zip(argsorted_indices, np.arange(len(argsorted_indices)))

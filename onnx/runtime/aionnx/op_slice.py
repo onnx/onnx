@@ -62,9 +62,8 @@ class Slice_1(SliceCommon):
             if getattr(self, f) is not None and len(getattr(self, f)) == 0:
                 setattr(self, f, None)
 
-    def _run(self, data):  # type: ignore
-        # TODO: support overridden attributes.
-        return SliceCommon._run(self, data, self.starts, self.ends, self.axes)  # type: ignore
+    def _run(self, data, axes=None, ends=None, starts=None):  # type: ignore
+        return SliceCommon._run(self, data, starts, ends, axes)
 
 
 if onnx_opset_version() >= 10:
