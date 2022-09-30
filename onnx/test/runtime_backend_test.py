@@ -686,7 +686,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_roialign_aligned_false" == name,
+            lambda name: "test_tfidfvectorizer_tf_onlybigrams_skip5" == name,
             verbose=0,
             atol={"test_roialign_aligned_false": 1e-4},
             check_other_runtime="onnxruntime",
