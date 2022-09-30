@@ -188,6 +188,16 @@ class TestAutomaticUpgrade(unittest.TestCase):
     def test_Atan(self) -> None:
         self._test_op_upgrade("Atan", 7)
 
+    def test_AttributeHasValue(self) -> None:
+        self._test_op_upgrade(
+            "AttributeHasValue",
+            18,
+            [],
+            [[]],
+            output_types=[TensorProto.BOOL],
+            attrs={"value_int": 1},
+        )
+
     def test_AveragePool(self) -> None:
         self._test_op_upgrade(
             "AveragePool",
