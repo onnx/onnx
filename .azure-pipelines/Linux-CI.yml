@@ -69,10 +69,12 @@ jobs:
 
       # style check (flake8, mypy, and clang-format)
       python -m pip install -q -r requirements-dev.txt
-      bash tools/style.sh
-      if [ $? -ne 0 ]; then
-        echo "style check failed"
-        exit 1
+      if [ '$(documentation)' == '0' ]; then
+        bash tools/style.sh
+        if [ $? -ne 0 ]; then
+          echo "style check failed"
+          exit 1
+        fi
       fi
 
       # check line endings to be UNIX
