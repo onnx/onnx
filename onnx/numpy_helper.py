@@ -165,6 +165,8 @@ def to_list(sequence: SequenceProto) -> List[Any]:
         return [to_array(v) for v in sequence.sparse_tensor_values]
     if elem_type == SequenceProto.SEQUENCE:
         return [to_list(v) for v in sequence.sequence_values]
+    if elem_type == SequenceProto.MAP:
+        return [to_dict(v) for v in sequence.map_values]
     raise TypeError("The element type in the input sequence is not supported.")
 
 
