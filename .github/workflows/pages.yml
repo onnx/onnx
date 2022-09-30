@@ -43,7 +43,7 @@ jobs:
         run: python setup.py install
 
       - name: Build Docs
-        run: cd docs/docsgen && make html
+        run: cd docs/docsgen && make html -j auto
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1

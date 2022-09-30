@@ -133,6 +133,6 @@ jobs:
       if [ '$(documentation)' == '1' ]; then
         source venv/bin/activate
         pip install -r docs/docsgen/source/requirements.txt
-        cd docs/docsgen && make html
+        cd docs/docsgen && make html -j auto
       fi
     displayName: Test documentation
