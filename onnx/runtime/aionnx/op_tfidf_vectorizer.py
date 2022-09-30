@@ -59,13 +59,6 @@ def PopulateGrams(
     return ngram_id
 
 
-"""
-void* AdvanceElementPtr(const void* p, size_t elements, size_t element_size) {
-    return reinterpret_cast<const uint8_t*>(p) + elements * element_size;
-}
-"""
-
-
 class TfIdfVectorizer(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
@@ -182,13 +175,13 @@ class TfIdfVectorizer(OpRun):
     def compute_impl(
             self,
             X:np.ndarray, row_num:int, row_size:int, frequencies: List[int])->None:
-        const auto elem_size = sizeof(int64_t);
 
-        const void* row_begin = AdvanceElementPtr((void*)X.data(0), row_num * row_size, elem_size);
-        const void* const row_end = AdvanceElementPtr(row_begin, row_size, elem_size);
+        X_flat = X.flatten()
+        row_begin = row_num * row_size
+        row_end = row_begin + row_size
 
-        const auto max_gram_length = max_gram_length_;
-        const auto max_skip_distance = max_skip_count_ + 1;  // Convert to distance
+        max_gram_length = self.max_gram_length_
+        max_skip_distance = self.max_skip_count_ + 1
         auto start_ngram_size = min_gram_length_;
 
         for (auto skip_distance = 1; skip_distance <= max_skip_distance; ++skip_distance) {
