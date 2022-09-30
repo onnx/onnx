@@ -24,9 +24,10 @@ def bfloat16_to_float32(
 def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     """Converts a tensor def object to a numpy array.
 
-    Inputs:
+    Args:
         tensor: a TensorProto object.
         base_dir: if external tensor exists, base_dir can help to find the path to it
+
     Returns:
         arr: the converted array.
     """
@@ -91,9 +92,10 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
 def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
-    Inputs:
+    Args:
         arr: a numpy array.
         name: (optional) the name of the tensor.
+
     Returns:
         TensorProto: the converted tensor def.
     """
@@ -150,8 +152,9 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
 def to_list(sequence: SequenceProto) -> List[Any]:
     """Converts a sequence def to a Python list.
 
-    Inputs:
+    Args:
         sequence: a SequenceProto object.
+
     Returns:
         list: the converted list.
     """
@@ -170,11 +173,12 @@ def from_list(
 ) -> SequenceProto:
     """Converts a list into a sequence def.
 
-    Inputs:
+    Args:
         lst: a Python list
         name: (optional) the name of the sequence.
         dtype: (optional) type of element in the input list, used for specifying
                           sequence values when converting an empty list.
+
     Returns:
         SequenceProto: the converted sequence def.
     """
@@ -224,8 +228,9 @@ def from_list(
 def to_dict(map: MapProto) -> Dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
-    Inputs:
+    Args:
         map: a MapProto object.
+
     Returns:
         dict: the converted dictionary.
     """
@@ -249,9 +254,10 @@ def to_dict(map: MapProto) -> Dict[Any, Any]:
 def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
     """Converts a Python dictionary into a map def.
 
-    Inputs:
+    Args:
         dict: Python dictionary
         name: (optional) the name of the map.
+
     Returns:
         MapProto: the converted map def.
     """
@@ -301,8 +307,9 @@ def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
 def to_optional(optional: OptionalProto) -> Optional[Any]:
     """Converts an optional def to a Python optional.
 
-    Inputs:
+    Args:
         optional: an OptionalProto object.
+
     Returns:
         opt: the converted optional.
     """
@@ -327,12 +334,13 @@ def from_optional(
 ) -> OptionalProto:
     """Converts an optional value into a Optional def.
 
-    Inputs:
+    Args:
         opt: a Python optional
         name: (optional) the name of the optional.
         dtype: (optional) type of element in the input, used for specifying
                           optional values when converting empty none. dtype must
                           be a valid OptionalProto.DataType value
+
     Returns:
         optional: the converted optional def.
     """

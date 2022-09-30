@@ -8,9 +8,8 @@ Versioning
 ++++++++++
 
 The following example shows how to retrieve onnx version,
-the onnx opset, the IR version. Every new major release increments the opset version.
-
-.. autofunction:: onnx.defs.onnx_opset_version
+the onnx opset, the IR version. Every new major release increments the opset version
+(see :ref:`l-api-opset-version`).
 
 .. exec_code::
 

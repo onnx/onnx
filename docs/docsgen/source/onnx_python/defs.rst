@@ -7,6 +7,8 @@ onnx.defs
 .. contents::
     :local:
 
+.. _l-api-opset-version:
+
 Opset Version
 +++++++++++++
 
@@ -21,8 +23,30 @@ Operators and Functions Schemas
 
 .. autofunction:: onnx.defs.get_schema
 
-Internal module
-+++++++++++++++
+class OpSchema
+++++++++++++++
 
-.. automodule:: onnx.onnx_cpp2py_export.defs
+.. autoclass:: onnx.defs.OpSchema
     :members:
+
+Exception SchemaError
++++++++++++++++++++++
+
+.. autoclass:: onnx.defs.SchemaError
+    :members:
+
+Constants
++++++++++
+
+Domains officially supported in onnx package.
+
+.. exec_code::
+
+    from onnx.defs import (
+        ONNX_DOMAIN,    
+        ONNX_ML_DOMAIN,    
+        AI_ONNX_PREVIEW_TRAINING_DOMAIN,    
+    )
+    print(f"ONNX_DOMAIN={ONNX_DOMAIN!r}")
+    print(f"ONNX_ML_DOMAIN={ONNX_ML_DOMAIN!r}")
+    print(f"AI_ONNX_PREVIEW_TRAINING_DOMAIN={AI_ONNX_PREVIEW_TRAINING_DOMAIN!r}")
