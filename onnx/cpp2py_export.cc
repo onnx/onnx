@@ -261,15 +261,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   defs.def(
       "get_all_schemas",
-      []() -> const std::vector<OpSchema> {
-        return OpSchemaRegistry::get_all_schemas();
-      },
+      []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas(); },
       "Return the schema of all existing operators for the latest version.");
 
   defs.def(
-      "get_all_schemas_with_history", []() -> const std::vector<OpSchema> {
-        return OpSchemaRegistry::get_all_schemas_with_history();
-      },
+      "get_all_schemas_with_history",
+      []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
       "Return the schema of all existing operators and all versions.");
 
   // Submodule `checker`
