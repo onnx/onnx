@@ -100,6 +100,7 @@ print('After saving and loading, new TensorProto:\n{}'.format(new_tensor))
 from onnx import TensorProto, helper
 
 # Conversion utilities for mapping attributes in ONNX IR
+# The functions below are available after ONNX 1.13
 np_dtype = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
 print(f"The converted numpy dtype for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {np_dtype}.")
 storage_dtype = helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.FLOAT)
