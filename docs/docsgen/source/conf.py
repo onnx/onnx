@@ -45,11 +45,6 @@ html_favicon = "onnx-favicon.png"
 html_logo = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "../../onnx-horizontal-color.png"
 )
-html_theme_options = {
-    "logo": {
-        "image_dark": "onnx-horizontal-white.png",
-    }
-}
 html_sidebars = {}
 html_static_path = ["_static"]
 html_theme = "pydata_sphinx_theme"
@@ -74,6 +69,7 @@ html_theme_options = {
         {"name": "github", "url": "https://github.com/onnx/onnx"},
     ],
     "github_url": "https://github.com/onnx/onnx",
+    "logo": {"image_dark": "onnx-horizontal-white.png"},
     "navbar_center": [],
     "navigation_depth": 5,
     "page_sidebar_items": [],  # default setting is: ["page-toc", "edit-this-page", "sourcelink"],
@@ -81,7 +77,6 @@ html_theme_options = {
     "show_prev_next": True,
     "show_toc_level": 0,
 }
-
 
 intersphinx_mapping = {
     "https://docs.python.org/": None,
