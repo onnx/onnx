@@ -28,23 +28,3 @@ TENSOR_TYPE_MAP
     from onnx.mapping import TENSOR_TYPE_MAP
 
     pprint.pprint(TENSOR_TYPE_MAP)
-
-Opset Version
-+++++++++++++
-
-.. autofunction:: onnx.defs.onnx_opset_version
-
-.. autofunction:: onnx.defs.get_all_schemas_with_history
-
-Operators and Functions Schemas
-+++++++++++++++++++++++++++++++
-
-.. autofunction:: onnx.defs.get_function_ops
-
-.. autofunction:: onnx.defs.get_schema
-
-Internal module
-+++++++++++++++
-
-.. automodule:: onnx.onnx_cpp2py_export.defs
-    :members:

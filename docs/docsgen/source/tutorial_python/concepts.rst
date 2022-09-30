@@ -47,19 +47,15 @@ It is just a kind of pseudo code to illustrate the model.
 
 ::
 
-    x = onnx.input(0)
-    a = onnx.input(1)
-    c = onnx.input(2)
+    Input: float[M,K] x, float[K,N] a, float[N] c
+    Output: float[M, N] y
 
-    ax = onnx.MatMul(a, x)
-    axc = onnx.Add(ax, c)
+    r = onnx.MatMul(a, x)
+    y = onnx.Add(ax, c)
 
-    onnx.output(0) = axc
-
-This code implements a function with the signature `f(x, a, c) -> axc`.
-And *x*, *a*, *c* are the **inputs**, *axc* is the **output**.
-*ax* is an intermediate result.
-Inputs and outputs are changing at each inference.
+This code implements a function `f(x, a, c) -> y = a @ x + c`.
+And *x*, *a*, *c* are the **inputs**, *y* is the **output**.
+*r* is an intermediate result.
 *MatMul* and *Add* are the **nodes**. They also have inputs and outputs.
 A node has also a type, one of the operators in
 :ref:`l-onnx-operators`. This graph was built with the example
@@ -71,14 +67,12 @@ it is most efficient to turn it into a constant stored in the graph.
 
 ::
 
-    x = onnx.input(0)
-    a = initializer
-    c = initializer
+    Input: float[M,K] x
+    Initializer: float[K,N] a, float[N] c
+    Output: float[M, N] axc
 
     ax = onnx.MatMul(a, x)
     axc = onnx.Add(ax, c)
-
-    onnx.output(0) = axc
 
 Visually, this graph would look like the following image.
 The right side describes operator *Add* where the second input

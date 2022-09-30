@@ -1,8 +1,8 @@
 
 .. _l-main-doc-page:
 
-Python Documentation of ONNX
-============================
+Documentation of ONNX Python Package
+====================================
 
 This documentation introduces the Python package
 `onnx <https://github.com/onnx/onnx>`_. A tutorial shows how
