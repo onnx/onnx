@@ -212,9 +212,9 @@ class RoiAlign(OpRun):
                         output_val = 0.0
                         if mode == "avg":  # avg pooling
                             for iy in range(roi_bin_grid_h):  # pylint: disable=W0612
-                                for ix in range(
+                                for ix in range(  # pylint: disable=W0612
                                     roi_bin_grid_w
-                                ):  # pylint: disable=W0612
+                                ):
                                     pc = pre_calc[pre_calc_index]
                                     output_val += (
                                         pc.w1

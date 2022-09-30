@@ -5,6 +5,16 @@ import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
+class IntMap(dict):
+    pass
+
+
+class NgramPart:
+    def __init__(self, nid:int):
+        self.id_=nid  # 0 - means no entry, search for a bigger N
+        leafs_:IntMap=None
+
+
 
 class TfIdfVectorizer(OpRun):
     def _run(  # type: ignore

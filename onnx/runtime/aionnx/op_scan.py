@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0914,W0221
+# pylint: disable=R0912,R0914,W0221,W0613
 
 import numpy as np  # type: ignore
 

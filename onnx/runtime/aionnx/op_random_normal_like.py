@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
+# pylint: disable=R0913,W0221
 
 from ...helper import np_dtype_to_tensor_dtype
 from ._op_common_random import _CommonRandom
