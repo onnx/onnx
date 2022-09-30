@@ -96,6 +96,23 @@ new_tensor = onnx.TensorProto()
 with open('tensor.pb', 'rb') as f:
     new_tensor.ParseFromString(f.read())
 print('After saving and loading, new TensorProto:\n{}'.format(new_tensor))
+
+from onnx import TensorProto, helper
+
+# Conversion utilities for mapping attributes in ONNX IR
+# The functions below are available after ONNX 1.13
+np_dtype = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
+print(f"The converted numpy dtype for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {np_dtype}.")
+storage_dtype = helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.FLOAT)
+print(f"The storage dtype for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {helper.tensor_dtype_to_string(storage_dtype)}.")
+field_name = helper.tensor_dtype_to_field(TensorProto.FLOAT)
+print(f"The field name for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {field_name}.")
+tensor_dtype = helper.np_dtype_to_tensor_dtype(np_dtype)
+print(f"The tensor data type for numpy dtype: {np_dtype} is {helper.tensor_dtype_to_string(tensor_dtype)}.")
+
+for tensor_dtype in helper.get_all_tensor_dtypes():
+    print(helper.tensor_dtype_to_string(tensor_dtype))
+
 ```
 Runnable IPython notebooks:
 - [np_array_tensorproto.ipynb](/onnx/examples/np_array_tensorproto.ipynb)

@@ -2,7 +2,7 @@
 import unittest
 from typing import Sequence
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx.defs
 import onnx.onnx_cpp2py_export.checker as C
@@ -60,6 +60,7 @@ class TestChecker(unittest.TestCase):
 
         # Explicitly pass the empty string as optional
         node = helper.make_node("GivenTensorFill", [""], ["Y"], name="test")
+        checker.check_node(node)
 
         # Input of RELU is not optional
         node = helper.make_node("Relu", [""], ["Y"], name="test")

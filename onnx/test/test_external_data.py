@@ -7,7 +7,7 @@ import unittest
 import uuid
 from typing import Any, List, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 import pytest  # type: ignore
 
 import onnx
@@ -36,11 +36,11 @@ class TestLoadExternalDataBase(unittest.TestCase):
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + ".onnx")
 
     def create_external_data_tensor(
-        self, value: List[Any], tensor_name: str
+        self, value: List[Any], tensor_name: str, location: str = ""
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
-        tensor_filename = f"{tensor_name}.bin"
+        tensor_filename = location if location else f"{tensor_name}.bin"
         set_external_data(tensor, location=tensor_filename)
 
         with open(os.path.join(self.temp_dir, tensor_filename), "wb") as data_file:
@@ -49,7 +49,7 @@ class TestLoadExternalDataBase(unittest.TestCase):
         tensor.data_location = onnx.TensorProto.EXTERNAL
         return tensor
 
-    def create_test_model(self) -> str:
+    def create_test_model(self, location: str = "") -> str:
         constant_node = onnx.helper.make_node(
             "Constant",
             inputs=[],
@@ -60,7 +60,9 @@ class TestLoadExternalDataBase(unittest.TestCase):
         )
 
         initializers = [
-            self.create_external_data_tensor(self.initializer_value, "input_value")
+            self.create_external_data_tensor(
+                self.initializer_value, "input_value", location
+            )
         ]
         inputs = [
             helper.make_tensor_value_info(
@@ -615,12 +617,13 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
     directory."""
 
     def create_external_data_tensor(
-        self, value: List[Any], tensor_name: str
+        self, value: List[Any], tensor_name: str, location: str = ""
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
+        tensor_filename = location if location else f"{tensor_name}.bin"
 
-        set_external_data(tensor, location="../../file.bin")
+        set_external_data(tensor, location=tensor_filename)
 
         tensor.ClearField("raw_data")
         tensor.data_location = onnx.TensorProto.EXTERNAL
@@ -628,31 +631,45 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
 
     def test_check_model(self) -> None:
         """We only test the model validation as onnxruntime uses this to load the model."""
+        self.model_filename = self.create_test_model("../../file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
+
+    def test_check_model_relative(self) -> None:
+        """More relative path test."""
+        self.model_filename = self.create_test_model("../test/../file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
+
+    def test_check_model_absolute(self) -> None:
+        """ONNX checker disallows using absolute path as location in external tensor."""
+        self.model_filename = self.create_test_model("//file.bin")
         with self.assertRaises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Skip Windows test")
 class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
-    TestLoadExternalDataBase
+    TestNotAllowToLoadExternalDataOutsideModelDirectory
 ):
     """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
     directory."""
 
-    def create_external_data_tensor(
-        self, value: List[Any], tensor_name: str
-    ) -> TensorProto:
-        tensor = from_array(np.array(value))
-        tensor.name = tensor_name
-
-        set_external_data(tensor, location="..\\..\\file.bin")
-
-        tensor.ClearField("raw_data")
-        tensor.data_location = onnx.TensorProto.EXTERNAL
-        return tensor
-
     def test_check_model(self) -> None:
         """We only test the model validation as onnxruntime uses this to load the model."""
+        self.model_filename = self.create_test_model("..\\..\\file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
+
+    def test_check_model_relative(self) -> None:
+        """More relative path test."""
+        self.model_filename = self.create_test_model("..\\test\\..\\file.bin")
+        with self.assertRaises(onnx.checker.ValidationError):
+            checker.check_model(self.model_filename)
+
+    def test_check_model_absolute(self) -> None:
+        """ONNX checker disallows using absolute path as location in external tensor."""
+        self.model_filename = self.create_test_model("C:/file.bin")
         with self.assertRaises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
