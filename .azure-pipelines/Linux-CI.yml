@@ -11,7 +11,7 @@ jobs:
         python.version: '3.9'
         onnx_ml: 1
         onnx_debug: 1
-        documentation: 1
+        documentation: 0
       py38:
         python.version: '3.8'
         onnx_ml: 0
@@ -21,7 +21,7 @@ jobs:
         python.version: '3.8'
         onnx_ml: 1
         onnx_debug: 0
-        documentation: 0
+        documentation: 1
       py37:
         python.version: '3.7'
         onnx_ml: 0
@@ -132,6 +132,8 @@ jobs:
   - script: |
       if [ '$(documentation)' == '1' ]; then
         pip install -r docs/docsgen/source/requirements.txt
+        pip uninstall -y onnx
+        python setup.py install
         cd docs/docsgen && make html
       fi
-    displayName: Builds documentation
+    displayName: Test documentation
