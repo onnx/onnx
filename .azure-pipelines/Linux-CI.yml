@@ -131,6 +131,7 @@ jobs:
 
   - script: |
       if [ '$(documentation)' == '1' ]; then
+        pip install -r docs/docsgen/source/requirements.txt
         cd docs/docsgen && make html
       fi
     displayName: Builds documentation
