@@ -245,8 +245,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "op_type"_a,
           "max_inclusive_version"_a,
           "domain"_a = ONNX_DOMAIN,
-          "Return the schema of the operator *op_type* and for a specific version."
-      )
+          "Return the schema of the operator *op_type* and for a specific version.")
       .def(
           "get_schema",
           [](const std::string& op_type, const std::string& domain) -> OpSchema {
@@ -258,23 +257,20 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           },
           "op_type"_a,
           "domain"_a = ONNX_DOMAIN,
-          "Return the schema of the operator *op_type* and for a specific version."
-  );
+          "Return the schema of the operator *op_type* and for a specific version.");
 
   defs.def(
       "get_all_schemas",
       []() -> const std::vector<OpSchema> {
         return OpSchemaRegistry::get_all_schemas();
       },
-      "Return the schema of all existing operators for the latest version."
-  );
+      "Return the schema of all existing operators for the latest version.");
 
   defs.def(
       "get_all_schemas_with_history", []() -> const std::vector<OpSchema> {
         return OpSchemaRegistry::get_all_schemas_with_history();
       },
-      "Return the schema of all existing operators and all versions."
-  );
+      "Return the schema of all existing operators and all versions.");
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
