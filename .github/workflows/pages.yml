@@ -4,8 +4,8 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main", "add-docs"]
-
+    branches: ["main"]
+  pull_request:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -26,6 +26,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'run create pages')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,7 +41,10 @@ jobs:
         run: pip uninstall -y onnx
 
       - name: Install onnx development version
-        run: python setup.py install
+        run: |
+          sudo apt-get install libprotobuf-dev protobuf-compiler
+          git submodule update --init --recursive
+          python setup.py develop
 
       - name: Build Docs
         run: cd docs/docsgen && make html -j auto
