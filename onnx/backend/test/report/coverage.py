@@ -6,7 +6,7 @@ import os
 from collections import OrderedDict, defaultdict
 from typing import IO, Any, Dict, List, Optional, Set
 
-from tabulate import tabulate  # type: ignore
+from tabulate import tabulate
 
 import onnx
 from onnx import GraphProto, defs, helper

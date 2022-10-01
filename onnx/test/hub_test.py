@@ -4,7 +4,7 @@ import os
 import unittest
 from os.path import join
 
-import pytest  # type: ignore
+import pytest
 
 import onnx.hub as hub
 from onnx import ModelProto
@@ -94,3 +94,7 @@ class TestModelHub(unittest.TestCase):
         self.assertRaises(
             AssertionError, lambda: hub.get_model_info("mnist", self.repo, opset=-1)
         )
+
+
+if __name__ == "__main__":
+    unittest.main()
