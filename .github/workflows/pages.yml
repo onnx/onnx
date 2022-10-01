@@ -26,7 +26,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'run create pages')
+    if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'run pages creation')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
