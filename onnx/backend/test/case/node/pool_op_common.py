@@ -2,7 +2,7 @@
 import itertools
 from typing import Sequence
 
-import numpy as np  # type: ignore
+import numpy as np
 
 
 def get_pad_shape(

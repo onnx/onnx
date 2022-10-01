@@ -1,6 +1,6 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/ONNX_logo_main.png" /></p>
+<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/onnx-horizontal-color.png" /></p>
 
 
 [![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Windows-CI?branchName=main)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)
@@ -55,6 +55,15 @@ pip install onnx
 
 [Weekly packages](https://test.pypi.org/project/onnx-weekly/) are published in test pypi to enable experimentation and early testing.
 
+## vcpkg packages
+onnx is in the maintenance list of [vcpkg](https://github.com/microsoft/vcpkg), you can easily use vcpkg to build and install it.
+```
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.bat # For powershell
+./bootstrap-vcpkg.sh # For bash
+./vcpkg install onnx
+```
 
 ## Conda packages
 A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):

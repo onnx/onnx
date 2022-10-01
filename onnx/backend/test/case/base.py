@@ -5,7 +5,7 @@ from collections import defaultdict
 from textwrap import dedent
 from typing import Any, Dict, List, Tuple, Type
 
-import numpy as np  # type: ignore
+import numpy as np
 
 
 def process_snippet(op_name: str, name: str, export: Any) -> Tuple[str, str]:
