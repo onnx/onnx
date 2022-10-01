@@ -36,8 +36,14 @@ jobs:
       - name: Install Dependencies
         run: pip install -r docs/docsgen/source/requirements.txt
 
+      - name: Uninstall onnx
+        run: pip uninstall -y onnx
+
+      - name: Install onnx development version
+        run: python setup.py install
+
       - name: Build Docs
-        run: cd docs/docsgen && make html
+        run: cd docs/docsgen && make html -j auto
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
