@@ -87,7 +87,7 @@ def main():
     # run checker on each model
     failed_models = []
     failed_messages = []
-    skip_models = []
+    skip_models: List[str] = []
     for model_path in model_list:
         start = time.time()
         model_name = model_path.split("/")[-1]
