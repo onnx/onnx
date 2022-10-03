@@ -1,32 +1,77 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import pprint
-
 from enum import IntEnum
+from pprint import pformat
+from typing import List
 
 import numpy as np  # type: ignore
 
 from ..op_run import OpRun
 
 
-class IntMap(dict):
+class IntMap(dict):  # type: ignore
+    def __init__(self):
+        dict.__init__(self)
+        self.added_keys = []
+
     def emplace(self, key, value):
+        if not isinstance(key, int):
+            raise TypeError(f"key must be a NGramPart not {type(key)}.")
+        if not isinstance(value, NgramPart):
+            raise TypeError(f"value must be a NGramPart not {type(value)}.")
+        self.added_keys.append(key)
         self[key] = value
         return self[key]
 
     def __repr__(self):
         vals = {k: repr(v) for k, v in self.items()}
-        return f"IntMap({pprint.pformat(vals)})"
+        return f"IntMap({pformat(vals)})"
+
+    @property
+    def first_key(self):
+        if len(self) == 0:
+            raise ValueError("IntMap is empty.")
+        return self.added_keys[0]
 
 
 class NgramPart:
     def __init__(self, nid: int):
         self.id_ = nid  # 0 - means no entry, search for a bigger N
-        self.leafs_ = IntMap()
+        self._leafs_ = None
+
+    def init(self):
+        self._leafs_ = IntMap()  # type: ignore
 
     def __repr__(self):
+        if self.empty():
+            return f"NgramPart({self.id_})"
         return f"NgramPart({self.id_}, {repr(self.leafs_)})"
+
+    def empty(self):
+        return self._leafs_ is None
+
+    def has_leaves(self):
+        return self._leafs_ is not None and len(self._leafs_) > 0
+
+    @property
+    def leafs_(self):
+        if self._leafs_ is None:
+            raise RuntimeError("NgramPart was not initialized.")
+        return self._leafs_
+
+    def find(self, key):
+        if not self.has_leaves():
+            return None
+        if key in self._leafs_:  # type: ignore
+            return key
+        return None
+
+    def emplace(self, key, value):
+        return self.leafs_.emplace(key, value)
+
+    def __getitem__(self, key):
+        return self.leafs_[key]
 
 
 class WeightingCriteria(IntEnum):
@@ -36,7 +81,7 @@ class WeightingCriteria(IntEnum):
     kTFIDF = 3
 
 
-def PopulateGrams(
+def populate_grams(
     els,
     els_index,
     n_ngrams: int,
@@ -48,14 +93,16 @@ def PopulateGrams(
         n = 1
         m = c
         while els_index < len(els):
-            p = m.emplace(els[els_index], NgramPart(0))
-            els_index += 1
+            p = m.emplace(els[els_index], NgramPart(-1))
             if n == ngram_size:
                 p.id_ = ngram_id
                 ngram_id += 1
                 break
-            n += 1
+            if p.empty():
+                p.init()
             m = p.leafs_
+            n += 1
+            els_index += 1
     return ngram_id
 
 
@@ -71,18 +118,18 @@ class TfIdfVectorizer(OpRun):
         elif mode == "TFIDF":
             self.weighting_criteria_ = WeightingCriteria.kTFIDF
 
-        self.min_gram_length_ = self.min_gram_length
-        self.max_gram_length_ = self.max_gram_length
-        self.max_skip_count_ = self.max_skip_count
-        self.ngram_counts_ = self.ngram_counts
-        self.max_gram_length_ = self.max_gram_length
-        self.ngram_indexes_ = self.ngram_indexes
-
+        self.min_gram_length_ = self.min_gram_length  # type: ignore
+        self.max_gram_length_ = self.max_gram_length  # type: ignore
+        self.max_skip_count_ = self.max_skip_count  # type: ignore
+        self.ngram_counts_ = self.ngram_counts  # type: ignore
+        self.max_gram_length_ = self.max_gram_length  # type: ignore
+        self.ngram_indexes_ = self.ngram_indexes  # type: ignore
         self.output_size_ = max(self.ngram_indexes_) + 1
+        self.weights_ = self.weights  # type: ignore
+        self.pool_int64s_ = self.pool_int64s  # type: ignore
 
-        self.weights_ = self.weights
-        self.pool_int64s_ = self.pool_int64s
-        self.int64_map_ = IntMap()
+        self.int64_map_ = NgramPart(-2)
+        self.int64_map_.init()
 
         total_items = len(self.pool_int64s_)
         ngram_id = 1  # start with 1, 0 - means no n-gram
@@ -100,10 +147,10 @@ class TfIdfVectorizer(OpRun):
             if items > 0:
                 ngrams = items // ngram_size
                 if (
-                    ngram_size >= self.min_gram_length
-                    and ngram_size <= self.max_gram_length
+                    ngram_size >= self.min_gram_length_
+                    and ngram_size <= self.max_gram_length_
                 ):
-                    ngram_id = PopulateGrams(
+                    ngram_id = populate_grams(
                         self.pool_int64s_,
                         start_idx,
                         ngrams,
@@ -115,15 +162,17 @@ class TfIdfVectorizer(OpRun):
                     ngram_id += ngrams
             ngram_size += 1
 
-    def increment_count(self, ngram_id:int,  row_num:int, frequencies:List[int])->None:
+    def increment_count(
+        self, ngram_id: int, row_num: int, frequencies: List[int]
+    ) -> None:
         ngram_id -= 1
         # assert(ngram_id < ngram_indexes_.size());
         output_idx = row_num * self.output_size_ + self.ngram_indexes_[ngram_id]
         # assert(static_cast<size_t>(output_idx) < frequencies.size());
-        frequencies[output_idx] -= 1
+        frequencies[output_idx] += 1
 
-    def output_result(self, B:int, frequences: List[int])->List[float]:
-        output_dims:List[int] = []
+    def output_result(self, B: int, frequencies: List[int]) -> np.ndarray:
+        output_dims: List[int] = []
         if B == 0:
             output_dims.append(self.output_size_)
             B = 1
@@ -134,38 +183,36 @@ class TfIdfVectorizer(OpRun):
         row_size = self.output_size_
 
         total_dims = np.prod(output_dims)
-        Y = np.empty((total_dims, ), dtype=np.float)
+        Y = np.empty((total_dims,), dtype=np.float)
 
         w = self.weights_
         if self.weighting_criteria_ == WeightingCriteria.kTF:
             i = 0
-            for f in frequences:
+            for f in frequencies:
                 Y[i] = f
                 i += 1
         elif self.weighting_criteria_ == WeightingCriteria.kIDF:
             if len(w) > 0:
-                freqs = frequences
                 p = 0
                 for batch in range(B):
                     for i in range(row_size):
-                        Y[p] = w[i] if frequences[p] > 0 else 0
+                        Y[p] = w[i] if frequencies[p] > 0 else 0
                         p += 1
-            else :
+            else:
                 p = 0
-                for f in frequences:
+                for f in frequencies:
                     Y[p] = 1 if f > 0 else 0
                     p += 1
         elif self.weighting_criteria_ == WeightingCriteria.kTFIDF:
             if len(w) > 0:
-                freqs = frequences
                 p = 0
                 for batch in range(B):
                     for i in range(row_size):
-                        Y[p] = w[i] * frequences[p] 
+                        Y[p] = w[i] * frequencies[p]
                         p += 1
-            else :
+            else:
                 p = 0
-                for f in frequences:
+                for f in frequencies:
                     Y[p] = f
                     p += 1
         else:
@@ -173,8 +220,8 @@ class TfIdfVectorizer(OpRun):
         return Y
 
     def compute_impl(
-            self,
-            X:np.ndarray, row_num:int, row_size:int, frequencies: List[int])->None:
+        self, X: np.ndarray, row_num: int, row_size: int, frequencies: List[int]
+    ) -> None:
 
         X_flat = X.flatten()
         row_begin = row_num * row_size
@@ -182,46 +229,45 @@ class TfIdfVectorizer(OpRun):
 
         max_gram_length = self.max_gram_length_
         max_skip_distance = self.max_skip_count_ + 1
-        auto start_ngram_size = min_gram_length_;
+        start_ngram_size = self.min_gram_length_
 
-        for (auto skip_distance = 1; skip_distance <= max_skip_distance; ++skip_distance) {
-            auto ngram_start = row_begin;
-            auto const ngram_row_end = row_end;
+        for skip_distance in range(1, max_skip_distance + 1):
+            ngram_start = row_begin
+            ngram_row_end = row_end
 
-            while (ngram_start < ngram_row_end) {
-                // We went far enough so no n-grams of any size can be gathered
-                auto at_least_this = AdvanceElementPtr(
-                    ngram_start, skip_distance * (start_ngram_size - 1), elem_size);
-                if (at_least_this >= ngram_row_end)
-                    break;
+            while ngram_start < ngram_row_end:
+                # We went far enough so no n-grams of any size can be gathered
+                at_least_this = ngram_start + skip_distance * (start_ngram_size - 1)
+                if at_least_this >= ngram_row_end:
+                    break
 
-                auto ngram_item = ngram_start;
-                const IntMap* int_map = &int64_map_;
-                for (auto ngram_size = 1;
-                        !int_map->empty() &&
-                        ngram_size <= max_gram_length &&
-                        ngram_item < ngram_row_end;
-                        ++ngram_size, ngram_item = AdvanceElementPtr(ngram_item, skip_distance, elem_size)) {
-                    int64_t val = *reinterpret_cast<const int64_t*>(ngram_item);
-                    auto hit = int_map->find(val);
-                    if (hit == int_map->end())
-                        break;
-                    if (ngram_size >= start_ngram_size && hit->second->id_ != 0) {
-                        IncrementCount(hit->second->id_, row_num, frequencies);
-                    }
-                    int_map = &hit->second->leafs_;
-                }
-                // Sliding window shift
-                ngram_start = AdvanceElementPtr(ngram_start, 1, elem_size);
-            }
-            // We count UniGrams only once since they are not affected
-            // by skip distance
-            if (start_ngram_size == 1 && ++start_ngram_size > max_gram_length)
-                break;
-        }
-    }
+                ngram_item = ngram_start
+                int_map = self.int64_map_
+                ngram_size = 1
+                while (
+                    int_map.has_leaves()
+                    and ngram_size <= max_gram_length
+                    and ngram_item < ngram_row_end
+                ):
 
-   
+                    val = X_flat[ngram_item]
+                    hit = int_map.find(val)
+                    if hit is None:
+                        break
+                    if ngram_size >= start_ngram_size and int_map[hit].id_ != -1:
+                        self.increment_count(int_map[hit].id_, row_num, frequencies)
+                    int_map = int_map[hit]
+                    ngram_size += 1
+                    ngram_item += skip_distance
+
+                ngram_start += 1
+
+            # We count UniGrams only once since they are not affected
+            # by skip distance
+            start_ngram_size += 1
+            if start_ngram_size == 1 and start_ngram_size > max_gram_length:
+                break
+
     def _run(  # type: ignore
         self,
         X,
@@ -236,68 +282,53 @@ class TfIdfVectorizer(OpRun):
         weights=None,
     ):
 
-        weighting_criteria_ = WeightingCriteria.kNone
-        max_gram_length_ = 0
-        min_gram_length_ = 0
-        max_skip_count_ = 0
-        output_size_ = 0
+        total_items = np.prod(X.shape)
 
- def compute(py::array_t<int64_t, py::array::c_style | py::array::forcecast> X) const {
-        std::vector<int64_t> input_shape;
-        arrayshape2vector(input_shape, X);
-        const size_t total_items = flattened_dimension(input_shape);
+        num_rows = 0
+        B = 0
+        C = 0
+        input_dims = X.shape
+        if len(input_dims) == 0:
+            num_rows = 1
+            C = 1
+            if total_items != 1:
+                raise ValueError(f"Unexpected total of items {total_items}.")
+        elif len(input_dims) == 1:
+            num_rows = 1
+            C = input_dims[0]
+        elif len(input_dims) == 2:
+            B = input_dims[0]
+            C = input_dims[1]
+            num_rows = B
+            if B < 1:
+                raise ValueError(
+                    f"Input shape must have either [C] or [B,C] dimensions with B > 0, B={B}, C={C}."
+                )
+        else:
+            raise ValueError(
+                f"Input shape must have either [C] or [B,C] dimensions with B > 0, B={B}, C={C}."
+            )
 
-        int32_t num_rows = 0;
-        size_t B = 0;
-        size_t C = 0;
-        auto& input_dims = input_shape;
-        if (input_dims.empty()) {
-            num_rows = 1;
-            C = 1;
-            if (total_items != 1)
-                throw std::invalid_argument("Unexpected total of items.");
-        }
-        else if (input_dims.size() == 1) {
-            num_rows = 1;
-            C = input_dims[0];
-        }
-        else if (input_dims.size() == 2) {
-            B = input_dims[0];
-            C = input_dims[1];
-            num_rows = static_cast<int32_t>(B);
-            if (B < 1)
-                throw std::invalid_argument(
-                    "Input shape must have either [C] or [B,C] dimensions with B > 0.");
-        }
-        else
-            throw std::invalid_argument(
-                    "Input shape must have either [C] or [B,C] dimensions with B > 0.");
+        if num_rows * C != total_items:
+            raise ValueError(
+                f"Unexpected total of items, num_rows * C = {num_rows * C} != total_items = {total_items}."
+            )
+        # Frequency holder allocate [B..output_size_] and init all to zero
+        frequencies = [0] * (num_rows * self.output_size_)
 
-        if (num_rows * C != total_items)
-            throw std::invalid_argument("Unexpected total of items.");
-        // Frequency holder allocate [B..output_size_]
-        // and init all to zero
-        std::vector<uint32_t> frequencies;
-        frequencies.resize(num_rows * output_size_, 0);
+        if total_items == 0 or self.int64_map_.empty():
+            # TfidfVectorizer may receive an empty input when it follows a Tokenizer
+            # (for example for a string containing only stopwords).
+            # TfidfVectorizer returns a zero tensor of shape
+            # {b_dim, output_size} when b_dim is the number of received observations
+            # and output_size the is the maximum value in ngram_indexes attribute plus 1.
+            return self.output_result(B, frequencies)
 
-        if (total_items == 0 || int64_map_.empty()) {
-            // TfidfVectorizer may receive an empty input when it follows a Tokenizer
-            // (for example for a string containing only stopwords).
-            // TfidfVectorizer returns a zero tensor of shape
-            // {b_dim, output_size} when b_dim is the number of received observations
-            // and output_size the is the maximum value in ngram_indexes attribute plus 1.
-            return OutputResult(B, frequencies);
-        }
+        def fn(row_num):
+            self.compute_impl(X, row_num, C, frequencies)
 
-        std::function<void(ptrdiff_t)> fn = [this, X, C, &frequencies](ptrdiff_t row_num) {
-            ComputeImpl(X, row_num, C, frequencies);
-        };
+        # can be parallelized.
+        for i in range(num_rows):
+            fn(i)
 
-        // can be parallelized.
-        for (int64_t i = 0; i < num_rows; ++i)
-            fn(i);
-
-        return OutputResult(B, frequencies);
-    }
-
-
+        return (self.output_result(B, frequencies),)
