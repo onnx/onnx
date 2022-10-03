@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0913,R0914,R0915,R1716,W0221
+# pylint: disable=C0200,R0902,R0912,R0913,R0914,R0915,R1716,W0612,W0221
 
 from enum import IntEnum
 from pprint import pformat
@@ -293,6 +293,9 @@ class TfIdfVectorizer(OpRun):
         pool_strings=None,
         weights=None,
     ):
+        # weights should be identical to self.weights as well as
+        # pool_strings, pool_int64s, ngram_indexes, ngram_counts, mode.
+        # This means none of those attributes can be used in one function.
 
         total_items = np.prod(X.shape)
 
