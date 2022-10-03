@@ -3,7 +3,7 @@
 import unittest
 from typing import Callable, List, Optional, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from onnx import (
     FunctionProto,

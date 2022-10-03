@@ -11,22 +11,27 @@ jobs:
         python.version: '3.9'
         onnx_ml: 1
         onnx_debug: 1
+        documentation: 0
       py38:
         python.version: '3.8'
         onnx_ml: 0
         onnx_debug: 0
+        documentation: 0
       py38-ml:
         python.version: '3.8'
         onnx_ml: 1
         onnx_debug: 0
+        documentation: 1
       py37:
         python.version: '3.7'
         onnx_ml: 0
         onnx_debug: 0
+        documentation: 0
       py37-ml:
         python.version: '3.7'
         onnx_ml: 1
         onnx_debug: 0
+        documentation: 0
     maxParallel: 6
 
   steps:
@@ -54,7 +59,7 @@ jobs:
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
       fi
-      export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+      export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py --quiet install
     displayName: 'Install ONNX and dependencies'
@@ -64,10 +69,12 @@ jobs:
 
       # style check (flake8, mypy, and clang-format)
       python -m pip install -q -r requirements-dev.txt
-      bash tools/style.sh
-      if [ $? -ne 0 ]; then
-        echo "style check failed"
-        exit 1
+      if [ '$(documentation)' == '0' ]; then
+        bash tools/style.sh
+        if [ $? -ne 0 ]; then
+          echo "style check failed"
+          exit 1
+        fi
       fi
 
       # check line endings to be UNIX
@@ -108,17 +115,11 @@ jobs:
         exit 1
       fi
 
-      ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
-      if [ $? -ne 0 ]; then
-        echo "onnxifi_test_driver_gtests failed"
-        exit 1
-      fi
-
     displayName: 'Run ONNX tests'
 
   - script: |
       source venv/bin/activate
-      python onnx/backend/test/cmd_tools.py generate-data
+      python onnx/backend/test/cmd_tools.py generate-data --clean
       git status
       # Skip *output_*.pb because NumPy functions might behave differently on different platforms
       # Skip test_log's input.pb because it uses np.random, which might behave differently on different platforms
@@ -127,5 +128,19 @@ jobs:
         echo "git diff for test generation returned failures. Please check updated node test files"
         exit 1
       fi
+      git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
+      if [ $? -ne 0 ]; then
+        echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
+        exit 1
+      fi
 
     displayName: Test backend test data
+
+  - script: |
+      if [ '$(documentation)' == '1' ]; then
+        source venv/bin/activate
+        pip install -r docs/docsgen/source/requirements.txt
+        cd docs/docsgen && make text -j auto
+      fi
+    displayName: Test documentation
+    continueOnError: true  # the documentation generates errors due to operators documentation

@@ -306,8 +306,8 @@ ext_modules = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
 ################################################################################
 
 # Add package directories here if you want to package them with the source
+# TODO try to remove unnecessary .cpp files
 include_dirs = [
-    "onnx.backend.test.cpp*",
     "onnx.backend.test.data.*",
     "onnx.common",
     "onnx.defs.*",
@@ -342,8 +342,8 @@ tests_require.append("tabulate")
 
 extras_require["lint"] = [
     "clang-format==13.0.0",
-    "flake8==5.0.2",
-    "mypy==0.782",
+    "flake8>=5.0.2",
+    "mypy>=0.971",
     "types-protobuf==3.18.4",
     "black>=22.3",
     "isort[colors]>=5.10",

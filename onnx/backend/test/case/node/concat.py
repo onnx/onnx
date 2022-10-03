@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Sequence
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 
