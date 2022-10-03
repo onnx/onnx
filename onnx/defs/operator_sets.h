@@ -1006,6 +1006,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Resize);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Mish);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalGetElement);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalHasElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Split);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterElements);
@@ -1021,6 +1022,7 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Resize)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Mish)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalGetElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Split)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalHasElement)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND)>());
