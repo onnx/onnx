@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 165/180 (91.67%, 5 generators excluded) common operators.
+Node tests have covered 167/182 (91.76%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1040,6 +1040,115 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 </details>
 
 
+### AttributeHasValue
+There are 1 test cases, listed as following:
+<details>
+<summary>attributehasvalue</summary>
+
+```python
+def test_one_attribute(name: str, **kwargs: Any) -> None:
+    node = onnx.helper.make_node(
+        "AttributeHasValue",
+        inputs=[],
+        outputs=["output"],
+    )
+
+    output = np.array(False)
+    expect(
+        node,
+        inputs=[],
+        outputs=[output],
+        name=f"test_attribute_has_{name}_false",
+    )
+
+    node = onnx.helper.make_node(
+        "AttributeHasValue",
+        inputs=[],
+        outputs=["output"],
+        **kwargs,
+    )
+
+    output = np.array(True)
+    expect(
+        node,
+        inputs=[],
+        outputs=[output],
+        name=f"test_attribute_has_{name}_true",
+    )
+
+value_float = 0.1
+test_one_attribute("value_float", value_float=value_float)
+
+value_int = 1
+test_one_attribute("value_int", value_int=value_int)
+
+value_string = "test"
+test_one_attribute("value_string", value_string=value_string)
+
+tensor_values = np.random.randn(5, 5).astype(np.float32)
+value_tensor = onnx.helper.make_tensor(
+    name="const_tensor",
+    data_type=onnx.TensorProto.FLOAT,
+    dims=tensor_values.shape,
+    vals=tensor_values.flatten().astype(float),
+)
+test_one_attribute("value_tensor", value_tensor=value_tensor)
+
+value_graph = onnx.parser.parse_graph("agraph (X) => (Y) {Y = Identity(X)}")
+test_one_attribute("value_graph", value_graph=value_graph)
+
+value_sparse_tensor = onnx.helper.make_sparse_tensor(
+    onnx.helper.make_tensor(
+        name="",
+        data_type=onnx.TensorProto.FLOAT,
+        dims=(5,),
+        vals=[1.1, 2.2, 3.3, 4.4, 5.5],
+    ),
+    onnx.helper.make_tensor(
+        name="",
+        data_type=onnx.TensorProto.INT64,
+        dims=(5,),
+        vals=[1, 3, 5, 7, 9],
+    ),
+    [10],
+)
+
+test_one_attribute(
+    "value_sparse_tensor", value_sparse_tensor=value_sparse_tensor
+)
+
+value_type_proto = onnx.helper.make_tensor_type_proto(
+    onnx.TensorProto.FLOAT, shape=[5]
+)
+test_one_attribute("value_type_proto", value_type_proto=value_type_proto)
+
+value_floats = [0.0, 1.1]
+test_one_attribute("value_floats", value_floats=value_floats)
+
+value_ints = [0, 1]
+test_one_attribute("value_ints", value_ints=value_ints)
+
+value_strings = ["test strings"]
+test_one_attribute("value_strings", value_strings=value_strings)
+
+value_tensors = [value_tensor, value_tensor]
+test_one_attribute("value_tensors", value_tensors=value_tensors)
+
+value_graphs = [value_graph, value_graph]
+test_one_attribute("value_graphs", value_graphs=value_graphs)
+
+value_sparse_tensors = [value_sparse_tensor, value_sparse_tensor]
+test_one_attribute(
+    "value_sparse_tensors", value_sparse_tensors=value_sparse_tensors
+)
+
+value_type_protos = [value_type_proto, value_type_proto]
+test_one_attribute("value_type_protos", value_type_protos=value_type_protos)
+```
+
+</details>
+
+
 ### AveragePool
 There are 13 test cases, listed as following:
 <details>
@@ -1838,6 +1947,37 @@ expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_uint8")
 </details>
 
 
+### BitwiseNot
+There are 1 test cases, listed as following:
+<details>
+<summary>bitwisenot</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseNot",
+    inputs=["x"],
+    outputs=["bitwise_not"],
+)
+
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_2d")
+
+# 3d
+x = np.random.randn(3, 4, 5).astype(np.uint16)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
+
+# 4d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_4d")
+```
+
+</details>
+
+
 ### BlackmanWindow
 There are 1 test cases, listed as following:
 <details>
@@ -1955,7 +2095,7 @@ for from_type, to_type in test_cases:
             )
     elif "STRING" != from_type:
         input = np.random.random_sample(shape).astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
         if "STRING" == to_type:
             # Converting input to str, then give it object dtype for generating script
@@ -1968,7 +2108,7 @@ for from_type, to_type in test_cases:
             output = np.array(ss).astype(object).reshape([3, 4])
         else:
             output = input.astype(
-                TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+                helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
             )
     else:
         input = np.array(
@@ -1989,7 +2129,7 @@ for from_type, to_type in test_cases:
             dtype=np.dtype(object),
         ).reshape([3, 4])
         output = input.astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
         )
     node = onnx.helper.make_node(
         "Cast",
@@ -2093,7 +2233,7 @@ for from_type, to_type in test_cases:
             )
     elif "STRING" != from_type:
         input = np.random.random_sample(shape).astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
         if "STRING" == to_type:
             # Converting input to str, then give it np.object dtype for generating script
@@ -2106,7 +2246,7 @@ for from_type, to_type in test_cases:
             output = np.array(ss).astype(np.object).reshape([3, 4])
         else:
             output = input.astype(
-                TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+                helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
             )
     else:
         input = np.array(
@@ -2127,7 +2267,7 @@ for from_type, to_type in test_cases:
             dtype=np.dtype(np.object),
         ).reshape([3, 4])
         output = input.astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
         )
     like = output.flatten()[0:1]
     node = onnx.helper.make_node(
@@ -18181,12 +18321,12 @@ expect(node, inputs=[x], outputs=[y], name="test_spacetodepth")
 
 
 ### Split
-There are 4 test cases, listed as following:
+There are 10 test cases, listed as following:
 <details>
-<summary>1d</summary>
+<summary>1d_opset13</summary>
 
 ```python
-input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
 
 node = onnx.helper.make_node(
     "Split",
@@ -18202,9 +18342,10 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input],
-    outputs=[y for y in expected_outputs],
-    name="test_split_equal_parts_1d",
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_1d_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 
 split = np.array([2, 4]).astype(np.int64)
@@ -18221,18 +18362,95 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input, split],
-    outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_1d",
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_1d_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 ```
 
 </details>
 <details>
-<summary>2d</summary>
+<summary>1d_opset18</summary>
 
 ```python
-input = np.array(
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3"],
+    axis=0,
+    num_outputs=3,
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0]).astype(np.float32),
+    np.array([5.0, 6.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_1d_opset18",
+)
+
+split = np.array([2, 4]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input", "split"],
+    outputs=["output_1", "output_2"],
+    axis=0,
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0, 5.0, 6.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_1d_opset18",
+)
+```
+
+</details>
+<details>
+<summary>1d_uneven_split_opset18</summary>
+
+```python
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]).astype(np.float32)
+
+# If axis is not specified, split is applied on default axis 0
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3", "output_4"],
+    num_outputs=4,
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0]).astype(np.float32),
+    np.array([5.0, 6.0]).astype(np.float32),
+    np.array([7.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_1d_uneven_split_opset18",
+)
+```
+
+</details>
+<details>
+<summary>2d_opset13</summary>
+
+```python
+node_input = np.array(
     [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [7.0, 8.0, 9.0, 10.0, 11.0, 12.0]]
 ).astype(np.float32)
 
@@ -18247,8 +18465,62 @@ expected_outputs = [
 
 expect(
     node,
-    inputs=[input],
-    outputs=[y for y in expected_outputs],
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_2d_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
+)
+
+split = np.array([2, 4]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input", "split"],
+    outputs=["output_1", "output_2"],
+    axis=1,
+)
+
+expected_outputs = [
+    np.array([[1.0, 2.0], [7.0, 8.0]]).astype(np.float32),
+    np.array([[3.0, 4.0, 5.0, 6.0], [9.0, 10.0, 11.0, 12.0]]).astype(
+        np.float32
+    ),
+]
+
+expect(
+    node,
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_2d_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
+)
+```
+
+</details>
+<details>
+<summary>2d_opset18</summary>
+
+```python
+node_input = np.array(
+    [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [7.0, 8.0, 9.0, 10.0, 11.0, 12.0]]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2"],
+    axis=1,
+    num_outputs=2,
+)
+
+expected_outputs = [
+    np.array([[1.0, 2.0, 3.0], [7.0, 8.0, 9.0]]).astype(np.float32),
+    np.array([[4.0, 5.0, 6.0], [10.0, 11.0, 12.0]]).astype(np.float32),
+]
+
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
     name="test_split_equal_parts_2d",
 )
 
@@ -18269,18 +18541,52 @@ expected_outputs = [
 
 expect(
     node,
-    inputs=[input, split],
-    outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_2d",
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_2d_opset18",
 )
 ```
 
 </details>
 <details>
-<summary>default_values</summary>
+<summary>2d_uneven_split_opset18</summary>
 
 ```python
-input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
+node_input = np.array(
+    [
+        [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+        [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0],
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3"],
+    axis=1,
+    num_outputs=3,
+)
+
+expected_outputs = [
+    np.array([[1.0, 2.0, 3.0], [9.0, 10.0, 11.0]]).astype(np.float32),
+    np.array([[4.0, 5.0, 6.0], [12.0, 13.0, 14.0]]).astype(np.float32),
+    np.array([[7.0, 8.0], [15.0, 16.0]]).astype(np.float32),
+]
+
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_2d_uneven_split_opset18",
+)
+```
+
+</details>
+<details>
+<summary>default_values_opset13</summary>
+
+```python
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
 
 # If axis is not specified, split is applied on default axis 0
 node = onnx.helper.make_node(
@@ -18294,9 +18600,10 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input],
-    outputs=[y for y in expected_outputs],
-    name="test_split_equal_parts_default_axis",
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_default_axis_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 
 split = np.array([2, 4]).astype(np.int64)
@@ -18310,18 +18617,64 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input, split],
-    outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_default_axis",
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_default_axis_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 ```
 
 </details>
 <details>
-<summary>zero_size_splits</summary>
+<summary>default_values_opset18</summary>
 
 ```python
-input = np.array([]).astype(np.float32)
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
+
+# If axis is not specified, split is applied on default axis 0
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3"],
+    num_outputs=3,
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0]).astype(np.float32),
+    np.array([5.0, 6.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_default_axis_opset18",
+)
+
+split = np.array([2, 4]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Split", inputs=["input", "split"], outputs=["output_1", "output_2"]
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0, 5.0, 6.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_default_axis_opset18",
+)
+```
+
+</details>
+<details>
+<summary>zero_size_splits_opset13</summary>
+
+```python
+# 1-dimensional tensor with dimension_size=0
+node_input = np.array([]).astype(np.float32)
 
 # Split emtpy tensor to tensors of size zero
 split = np.array([0, 0, 0]).astype(np.int64)
@@ -18338,9 +18691,39 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input, split],
-    outputs=[y for y in expected_outputs],
-    name="test_split_zero_size_splits",
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_zero_size_splits_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
+)
+```
+
+</details>
+<details>
+<summary>zero_size_splits_opset18</summary>
+
+```python
+# 1-dimensional tensor with dimension_size=0
+node_input = np.array([]).astype(np.float32)
+
+# Split emtpy tensor to tensors of size zero
+split = np.array([0, 0, 0]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input", "split"],
+    outputs=["output_1", "output_2", "output_3"],
+)
+
+expected_outputs = [
+    np.array([]).astype(np.float32),
+    np.array([]).astype(np.float32),
+    np.array([]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_zero_size_splits_opset18",
 )
 ```
 

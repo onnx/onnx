@@ -1,6 +1,6 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/ONNX_logo_main.png" /></p>
+<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/onnx-horizontal-color.png" /></p>
 
 
 [![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Windows-CI?branchName=main)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)

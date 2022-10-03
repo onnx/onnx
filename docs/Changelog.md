@@ -21222,6 +21222,93 @@ This version of the operator has been available since version 17 of the default 
 </dl>
 
 ## Version 18 of the default ONNX operator set
+### <a name="AttributeHasValue-18"></a>**AttributeHasValue-18**</a>
+
+  Returns true if at least one of the attribute-value is specified.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>value_float</tt> : float</dt>
+<dd>The float attribute.</dd>
+<dt><tt>value_floats</tt> : list of floats</dt>
+<dd>The floats attribute.</dd>
+<dt><tt>value_graph</tt> : graph</dt>
+<dd>The graph attribute.</dd>
+<dt><tt>value_graphs</tt> : list of graphs</dt>
+<dd>The graphs attribute.</dd>
+<dt><tt>value_int</tt> : int</dt>
+<dd>The int attribute.</dd>
+<dt><tt>value_ints</tt> : list of ints</dt>
+<dd>The ints attribute.</dd>
+<dt><tt>value_sparse_tensor</tt> : sparse_tensor</dt>
+<dd>The sparse_tensor attribute.</dd>
+<dt><tt>value_sparse_tensors</tt> : list of sparse_tensors</dt>
+<dd>The sparse_tensors attribute.</dd>
+<dt><tt>value_string</tt> : string</dt>
+<dd>The string attribute.</dd>
+<dt><tt>value_strings</tt> : list of strings</dt>
+<dd>The strings attribute.</dd>
+<dt><tt>value_tensor</tt> : tensor</dt>
+<dd>The tensor attribute.</dd>
+<dt><tt>value_tensors</tt> : list of tensors</dt>
+<dd>The tensors attribute.</dd>
+<dt><tt>value_type_proto</tt> : type_proto</dt>
+<dd>The type_proto attribute.</dd>
+<dt><tt>value_type_protos</tt> : list of type_protos</dt>
+<dd>The type_protos attribute.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : B</dt>
+<dd>A scalar boolean tensor. If true, it indicates that an attribute is provided.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrain output to a boolean tensor.</dd>
+</dl>
+
+### <a name="BitwiseNot-18"></a>**BitwiseNot-18**</a>
+
+  Returns the bitwise not of the input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input/output to integer tensors.</dd>
+</dl>
+
 ### <a name="CenterCropPad-18"></a>**CenterCropPad-18**</a>
 
   Center crop or pad an input to given dimensions.
@@ -21857,6 +21944,50 @@ This version of the operator has been available since version 18 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
+### <a name="Split-18"></a>**Split-18**</a>
+
+  Split a tensor into a list of tensors, along the specified 'axis'.
+  Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
+  If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
+  If the tensor is not evenly splittable into `num_outputs`, the last chunk will be smaller.
+  If the input 'split' is specified, it indicates the sizes of each output in the split.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
+<dt><tt>num_outputs</tt> : int</dt>
+<dd>Number of outputs to split parts of the tensor into. If the tensor is not evenly splittable the last chunk will be smaller.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>The tensor to split</dd>
+<dt><tt>split</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional length of each output. Values should be >= 0.Sum of the values must be equal to the dim value at 'axis' specified.</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, differentiable) : T</dt>
+<dd>One or more outputs forming list of tensors after splitting</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 # ai.onnx.preview.training

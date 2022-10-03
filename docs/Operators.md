@@ -25,6 +25,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
 |<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
+|<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
 |<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
@@ -142,7 +143,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Size">Size</a>|<a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
 |<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
-|<a href="#Split">Split</a>|<a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
+|<a href="#Split">Split</a>|<a href="Changelog.md#Split-18">18</a>, <a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
 |<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
 |<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
@@ -162,6 +163,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|
+|<a href="#AttributeHasValue">AttributeHasValue</a>|<a href="Changelog.md#AttributeHasValue-18">18</a>|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|
@@ -1462,6 +1464,174 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 </details>
 
 
+### <a name="AttributeHasValue"></a><a name="attributehasvalue">**AttributeHasValue**</a>
+
+  Returns true if at least one of the attribute-value is specified.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>value_float</tt> : float</dt>
+<dd>The float attribute.</dd>
+<dt><tt>value_floats</tt> : list of floats</dt>
+<dd>The floats attribute.</dd>
+<dt><tt>value_graph</tt> : graph</dt>
+<dd>The graph attribute.</dd>
+<dt><tt>value_graphs</tt> : list of graphs</dt>
+<dd>The graphs attribute.</dd>
+<dt><tt>value_int</tt> : int</dt>
+<dd>The int attribute.</dd>
+<dt><tt>value_ints</tt> : list of ints</dt>
+<dd>The ints attribute.</dd>
+<dt><tt>value_sparse_tensor</tt> : sparse_tensor</dt>
+<dd>The sparse_tensor attribute.</dd>
+<dt><tt>value_sparse_tensors</tt> : list of sparse_tensors</dt>
+<dd>The sparse_tensors attribute.</dd>
+<dt><tt>value_string</tt> : string</dt>
+<dd>The string attribute.</dd>
+<dt><tt>value_strings</tt> : list of strings</dt>
+<dd>The strings attribute.</dd>
+<dt><tt>value_tensor</tt> : tensor</dt>
+<dd>The tensor attribute.</dd>
+<dt><tt>value_tensors</tt> : list of tensors</dt>
+<dd>The tensors attribute.</dd>
+<dt><tt>value_type_proto</tt> : type_proto</dt>
+<dd>The type_proto attribute.</dd>
+<dt><tt>value_type_protos</tt> : list of type_protos</dt>
+<dd>The type_protos attribute.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : B</dt>
+<dd>A scalar boolean tensor. If true, it indicates that an attribute is provided.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrain output to a boolean tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>attributehasvalue</summary>
+
+```python
+def test_one_attribute(name: str, **kwargs: Any) -> None:
+    node = onnx.helper.make_node(
+        "AttributeHasValue",
+        inputs=[],
+        outputs=["output"],
+    )
+
+    output = np.array(False)
+    expect(
+        node,
+        inputs=[],
+        outputs=[output],
+        name=f"test_attribute_has_{name}_false",
+    )
+
+    node = onnx.helper.make_node(
+        "AttributeHasValue",
+        inputs=[],
+        outputs=["output"],
+        **kwargs,
+    )
+
+    output = np.array(True)
+    expect(
+        node,
+        inputs=[],
+        outputs=[output],
+        name=f"test_attribute_has_{name}_true",
+    )
+
+value_float = 0.1
+test_one_attribute("value_float", value_float=value_float)
+
+value_int = 1
+test_one_attribute("value_int", value_int=value_int)
+
+value_string = "test"
+test_one_attribute("value_string", value_string=value_string)
+
+tensor_values = np.random.randn(5, 5).astype(np.float32)
+value_tensor = onnx.helper.make_tensor(
+    name="const_tensor",
+    data_type=onnx.TensorProto.FLOAT,
+    dims=tensor_values.shape,
+    vals=tensor_values.flatten().astype(float),
+)
+test_one_attribute("value_tensor", value_tensor=value_tensor)
+
+value_graph = onnx.parser.parse_graph("agraph (X) => (Y) {Y = Identity(X)}")
+test_one_attribute("value_graph", value_graph=value_graph)
+
+value_sparse_tensor = onnx.helper.make_sparse_tensor(
+    onnx.helper.make_tensor(
+        name="",
+        data_type=onnx.TensorProto.FLOAT,
+        dims=(5,),
+        vals=[1.1, 2.2, 3.3, 4.4, 5.5],
+    ),
+    onnx.helper.make_tensor(
+        name="",
+        data_type=onnx.TensorProto.INT64,
+        dims=(5,),
+        vals=[1, 3, 5, 7, 9],
+    ),
+    [10],
+)
+
+test_one_attribute(
+    "value_sparse_tensor", value_sparse_tensor=value_sparse_tensor
+)
+
+value_type_proto = onnx.helper.make_tensor_type_proto(
+    onnx.TensorProto.FLOAT, shape=[5]
+)
+test_one_attribute("value_type_proto", value_type_proto=value_type_proto)
+
+value_floats = [0.0, 1.1]
+test_one_attribute("value_floats", value_floats=value_floats)
+
+value_ints = [0, 1]
+test_one_attribute("value_ints", value_ints=value_ints)
+
+value_strings = ["test strings"]
+test_one_attribute("value_strings", value_strings=value_strings)
+
+value_tensors = [value_tensor, value_tensor]
+test_one_attribute("value_tensors", value_tensors=value_tensors)
+
+value_graphs = [value_graph, value_graph]
+test_one_attribute("value_graphs", value_graphs=value_graphs)
+
+value_sparse_tensors = [value_sparse_tensor, value_sparse_tensor]
+test_one_attribute(
+    "value_sparse_tensors", value_sparse_tensors=value_sparse_tensors
+)
+
+value_type_protos = [value_type_proto, value_type_proto]
+test_one_attribute("value_type_protos", value_type_protos=value_type_protos)
+```
+
+</details>
+
+
 ### <a name="AveragePool"></a><a name="averagepool">**AveragePool**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
@@ -2576,6 +2746,67 @@ expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_uint8")
 </details>
 
 
+### <a name="BitwiseNot"></a><a name="bitwisenot">**BitwiseNot**</a>
+
+  Returns the bitwise not of the input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input/output to integer tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>bitwisenot</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseNot",
+    inputs=["x"],
+    outputs=["bitwise_not"],
+)
+
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_2d")
+
+# 3d
+x = np.random.randn(3, 4, 5).astype(np.uint16)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
+
+# 4d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.bitwise_not(x)
+expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_4d")
+```
+
+</details>
+
+
 ### <a name="BlackmanWindow"></a><a name="blackmanwindow">**BlackmanWindow**</a>
 
   Generates a Blackman window as described in the paper https://ieeexplore.ieee.org/document/1455106.
@@ -2809,7 +3040,7 @@ for from_type, to_type in test_cases:
             )
     elif "STRING" != from_type:
         input = np.random.random_sample(shape).astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
         if "STRING" == to_type:
             # Converting input to str, then give it object dtype for generating script
@@ -2822,7 +3053,7 @@ for from_type, to_type in test_cases:
             output = np.array(ss).astype(object).reshape([3, 4])
         else:
             output = input.astype(
-                TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+                helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
             )
     else:
         input = np.array(
@@ -2843,7 +3074,7 @@ for from_type, to_type in test_cases:
             dtype=np.dtype(object),
         ).reshape([3, 4])
         output = input.astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
         )
     node = onnx.helper.make_node(
         "Cast",
@@ -2983,7 +3214,7 @@ for from_type, to_type in test_cases:
             )
     elif "STRING" != from_type:
         input = np.random.random_sample(shape).astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
         if "STRING" == to_type:
             # Converting input to str, then give it np.object dtype for generating script
@@ -2996,7 +3227,7 @@ for from_type, to_type in test_cases:
             output = np.array(ss).astype(np.object).reshape([3, 4])
         else:
             output = input.astype(
-                TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+                helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
             )
     else:
         input = np.array(
@@ -3017,7 +3248,7 @@ for from_type, to_type in test_cases:
             dtype=np.dtype(np.object),
         ).reshape([3, 4])
         output = input.astype(
-            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)]
+            helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
         )
     like = output.flatten()[0:1]
     node = onnx.helper.make_node(
@@ -26990,21 +27221,25 @@ expect(node, inputs=[x], outputs=[y], name="test_spacetodepth")
 
 ### <a name="Split"></a><a name="split">**Split**</a>
 
-  Split a tensor into a list of tensors, along the specified
-  'axis'. Lengths of the parts can be specified using input 'split'.
-  Otherwise, the tensor is split to equal sized parts.
+  Split a tensor into a list of tensors, along the specified 'axis'.
+  Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
+  If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
+  If the tensor is not evenly splittable into `num_outputs`, the last chunk will be smaller.
+  If the input 'split' is specified, it indicates the sizes of each output in the split.
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Split-1">1</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Split-1">1</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
+<dt><tt>num_outputs</tt> : int</dt>
+<dd>Number of outputs to split parts of the tensor into. If the tensor is not evenly splittable the last chunk will be smaller.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -27034,10 +27269,10 @@ Other versions of this operator: <a href="Changelog.md#Split-1">1</a>, <a href="
 #### Examples
 
 <details>
-<summary>1d</summary>
+<summary>1d_opset13</summary>
 
 ```python
-input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
 
 node = onnx.helper.make_node(
     "Split",
@@ -27053,9 +27288,10 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input],
-    outputs=[y for y in expected_outputs],
-    name="test_split_equal_parts_1d",
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_1d_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 
 split = np.array([2, 4]).astype(np.int64)
@@ -27072,9 +27308,10 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input, split],
-    outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_1d",
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_1d_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 ```
 
@@ -27082,10 +27319,90 @@ expect(
 
 
 <details>
-<summary>2d</summary>
+<summary>1d_opset18</summary>
 
 ```python
-input = np.array(
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3"],
+    axis=0,
+    num_outputs=3,
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0]).astype(np.float32),
+    np.array([5.0, 6.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_1d_opset18",
+)
+
+split = np.array([2, 4]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input", "split"],
+    outputs=["output_1", "output_2"],
+    axis=0,
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0, 5.0, 6.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_1d_opset18",
+)
+```
+
+</details>
+
+
+<details>
+<summary>1d_uneven_split_opset18</summary>
+
+```python
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]).astype(np.float32)
+
+# If axis is not specified, split is applied on default axis 0
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3", "output_4"],
+    num_outputs=4,
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0]).astype(np.float32),
+    np.array([5.0, 6.0]).astype(np.float32),
+    np.array([7.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_1d_uneven_split_opset18",
+)
+```
+
+</details>
+
+
+<details>
+<summary>2d_opset13</summary>
+
+```python
+node_input = np.array(
     [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [7.0, 8.0, 9.0, 10.0, 11.0, 12.0]]
 ).astype(np.float32)
 
@@ -27100,8 +27417,64 @@ expected_outputs = [
 
 expect(
     node,
-    inputs=[input],
-    outputs=[y for y in expected_outputs],
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_2d_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
+)
+
+split = np.array([2, 4]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input", "split"],
+    outputs=["output_1", "output_2"],
+    axis=1,
+)
+
+expected_outputs = [
+    np.array([[1.0, 2.0], [7.0, 8.0]]).astype(np.float32),
+    np.array([[3.0, 4.0, 5.0, 6.0], [9.0, 10.0, 11.0, 12.0]]).astype(
+        np.float32
+    ),
+]
+
+expect(
+    node,
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_2d_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>2d_opset18</summary>
+
+```python
+node_input = np.array(
+    [[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [7.0, 8.0, 9.0, 10.0, 11.0, 12.0]]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2"],
+    axis=1,
+    num_outputs=2,
+)
+
+expected_outputs = [
+    np.array([[1.0, 2.0, 3.0], [7.0, 8.0, 9.0]]).astype(np.float32),
+    np.array([[4.0, 5.0, 6.0], [10.0, 11.0, 12.0]]).astype(np.float32),
+]
+
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
     name="test_split_equal_parts_2d",
 )
 
@@ -27122,9 +27495,9 @@ expected_outputs = [
 
 expect(
     node,
-    inputs=[input, split],
-    outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_2d",
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_2d_opset18",
 )
 ```
 
@@ -27132,10 +27505,46 @@ expect(
 
 
 <details>
-<summary>default_values</summary>
+<summary>2d_uneven_split_opset18</summary>
 
 ```python
-input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
+node_input = np.array(
+    [
+        [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+        [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0],
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3"],
+    axis=1,
+    num_outputs=3,
+)
+
+expected_outputs = [
+    np.array([[1.0, 2.0, 3.0], [9.0, 10.0, 11.0]]).astype(np.float32),
+    np.array([[4.0, 5.0, 6.0], [12.0, 13.0, 14.0]]).astype(np.float32),
+    np.array([[7.0, 8.0], [15.0, 16.0]]).astype(np.float32),
+]
+
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_2d_uneven_split_opset18",
+)
+```
+
+</details>
+
+
+<details>
+<summary>default_values_opset13</summary>
+
+```python
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
 
 # If axis is not specified, split is applied on default axis 0
 node = onnx.helper.make_node(
@@ -27149,9 +27558,10 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input],
-    outputs=[y for y in expected_outputs],
-    name="test_split_equal_parts_default_axis",
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_default_axis_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 
 split = np.array([2, 4]).astype(np.int64)
@@ -27165,9 +27575,10 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input, split],
-    outputs=[y for y in expected_outputs],
-    name="test_split_variable_parts_default_axis",
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_default_axis_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
 )
 ```
 
@@ -27175,10 +27586,57 @@ expect(
 
 
 <details>
-<summary>zero_size_splits</summary>
+<summary>default_values_opset18</summary>
 
 ```python
-input = np.array([]).astype(np.float32)
+node_input = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float32)
+
+# If axis is not specified, split is applied on default axis 0
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input"],
+    outputs=["output_1", "output_2", "output_3"],
+    num_outputs=3,
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0]).astype(np.float32),
+    np.array([5.0, 6.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input],
+    outputs=expected_outputs,
+    name="test_split_equal_parts_default_axis_opset18",
+)
+
+split = np.array([2, 4]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Split", inputs=["input", "split"], outputs=["output_1", "output_2"]
+)
+
+expected_outputs = [
+    np.array([1.0, 2.0]).astype(np.float32),
+    np.array([3.0, 4.0, 5.0, 6.0]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_variable_parts_default_axis_opset18",
+)
+```
+
+</details>
+
+
+<details>
+<summary>zero_size_splits_opset13</summary>
+
+```python
+# 1-dimensional tensor with dimension_size=0
+node_input = np.array([]).astype(np.float32)
 
 # Split emtpy tensor to tensors of size zero
 split = np.array([0, 0, 0]).astype(np.int64)
@@ -27195,9 +27653,41 @@ expected_outputs = [
 ]
 expect(
     node,
-    inputs=[input, split],
-    outputs=[y for y in expected_outputs],
-    name="test_split_zero_size_splits",
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_zero_size_splits_opset13",
+    opset_imports=[onnx.helper.make_opsetid("", 13)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>zero_size_splits_opset18</summary>
+
+```python
+# 1-dimensional tensor with dimension_size=0
+node_input = np.array([]).astype(np.float32)
+
+# Split emtpy tensor to tensors of size zero
+split = np.array([0, 0, 0]).astype(np.int64)
+node = onnx.helper.make_node(
+    "Split",
+    inputs=["input", "split"],
+    outputs=["output_1", "output_2", "output_3"],
+)
+
+expected_outputs = [
+    np.array([]).astype(np.float32),
+    np.array([]).astype(np.float32),
+    np.array([]).astype(np.float32),
+]
+expect(
+    node,
+    inputs=[node_input, split],
+    outputs=expected_outputs,
+    name="test_split_zero_size_splits_opset18",
 )
 ```
 
