@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
+# pylint: disable=R0912,R0913,R0914,R0915,R1716,W0221
 
 from enum import IntEnum
 from pprint import pformat
@@ -71,7 +71,7 @@ class NgramPart:
         return self.leafs_.emplace(key, value)
 
     def __getitem__(self, key):
-        return self.leafs_[key]
+        return self._leafs_[key]
 
 
 class WeightingCriteria(IntEnum):
@@ -220,16 +220,28 @@ class TfIdfVectorizer(OpRun):
         return Y
 
     def compute_impl(
-        self, X: np.ndarray, row_num: int, row_size: int, frequencies: List[int]
+        self,
+        X: np.ndarray,
+        row_num: int,
+        row_size: int,
+        frequencies: List[int],
+        max_gram_length=None,
+        max_skip_count=None,
+        min_gram_length=None,
+        mode=None,
+        ngram_counts=None,
+        ngram_indexes=None,
+        pool_int64s=None,
+        pool_strings=None,
+        weights=None,
     ) -> None:
 
         X_flat = X.flatten()
         row_begin = row_num * row_size
         row_end = row_begin + row_size
 
-        max_gram_length = self.max_gram_length_
-        max_skip_distance = self.max_skip_count_ + 1
-        start_ngram_size = self.min_gram_length_
+        max_skip_distance = max_skip_count + 1
+        start_ngram_size = min_gram_length
 
         for skip_distance in range(1, max_skip_distance + 1):
             ngram_start = row_begin
@@ -249,24 +261,24 @@ class TfIdfVectorizer(OpRun):
                     and ngram_size <= max_gram_length
                     and ngram_item < ngram_row_end
                 ):
-
                     val = X_flat[ngram_item]
                     hit = int_map.find(val)
                     if hit is None:
                         break
-                    if ngram_size >= start_ngram_size and int_map[hit].id_ != -1:
-                        self.increment_count(int_map[hit].id_, row_num, frequencies)
-                    int_map = int_map[hit]
+                    hit = int_map[val].id_
+                    if ngram_size >= start_ngram_size and hit != -1:
+                        self.increment_count(hit, row_num, frequencies)
+                    int_map = int_map[val]
                     ngram_size += 1
                     ngram_item += skip_distance
 
                 ngram_start += 1
 
-            # We count UniGrams only once since they are not affected
-            # by skip distance
-            start_ngram_size += 1
-            if start_ngram_size == 1 and start_ngram_size > max_gram_length:
-                break
+            # We count UniGrams only once since they are not affected by skip_distance
+            if start_ngram_size == 1:
+                start_ngram_size += 1
+                if start_ngram_size > max_gram_length:
+                    break
 
     def _run(  # type: ignore
         self,
@@ -325,7 +337,21 @@ class TfIdfVectorizer(OpRun):
             return self.output_result(B, frequencies)
 
         def fn(row_num):
-            self.compute_impl(X, row_num, C, frequencies)
+            self.compute_impl(
+                X,
+                row_num,
+                C,
+                frequencies,
+                max_gram_length=max_gram_length,
+                max_skip_count=max_skip_count,
+                min_gram_length=min_gram_length,
+                mode=mode,
+                ngram_counts=ngram_counts,
+                ngram_indexes=ngram_indexes,
+                pool_int64s=pool_int64s,
+                pool_strings=pool_strings,
+                weights=weights,
+            )
 
         # can be parallelized.
         for i in range(num_rows):
