@@ -903,7 +903,8 @@ def printable_attribute(
             content.append("<Tensor>")
         else:
             # special case to print scalars
-            content.append("<Scalar Tensor>")
+            field = tensor_dtype_to_field(attr.t.data_type)
+            content.append(f"<Scalar Tensor {str(getattr(attr.t, field))}>")
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)
@@ -1137,7 +1138,7 @@ def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
     :param tensor_dtype: TensorProto's data_type
     :return: numpy's data_type
     """
-    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].np_dtype
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
@@ -1157,7 +1158,7 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     :param tensor_dtype: TensorProto's data_type
     :return: the name of data_type
     """
-    return mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].name
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
@@ -1167,14 +1168,9 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     :param tensor_dtype: TensorProto's data_type
     :return: field name
     """
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        return cast(
-            str,
-            mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
-                mapping.TENSOR_TYPE_MAP[int(tensor_dtype)].storage_dtype
-            ],
-        )
+    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
+        mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    ]
 
 
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
@@ -1184,7 +1180,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     :param np_dtype: numpy's data_type
     :return: TensorsProto's data_type
     """
-    return cast(int, mapping.NP_TYPE_TO_TENSOR_TYPE[np_dtype])
+    return cast(int, mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype])
 
 
 def get_all_tensor_dtypes() -> KeysView[int]:
