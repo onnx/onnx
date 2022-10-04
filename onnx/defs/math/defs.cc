@@ -6,9 +6,9 @@
 #include <functional>
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/math/utils.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
-#include "onnx/defs/math/utils.h"
 
 namespace ONNX_NAMESPACE {
 
