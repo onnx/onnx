@@ -155,7 +155,8 @@ class ReduceLogSumExp(Base):
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.double)
         reduced = np.log(
-            np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1))
+            np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1)
+        )
 
         expect(
             node,

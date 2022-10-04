@@ -526,7 +526,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("ScatterND", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("ScatterElements", OpSetID(17), OpSetID(18)));
 
-    std::vector<TensorProto_DataType> exp_18_added_types = {TensorProto_DataType_UINT32, TensorProto_DataType_UINT64, TensorProto_DataType_INT32, TensorProto_DataType_INT64};
+    std::vector<TensorProto_DataType> exp_18_added_types = {
+        TensorProto_DataType_UINT32,
+        TensorProto_DataType_UINT64,
+        TensorProto_DataType_INT32,
+        TensorProto_DataType_INT64};
     registerAdapter(make_unique<TypeRestriction>("Exp", OpSetID(18), OpSetID(17), exp_18_added_types));
     registerAdapter(make_unique<CompatibleAdapter>("Exp", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceSumSquare", OpSetID(17), OpSetID(18)));
