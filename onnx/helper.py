@@ -2,7 +2,6 @@
 import collections.abc
 import numbers
 import struct
-import warnings
 from cmath import isnan
 from typing import (
     Any,

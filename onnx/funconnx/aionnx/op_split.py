@@ -13,9 +13,14 @@ class CommonSplit(OpRun):
     def common_run(self, mat, split, axis, num_outputs):  # type: ignore
         n_outputs = num_outputs or self.n_outputs
         if split is None:
-            div = mat.shape[axis] // n_outputs  # type: ignore
-            split = [div] * n_outputs
-            split[-1] += mat.shape[axis] - sum(split)  # type: ignore
+            if mat.shape[axis] % n_outputs == 0:
+                div = mat.shape[axis] // n_outputs
+                split = [div] * n_outputs
+            else:
+                div = mat.shape[axis] // n_outputs + 1
+                split = [div] * n_outputs
+                split[-1] += mat.shape[axis] - sum(split)  # type: ignore
+
         sli = [slice(0, s) for s in mat.shape]
         res = []
         pos = 0
@@ -28,7 +33,7 @@ class CommonSplit(OpRun):
 
 class Split_2(CommonSplit):
     def _run(self, mat, axis=None):  # type: ignore
-        return self.common_run(mat, self.split, axis=axis)  # type: ignore
+        return self.common_run(mat, self.split, axis=axis, num_outputs=None)  # type: ignore
 
 
 class Split_11(Split_2):

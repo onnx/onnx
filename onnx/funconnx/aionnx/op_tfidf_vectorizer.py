@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0200,R0902,R0912,R0913,R0914,R0915,R1716,W0612,W0221
+# pylint: disable=C0200,R0902,R0912,R0913,R0914,R0915,R1716,W0611,W0612,W0613,W0221
 
 from enum import IntEnum
-from pprint import pformat
 from typing import List
 
 import numpy as np  # type: ignore
@@ -89,7 +88,7 @@ class NgramPart:
         return self.leafs_.emplace(key, value)
 
     def __getitem__(self, key):
-        return self._leafs_[key]
+        return self._leafs_[key]  # type: ignore
 
 
 class WeightingCriteria(IntEnum):
@@ -123,29 +122,6 @@ def populate_grams(
             n += 1
             els_index += 1
     return ngram_id
-
-
-"""
-    std::cout << "populate, ngrams=" << ngrams << ", ngram_size=" << ngram_size << ", ngram_id=" << ngram_id << "\n";
-    for (; ngrams > 0; --ngrams) {
-        size_t n = 1;
-        Map* m = &c;
-        while (true) {
-            auto p = m->emplace(*first, new NgramPart<int64_t>(0));
-            std::cout << "  L" << *first << " n=" << n << " ngram_size=" << ngram_size << "\n";
-            ++first;
-            if (n == ngram_size) {
-                std::cout << "  L" << *first << "-" << ngram_id << "\n";
-                p.first->second->id_ = ngram_id;
-                ++ngram_id;
-                break;
-            }
-            ++n;
-            m = &p.first->second->leafs_;
-        }
-    }
-    return ngram_id;
-    """
 
 
 class TfIdfVectorizer(OpRun):
@@ -214,14 +190,14 @@ class TfIdfVectorizer(OpRun):
         frequencies[output_idx] += 1
 
     def output_result(self, B: int, frequencies: List[int]) -> np.ndarray:
-        output_dims: List[int] = []
+        l_output_dims: List[int] = []
         if B == 0:
-            output_dims.append(self.output_size_)
+            l_output_dims.append(self.output_size_)
             B = 1
         else:
-            output_dims.append(B)
-            output_dims.append(self.output_size_)
-        output_dims = tuple(output_dims)
+            l_output_dims.append(B)
+            l_output_dims.append(self.output_size_)
+        output_dims = tuple(l_output_dims)
 
         row_size = self.output_size_
 

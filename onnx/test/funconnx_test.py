@@ -12,10 +12,19 @@ from typing import Any, List
 import numpy as np  # type: ignore
 from numpy.testing import assert_allclose  # type: ignore
 
-from onnx.funconnx import ProtoRun
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
+from onnx.funconnx import ProtoRun
+from onnx.funconnx.aionnx import load_op
+from onnx.funconnx.aionnx._op_list import Celu
+from onnx.funconnx.aionnx.op_celu import _vcelu1
+from onnx.funconnx.aionnx.op_col2im import (
+    _col2im_naive_implementation_2d,
+    col2im_naive_implementation,
+)
+from onnx.funconnx.aionnx_preview_training._op_list import Adam
+from onnx.funconnx.op_run import OpRun
 from onnx.helper import (
     make_function,
     make_graph,
@@ -29,15 +38,6 @@ from onnx.helper import (
     make_value_info,
 )
 from onnx.numpy_helper import from_array
-from onnx.funconnx.aionnx import load_op
-from onnx.funconnx.aionnx._op_list import Celu
-from onnx.funconnx.aionnx.op_celu import _vcelu1
-from onnx.funconnx.aionnx.op_col2im import (
-    _col2im_naive_implementation_2d,
-    col2im_naive_implementation,
-)
-from onnx.funconnx.aionnx_preview_training._op_list import Adam
-from onnx.funconnx.op_run import OpRun
 
 
 def skip_if_no_onnxruntime(fn):

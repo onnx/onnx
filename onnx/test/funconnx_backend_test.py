@@ -15,7 +15,6 @@ import numpy as np
 from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
-from onnx.funconnx import ProtoRun
 from onnx import (
     ModelProto,
     OptionalProto,
@@ -27,6 +26,7 @@ from onnx import (
     load_tensor_from_string,
 )
 from onnx.backend.test import __file__ as backend_folder
+from onnx.funconnx import ProtoRun
 from onnx.helper import __file__ as onnx_file
 from onnx.mapping import OPTIONAL_ELEMENT_TYPE_TO_FIELD, TENSOR_TYPE_TO_NP_TYPE
 from onnx.numpy_helper import to_array, to_list, to_optional
@@ -690,10 +690,10 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_tfidfvectorizer_tf_batch_onlybigrams_skip0" == name,
+            lambda name: "test_split_1d_uneven_split_opset18" == name,
             verbose=0,
             atol={"test_roialign_aligned_false": 1e-4},
-            check_other_runtime="mlprodict",
+            check_other_runtime="onnxruntime",
         )
 
 
