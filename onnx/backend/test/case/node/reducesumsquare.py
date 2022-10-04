@@ -96,7 +96,10 @@ class ReduceSumSquare(Base):
         keepdims = 1
 
         node = onnx.helper.make_node(
-            "ReduceSumSquare", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
+            "ReduceSumSquare",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
         )
 
         data = np.array(

@@ -11990,7 +11990,10 @@ data = np.random.ranf([3, 4, 5]).astype(np.float32)
 reduced = np.log(np.sum(data, keepdims=True))
 axes = np.array([], dtype=np.int64)
 expect(
-    node, inputs=[data, axes], outputs=[reduced], name="test_reduce_log_sum_default"
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_default",
 )
 ```
 
@@ -12000,7 +12003,9 @@ expect(
 
 ```python
 axes = np.array([-2], dtype=np.int64)
-node = onnx.helper.make_node("ReduceLogSum", inputs=["data", "axes"], outputs=["reduced"])
+node = onnx.helper.make_node(
+    "ReduceLogSum", inputs=["data", "axes"], outputs=["reduced"]
+)
 data = np.random.ranf([3, 4, 5]).astype(np.float32)
 reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=True))
 # print(reduced)
@@ -12029,7 +12034,10 @@ node = onnx.helper.make_node(
 data = np.random.ranf(shape).astype(np.float32)
 reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=False))
 expect(
-    node, inputs=[data, axes], outputs=[reduced], name="test_reduce_log_sum_desc_axes"
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_desc_axes",
 )
 
 axes = np.array([0, 1], dtype=np.int64)
@@ -12042,7 +12050,10 @@ node = onnx.helper.make_node(
 data = np.random.ranf(shape).astype(np.float32)
 reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=False))
 expect(
-    node, inputs=[data, axes], outputs=[reduced], name="test_reduce_log_sum_asc_axes"
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_asc_axes",
 )
 ```
 
@@ -12060,7 +12071,10 @@ axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
-    "ReduceLogSumExp", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
 )
 
 data = np.array(
@@ -12207,7 +12221,8 @@ expect(
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.double)
-reduced = np.log(np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1))
+reduced = np.log(
+    np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1))
 
 expect(
     node,
@@ -13147,7 +13162,10 @@ axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
-    "ReduceSumSquare", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
+    "ReduceSumSquare",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
 )
 
 data = np.array(

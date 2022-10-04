@@ -2166,18 +2166,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, output_shape);
         }));
 
-static const char* mvn_ver13_doc = R"DOC(
+static const char* mvn_ver18_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
       on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 )DOC";
 
-static std::vector<int64_t> mvn_default_axes = {0, 2, 3};
+static const std::vector<int64_t> mvn_default_axes = {0, 2, 3};
 
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
-    13,
+    18,
     OpSchema()
-        .SetDoc(mvn_ver13_doc)
+        .SetDoc(mvn_ver18_doc)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
@@ -2438,7 +2438,7 @@ static const char* LayerNormalization_ver17_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     LayerNormalization,
-    17,
+    18,
     OpSchema()
         .SetDoc(LayerNormalization_ver17_doc)
         .Attr(

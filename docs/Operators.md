@@ -49,7 +49,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-12">12</a>|
 |<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
-|<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
+|<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-18">18</a>, <a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
 |<a href="#Expand">Expand</a>|<a href="Changelog.md#Expand-13">13</a>, <a href="Changelog.md#Expand-8">8</a>|
 |<a href="#EyeLike">EyeLike</a>|<a href="Changelog.md#EyeLike-9">9</a>|
 |<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
@@ -172,11 +172,11 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
-|<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|
+|<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-18">18</a>, <a href="Changelog.md#LayerNormalization-17">17</a>|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|
-|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
-|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
+|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-18">18</a>, <a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
+|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-18">18</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-18">18</a>|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
@@ -190,7 +190,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
-|<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
+|<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-18">18</a>, <a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|
@@ -7247,9 +7247,9 @@ expect(node, inputs=[x], outputs=[y], name="test_erf")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Exp-1">1</a>, <a href="Changelog.md#Exp-6">6</a>
+Other versions of this operator: <a href="Changelog.md#Exp-1">1</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-13">13</a>
 
 #### Inputs
 
@@ -7268,8 +7268,8 @@ Other versions of this operator: <a href="Changelog.md#Exp-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -11134,7 +11134,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 17 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LayerNormalization-17">17</a>
 
 #### Attributes
 
@@ -11624,9 +11626,9 @@ expect(node, inputs=[x], outputs=[y], name="test_log")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a href="Changelog.md#LogSoftmax-11">11</a>
+Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-13">13</a>
 
 #### Attributes
 
@@ -13675,9 +13677,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>
+Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>
 
 #### Attributes
 
@@ -18544,7 +18546,10 @@ data = np.random.ranf([3, 4, 5]).astype(np.float32)
 reduced = np.log(np.sum(data, keepdims=True))
 axes = np.array([], dtype=np.int64)
 expect(
-    node, inputs=[data, axes], outputs=[reduced], name="test_reduce_log_sum_default"
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_default",
 )
 ```
 
@@ -18556,7 +18561,9 @@ expect(
 
 ```python
 axes = np.array([-2], dtype=np.int64)
-node = onnx.helper.make_node("ReduceLogSum", inputs=["data", "axes"], outputs=["reduced"])
+node = onnx.helper.make_node(
+    "ReduceLogSum", inputs=["data", "axes"], outputs=["reduced"]
+)
 data = np.random.ranf([3, 4, 5]).astype(np.float32)
 reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=True))
 # print(reduced)
@@ -18587,7 +18594,10 @@ node = onnx.helper.make_node(
 data = np.random.ranf(shape).astype(np.float32)
 reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=False))
 expect(
-    node, inputs=[data, axes], outputs=[reduced], name="test_reduce_log_sum_desc_axes"
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_desc_axes",
 )
 
 axes = np.array([0, 1], dtype=np.int64)
@@ -18600,7 +18610,10 @@ node = onnx.helper.make_node(
 data = np.random.ranf(shape).astype(np.float32)
 reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=False))
 expect(
-    node, inputs=[data, axes], outputs=[reduced], name="test_reduce_log_sum_asc_axes"
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_asc_axes",
 )
 ```
 
@@ -18666,7 +18679,10 @@ axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
-    "ReduceLogSumExp", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
 )
 
 data = np.array(
@@ -18819,7 +18835,8 @@ expect(
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.double)
-reduced = np.log(np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1))
+reduced = np.log(
+    np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1))
 
 expect(
     node,
@@ -20079,7 +20096,10 @@ axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
-    "ReduceSumSquare", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
+    "ReduceSumSquare",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
 )
 
 data = np.array(
@@ -25526,9 +25546,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href="Changelog.md#Softmax-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-13">13</a>
 
 #### Attributes
 

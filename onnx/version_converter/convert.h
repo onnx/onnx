@@ -525,11 +525,23 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<Split_17_18>());
     registerAdapter(make_unique<CompatibleAdapter>("ScatterND", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("ScatterElements", OpSetID(17), OpSetID(18)));
-    registerAdapter(make_unique<CompatibleAdapter>("ReduceL1", OpSetID(17), OpSetID(18)));
-    registerAdapter(make_unique<CompatibleAdapter>("ReduceL2", OpSetID(17), OpSetID(18)));
-    registerAdapter(make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(17), OpSetID(18)));
-    registerAdapter(make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(17), OpSetID(18)));
-    registerAdapter(make_unique<CompatibleAdapter>("ReduceSumSquare", OpSetID(17), OpSetID(18)));
+
+    std::vector<TensorProto_DataType> exp_18_added_types = {TensorProto_DataType_UINT32, TensorProto_DataType_UINT64, TensorProto_DataType_INT32, TensorProto_DataType_INT64};
+    registerAdapter(make_unique<TypeRestriction>("Exp", OpSetID(18), OpSetID(17), exp_18_added_types));
+    registerAdapter(make_unique<CompatibleAdapter>("Exp", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceSumSquare", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceLogSum", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceLogSumExp", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceL1", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceL2", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceMax", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceMin", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceMean", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceProd", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("LayerNormalization", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("LogSoftmax", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("Softmax", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(17), OpSetID(18)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

@@ -94,7 +94,10 @@ class ReduceLogSumExp(Base):
         keepdims = 1
 
         node = onnx.helper.make_node(
-            "ReduceLogSumExp", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
+            "ReduceLogSumExp",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
         )
 
         data = np.array(
@@ -151,7 +154,8 @@ class ReduceLogSumExp(Base):
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.double)
-        reduced = np.log(np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1))
+        reduced = np.log(
+            np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1))
 
         expect(
             node,
