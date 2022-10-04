@@ -34,6 +34,7 @@
 #include "onnx/version_converter/adapters/softmax_12_13.h"
 #include "onnx/version_converter/adapters/split_12_13.h"
 #include "onnx/version_converter/adapters/split_13_12.h"
+#include "onnx/version_converter/adapters/split_17_18.h"
 #include "onnx/version_converter/adapters/sum_8_7.h"
 #include "onnx/version_converter/adapters/topk_9_10.h"
 #include "onnx/version_converter/adapters/type_restriction.h"
@@ -522,6 +523,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("Resize", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("OptionalGetElement", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("OptionalHasElement", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<Split_17_18>());
     registerAdapter(make_unique<CompatibleAdapter>("ScatterND", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("ScatterElements", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<MaxPool_17_18>());

@@ -603,15 +603,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Split_ver13_doc =
-    R"DOC(Split a tensor into a list of tensors, along the specified
-'axis'. Lengths of the parts can be specified using input 'split'.
-Otherwise, the tensor is split to equal sized parts.
+static const char* Split_ver18_doc =
+    R"DOC(Split a tensor into a list of tensors, along the specified 'axis'.
+Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
+If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
+If the tensor is not evenly splittable into `num_outputs`, the last chunk will be smaller.
+If the input 'split' is specified, it indicates the sizes of each output in the split.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Split,
-    13,
+    18,
     OpSchema()
         .Input(0, "input", "The tensor to split", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
@@ -644,7 +646,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(Split_ver13_doc)
+        .Attr(
+            "num_outputs",
+            "Number of outputs to split parts of the tensor into. "
+            "If the tensor is not evenly splittable the last chunk will be smaller.",
+            AttributeProto::INT,
+            false)
+        .SetDoc(Split_ver18_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
@@ -652,7 +660,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
           int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
@@ -673,8 +680,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           int split_dim_value = static_cast<int>(split_dim.dim_value());
 
           std::vector<int64_t> split;
-          size_t num_inputs = ctx.getNumInputs();
-          if ((num_inputs == 2) && ctx.getInputType(1)) { //'split' is input
+          const auto num_outputs_attr = ctx.getAttribute("num_outputs");
+          if (ctx.hasInput(1) && num_outputs_attr) {
+            fail_shape_inference("Both 'split' input and 'num_outputs' attribute were given");
+          }
+          if (ctx.hasInput(1)) { //'split' is input
             auto split_proto = ctx.getInputData(1);
             if (split_proto == nullptr) {
               // skip if split is not an initializer
@@ -698,14 +708,22 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ")");
             }
           } else { // no value available for 'split'
-            int num_outputs = static_cast<int>(ctx.getNumOutputs());
-            if (split_dim_value % num_outputs != 0) {
-              fail_shape_inference("The input is not evenly splittable");
-            }
-            int chunk_size = split_dim_value / num_outputs;
-            split.reserve(ctx.getNumOutputs());
-            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
-              split.push_back(chunk_size);
+            if (num_outputs_attr) {
+              const auto num_outputs = num_outputs_attr->i();
+              if (num_outputs < 1) {
+                fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
+              }
+              if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
+                int chunk_size = split_dim_value / num_outputs;
+                split.resize(num_outputs, chunk_size);
+              } else { // tensor needs to be split unevenly
+                int chunk_size = (split_dim_value / num_outputs) + 1;
+                int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
+                split.resize(num_outputs - 1, chunk_size);
+                split.push_back(last_chunk_size);
+              }
+            } else {
+              fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");
             }
           }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
@@ -3720,4 +3738,60 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
+bool BuildContextDependentFunctionBodyAttributeHasValue(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  bool has_attribute = false;
+  auto& attributes = schema.attributes();
+  for (auto& name_attr : attributes) {
+    auto* attr_proto = ctx.getAttribute(name_attr.first);
+    if (attr_proto) {
+      has_attribute = true;
+      break;
+    }
+  }
+
+  FunctionBuilder builder(functionProto);
+
+  // ToTensor does not work with boolean element type. Need to create a Constant int
+  // and then Cast to tensor of boolean.
+  if (has_attribute) {
+    builder.Add("output0 = Constant < value = bool {1} > ()");
+  } else {
+    builder.Add("output0 = Constant < value = bool {0} > ()");
+  }
+
+  builder.Add("output = Cast (output0)", "to", (int64_t)(TensorProto_DataType_BOOL));
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    AttributeHasValue,
+    18,
+    OpSchema()
+        .SetDoc(R"DOC(Returns true if at least one of the attribute-value is specified.)DOC")
+        .Attr("value_float", "The float attribute.", AttributeProto::FLOAT, false)
+        .Attr("value_int", "The int attribute.", AttributeProto::INT, false)
+        .Attr("value_string", "The string attribute.", AttributeProto::STRING, false)
+        .Attr("value_tensor", "The tensor attribute.", AttributeProto::TENSOR, false)
+        .Attr("value_graph", "The graph attribute.", AttributeProto::GRAPH, false)
+        .Attr("value_sparse_tensor", "The sparse_tensor attribute.", AttributeProto::SPARSE_TENSOR, false)
+        .Attr("value_type_proto", "The type_proto attribute.", AttributeProto::TYPE_PROTO, false)
+        .Attr("value_floats", "The floats attribute.", AttributeProto::FLOATS, false)
+        .Attr("value_ints", "The ints attribute.", AttributeProto::INTS, false)
+        .Attr("value_strings", "The strings attribute.", AttributeProto::STRINGS, false)
+        .Attr("value_tensors", "The tensors attribute.", AttributeProto::TENSORS, false)
+        .Attr("value_graphs", "The graphs attribute.", AttributeProto::GRAPHS, false)
+        .Attr("value_sparse_tensors", "The sparse_tensors attribute.", AttributeProto::SPARSE_TENSORS, false)
+        .Attr("value_type_protos", "The type_protos attribute.", AttributeProto::TYPE_PROTOS, false)
+        .Output(0, "output", "A scalar boolean tensor. If true, it indicates that an attribute is provided.", "B")
+        .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyAttributeHasValue)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+          output_tensor_type->set_elem_type(TensorProto::BOOL);
+          output_tensor_type->mutable_shape()->Clear();
+        }));
 } // namespace ONNX_NAMESPACE
