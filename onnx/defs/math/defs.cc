@@ -1060,7 +1060,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
               FunctionBuilder builder(functionProto);
               builder.Const1D("axes", axis)
-                  .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input)", "axes", std::vector<int64_t>({axis}))
+                  .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input, axes)")
                   .Add(R"(
                     X_Sub = Sub (input, X_ReduceMax)
                     X_Exp = Exp (X_Sub)
@@ -1085,7 +1085,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
               FunctionBuilder builder(functionProto);
               builder.Const1D("axes", axis)
-                  .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input)", "axes", std::vector<int64_t>({axis}))
+                  .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input, axes)")
                   .Add(R"(
                     X_Sub = Sub (input, X_ReduceMax)
                     X_Exp = Exp (X_Sub)

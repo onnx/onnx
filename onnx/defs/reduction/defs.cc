@@ -12,37 +12,19 @@
 namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> ReduceDocGeneratorWithFunctionBody(const char* name, const char* func_body) {
-  return ReduceDocGenerator_opset13_18(name, false, false, func_body);
+  return ReduceDocGenerator_opset13_18(name, false, true, func_body);
 }
 
-std::function<void(OpSchema&)> ReduceDocGeneratorWithFunctionBuilder(
-    const char* name,
-    ContextDependentFunctionBodyBuilder functionBuilder) {
-  return ReduceDocGenerator_opset13_18(name, false, false, nullptr, functionBuilder);
-}
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("max", true, true)));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("max", true)));
-
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("min", true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("min", true, true)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("sum", false, true)));
 
 const char* reduce_sum_square_func_body = R"ONNX(
   {
-    has_axes = AttributeHasValue <value_ints: ints = @axes>()
-    reduced = If (has_axes) <
-      then_branch = g1 () => (reduced_then)
-      {
-        data_square = Mul(data, data)
-        axes = Constant <value_ints: ints = @axes>()
-        reduced_then = ReduceSum<keepdims: int = @keepdims>(data_square, axes)
-      },
-      else_branch = g2 () => (reduced_else)
-      {
-        data_square = Mul(data, data)
-        reduced_else = ReduceSum<keepdims: int = @keepdims>(data_square)
-      }
-    >
+    data_square = Mul(data, data)
+    reduced = ReduceSum<keepdims: int = @keepdims>(data_square, axes)
   }
   )ONNX";
 
@@ -51,26 +33,14 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema().FillUsing(ReduceDocGeneratorWithFunctionBody("sum square", reduce_sum_square_func_body)));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("mean")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("mean", false, true)));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("product")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("product", false, true)));
 
 const char* reduce_log_sum_func_body = R"ONNX(
   {
-    has_axes = AttributeHasValue <value_ints: ints = @axes>()
-    reduced = If (has_axes) <
-      then_branch = g1 () => (reduced_then)
-      {
-        axes = Constant <value_ints: ints = @axes>()
-        reduced_sum = ReduceSum<keepdims: int = @keepdims>(data, axes)
-        reduced_then = Log (reduced_sum)
-      },
-      else_branch = g2 () => (reduced_else)
-      {
-        reduced_sum = ReduceSum<keepdims: int = @keepdims>(data)
-        reduced_else = Log (reduced_sum)
-      }
-    >
+    reduced_sum = ReduceSum<keepdims: int = @keepdims>(data, axes)
+    reduced = Log (reduced_sum)
   }
   )ONNX";
 ONNX_OPERATOR_SET_SCHEMA(
@@ -80,22 +50,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 const char* reduce_log_sum_exp_func_body = R"ONNX(
   {
-    has_axes = AttributeHasValue <value_ints: ints = @axes>()
-    reduced = If (has_axes) <
-      then_branch = g1 () => (reduced_then)
-      {
-        data_exp = Exp (data)
-        axes = Constant <value_ints: ints = @axes>()
-        reduced_sum = ReduceSum<keepdims: int = @keepdims>(data_exp, axes)
-        reduced_then = Log (reduced_sum)
-      },
-      else_branch = g2 () => (reduced_else)
-      {
-        data_exp = Exp (data)
-        reduced_sum = ReduceSum<keepdims: int = @keepdims>(data_exp)
-        reduced_else = Log (reduced_sum)
-      }
-    >
+    data_exp = Exp (data)
+    reduced_sum = ReduceSum<keepdims: int = @keepdims>(data_exp, axes)
+    reduced = Log (reduced_sum)
   }
   )ONNX";
 ONNX_OPERATOR_SET_SCHEMA(
@@ -105,20 +62,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 const char* reduce_l1_func_body = R"ONNX(
   {
-    has_axes = AttributeHasValue <value_ints: ints = @axes>()
-    reduced = If (has_axes) <
-      then_branch = g1 () => (reduced_then)
-      {
-        data_abs = Abs(data)
-        axes = Constant <value_ints: ints = @axes>()
-        reduced_then = ReduceSum<keepdims: int = @keepdims>(data_abs, axes)
-      },
-      else_branch = g2 () => (reduced_else)
-      {
-        data_abs = Abs(data)
-        reduced_else = ReduceSum<keepdims: int = @keepdims>(data_abs)
-      }
-    >
+    data_abs = Abs(data)
+    reduced = ReduceSum<keepdims: int = @keepdims>(data_abs, axes)
   }
   )ONNX";
 ONNX_OPERATOR_SET_SCHEMA(
@@ -128,7 +73,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 const char* reduce_l2_func_body = R"ONNX(
   {
-    sum_square = ReduceSumSquare<axes: ints = @axes, keepdims: int = @keepdims>(data)
+    data_square = Mul(data, data)
+    sum_square = ReduceSum<keepdims: int = @keepdims>(data_square, axes)
     sum_square_dbl = Cast <to = 1>(sum_square)
     sqrt = Sqrt(sum_square_dbl)
     reduced = CastLike(sqrt, data)
