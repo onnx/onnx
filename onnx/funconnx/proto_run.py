@@ -116,7 +116,7 @@ class ProtoRun:
     .. exec_code::
 
         import numpy as np
-        from onnx.ProtoRun.aionnx._op_list import Celu
+        from onnx.funconnx.aionnx._op_list import Celu
 
         onnx_node = Celu.make_node(alpha=0.5)
         print(onnx_node)

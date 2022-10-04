@@ -55,13 +55,13 @@ verify a model with the following helpers.
     compose
     defs
     external_data_helper
+    funconnx
     helper
     hub
     mapping
     numpy_helper
     parser
     printer
-    runtime
     shape_inference
     tools
     utils
