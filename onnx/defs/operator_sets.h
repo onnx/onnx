@@ -1025,6 +1025,9 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LayerNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LogSoftmax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Softmax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MeanVarianceNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseAnd);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot);
 
 // Iterate over schema from ai.onnx version 18
@@ -1056,6 +1059,9 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LogSoftmax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Softmax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MeanVarianceNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseAnd)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot)>());
   }
 };
