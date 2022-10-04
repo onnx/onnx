@@ -219,4 +219,27 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
+static const char* BitwiseNot_ver18_doc = R"DOC(
+Returns the bitwise not of the input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BitwiseNot,
+    18,
+    OpSchema()
+        .SetDoc(BitwiseNot_ver18_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input/output to integer tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 } // namespace ONNX_NAMESPACE
