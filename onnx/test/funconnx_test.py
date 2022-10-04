@@ -1289,7 +1289,7 @@ class TestRuntimeProtoRun(unittest.TestCase):
     def test_col2im_2d(self):
 
         data = np.zeros([6, 28], dtype=np.float32)
-        data[0][0] = 1.
+        data[0][0] = 1.0
         image_shape, kernel_shape, dilations, pads, stride = (
             np.array([6, 4]),
             (2, 3),
