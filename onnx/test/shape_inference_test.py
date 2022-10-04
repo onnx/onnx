@@ -2493,7 +2493,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_split_negative_axis(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4))],
-            [make_node("Split", ["x"], ["y", "z"], axis=-1)],
+            [make_node("Split", ["x"], ["y", "z"], axis=-1, num_outputs=2)],
             [],
         )
         self._assert_inferred(
@@ -2540,7 +2540,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_split_from_GLU(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
-            [make_node("Split", ["x"], ["y", "z"], axis=1)],
+            [make_node("Split", ["x"], ["y", "z"], axis=1, num_outputs=2)],
             [],
         )
         self._assert_inferred(
@@ -2551,11 +2551,41 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_split_uneven_split_2d(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (8, 2))],
+            [make_node("Split", ["x"], ["y", "z", "a"], axis=0, num_outputs=3)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (3, 2)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (3, 2)),
+                make_tensor_value_info("a", TensorProto.FLOAT, (2, 2)),
+            ],
+        )
+
+    def test_split_uneven_split_3d(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 7, 3))],
+            [make_node("Split", ["x"], ["y", "z", "a"], axis=1, num_outputs=3)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (2, 3, 3)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 3)),
+                make_tensor_value_info("a", TensorProto.FLOAT, (2, 1, 3)),
+            ],
+        )
+
     def test_GLU_partial(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
             [
-                make_node("Split", ["x"], ["y", "z"], axis=1),
+                make_node("Split", ["x"], ["y", "z"], axis=1, num_outputs=2),
                 make_node("Sigmoid", ["z"], ["a"]),
             ],
             [],
@@ -2573,7 +2603,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
             [
-                make_node("Split", ["x"], ["y", "z"], axis=1),
+                make_node("Split", ["x"], ["y", "z"], axis=1, num_outputs=2),
                 make_node("Sigmoid", ["z"], ["a"]),
                 make_node("Mul", ["y", "a"], ["b"]),
             ],
