@@ -21314,6 +21314,35 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input to integer tensors.</dd>
 </dl>
 
+### <a name="BitwiseNot-18"></a>**BitwiseNot-18**</a>
+
+  Returns the bitwise not of the input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input/output to integer tensors.</dd>
+</dl>
+
 ### <a name="BitwiseOr-18"></a>**BitwiseOr-18**</a>
 
   Returns the tensor resulting from performing the bitwise `or` operation
