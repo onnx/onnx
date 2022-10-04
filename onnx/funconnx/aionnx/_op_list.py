@@ -30,6 +30,7 @@ from .op_average_pool import AveragePool
 from .op_batch_normalization import BatchNormalization, BatchNormalization_14
 from .op_bernoulli import Bernoulli
 from .op_bitshift import BitShift
+from .op_bitwise_not import BitwiseNot
 from .op_blackman_window import BlackmanWindow
 from .op_cast import Cast
 from .op_cast_like import CastLike
