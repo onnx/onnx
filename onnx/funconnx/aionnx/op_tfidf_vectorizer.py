@@ -20,13 +20,31 @@ class IntMap(dict):  # type: ignore
             raise TypeError(f"key must be a NGramPart not {type(key)}.")
         if not isinstance(value, NgramPart):
             raise TypeError(f"value must be a NGramPart not {type(value)}.")
-        self.added_keys.append(key)
-        self[key] = value
+        if key not in self:
+            self.added_keys.append(key)
+            self[key] = value
         return self[key]
 
     def __repr__(self):
         vals = {k: repr(v) for k, v in self.items()}
-        return f"IntMap({pformat(vals)})"
+        rows = ["{"]
+        for k, v in sorted(vals.items()):
+            if "\n" in v:
+                vs = v.split("\n")
+                for i, line in enumerate(vs):
+                    if i == 0:
+                        if line == "{":
+                            rows.append(f"  {k}={line}")
+                        else:
+                            rows.append(f"  {k}={line},")
+                    elif i == len(vs) - 1:
+                        rows.append(f"  {line}")
+                    else:
+                        rows.append(f"    {line}")
+            else:
+                rows.append(f"  {k}={v},")
+        rows.append("}")
+        return "\n".join(rows)
 
     @property
     def first_key(self):
@@ -93,10 +111,11 @@ def populate_grams(
         n = 1
         m = c
         while els_index < len(els):
-            p = m.emplace(els[els_index], NgramPart(-1))
+            p = m.emplace(els[els_index], NgramPart(0))
             if n == ngram_size:
                 p.id_ = ngram_id
                 ngram_id += 1
+                els_index += 1
                 break
             if p.empty():
                 p.init()
@@ -104,6 +123,29 @@ def populate_grams(
             n += 1
             els_index += 1
     return ngram_id
+
+
+"""
+    std::cout << "populate, ngrams=" << ngrams << ", ngram_size=" << ngram_size << ", ngram_id=" << ngram_id << "\n";
+    for (; ngrams > 0; --ngrams) {
+        size_t n = 1;
+        Map* m = &c;
+        while (true) {
+            auto p = m->emplace(*first, new NgramPart<int64_t>(0));
+            std::cout << "  L" << *first << " n=" << n << " ngram_size=" << ngram_size << "\n";
+            ++first;
+            if (n == ngram_size) {
+                std::cout << "  L" << *first << "-" << ngram_id << "\n";
+                p.first->second->id_ = ngram_id;
+                ++ngram_id;
+                break;
+            }
+            ++n;
+            m = &p.first->second->leafs_;
+        }
+    }
+    return ngram_id;
+    """
 
 
 class TfIdfVectorizer(OpRun):
@@ -128,7 +170,7 @@ class TfIdfVectorizer(OpRun):
         self.weights_ = self.weights  # type: ignore
         self.pool_int64s_ = self.pool_int64s  # type: ignore
 
-        self.int64_map_ = NgramPart(-2)
+        self.int64_map_ = NgramPart(-10)
         self.int64_map_.init()
 
         total_items = len(self.pool_int64s_)
@@ -179,11 +221,12 @@ class TfIdfVectorizer(OpRun):
         else:
             output_dims.append(B)
             output_dims.append(self.output_size_)
+        output_dims = tuple(output_dims)
 
         row_size = self.output_size_
 
         total_dims = np.prod(output_dims)
-        Y = np.empty((total_dims,), dtype=np.float)
+        Y = np.empty((total_dims,), dtype=np.float32)
 
         w = self.weights_
         if self.weighting_criteria_ == WeightingCriteria.kTF:
@@ -217,9 +260,9 @@ class TfIdfVectorizer(OpRun):
                     p += 1
         else:
             raise RuntimeError("Unexpected weighting_criteria.")
-        return Y
+        return Y.reshape(output_dims)
 
-    def compute_impl(
+    def compute_impl(  # type: ignore
         self,
         X: np.ndarray,
         row_num: int,
@@ -236,8 +279,11 @@ class TfIdfVectorizer(OpRun):
         weights=None,
     ) -> None:
 
-        X_flat = X.flatten()
-        row_begin = row_num * row_size
+        if len(X.shape) > 1:
+            X_flat = X[row_num]
+        else:
+            X_flat = X
+        row_begin = 0
         row_end = row_begin + row_size
 
         max_skip_distance = max_skip_count + 1
@@ -266,7 +312,7 @@ class TfIdfVectorizer(OpRun):
                     if hit is None:
                         break
                     hit = int_map[val].id_
-                    if ngram_size >= start_ngram_size and hit != -1:
+                    if ngram_size >= start_ngram_size and hit != 0:
                         self.increment_count(hit, row_num, frequencies)
                     int_map = int_map[val]
                     ngram_size += 1
@@ -329,7 +375,7 @@ class TfIdfVectorizer(OpRun):
                 f"Unexpected total of items, num_rows * C = {num_rows * C} != total_items = {total_items}."
             )
         # Frequency holder allocate [B..output_size_] and init all to zero
-        frequencies = [0] * (num_rows * self.output_size_)
+        frequencies = np.zeros((num_rows * self.output_size_,), dtype=np.int64)
 
         if total_items == 0 or self.int64_map_.empty():
             # TfidfVectorizer may receive an empty input when it follows a Tokenizer

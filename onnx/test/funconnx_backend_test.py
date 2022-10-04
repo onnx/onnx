@@ -2,7 +2,7 @@
 # type: ignore
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0613,W0640,W0703
 """
-These test evaluates the python runtime (class Inference) against
+These test evaluates the python runtime (class ProtoRun) against
 all the backend tests (in onnx/backend/test/case/node) and checks
 the runtime produces the expected outputs.
 """
@@ -376,7 +376,7 @@ def enumerate_onnx_tests(series, fct_filter=None):
             yield OnnxBackendTest(folder)
 
 
-class TestOnnxBackEnd(unittest.TestCase):
+class TestOnnxBackEndWithProtoRun(unittest.TestCase):
 
     folder = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), "onnx_backend_test_code"
@@ -417,9 +417,9 @@ class TestOnnxBackEnd(unittest.TestCase):
             self.assertIn(te.name, repr(te))
             self.assertGreater(len(te), 0)
             te.run(
-                TestOnnxBackEnd.load_fct,
-                TestOnnxBackEnd.run_fct,
-                comment="[runtime=Inference]",
+                TestOnnxBackEndWithProtoRun.load_fct,
+                TestOnnxBackEndWithProtoRun.run_fct,
+                comment="[runtime=ProtoRun]",
             )
             done += 1
         self.assertEqual(done, 1)
@@ -454,21 +454,21 @@ class TestOnnxBackEnd(unittest.TestCase):
                     print("  run")
                 if verbose > 5:
                     te.run(
-                        lambda *args, verbose=verbose: TestOnnxBackEnd.load_fct(
+                        lambda *args, verbose=verbose: TestOnnxBackEndWithProtoRun.load_fct(
                             *args, verbose
                         ),
-                        TestOnnxBackEnd.run_fct,
+                        TestOnnxBackEndWithProtoRun.run_fct,
                         atol=atol.get(te.name, None),
                         rtol=rtol.get(te.name, None),
-                        comment=f"[runtime=Inference, verbose={verbose}]",
+                        comment=f"[runtime=ProtoRun, verbose={verbose}]",
                     )
                 else:
                     te.run(
-                        TestOnnxBackEnd.load_fct,
-                        TestOnnxBackEnd.run_fct,
+                        TestOnnxBackEndWithProtoRun.load_fct,
+                        TestOnnxBackEndWithProtoRun.run_fct,
                         atol=atol.get(te.name, None),
                         rtol=rtol.get(te.name, None),
-                        comment="[runtime=Inference]",
+                        comment="[runtime=ProtoRun]",
                     )
                 if verbose > 7:
                     print("  end run")
@@ -490,7 +490,9 @@ class TestOnnxBackEnd(unittest.TestCase):
 
                     te.run(
                         lambda obj: InferenceSession(obj.SerializeToString()),
-                        lambda *a, **b: TestOnnxBackEnd.run_fct(*a, verbose=1, **b),
+                        lambda *a, **b: TestOnnxBackEndWithProtoRun.run_fct(
+                            *a, verbose=1, **b
+                        ),
                         atol=atol.get(te.name, None),
                         rtol=rtol.get(te.name, None),
                         comment="[runtime=onnxruntime]",
@@ -512,7 +514,9 @@ class TestOnnxBackEnd(unittest.TestCase):
 
                     te.run(
                         lambda obj: _Wrap(OnnxInference(obj)),
-                        lambda *a, **b: TestOnnxBackEnd.run_fct(*a, verbose=1, **b),
+                        lambda *a, **b: TestOnnxBackEndWithProtoRun.run_fct(
+                            *a, verbose=1, **b
+                        ),
                         atol=atol.get(te.name, None),
                         rtol=rtol.get(te.name, None),
                         comment="[runtime=mlprodict]",
@@ -686,13 +690,13 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_tfidfvectorizer_tf_onlybigrams_skip5" == name,
+            lambda name: "test_tfidfvectorizer_tf_batch_onlybigrams_skip0" == name,
             verbose=0,
             atol={"test_roialign_aligned_false": 1e-4},
-            check_other_runtime="onnxruntime",
+            check_other_runtime="mlprodict",
         )
 
 
 if __name__ == "__main__":
-    TestOnnxBackEnd().test_enumerate_onnx_tests_run_one_case()
+    TestOnnxBackEndWithProtoRun().test_enumerate_onnx_tests_run_one_case()
     unittest.main(verbosity=2)

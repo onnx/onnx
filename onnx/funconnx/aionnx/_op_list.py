@@ -257,10 +257,10 @@ def load_op(
         # maybe the operator can be replacted by a function
         schema = get_schema(op_type, version, "")  # type: ignore
         if schema.has_function:  # type: ignore
-            from ..inference import Inference
+            from ..proto_run import ProtoRun
 
             body = schema.function_body  # type: ignore
-            sess = Inference(body)
+            sess = ProtoRun(body)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         found = False
     if not found:

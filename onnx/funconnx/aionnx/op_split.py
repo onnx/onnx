@@ -10,10 +10,11 @@ class CommonSplit(OpRun):
         OpRun.__init__(self, onnx_node, run_params)
         self.n_outputs = len(onnx_node.output)
 
-    def common_run(self, mat, split, axis):  # type: ignore
+    def common_run(self, mat, split, axis, num_outputs):  # type: ignore
+        n_outputs = num_outputs or self.n_outputs
         if split is None:
-            div = mat.shape[axis] // self.n_outputs  # type: ignore
-            split = [div] * self.n_outputs
+            div = mat.shape[axis] // n_outputs  # type: ignore
+            split = [div] * n_outputs
             split[-1] += mat.shape[axis] - sum(split)  # type: ignore
         sli = [slice(0, s) for s in mat.shape]
         res = []
@@ -35,8 +36,8 @@ class Split_11(Split_2):
 
 
 class Split_13(CommonSplit):
-    def _run(self, mat, split=None, axis=None):  # type: ignore
-        return self.common_run(mat, split, axis=axis)
+    def _run(self, mat, split=None, axis=None, num_outputs=None):  # type: ignore
+        return self.common_run(mat, split, axis=axis, num_outputs=num_outputs)
 
 
 if onnx_opset_version() >= 13:

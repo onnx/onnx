@@ -59,7 +59,7 @@ class ProtoRun:
     It must also define attribute `op_domain`.
     Here is an example which computes :math:`\\frac{1}{X + \\alpha}`.
 
-    ::
+    .. exec_code::
 
         from onnx.funconnx.op_run import OpRun
 
@@ -89,17 +89,18 @@ class ProtoRun:
 
     A specific node can be simply evaluated.
 
-    ::
+    .. exec_code::
 
         import numpy as np
         from onnx.funconnx.aionnx._op_list import Celu
 
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Celu.eval(x, alpha=0.5)
+        print(y)
 
     This can also be expressed as:
 
-    ::
+    .. exec_code::
 
         import numpy as np
         from onnx.funconnx.aionnx import load_op
@@ -107,16 +108,18 @@ class ProtoRun:
         Celu = load_op("", "Celu")  # domain is ""
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Celu.eval(x, alpha=0.5)
+        print(y)
 
     Method :meth:`eval <onnx.ProtoRun.op_run.eval>` creates an onnx node
     returned by method :meth:`make_node <onnx.funconnx.op_run.make_node>`.
 
-    ::
+    .. exec_code::
 
         import numpy as np
         from onnx.ProtoRun.aionnx._op_list import Celu
 
         onnx_node = Celu.make_node(alpha=0.5)
+        print(onnx_node)
     """
 
     def __init__(  # type: ignore
