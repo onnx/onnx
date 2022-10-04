@@ -12,7 +12,7 @@ from typing import Any, List
 import numpy as np  # type: ignore
 from numpy.testing import assert_allclose  # type: ignore
 
-import onnx.runtime as rt
+from onnx.funconnx import ProtoRun
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
@@ -29,15 +29,15 @@ from onnx.helper import (
     make_value_info,
 )
 from onnx.numpy_helper import from_array
-from onnx.runtime.aionnx import load_op
-from onnx.runtime.aionnx._op_list import Celu
-from onnx.runtime.aionnx.op_celu import _vcelu1
-from onnx.runtime.aionnx.op_col2im import (
+from onnx.funconnx.aionnx import load_op
+from onnx.funconnx.aionnx._op_list import Celu
+from onnx.funconnx.aionnx.op_celu import _vcelu1
+from onnx.funconnx.aionnx.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
 )
-from onnx.runtime.aionnx_preview_training._op_list import Adam
-from onnx.runtime.op_run import OpRun
+from onnx.funconnx.aionnx_preview_training._op_list import Adam
+from onnx.funconnx.op_run import OpRun
 
 
 def skip_if_no_onnxruntime(fn):
@@ -71,7 +71,7 @@ def make_sequence_value_info(name, elem_type, shape):
     return make_value_info(name, s_type, shape)
 
 
-class TestRuntimeInference(unittest.TestCase):
+class TestRuntimeProtoRun(unittest.TestCase):
     m2_def = """
         <
             ir_version: 7,
@@ -149,15 +149,15 @@ class TestRuntimeInference(unittest.TestCase):
             raise AssertionError(f"checker fails for\n{str(onnx_model)}") from e
         return onnx_model, f
 
-    def test_inference_exceptions(self):
+    def test_ProtoRun_exceptions(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         with self.assertRaises(TypeError):
-            rt.Inference(X)
+            ProtoRun(X)
 
-    def test_inference_no_attribute(self):
-        m = TestRuntimeInference._load_model(TestRuntimeInference.m2_def)
+    def test_ProtoRun_no_attribute(self):
+        m = TestRuntimeProtoRun._load_model(TestRuntimeProtoRun.m2_def)
         checker.check_model(m)
-        sess = rt.Inference(m)
+        sess = ProtoRun(m)
         self.assertEqual(sess.input_names, ["B01", "B11", "B21"])
         self.assertEqual(sess.output_names, ["D0"])
         self.assertEqual(sess.opsets, {"": 10, "com.microsoft": 1})
@@ -168,10 +168,10 @@ class TestRuntimeInference(unittest.TestCase):
         expected = (x + y) * (y - z)
         assert_allclose(expected, res)
 
-    def test_inference_no_attribute_bytes(self):
-        m = TestRuntimeInference._load_model(TestRuntimeInference.m2_def)
+    def test_ProtoRun_no_attribute_bytes(self):
+        m = TestRuntimeProtoRun._load_model(TestRuntimeProtoRun.m2_def)
         checker.check_model(m)
-        sess = rt.Inference(m.SerializeToString())
+        sess = ProtoRun(m.SerializeToString())
         self.assertEqual(sess.input_names, ["B01", "B11", "B21"])
         self.assertEqual(sess.output_names, ["D0"])
         self.assertEqual(sess.opsets, {"": 10, "com.microsoft": 1})
@@ -182,14 +182,14 @@ class TestRuntimeInference(unittest.TestCase):
         expected = (x + y) * (y - z)
         assert_allclose(expected, res)
 
-    def test_inference_no_attribute_verbose(self):
-        m = TestRuntimeInference._load_model(TestRuntimeInference.m2_def)
+    def test_ProtoRun_no_attribute_verbose(self):
+        m = TestRuntimeProtoRun._load_model(TestRuntimeProtoRun.m2_def)
         x = np.array([[0, 1], [2, 3]], dtype=np.float32)
         y = np.array([[4, 5], [6, 7]], dtype=np.float32)
         z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
 
         with self.subTest(level=2):
-            sess = rt.Inference(m, verbose=2)
+            sess = ProtoRun(m, verbose=2)
             stdout = StringIO()
             with redirect_stdout(stdout):
                 sess.run(None, {"B01": x, "B11": y, "B21": z})
@@ -198,7 +198,7 @@ class TestRuntimeInference(unittest.TestCase):
             self.assertEqual(log, out)
 
         with self.subTest(level=3):
-            sess = rt.Inference(m, verbose=3)
+            sess = ProtoRun(m, verbose=3)
             stdout = StringIO()
             with redirect_stdout(stdout):
                 sess.run(None, {"B01": x, "B11": y, "B21": z})
@@ -216,7 +216,7 @@ class TestRuntimeInference(unittest.TestCase):
             self.assertEqual(log, out)
 
         with self.subTest(level=4):
-            sess = rt.Inference(m, verbose=4)
+            sess = ProtoRun(m, verbose=4)
             stdout = StringIO()
             with redirect_stdout(stdout):
                 sess.run(None, {"B01": x, "B11": y, "B21": z})
@@ -234,7 +234,7 @@ class TestRuntimeInference(unittest.TestCase):
             self.assertEqual(log, out)
 
         with self.subTest(level=15):
-            sess = rt.Inference(m, verbose=15)
+            sess = ProtoRun(m, verbose=15)
             stdout = StringIO()
             with redirect_stdout(stdout):
                 sess.run(None, {"B01": x, "B11": y, "B21": z})
@@ -257,61 +257,61 @@ class TestRuntimeInference(unittest.TestCase):
             ).lstrip("\n")
             self.assertEqual(log, out)
 
-    def test_inference_lr(self):
-        lr, f = TestRuntimeInference._linear_regression()
+    def test_ProtoRun_lr(self):
+        lr, f = TestRuntimeProtoRun._linear_regression()
         x = np.array([[0, 1], [2, 3]], dtype=np.float32)
         a = np.array([1, 1], dtype=np.float32)
         b = np.array([11], dtype=np.float32)
         expected = f(x, a, b)
-        sess = rt.Inference(lr)
+        sess = ProtoRun(lr)
         got = sess.run(None, {"X": a, "A": a, "B": b})[0]
         assert_allclose(expected, got)
 
-    def test_inference_lr_clip(self):
+    def test_ProtoRun_lr_clip(self):
         with self.subTest(opt="min+max"):
-            lr, f = TestRuntimeInference._linear_regression(clip=True)
+            lr, f = TestRuntimeProtoRun._linear_regression(clip=True)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = rt.Inference(lr)
+            sess = ProtoRun(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_allclose(expected, got)
 
         with self.subTest(opt="max"):
-            lr, f = TestRuntimeInference._linear_regression(clip=True, min_value=None)
+            lr, f = TestRuntimeProtoRun._linear_regression(clip=True, min_value=None)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = rt.Inference(lr)
+            sess = ProtoRun(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_allclose(expected, got)
 
         with self.subTest(opt="min"):
-            lr, f = TestRuntimeInference._linear_regression(clip=True, max_value=None)
+            lr, f = TestRuntimeProtoRun._linear_regression(clip=True, max_value=None)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = rt.Inference(lr)
+            sess = ProtoRun(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_allclose(expected, got)
 
-    def test_inference_lr_clip_6(self):
+    def test_ProtoRun_lr_clip_6(self):
         with self.subTest(opt="min+max"):
-            lr, f = TestRuntimeInference._linear_regression(clip=True, opset=10)
+            lr, f = TestRuntimeProtoRun._linear_regression(clip=True, opset=10)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = rt.Inference(lr)
+            sess = ProtoRun(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.min, -1)
@@ -320,14 +320,14 @@ class TestRuntimeInference(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="max"):
-            lr, f = TestRuntimeInference._linear_regression(
+            lr, f = TestRuntimeProtoRun._linear_regression(
                 clip=True, opset=10, min_value=None
             )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = rt.Inference(lr)
+            sess = ProtoRun(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.max, 1)
@@ -336,14 +336,14 @@ class TestRuntimeInference(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="min"):
-            lr, f = TestRuntimeInference._linear_regression(
+            lr, f = TestRuntimeProtoRun._linear_regression(
                 clip=True, opset=10, max_value=None
             )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = rt.Inference(lr)
+            sess = ProtoRun(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.min, -1)
@@ -397,7 +397,7 @@ class TestRuntimeInference(unittest.TestCase):
         """
         )
 
-        sess = rt.Inference(m)
+        sess = ProtoRun(m)
         x = np.array([0, 1, 3], dtype=np.uint8).reshape((1, 1, 3))
         result = sess.run(None, {"x": x})[0]
         expected = x
@@ -412,7 +412,7 @@ class TestRuntimeInference(unittest.TestCase):
         check_model(onnx_model)
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
         expected = x.sum(axis=1, keepdims=1)
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {"X": x})[0]
         assert_allclose(expected, got)
 
@@ -427,7 +427,7 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
         a = np.array([1], dtype=np.int64)
         expected = x.sum(axis=1, keepdims=1)
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {"X": x, "A": a})[0]
         assert_allclose(expected, got)
 
@@ -442,7 +442,7 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
         a = np.array([], dtype=np.int64)
         expected = x.sum(keepdims=1)
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {"X": x, "A": a})[0]
         assert_allclose(expected, got)
 
@@ -454,7 +454,7 @@ class TestRuntimeInference(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 13)])
         check_model(onnx_model)
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {"X": x})[0]
         assert_allclose(x, got)
 
@@ -469,7 +469,7 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.arange(4).reshape((2, 2)).astype(np.float32)
         y = np.array([2], dtype=np.float32)
         expected = x > y
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(expected, got)
 
@@ -484,7 +484,7 @@ class TestRuntimeInference(unittest.TestCase):
         x = np.arange(4).reshape((2, 2)).astype(np.float32)
         y = np.array([2], dtype=np.float32)
         expected = x >= y
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(expected, got)
 
@@ -521,8 +521,8 @@ class TestRuntimeInference(unittest.TestCase):
         graph = make_graph([greater, node_if], "g", [X], [Z], initializer=[zero])
         model_def = make_model(graph)
 
-        sess = rt.Inference(model_def)
-        self.assertEqual(str(sess), "Inference(X) -> Z")
+        sess = ProtoRun(model_def)
+        self.assertEqual(str(sess), "ProtoRun(X) -> Z")
 
         x = np.array([1, 2], dtype=np.float32)
         got = sess.run(None, {"X": x})[0]
@@ -578,7 +578,7 @@ class TestRuntimeInference(unittest.TestCase):
         )
         m.functions.extend([f])
 
-        sess = rt.Inference(m)
+        sess = ProtoRun(m)
         result = sess.run(None, {"cond": np.array(True)})
         expected = np.array([1, 2, 3, 4, 5], dtype=np.float32)
         assert_allclose(expected, result[0])
@@ -631,7 +631,7 @@ class TestRuntimeInference(unittest.TestCase):
         onnx_model = make_model(
             graph, opset_imports=opset_imports, functions=[linear_regression]
         )
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         x = np.arange(6).reshape((3, 2)).astype(np.float32)
         a = np.array([1, -1], dtype=np.float32)
         result = sess.run(None, {"X": x, "A": a})[0]
@@ -669,26 +669,26 @@ class TestRuntimeInference(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
         with self.assertRaises(NotImplementedError):
-            rt.Inference(onnx_model)
+            ProtoRun(onnx_model)
 
         node1 = make_node("_InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(TypeError):
-            rt.Inference(onnx_model, new_ops=[_InvAlpha])
+            ProtoRun(onnx_model, new_ops=[_InvAlpha])
 
         node1 = make_node("InvAlpha_", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(NotImplementedError):
-            rt.Inference(onnx_model, new_ops=[InvAlpha_])
+            ProtoRun(onnx_model, new_ops=[InvAlpha_])
 
         node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(ValueError):
-            rt.Inference(onnx_model, new_ops=[InvAlpha, InvAlpha])
-        sess = rt.Inference(onnx_model, new_ops=[InvAlpha])
+            ProtoRun(onnx_model, new_ops=[InvAlpha, InvAlpha])
+        sess = ProtoRun(onnx_model, new_ops=[InvAlpha])
         got = sess.run(None, {"X": x})[0]
         expected = 1 / (x + 0.5)
         assert_allclose(expected, got)
@@ -825,7 +825,7 @@ class TestRuntimeInference(unittest.TestCase):
             [1.0, 1.0, 2.0, 1.0, 2.0, 3.0, 1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0, 5.0],
             dtype=np.float32,
         )
-        oinf = rt.Inference(model_def)
+        oinf = ProtoRun(model_def)
         inputs = {"trip_count": trip_count, "cond": cond, "seq_empty": seq_empty}
         got = oinf.run(None, inputs)
         assert_allclose(expected, got[0])
@@ -837,7 +837,7 @@ class TestRuntimeInference(unittest.TestCase):
         graph = make_graph([node1], "g", [X], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {"X": np.zeros((2, 4), dtype=np.float32) + 0.5})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -850,7 +850,7 @@ class TestRuntimeInference(unittest.TestCase):
         graph = make_graph([node1], "g", [], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -864,7 +864,7 @@ class TestRuntimeInference(unittest.TestCase):
         graph = make_graph([node1], "g", [X], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {"X": np.zeros((2, 4), dtype=np.float32)})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -877,7 +877,7 @@ class TestRuntimeInference(unittest.TestCase):
         graph = make_graph([node1], "g", [], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -889,7 +889,7 @@ class TestRuntimeInference(unittest.TestCase):
         graph = make_graph([node1], "g", [X], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
         got = sess.run(None, {"X": np.zeros((2, 4), dtype=np.float32)})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -936,7 +936,7 @@ class TestRuntimeInference(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
 
         sess1 = ort.InferenceSession(onnx_model.SerializeToString())
-        sess2 = rt.Inference(onnx_model)
+        sess2 = ProtoRun(onnx_model)
 
         sH, sW = 5, 6
         for i in range(sH):
@@ -988,7 +988,7 @@ class TestRuntimeInference(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
 
         sess1 = ort.InferenceSession(onnx_model.SerializeToString())
-        sess2 = rt.Inference(onnx_model)
+        sess2 = ProtoRun(onnx_model)
 
         sH, sW = 3, 3
         for i in range(sH):
@@ -1116,7 +1116,7 @@ class TestRuntimeInference(unittest.TestCase):
         )
         graph_conv = make_graph([node], "g", [X, W], [Y1])
         onnx_model_conv = make_model(graph_conv, opset_imports=[make_opsetid("", 16)])
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
 
         try:
             import onnxruntime as ort
@@ -1209,7 +1209,7 @@ class TestRuntimeInference(unittest.TestCase):
         )
         graph = make_graph([node], "g", [X, IS, BS], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
 
         X = np.array(
             [
@@ -1250,7 +1250,7 @@ class TestRuntimeInference(unittest.TestCase):
         )
         graph = make_graph([node], "g", [X, IS, BS], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-        sess = rt.Inference(onnx_model)
+        sess = ProtoRun(onnx_model)
 
         fold = torch.nn.Fold(
             output_size=tuple(image_shape),
@@ -1489,5 +1489,5 @@ class TestRuntimeInference(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    TestRuntimeInference().test_function_attribute()
+    TestRuntimeProtoRun().test_function_attribute()
     unittest.main(verbosity=2)

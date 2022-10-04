@@ -11,7 +11,7 @@ from ..onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto
 from .op_run import OpRun
 
 
-class Inference:
+class ProtoRun:
     """
     Executes an onnx model. The implementation relies on numpy
     for the most past and C++ through pybind11.
@@ -24,22 +24,22 @@ class Inference:
     :param functions: known onnx functions
     :param new_ops: this runtime can be used to test the implementations
         of new operators, *new_ops* is a list of classes
-        derived from :class:`OpRun <onnx.runtime.op_run.OpRun>`,
+        derived from :class:`OpRun <onnx.funconnx.op_run.OpRun>`,
         every class must define the static attribute `domain`
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
     it uses this class to execute the subgraph or the function.
-    Next example shows how to run inference with an onnx model
+    Next example shows how to run `ProtoRun` with an onnx model
     stored in file `model.onnx`.
 
     ::
 
         import numpy as np
-        from onnx.runtime import Inference
+        from onnx.funconnx import ProtoRun
 
         X = np.array(...)
-        sess = Inference("model.onnx")
+        sess = ProtoRun("model.onnx")
         results = sess.run(None, {"X": X})
         print(results[0])  # display the first result
 
@@ -55,13 +55,13 @@ class Inference:
     a custom operator. Let's assume this new operator
     is `InvAlpha` from domain `custom`. The implementation
     must take place in a class inheriting from
-    :class:`OpRun <onnx.runtime.op_run.OpRun>`.
+    :class:`OpRun <onnx.funconnx.op_run.OpRun>`.
     It must also define attribute `op_domain`.
     Here is an example which computes :math:`\\frac{1}{X + \\alpha}`.
 
     ::
 
-        from onnx.runtime.op_run import OpRun
+        from onnx.funconnx.op_run import OpRun
 
         class InvAlpha(OpRun):
 
@@ -79,12 +79,12 @@ class Inference:
     the onnx function if that's the case of falls back to the default
     value defined by the onnx node.
     to link a function attribute to a node attribute. In that case,
-    Class `Inference` must know about this new implementation
+    Class `ProtoRun` must know about this new implementation
     and this can be done by specified argument *new_ops*.
 
     ::
 
-        sess = Inference(onnx_model, new_ops=[InvAlpha])
+        sess = ProtoRun(onnx_model, new_ops=[InvAlpha])
         got = sess.run(None, {"X": x})[0]
 
     A specific node can be simply evaluated.
@@ -92,7 +92,7 @@ class Inference:
     ::
 
         import numpy as np
-        from onnx.runtime.aionnx._op_list import Celu
+        from onnx.funconnx.aionnx._op_list import Celu
 
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Celu.eval(x, alpha=0.5)
@@ -102,19 +102,19 @@ class Inference:
     ::
 
         import numpy as np
-        from onnx.runtime.aionnx import load_op
+        from onnx.funconnx.aionnx import load_op
 
         Celu = load_op("", "Celu")  # domain is ""
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Celu.eval(x, alpha=0.5)
 
-    Method :meth:`eval <onnx.runtime.op_run.eval>` creates an onnx node
-    returned by method :meth:`make_node <onnx.runtime.op_run.make_node>`.
+    Method :meth:`eval <onnx.ProtoRun.op_run.eval>` creates an onnx node
+    returned by method :meth:`make_node <onnx.funconnx.op_run.make_node>`.
 
     ::
 
         import numpy as np
-        from onnx.runtime.aionnx._op_list import Celu
+        from onnx.ProtoRun.aionnx._op_list import Celu
 
         onnx_node = Celu.make_node(alpha=0.5)
     """
@@ -133,7 +133,7 @@ class Inference:
         elif isinstance(proto, bytes):
             proto = load(BytesIO(proto))
         self.proto_ = proto
-        self.functions_: Dict[Tuple[str, str], Inference] = {}
+        self.functions_: Dict[Tuple[str, str], ProtoRun] = {}
         self.attributes_: List[str] = []
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
@@ -174,10 +174,10 @@ class Inference:
             for f in functions:
                 if isinstance(f, FunctionProto):
                     existing_functions = list(self.functions_.values())
-                    self.functions_[f.domain, f.name] = Inference(
+                    self.functions_[f.domain, f.name] = ProtoRun(
                         f, verbose=verbose, functions=existing_functions
                     )
-                elif isinstance(f, Inference):
+                elif isinstance(f, ProtoRun):
                     onx = f.proto_  # type: ignore
                     self.functions_[onx.domain, onx.name] = f
                 else:

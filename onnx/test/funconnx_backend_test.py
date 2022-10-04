@@ -15,7 +15,7 @@ import numpy as np
 from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
-import onnx.runtime as rt
+from onnx.funconnx import ProtoRun
 from onnx import (
     ModelProto,
     OptionalProto,
@@ -391,7 +391,7 @@ class TestOnnxBackEnd(unittest.TestCase):
 
     @staticmethod
     def load_fct(obj, verbose=0):
-        return rt.Inference(obj, verbose=verbose)
+        return ProtoRun(obj, verbose=verbose)
 
     @staticmethod
     def run_fct(obj, *inputs, verbose=0):  # pylint: disable=W0613

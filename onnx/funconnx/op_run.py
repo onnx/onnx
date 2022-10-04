@@ -162,9 +162,9 @@ class OpRun(ABC):
         Converts an attribute value into a python value.
         """
         if att.type == AttributeProto.GRAPH:
-            from .inference import Inference  # type: ignore
+            from .proto_run import ProtoRun  # type: ignore
 
-            return Inference(
+            return ProtoRun(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
