@@ -1015,6 +1015,10 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSumExp);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL1);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL2);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMax);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMin);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMean);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceProd);
 
 // Iterate over schema from ai.onnx version 18
 class OpSet_Onnx_ver18 {
@@ -1035,6 +1039,10 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSumExp)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL1)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL2)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMax)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMin)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMean)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceProd)>());
   }
 };
 
