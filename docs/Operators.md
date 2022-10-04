@@ -13405,7 +13405,7 @@ expect(
     inputs=[x],
     outputs=[y, z],
     name="test_maxpool_with_argmax_2d_precomputed_strides",
-    opset_imports=[onnx.helper.make_opsetid("", 12)]
+    opset_imports=[onnx.helper.make_opsetid("", 12)],
 )
 ```
 
