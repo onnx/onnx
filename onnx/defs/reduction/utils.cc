@@ -44,7 +44,7 @@ False instead of True.)DOC";
     if (axes_input) {
       schema.Attr(
           "noop_with_empty_axes",
-          "Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. "
+          "Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. "
           "When axes is empty and this attribute is set to true, input tensor will not be reduced,"
           "and the output tensor would be equivalent to input tensor.",
           AttributeProto::INT,

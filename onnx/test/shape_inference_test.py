@@ -2311,9 +2311,10 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_reduce_op_shape_2_axis(self) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (24, 4, 11))],
-            [make_node("ReduceL1", "x", "y", axes=(1, 2), keepdims=0)],
+            [("x", TensorProto.FLOAT, (24, 4, 11)), ("axes", TensorProto.INT64, (2,))],
+            [make_node("ReduceL1", ["x", "axes"], "y", keepdims=0)],
             [],
+            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (1, 2))],
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (24,))]
@@ -2321,9 +2322,10 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_reduce_op_shape_keep_dims(self) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (24, 4, 11))],
-            [make_node("ReduceL1", "x", "y", axes=(1, 2), keepdims=1)],
+            [("x", TensorProto.FLOAT, (24, 4, 11)), ("axes", TensorProto.INT64, (2,))],
+            [make_node("ReduceL1", ["x", "axes"], "y", keepdims=1)],
             [],
+            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (1, 2))],
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))]
@@ -2351,9 +2353,10 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_reduce_op_shape_negative_axis(self) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (24, 4, 11))],
-            [make_node("ReduceL1", "x", "y", axes=(-1, -2))],
+            [("x", TensorProto.FLOAT, (24, 4, 11)), ("axes", TensorProto.INT64, (2,))],
+            [make_node("ReduceL1", ["x", "axes"], "y")],
             [],
+            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (-1, -2))],
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))]
