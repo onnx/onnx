@@ -1042,8 +1042,7 @@ std::set<std::string> experimental_ops = {
     "ScaledTanh"};
 
 bool check_is_experimental_op(const NodeProto& node) {
-  return (node.domain() == ONNX_DOMAIN || node.domain() == "ai.onnx") && experimental_ops.count(node.op_type()) ? true
-                                                                                                                : false;
+  return (node.domain() == ONNX_DOMAIN || node.domain() == "ai.onnx") && experimental_ops.count(node.op_type());
 }
 
 #undef fail_check
