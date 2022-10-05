@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Dict, NamedTuple, Union
+from typing import Any, Dict, NamedTuple, Union, cast
 
 import numpy as np
 
@@ -88,7 +88,7 @@ class DeprecatedWarningDict(dict):  # type: ignore
             warnings.warn(
                 str(
                     f"`mapping.{self._origin_function}` is now deprecated and will be removed in the next release or so."
-                    + "To silence this warning, please simply use if-else statement to check the type of the key."
+                    + "To silence this warning, please simply use if-else statement to get the corresponding value."
                 ),
                 DeprecationWarning,
                 stacklevel=2,
@@ -112,7 +112,7 @@ TENSOR_TYPE_TO_NP_TYPE = DeprecatedWarningDict(
     "tensor_dtype_to_np_dtype",
 )
 # This is only used to get keys into STORAGE_TENSOR_TYPE_TO_FIELD.
-# TODO(https://github.com/onnx/onnx/issues/4261): Remove this.
+# TODO(https://github.com/onnx/onnx/issues/4554): Move these variables into _mapping.py
 
 TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = DeprecatedWarningDict(
     {
@@ -123,30 +123,39 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = DeprecatedWarningDict(
     "tensor_dtype_to_storage_tensor_dtype",
 )
 
+# NP_TYPE_TO_TENSOR_TYPE will be eventually removed in the future
+# and _NP_TYPE_TO_TENSOR_TYPE will only be used internally
+_NP_TYPE_TO_TENSOR_TYPE = {
+    v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16
+}
+
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
 # Numpy float32 array is only reversed to TensorProto.FLOAT
 NP_TYPE_TO_TENSOR_TYPE = DeprecatedWarningDict(
-    {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16},
+    cast(Dict[int, Union[int, str, Any]], _NP_TYPE_TO_TENSOR_TYPE),
     "NP_TYPE_TO_TENSOR_TYPE",
     "np_dtype_to_tensor_dtype",
 )
 
+# STORAGE_TENSOR_TYPE_TO_FIELD will be eventually removed in the future
+# and _STORAGE_TENSOR_TYPE_TO_FIELD will only be used internally
+_STORAGE_TENSOR_TYPE_TO_FIELD = {
+    int(TensorProto.FLOAT): "float_data",
+    int(TensorProto.INT32): "int32_data",
+    int(TensorProto.INT64): "int64_data",
+    int(TensorProto.UINT16): "int32_data",
+    int(TensorProto.DOUBLE): "double_data",
+    int(TensorProto.COMPLEX64): "float_data",
+    int(TensorProto.COMPLEX128): "double_data",
+    int(TensorProto.UINT32): "uint64_data",
+    int(TensorProto.UINT64): "uint64_data",
+    int(TensorProto.STRING): "string_data",
+    int(TensorProto.BOOL): "int32_data",
+}
+
 STORAGE_TENSOR_TYPE_TO_FIELD = DeprecatedWarningDict(
-    {
-        int(TensorProto.FLOAT): "float_data",
-        int(TensorProto.INT32): "int32_data",
-        int(TensorProto.INT64): "int64_data",
-        int(TensorProto.UINT16): "int32_data",
-        int(TensorProto.DOUBLE): "double_data",
-        int(TensorProto.COMPLEX64): "float_data",
-        int(TensorProto.COMPLEX128): "double_data",
-        int(TensorProto.UINT32): "uint64_data",
-        int(TensorProto.UINT64): "uint64_data",
-        int(TensorProto.STRING): "string_data",
-        int(TensorProto.BOOL): "int32_data",
-    },
+    cast(Dict[int, Union[int, str, Any]], _STORAGE_TENSOR_TYPE_TO_FIELD),
     "STORAGE_TENSOR_TYPE_TO_FIELD",
-    "tensor_dtype_to_field",
 )
 
 

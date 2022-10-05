@@ -8,7 +8,7 @@
 ```python
 import onnx
 
-onnx_model = onnx.load('path/to/the/model.onnx')
+onnx_model = onnx.load("path/to/the/model.onnx")
 ```
 
 * If the external data is under another directory, use `load_external_data_for_model()` to specify the directory path and load after using `onnx.load()`
@@ -17,8 +17,8 @@ onnx_model = onnx.load('path/to/the/model.onnx')
 import onnx
 from onnx.external_data_helper import load_external_data_for_model
 
-onnx_model = onnx.load('path/to/the/model.onnx', load_external_data=False)
-load_external_data_for_model(onnx_model, 'data/directory/path/')
+onnx_model = onnx.load("path/to/the/model.onnx", load_external_data=False)
+load_external_data_for_model(onnx_model, "data/directory/path/")
 # Then the onnx_model has loaded the external data from the specific directory
 ```
 
@@ -28,9 +28,9 @@ import onnx
 from onnx.external_data_helper import convert_model_to_external_data
 
 onnx_model = ... # Your model in memory as ModelProto
-convert_model_to_external_data(onnx_model, all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
+convert_model_to_external_data(onnx_model, all_tensors_to_one_file=True, location="filename", size_threshold=1024, convert_attribute=False)
 # Must be followed by save_model to save the converted model to a specific path
-onnx.save_model(onnx_model, 'path/to/save/the/model.onnx')
+onnx.save_model(onnx_model, "path/to/save/the/model.onnx")
 # Then the onnx_model has converted raw data as external data and saved to specific directory
 ```
 
@@ -39,7 +39,7 @@ onnx.save_model(onnx_model, 'path/to/save/the/model.onnx')
 import onnx
 
 onnx_model = ... # Your model in memory as ModelProto
-onnx.save_model(onnx_model, 'path/to/save/the/model.onnx', save_as_external_data=True, all_tensors_to_one_file=True, location='filename', size_threshold=1024, convert_attribute=False)
+onnx.save_model(onnx_model, "path/to/save/the/model.onnx", save_as_external_data=True, all_tensors_to_one_file=True, location="filename", size_threshold=1024, convert_attribute=False)
 # Then the onnx_model has converted raw data as external data and saved to specific directory
 ```
 
@@ -55,7 +55,7 @@ However, for those models larger than 2GB, please use the model path for onnx.ch
 ```python
 import onnx
 
-onnx.checker.check_model('path/to/the/model.onnx')
+onnx.checker.check_model("path/to/the/model.onnx")
 # onnx.checker.check_model(loaded_onnx_model) will fail if given >2GB model
 ```
 
