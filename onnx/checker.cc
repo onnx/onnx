@@ -595,15 +595,15 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   }
 }
 
-void print_warning_if_has_experimental(const std::unordered_set<std::string>& existed_experimental_ops) {
-  if (!existed_experimental_ops.empty()) {
+void print_warning_if_has_experimental(const std::unordered_set<std::string>& used_experimental_ops) {
+  if (!used_experimental_ops.empty()) {
     std::string all_experimental_ops;
-    for (const auto& op : existed_experimental_ops) {
+    for (const auto& op : used_experimental_ops) {
       all_experimental_ops += " " + op + ",";
     }
     // Remove the last comma which is unnecessary
     all_experimental_ops.pop_back();
-    std::cout << "Warning: Checker does not support models with experimental ops:" + all_experimental_ops << std::endl;
+    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << std::endl;
   }
 }
 
@@ -627,7 +627,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   }
 
   // This issue will be caught by check_graph instead
-  if (check_is_experimental_op(node.op_type())) {
+  if (check_is_experimental_op(node)) {
     return;
   }
 
@@ -723,7 +723,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     check_sparse_tensor(sparse_init, ctx);
     lex_ctx.add(name);
   }
-  std::unordered_set<std::string> existed_experimental_ops;
+  std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : graph.node()) {
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
@@ -744,8 +744,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       }
     }
 
-    if (check_is_experimental_op(node.op_type())) {
-      existed_experimental_ops.insert(node.op_type());
+    if (check_is_experimental_op(node)) {
+      used_experimental_ops.insert(node.op_type());
     }
 
     // This needs to happen before SSA check since we don't want to recurse and
@@ -777,7 +777,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       lex_ctx.add(output);
     }
   }
-  print_warning_if_has_experimental(existed_experimental_ops);
+  print_warning_if_has_experimental(used_experimental_ops);
 }
 
 // Utilify function to get the imported version of domain from opset imports
@@ -908,7 +908,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }
-  std::unordered_set<std::string> existed_experimental_ops;
+  std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
@@ -932,8 +932,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     // check whether the opset version imported for a domain by function and model are
     // compatible
     check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
-    if (check_is_experimental_op(node.op_type())) {
-      existed_experimental_ops.insert(node.op_type());
+    if (check_is_experimental_op(node)) {
+      used_experimental_ops.insert(node.op_type());
     }
     check_node(node, ctx_copy, lex_ctx);
 
@@ -952,7 +952,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       lex_ctx.add(output);
     }
   }
-  print_warning_if_has_experimental(existed_experimental_ops);
+  print_warning_if_has_experimental(used_experimental_ops);
 }
 
 void check_model(const ModelProto& model, CheckerContext& ctx) {
@@ -1041,8 +1041,9 @@ std::set<std::string> experimental_ops = {
     "Scale",
     "ScaledTanh"};
 
-bool check_is_experimental_op(std::string node_op_type) {
-  return (experimental_ops.count(node_op_type)) ? true : false;
+bool check_is_experimental_op(const NodeProto& node) {
+  return (node.domain() == ONNX_DOMAIN || node.domain() == "ai.onnx") && experimental_ops.count(node.op_type()) ? true
+                                                                                                                : false;
 }
 
 #undef fail_check
