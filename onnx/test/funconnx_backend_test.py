@@ -27,7 +27,9 @@ from onnx import (
 )
 from onnx.backend.test import __file__ as backend_folder
 from onnx.funconnx import ProtoRun
+from onnx.funconnx.aionnx.op_cast import cast_to
 from onnx.helper import __file__ as onnx_file
+from onnx.helper import bfloat16_to_float32, float32_to_bfloat16
 from onnx.mapping import OPTIONAL_ELEMENT_TYPE_TO_FIELD, TENSOR_TYPE_TO_NP_TYPE
 from onnx.numpy_helper import to_array, to_list, to_optional
 
@@ -88,7 +90,8 @@ class OnnxBackendTest:
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", DeprecationWarning)
-                loaded = to_array(load_tensor_from_string(serialized))
+                te = load_tensor_from_string(serialized)
+                loaded = to_array(te)
         except Exception as e:
             proto_types = [SequenceProto, TypeProto, OptionalProto]
             read_obj = None
@@ -407,6 +410,32 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             raise AssertionError(
                 f"Got {len(inputs)} inputs but expecting {len(obj.input_names)}."
             )
+        rewrite = False
+        for i in range(len(inputs)):
+            if (
+                isinstance(inputs[i], np.ndarray)
+                and inputs[i].dtype == np.uint16
+                and obj.input_types[i].tensor_type.elem_type != TensorProto.UINT16
+            ):
+                rewrite = True
+        if rewrite:
+            # bfloat16 does not exist for numpy.
+            inputs = list(inputs)
+            for i in range(len(inputs)):
+                if (
+                    isinstance(inputs[i], np.ndarray)
+                    and inputs[i].dtype == np.uint16
+                    and obj.input_types[i].tensor_type.elem_type != TensorProto.UINT16
+                ):
+                    xr = inputs[i].ravel()
+                    xf = np.empty(xr.shape[0], dtype=np.float32)
+                    for ie in range(xr.shape[0]):
+                        el = bfloat16_to_float32(xr[ie])
+                        xf[ie] = el
+                    inputs[i] = cast_to(
+                        xf.astype(np.float32).reshape(inputs[i].shape),
+                        TensorProto.BFLOAT16,
+                    )
         feeds = {input_names[i]: inputs[i] for i in range(len(inputs))}
         got = obj.run(None, feeds)
         return got
@@ -605,45 +634,23 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
         # see http://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
         # to compare with onnxruntime
         skip_test = {
-            "test_cast_FLOAT_to_BFLOAT16",
-            "test_castlike_FLOAT_to_BFLOAT16_expanded",
-            "test_cast_BFLOAT16_to_FLOAT",
-            "test_castlike_BFLOAT16_to_FLOAT_expanded",
-            "test_castlike_BFLOAT16_to_FLOAT",
-            "test_castlike_FLOAT_to_BFLOAT16",
-        }
-        # discrepancies
-        skip_test |= {
-            # mismatches
-            "test_center_crop_pad_crop_axes_hwc_expanded",
-            "test_col2im_pads",
-            "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",
-            "test_resize_downsample_scales_cubic_antialias",
-            "test_resize_downsample_scales_linear_antialias",
-            "test_resize_downsample_sizes_cubic_antialias",
-            "test_resize_downsample_sizes_linear_antialias",
-            "test_nesterov_momentum",
-            "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",
-            # mismatches, problem of truncated values 0.5 -> 0 or 1?
-            "test_dynamicquantizelinear_max_adjusted_expanded",
-            "test_dynamicquantizelinear_min_adjusted_expanded",
-            "test_dynamicquantizelinear_expanded",
-            # mismatches, problem with constant pi
-            "test_blackmanwindow_expanded",
-            "test_blackmanwindow_symmetric_expanded",
-            "test_hannwindow_expanded",
-            "test_hannwindow_symmetric_expanded",
-            "test_hammingwindow_expanded",
-            "test_hammingwindow_symmetric_expanded",
-            # mistmaches, shape dimension, example does not follow formula from the spec
-            "test_convtranspose_autopad_same",
+            "test_center_crop_pad_crop_axes_hwc_expanded",  # shapes (10, 9, 3), (10, 8, 3) mismatch
+            "test_col2im_pads",  # mismatch
+            "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
+            "test_resize_downsample_scales_cubic_antialias",  # mismatch
+            "test_resize_downsample_scales_linear_antialias",  # misatch
+            "test_resize_downsample_sizes_cubic_antialias",  # mismatch
+            "test_resize_downsample_sizes_linear_antialias",  # misatch
+            "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
+            "test_dynamicquantizelinear_max_adjusted_expanded",  # problem of truncated values 0.5 -> 0 or 1?
+            "test_dynamicquantizelinear_min_adjusted_expanded",  # problem of truncated values 0.5 -> 0 or 1?
+            "test_dynamicquantizelinear_expanded",  # problem of truncated values 0.5 -> 0 or 1?
+            "test_convtranspose_autopad_same",  # shapes (1, 2, 6, 6), (1, 2, 7, 7) mismatch, onnxruntime fails too
             # bug
-            "test_loop16_seq_none",
-            # bug
-            "test_gru_batchwise",
-            "test_resize_downsample_sizes_nearest_not_larger",
-            "test_resize_downsample_sizes_nearest_not_smaller",
-            "test_resize_tf_crop_and_resize_axes_3_2",
+            "test_gru_batchwise",  # shapes (3, 1, 1, 6), (1, 3, 1, 6) mismatch, onnxruntime fails too
+            "test_resize_downsample_sizes_nearest_not_larger",  # operands could not be broadcast together with shapes (2,) (4,)
+            "test_resize_downsample_sizes_nearest_not_smaller",  # operands could not be broadcast together with shapes (2,) (4,)
+            "test_resize_tf_crop_and_resize_axes_3_2",  # operands could not be broadcast together with shapes (2,) (4,)
             "test_resize_tf_crop_and_resize_axes_2_3",
             "test_resize_upsample_scales_nearest_axes_2_3",
             "test_resize_upsample_scales_nearest_axes_3_2",
@@ -652,13 +659,13 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test_resize_upsample_sizes_nearest_not_larger",
             "test_scatter_elements_with_reduction_min",
             "test_scatter_elements_with_duplicate_indices",
-            "test_simple_rnn_batchwise",
-            "test_stft_with_window",
-            "test_stft",
+            "test_simple_rnn_batchwise",  # (shapes (3, 1, 4), (1, 1, 4) mismatch)
+            "test_stft_with_window",  # RuntimeError: DFT is not implemented when normalize is True.
+            "test_stft",  # RuntimeError: DFT is not implemented when normalize is True.
             # deprecated
-            "test_scan_sum",  # opset 8 -> not implemented
-            "test_scatter_with_axis",  # scatter is removed
-            "test_scatter_without_axis",  # scatter is removed
+            "test_scan_sum",  # deprecated, opset 8 -> not implemented
+            "test_scatter_with_axis",  # deprecated, scatter is removed
+            "test_scatter_without_axis",  # deprecated, scatter is removed
         }
         rtol = {
             "test_adam_multiple": 1e-2,
@@ -668,10 +675,16 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
         }
         atol = {
             "test_blackmanwindow": 1e-7,
+            "test_blackmanwindow_expanded": 1e-4,
             "test_blackmanwindow_symmetric": 1e-7,
+            "test_blackmanwindow_symmetric_expanded": 1e-4,
             "test_gridsample_bicubic": 1e-4,
             "test_gru_seq_length": 1e-7,
+            "test_hammingwindow_expanded": 1e-4,
+            "test_hammingwindow_symmetric_expanded": 1e-4,
+            "test_hannwindow_expanded": 1e-4,
             "test_hannwindow_symmetric": 1e-7,
+            "test_hannwindow_symmetric_expanded": 1e-4,
             "test_layer_normalization_4d_axis_negative_1_expanded": 1e-6,
             "test_layer_normalization_4d_axis1_expanded": 1e-6,
             "test_layer_normalization_4d_axis_negative_3_expanded": 1e-6,
@@ -690,10 +703,10 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
 
     def test_enumerate_onnx_tests_run_one_case(self):
         self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_split_1d_uneven_split_opset18" == name,
+            lambda name: "test_castlike_FLOAT_to_BFLOAT16" == name,
             verbose=0,
             atol={"test_roialign_aligned_false": 1e-4},
-            check_other_runtime="onnxruntime",
+            # check_other_runtime="onnxruntime",
         )
 
 

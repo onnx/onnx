@@ -130,6 +130,8 @@ class ProtoRun:
         verbose: int = 0,
         new_ops: Optional[List[OpRun]] = None,
     ):
+        self.output_types_ = None
+        self.input_types_ = None
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
@@ -161,7 +163,9 @@ class ProtoRun:
             raise TypeError(f"Unexpected type {type(proto)} for proto.")
         if self.onnx_graph_:
             self.input_names_ = [i.name for i in self.onnx_graph_.input]
+            self.input_types_ = [i.type for i in self.onnx_graph_.input]
             self.output_names_ = [o.name for o in self.onnx_graph_.output]
+            self.output_types_ = [i.type for i in self.onnx_graph_.output]
             self.inits_ = list(self.onnx_graph_.initializer) + list(
                 self.onnx_graph_.sparse_initializer  # type: ignore
             )
@@ -231,9 +235,19 @@ class ProtoRun:
         return self.input_names_
 
     @property
+    def input_types(self):  # type: ignore
+        "Returns the input types if any specified."
+        return self.input_types_
+
+    @property
     def output_names(self):  # type: ignore
         "Returns the output names."
         return self.output_names_
+
+    @property
+    def output_types(self):  # type: ignore
+        "Returns the output types."
+        return self.output_types_
 
     @property
     def opsets(self):  # type: ignore

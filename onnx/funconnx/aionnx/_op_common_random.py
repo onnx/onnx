@@ -3,7 +3,7 @@
 
 import numpy as np  # type: ignore
 
-from ...mapping import TENSOR_TYPE_MAP
+from ...helper import tensor_dtype_to_np_dtype
 from ..op_run import OpRun
 
 
@@ -17,7 +17,7 @@ class _CommonRandom(OpRun):
 
     @staticmethod
     def numpy_type(dtype):  # type: ignore
-        return TENSOR_TYPE_MAP[dtype].np_dtype
+        return tensor_dtype_to_np_dtype(dtype)
 
     @staticmethod
     def _dtype(*data, dtype=None, dtype_first=False):  # type: ignore

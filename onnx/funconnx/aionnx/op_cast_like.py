@@ -1,9 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
+from ... import TensorProto
+from ...helper import np_dtype_to_tensor_dtype
 from ..op_run import OpRun
+from .op_cast import bfloat16, cast_to
 
 
 class CastLike(OpRun):
     def _run(self, x, y):  # type: ignore
-        return (x.astype(y.dtype),)
+        if y.dtype == bfloat16:
+            to = TensorProto.BFLOAT16
+        else:
+            to = np_dtype_to_tensor_dtype(y.dtype)  # type: ignore
+        return (cast_to(x, to),)
