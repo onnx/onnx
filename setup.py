@@ -239,7 +239,9 @@ class build_py(setuptools.command.build_py.build_py):
         for src in generated_python_files:
             dst = os.path.join(TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
             self.copy_file(src, dst)
-
+        # TODO (https://github.com/pypa/setuptools/issues/3606)
+        # Review the command customisations to enable editable_mode
+        self.editable_mode = False
         return setuptools.command.build_py.build_py.run(self)
 
 
