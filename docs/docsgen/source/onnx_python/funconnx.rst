@@ -20,13 +20,13 @@ OpFunction
 ++++++++++
 
 .. autoclass:: onnx.funconnx.op_run.OpFunction
-    :members: create, eval, input, output, local_inputs, domain, need_context, run, make_node
+    :members: create, eval, input, output, implicit_inputs, domain, need_context, run, make_node
 
 OpRun
 +++++
 
 .. autoclass:: onnx.funconnx.op_run.OpRun
-    :members: create, eval, input, output, local_inputs, domain, need_context, run, make_node
+    :members: create, eval, input, output, implicit_inputs, domain, need_context, run, make_node
 
 RuntimeTypeError
 ++++++++++++++++

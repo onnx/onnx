@@ -4,7 +4,7 @@
 import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
-from ._op import OpRunArg
+from ..op_run import OpRun
 
 
 def _argmin(data, axis=0, keepdims=True):  # type: ignore
@@ -23,29 +23,19 @@ def _argmin_use_numpy_select_last_index(data, axis=0, keepdims=True):  # type: i
     return result.astype(np.int64)
 
 
-class _ArgMin(OpRunArg):
-    def _run(self, data, overridden_attributes=None):  # type: ignore
-        axis, keepdims = self.attr(
-            "axis", "keepdims", overridden_attributes=overridden_attributes
-        )
+class _ArgMin(OpRun):
+    def _run(self, data, axis=None, keepdims=None):  # type: ignore
         return (_argmin(data, axis=axis, keepdims=keepdims),)
 
 
 class ArgMin_11(_ArgMin):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        _ArgMin.__init__(self, onnx_node, run_params)
+    pass
 
 
 class ArgMin_12(_ArgMin):
-    def _run(self, data, overridden_attributes=None):  # type: ignore
-        select_last_index = self.attr(
-            "select_last_index", overridden_attributes=overridden_attributes
-        )
+    def _run(self, data, axis=None, keepdims=None, select_last_index=None):  # type: ignore
         if select_last_index == 0:  # type: ignore
             return _ArgMin._run(self, data)
-        axis, keepdims = self.attr(
-            "axis", "keepdims", overridden_attributes=overridden_attributes
-        )
         return (
             _argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims),
         )

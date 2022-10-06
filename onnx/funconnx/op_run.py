@@ -46,6 +46,11 @@ def _build_schemas() -> Dict[str, type]:
     for schema in get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
+            if schema.domain != res[schema.name].domain:
+                raise NotImplementedError(
+                    f"This function assumes every operator has a unique name {schema.name!r} "
+                    f"even accross multiple domains {schema.domain!r} and {res[schema.name].domain!r}."
+                )
             if schema.since_version > res[schema.name].since_version:  # type: ignore
                 # We keep the most recent one.
                 res[schema.name] = schema  # type: ignore
@@ -102,13 +107,12 @@ class Graph:
 class OpRun(ABC):
     """
     Ancestor to all operators in this subfolder.
-    The runtime for every node can checked into
-    `ONNX unit tests
-    <https://github.com/onnx/onnx/tree/master/onnx/backend/test/case/node>`_.
 
     :param onnx_node: :epkg:`onnx` node
-    :param log_function: function used to log information while
-        executing the onnx graph
+    :param run_params: additional parameters such as `verbose`, `opsets`
+        (it can be more than one if the operator has a subgraph),
+        `log` for a logging function
+    :param schema: operator schema
     """
 
     op_domain = ""
@@ -222,7 +226,7 @@ class OpRun(ABC):
         self.attributes_names_ = set(added_attributes)
 
     @staticmethod
-    def local_inputs(graph: GraphProto) -> List[str]:
+    def implicit_inputs(graph: GraphProto) -> List[str]:
         """
         Returns all varibles not registered as inputs and not produced by
         an node inside the graph. This inputs are part of the context
@@ -255,27 +259,6 @@ class OpRun(ABC):
     def output(self) -> Iterable[str]:
         "Returns node attribute `output`."
         return self.onnx_node.output  # type: ignore
-
-    def attr(
-        self, *names: str, overridden_attributes: Optional[Dict[str, Any]] = None
-    ) -> Any:
-        """
-        Retrieves the value of an attribute. It is `self.<name>` unless
-        its value is linked to the function attribute it is part of.
-        """
-        values = []
-        for name in names:
-            value = getattr(self, name)
-            if isinstance(value, RefAttrName):
-                if overridden_attributes is None:
-                    raise AttributeError(
-                        f"Attribute {name!r} of operator {type(self)} is linked but "
-                        f"'overridden_attributes' has no value for it."
-                    )
-                values.append(overridden_attributes[name])
-            else:
-                values.append(getattr(self, name))
-        return tuple(values)
 
     @property
     def op_type(self) -> str:
@@ -312,7 +295,10 @@ class OpRun(ABC):
         Should be overwritten.
 
         :param args: operator inputs
-        :param kwargs: optional inputs
+        :param kwargs: optional inputs and overriden attributes,
+            an attribute may be overridden if it belongs to a function,
+            in this case, the same instance of OpRun can be called
+            with different values of the same attribute.
         :return: outputs
         """
         raise NotImplementedError(
@@ -323,6 +309,8 @@ class OpRun(ABC):
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
+
+        `kwargs` can be used to override an attribute value.
         """
         if self.has_linked_attribute and linked_attributes is None:
             raise ValueError(
@@ -382,7 +370,9 @@ class OpRun(ABC):
         if any(map(lambda t: isinstance(t, tuple), res)):
             dtypes = [type(t) for t in res]
             raise TypeError(
-                f"Method '_run' of class {self.__class__.__name__!r} must not return a tuple: {dtypes}."
+                f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
+                f"is a tuple, this is no onnx correponding type (Map, List, Tensor, SparseTensor). "
+                f"All returned types: {dtypes!r}."
             )
         return res
 

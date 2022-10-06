@@ -4,7 +4,7 @@
 import numpy as np  # type: ignore
 
 from ...defs import onnx_opset_version
-from ._op import OpRunArg
+from ..op_run import OpRun
 
 
 def _argmax(data, axis=0, keepdims=True):  # type: ignore
@@ -23,28 +23,19 @@ def _argmax_use_numpy_select_last_index(data, axis=0, keepdims=True):  # type: i
     return result.astype(np.int64)
 
 
-class _ArgMax(OpRunArg):
+class _ArgMax(OpRun):
     def _run(self, data, axis=None, keepdims=None):  # type: ignore
-        axis = axis or self.axis  # type: ignore
-        keepdims = keepdims or self.keepdims  # type: ignore
         return (_argmax(data, axis=axis, keepdims=keepdims),)
 
 
 class ArgMax_11(_ArgMax):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        _ArgMax.__init__(self, onnx_node, run_params)
+    pass
 
 
 class ArgMax_12(_ArgMax):
-    def _run(self, data, **overridden_attributes):  # type: ignore
-        select_last_index = self.attr(
-            "select_last_index", overridden_attributes=overridden_attributes
-        )
+    def _run(self, data, axis=None, keepdims=None, select_last_index=None):  # type: ignore
         if select_last_index == 0:  # type: ignore
             return _ArgMax._run(self, data)
-        axis, keepdims = self.attr(
-            "axis", "keepdims", overridden_attributes=overridden_attributes
-        )
         return (
             _argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims),
         )

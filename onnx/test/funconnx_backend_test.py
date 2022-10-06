@@ -385,6 +385,29 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
         os.path.abspath(os.path.dirname(__file__)), "onnx_backend_test_code"
     )
 
+    @classmethod
+    def add_test_methods(cls):
+        for te in enumerate_onnx_tests("node"):
+
+            def _test_(self, te=te):
+                if te.name in getattr(cls, "skip_test", set()):
+                    cls.skipped.append((te, None))
+                    return
+                self.common_test_onnx_test_run(
+                    te,
+                    getattr(cls, "successes", []),
+                    getattr(cls, "missed", []),
+                    getattr(cls, "skipped", []),
+                    getattr(cls, "load_failed", []),
+                    getattr(cls, "exec_failed", []),
+                    getattr(cls, "mismatch", []),
+                    verbose=0,
+                    rtol=getattr(cls, "rtol", {}),
+                    atol=getattr(cls, "atol", {}),
+                )
+
+            setattr(TestOnnxBackEndWithProtoRun, te.name, _test_)
+
     def test_onnx_backend_test(self):
         name = "test_abs"
         code = []
@@ -440,7 +463,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
         got = obj.run(None, feeds)
         return got
 
-    def test_enumerate_onnx_tests_run_one(self):
+    def test_onnx_test_run_test_abs(self):
         done = 0
         for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
             self.assertIn(te.name, repr(te))
@@ -453,116 +476,116 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             done += 1
         self.assertEqual(done, 1)
 
-    def common_test_enumerate_onnx_tests_run(
-        self, valid, verbose=0, rtol=None, atol=None, check_other_runtime=None
+    def common_test_onnx_test_run(
+        self,
+        te,
+        successes,
+        missed,
+        skipped,
+        load_failed,
+        exec_failed,
+        mismatch,
+        verbose=0,
+        rtol=None,
+        atol=None,
+        check_other_runtime=None,
     ):
-        if rtol is None:
-            rtol = {}
-        if atol is None:
-            atol = {}
-        with self.assertRaises(FileNotFoundError):
-            list(enumerate_onnx_tests("NNN"))
-        missed = []
-        skipped = []
-        load_failed = []
-        exec_failed = []
-        mismatch = []
-        success = 0
-        for te in enumerate_onnx_tests("node"):
-            if not valid(te.name):
-                skipped.append((te,))
-                continue
-            if verbose > 6:
-                print("TEST:", te.name)
+        if verbose > 6:
+            print("TEST:", te.name)
+        if verbose > 7:
+            print("  check runtime")
+        self.assertIn(te.name, repr(te))
+        self.assertGreater(len(te), 0)
+        try:
             if verbose > 7:
-                print("  check runtime")
-            self.assertIn(te.name, repr(te))
-            self.assertGreater(len(te), 0)
-            try:
-                if verbose > 7:
-                    print("  run")
-                if verbose > 5:
-                    te.run(
-                        lambda *args, verbose=verbose: TestOnnxBackEndWithProtoRun.load_fct(
-                            *args, verbose
-                        ),
-                        TestOnnxBackEndWithProtoRun.run_fct,
-                        atol=atol.get(te.name, None),
-                        rtol=rtol.get(te.name, None),
-                        comment=f"[runtime=ProtoRun, verbose={verbose}]",
-                    )
-                else:
-                    te.run(
-                        TestOnnxBackEndWithProtoRun.load_fct,
-                        TestOnnxBackEndWithProtoRun.run_fct,
-                        atol=atol.get(te.name, None),
-                        rtol=rtol.get(te.name, None),
-                        comment="[runtime=ProtoRun]",
-                    )
-                if verbose > 7:
-                    print("  end run")
-                    if verbose > 8:
-                        print(te.onnx_model)
-            except NotImplementedError as e:
-                if verbose > 7:
-                    print("  ", e, type(e))
-                missed.append((te, e))
-                continue
-            except AssertionError as e:
-                if verbose > 7:
-                    print("  ", e, type(e))
-                mismatch.append((te, e))
-                if check_other_runtime is None:
-                    continue
-                if "onnxruntime" in check_other_runtime:
-                    from onnxruntime import InferenceSession
-
-                    te.run(
-                        lambda obj: InferenceSession(obj.SerializeToString()),
-                        lambda *a, **b: TestOnnxBackEndWithProtoRun.run_fct(
-                            *a, verbose=1, **b
-                        ),
-                        atol=atol.get(te.name, None),
-                        rtol=rtol.get(te.name, None),
-                        comment="[runtime=onnxruntime]",
-                    )
-                if "mlprodict" in check_other_runtime:
-                    from mlprodict.onnxrt import OnnxInference
-
-                    class _Wrap:
-                        def __init__(self, sess):
-                            self.sess = sess
-
-                        @property
-                        def input_names(self):
-                            return [i.name for i in self.sess.obj.graph.input]
-
-                        def run(self, unused, feeds, *args, **kwargs):
-                            res = self.sess.run(feeds)
-                            return [res[o.name] for o in self.sess.obj.graph.output]
-
-                    te.run(
-                        lambda obj: _Wrap(OnnxInference(obj)),
-                        lambda *a, **b: TestOnnxBackEndWithProtoRun.run_fct(
-                            *a, verbose=1, **b
-                        ),
-                        atol=atol.get(te.name, None),
-                        rtol=rtol.get(te.name, None),
-                        comment="[runtime=mlprodict]",
-                    )
-                continue
-            except Exception as e:
-                if verbose > 7:
-                    print("  ", e, type(e))
-                with open(f"issue_{te.name}.onnx", "wb") as f:
-                    f.write(te.onnx_model.SerializeToString())
-                raise AssertionError(
-                    f"Unable to run test {te.name!r} due to {e}\n{str(te.onnx_model)}"
-                ) from e
-            success += 1
+                print("  run")
+            if verbose > 5:
+                te.run(
+                    lambda *args, verbose=verbose: TestOnnxBackEndWithProtoRun.load_fct(
+                        *args, verbose
+                    ),
+                    TestOnnxBackEndWithProtoRun.run_fct,
+                    atol=atol.get(te.name, None),
+                    rtol=rtol.get(te.name, None),
+                    comment=f"[runtime=ProtoRun, verbose={verbose}]",
+                )
+            else:
+                te.run(
+                    TestOnnxBackEndWithProtoRun.load_fct,
+                    TestOnnxBackEndWithProtoRun.run_fct,
+                    atol=atol.get(te.name, None),
+                    rtol=rtol.get(te.name, None),
+                    comment="[runtime=ProtoRun]",
+                )
             if verbose > 7:
-                print("  end example.")
+                print("  end run")
+                if verbose > 8:
+                    print(te.onnx_model)
+        except NotImplementedError as e:
+            if verbose > 7:
+                print("  ", e, type(e))
+            missed.append((te, e))
+            raise e
+        except AssertionError as e:
+            if verbose > 7:
+                print("  ", e, type(e))
+            mismatch.append((te, e))
+            if check_other_runtime is None:
+                raise e
+            if "onnxruntime" in check_other_runtime:
+                from onnxruntime import InferenceSession
 
+                te.run(
+                    lambda obj: InferenceSession(obj.SerializeToString()),
+                    lambda *a, **b: TestOnnxBackEndWithProtoRun.run_fct(
+                        *a, verbose=1, **b
+                    ),
+                    atol=atol.get(te.name, None),
+                    rtol=rtol.get(te.name, None),
+                    comment="[runtime=onnxruntime]",
+                )
+            if "mlprodict" in check_other_runtime:
+                from mlprodict.onnxrt import OnnxInference
+
+                class _Wrap:
+                    def __init__(self, sess):
+                        self.sess = sess
+
+                    @property
+                    def input_names(self):
+                        return [i.name for i in self.sess.obj.graph.input]
+
+                    def run(self, unused, feeds, *args, **kwargs):
+                        res = self.sess.run(feeds)
+                        return [res[o.name] for o in self.sess.obj.graph.output]
+
+                te.run(
+                    lambda obj: _Wrap(OnnxInference(obj)),
+                    lambda *a, **b: TestOnnxBackEndWithProtoRun.run_fct(
+                        *a, verbose=1, **b
+                    ),
+                    atol=atol.get(te.name, None),
+                    rtol=rtol.get(te.name, None),
+                    comment="[runtime=mlprodict]",
+                )
+            raise e
+        except Exception as e:
+            if verbose > 7:
+                print("  ", e, type(e))
+            with open(f"issue_{te.name}.onnx", "wb") as f:
+                f.write(te.onnx_model.SerializeToString())
+            raise AssertionError(
+                f"Unable to run test {te.name!r} due to {e}\n{str(te.onnx_model)}"
+            ) from e
+        successes.append((te, atol.get(te.name, None), rtol.get(te.name, None)))
+        if verbose > 7:
+            print("  end example.")
+
+    @staticmethod
+    def _postprocess(
+        successes, missed, skipped, load_failed, exec_failed, mismatch, verbose
+    ):
+        success = len(successes)
         failed = [
             len(missed),
             len(skipped),
@@ -628,12 +651,16 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                 f"corresponding runtime."
             )
 
-    def test_enumerate_onnx_tests_run(self):
+    @classmethod
+    def setUpClass(cls):
         # test not supported yet
         # not supported yet
         # see http://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
         # to compare with onnxruntime
-        skip_test = {
+        cls.skip_test = {
+            # incomplete implementation
+            "test_nesterov_momentum",
+            # mismatches
             "test_center_crop_pad_crop_axes_hwc_expanded",  # shapes (10, 9, 3), (10, 8, 3) mismatch
             "test_col2im_pads",  # mismatch
             "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
@@ -667,13 +694,13 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test_scatter_with_axis",  # deprecated, scatter is removed
             "test_scatter_without_axis",  # deprecated, scatter is removed
         }
-        rtol = {
+        cls.rtol = {
             "test_adam_multiple": 1e-2,
             "test_blackmanwindow_expanded": 0,
             "test_blackmanwindow_symmetric_expanded": 0,
             "test_simple_rnn_batchwise": 0,
         }
-        atol = {
+        cls.atol = {
             "test_blackmanwindow": 1e-7,
             "test_blackmanwindow_expanded": 1e-4,
             "test_blackmanwindow_symmetric": 1e-7,
@@ -693,23 +720,31 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test_roialign_aligned_false": 1e-4,
             "test_roialign_aligned_true": 1e-4,
         }
+        cls.successes = []
+        cls.missed = []
+        cls.skipped = []
+        cls.load_failed = []
+        cls.exec_failed = []
+        cls.mismatch = []
 
-        self.common_test_enumerate_onnx_tests_run(
-            valid=lambda name: name not in skip_test,
-            verbose=4 if __name__ == "__main__" else 0,
-            rtol=rtol,
-            atol=atol,
+    @classmethod
+    def tearDownClass(cls):
+        if len(cls.successes) == 0:
+            raise RuntimeError(f"No test was successful.")
+        cls._postprocess(
+            cls.successes,
+            cls.missed,
+            cls.skipped,
+            cls.load_failed,
+            cls.exec_failed,
+            cls.mismatch,
+            10,
         )
 
-    def test_enumerate_onnx_tests_run_one_case(self):
-        self.common_test_enumerate_onnx_tests_run(
-            lambda name: "test_castlike_FLOAT_to_BFLOAT16" == name,
-            verbose=0,
-            atol={"test_roialign_aligned_false": 1e-4},
-            # check_other_runtime="onnxruntime",
-        )
+
+TestOnnxBackEndWithProtoRun.add_test_methods()
 
 
 if __name__ == "__main__":
-    TestOnnxBackEndWithProtoRun().test_enumerate_onnx_tests_run_one_case()
+    TestOnnxBackEndWithProtoRun().test_argmax_default_axis_example()
     unittest.main(verbosity=2)
