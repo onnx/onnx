@@ -5,7 +5,6 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-  pull_request:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -53,27 +52,26 @@ jobs:
           python setup.py install
 
       - name: Build Docs
-        id: build_docs
-        if: ${{ always() }}
+        # TODO: fix warnings from "make html -j auto" so it can normally succeed without errors
+        continue-on-error: true
         run: |
           cd docs/docsgen
-          make html -j auto > stdout_stderr.log
+          make html -j auto > stdout_stderror.log 2>&1
       - name: Check whether previous build docs succeeded
         run: |
-          if grep -Fxq "build succeeded" stdout_stderr.log
+          cat docs/docsgen/stdout_stderror.log
+          if grep -F "build succeeded" docs/docsgen/stdout_stderror.log
           then
+            echo "Build succeeded."
+          else
             echo "Build failed."
             exit 1
-          else
-            echo "Build succeeded."
           fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
-        if: github.event_name == 'push'
         with:
           path: 'docs/docsgen/build/html'
       - name: Deploy to GitHub Pages
-        if: github.event_name == 'push'
         id: deployment
         uses: actions/deploy-pages@v1
