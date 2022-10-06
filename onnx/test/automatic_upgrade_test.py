@@ -14,7 +14,7 @@ from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_c
 # shape inference on the upgraded model.
 ####################################################################################
 
-latest_opset = onnx.defs.onnx_opset_version()
+LATEST_OPSET = onnx.defs.onnx_opset_version()
 tested_ops = []
 
 
@@ -28,12 +28,15 @@ class TestAutomaticUpgrade(unittest.TestCase):
         input_types: Optional[Sequence[Any]] = None,
         output_types: Optional[Sequence[Any]] = None,
         initializer: Sequence[Any] = tuple(),
-        attrs: Dict[str, Any] = {},
+        attrs: Optional[Dict[str, Any]] = None,
         seq_inputs: Sequence[int] = tuple(),
         seq_outputs: Sequence[int] = tuple(),
         optional_inputs: Sequence[int] = tuple(),
         optional_outputs: Sequence[int] = tuple(),
     ) -> None:
+        if attrs is None:
+            attrs = {}
+
         global tested_ops
         tested_ops.append(op)
 
@@ -104,7 +107,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
         onnx.checker.check_model(original)
         shape_inference.infer_shapes(original, strict_mode=True)
 
-        converted = version_converter.convert_version(original, latest_opset)
+        converted = version_converter.convert_version(original, LATEST_OPSET)
         onnx.checker.check_model(converted)
         shape_inference.infer_shapes(converted, strict_mode=True)
 
