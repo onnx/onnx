@@ -730,7 +730,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if len(cls.successes) == 0:
-            raise RuntimeError(f"No test was successful.")
+            raise RuntimeError("No test was successful.")
         cls._postprocess(
             cls.successes,
             cls.missed,
@@ -746,5 +746,5 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 
 
 if __name__ == "__main__":
-    TestOnnxBackEndWithProtoRun().test_argmax_default_axis_example()
+    # TestOnnxBackEndWithProtoRun().test_stft()
     unittest.main(verbosity=2)
