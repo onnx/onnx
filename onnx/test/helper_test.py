@@ -226,21 +226,21 @@ class TestHelperAttributeFunctions(unittest.TestCase):
     def test_is_attr_legal_verbose(self) -> None:
         def _set(
             attr: AttributeProto,
-            type: AttributeProto.AttributeType,
+            type_: AttributeProto.AttributeType,
             var: str,
             value: Any,
         ) -> None:
             setattr(attr, var, value)
-            setattr(attr, "type", type)
+            attr.type = type_
 
         def _extend(
             attr: AttributeProto,
-            type: AttributeProto.AttributeType,
+            type_: AttributeProto.AttributeType,
             var: List[Any],
             value: Any,
         ) -> None:
             var.extend(value)
-            setattr(attr, "type", type)
+            attr.type = type_
 
         SET_ATTR = [
             (lambda attr: _set(attr, AttributeProto.FLOAT, "f", 1.0)),

@@ -70,7 +70,7 @@ class TestSymbolicShape(unittest.TestCase):
             "Concat", inputs=["A", "B"], outputs=["C"], name="Concat", axis=1
         )
         cast = onnx.helper.make_node(
-            "Cast", inputs=["C"], outputs=["output"], to=getattr(TensorProto, "FLOAT")
+            "Cast", inputs=["C"], outputs=["output"], to=TensorProto.FLOAT
         )
         graph_def = helper.make_graph(
             name="test_graph",
@@ -102,7 +102,7 @@ class TestSymbolicShape(unittest.TestCase):
             "Concat", inputs=["C", "D"], outputs=["E"], name="Concat", axis=1
         )
         cast = onnx.helper.make_node(
-            "Cast", inputs=["E"], outputs=["output"], to=getattr(TensorProto, "FLOAT")
+            "Cast", inputs=["E"], outputs=["output"], to=TensorProto.FLOAT
         )
         graph_def = helper.make_graph(
             name="test_graph",
@@ -139,7 +139,7 @@ class TestSymbolicShape(unittest.TestCase):
             "Concat", inputs=["C", "D"], outputs=["E"], name="Concat", axis=1
         )
         cast = onnx.helper.make_node(
-            "Cast", inputs=["E"], outputs=["output"], to=getattr(TensorProto, "FLOAT")
+            "Cast", inputs=["E"], outputs=["output"], to=TensorProto.FLOAT
         )
         graph_def = helper.make_graph(
             name="test_graph",
@@ -171,7 +171,7 @@ class TestSymbolicShape(unittest.TestCase):
             "Concat", inputs=["A", "B"], outputs=["C"], name="Concat", axis=1
         )
         cast = onnx.helper.make_node(
-            "Cast", inputs=["C"], outputs=["output"], to=getattr(TensorProto, "FLOAT")
+            "Cast", inputs=["C"], outputs=["output"], to=TensorProto.FLOAT
         )
         graph_def = helper.make_graph(
             name="test_graph",

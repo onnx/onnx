@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import string
 import unittest
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
 import numpy as np
 
@@ -23,16 +23,16 @@ class TestAutomaticUpgrade(unittest.TestCase):
         self,
         op: str,
         from_opset: int,
-        input_shapes: List[Union[List[Optional[int]], str]] = [[3, 4, 5]],
-        output_shapes: List[List[Optional[int]]] = [[3, 4, 5]],
-        input_types: Union[List[Any], None] = None,
-        output_types: Union[List[Any], None] = None,
-        initializer: List[Any] = [],
+        input_shapes: Sequence[Union[Sequence[Optional[int]], str]] = ((3, 4, 5),),
+        output_shapes: Sequence[Sequence[Optional[int]]] = ((3, 4, 5),),
+        input_types: Optional[Sequence[Any]] = None,
+        output_types: Optional[Sequence[Any]] = None,
+        initializer: Sequence[Any] = tuple(),
         attrs: Dict[str, Any] = {},
-        seq_inputs: List[int] = [],
-        seq_outputs: List[int] = [],
-        optional_inputs: List[int] = [],
-        optional_outputs: List[int] = [],
+        seq_inputs: Sequence[int] = tuple(),
+        seq_outputs: Sequence[int] = tuple(),
+        optional_inputs: Sequence[int] = tuple(),
+        optional_outputs: Sequence[int] = tuple(),
     ) -> None:
         global tested_ops
         tested_ops.append(op)

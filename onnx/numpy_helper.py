@@ -136,8 +136,10 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
     # For numerical types, directly use numpy raw bytes.
     try:
         dtype = helper.np_dtype_to_tensor_dtype(arr.dtype)
-    except KeyError:
-        raise RuntimeError(f"Numpy data type not understood yet: {str(arr.dtype)}")
+    except KeyError as e:
+        raise RuntimeError(
+            f"Numpy data type not understood yet: {str(arr.dtype)}"
+        ) from e
     tensor.data_type = dtype
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
     if sys.byteorder == "big":
