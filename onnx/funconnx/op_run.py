@@ -46,10 +46,10 @@ def _build_schemas() -> Dict[str, type]:
     for schema in get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
-            if schema.domain != res[schema.name].domain:
+            if schema.domain != res[schema.name].domain:  # type: ignore
                 raise NotImplementedError(
                     f"This function assumes every operator has a unique name {schema.name!r} "
-                    f"even accross multiple domains {schema.domain!r} and {res[schema.name].domain!r}."
+                    f"even accross multiple domains {schema.domain!r} and {res[schema.name].domain!r}."  # type: ignore
                 )
             if schema.since_version > res[schema.name].since_version:  # type: ignore
                 # We keep the most recent one.
@@ -305,20 +305,35 @@ class OpRun(ABC):
             f"Method '_run' must be overwritten for operator {self.__class__.__name__!r}."
         )
 
-    def run(self, *args, linked_attributes=None, **kwargs):  # type: ignore
+    def run(self, *args, linked_attributes=None, context=None):  # type: ignore
         """
         Calls method ``_run``, catches exceptions,
         displays a longer error message.
 
-        `kwargs` can be used to override an attribute value.
+        :param args: inputs
+        :param linked_attributes: used if this has an attriute linked
+            to the attribute of the function it belongs to
+        :param context: if this node is part of the subgraph, `context`
+            is a dictionary with the values this node may use
+        :return: tuple of results
         """
+        if self.need_context():
+            if context is None:
+                raise RuntimeError(
+                    f"This node if type {type(self)} needs context to be filled."
+                )
+        elif context is not None:
+            raise RuntimeError(
+                f"This node if type {type(self)} does not need any contextbut one is given."
+            )
         if self.has_linked_attribute and linked_attributes is None:
             raise ValueError(
                 f"This node {type(self)} has linked attributes but None are given in parameter 'linked_attributes'."
             )
         if not self.has_linked_attribute and linked_attributes is not None:
             raise ValueError(
-                f"This node {type(self)} has no linked attribute but some are given in parameter 'linked_attributes' {set(linked_attributes)}."
+                f"This node {type(self)} has no linked attribute but some are given in parameter "
+                f"'linked_attributes' {set(linked_attributes)}."
             )
         overridden_attributes = {}
         if self.has_linked_attribute:
@@ -338,15 +353,17 @@ class OpRun(ABC):
                     overridden_attributes[att] = linked_attributes[v.name]
 
         self._log("-- begin %s.run(%d inputs)", self.__class__.__name__, len(args))
-        kwargs = kwargs.copy()
+        kwargs = {}
         for att in self.attributes_names_:
-            if att in overridden_attributes or att in kwargs:
+            if att in overridden_attributes:
                 continue
             if not hasattr(self, att):
                 raise NameError(
                     f"Attribute {att!r} is missing in operator {self.__class__.__name__!r}."
                 )
             kwargs[att] = getattr(self, att)
+        if context is not None:
+            kwargs["context"] = context
         try:
             if len(overridden_attributes) > 0:
                 res = self._run(*args, **overridden_attributes, **kwargs)
@@ -391,6 +408,17 @@ class OpRun(ABC):
         :param verbose: verbosity
         :param kwargs: node attributes
         :return: NodeProto
+
+        Method :meth:`eval <onnx.ProtoRun.op_run.eval>` creates an onnx node
+        returned by method :meth:`make_node <onnx.funconnx.op_run.make_node>`.
+
+        .. exec_code::
+
+            import numpy as np
+            from onnx.funconnx.aionnx._op_list import Celu
+
+            onnx_node = Celu.make_node(alpha=0.5)
+            print(onnx_node)
         """
         domain = cls.op_domain
         schema = None

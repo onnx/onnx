@@ -109,24 +109,13 @@ class ProtoRun:
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Celu.eval(x, alpha=0.5)
         print(y)
-
-    Method :meth:`eval <onnx.ProtoRun.op_run.eval>` creates an onnx node
-    returned by method :meth:`make_node <onnx.funconnx.op_run.make_node>`.
-
-    .. exec_code::
-
-        import numpy as np
-        from onnx.funconnx.aionnx._op_list import Celu
-
-        onnx_node = Celu.make_node(alpha=0.5)
-        print(onnx_node)
     """
 
     def __init__(  # type: ignore
         self,
         proto: Any,
-        opsets: Union[None, Dict[str, int]] = None,
-        functions=None,
+        opsets: Optional[Dict[str, int]] = None,
+        functions: Optional[List[Union["ProtoRun", FunctionProto]]] = None,  # type: ignore
         verbose: int = 0,
         new_ops: Optional[List[OpRun]] = None,
     ):
@@ -175,10 +164,8 @@ class ProtoRun:
             self.output_names_ = list(proto.output)
             self.inits_ = []
             self.nodes_ = proto.node
-        if "" not in self.opsets:
-            self.opsets[""] = onnx_opset_version()
         if functions is not None:
-            for f in functions:
+            for f in functions:  # type: ignore
                 if isinstance(f, FunctionProto):
                     existing_functions = list(self.functions_.values())
                     self.functions_[f.domain, f.name] = ProtoRun(
