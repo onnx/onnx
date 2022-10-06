@@ -1230,6 +1230,95 @@ void convTransposeShapeInference1(InferenceContext& ctx) {
   }
 }
 
+void convTransposeShapeInference2(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // we need at least two inputs to have a shape for this inference.
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+
+  int64_t group = getAttribute(ctx, "group", 1);
+
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (input_shape.dim_size() < 2) {
+    return; // Input tensor should have at least two dimensions.
+  }
+
+  // first dim is the batch axis and the next is the number of channels.
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+
+  std::vector<int64_t> dilations;
+  if (getRepeatedAttribute(ctx, "dilations", dilations)) {
+    if (dilations.size() != n_input_dims) {
+      return;
+    }
+  } else {
+    dilations.assign(n_input_dims, 1);
+  }
+
+  std::vector<int64_t> strides;
+  if (getRepeatedAttribute(ctx, "strides", strides)) {
+    if (strides.size() != n_input_dims) {
+      return;
+    }
+  } else {
+    strides.assign(n_input_dims, 1);
+  }
+
+  std::vector<int64_t> kernel_shape;
+  if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
+    if (kernel_shape.size() != n_input_dims) {
+      return;
+    }
+  } else {
+    auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
+    for (int i = 2; i < second_input_shape.dim_size(); ++i) {
+      if (!second_input_shape.dim(i).has_dim_value()) {
+        return;
+      }
+      kernel_shape.push_back(second_input_shape.dim(i).dim_value());
+    }
+  }
+
+  std::vector<int64_t> effective_kernel_shape = kernel_shape;
+  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+    // accounting for dilation, how big is the kernel in this dimension
+    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+  }
+
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != n_input_dims * 2) {
+      fail_shape_inference("Attribute pads has incorrect size");
+    }
+    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+    if (nullptr != auto_pad_attr && auto_pad_attr->s() != "NOTSET") {
+      fail_shape_inference("The pads attribute cannot be used simultaneously with auto_pad attribute");
+    }
+  } else {
+    pads.assign(n_input_dims * 2, 0);
+    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+    if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
+      int input_dims_size = static_cast<int>(n_input_dims);
+      for (int i = 0; i < input_dims_size; ++i) {
+        int64_t total_pad = effective_kernel_shape[i] - strides[i];
+        if (total_pad < 0)
+          total_pad = 0;
+        int64_t half_pad_small = total_pad >> 1;
+        int64_t half_pad_big = total_pad - half_pad_small;
+        if (auto_pad_attr->s() == "SAME_UPPER") {
+          pads[i] = half_pad_small;
+          pads[i + input_dims_size] = half_pad_big;
+        } else if (auto_pad_attr->s() == "SAME_LOWER") {
+          pads[i] = half_pad_big;
+          pads[i + input_dims_size] = half_pad_small;
+        }
+      }
+    }
+  }
+}
+
 std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_10(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
@@ -1317,6 +1406,136 @@ output_shape can also be explicitly specified in which case pads values are auto
 }
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 1, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator_10("a filter")));
+
+const char* conv_transpose_auto_pad_doc1 =
+    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
+    "default value is NOTSET, which means explicit padding is used. "
+    "SAME_UPPER or SAME_LOWER mean pad the input so that "
+    "`output_shape[i] = input_shape[i] * strides[i]` for each axis `i`. "
+    "The padding is split between the two sides equally or almost equally (depending "
+    "on whether it is even or odd). In case the padding is an odd number, the extra "
+    "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
+
+std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_11(const char* filter_desc) {
+  return [=](OpSchema& schema) {
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
+The convolution transpose operator consumes an input tensor and {filter_desc},
+and computes the output.
+
+If the pads parameter is provided the shape of the output is calculated via the following equation:
+
+  output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - pads[start_i] - pads[end_i]
+
+output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
+
+  total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
+  If (auto_pads == SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
+  Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
+
+    )DOC";
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
+    schema.SetDoc(doc);
+    schema.Input(
+        0,
+        "X",
+        "Input data tensor from previous layer; has size (N x C x H x W)"
+        ", where N is the batch size, C is the number of channels, and"
+        " H and W are the height and width. Note that this is for the 2D image. "
+        "Otherwise the size is (N x C x D1 x D2 ... x Dn)",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Input(
+        1,
+        "W",
+        "The weight tensor that will be used in the "
+        "convolutions; has size (C x M/group x kH x kW), where C "
+        "is the number of channels, and kH and kW are the "
+        "height and width of the kernel, and M is the number "
+        "of feature maps. For more than 2 dimensions, the "
+        "weight shape will be (C x M/group x k1 x k2 x ... x kn), "
+        "where (k1 x k2 x ... x kn) is the dimension of the kernel. "
+        "The number of channels in the output should be equal to W.shape[1] * group "
+        "(assuming zero based indices of the shape array)",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Input(
+        2,
+        "B",
+        "Optional 1D bias to be added to the convolution, has size of M.",
+        "T",
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.Output(
+        0,
+        "Y",
+        "Output data tensor that contains the result of the convolution. The "
+        "output dimensions are functions of the kernel size, stride size, "
+        "pad lengths and group count. "
+        "The number of channels in the output should be equal to W.shape[1] * group "
+        "(assuming zero based indices of the shape array)",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.Attr(
+        "kernel_shape",
+        "The shape of the convolution kernel. If not present, should be inferred from input W.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "output_shape",
+        "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
+        "pads values are ignored. See doc for details for equations to generate pads",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "output_padding",
+        "Additional elements added to the side with higher coordinate indices in the output. "
+        "Each padding value in \"output_padding\" must be less than the corresponding stride/dilation dimension. "
+        "By default, this attribute is a zero vector. "
+        "Note that this attribute doesn't directly affect the computed output values. "
+        "It only controls the selection of the computed values, "
+        "so changing this attribute only adds or removes output elements. "
+        "If \"output_shape\" is explicitly provided, "
+        "\"output_padding\" does not contribute additional size to \"output_shape\" but "
+        "participates in the computation of the needed padding amount. "
+        "This is also called adjs or adjustment in some frameworks.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "dilations",
+        "dilation value along each spatial axis of the filter. If not present, the dilation defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr(
+        "strides",
+        "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
+    schema.Attr("auto_pad", conv_transpose_auto_pad_doc1, AttributeProto::STRING, std::string("NOTSET"));
+    schema.Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE);
+    schema.Attr(
+        "group",
+        "number of groups input channels and output channels are divided into.",
+        AttributeProto::INT,
+        static_cast<int64_t>(1));
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { convTransposeShapeInference2(ctx); });
+  };
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     GlobalLpPool,
