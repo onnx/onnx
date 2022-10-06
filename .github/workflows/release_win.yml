@@ -21,10 +21,9 @@ jobs:
         architecture: ['x64', 'x86']
     steps:        
     - name: Checkout ONNX
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
          path: ./onnx
-
     - name: Checkout ONNX submodules
       shell: bash
       run: |

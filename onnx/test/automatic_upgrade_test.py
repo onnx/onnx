@@ -1732,6 +1732,46 @@ class TestAutomaticUpgrade(unittest.TestCase):
             initializer=[input, shape],
         )
 
+    def test_BitwiseNot(self) -> None:
+        self._test_op_upgrade(
+            "BitwiseNot",
+            18,
+            [[2, 3]],
+            [[2, 3]],
+            [TensorProto.INT32],
+            [TensorProto.INT32],
+        )
+
+    def test_BitwiseAnd(self) -> None:
+        self._test_op_upgrade(
+            "BitwiseAnd",
+            18,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [TensorProto.INT16, TensorProto.INT16],
+            [TensorProto.INT16],
+        )
+
+    def test_BitwiseOr(self) -> None:
+        self._test_op_upgrade(
+            "BitwiseOr",
+            18,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [TensorProto.INT16, TensorProto.INT16],
+            [TensorProto.INT16],
+        )
+
+    def test_BitwiseXor(self) -> None:
+        self._test_op_upgrade(
+            "BitwiseXor",
+            18,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [TensorProto.INT16, TensorProto.INT16],
+            [TensorProto.INT16],
+        )
+
     def test_ops_tested(self) -> None:
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == ""]
