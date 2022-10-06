@@ -8,12 +8,12 @@ from ..op_run import OpRun
 
 
 def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ignore
-    if axes is not None:
+    if raw_pads is not None:
         old_raw_pads = raw_pads
         raw_pads = []
         pos = 0
         for i in range(len(data.shape)):
-            if i in axes:
+            if axes is None or i in axes:
                 raw_pads.extend(old_raw_pads[pos : pos + 2])
                 pos += 2
             else:

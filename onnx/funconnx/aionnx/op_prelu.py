@@ -8,4 +8,6 @@ from ..op_run import OpRun
 
 class PRelu(OpRun):
     def _run(self, x, slope):  # type: ignore
+        print(x)
+        print(slope)
         return (np.where(x > 0, x, x * slope),)

@@ -37,7 +37,11 @@ def sequence_insert_reference_implementation(
 
 class SequenceInsert(OpRun):
     def _run(self, S, T, ind=None):  # type: ignore
-        if ind is not None and len(ind) > 0:
+        if ind is None:
+            res = sequence_insert_reference_implementation(S, T)
+        elif isinstance(ind, int):
+            res = sequence_insert_reference_implementation(S, T, [ind])
+        elif len(ind.shape) > 0:
             res = sequence_insert_reference_implementation(S, T, ind)
         else:
             res = sequence_insert_reference_implementation(S, T)

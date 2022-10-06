@@ -387,31 +387,43 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
 
     @classmethod
     def add_test_methods(cls):
-        for te in enumerate_onnx_tests("node"):
+        for folder in ["node", "pytorch-converted", "pytorch-operator", "simple"]:
+            for te in enumerate_onnx_tests(folder):
 
-            def _test_(self, te=te):
-                if te.name in getattr(cls, "skip_test", set()):
-                    cls.skipped.append((te, None))
-                    return
-                self.common_test_onnx_test_run(
-                    te,
-                    getattr(cls, "successes", []),
-                    getattr(cls, "missed", []),
-                    getattr(cls, "skipped", []),
-                    getattr(cls, "load_failed", []),
-                    getattr(cls, "exec_failed", []),
-                    getattr(cls, "mismatch", []),
-                    verbose=0,
-                    rtol=getattr(cls, "rtol", {}),
-                    atol=getattr(cls, "atol", {}),
-                )
+                def _test_(self, te=te):
+                    if te.name in getattr(cls, "skip_test", set()):
+                        cls.skipped.append((te, None))
+                        return
+                    self.common_test_onnx_test_run(
+                        te,
+                        getattr(cls, "successes", []),
+                        getattr(cls, "missed", []),
+                        getattr(cls, "skipped", []),
+                        getattr(cls, "load_failed", []),
+                        getattr(cls, "exec_failed", []),
+                        getattr(cls, "mismatch", []),
+                        verbose=0,
+                        rtol=getattr(cls, "rtol", {}),
+                        atol=getattr(cls, "atol", {}),
+                    )
 
-            setattr(TestOnnxBackEndWithProtoRun, te.name, _test_)
+                if folder == "node":
+                    name = te.name
+                else:
+                    name = f"test__{folder.replace('-', '_')}_{te.name[5:]}"
+                setattr(TestOnnxBackEndWithProtoRun, name, _test_)
 
-    def test_onnx_backend_test(self):
+    def test_onnx_backend_test_abs(self):
         name = "test_abs"
         code = []
         for te in enumerate_onnx_tests("node", lambda folder: folder == name):
+            code.append(te)
+        self.assertEqual(len(code), 1)
+
+    def test_onnx_backend_test_expand_shape_model1(self):
+        name = "test_expand_shape_model1"
+        code = []
+        for te in enumerate_onnx_tests("simple", lambda folder: folder == name):
             code.append(te)
         self.assertEqual(len(code), 1)
 
@@ -694,6 +706,11 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test_scatter_with_axis",  # deprecated, scatter is removed
             "test_scatter_without_axis",  # deprecated, scatter is removed
         }
+        cls.skip_test |= {
+            # not implemented
+            "test_simple_gradient_of_add",
+            "simple_gradient_of_add_and_mul",
+        }
         cls.rtol = {
             "test_adam_multiple": 1e-2,
             "test_blackmanwindow_expanded": 0,
@@ -746,5 +763,71 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 
 
 if __name__ == "__main__":
-    # TestOnnxBackEndWithProtoRun().test_stft()
+    """
+    test__pytorch_converted_BatchNorm1d_3d_input_eval (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_BatchNorm2d_eval (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_BatchNorm2d_momentum_eval (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_BatchNorm3d_eval (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_BatchNorm3d_momentum_eval (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_ConstantPad2d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv1d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv1d_dilated (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv1d_groups (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv1d_pad1 (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv1d_pad1size1 (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv1d_pad2 (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv1d_pad2size1 (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv1d_stride (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_depthwise (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_depthwise_padded (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_depthwise_strided (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_depthwise_with_multiplier (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_dilated (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_groups (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_groups_thnn (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_no_bias (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_padding (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv2d_strided (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv3d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv3d_dilated (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv3d_dilated_strided (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv3d_groups (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv3d_no_bias (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv3d_stride (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Conv3d_stride_padding (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_ConvTranspose2d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_ConvTranspose2d_no_bias (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_GLU (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_GLU_dim (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Linear (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_Linear_no_bias (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_MaxPool1d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_MaxPool1d_stride (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_MaxPool1d_stride_padding_dilation (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_MaxPool2d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_MaxPool3d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_MaxPool3d_stride (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_MaxPool3d_stride_padding (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_PReLU_1d_multiparam (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_PReLU_2d_multiparam (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_PReLU_3d_multiparam (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_ReflectionPad2d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_ReplicationPad2d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_converted_ZeroPad2d (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_operator_operator_addmm (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_operator_operator_chunk (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_operator_operator_conv (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_operator_operator_convtranspose (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_operator_operator_index (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_operator_operator_maxpool (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__pytorch_operator_operator_symbolic_override (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__simple_sequence_model1 (__main__.TestOnnxBackEndWithProtoRun) ... FAIL
+    test__simple_sequence_model2 (__main__.TestOnnxBackEndWithProtoRun) ... ERROR  SequenceErase
+    test__simple_sequence_model3 (__main__.TestOnnxBackEndWithProtoRun) ... ERROR
+    test__simple_sequence_model6 (__main__.TestOnnxBackEndWithProtoRun) ... ERROR
+    test__simple_sequence_model7 (__main__.TestOnnxBackEndWithProtoRun) ... ERROR
+    test__simple_sequence_model8 (__main__.TestOnnxBackEndWithProtoRun) ... ERROR
+    """
+    TestOnnxBackEndWithProtoRun().test__pytorch_operator_operator_index()
     unittest.main(verbosity=2)

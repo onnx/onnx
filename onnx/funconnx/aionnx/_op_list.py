@@ -72,7 +72,7 @@ from .op_floor import Floor
 from .op_gather import Gather
 from .op_gather_elements import GatherElements
 from .op_gathernd import GatherND
-from .op_gemm import Gemm
+from .op_gemm import Gemm, Gemm_6, Gemm_7
 from .op_global_average_pool import GlobalAveragePool
 from .op_global_max_pool import GlobalMaxPool
 from .op_greater import Greater
