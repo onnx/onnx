@@ -48,7 +48,7 @@ def _build_schemas() -> Dict[str, type]:
         if schema.name in res:
             if schema.domain != res[schema.name].domain:  # type: ignore
                 raise NotImplementedError(
-                    f"This function assumes every operator has a unique name {schema.name!r} "
+                    f"This function assumes every operator has a unique name {schema.name!r} "  # type: ignore
                     f"even accross multiple domains {schema.domain!r} and {res[schema.name].domain!r}."  # type: ignore
                 )
             if schema.since_version > res[schema.name].since_version:  # type: ignore
