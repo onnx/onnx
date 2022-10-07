@@ -148,7 +148,7 @@ class ProtoRun:
                 raise ValueError("opsets must be None if proto is FunctionProto.")
             self.attributes_ = list(proto.attribute)
         elif isinstance(proto, NodeProto):
-            self.onnx_graph_ = None
+            self.onnx_graph_ = None  # type: ignore
             self.opsets_ = {
                 proto.domain: 1 if proto.domain != "" else onnx_opset_version()
             }
