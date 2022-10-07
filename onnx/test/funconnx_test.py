@@ -458,7 +458,7 @@ class TestRuntimeProtoRun(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(x, got)
 
-    def test_reduce_greater(self):
+    def test_greater(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
         Z = make_tensor_value_info("Z", TensorProto.FLOAT, [None])
@@ -473,7 +473,16 @@ class TestRuntimeProtoRun(unittest.TestCase):
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(expected, got)
 
-    def test_reduce_greater_or_equal(self):
+    def test_node_proto(self):
+        node1 = make_node("Greater", ["X", "Y"], ["Z"])
+        x = np.arange(4).reshape((2, 2)).astype(np.float32)
+        y = np.array([2], dtype=np.float32)
+        expected = x > y
+        sess = ProtoRun(node1)
+        got = sess.run(None, {"X": x, "Y": y})[0]
+        assert_allclose(expected, got)
+
+    def test_greater_or_equal(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
         Z = make_tensor_value_info("Z", TensorProto.FLOAT, [None])

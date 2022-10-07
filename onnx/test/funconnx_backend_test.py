@@ -29,7 +29,7 @@ from onnx.backend.test import __file__ as backend_folder
 from onnx.funconnx import ProtoRun
 from onnx.funconnx.aionnx.op_cast import cast_to
 from onnx.helper import __file__ as onnx_file
-from onnx.helper import bfloat16_to_float32, float32_to_bfloat16
+from onnx.helper import bfloat16_to_float32
 from onnx.mapping import OPTIONAL_ELEMENT_TYPE_TO_FIELD, TENSOR_TYPE_TO_NP_TYPE
 from onnx.numpy_helper import to_array, to_list, to_optional
 
@@ -461,7 +461,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                 f"Got {len(inputs)} inputs but expecting {len(obj.input_names)}."
             )
         rewrite = False
-        for i in range(len(inputs)):
+        for i in range(len(inputs)):  # pylint: disable=C0200
             if (
                 isinstance(inputs[i], np.ndarray)
                 and inputs[i].dtype == np.uint16
@@ -471,7 +471,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
         if rewrite:
             # bfloat16 does not exist for numpy.
             inputs = list(inputs)
-            for i in range(len(inputs)):
+            for i in range(len(inputs)):  # pylint: disable=C0200
                 if (
                     isinstance(inputs[i], np.ndarray)
                     and inputs[i].dtype == np.uint16
@@ -796,7 +796,6 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test_roialign_aligned_false": 1e-4,
             "test_roialign_aligned_true": 1e-4,
             # extended list
-            "test__pytorch_operator_operator_symbolic_override": 1e-5,
             "test__pytorch_converted_Linear_no_bias": 1e-5,
             "test_Linear_no_bias": 1e-5,
             "test__pytorch_operator_operator_symbolic_override": 1e-5,

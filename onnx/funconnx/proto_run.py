@@ -16,7 +16,9 @@ class ProtoRun:
     Executes an onnx model. The implementation relies on numpy
     for the most past and C++ through pybind11.
 
-    :param proto: ModelProto, GraphProto, FunctionProto, filename or bytes
+    :param proto: :class:`onnx.ModelProto`, :class:`onnx.GraphProto`,
+        :class:`onnx.FunctionProto`, :class:`onnx.NodeProto`,
+        filename or bytes
     :param verbose: display intermediate results
         on the standard output during the execution
     :param opsets: if *proto* is an instance of *GraphProto*,
@@ -74,11 +76,8 @@ class ProtoRun:
                 return (1 / (x + alpha),)
 
     `alpha` is an attribute. It can be defined by the onnx node or
-    be defined by the function used this node. It is possible
-    Line `alpha = alpha or self.alpha` selects first the value defined
-    the onnx function if that's the case of falls back to the default
-    value defined by the onnx node.
-    to link a function attribute to a node attribute. In that case,
+    be defined by the function using this node. It is safe to assume
+    that attributes are known at the same time as the input.
     Class `ProtoRun` must know about this new implementation
     and this can be done by specified argument *new_ops*.
 
@@ -148,6 +147,11 @@ class ProtoRun:
             if opsets is not None:
                 raise ValueError("opsets must be None if proto is FunctionProto.")
             self.attributes_ = list(proto.attribute)
+        elif isinstance(proto, NodeProto):
+            self.onnx_graph_ = None
+            self.opsets_ = {
+                proto.domain: 1 if proto.domain != "" else onnx_opset_version()
+            }
         else:
             raise TypeError(f"Unexpected type {type(proto)} for proto.")
         if self.onnx_graph_:
@@ -163,7 +167,10 @@ class ProtoRun:
             self.input_names_ = list(proto.input)
             self.output_names_ = list(proto.output)
             self.inits_ = []
-            self.nodes_ = proto.node
+            if isinstance(proto, NodeProto):
+                self.nodes_ = [proto]
+            else:
+                self.nodes_ = proto.node
         if functions is not None:
             for f in functions:  # type: ignore
                 if isinstance(f, FunctionProto):
