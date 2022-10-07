@@ -38,9 +38,18 @@ def _gemm11(a, b, c, alpha, beta):  # type: ignore
 class Gemm_6(OpRun):
     def _run(self, a, b, c=None, alpha=None, beta=None, transA=None, transB=None, broadcast=None):  # type: ignore
         if broadcast == 0:
-            raise NotImplementedError(
-                f"broadcast == 0 not implemented for operator {self.__class__.__operator__!r}"  # type: ignore
-            )
+            if transA:
+                _meth = _gemm11 if transB else _gemm10
+            else:
+                _meth = _gemm01 if transB else _gemm00
+            res = _meth(a, b, None, alpha, beta)
+            if c is None:
+                return (res,)
+            if c.shape != res.shape:
+                raise ValueError(
+                    f"Unable to add shape {c.shape} to shape {res.shape} without broadcast."
+                )
+            return (res + c,)
         if transA:
             _meth = _gemm11 if transB else _gemm10
         else:

@@ -49,6 +49,17 @@ def _batchnorm_training_mode(
     )
 
 
+class BatchNormalization_6(OpRun):
+    def _run(self, x, scale, bias, mean, var, epsilon=None, is_test=None, momentum=None, spatial=None):  # type: ignore
+        if is_test:
+            res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
+        else:
+            res = _batchnorm_training_mode(
+                x, scale, bias, mean, var, epsilon=epsilon, momentum=momentum
+            )
+        return (res,)
+
+
 class BatchNormalization_9(OpRun):
     def _run(self, x, scale, bias, mean, var, epsilon=None):  # type: ignore
         res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
@@ -70,5 +81,7 @@ class BatchNormalization_14(OpRun):
 
 if onnx_opset_version() >= 14:
     BatchNormalization = BatchNormalization_14
-else:
+elif onnx_opset_version() >= 9:
     BatchNormalization = BatchNormalization_9  # type: ignore
+else:
+    BatchNormalization = BatchNormalization_6  # type: ignore

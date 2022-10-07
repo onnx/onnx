@@ -32,8 +32,8 @@ class CommonSplit(OpRun):
 
 
 class Split_2(CommonSplit):
-    def _run(self, mat, axis=None):  # type: ignore
-        return self.common_run(mat, self.split, axis=axis, num_outputs=None)  # type: ignore
+    def _run(self, mat, axis=None, split=None):  # type: ignore
+        return self.common_run(mat, split, axis=axis, num_outputs=None)  # type: ignore
 
 
 class Split_11(Split_2):

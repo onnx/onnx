@@ -27,7 +27,12 @@ from .op_atan import Atan
 from .op_atanh import Atanh
 from .op_attribute_has_value import AttributeHasValue
 from .op_average_pool import AveragePool
-from .op_batch_normalization import BatchNormalization, BatchNormalization_14
+from .op_batch_normalization import (
+    BatchNormalization,
+    BatchNormalization_6,
+    BatchNormalization_9,
+    BatchNormalization_14,
+)
 from .op_bernoulli import Bernoulli
 from .op_bitshift import BitShift
 from .op_bitwise_and import BitwiseAnd
@@ -118,7 +123,7 @@ from .op_optional import Optional
 from .op_optional_get_element import OptionalGetElement
 from .op_optional_has_element import OptionalHasElement
 from .op_or import Or
-from .op_pad import Pad
+from .op_pad import Pad, Pad_1, Pad_2, Pad_11, Pad_18
 from .op_pow import Pow
 from .op_prelu import PRelu
 from .op_qlinear_conv import QLinearConv
@@ -171,6 +176,7 @@ from .op_softplus import Softplus
 from .op_softsign import Softsign
 from .op_space_to_depth import SpaceToDepth
 from .op_split import Split, Split_2, Split_11, Split_13
+from .op_split_to_sequence import SplitToSequence
 from .op_sqrt import Sqrt
 from .op_squeeze import Squeeze, Squeeze_1, Squeeze_11, Squeeze_13
 from .op_stft import STFT

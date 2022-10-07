@@ -18,13 +18,6 @@ class MaxPool(CommonPool):
         storage_order=None,
         strides=None,
     ):
-        auto_pad = auto_pad or self.auto_pad  # type: ignore
-        ceil_mode = ceil_mode or self.ceil_mode  # type: ignore
-        dilations = dilations or self.dilations  # type: ignore
-        strides = strides or self.strides  # type: ignore
-        storage_order = storage_order or self.storage_order  # type: ignore
-        kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
-        pads = pads or self.pads  # type: ignore
         if (
             dilations is not None
             and (min(dilations) != max(dilations) or min(dilations) != 1)

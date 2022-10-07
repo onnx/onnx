@@ -35,10 +35,26 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
 
 
 class Pad_1(OpRun):
-    def _run(self, data, pads, mode=None, constant_value=None):  # type: ignore
+    def _run(self, data, paddings=None, mode=None, value=None):  # type: ignore
+        if value is None:
+            value = 0
+        return (_pad_impl(data, paddings, mode=mode, constant_values=value),)
+
+
+class Pad_2(OpRun):
+    def _run(self, data, pads=None, mode=None, value=None):  # type: ignore
+        if value is None:
+            value = 0
+        return (_pad_impl(data, pads, mode=mode, constant_values=value),)
+
+
+class Pad_11(OpRun):
+    def _run(self, data, pads, constant_value=None, mode=None):  # type: ignore
         if constant_value is None:
             constant_value = 0
-        return (_pad_impl(data, pads, mode=mode, constant_values=constant_value),)
+        return (
+            _pad_impl(data, pads, mode=mode, constant_values=constant_value, axes=None),
+        )
 
 
 class Pad_18(OpRun):
@@ -52,5 +68,9 @@ class Pad_18(OpRun):
 
 if onnx_opset_version() >= 18:
     Pad = Pad_18
+elif onnx_opset_version() >= 11:
+    Pad = Pad_11  # type: ignore
+elif onnx_opset_version() >= 2:
+    Pad = Pad_2  # type: ignore
 else:
     Pad = Pad_1  # type: ignore

@@ -16,6 +16,14 @@ def _slice(
     axes: Optional[np.ndarray] = None,
     steps: Optional[np.ndarray] = None,
 ) -> np.ndarray:
+    if isinstance(starts, list):
+        starts = np.array(starts)
+    if isinstance(ends, list):
+        ends = np.array(ends)
+    if isinstance(axes, list):
+        axes = np.array(axes)
+    if isinstance(steps, list):
+        steps = np.array(steps)
     if len(starts.shape) == 0:
         starts = np.array([starts])
     if len(ends.shape) == 0:
