@@ -1,10 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-from typing import Any, List, Optional, Union
-
-import numpy as np  # type: ignore
-
 from ..op_run import OpRun
 
 

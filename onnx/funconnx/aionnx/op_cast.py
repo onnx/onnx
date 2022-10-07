@@ -21,7 +21,7 @@ def cast_to(x, to):
             xf[i] = el
         dtype = tensor_dtype_to_np_dtype(to)
         return xf.astype(dtype).reshape(x.shape)
-    elif to == TensorProto.BFLOAT16:
+    if to == TensorProto.BFLOAT16:
         xf = x.astype(np.float32).ravel()
         y = np.empty(xf.shape, dtype=bfloat16).ravel()
         for i in range(y.shape[0]):

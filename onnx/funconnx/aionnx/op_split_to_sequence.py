@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
+# pylint: disable=C0200,W0221
 
-from ..op_run import OpRun
 from .op_split import CommonSplit
 
 
