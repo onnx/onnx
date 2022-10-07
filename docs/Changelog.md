@@ -21628,52 +21628,6 @@ This version of the operator has been available since version 18 of the default 
 <dd>Type of Mean and InvStdDev tensors.</dd>
 </dl>
 
-### <a name="LogSoftmax-18"></a>**LogSoftmax-18**</a>
-
-  The operator computes the log of softmax values for the given input:
-
-   LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))
-
-  The "axis" attribute indicates the dimension along which LogSoftmax
-  will be performed. The output tensor has the same shape
-  and contains the LogSoftmax values of the corresponding input.
-
-#### Version
-
-This version of the operator has been available since version 18 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>
-Describes the dimension LogSoftmax will be performed on.
-Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).
-</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor of rank >= axis.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as the input tensor.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="MeanVarianceNormalization-18"></a>**MeanVarianceNormalization-18**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
@@ -22651,52 +22605,6 @@ This version of the operator has been available since version 18 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
-</dl>
-
-### <a name="Softmax-18"></a>**Softmax-18**</a>
-
-  The operator computes the normalized exponential values for the given input:
-
-   Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1)
-
-  The "axis" attribute indicates the dimension along which Softmax
-  will be performed. The output tensor has the same shape
-  and contains the Softmax values of the corresponding input.
-
-#### Version
-
-This version of the operator has been available since version 18 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>
-Describes the dimension Softmax will be performed on.
-Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).
-</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> (differentiable) : T</dt>
-<dd>The input tensor of rank >= axis.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The output values with the same shape as the input tensor.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="Split-18"></a>**Split-18**</a>

@@ -114,6 +114,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("since_version", &OpSchema::since_version)
       .def_property_readonly("deprecated", &OpSchema::deprecated)
       .def_property_readonly("domain", &OpSchema::domain)
+      .def_property_readonly("function_opset_versions", &OpSchema::function_opset_versions)      
       .def_property_readonly("name", &OpSchema::Name)
       .def_property_readonly("min_input", &OpSchema::min_input)
       .def_property_readonly("max_input", &OpSchema::max_input)
@@ -163,8 +164,28 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               func_proto.SerializeToString(&func_bytes);
             }
             return py::bytes(func_bytes);
+          })
+      .def(
+          "get_context_dependent_function_with_opset_version",
+          [](OpSchema* op, int opset_version, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes) -> py::bytes {
+            NodeProto proto{};
+            ParseProtoFromPyBytes(&proto, bytes);
+            std::string func_bytes = "";
+            if (op->HasContextDependentFunctionWithOpsetVersion(opset_version)) {
+              std::vector<TypeProto> input_types;
+              input_types.reserve(input_types_bytes.size());
+              for (auto& type_bytes : input_types_bytes) {
+                TypeProto type_proto{};
+                ParseProtoFromPyBytes(&type_proto, type_bytes);
+                input_types.push_back(type_proto);
+              }
+              FunctionBodyBuildContextImpl ctx(proto, input_types);
+              FunctionProto func_proto;
+              op->BuildContextDependentFunction(ctx, func_proto, opset_version);
+              func_proto.SerializeToString(&func_bytes);
+            }
+            return py::bytes(func_bytes);
           });
-  ;
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)

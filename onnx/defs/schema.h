@@ -767,6 +767,17 @@ class OpSchema final {
     return domain_;
   }
 
+  std::vector<int> function_opset_versions() const {
+    std::vector<int> opset_versions;
+    std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it = 
+      opset_version_to_function_builder_.cbegin();
+    for (; it != opset_version_to_function_builder_.cend(); ++it)
+    {
+      opset_versions.push_back(it->first);
+    }
+    return opset_versions;
+  }
+  
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
@@ -837,12 +848,16 @@ class OpSchema final {
   const FunctionProto* GetFunction() const;
 
   bool HasContextDependentFunction() const {
-    return functionBuilder_ != nullptr;
+    return opset_version_to_function_builder_.find(since_version_) != opset_version_to_function_builder_.end();
   }
 
-  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder);
+  bool HasContextDependentFunctionWithOpsetVersion(int opset_version) const {
+    return opset_version_to_function_builder_.find(opset_version) != opset_version_to_function_builder_.end();
+  }
 
-  bool BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto) const;
+  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder, int opset_version=-1);
+
+  bool BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto, int opset_version=-1) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -882,7 +897,7 @@ class OpSchema final {
   InferenceFunction tensor_inference_function_;
   DataPropagationFunction data_propagation_function_;
   FunctionProto function_body_;
-  ContextDependentFunctionBodyBuilder functionBuilder_;
+  std::map<int, ContextDependentFunctionBodyBuilder> opset_version_to_function_builder_;
 };
 
 // Map type to store operator schemas. The format is,

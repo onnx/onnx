@@ -178,7 +178,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-18">18</a>, <a href="Changelog.md#LayerNormalization-17">17</a>|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|
-|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-18">18</a>, <a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
+|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-18">18</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-18">18</a>|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|
@@ -193,7 +193,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
-|<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-18">18</a>, <a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
+|<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|
@@ -11899,9 +11899,9 @@ expect(node, inputs=[x], outputs=[y], name="test_log")
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-13">13</a>
+Other versions of this operator: <a href="Changelog.md#LogSoftmax-1">1</a>, <a href="Changelog.md#LogSoftmax-11">11</a>
 
 #### Attributes
 
@@ -25820,9 +25820,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Softmax-1">1</a>, <a href="Changelog.md#Softmax-11">11</a>
 
 #### Attributes
 

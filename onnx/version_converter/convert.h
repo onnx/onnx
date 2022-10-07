@@ -543,8 +543,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceMean", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceProd", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("LayerNormalization", OpSetID(17), OpSetID(18)));
-    registerAdapter(make_unique<CompatibleAdapter>("LogSoftmax", OpSetID(17), OpSetID(18)));
-    registerAdapter(make_unique<CompatibleAdapter>("Softmax", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(17), OpSetID(18)));
   }
 

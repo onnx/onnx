@@ -987,12 +987,28 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softmax,
-    18,
+    13,
     OpSchema()
         .FillUsing(SoftmaxFamilyDocGenerator(
             "Softmax",
             "normalized exponential",
             "Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) "))
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
+              int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              FunctionBuilder builder(functionProto);
+              builder.Const1D("axes", axis)
+                  .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input)", "axes", std::vector<int64_t>({axis}))
+                  .Add(R"(
+                    X_Sub = Sub (input, X_ReduceMax)
+                    X_Exp = Exp (X_Sub)
+                    X_ReduceSum = ReduceSum <keepdims = 1> (X_Exp, axes)
+                    output = Div (X_Exp, X_ReduceSum)
+                )");
+
+              schema.BuildFunction(functionProto);
+              return true;
+            })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
@@ -1006,16 +1022,33 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            }));
+            }, 18));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
-    18,
+    13,
     OpSchema()
         .FillUsing(SoftmaxFamilyDocGenerator(
             "LogSoftmax",
             "log of softmax",
             "LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))"))
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
+              const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              FunctionBuilder builder(functionProto);
+              builder.Const1D("axes", axis)
+                  .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input)", "axes", std::vector<int64_t>({axis}))
+                  .Add(R"(
+                    X_Sub = Sub (input, X_ReduceMax)
+                    X_Exp = Exp (X_Sub)
+                    X_ReduceSum = ReduceSum <keepdims = 1> (X_Exp, axes)
+                    X_Log = Log (X_ReduceSum)
+                    output = Sub (X_Sub, X_Log)
+                )");
+
+              schema.BuildFunction(functionProto);
+              return true;
+            }, 13)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
@@ -1030,7 +1063,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            }));
+            }, 18));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,

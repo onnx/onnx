@@ -348,6 +348,15 @@ void OpSchema::Verify(const NodeProto& node) const {
 
 OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   since_version_ = v;
+
+  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
+    opset_version_to_function_builder_.find(-1);
+
+  if (it != opset_version_to_function_builder_.cend()) {
+    opset_version_to_function_builder_[since_version_] = it->second;
+    opset_version_to_function_builder_.erase(it);
+  }
+
   return *this;
 }
 
@@ -665,16 +674,23 @@ void OpSchema::ParseAndSetTypes(
   }
 }
 
-OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder functionBuilder) {
-  functionBuilder_ = std::move(functionBuilder);
+OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder functionBuilder, int opset_version) {
+  opset_version_to_function_builder_[opset_version] = std::move(functionBuilder);
   return *this;
 }
 
-bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto) const {
-  if (functionBuilder_)
-    return functionBuilder_(ctx, *this, functionProto);
-  else
-    return false;
+bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto, int opset_version) const {
+  if (opset_version == -1)
+    opset_version = since_version_;
+
+  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it = opset_version_to_function_builder_.find(opset_version);
+
+  if (it != opset_version_to_function_builder_.end()) {
+    const ContextDependentFunctionBodyBuilder& body_builder = it->second;
+    return body_builder(ctx, *this, functionProto);
+  }
+    
+  return false;
 }
 
 OpSchema& OpSchema::FunctionBody(const char* func_body) {
