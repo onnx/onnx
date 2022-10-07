@@ -19,6 +19,22 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Input(0, "X", "Data to be selected", "T")
         .Input(1, "Y", "The indices, based on 0 as the first index of any dimension.", "tensor(int64)")
         .Output(0, "Z", "Selected output data as an array", "T")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_ndim = input_shape.dim_size();
+
+          auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          // This operator only applies to the last dimension; thus -1
+          for (int i = 0; i < input_ndim - 1; ++i) {
+            *output_shape->add_dim() = input_shape.dim(i);
+          }
+          // The length of the last dimension is not statically known
+          output_shape->add_dim();
+        })
         .TypeConstraint(
             "T",
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)", "tensor(string)"},

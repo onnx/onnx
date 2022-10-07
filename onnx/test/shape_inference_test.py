@@ -8425,6 +8425,28 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)],
         )
 
+    def test_array_feature_extractor(self) -> None:
+        if ONNX_ML:
+            node = make_node(
+                "ArrayFeatureExtractor",
+                ["x", "y"],
+                ["z"],
+                domain=ONNX_ML_DOMAIN,
+            )
+            graph_int = self._make_graph(
+                [("x", TensorProto.INT64, (3, 4, 5)), ("y", TensorProto.INT64, (2,))],
+                [node],
+                [],
+            )
+            self._assert_inferred(
+                graph_int,
+                [make_tensor_value_info("z", TensorProto.INT64, (3, 4, "unk__0"))],
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 3),
+                    make_opsetid(ONNX_DOMAIN, 18),
+                ],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
