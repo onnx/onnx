@@ -768,6 +768,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test__pytorch_converted_Conv3d_stride",
             "test__pytorch_converted_Conv3d_stride_padding",
             "test__simple_sequence_model1",
+            "test__simple_sequence_model3",
         }
         cls.rtol = {
             "test_adam_multiple": 1e-2,
@@ -799,6 +800,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test__pytorch_converted_Linear_no_bias": 1e-5,
             "test_Linear_no_bias": 1e-5,
             "test__pytorch_operator_operator_symbolic_override": 1e-5,
+            "test_operator_symbolic_override": 1e-4,
         }
         cls.successes = []
         cls.missed = []

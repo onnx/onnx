@@ -159,6 +159,7 @@ from .op_selu import Selu
 from .op_sequence_at import SequenceAt
 from .op_sequence_construct import SequenceConstruct
 from .op_sequence_empty import SequenceEmpty
+from .op_sequence_erase import SequenceErase
 from .op_sequence_insert import SequenceInsert
 from .op_sequence_length import SequenceLength
 from .op_sequence_map import SequenceMap
