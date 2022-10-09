@@ -50,9 +50,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 const char* reduce_log_sum_exp_func_body = R"ONNX(
   {
-    data_exp = Exp (data)
+    data_double = Cast<to = 11>(data)
+    data_exp = Exp (data_double)
     reduced_sum = ReduceSum<keepdims: int = @keepdims>(data_exp, axes)
-    reduced = Log (reduced_sum)
+    reduced_double = Log (reduced_sum)
+    reduced = CastLike(reduced_double, data)
   }
   )ONNX";
 ONNX_OPERATOR_SET_SCHEMA(
