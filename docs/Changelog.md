@@ -21511,35 +21511,6 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to all numeric tensor types.</dd>
 </dl>
 
-### <a name="Exp-18"></a>**Exp-18**</a>
-
-  Calculates the exponential of the given input tensor, element-wise.
-
-#### Version
-
-This version of the operator has been available since version 18 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> (differentiable) : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> (differentiable) : T</dt>
-<dd>The exponential of the input tensor computed element-wise</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
-</dl>
-
 ### <a name="LayerNormalization-18"></a>**LayerNormalization-18**</a>
 
   This is layer normalization defined in ONNX as function.

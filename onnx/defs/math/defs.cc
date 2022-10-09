@@ -557,15 +557,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Exp_ver18_doc = R"DOC(
+static const char* Exp_ver13_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,
-    18,
+    13,
     OpSchema()
-        .SetDoc(Exp_ver18_doc)
+        .SetDoc(Exp_ver13_doc)
         .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -579,8 +579,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            {OpSchema::numeric_types_for_math_reduction_with_bfloat()},
-            "Constrain input and output types to high-precision numeric tensors.")
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Log_ver13_doc = R"DOC(

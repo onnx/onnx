@@ -2954,30 +2954,4 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int64)"},
             "Constrain input and output types to float/int tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-static const char* Exp_ver13_doc = R"DOC(
-Calculates the exponential of the given input tensor, element-wise.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Exp,
-    13,
-    OpSchema()
-        .SetDoc(Exp_ver13_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The exponential of the input tensor computed "
-            "element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 } // namespace ONNX_NAMESPACE
