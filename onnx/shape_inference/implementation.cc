@@ -285,7 +285,7 @@ class ShapeInferenceImplBase {
   }
 
   void preprocess(const NodeProto& n) {
-    if (checker::check_is_experimental_op(n.op_type())) {
+    if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
     } else if (n.op_type() == "Constant" && n.output().size() == 1) {
       for (const auto& attr : n.attribute()) {

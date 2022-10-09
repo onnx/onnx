@@ -24,7 +24,7 @@ jobs:
       img: quay.io/pypa/manylinux2014_aarch64
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Checkout submodules
       shell: bash
       run: |
