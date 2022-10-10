@@ -205,6 +205,9 @@ class TestRuntimeProtoRun(unittest.TestCase):
             out = stdout.getvalue()
             log = dedent(
                 """
+                 +I B01: float32:(2, 2) in [0.0, 3.0]
+                 +I B11: float32:(2, 2) in [4.0, 7.0]
+                 +I B21: float32:(2, 2) in [-7.0, -4.0]
                 Add(B01, B11) -> C0
                  + C0: float32:(2, 2) in [4.0, 10.0]
                 Sub(B11, B21) -> C1
@@ -223,6 +226,9 @@ class TestRuntimeProtoRun(unittest.TestCase):
             out = stdout.getvalue()
             log = dedent(
                 """
+                 +I B01: float32:(2, 2):[0.0, 1.0, 2.0, 3.0]
+                 +I B11: float32:(2, 2):[4.0, 5.0, 6.0, 7.0]
+                 +I B21: float32:(2, 2):[-4.0, -5.0, -6.0, -7.0]
                 Add(B01, B11) -> C0
                  + C0: float32:(2, 2):[4.0, 6.0, 8.0, 10.0]
                 Sub(B11, B21) -> C1
@@ -241,6 +247,9 @@ class TestRuntimeProtoRun(unittest.TestCase):
             out = stdout.getvalue()
             log = dedent(
                 """
+                 +I B01: float32:(2, 2):[0.0, 1.0, 2.0, 3.0]
+                 +I B11: float32:(2, 2):[4.0, 5.0, 6.0, 7.0]
+                 +I B21: float32:(2, 2):[-4.0, -5.0, -6.0, -7.0]
                 Add(B01, B11) -> C0
                 -- begin Add.run(2 inputs)
                 -- done Add.run -> 1 outputs
