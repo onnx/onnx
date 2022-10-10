@@ -4,20 +4,9 @@
 import textwrap
 from typing import Any, Union
 
-from ..op_run import OpFunction
+from ..op_run import OpFunction, _split_class_name
 from ._op_run_experimental import OpRunExperimental
 from .op_im2col import Im2Col
-
-
-def _split_class_namme(name):  # type: ignore
-    if "_" in name:
-        prefix, vers = name.rsplit("_", maxsplit=1)
-        try:
-            v = int(vers)
-        except ValueError:
-            return name, None
-        return prefix, v
-    return name, None
 
 
 def _build_registered_operators():  # type: ignore
@@ -42,7 +31,7 @@ def _build_registered_operators():  # type: ignore
                 f"Unexpected variable type {class_type!r} and class_name={class_name!r}."
             ) from e
         if issub:
-            op_type, op_version = _split_class_namme(class_name)
+            op_type, op_version = _split_class_name(class_name)
             if op_type not in reg_ops:
                 reg_ops[op_type] = {}
             reg_ops[op_type][op_version] = class_type

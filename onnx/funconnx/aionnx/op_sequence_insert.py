@@ -27,7 +27,7 @@ def sequence_insert_reference_implementation(
     if position is not None:
         # In these cases, insert_position will be between [-len(sequence), len(sequence)]
         # The position argument will be in the format np.array([pos_index])
-        insert_position = position[0]
+        insert_position = (position[0] + len(seq)) % len(seq)
         seq.insert(insert_position, tensor)
     else:
         # Default position of insertion is at the end of the sequence.
@@ -43,6 +43,8 @@ class SequenceInsert(OpRun):
             res = sequence_insert_reference_implementation(S, T, [ind])
         elif len(ind.shape) > 0:
             res = sequence_insert_reference_implementation(S, T, ind)
+        elif len(ind.shape) == 0:
+            res = sequence_insert_reference_implementation(S, T, [int(ind)])
         else:
             res = sequence_insert_reference_implementation(S, T)
         return (res,)

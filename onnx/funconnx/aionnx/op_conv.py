@@ -38,27 +38,27 @@ def _conv_implementation(  # type: ignore
         W = new_w
         kernel_shape = new_kernel_shape
 
+    if auto_pad in {"SAME_LOWER", "SAME_UPPER", "VALID"}:
+        head = []
+        tail = []
+        for i in range(len(X.shape) - 2):
+            d = X.shape[i]
+            target_size = (d + strides[i] - 1) // strides[i]
+            pad_needed = (target_size - 1) * strides[i] + kernel_shape[i] - d
+            if auto_pad == "SAME_LOWER":
+                pad_head = (pad_needed + 1) // 2
+            else:
+                pad_head = pad_needed // 2
+            pad_tail = pad_needed - pad_head
+            head.append(pad_head)
+            tail.append(pad_tail)
+        pads = head + tail
+
     if len(X.shape) == 4:
         sN, sC, sH, sW = X.shape
         # M, C_group, kH, kW = W.shape
         kh, kw = kernel_shape
         sth, stw = strides
-
-        if auto_pad in {"SAME_LOWER", "SAME_UPPER", "VALID"}:
-            head = []
-            tail = []
-            for i in range(len(X.shape) - 2):
-                d = X.shape[i]
-                target_size = (d + strides[i] - 1) // strides[i]
-                pad_needed = (target_size - 1) * strides[i] + kernel_shape[i] - d
-                if auto_pad == "SAME_LOWER":
-                    pad_head = (pad_needed + 1) // 2
-                else:
-                    pad_head = pad_needed // 2
-                pad_tail = pad_needed - pad_head
-                head.append(pad_head)
-                tail.append(pad_tail)
-            pads = head + tail
 
         h_out = int(((sH - kh + pads[0] + pads[2]) / sth) + 1)
         w_out = int(((sW - kw + pads[1] + pads[3]) / stw) + 1)
@@ -67,39 +67,85 @@ def _conv_implementation(  # type: ignore
         oh, ow = -1 * (kh % 2), -1 * (kw % 2)
         bh, bw = -h0, -w0
         eh, ew = h_out * sth, w_out * stw
-        res = np.zeros((X.shape[:2] + (h_out, w_out)))
+        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out))
         if B is not None:
-            res[:, :, :, :] = B
+            res[:, :, :, :] = B.reshape((1, -1, 1, 1))
 
         for n in range(0, sN):
-            for c in range(0, sC):
-                for io in range(bh, eh, sth):
-                    for jo in range(bw, ew, stw):
-                        hr, wr = (io - bh) // sth, (jo - bw) // stw
-                        if hr >= h_out or wr >= w_out:
+            for nw in range(W.shape[0]):
+                for c in range(0, sC):
+                    for io in range(bh, eh, sth):
+                        for jo in range(bw, ew, stw):
+                            hr, wr = (io - bh) // sth, (jo - bw) // stw
+                            if hr >= h_out or wr >= w_out:
+                                continue
+                            i = io + kh % 2
+                            j = jo + kw % 2
+                            ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
+                            iw1, iw2 = max(0, j + ow), min(j + ow + kw, sW)
+                            img = X[n : n + 1, c : c + 1, ih1:ih2, iw1:iw2]
+                            w = W[nw : nw + 1, c : c + 1]
+                            if img.shape != w.shape:
+                                jh1, jh2 = max(-oh - i, 0), min(
+                                    kh, kh + sH - (i + oh + kh)
+                                )
+                                jw1, jw2 = max(-ow - j, 0), min(
+                                    kw, kw + sW - (j + ow + kw)
+                                )
+                                w = W[n : n + 1, c : c + 1, jh1:jh2, jw1:jw2]
+                                if img.shape != w.shape:
+                                    raise RuntimeError(
+                                        f"Unexpected shape {img.shape} != {w.shape}, oh={oh}, ow={ow}, "
+                                        f"i={i}, j={j}, kh={kh}, kw={kw}, sH={sH}, sW={sW}, sth={sth}, stw={stw}."
+                                    )
+                                s = (img * w).sum()
+                            else:
+                                s = (img * w).sum()
+                            res[n, nw, hr, wr] += s
+
+        return res
+
+    if len(X.shape) == 3:
+        sN, sC, sH = X.shape
+        # M, C_group, kH, kW = W.shape
+        (kh,) = kernel_shape
+        (sth,) = strides
+
+        h_out = int(((sH - kh + pads[0] + pads[1]) / sth) + 1)
+
+        h0 = pads[0]
+        oh = -1 * (kh % 2)
+        bh = -h0
+        eh = h_out * sth
+        res = np.zeros((X.shape[0], W.shape[0]) + (h_out,))
+        if B is not None:
+            res[:, :, :] += B.reshape((1, -1, 1))
+
+        for n in range(0, sN):
+            for nw in range(W.shape[0]):
+                for c in range(0, sC):
+                    for io in range(bh, eh, sth):
+                        hr = (io - bh) // sth
+                        if hr >= h_out:
                             continue
                         i = io + kh % 2
-                        j = jo + kw % 2
                         ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
-                        iw1, iw2 = max(0, j + ow), min(j + ow + kw, sW)
-                        img = X[n : n + 1, c : c + 1, ih1:ih2, iw1:iw2]
-                        if img.shape != W.shape:
+                        img = X[n : n + 1, c : c + 1, ih1:ih2]
+                        w = W[nw : nw + 1, c : c + 1]
+                        if img.shape != w.shape:
                             jh1, jh2 = max(-oh - i, 0), min(kh, kh + sH - (i + oh + kh))
-                            jw1, jw2 = max(-ow - j, 0), min(kw, kw + sW - (j + ow + kw))
-                            w = W[n : n + 1, c : c + 1, jh1:jh2, jw1:jw2]
+                            w = w[:1, :1, jh1:jh2]
                             if img.shape != w.shape:
                                 raise RuntimeError(
-                                    f"Unexpected shape {img.shape} != {w.shape}, oh={oh}, ow={ow}, "
-                                    f"i={i}, j={j}, kh={kh}, kw={kw}, sH={sH}, sW={sW}, sth={sth}, stw={stw}."
+                                    f"Unexpected shape {img.shape} != {w.shape}, oh={oh}, "
+                                    f"i={i}, kh={kh}, sH={sH}, sth={sth}."
                                 )
                             s = (img * w).sum()
                         else:
-                            s = (img * W).sum()
-                        if B is not None:
-                            s += B
-                        res[n, c, hr, wr] = s
+                            s = (img * w).sum()
+                        res[n, nw, hr] += s
 
-            return res
+        return res
 
     raise RuntimeError(
         f"The convolution for X.shape={X.shape}, W.shape={W.shape}, "

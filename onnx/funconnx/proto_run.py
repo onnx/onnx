@@ -331,6 +331,10 @@ class ProtoRun:
         results = {"": None}  # optional input
         results.update(self.rt_inits_)
         results.update(feed_inputs)
+        for k, v in self.rt_inits_.items():
+            self._log(2, " +C %s: %s", k, v)
+        for k, v in feed_inputs.items():
+            self._log(2, " +I %s: %s", k, v)
 
         # step 2: execute nodes
         for node in self.rt_nodes_:

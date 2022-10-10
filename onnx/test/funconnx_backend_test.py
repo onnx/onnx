@@ -8,6 +8,7 @@ the runtime produces the expected outputs.
 """
 
 import os
+import pprint
 import unittest
 import warnings
 
@@ -300,7 +301,16 @@ class OnnxBackendTest:
             return True
         return False
 
-    def run(self, load_fct, run_fct, index=None, rtol=1e-07, atol=0, comment=""):
+    def run(
+        self,
+        load_fct,
+        run_fct,
+        index=None,
+        rtol=1e-07,
+        atol=0,
+        comment="",
+        print_io=False,
+    ):
         """
         Executes a tests or all tests if index is None.
         The function crashes if the tests fails.
@@ -313,6 +323,7 @@ class OnnxBackendTest:
         :param rtol: relative tolerance
         :param atol: absolute tolerance
         :param comment: additional information for the user
+        :param print_io: prints out the input and output
         """
         if index is None:
             res = []
@@ -325,9 +336,18 @@ class OnnxBackendTest:
                         atol=atol,
                         rtol=rtol,
                         comment=comment,
+                        print_io=print_io,
                     )
                 )
             return res
+
+        if print_io:
+            print("------ INPUTS")
+            for k, v in enumerate(self.tests[index]["inputs"]):
+                print(f"input {k!r}, shape={v.shape}, dtype={v.dtype}")
+            print("------ EXPECTED OUTPUTS")
+            for k, v in enumerate(self.tests[index]["outputs"]):
+                print(f"output {k!r}, shape={v.shape}, dtype={v.dtype}")
 
         obj = load_fct(self.onnx_model)
 
@@ -409,10 +429,16 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
         for folder in ["node", "pytorch-converted", "pytorch-operator", "simple"]:
             for te in enumerate_onnx_tests(folder):
 
-                def _test_(self, te=te):
+                def _test_(
+                    self, te=te, check_other_runtime=None, verbose=0, print_io=False
+                ):
                     if te.fname in getattr(cls, "skip_test", set()):
                         cls.skipped.append((te, None))
                         return
+                    rtol = getattr(cls, "rtol", {})
+                    atol = getattr(cls, "atol", {})
+                    if len(rtol) == 0 or len(atol) == 0:
+                        raise AssertionError("rtol or atol is empty.")
                     self.common_test_onnx_test_run(
                         te,
                         getattr(cls, "successes", []),
@@ -421,9 +447,11 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                         getattr(cls, "load_failed", []),
                         getattr(cls, "exec_failed", []),
                         getattr(cls, "mismatch", []),
-                        verbose=0,
-                        rtol=getattr(cls, "rtol", {}),
-                        atol=getattr(cls, "atol", {}),
+                        verbose=verbose,
+                        rtol=rtol,
+                        atol=atol,
+                        check_other_runtime=check_other_runtime,
+                        print_io=print_io,
                     )
 
                 setattr(TestOnnxBackEndWithProtoRun, te.fname, _test_)
@@ -516,6 +544,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
         rtol=None,
         atol=None,
         check_other_runtime=None,
+        print_io=False,
     ):
         if verbose > 6:
             print("TEST:", te.name)
@@ -535,14 +564,16 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                     atol=atol.get(te.name, None),
                     rtol=rtol.get(te.name, None),
                     comment=f"[runtime=ProtoRun, verbose={verbose}]",
+                    print_io=print_io,
                 )
             else:
                 te.run(
                     TestOnnxBackEndWithProtoRun.load_fct,
                     TestOnnxBackEndWithProtoRun.run_fct,
-                    atol=atol.get(te.name, None),
-                    rtol=rtol.get(te.name, None),
+                    atol=atol.get(te.fname, atol.get(te.name, None)),
+                    rtol=rtol.get(te.fname, rtol.get(te.name, None)),
                     comment="[runtime=ProtoRun]",
+                    print_io=print_io,
                 )
             if verbose > 7:
                 print("  end run")
@@ -553,13 +584,14 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                 print("  ", e, type(e))
             missed.append((te, e))
             raise e
-        except AssertionError as e:
+        except (AssertionError, ValueError) as e:
             if verbose > 7:
                 print("  ", e, type(e))
             mismatch.append((te, e))
             if check_other_runtime is None:
                 raise e
             if "onnxruntime" in check_other_runtime:
+                print("CHECK RUNTIME onnxruntime")
                 from onnxruntime import InferenceSession
 
                 te.run(
@@ -567,11 +599,13 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                     lambda *a, **b: TestOnnxBackEndWithProtoRun.run_fct(
                         *a, verbose=1, **b
                     ),
-                    atol=atol.get(te.fname, None),
-                    rtol=rtol.get(te.fname, None),
+                    atol=1e-5,
+                    rtol=1e-3,
                     comment="[runtime=onnxruntime]",
                 )
+                print("done")
             if "mlprodict" in check_other_runtime:
+                print("CHECK RUNTIME mlprodict")
                 from mlprodict.onnxrt import OnnxInference
 
                 class _Wrap:
@@ -584,7 +618,9 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
 
                     def run(self, unused, feeds, *args, **kwargs):
                         res = self.sess.run(feeds)
-                        return [res[o.name] for o in self.sess.obj.graph.output]
+                        lres = [res[o.name] for o in self.sess.obj.graph.output]
+                        print("#", lres[0].shape)
+                        return lres
 
                 te.run(
                     lambda obj: _Wrap(OnnxInference(obj)),
@@ -595,6 +631,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                     rtol=rtol.get(te.fname, None),
                     comment="[runtime=mlprodict]",
                 )
+                print("done")
             raise e
         except Exception as e:
             if verbose > 7:
@@ -644,16 +681,16 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                     )
 
                 print("-----------")
-                for t in sorted(load_failed, key=lambda m: m[0].name):
-                    print("loading failed", _print(t[0], path))
-                for t in sorted(exec_failed, key=lambda m: m[0].name):
-                    print("execution failed", _print(t[0], path))
-                for t in sorted(mismatch, key=lambda m: m[0].name):
-                    print("mismatch", _print(t[0], path))
-                for t in sorted(missed, key=lambda m: m[0].name):
-                    print("missed ", _print(t[0], path))
-                for t in sorted(skipped, key=lambda m: m[0].name):
-                    print("skipped", _print(t[0], path))
+                for t in sorted(load_failed, key=lambda m: m[0].fname):
+                    print("loading failed", t[0].fname, _print(t[0], path))
+                for t in sorted(exec_failed, key=lambda m: m[0].fname):
+                    print("execution failed", t[0].fname, _print(t[0], path))
+                for t in sorted(mismatch, key=lambda m: m[0].nfame):
+                    print("mismatch", t[0].fname, _print(t[0], path))
+                for t in sorted(missed, key=lambda m: m[0].fname):
+                    print("missed ", t[0].fname, _print(t[0], path))
+                for t in sorted(skipped, key=lambda m: m[0].fname):
+                    print("skipped", t[0].fname, _print(t[0], path))
 
                 if success > 30:
                     print("-----------")
@@ -679,7 +716,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             )
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls, all_tests=False):
         # test not supported yet
         # not supported yet
         # see http://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
@@ -741,25 +778,15 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test__pytorch_converted_MaxPool2d",
             "test__pytorch_operator_operator_convtranspose",
             # bug
-            "test__pytorch_converted_Conv1d",
-            "test__pytorch_converted_Conv1d_dilated",
-            "test__pytorch_converted_Conv1d_groups",
-            "test__pytorch_converted_Conv1d_pad1",
-            "test__pytorch_converted_Conv1d_pad1size1",
-            "test__pytorch_converted_Conv1d_pad2",
-            "test__pytorch_converted_Conv1d_pad2size1",
-            "test__pytorch_converted_Conv1d_stride",
-            "test__pytorch_converted_Conv2d",
-            "test__pytorch_converted_Conv2d_depthwise",
-            "test__pytorch_converted_Conv2d_depthwise_padded",
-            "test__pytorch_converted_Conv2d_depthwise_strided",
-            "test__pytorch_converted_Conv2d_depthwise_with_multiplier",
-            "test__pytorch_converted_Conv2d_dilated",
-            "test__pytorch_converted_Conv2d_groups",
-            "test__pytorch_converted_Conv2d_groups_thnn",
-            "test__pytorch_converted_Conv2d_no_bias",
-            "test__pytorch_converted_Conv2d_padding",
-            "test__pytorch_converted_Conv2d_strided",
+            "test__pytorch_converted_Conv1d_groups",  # group==2 not implemented
+            "test__pytorch_converted_Conv2d_depthwise",  # group==4 not implemented
+            "test__pytorch_converted_Conv2d_depthwise_padded",  # group==4 not implemented
+            "test__pytorch_converted_Conv2d_depthwise_strided",  # group==4 not implemented
+            "test__pytorch_converted_Conv2d_depthwise_with_multiplier",  # group==4 not implemented
+            "test__pytorch_converted_Conv2d_dilated",  # bug
+            "test__pytorch_converted_Conv2d_groups",  # group==2 not implemented
+            "test__pytorch_converted_Conv2d_groups_thnn",  # group==2 not implemented
+            "test__pytorch_converted_Conv2d_padding",  # bug
             "test__pytorch_converted_Conv3d",
             "test__pytorch_converted_Conv3d_dilated",
             "test__pytorch_converted_Conv3d_dilated_strided",
@@ -767,14 +794,18 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test__pytorch_converted_Conv3d_no_bias",
             "test__pytorch_converted_Conv3d_stride",
             "test__pytorch_converted_Conv3d_stride_padding",
-            "test__simple_sequence_model1",
-            "test__simple_sequence_model3",
         }
+        if all_tests:
+            cls.skip_test = set()
         cls.rtol = {
             "test_adam_multiple": 1e-2,
             "test_blackmanwindow_expanded": 0,
             "test_blackmanwindow_symmetric_expanded": 0,
             "test_simple_rnn_batchwise": 0,
+            "test__pytorch_converted_Conv1d_pad1": 1e-4,
+            "test__pytorch_converted_Conv2d": 1e-5,
+            "test__pytorch_converted_Conv2d_no_bias": 1e-3,
+            "test__pytorch_converted_Conv2d_strided": 1e-4,
         }
         cls.atol = {
             "test_blackmanwindow": 1e-7,
@@ -798,6 +829,10 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             # extended list
             "test__pytorch_converted_Linear_no_bias": 1e-5,
             "test_Linear_no_bias": 1e-5,
+            "test__pytorch_converted_Conv1d_pad1": 1e-6,
+            "test__pytorch_converted_Conv2d": 1e-5,
+            "test__pytorch_converted_Conv2d_no_bias": 1e-5,
+            "test__pytorch_converted_Conv2d_strided": 1e-4,
             "test__pytorch_operator_operator_symbolic_override": 1e-5,
             "test_operator_symbolic_override": 1e-4,
         }
@@ -827,5 +862,9 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 
 
 if __name__ == "__main__":
-    # TestOnnxBackEndWithProtoRun().test__pytorch_converted_BatchNorm1d_3d_input_eval()
+    cl = TestOnnxBackEndWithProtoRun()
+    cl.setUpClass(True)
+    # cl.test__simple_sequence_model1(verbose=10)
+    # TestOnnxBackEndWithProtoRun().test__pytorch_converted_Conv2d_padding(print_io=True)
+    # test__pytorch_converted_Conv2d_dilated
     unittest.main(verbosity=2)

@@ -13,7 +13,7 @@ import textwrap
 from typing import Any, Union
 
 from ...defs import get_schema, onnx_opset_version
-from ..op_run import OpFunction, OpRun
+from ..op_run import OpFunction, OpRun, _split_class_name
 from .op_abs import Abs
 from .op_acos import Acos
 from .op_acosh import Acosh
@@ -199,17 +199,6 @@ from .op_where import Where
 from .op_xor import Xor
 
 
-def _split_class_namme(name):  # type: ignore
-    if "_" in name:
-        prefix, vers = name.rsplit("_", maxsplit=1)
-        try:
-            v = int(vers)
-        except ValueError:
-            return name, None
-        return prefix, v
-    return name, None
-
-
 def _build_registered_operators():  # type: ignore
     clo = globals().copy()
     reg_ops = {}  # type: ignore
@@ -233,7 +222,7 @@ def _build_registered_operators():  # type: ignore
                 f"Unexpected variable type {class_type!r} and class_name={class_name!r}."
             ) from e
         if issub:
-            op_type, op_version = _split_class_namme(class_name)
+            op_type, op_version = _split_class_name(class_name)
             if op_type not in reg_ops:
                 reg_ops[op_type] = {}
             reg_ops[op_type][op_version] = class_type

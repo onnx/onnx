@@ -12,6 +12,17 @@ from ..numpy_helper import to_array
 from ..onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 
 
+def _split_class_name(name):  # type: ignore
+    if "_" in name:
+        prefix, vers = name.rsplit("_", maxsplit=1)
+        try:
+            v = int(vers)
+        except ValueError:
+            return name, None
+        return prefix, v
+    return name, None
+
+
 class RuntimeTypeError(RuntimeError):
     """
     Raised when a type of a variable is unexpected.
