@@ -97,7 +97,7 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
 
   const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
   const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
-  const auto* sizesFromSymbolic = ctx.getSymbolicInput(3);
+  const auto* sizesFromSymbolic = 3 < ctx.getNumInputs() ? ctx.getSymbolicInput(3): nullptr;
 
   // If scales is an empty constant, assume it's not provided
   if (scales && ParseData<float>(scales).empty()) {
