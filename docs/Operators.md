@@ -19168,8 +19168,6 @@ data = np.array(
     dtype=np.float32,
 )
 reduced = np.maximum.reduce(data, axis=axes, keepdims=keepdims == 1)
-# print(reduced)
-[[[60.0]]]
 
 expect(
     node,
