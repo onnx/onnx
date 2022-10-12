@@ -12,7 +12,7 @@ void resizeShapeInferenceHelper(
   if (!sizes_data.empty()) {
     for (int i = 0; i < input_shape.dim_size(); ++i) {
       auto* dim = output_shape->mutable_dim(i);
-      if (sizes_data[i] >= 0) {
+      if (sizes_data[i] > 0) {
         dim->set_dim_value(sizes_data[i]);
       }
     }
@@ -96,19 +96,26 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   bool hasSizesInput = ctx.hasInput(3);
 
   const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
-  const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
-  const auto* sizesFromSymbolic = 3 < ctx.getNumInputs() ? ctx.getSymbolicInput(3) : nullptr;
+  std::vector<int64_t> sizes_data;
+  if (3 < ctx.getNumInputs()) {
+    bool found_sizes = false;
+    const auto sizes_shape = getShapeInput(ctx, 3, found_sizes);
+    // If sizes is an empty shape, assume it's not provided
+    if (found_sizes) {
+      if (sizes_shape.dim_size() == 0) {
+        hasSizesInput = false;
+      } else {
+        for (int i = 0; i < sizes_shape.dim_size(); ++i) {
+          sizes_data.push_back(sizes_shape.dim(i).dim_value());
+        }
+      }
+    }
+  }
 
   // If scales is an empty constant, assume it's not provided
   if (scales && ParseData<float>(scales).empty()) {
     hasScalesInput = false;
     scales = nullptr;
-  }
-
-  // If sizes is an empty constant, assume it's not provided
-  if (sizes && ParseData<int64_t>(sizes).empty() && sizesFromSymbolic == nullptr) {
-    hasSizesInput = false;
-    sizes = nullptr;
   }
 
   if (opset_version >= 13) {
@@ -158,19 +165,7 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   if (axes_attr) {
     axes = RetrieveValues<int64_t>(*axes_attr);
   }
-  if (nullptr != sizes || nullptr != sizesFromSymbolic) {
-    std::vector<int64_t> sizes_data;
-    if (nullptr != sizes) {
-      if (sizes->data_type() != TensorProto::INT64) {
-        fail_shape_inference("Input 'sizes' must have int64 element type.");
-      }
-      sizes_data = ParseData<int64_t>(sizes);
-    } else {
-      // If sizes cannot be parsed, get it from symbolic input
-      for (int i = 0; i < sizesFromSymbolic->dim_size(); ++i) {
-        sizes_data.push_back(sizesFromSymbolic->dim(i).dim_value());
-      }
-    }
+  if (hasSizesInput) {
     if (!axes.empty()) {
       if (sizes_data.size() != axes.size()) {
         fail_shape_inference(
@@ -191,7 +186,12 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
     } else {
       // sizes_data contains scales for all axes
       if (sizes_data.size() != rank_x) {
-        fail_shape_inference("Number of elements of input 'sizes' must be same as rank of input 'X'");
+        fail_shape_inference(
+            "Number of elements of input 'sizes' (",
+            sizes_data.size(),
+            ") must be same as rank of input 'X' (",
+            rank_x,
+            ").");
       }
     }
 
