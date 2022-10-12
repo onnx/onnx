@@ -9,8 +9,6 @@ from ..op_run import OpRun
 def _conv_implementation(  # type: ignore
     X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
 ):
-    if group != 1:
-        raise RuntimeError(f"group={group} != 1 is not implemented yet.")
     if dilations is None:
         dilations = [1 for s in X.shape[2:]]
     if kernel_shape is None:
@@ -19,6 +17,42 @@ def _conv_implementation(  # type: ignore
         pads = [0 for s in X.shape[2:]] * 2
     if strides is None:
         strides = [1 for s in X.shape[2:]]
+
+    if X.shape[1] != W.shape[1] * group or W.shape[0] % group != 0:
+        raise ValueError(
+            f"Shape inconsistencies, X.shape={X.shape}, W.shape={W.shape}, group={group}, "
+            f"W should be {(W.shape[0], X.shape[1] / group, np.prod(W.shape[1:]) / X.shape[1] * group)}."
+        )
+    if group > 1:
+        res = []
+        td = 0
+        mg = W.shape[0] // group
+        dw = W.shape[1]
+        for g in range(group):
+            gx = X[:, g * dw : g * dw + dw]
+            gw = W[g * mg : g * mg + mg]
+            try:
+                cv = _conv_implementation(
+                    gx, gw, None, auto_pad, dilations, 1, kernel_shape, pads, strides
+                )
+            except ValueError as e:
+                raise ValueError(
+                    f"Shape inconsistencies, X.shape={X.shape}, W.shape={W.shape}, group={g}/{group}, "
+                ) from e
+            td += cv.shape[1]
+            res.append(cv)
+        new_shape = list(res[0].shape)
+        new_shape[1] = td
+        final = np.zeros(tuple(new_shape), dtype=res[0].dtype)
+        p = 0
+        for g, cv in enumerate(res):
+            final[:, p : p + cv.shape[1]] = cv
+            p += cv.shape[1]
+        if B is not None:
+            new_shape = [1 for s in final.shape]
+            new_shape[1] = B.shape[0]
+            final += B.reshape(tuple(new_shape))
+        return final
 
     if dilations[0] != 1 or min(dilations) != max(dilations):
         # Let's compute the dilated kernel.

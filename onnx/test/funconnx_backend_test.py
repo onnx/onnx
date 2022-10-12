@@ -682,15 +682,15 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
 
                 print("-----------")
                 for t in sorted(load_failed, key=lambda m: m[0].fname):
-                    print("loading failed", t[0].fname, _print(t[0], path))
+                    print("loading failed", t[0].fname, "---", _print(t[0], path))
                 for t in sorted(exec_failed, key=lambda m: m[0].fname):
-                    print("execution failed", t[0].fname, _print(t[0], path))
+                    print("execution failed", t[0].fname, "---", _print(t[0], path))
                 for t in sorted(mismatch, key=lambda m: m[0].nfame):
-                    print("mismatch", t[0].fname, _print(t[0], path))
+                    print("mismatch", t[0].fname, "---", _print(t[0], path))
                 for t in sorted(missed, key=lambda m: m[0].fname):
-                    print("missed ", t[0].fname, _print(t[0], path))
+                    print("missed ", t[0].fname, "---", _print(t[0], path))
                 for t in sorted(skipped, key=lambda m: m[0].fname):
-                    print("skipped", t[0].fname, _print(t[0], path))
+                    print("skipped", t[0].fname, "---", _print(t[0], path))
 
                 if success > 30:
                     print("-----------")
@@ -770,7 +770,6 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test__pytorch_converted_MaxPool3d_stride",
             "test__pytorch_converted_MaxPool3d_stride_padding",
             # shape mismatch
-            "test__pytorch_operator_operator_conv",
             "test__pytorch_operator_operator_maxpool",
             # mismatch
             "test__pytorch_converted_ConvTranspose2d",
@@ -778,14 +777,8 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test__pytorch_converted_MaxPool2d",
             "test__pytorch_operator_operator_convtranspose",
             # bug
-            "test__pytorch_converted_Conv1d_groups",  # group==2 not implemented
-            "test__pytorch_converted_Conv2d_depthwise",  # group==4 not implemented
-            "test__pytorch_converted_Conv2d_depthwise_padded",  # group==4 not implemented
-            "test__pytorch_converted_Conv2d_depthwise_strided",  # group==4 not implemented
-            "test__pytorch_converted_Conv2d_depthwise_with_multiplier",  # group==4 not implemented
+            "test__pytorch_converted_Conv2d_depthwise_padded",  # bug
             "test__pytorch_converted_Conv2d_dilated",  # bug
-            "test__pytorch_converted_Conv2d_groups",  # group==2 not implemented
-            "test__pytorch_converted_Conv2d_groups_thnn",  # group==2 not implemented
             "test__pytorch_converted_Conv2d_padding",  # bug
             "test__pytorch_converted_Conv3d",
             "test__pytorch_converted_Conv3d_dilated",
@@ -831,6 +824,11 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test_Linear_no_bias": 1e-5,
             "test__pytorch_converted_Conv1d_pad1": 1e-6,
             "test__pytorch_converted_Conv2d": 1e-5,
+            "test__pytorch_converted_Conv2d_depthwise": 1e-4,
+            "test__pytorch_converted_Conv2d_depthwise_strided": 1e-4,
+            "test__pytorch_converted_Conv2d_depthwise_with_multiplier": 1e-4,
+            "test__pytorch_converted_Conv2d_groups": 1e-4,
+            "test__pytorch_converted_Conv2d_groups_thnn": 1e-4,
             "test__pytorch_converted_Conv2d_no_bias": 1e-5,
             "test__pytorch_converted_Conv2d_strided": 1e-4,
             "test__pytorch_operator_operator_symbolic_override": 1e-5,
@@ -864,7 +862,7 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 if __name__ == "__main__":
     cl = TestOnnxBackEndWithProtoRun()
     cl.setUpClass(True)
-    # cl.test__simple_sequence_model1(verbose=10)
+    cl.test__pytorch_converted_Conv1d_groups(verbose=0)
     # TestOnnxBackEndWithProtoRun().test__pytorch_converted_Conv2d_padding(print_io=True)
     # test__pytorch_converted_Conv2d_dilated
     unittest.main(verbosity=2)
