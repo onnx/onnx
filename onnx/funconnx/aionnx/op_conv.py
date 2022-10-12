@@ -103,7 +103,7 @@ def _conv_implementation(  # type: ignore
         eh, ew = h_out * sth, w_out * stw
         res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out))
         if B is not None:
-            res[:, :, :, :] = B.reshape((1, -1, 1, 1))
+            res[:, :, :, :] = B.reshape((1, -1, 1, 1))  # type: ignore
 
         for n in range(0, sN):
             for nw in range(W.shape[0]):
@@ -135,7 +135,71 @@ def _conv_implementation(  # type: ignore
                                 s = (img * w).sum()
                             else:
                                 s = (img * w).sum()
-                            res[n, nw, hr, wr] += s
+                            res[n, nw, hr, wr] += s  # type: ignore
+
+        return res
+
+    if len(X.shape) == 5:
+        sN, sC, sH, sW, sZ = X.shape
+        kh, kw, kz = kernel_shape
+        sth, stw, stz = strides
+
+        h_out = int(((sH - kh + pads[0] + pads[3]) / sth) + 1)
+        w_out = int(((sW - kw + pads[1] + pads[4]) / stw) + 1)
+        z_out = int(((sZ - kz + pads[2] + pads[5]) / stz) + 1)
+
+        h0, w0, z0 = pads[0], pads[1], pads[2]
+        oh, ow, oz = -1 * (kh % 2), -1 * (kw % 2), -1 * (kz % 2)
+        bh, bw, bz = -h0, -w0, -z0
+        eh, ew, ez = h_out * sth, w_out * stw, z_out * stz
+        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out, z_out))
+        if B is not None:
+            res[:, :, :, :] = B.reshape((1, -1, 1, 1, 1))  # type: ignore
+
+        for n in range(0, sN):
+            for nw in range(W.shape[0]):
+                for c in range(0, sC):
+                    for io in range(bh, eh, sth):
+                        for jo in range(bw, ew, stw):
+                            for zo in range(bz, ez, stz):
+                                hr, wr, zr = (
+                                    (io - bh) // sth,
+                                    (jo - bw) // stw,
+                                    (zo - bz) // stz,
+                                )
+                                if hr >= h_out or wr >= w_out or zr >= z_out:
+                                    continue
+                                i = io + kh % 2
+                                j = jo + kw % 2
+                                z = zo + kz % 2
+                                ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
+                                iw1, iw2 = max(0, j + ow), min(j + ow + kw, sW)
+                                iz1, iz2 = max(0, z + oz), min(z + oz + kz, sZ)
+                                img = X[n : n + 1, c : c + 1, ih1:ih2, iw1:iw2, iz1:iz2]
+                                w = W[nw : nw + 1, c : c + 1]
+                                if img.shape != w.shape:
+                                    jh1, jh2 = max(-oh - i, 0), min(
+                                        kh, kh + sH - (i + oh + kh)
+                                    )
+                                    jw1, jw2 = max(-ow - j, 0), min(
+                                        kw, kw + sW - (j + ow + kw)
+                                    )
+                                    jz1, jz2 = max(-oz - j, 0), min(
+                                        kz, kz + sZ - (z + oz + kz)
+                                    )
+                                    w = W[
+                                        n : n + 1, c : c + 1, jh1:jh2, jw1:jw2, jz1:jz2
+                                    ]
+                                    if img.shape != w.shape:
+                                        raise RuntimeError(
+                                            f"Unexpected shape {img.shape} != {w.shape}, oh={oh}, ow={ow}, oz={oz}, "
+                                            f"i={i}, j={j}, z={z}, kh={kh}, kw={kw}, kz={kz}, "
+                                            f"sH={sH}, sW={sW}, sZ={sZ}, sth={sth}, stw={stw}, stz={stz}."
+                                        )
+                                    s = (img * w).sum()
+                                else:
+                                    s = (img * w).sum()
+                                res[n, nw, hr, wr, zr] += s  # type: ignore
 
         return res
 
@@ -153,7 +217,7 @@ def _conv_implementation(  # type: ignore
         eh = h_out * sth
         res = np.zeros((X.shape[0], W.shape[0]) + (h_out,))
         if B is not None:
-            res[:, :, :] += B.reshape((1, -1, 1))
+            res[:, :, :] += B.reshape((1, -1, 1))  # type: ignore
 
         for n in range(0, sN):
             for nw in range(W.shape[0]):
@@ -177,7 +241,7 @@ def _conv_implementation(  # type: ignore
                             s = (img * w).sum()
                         else:
                             s = (img * w).sum()
-                        res[n, nw, hr] += s
+                        res[n, nw, hr] += s  # type: ignore
 
         return res
 

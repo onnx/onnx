@@ -780,13 +780,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test__pytorch_converted_Conv2d_depthwise_padded",  # bug
             "test__pytorch_converted_Conv2d_dilated",  # bug
             "test__pytorch_converted_Conv2d_padding",  # bug
-            "test__pytorch_converted_Conv3d",
-            "test__pytorch_converted_Conv3d_dilated",
-            "test__pytorch_converted_Conv3d_dilated_strided",
-            "test__pytorch_converted_Conv3d_groups",
-            "test__pytorch_converted_Conv3d_no_bias",
-            "test__pytorch_converted_Conv3d_stride",
-            "test__pytorch_converted_Conv3d_stride_padding",
+            "test__pytorch_converted_Conv3d_stride_padding",  # bug
         }
         if all_tests:
             cls.skip_test = set()
@@ -833,6 +827,12 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test__pytorch_converted_Conv2d_strided": 1e-4,
             "test__pytorch_operator_operator_symbolic_override": 1e-5,
             "test_operator_symbolic_override": 1e-4,
+            # "test__pytorch_converted_Conv3d": 1e-4,
+            # "test__pytorch_converted_Conv3d_dilated": 1e-4,
+            "test__pytorch_converted_Conv3d_dilated_strided": 1e-4,
+            "test__pytorch_converted_Conv3d_groups": 1e-4,
+            # "test__pytorch_converted_Conv3d_no_bias": 1e-4,
+            # "test__pytorch_converted_Conv3d_stride": 1e-4,
         }
         cls.successes = []
         cls.missed = []
@@ -862,7 +862,7 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 if __name__ == "__main__":
     cl = TestOnnxBackEndWithProtoRun()
     cl.setUpClass(True)
-    cl.test__pytorch_converted_Conv1d_groups(verbose=0)
+    cl.test__pytorch_converted_Conv3d(verbose=0)
     # TestOnnxBackEndWithProtoRun().test__pytorch_converted_Conv2d_padding(print_io=True)
     # test__pytorch_converted_Conv2d_dilated
     unittest.main(verbosity=2)

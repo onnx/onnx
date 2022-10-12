@@ -1325,5 +1325,5 @@ class TestRuntimeProtoRun(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    TestRuntimeProtoRun().test_function_attribute()
+    # TestRuntimeProtoRun().test_conv_1d_group()
     unittest.main(verbosity=2)
