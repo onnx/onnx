@@ -14300,6 +14300,7 @@ node = onnx.helper.make_node(
     outputs=["Y"],
     mode="linear",
     coordinate_transformation_mode="tf_crop_and_resize",
+    axes=axes,
 )
 
 data = np.array(
@@ -14352,6 +14353,7 @@ node = onnx.helper.make_node(
     outputs=["Y"],
     mode="linear",
     coordinate_transformation_mode="tf_crop_and_resize",
+    axes=axes,
 )
 
 data = np.array(
