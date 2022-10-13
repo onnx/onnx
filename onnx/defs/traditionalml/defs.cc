@@ -844,7 +844,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (nullptr != ctx.getInputType(0)) {
             auto input_shape = ctx.getInputType(0)->tensor_type().shape();
             if (input_shape.dim_size() != 2) {
-              fail_shape_inference("Input of TreeEnsembleRegressor is expected to be a matrix.");
+              fail_shape_inference("Input of TreeEnsembleClassifier is expected to be a matrix.");
             }
             *fst_dim_y = input_shape.dim(0);
             *fst_dim_z = input_shape.dim(0);
