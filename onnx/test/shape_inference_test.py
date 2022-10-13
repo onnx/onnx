@@ -8481,6 +8481,31 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_tree_ensemble_classifier(self) -> None:
+        tree = make_node(
+            "TreeEnsembleClassifier",
+            ["x"],
+            ["y", "z"],
+            class_ids=[0, 1, 2, 3, 4],
+            domain=ONNX_ML_DOMAIN
+        )
+        graph = self._make_graph(
+            [("x", TensorProto.DOUBLE, (30, 3))],
+            [tree],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.INT64, (30,)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (30, 5)),
+            ],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 3),
+                make_opsetid(ONNX_DOMAIN, 11),
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
