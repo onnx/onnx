@@ -114,7 +114,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("since_version", &OpSchema::since_version)
       .def_property_readonly("deprecated", &OpSchema::deprecated)
       .def_property_readonly("domain", &OpSchema::domain)
-      .def_property_readonly("function_opset_versions", &OpSchema::function_opset_versions)      
+      .def_property_readonly("function_opset_versions", &OpSchema::function_opset_versions)
+      .def_property_readonly("context_dependent_function_opset_versions", &OpSchema::context_dependent_function_opset_versions)
       .def_property_readonly("name", &OpSchema::Name)
       .def_property_readonly("min_input", &OpSchema::min_input)
       .def_property_readonly("max_input", &OpSchema::max_input)
@@ -127,6 +128,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("has_data_propagation_function", &OpSchema::has_data_propagation_function)
       .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
       .def_static("is_infinite", [](int v) { return v == std::numeric_limits<int>::max(); })
+      .def(
+          "_infer_node_outputs",
+          CallNodeInferenceFunction,
+          py::arg("nodeBytes"),
+          py::arg("valueTypesByNameBytes"),
+          py::arg("inputDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
+          py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{})
       .def_property_readonly("has_function", &OpSchema::HasFunction)
       .def_property_readonly(
           "_function_body",
@@ -136,14 +144,17 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               op->GetFunction()->SerializeToString(&bytes);
             return py::bytes(bytes);
           })
-      .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
       .def(
-          "_infer_node_outputs",
-          CallNodeInferenceFunction,
-          py::arg("nodeBytes"),
-          py::arg("valueTypesByNameBytes"),
-          py::arg("inputDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
-          py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{})
+          "get_function_with_opset_version",
+          [](OpSchema* op, int opset_version) -> py::bytes {
+            std::string bytes = "";
+            const FunctionProto* function_proto = op->GetFunctionWithOpsetVersion(opset_version);
+            if (function_proto) {
+              function_proto->SerializeToString(&bytes);
+            }
+            return py::bytes(bytes);
+          })
+      .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
       .def(
           "get_context_dependent_function",
           [](OpSchema* op, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes) -> py::bytes {
@@ -181,7 +192,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               }
               FunctionBodyBuildContextImpl ctx(proto, input_types);
               FunctionProto func_proto;
-              op->BuildContextDependentFunction(ctx, func_proto, opset_version);
+              op->BuildContextDependentFunctionWithOpsetVersion(ctx, func_proto, opset_version);
               func_proto.SerializeToString(&func_bytes);
             }
             return py::bytes(func_bytes);

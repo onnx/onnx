@@ -349,12 +349,33 @@ void OpSchema::Verify(const NodeProto& node) const {
 OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   since_version_ = v;
 
+  // SinceVersion is called after FunctionBody and SetContextDependentFunctionBodyBuilder are called
+  // when defining a op. 
+  // FunctionBody() and SetContextDependentFunctionBodyBuilder() use -1 as the default opset_version
+  // default opset_version is for a FunctionProto of the same opset_version as the op's since_version_.
+  // It is indexed with -1 so we need to reindex it with since_version_.
+  // 
+  // FunctionProtos of non-default opset_versions are for models whose opset version is higher than the op's
+  // opset version such that ops used in the default function_proto are no longer valid. For example:
+  // A model of opset version 18 contains a LayerNormalization op.
+  // LayerNormalization is function op whese function body uses ReduceMean op.
+  // LayerNormalization's since_version is 17 thus it is good for the model of opset 18.
+  // however, if a runtime needs to inline LayerNormalization, the inlined model has a ReduceMean op.
+  // ReduceMean in opset 18 is different from opset 17.
+  // This requires us to define more than one function body
   std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
     opset_version_to_function_builder_.find(-1);
 
   if (it != opset_version_to_function_builder_.cend()) {
     opset_version_to_function_builder_[since_version_] = it->second;
     opset_version_to_function_builder_.erase(it);
+  }
+
+  std::map<int, FunctionProto>::const_iterator it_function_body = opset_version_to_function_body_.find(-1);
+  if (it_function_body != opset_version_to_function_body_.cend()) {
+    opset_version_to_function_body_[since_version_] = it_function_body->second;
+    UpdateFunctionProtoOpsetImportVersion(opset_version_to_function_body_[since_version_], since_version_);
+    opset_version_to_function_body_.erase(it_function_body);
   }
 
   return *this;
@@ -679,7 +700,31 @@ OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(ContextDependentFunct
   return *this;
 }
 
-bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto, int opset_version) const {
+bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& function_proto) const {
+  return BuildContextDependentFunctionWithOpsetVersion(ctx, function_proto, since_version_);
+}
+
+void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const {
+  bool opset_import_exist = false;
+  for (int i = 0; i < function_proto.opset_import_size(); i++) {
+    auto* schema_opset = function_proto.mutable_opset_import(i);
+    if (schema_opset->domain() == domain_ && schema_opset->version() != opset_version) {
+      schema_opset->set_version(opset_version);
+      opset_import_exist = true;
+    }
+  }
+
+  if (!opset_import_exist) {
+    auto* schema_opset = function_proto.mutable_opset_import()->Add();
+    schema_opset->set_domain(domain_);
+    schema_opset->set_version(opset_version);    
+  }
+}
+
+bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
+    const FunctionBodyBuildContext& ctx,
+    FunctionProto& function_proto,
+    int opset_version) const {
   if (opset_version == -1)
     opset_version = since_version_;
 
@@ -687,51 +732,85 @@ bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx
 
   if (it != opset_version_to_function_builder_.end()) {
     const ContextDependentFunctionBodyBuilder& body_builder = it->second;
-    return body_builder(ctx, *this, functionProto);
+    if (!body_builder(ctx, *this, function_proto)) {
+      return false;
+    }
+
+    // default opset import may have been added to function_proto by OpSchema::BuildFunction
+    // we need to update its version with the specified opset_version
+    UpdateFunctionProtoOpsetImportVersion(function_proto, opset_version);
+    return true;
   }
     
   return false;
 }
 
-OpSchema& OpSchema::FunctionBody(const char* func_body) {
+OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
+  FunctionProto function_proto;
   OnnxParser parser(func_body);
-  auto status = parser.Parse(*function_body_.mutable_node());
+  auto status = parser.Parse(*function_proto.mutable_node());
   if (!status.IsOK())
     ONNX_THROW_EX(std::logic_error("Error parsing function body:" + status.ErrorMessage()));
   if (!parser.EndOfInput())
     ONNX_THROW_EX(std::logic_error("Extra unparsed input unexpected."));
+
+  // opset import may have been set
+  // we may need to update its version with the specified opset_version
+  UpdateFunctionProtoOpsetImportVersion(function_proto, opset_version);
+
+  opset_version_to_function_body_.insert(std::make_pair(opset_version, function_proto));
   return *this;
 }
 
-OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes) {
+OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version) {
+  FunctionProto function_proto;
   for (const auto& node : func_nodes) {
-    auto new_node = function_body_.add_node();
+    auto new_node = function_proto.add_node();
     new_node->CopyFrom(node);
   }
+
+  // opset import may have been set
+  // we may need to update its version with the specified opset_version
+  UpdateFunctionProtoOpsetImportVersion(function_proto, opset_version);
+  opset_version_to_function_body_.insert(std::make_pair(opset_version, function_proto));
   return *this;
 }
 
 OpSchema& OpSchema::FunctionBody(
     const std::vector<NodeProto>& func_nodes,
-    const std::vector<OperatorSetIdProto>& relied_opsets) {
+    const std::vector<OperatorSetIdProto>& relied_opsets,
+    int opset_version) {
+  FunctionProto function_proto;
   for (auto& relied_opset : relied_opsets) {
-    *(function_body_.mutable_opset_import()->Add()) = relied_opset;
+    *(function_proto.mutable_opset_import()->Add()) = relied_opset;
   }
 
-  return FunctionBody(func_nodes);
-}
-
-OpSchema& OpSchema::FunctionAddOpset(const char* domain, int version) {
-  OperatorSetIdProto* onnx_opset = function_body_.mutable_opset_import()->Add();
-  onnx_opset->set_domain(domain);
-  onnx_opset->set_version(version);
+  for (const auto& node : func_nodes) {
+    auto new_node = function_proto.add_node();
+    new_node->CopyFrom(node);
+  }
+  // opset import may have been set
+  // we may need to update its version with the specified opset_version
+  UpdateFunctionProtoOpsetImportVersion(function_proto, opset_version);
+  opset_version_to_function_body_.insert(std::make_pair(opset_version, function_proto));
   return *this;
 }
 
 const FunctionProto* OpSchema::GetFunction() const {
-  return function_body_.node_size() > 0 ? &function_body_ : nullptr;
+  return GetFunctionWithOpsetVersion(since_version_);
 }
 
+const FunctionProto* OpSchema::GetFunctionWithOpsetVersion(int opset_version) const {
+  return const_cast<OpSchema*>(this)->GetFunctionWithOpsetInternal(opset_version);
+}
+
+FunctionProto* OpSchema::GetFunctionWithOpsetInternal(int opset_version) {
+  std::map<int, FunctionProto>::iterator it = opset_version_to_function_body_.lower_bound(opset_version);
+  if (it != opset_version_to_function_body_.cend())
+    return &opset_version_to_function_body_[opset_version];
+
+  return nullptr;
+}
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   if (populator) {
     populator(*this);
@@ -829,8 +908,8 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
 
-  if (this->HasFunction()) {
-    BuildFunction(function_body_);
+  for (auto& func : opset_version_to_function_body_) {
+    BuildFunction(func.second);
   }
 }
 

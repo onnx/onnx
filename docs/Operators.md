@@ -175,11 +175,11 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
 |<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
-|<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-18">18</a>, <a href="Changelog.md#LayerNormalization-17">17</a>|
+|<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
-|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-18">18</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
+|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-18">18</a>|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
@@ -11407,9 +11407,7 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
-
-Other versions of this operator: <a href="Changelog.md#LayerNormalization-17">17</a>
+This version of the operator has been available since version 17 of the default ONNX operator set.
 
 #### Attributes
 
@@ -13950,9 +13948,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 13 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>
+Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>
 
 #### Attributes
 

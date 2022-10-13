@@ -534,8 +534,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceMin", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceMean", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceProd", OpSetID(17), OpSetID(18)));
-    registerAdapter(make_unique<CompatibleAdapter>("LayerNormalization", OpSetID(17), OpSetID(18)));
-    registerAdapter(make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(17), OpSetID(18)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

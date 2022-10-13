@@ -1020,8 +1020,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMin);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMean);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceProd);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LayerNormalization);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MeanVarianceNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseAnd);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor);
@@ -1051,8 +1049,6 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMin)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMean)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceProd)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LayerNormalization)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MeanVarianceNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseAnd)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor)>());

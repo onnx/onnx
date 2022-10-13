@@ -303,8 +303,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             ZeroCast = CastLike (Zero, X)
             Y = Max (X, ZeroCast)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18)
+        )ONNX",
+        18)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* LeakyRelu_ver16_doc = R"DOC(
@@ -369,8 +369,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AlphaLessThanX = Less(AlphaCast, X)
             Y = Where(AlphaLessThanX, X, ZeroCast)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+        18));
 
 static const char* Selu_ver6_doc = R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
@@ -419,8 +419,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             XLessThanZero = Less (X, ZeroCast)
             Y = Where(XLessThanZero, Neg, Pos)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+        18));
 
 static const char* Elu_ver6_doc = R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
@@ -456,8 +456,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AlphaMulExpXSubOne = Mul (AlphaCast, ExpXSubOne)
             Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+        18));
 
 static const char* mish_ver18_doc = R"DOC(
 Mish: A Self Regularized Non-Monotonic Neural Activation Function.
@@ -793,8 +793,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             MinOneOrAlphaMulXAddBeta = Min (AlphaMulXAddBeta, OneCast)
             Y = Max(MinOneOrAlphaMulXAddBeta, ZeroCast)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+        18));
 
 static const char* HardSwish_ver14_doc = R"DOC(
 HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
@@ -1105,8 +1105,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OneAddAbsInput = Add (OneCast, AbsInput)
             output = Div(input, OneAddAbsInput)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+        18));
 
 static const char* Softplus_ver1_doc = R"DOC(
 Softplus takes one input data (Tensor<T>) and produces one output data
