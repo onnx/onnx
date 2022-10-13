@@ -8487,7 +8487,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ["x"],
             ["y", "z"],
             class_ids=[0, 1, 2, 3, 4],
-            domain=ONNX_ML_DOMAIN
+            domain=ONNX_ML_DOMAIN,
         )
         graph = self._make_graph(
             [("x", TensorProto.DOUBLE, (30, 3))],
