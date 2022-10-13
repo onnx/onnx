@@ -49,7 +49,7 @@ def namedtupledict(
             key = field_names_map[key]
         return super(type(self), self).__getitem__(key)  # type: ignore
 
-    setattr(data, "__getitem__", getitem)
+    data.__getitem__ = getitem  # type: ignore[assignment]
     return data
 
 

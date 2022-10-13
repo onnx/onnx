@@ -4,8 +4,7 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main", "add-docs"]
-
+    branches: ["main"]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -53,8 +52,22 @@ jobs:
           python setup.py install
 
       - name: Build Docs
-        run: cd docs/docsgen && make html -j auto
-      
+        # TODO: fix warnings from "make html -j auto" so it can normally succeed without errors
+        continue-on-error: true
+        run: |
+          cd docs/docsgen
+          make html -j auto > stdout_stderror.log 2>&1
+      - name: Check whether previous build docs succeeded
+        run: |
+          cat docs/docsgen/stdout_stderror.log
+          if grep -F "build succeeded" docs/docsgen/stdout_stderror.log
+          then
+            echo "Build succeeded."
+          else
+            echo "Build failed."
+            exit 1
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
