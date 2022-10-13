@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <stdio.h>
 #include "onnx/defs/schema.h"
 
 #ifdef ONNX_ML
