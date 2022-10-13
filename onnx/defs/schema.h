@@ -824,23 +824,25 @@ class OpSchema final {
 
   std::vector<int> function_opset_versions() const {
     std::vector<int> opset_versions;
-    std::map<int, FunctionProto>::const_iterator it = opset_version_to_function_body_.cbegin();
-    for (; it != opset_version_to_function_body_.cend(); ++it)
-    {
+    std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it = opset_version_to_function_body_.cbegin();
+    for (; it != opset_version_to_function_body_.cend(); ++it) {
       opset_versions.push_back(it->first);
     }
     return opset_versions;
   }
-  
+
   bool HasFunction() const {
     return !opset_version_to_function_body_.empty();
   }
 
-  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version=-1);
+  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version = -1);
 
-  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, const std::vector<OperatorSetIdProto>& opsets, int opset_version=-1);
+  OpSchema& FunctionBody(
+      const std::vector<NodeProto>& func_nodes,
+      const std::vector<OperatorSetIdProto>& opsets,
+      int opset_version=-1);
 
-  OpSchema& FunctionBody(const char* func_body, int opset_version=-1);
+  OpSchema& FunctionBody(const char* func_body, int opset_version = -1);
 
   const FunctionProto* GetFunction() const;
 
@@ -848,24 +850,22 @@ class OpSchema final {
 
   std::vector<int> context_dependent_function_opset_versions() const {
     std::vector<int> opset_versions;
-    std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it = 
-      opset_version_to_function_builder_.cbegin();
-    for (; it != opset_version_to_function_builder_.cend(); ++it)
-    {
+    std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it = opset_version_to_function_builder_.cbegin();
+    for (; it != opset_version_to_function_builder_.cend(); ++it) {
       opset_versions.push_back(it->first);
     }
     return opset_versions;
   }
 
   bool HasContextDependentFunction() const {
-    return opset_version_to_function_builder_.find(since_version_) != opset_version_to_function_builder_.end();
+    return !opset_version_to_function_builder_.empty();
   }
 
   bool HasContextDependentFunctionWithOpsetVersion(int opset_version) const {
     return opset_version_to_function_builder_.find(opset_version) != opset_version_to_function_builder_.end();
   }
 
-  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder, int opset_version=-1);
+  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder, int opset_version = -1);
 
   bool BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& function_proto) const;
   bool BuildContextDependentFunctionWithOpsetVersion(
@@ -912,7 +912,7 @@ class OpSchema final {
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
   DataPropagationFunction data_propagation_function_;
-  std::map<int, FunctionProto> opset_version_to_function_body_;
+  std::map<int, std::shared_ptr<FunctionProto>> opset_version_to_function_body_;
   std::map<int, ContextDependentFunctionBodyBuilder> opset_version_to_function_builder_;
 };
 

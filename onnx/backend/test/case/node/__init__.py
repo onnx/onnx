@@ -134,7 +134,7 @@ def function_testcase_helper(
     schema = onnx.defs.get_schema(test_op, node.domain)
 
     # an op schema may have several functions, each for one opset version
-    # opset versions include the op's since_version and other opset versions 
+    # opset versions include the op's since_version and other opset versions
     # if it is needed to define the op for a opset version other than the op's since_version.
     function_protos = []
     for opset_version in schema.function_opset_versions:
@@ -146,7 +146,8 @@ def function_testcase_helper(
         function_proto_str = schema.get_context_dependent_function_with_opset_version(
             opset_version,
             node.SerializeToString(),
-            [t.SerializeToString() for t in input_types])
+            [t.SerializeToString() for t in input_types]
+        )
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
         function_protos.append(function_proto)
@@ -308,10 +309,14 @@ def expect(
         return []
 
     merged_types = merge(list(node.input), inputs_vi)
-    expanded_function_node_list, func_opset_import_list, since_version = function_testcase_helper(
-        node, merged_types, name
-    )
-    for expanded_function_nodes, func_opset_import in zip(expanded_function_node_list, func_opset_import_list):
+    (
+        expanded_function_node_list,
+        func_opset_import_list,
+        since_version
+    ) = function_testcase_helper(node, merged_types, name)
+    for expanded_function_nodes, func_opset_import in zip(
+        expanded_function_node_list, func_opset_import_list
+    ):
         kwargs["producer_name"] = "backend-test"
 
         # TODO: if kwargs["opset_imports"] already exists, only generate test case for the opset version.
@@ -329,10 +334,14 @@ def expect(
                     matches[0].version = opset_import.version
                 else:
                     kwargs["opset_imports"].append(opset_import)
-        
+
         onnx_ai_opset_version = ""
         if "opset_imports" in kwargs:
-            onnx_ai_opset_imports = [oi for oi in kwargs["opset_imports"] if oi.domain == "" or oi.domain == "ai.onnx"]
+            onnx_ai_opset_imports = [
+                oi
+                for oi in kwargs["opset_imports"]
+                if oi.domain == "" or oi.domain == "ai.onnx"
+            ]
             if len(onnx_ai_opset_imports) == 1:
                 onnx_ai_opset_version = onnx_ai_opset_imports[0].version
 

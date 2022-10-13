@@ -297,14 +297,15 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to signed numeric tensors.")
-        .FunctionBody(R"ONNX(
+        .FunctionBody
+            (R"ONNX(
           {
             Zero = Constant <value = float {0.0}>()
             ZeroCast = CastLike (Zero, X)
             Y = Max (X, ZeroCast)
           }
         )ONNX",
-        18)
+            18)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* LeakyRelu_ver16_doc = R"DOC(
@@ -360,7 +361,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Alpha = Constant <value_float: float = @alpha>()
             AlphaCast = CastLike (Alpha, X)
@@ -370,7 +372,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Where(AlphaLessThanX, X, ZeroCast)
           }
         )ONNX",
-        18));
+            18));
 
 static const char* Selu_ver6_doc = R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
@@ -403,7 +405,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Alpha = Constant <value_float: float = @alpha>()
             AlphaCast = CastLike (Alpha, X)
@@ -420,7 +423,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Where(XLessThanZero, Neg, Pos)
           }
         )ONNX",
-        18));
+            18));
 
 static const char* Elu_ver6_doc = R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
@@ -442,7 +445,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Alpha = Constant <value_float: float = @alpha>()
             AlphaCast = CastLike (Alpha, X)
@@ -457,7 +461,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
           }
         )ONNX",
-        18));
+            18));
 
 static const char* mish_ver18_doc = R"DOC(
 Mish: A Self Regularized Non-Monotonic Neural Activation Function.
@@ -778,7 +782,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Alpha = Constant <value_float: float = @alpha>()
             AlphaCast = CastLike (Alpha, X)
@@ -794,7 +799,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Max(MinOneOrAlphaMulXAddBeta, ZeroCast)
           }
         )ONNX",
-        18));
+            18));
 
 static const char* HardSwish_ver14_doc = R"DOC(
 HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
@@ -1022,7 +1027,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            }, 18));
+            },
+            18));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
@@ -1048,7 +1054,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            }, 13)
+            },
+            13)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
@@ -1063,7 +1070,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            }, 18));
+            },
+            18));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
@@ -1097,7 +1105,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             One = Constant <value = float {1.0}>()
             OneCast = CastLike (One, input)
@@ -1106,7 +1115,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             output = Div(input, OneAddAbsInput)
           }
         )ONNX",
-        18));
+            18));
 
 static const char* Softplus_ver1_doc = R"DOC(
 Softplus takes one input data (Tensor<T>) and produces one output data

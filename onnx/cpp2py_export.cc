@@ -115,7 +115,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("deprecated", &OpSchema::deprecated)
       .def_property_readonly("domain", &OpSchema::domain)
       .def_property_readonly("function_opset_versions", &OpSchema::function_opset_versions)
-      .def_property_readonly("context_dependent_function_opset_versions", &OpSchema::context_dependent_function_opset_versions)
+      .def_property_readonly(
+          "context_dependent_function_opset_versions", &OpSchema::context_dependent_function_opset_versions)
       .def_property_readonly("name", &OpSchema::Name)
       .def_property_readonly("min_input", &OpSchema::min_input)
       .def_property_readonly("max_input", &OpSchema::max_input)
@@ -178,7 +179,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           })
       .def(
           "get_context_dependent_function_with_opset_version",
-          [](OpSchema* op, int opset_version, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes) -> py::bytes {
+          [](OpSchema* op, int opset_version, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes)
+              -> py::bytes {
             NodeProto proto{};
             ParseProtoFromPyBytes(&proto, bytes);
             std::string func_bytes = "";

@@ -1841,7 +1841,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Lambd = Constant <value_float: float = @lambd>()
             LambdCast = CastLike (Lambd, input)
@@ -1858,7 +1859,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             output = Where(InputLessThanNegLambda, InputAddBias, InputSubBiasOrZero)
 		      }
         )ONNX",
-        18));
+            18));
 
 static const char* Flatten_ver13_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -2208,7 +2209,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           Y = Div (X_variance, Processed_STD)
         }
         )ONNX")
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
         {
           Exponent = Constant <value = float {2.0}>()
           Epsilon = Constant <value = float {1e-9}>()
@@ -2223,7 +2225,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           Processed_STD = Add (STD, Epsilon)
           Y = Div (X_variance, Processed_STD)
         }
-        )ONNX", 18));
+        )ONNX",
+            18));
 
 void col2imShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2465,8 +2468,8 @@ bool BuildContextDependentFunctionBodyLayerNormalization(
   int64_t T = tp->tensor_type().elem_type();
 
   auto type_attr = ctx.getAttribute("stash_type");
-  int64_t U = (type_attr != nullptr) ? type_attr->i()
-                                      : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+  int64_t U =
+      (type_attr != nullptr) ? type_attr->i() : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
   if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) && (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16))
     return false; // Error
 
@@ -2507,11 +2510,11 @@ bool BuildContextDependentFunctionBodyLayerNormalization(
       .Add("X2D = Flatten (X)", "axis", axis)
       .Add("XU = Cast (X2D)", "to", U);
   if (sinceVersion == 17) {
-      builder.Add("Mean2D = ReduceMean <axes = [1]> (XU)")
+    builder.Add("Mean2D = ReduceMean <axes = [1]> (XU)")
         .Add("Square = Mul (XU, XU)")
         .Add("MeanOfSquare = ReduceMean <axes = [1]> (Square)");
   } else if (sinceVersion == 18) {
-      builder.Add("Axes_1 = Constant()", "value", mktensor(1))
+    builder.Add("Axes_1 = Constant()", "value", mktensor(1))
         .Add("Mean2D = ReduceMean (XU, Axes_1)")
         .Add("Square = Mul (XU, XU)")
         .Add("MeanOfSquare = ReduceMean (Square, Axes_1)");
@@ -2548,22 +2551,14 @@ bool BuildContextDependentFunctionBodyLayerNormalizationVer17(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
-  return BuildContextDependentFunctionBodyLayerNormalization(
-    ctx,
-    schema,
-    functionProto,
-    17);
+  return BuildContextDependentFunctionBodyLayerNormalization(ctx, schema, functionProto, 17);
 }
 
 bool BuildContextDependentFunctionBodyLayerNormalizationVer18(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
-  return BuildContextDependentFunctionBodyLayerNormalization(
-    ctx,
-    schema,
-    functionProto,
-    18);
+  return BuildContextDependentFunctionBodyLayerNormalization(ctx, schema, functionProto, 18);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
