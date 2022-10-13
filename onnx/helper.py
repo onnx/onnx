@@ -176,7 +176,7 @@ def make_graph(
     outputs: Sequence[ValueInfoProto],
     initializer: Optional[Sequence[TensorProto]] = None,
     doc_string: Optional[str] = None,
-    value_info: Sequence[ValueInfoProto] = [],
+    value_info: Optional[Sequence[ValueInfoProto]] = None,
     sparse_initializer: Optional[Sequence[SparseTensorProto]] = None,
 ) -> GraphProto:
     """Construct a GraphProto
@@ -234,9 +234,11 @@ def make_function(
     outputs: Sequence[str],
     nodes: Sequence[NodeProto],
     opset_imports: Sequence[OperatorSetIdProto],
-    attributes: Optional[Sequence[str]] = [],
+    attributes: Optional[Sequence[str]] = None,
     doc_string: Optional[str] = None,
 ) -> FunctionProto:
+    if attributes is None:
+        attributes = []
     f = FunctionProto()
     f.domain = domain
     f.name = fname

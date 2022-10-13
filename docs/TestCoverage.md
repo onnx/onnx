@@ -12404,8 +12404,6 @@ data = np.array(
     dtype=np.float32,
 )
 reduced = np.maximum.reduce(data, axis=axes, keepdims=keepdims == 1)
-# print(reduced)
-[[[60.0]]]
 
 expect(
     node,
@@ -14302,6 +14300,7 @@ node = onnx.helper.make_node(
     outputs=["Y"],
     mode="linear",
     coordinate_transformation_mode="tf_crop_and_resize",
+    axes=axes,
 )
 
 data = np.array(
@@ -14354,6 +14353,7 @@ node = onnx.helper.make_node(
     outputs=["Y"],
     mode="linear",
     coordinate_transformation_mode="tf_crop_and_resize",
+    axes=axes,
 )
 
 data = np.array(

@@ -13,13 +13,13 @@ import config
 import onnx
 from onnx import version_converter
 
-cwd_path = Path.cwd()
+CWD_PATH = Path.cwd()
 
 
 def run_lfs_install():
     result = subprocess.run(
         ["git", "lfs", "install"],
-        cwd=cwd_path,
+        cwd=CWD_PATH,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -29,7 +29,7 @@ def run_lfs_install():
 def pull_lfs_file(file_name):
     result = subprocess.run(
         ["git", "lfs", "pull", "--include", file_name, "--exclude", "''"],
-        cwd=cwd_path,
+        cwd=CWD_PATH,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -40,7 +40,7 @@ def pull_lfs_file(file_name):
 def run_lfs_prune():
     result = subprocess.run(
         ["git", "lfs", "prune"],
-        cwd=cwd_path,
+        cwd=CWD_PATH,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
