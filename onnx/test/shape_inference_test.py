@@ -8438,7 +8438,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph_int, [make_tensor_value_info("y", TensorProto.STRING, (30, 4, 5))],
+            graph_int,
+            [make_tensor_value_info("y", TensorProto.STRING, (30, 4, 5))],
             opset_imports=[
                 make_opsetid(ONNX_ML_DOMAIN, 1),
                 make_opsetid(ONNX_DOMAIN, 11),
@@ -8450,7 +8451,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph_str, [make_tensor_value_info("y", TensorProto.INT64, (30, 5, 4))],
+            graph_str,
+            [make_tensor_value_info("y", TensorProto.INT64, (30, 5, 4))],
             opset_imports=[
                 make_opsetid(ONNX_ML_DOMAIN, 1),
                 make_opsetid(ONNX_DOMAIN, 11),
@@ -8471,7 +8473,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (30, 5))],
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (30, 5))],
             opset_imports=[
                 make_opsetid(ONNX_ML_DOMAIN, 3),
                 make_opsetid(ONNX_DOMAIN, 11),
