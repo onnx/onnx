@@ -5,8 +5,8 @@ ONNX Concepts
 ONNX can be compared to a programming language specialized
 in mathematical functions. It defines all the necessary operations
 a machine learning model needs to implement its inference function
-with this langage. A linear regression could be represented
-the following way:
+with this language. A linear regression could be represented
+in the following way:
 
 ::
 
@@ -16,10 +16,10 @@ the following way:
 
 .. index:: ONNX graph
 
-This example is very similar to an expression a developper could
-write in Python. It can be also represented as a graph which shows
-step by step how to transform the features to get a prediction.
-That's why a machine learning model implemented with ONNX is often
+This example is very similar to an expression a developer could
+write in Python. It can be also represented as a graph that shows
+step-by-step how to transform the features to get a prediction.
+That's why a machine-learning model implemented with ONNX is often
 referenced as an **ONNX graph**.
 
 .. image:: images/linreg1.png
@@ -43,7 +43,7 @@ Building an ONNX graph means implementing a function
 with the ONNX language or more precisely the :ref:`l-onnx-operators`.
 A linear regression would be written this way.
 The following lines do not follow python syntax.
-It is just a kind of pseudo code to illustrate the model.
+It is just a kind of pseudo-code to illustrate the model.
 
 ::
 
@@ -90,8 +90,8 @@ cannot be changed and remain frozen for all the predictions.
 Serialization with protobuf
 +++++++++++++++++++++++++++
 
-The deployment of a machine learned model into production
-usually requires to replicate the entire ecosystem used to
+The deployment of a machine-learned model into production
+usually requires replicating the entire ecosystem used to
 train the model, most of the time with a *docker*.
 Once a model is converted into ONNX, the production environment
 only needs a runtime to execute the graph defined with ONNX
@@ -111,7 +111,7 @@ Metadata
 ++++++++
 
 Machine learned models are continuously refreshed. It is important
-to keep track of the model version, the author of the model,
+to keep track of the model version, the author of the model and 
 how it was trained. ONNX offers the possibility to store additional data
 into the model itself.
 
@@ -163,7 +163,7 @@ supports any custom domains and operators
 Supported Types
 +++++++++++++++
 
-ONNX specifications is optimized for numerical competition with
+ONNX specifications are optimized for numerical competition with
 tensors. A *tensor* is a multidimensional array. It is defined
 by:
 
@@ -172,7 +172,7 @@ by:
   a dimension can be null
 * a contiguous array: it represents all the values
 
-This definition do not include *strides* or the possibility to define
+This definition does not include *strides* or the possibility to define
 a view of a tensor based on an existing tensor. An ONNX tensor is a dense
 full array with no stride.
 
@@ -180,9 +180,9 @@ Element Type
 ~~~~~~~~~~~~
 
 ONNX was initially developed to help deploying deep learning model.
-That's why the specifications was initially designed for floats (32 bits).
+That's why the specifications were initially designed for floats (32 bits).
 The current version supports all common types. Dictionary
-:ref:`l-onnx-types-mapping` gives the correspondance between *ONNX*
+:ref:`l-onnx-types-mapping` gives the correspondence between *ONNX*
 and :mod:`numpy`.
 
 .. exec_code::
@@ -206,7 +206,7 @@ and :mod:`numpy`.
 
 ONNX is strongly typed and its definition does not support
 implicit cast. It is impossible to add two tensors or matrices
-with different types even if other languages does. That's why explicit
+with different types even if other languages does. That's why an explicit
 cast must be inserted in a graph.
 
 Sparse Tensor
@@ -244,7 +244,7 @@ specifications version 7. An operator in a graph follows its most
 recent definition below (or equal) the global graph opset.
 
 A graph may include operators from several domains, `ai.onnx` and
-`ai.onnx.ml` for example. In that case, the graph must defines a
+`ai.onnx.ml` for example. In that case, the graph must define a
 global opset for every domain. The rule is applied to every
 operators within the same domain.
 
@@ -264,9 +264,9 @@ one of the two graphs depending one the condition evaluation.
 ::
 
     If(condition) then
-        exeute this ONNX graph (`then_branch`)
+        execute this ONNX graph (`then_branch`)
     else
-        exeute this ONNX graph (`else_branch`)
+        execute this ONNX graph (`else_branch`)
 
 Those two graphs can use any result already computed in the
 graph and must produce the exact same number of outputs.
@@ -289,7 +289,7 @@ pairwise distances: :math:`M(i,j) = \norm{X_i - X_j}^2`.
 This loop is efficient even if it is still slower than a custom implementation
 of pairwise distances. It assumes inputs and outputs are tensors and
 automatically concatenate the outputs of every iteration into single
-tensors. The previous example only have one but it could have several.
+tensors. The previous example only has one but it could have several.
 
 Loop
 ~~~~
@@ -297,7 +297,7 @@ Loop
 Operator :ref:`l-onnx-doc-Loop` implements a for and a while loop. It can do a fixed
 number of iterators and/or ends when a condition is not met anymore.
 Outputs are processed in two different ways. First one is similar to
-loop :ref:`l-onnx-doc-Scan`, outputs are concatenate into tensors (along the first
+loop :ref:`l-onnx-doc-Scan`, outputs are concatenated into tensors (along the first
 dimension). This also means that these outputs must have compatible shapes.
 Second mechanism concatenates tensors into a sequence of tensors.
 
@@ -307,7 +307,7 @@ Extensibility
 +++++++++++++
 
 ONNX defines a list of operators as the standard: :ref:`l-onnx-operators`.
-However it is very possible
+However, it is very possible
 to define your own operators under this domain or a new one.
 *onnxruntime* defines custom operators to improve inference.
 Every node has a type, a name,
@@ -323,7 +323,7 @@ Functions
 +++++++++
 
 Functions are one way to extend ONNX specifications. Some model requires
-the same combination of operators. This can be avoid by created a function
+the same combination of operators. This can be avoided by creating a function
 itself defined with existing ONNX operators. Once defined, a function behaves
 like any other operators. It has inputs, outputs and attributes.
 
