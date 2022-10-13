@@ -146,7 +146,7 @@ def function_testcase_helper(
         function_proto_str = schema.get_context_dependent_function_with_opset_version(
             opset_version,
             node.SerializeToString(),
-            [t.SerializeToString() for t in input_types]
+            [t.SerializeToString() for t in input_types],
         )
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
@@ -312,7 +312,7 @@ def expect(
     (
         expanded_function_node_list,
         func_opset_import_list,
-        since_version
+        since_version,
     ) = function_testcase_helper(node, merged_types, name)
     for expanded_function_nodes, func_opset_import in zip(
         expanded_function_node_list, func_opset_import_list

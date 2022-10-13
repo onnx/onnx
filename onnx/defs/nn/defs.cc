@@ -2518,8 +2518,6 @@ bool BuildContextDependentFunctionBodyLayerNormalization(
         .Add("Mean2D = ReduceMean (XU, Axes_1)")
         .Add("Square = Mul (XU, XU)")
         .Add("MeanOfSquare = ReduceMean (Square, Axes_1)");
-  } else {
-
   }
   builder.Add("SquareOfMean = Mul (Mean2D, Mean2D)")
       .Add("Var = Sub (MeanOfSquare, SquareOfMean)")

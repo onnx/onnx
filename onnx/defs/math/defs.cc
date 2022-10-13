@@ -297,8 +297,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to signed numeric tensors.")
-        .FunctionBody
-            (R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Zero = Constant <value = float {0.0}>()
             ZeroCast = CastLike (Zero, X)

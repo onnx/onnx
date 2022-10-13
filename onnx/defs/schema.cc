@@ -370,7 +370,8 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
     opset_version_to_function_builder_.erase(it);
   }
 
-  std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it_function_body = opset_version_to_function_body_.find(-1);
+  std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it_function_body =
+      opset_version_to_function_body_.find(-1);
   if (it_function_body != opset_version_to_function_body_.cend()) {
     opset_version_to_function_body_[since_version_] = it_function_body->second;
     UpdateFunctionProtoOpsetImportVersion(*opset_version_to_function_body_[since_version_], since_version_);
@@ -821,7 +822,8 @@ const FunctionProto* OpSchema::GetFunctionWithOpsetVersion(int opset_version) co
 }
 
 FunctionProto* OpSchema::GetFunctionWithOpsetInternal(int opset_version) {
-  std::map<int, std::shared_ptr<FunctionProto>>::iterator it = opset_version_to_function_body_.lower_bound(opset_version);
+  std::map<int, std::shared_ptr<FunctionProto>>::iterator it =
+      opset_version_to_function_body_.lower_bound(opset_version);
   if (it != opset_version_to_function_body_.cend())
     return it->second.get();
 

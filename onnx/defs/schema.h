@@ -840,7 +840,7 @@ class OpSchema final {
   OpSchema& FunctionBody(
       const std::vector<NodeProto>& func_nodes,
       const std::vector<OperatorSetIdProto>& opsets,
-      int opset_version=-1);
+      int opset_version = -1);
 
   OpSchema& FunctionBody(const char* func_body, int opset_version = -1);
 
