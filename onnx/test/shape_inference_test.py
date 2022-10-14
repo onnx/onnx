@@ -8433,19 +8433,20 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ["z"],
                 domain=ONNX_ML_DOMAIN,
             )
-            graph_int = self._make_graph(
-                [("x", TensorProto.INT64, (3, 4, 5)), ("y", TensorProto.INT64, (2,))],
-                [node],
-                [],
-            )
-            self._assert_inferred(
-                graph_int,
-                [make_tensor_value_info("z", TensorProto.INT64, (3, 4, "unk__0"))],
-                opset_imports=[
-                    make_opsetid(ONNX_ML_DOMAIN, 3),
-                    make_opsetid(ONNX_DOMAIN, 18),
-                ],
-            )
+            for (axes_shape, expected) in [((2, ), 2), (tuple(), "unk__0"), (("N", ), "N")]:
+                graph = self._make_graph(
+                    [("x", TensorProto.INT64, (3, 4, 5)), ("y", TensorProto.INT64, axes_shape)],
+                    [node],
+                    [],
+                )
+                self._assert_inferred(
+                    graph,
+                    [make_tensor_value_info("z", TensorProto.INT64, (3, 4, expected))],  # type: ignore
+                    opset_imports=[
+                        make_opsetid(ONNX_ML_DOMAIN, 3),
+                        make_opsetid(ONNX_DOMAIN, 18),
+                    ],
+                )
 
 
 if __name__ == "__main__":
