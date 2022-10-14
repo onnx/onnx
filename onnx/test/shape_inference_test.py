@@ -8433,9 +8433,16 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ["z"],
                 domain=ONNX_ML_DOMAIN,
             )
-            for (axes_shape, expected) in [((2, ), 2), (tuple(), "unk__0"), (("N", ), "N")]:
+            for (axes_shape, expected) in [
+                ((2,), 2),
+                (tuple(), "unk__0"),
+                (("N",), "N"),
+            ]:
                 graph = self._make_graph(
-                    [("x", TensorProto.INT64, (3, 4, 5)), ("y", TensorProto.INT64, axes_shape)],
+                    [
+                        ("x", TensorProto.INT64, (3, 4, 5)),
+                        ("y", TensorProto.INT64, axes_shape),
+                    ],
                     [node],
                     [],
                 )
