@@ -470,10 +470,10 @@ class ShapeInferenceImplBase {
       }
       processInitializer(tp.values().name(), tp, initializer_type, input_sparse_data_by_name);
     }
-    // Collect data from constant nodes and check if any experimental ops exist
-    for (const auto& n : graph.node()) {
-      preprocess(n); // process constant node
-    }
+    // // Collect data from constant nodes and check if any experimental ops exist
+    // for (const auto& n : graph.node()) {
+    //   preprocess(n); // process constant node
+    // }
     for (auto& n : *graph.mutable_node()) {
       process(n);
     }

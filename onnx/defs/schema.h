@@ -145,6 +145,7 @@ using TypeConstraintMap = std::unordered_map<std::string, std::pair<DataTypeSet,
  */
 class OpSchema final {
  public:
+  static constexpr int kUninitializedSinceVersion = -1;
   // Formal parameter options.
   enum FormalParameterOption : uint8_t {
     // The formal parameter is single and not optional.
@@ -835,14 +836,14 @@ class OpSchema final {
     return !opset_version_to_function_body_.empty();
   }
 
-  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version = -1);
+  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version = kUninitializedSinceVersion);
 
   OpSchema& FunctionBody(
       const std::vector<NodeProto>& func_nodes,
       const std::vector<OperatorSetIdProto>& opsets,
-      int opset_version = -1);
+      int opset_version = kUninitializedSinceVersion);
 
-  OpSchema& FunctionBody(const char* func_body, int opset_version = -1);
+  OpSchema& FunctionBody(const char* func_body, int opset_version = kUninitializedSinceVersion);
 
   const FunctionProto* GetFunction() const;
 
@@ -865,7 +866,7 @@ class OpSchema final {
     return opset_version_to_function_builder_.find(opset_version) != opset_version_to_function_builder_.end();
   }
 
-  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder, int opset_version = -1);
+  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder, int opset_version = kUninitializedSinceVersion);
 
   bool BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& function_proto) const;
   bool BuildContextDependentFunctionWithOpsetVersion(
@@ -906,7 +907,7 @@ class OpSchema final {
   int min_output_ = 0;
   int max_output_ = 0;
   // The default is a little goofy, since it is never what you want
-  OperatorSetVersion since_version_ = 1;
+  OperatorSetVersion since_version_ = kUninitializedSinceVersion;
   bool deprecated_{};
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };

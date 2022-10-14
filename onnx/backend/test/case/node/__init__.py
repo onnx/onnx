@@ -128,7 +128,7 @@ def function_expand_helper(
 
 def function_testcase_helper(
     node: NodeProto, input_types: List[TypeProto], name: str
-) -> Tuple[List[NodeProto], List[OperatorSetIdProto]]:
+) -> Tuple[List[List[NodeProto]], List[Any], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
     schema = onnx.defs.get_schema(test_op, node.domain)
@@ -137,13 +137,13 @@ def function_testcase_helper(
     # opset versions include the op's since_version and other opset versions
     # if it is needed to define the op for a opset version other than the op's since_version.
     function_protos = []
-    for opset_version in schema.function_opset_versions:
-        function_proto_str = schema.get_function_with_opset_version(opset_version)
+    for opset_version in schema.function_opset_versions:    # type: ignore
+        function_proto_str = schema.get_function_with_opset_version(opset_version)  # type: ignore
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
         function_protos.append(function_proto)
-    for opset_version in schema.context_dependent_function_opset_versions:
-        function_proto_str = schema.get_context_dependent_function_with_opset_version(
+    for opset_version in schema.context_dependent_function_opset_versions:  # type: ignore
+        function_proto_str = schema.get_context_dependent_function_with_opset_version(  # type: ignore
             opset_version,
             node.SerializeToString(),
             [t.SerializeToString() for t in input_types],

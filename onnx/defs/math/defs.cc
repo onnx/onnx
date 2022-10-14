@@ -998,6 +998,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Softmax",
             "normalized exponential",
             "Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) "))
+        // function body builder for opset version 13 (the default opset version is the same
+        // as the operator's since_version.
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
@@ -1014,6 +1016,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             })
+        // function body builder for opset version 18.
+        // ReduceSum is updated in opset 18 to have axes as the second input.
+        // Therefore function body for opset version 18
+        // is different than the one defined using opset version 13.
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
