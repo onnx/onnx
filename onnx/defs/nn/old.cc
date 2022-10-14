@@ -1238,8 +1238,6 @@ void convTransposeShapeInference2(InferenceContext& ctx) {
     return;
   }
 
-  int64_t group = getAttribute(ctx, "group", 1);
-
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     return; // Input tensor should have at least two dimensions.
