@@ -27,7 +27,9 @@ def check_overlapping_names(
     def _overlapping(c1: List[str], c2: List[str]) -> List[str]:
         return list(set(c1) & set(c2))
 
-    def _edge_names(graph: GraphProto, exclude: Set[str] = set()) -> List[str]:
+    def _edge_names(graph: GraphProto, exclude: Optional[Set[str]] = None) -> List[str]:
+        if exclude is None:
+            exclude = set()
         edges = []
         for n in graph.node:
             for i in n.input:

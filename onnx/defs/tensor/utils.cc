@@ -12,7 +12,7 @@ void resizeShapeInferenceHelper(
   if (!sizes_data.empty()) {
     for (int i = 0; i < input_shape.dim_size(); ++i) {
       auto* dim = output_shape->mutable_dim(i);
-      if (sizes_data[i] >= 0) {
+      if (sizes_data[i] > 0) {
         dim->set_dim_value(sizes_data[i]);
       }
     }
@@ -96,18 +96,26 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   bool hasSizesInput = ctx.hasInput(3);
 
   const TensorProto* scales = 2 < ctx.getNumInputs() ? ctx.getInputData(2) : nullptr;
-  const TensorProto* sizes = 3 < ctx.getNumInputs() ? ctx.getInputData(3) : nullptr;
+  std::vector<int64_t> sizes_data;
+  if (3 < ctx.getNumInputs()) {
+    bool found_sizes = false;
+    const auto sizes_shape = getShapeInput(ctx, 3, found_sizes);
+    // If sizes is an empty shape, assume it's not provided
+    if (found_sizes) {
+      if (sizes_shape.dim_size() == 0) {
+        hasSizesInput = false;
+      } else {
+        for (int i = 0; i < sizes_shape.dim_size(); ++i) {
+          sizes_data.push_back(sizes_shape.dim(i).dim_value());
+        }
+      }
+    }
+  }
 
   // If scales is an empty constant, assume it's not provided
   if (scales && ParseData<float>(scales).empty()) {
     hasScalesInput = false;
     scales = nullptr;
-  }
-
-  // If sizes is an empty constant, assume it's not provided
-  if (sizes && ParseData<int64_t>(sizes).empty()) {
-    hasSizesInput = false;
-    sizes = nullptr;
   }
 
   if (opset_version >= 13) {
@@ -157,54 +165,53 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   if (axes_attr) {
     axes = RetrieveValues<int64_t>(*axes_attr);
   }
-
-  if (nullptr != sizes) {
-    if (sizes->data_type() == TensorProto::INT64) {
-      auto sizes_data = ParseData<int64_t>(sizes);
-      if (!axes.empty()) {
-        if (sizes_data.size() != axes.size()) {
-          fail_shape_inference(
-              "Number of elements of input 'sizes' (",
-              sizes_data.size(),
-              ") does not match the number of axes (",
-              axes.size(),
-              ").");
-        }
-
-        std::vector<bool> tmp(rank_x, false);
-        for (auto axis : axes) {
-          if (tmp[axis]) {
-            fail_shape_inference("Repeated axis: ", axis);
-          }
-          tmp[axis] = true;
-        }
-      } else {
-        // sizes_data contains scales for all axes
-        if (sizes_data.size() != rank_x) {
-          fail_shape_inference("Number of elements of input 'sizes' must be same as rank of input 'X'");
-        }
+  if (hasSizesInput) {
+    if (!axes.empty()) {
+      if (sizes_data.size() != axes.size()) {
+        fail_shape_inference(
+            "Number of elements of input 'sizes' (",
+            sizes_data.size(),
+            ") does not match the number of axes (",
+            axes.size(),
+            ").");
       }
 
-      // Process sizes_data according to the selected policy
-      KeepAspectRatioHelper(keep_aspect_ratio_policy, input_shape, axes, sizes_data);
-
-      // If axes subset is provided, populate new sizes_data with all dims
-      if (!axes.empty()) {
-        std::vector<int64_t> tmp(rank_x);
-        for (size_t i = 0; i < rank_x; i++) {
-          tmp[i] = input_shape.dim(i).has_dim_value() ? input_shape.dim(i).dim_value() : -1;
+      std::vector<bool> tmp(rank_x, false);
+      for (auto axis : axes) {
+        if (tmp[axis]) {
+          fail_shape_inference("Repeated axis: ", axis);
         }
-        for (size_t i = 0; i < axes.size(); i++) {
-          int d = axes[i];
-          tmp[d] = sizes_data[i];
-        }
-        std::swap(tmp, sizes_data);
+        tmp[axis] = true;
       }
-
-      resizeShapeInferenceHelper(input_shape, sizes_data, output_shape);
     } else {
-      fail_shape_inference("Input 'sizes' must have int64 element type.");
+      // sizes_data contains scales for all axes
+      if (sizes_data.size() != rank_x) {
+        fail_shape_inference(
+            "Number of elements of input 'sizes' (",
+            sizes_data.size(),
+            ") must be same as rank of input 'X' (",
+            rank_x,
+            ").");
+      }
     }
+
+    // Process sizes_data according to the selected policy
+    KeepAspectRatioHelper(keep_aspect_ratio_policy, input_shape, axes, sizes_data);
+
+    // If axes subset is provided, populate new sizes_data with all dims
+    if (!axes.empty()) {
+      std::vector<int64_t> tmp(rank_x);
+      for (size_t i = 0; i < rank_x; i++) {
+        tmp[i] = input_shape.dim(i).has_dim_value() ? input_shape.dim(i).dim_value() : -1;
+      }
+      for (size_t i = 0; i < axes.size(); i++) {
+        int d = axes[i];
+        tmp[d] = sizes_data[i];
+      }
+      std::swap(tmp, sizes_data);
+    }
+
+    resizeShapeInferenceHelper(input_shape, sizes_data, output_shape);
   } else if (nullptr != scales) {
     // Infer output shape's dimension value if 'scales' is known.
     if (scales->data_type() == TensorProto::FLOAT) {

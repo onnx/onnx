@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 
@@ -107,8 +107,6 @@ class ReduceMax(Base):
             dtype=np.float32,
         )
         reduced = np.maximum.reduce(data, axis=axes, keepdims=keepdims == 1)
-        # print(reduced)
-        [[[60.0]]]
 
         expect(
             node,

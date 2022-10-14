@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 
@@ -18,7 +18,7 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ign
         raise Exception("The number of elements in raw_pads should be 2 * num_axes")
 
     pad_width = []
-    for i in range(input_rank):
+    for _ in range(input_rank):
         pad_width += [[0, 0]]  # init to zero
 
     # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)

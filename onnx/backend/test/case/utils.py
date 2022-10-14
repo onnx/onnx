@@ -5,7 +5,7 @@ import pkgutil
 from types import ModuleType
 from typing import List, Optional
 
-import numpy as np  # type: ignore
+import numpy as np
 
 all_numeric_dtypes = [
     np.int8,

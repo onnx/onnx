@@ -356,7 +356,10 @@ class PkgWriter:
     def write(self) -> str:
         imports = []
         for pkg, items in self.imports.items():
-            imports.append(f"from {pkg} import (")
+            if pkg.startswith("google."):
+                imports.append(f"from {pkg} import (  # type: ignore")
+            else:
+                imports.append(f"from {pkg} import (")
             for item in sorted(items):
                 imports.append(f"    {item},")
             imports.append(")\n")
