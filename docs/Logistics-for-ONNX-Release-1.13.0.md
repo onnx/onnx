@@ -2,27 +2,24 @@
 
 **Release Manager:** Przemyslaw Wysocki
 
-**Target Release date**: Week of 12/5/2022
+**Target Release date**: 12/12/2022
 
 ## Timetable
 
 * 10/13 - Create [v1.13.0 release wiki](https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.13.0) with release schedule.
 * 10/13 - Document key v1.13.0 changes for the release in this wiki.
-* 12/06 - Code freeze. All PRs must be validated and merged by this date.
-* 12/06 - Cut the release branch.
+* 11/15 - Code freeze. All PRs must be validated and merged by this date.
+* 11/21 - Cut the release branch.
 * xx/xx - Create test packages for v1.13.0rc1
 
 
 ### References
-TODO: What are work items exactly?
-* [Work items for ONNX 1.13.0](TBD)
 * [Drafting ONNX Releases](https://github.com/onnx/onnx/blob/master/docs/OnnxReleases.md)
 
 ## Changelog
 
 ### Operator updates in ai.onnx opset 18
 #### all new and updated operators are to be validated by TBD
-TODO: What is validation about? 1.12 release wiki is empty
 | Op Name | Description |Validation status | ONNX PR 
 |---------|:-------------------------:|:------------:|:------------:|
 |Col2Im|New operator, rearranges input tensor into blocks||[#3948](https://github.com/onnx/onnx/pull/3948)|
@@ -44,7 +41,6 @@ TODO: What is validation about? 1.12 release wiki is empty
 |mish|New function, used for example in YoloV4||[#4350](https://github.com/onnx/onnx/pull/4350)|
 
 ### Bugfixes and infrastructure improvements
-TODO: Should this section be divided? It's quite long
 | Description | PR | Status | Notes |      
 |--------------------------------------|:------:|:------------:|:------------:|
 |Fix concurrent remove of .proto3.* files during build|[#3317](https://github.com/onnx/onnx/pull/3317)|Merged||
@@ -159,12 +155,10 @@ TODO: Should this section be divided? It's quite long
 
 ### Deprecation notice
 * `TENOSR_TYPE_TO_NP_TYPE` has been deprecated [#4270](https://github.com/onnx/onnx/pull/4270)
-* `macos-10.15` is no longer supported [#4413](https://github.com/onnx/onnx/pull/4413)
 * ONNXIFI: ONNX Interface for Framework Integration has been deprecated [#4431](https://github.com/onnx/onnx/pull/4431)
 
 ### Partner validation requests
-TODO: What is it about? Most of those were TBD in 1.12
-* [onnxruntime](https://github.com/microsoft/onnxruntime/issues/11640)
+* [onnxruntime](https://github.com/microsoft/onnxruntime/issues/TBD)
 * [pytorch](https://github.com/pytorch/pytorch/issues/TBD)
 * [onnx-tensorflow](https://github.com/onnx/onnx-tensorflow/issues/TBD)
 * [tensorflow-onnx](https://github.com/onnx/tensorflow-onnx/issues/TBD)
@@ -175,9 +169,5 @@ TODO: What is it about? Most of those were TBD in 1.12
 * [onnx-coreml](https://github.com/onnx/onnx-coreml/issues/TBD)
 
 # Contributors
-TODO: Update close to release
-Thanks to these individuals for their contributions in this release since last 1.11.0 release. (Contributor list obtained with: https://github.com/onnx/onnx/graphs/contributors?from=2022-02-08&to=2022-05-24&type=c): @jcwchen, @gramalingam, @xuzijian629, @garymm, @diyessi, @liqunfu, @jantonguirao, @daquexian, @fdwr, @andife, @wschin, @xadupre, @xkszltl, @snnn
-
-
-
-
+TODO: Update contributors close to release
+Thanks to these individuals for their contributions in this release since last 1.12.0 release. (Contributor list obtained with: https://github.com/onnx/onnx/graphs/contributors?from=2022-02-08&to=2022-05-24&type=c): @jcwchen, @gramalingam, @xuzijian629, @garymm, @diyessi, @liqunfu, @jantonguirao, @daquexian, @fdwr, @andife, @wschin, @xadupre, @xkszltl, @snnn
