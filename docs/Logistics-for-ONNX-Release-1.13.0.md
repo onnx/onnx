@@ -8,7 +8,7 @@
 
 * 10/13 - Create [v1.13.0 release wiki](https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.13.0) with release schedule.
 * 10/13 - Document key v1.13.0 changes for the release in this wiki.
-* 11/15 - Code freeze. All PRs must be validated and merged by this date.
+* 11/18 - Code freeze. All PRs must be validated and merged by this date.
 * 11/21 - Cut the release branch.
 * xx/xx - Create test packages for v1.13.0rc1
 
