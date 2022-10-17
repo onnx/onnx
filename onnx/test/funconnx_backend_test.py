@@ -685,7 +685,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                     print("loading failed", t[0].fname, "---", _print(t[0], path))
                 for t in sorted(exec_failed, key=lambda m: m[0].fname):
                     print("execution failed", t[0].fname, "---", _print(t[0], path))
-                for t in sorted(mismatch, key=lambda m: m[0].nfame):
+                for t in sorted(mismatch, key=lambda m: m[0].fname):
                     print("mismatch", t[0].fname, "---", _print(t[0], path))
                 for t in sorted(missed, key=lambda m: m[0].fname):
                     print("missed ", t[0].fname, "---", _print(t[0], path))
@@ -763,18 +763,11 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             # not implemented
             "test__simple_gradient_of_add",  # gradient not implemented
             "test__simple_gradient_of_add_and_mul",  # gradient not implemented
-            "test__pytorch_converted_MaxPool1d",
-            "test__pytorch_converted_MaxPool1d_stride",
-            "test__pytorch_converted_MaxPool1d_stride_padding_dilation",
-            "test__pytorch_converted_MaxPool3d",
-            "test__pytorch_converted_MaxPool3d_stride",
-            "test__pytorch_converted_MaxPool3d_stride_padding",
-            # shape mismatch
-            "test__pytorch_operator_operator_maxpool",
             # mismatch
             "test__pytorch_converted_ConvTranspose2d",
             "test__pytorch_converted_ConvTranspose2d_no_bias",
             "test__pytorch_converted_MaxPool2d",
+            "test__pytorch_converted_MaxPool3d_stride_padding",
             "test__pytorch_operator_operator_convtranspose",
             # bug
             "test__pytorch_converted_Conv2d_depthwise_padded",  # bug
@@ -862,7 +855,7 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 if __name__ == "__main__":
     cl = TestOnnxBackEndWithProtoRun()
     cl.setUpClass(True)
-    cl.test__pytorch_converted_MaxPool1d(verbose=0)
+    cl.test__pytorch_converted_MaxPool3d(verbose=0)
     # TestOnnxBackEndWithProtoRun().test__pytorch_converted_Conv2d_padding(print_io=True)
     # test__pytorch_converted_Conv2d_dilated
     unittest.main(verbosity=2)
