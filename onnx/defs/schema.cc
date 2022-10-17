@@ -24,6 +24,8 @@ namespace ONNX_NAMESPACE {
 // Other positive integer means the ONNX schemas for the specified version have been loaded
 int OpSchemaRegistry::loaded_schema_version = -1;
 
+constexpr int OpSchema::kUninitializedSinceVersion;
+
 // By default if opset_version_to_load=0, it registers all opset schema for all opset versions
 // Otherwise, it only registers the latest schema according to opset_version_to_load
 void RegisterSchema(OpSchema schema, int opset_version_to_load) {
@@ -363,7 +365,8 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   // however, if a runtime needs to inline LayerNormalization, the inlined model has a ReduceMean op.
   // ReduceMean in opset 18 is different from opset 17.
   // This requires us to define more than one function body
-  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it = opset_version_to_function_builder_.find(kUninitializedSinceVersion);
+  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
+    opset_version_to_function_builder_.find(OpSchema::kUninitializedSinceVersion);
 
   if (it != opset_version_to_function_builder_.cend()) {
     opset_version_to_function_builder_[since_version_] = it->second;
@@ -371,7 +374,7 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   }
 
   std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it_function_body =
-      opset_version_to_function_body_.find(kUninitializedSinceVersion);
+      opset_version_to_function_body_.find(OpSchema::kUninitializedSinceVersion);
   if (it_function_body != opset_version_to_function_body_.cend()) {
     opset_version_to_function_body_[since_version_] = it_function_body->second;
     UpdateFunctionProtoOpsetImportVersion(*opset_version_to_function_body_[since_version_], since_version_);
@@ -698,7 +701,8 @@ void OpSchema::ParseAndSetTypes(
 OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(
     ContextDependentFunctionBodyBuilder functionBuilder,
     int opset_version) {
-  if (opset_version == kUninitializedSinceVersion && since_version_ != kUninitializedSinceVersion) {
+  if (opset_version == OpSchema::kUninitializedSinceVersion &&
+    since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version_to_function_builder_[since_version_] = std::move(functionBuilder);
   } else {
     opset_version_to_function_builder_[opset_version] = std::move(functionBuilder);
@@ -731,7 +735,7 @@ bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
     const FunctionBodyBuildContext& ctx,
     FunctionProto& function_proto,
     int opset_version) const {
-  if (opset_version == kUninitializedSinceVersion)
+  if (opset_version == OpSchema::kUninitializedSinceVersion)
     opset_version = since_version_;
 
   std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
@@ -753,7 +757,8 @@ bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
 }
 
 OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
-  if (opset_version == kUninitializedSinceVersion && since_version_ != kUninitializedSinceVersion) {
+  if (opset_version == OpSchema::kUninitializedSinceVersion &&
+    since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
   std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
@@ -773,7 +778,7 @@ OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
 }
 
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version) {
-  if (opset_version == kUninitializedSinceVersion && since_version_ != kUninitializedSinceVersion) {
+  if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
   std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
@@ -793,7 +798,7 @@ OpSchema& OpSchema::FunctionBody(
     const std::vector<NodeProto>& func_nodes,
     const std::vector<OperatorSetIdProto>& relied_opsets,
     int opset_version) {
-  if (opset_version == kUninitializedSinceVersion && since_version_ != kUninitializedSinceVersion) {
+  if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
 
