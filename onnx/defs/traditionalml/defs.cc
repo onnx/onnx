@@ -800,17 +800,6 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          std::vector<std::string> label_strs;
-          auto result = getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
-          bool using_strings = (result && !label_strs.empty());
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
-          if (using_strings) {
-            output_elem_type->set_elem_type(TensorProto::STRING);
-          } else {
-            output_elem_type->set_elem_type(TensorProto::INT64);
-          }
-          ctx.getOutputType(1)->mutable_tensor_type()->set_elem_type(TensorProto::FLOAT);
-
           auto* nodes_values = ctx.getAttribute("nodes_values");
           auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
           auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
@@ -837,25 +826,26 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                 "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
           }
 
-          // First axis of Y & Z - N (inputs)
-          auto fst_dim_y = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
-          auto fst_dim_z = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape()->add_dim();
-          auto snd_dim_z = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape()->add_dim();
-          if (nullptr != ctx.getInputType(0)) {
-            auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-            if (input_shape.dim_size() != 2) {
-              fail_shape_inference("Input of TreeEnsembleClassifier is expected to be a matrix.");
-            }
-            *fst_dim_y = input_shape.dim(0);
-            *fst_dim_z = input_shape.dim(0);
+          std::vector<std::string> label_strs;
+          auto result = getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
+          bool using_strings = (result && !label_strs.empty());
+          if (using_strings) {
+            updateOutputElemType(ctx, 0, TensorProto::STRING);
+          } else {
+            updateOutputElemType(ctx, 0, TensorProto::INT64);
           }
+          updateOutputElemType(ctx, 1, TensorProto::FLOAT);
 
-          // Second axis of Z - E (classes)
+          checkInputRank(ctx, 0, 2);
+          Dim N, E;
+          unifyInputDim(ctx, 0, 0, N);
           std::vector<int64_t> class_ids;
           auto has_ids = getRepeatedAttribute(ctx, "class_ids", class_ids);
           if (has_ids) {
-            snd_dim_z->set_dim_value(class_ids.size());
+            unifyDim(E, class_ids.size());
           }
+          updateOutputShape(ctx, 0, {N});
+          updateOutputShape(ctx, 1, {N, E});
         }));
 
 static const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
@@ -976,23 +966,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                 "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
           }
 
-          auto fst_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
-          auto snd_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
-          // First axis for Y - N (inputs)
-          if (nullptr != ctx.getInputType(0)) {
-            auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-            if (input_shape.dim_size() != 2) {
-              fail_shape_inference("Input of TreeEnsembleRegressor is expected to be a matrix.");
-            }
-            *fst_dim = input_shape.dim(0);
-          }
-
-          // Second axis for Y - E (targets)
+          checkInputRank(ctx, 0, 2);
+          Dim N, E;
+          unifyInputDim(ctx, 0, 0, N);
           if (nullptr != ctx.getAttribute("n_targets")) {
-            snd_dim->set_dim_value(ctx.getAttribute("n_targets")->i());
+            unifyDim(E, ctx.getAttribute("n_targets")->i());
           }
-
-          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::FLOAT);
+          updateOutputElemType(ctx, 0, TensorProto::FLOAT);
+          updateOutputShape(ctx, 0, {N, E});
         }));
 
 static const char* ZipMap_ver1_doc = R"DOC(
