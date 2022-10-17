@@ -761,8 +761,8 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
         cls.skip_test |= {
             # extended list
             # not implemented
-            "test__simple_gradient_of_add",
-            "test__simple_gradient_of_add_and_mul",
+            "test__simple_gradient_of_add",  # gradient not implemented
+            "test__simple_gradient_of_add_and_mul",  # gradient not implemented
             "test__pytorch_converted_MaxPool1d",
             "test__pytorch_converted_MaxPool1d_stride",
             "test__pytorch_converted_MaxPool1d_stride_padding_dilation",
@@ -862,7 +862,7 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 if __name__ == "__main__":
     cl = TestOnnxBackEndWithProtoRun()
     cl.setUpClass(True)
-    cl.test__pytorch_converted_Conv3d(verbose=0)
+    cl.test__pytorch_converted_MaxPool1d(verbose=0)
     # TestOnnxBackEndWithProtoRun().test__pytorch_converted_Conv2d_padding(print_io=True)
     # test__pytorch_converted_Conv2d_dilated
     unittest.main(verbosity=2)
