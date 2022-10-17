@@ -229,10 +229,8 @@ class RoiAlign(OpRun):
                             output_val /= count
                         else:  # max pooling
                             max_flag = False
-                            for iy in range(roi_bin_grid_h):  # pylint: disable=W0612
-                                for ix in range(
-                                    roi_bin_grid_w
-                                ):  # pylint: disable=W0612
+                            for _iy in range(roi_bin_grid_h):
+                                for _ix in range(roi_bin_grid_w):
                                     pc = pre_calc[pre_calc_index]
                                     val = max(
                                         max(
