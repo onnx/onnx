@@ -45,7 +45,7 @@ def _conv_implementation(  # type: ignore
         new_shape[1] = td
         final = np.zeros(tuple(new_shape), dtype=res[0].dtype)
         p = 0
-        for g, cv in enumerate(res):
+        for cv in res:
             final[:, p : p + cv.shape[1]] = cv
             p += cv.shape[1]
         if B is not None:

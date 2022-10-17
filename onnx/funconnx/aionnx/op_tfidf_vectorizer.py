@@ -106,7 +106,7 @@ def populate_grams(
     ngram_id: int,
     c,  # : ForwardIter ,  # Map
 ):
-    for ngrams in range(n_ngrams, 0, -1):
+    for _ngrams in range(n_ngrams, 0, -1):
         n = 1
         m = c
         while els_index < len(els):
@@ -213,7 +213,7 @@ class TfIdfVectorizer(OpRun):
         elif self.weighting_criteria_ == WeightingCriteria.kIDF:
             if len(w) > 0:
                 p = 0
-                for batch in range(B):
+                for _batch in range(B):
                     for i in range(row_size):
                         Y[p] = w[i] if frequencies[p] > 0 else 0
                         p += 1
@@ -225,7 +225,7 @@ class TfIdfVectorizer(OpRun):
         elif self.weighting_criteria_ == WeightingCriteria.kTFIDF:
             if len(w) > 0:
                 p = 0
-                for batch in range(B):
+                for _batch in range(B):
                     for i in range(row_size):
                         Y[p] = w[i] * frequencies[p]
                         p += 1

@@ -46,7 +46,7 @@ def skip_if_no_onnxruntime(fn):
         try:
             import onnxruntime  # pylint: disable=W0611
         except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed")
+            raise unittest.SkipTest("onnxruntime not installed")  # noqa
         fn(*args, **kwargs)
 
     return wrapper
@@ -58,7 +58,7 @@ def skip_if_no_torch(fn):
         try:
             import torch  # pylint: disable=W0611
         except ImportError:
-            raise unittest.SkipTest("torch not installed")
+            raise unittest.SkipTest("torch not installed")  # noqa
         fn(*args, **kwargs)
 
     return wrapper

@@ -111,6 +111,8 @@ def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
 
 
 class Graph:
+    __slots__ = ["g"]
+
     def __init__(self, g: GraphProto) -> None:
         self.g = g
 

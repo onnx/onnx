@@ -78,7 +78,7 @@ def load_op(
         cl = impl[None]
     else:
         best = -1
-        for v, cl in impl.items():
+        for v in impl:
             if v is None:
                 continue
             if best < v <= version:
