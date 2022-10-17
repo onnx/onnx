@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -579,16 +579,16 @@ class TestComposeFunctions(unittest.TestCase):
 
     def _test_overlapping_names(
         self,
-        inputs0: List[str] = ["i0", "i1"],
-        inputs1: List[str] = ["i2", "i3"],
-        outputs0: List[str] = ["o0", "o1"],
-        outputs1: List[str] = ["o2", "o3"],
-        value_info0: List[str] = ["v0", "v1"],
-        value_info1: List[str] = ["v2", "v3"],
-        initializer0: List[str] = ["init0", "init1"],
-        initializer1: List[str] = ["init2", "init3"],
-        sparse_initializer0: List[str] = ["sparse_init0", "sparse_init1"],
-        sparse_initializer1: List[str] = ["sparse_init2", "sparse_init3"],
+        inputs0: Sequence[str] = ("i0", "i1"),
+        inputs1: Sequence[str] = ("i2", "i3"),
+        outputs0: Sequence[str] = ("o0", "o1"),
+        outputs1: Sequence[str] = ("o2", "o3"),
+        value_info0: Sequence[str] = ("v0", "v1"),
+        value_info1: Sequence[str] = ("v2", "v3"),
+        initializer0: Sequence[str] = ("init0", "init1"),
+        initializer1: Sequence[str] = ("init2", "init3"),
+        sparse_initializer0: Sequence[str] = ("sparse_init0", "sparse_init1"),
+        sparse_initializer1: Sequence[str] = ("sparse_init2", "sparse_init3"),
     ) -> None:
         n0 = [
             helper.make_node("Identity", inputs=[inputs0[i]], outputs=[outputs0[i]])

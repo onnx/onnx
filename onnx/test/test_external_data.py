@@ -507,7 +507,7 @@ class TestExternalDataToArray(unittest.TestCase):
             outputs=["Y"],
         )
         cast = onnx.helper.make_node(
-            "Cast", inputs=["Y"], outputs=["C"], to=getattr(TensorProto, "INT64")
+            "Cast", inputs=["Y"], outputs=["C"], to=TensorProto.INT64
         )
 
         graph_def = helper.make_graph(

@@ -116,7 +116,7 @@ class Runner:
         import pytest
 
         for category, items_map in self._test_items.items():
-            for name, item in items_map.items():
+            for item in items_map.values():
                 item.func = pytest.mark.onnx_coverage(item.proto, category)(item.func)
         return self
 
