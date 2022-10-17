@@ -17,12 +17,6 @@ def _unsqueeze(a, axis):  # type: ignore
     return np.expand_dims(a, axis=axis)
 
 
-def _switch_axes(a, ax1, ax2):  # type: ignore
-    p = list(range(len(a.shape)))
-    p[ax1], p[ax2] = p[ax2], p[ax1]
-    return np.transpose(a, p)
-
-
 def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type: ignore
     """
     Applies one dimensional FFT with window weights.
@@ -45,6 +39,7 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
         new_dim = sliced_x.shape[-2:-1]
         missing = (window_size - new_dim[0],)
         new_shape = sliced_x.shape[:-2] + missing + sliced_x.shape[-1:]
+        print(sliced_x.shape, begin, end, new_shape)
         cst = np.zeros(new_shape, dtype=x.dtype)
         pad_sliced_x = _concat(sliced_x, cst, axis=-2)
 
@@ -71,7 +66,8 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
     dim = len(result.shape)
     ax1 = dim - 3
     ax2 = dim - 2
-    return _switch_axes(result, ax1, ax2)
+    final = np.swapaxes(result, ax1, ax2)
+    return np.squeeze(final, axis=1)
 
 
 def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
@@ -157,17 +153,12 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
 
 
 class STFT(OpRun):
-    def _run(self, x, frame_step, window=None, frame_length=None, onesided=True, inverse=True):  # type: ignore
+    def _run(self, x, frame_step, window=None, frame_length=None, onesided=None):  # type: ignore
         if frame_length is None:
             frame_length = x.shape[-2]
         hop_length = frame_length // 4
         if window is None:
-            window = np.ones(x.shape[-2], dtype=x.dtype)
-        if inverse:
-            res = _istft(x, [frame_length], hop_length, window, onesided=onesided)
-        else:
-            n_frames = 1  # int(1 + (x.shape[-2] - frame_length) / hop_length)
-            res = _stft(
-                x, [frame_length], hop_length, n_frames, window, onesided=onesided
-            )
+            window = np.ones((frame_length,), dtype=x.dtype)
+        n_frames = 1  # int(1 + (x.shape[-2] - frame_length) / hop_length)
+        res = _stft(x, [frame_length], hop_length, n_frames, window, onesided=onesided)
         return (res.astype(x.dtype),)

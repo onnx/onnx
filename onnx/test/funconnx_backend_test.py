@@ -845,6 +845,6 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 if __name__ == "__main__":
     cl = TestOnnxBackEndWithProtoRun()
     cl.setUpClass(True)
-    cl.test_simple_rnn_batchwise()
+    cl.test_stft()
     # stop
     unittest.main(verbosity=2)

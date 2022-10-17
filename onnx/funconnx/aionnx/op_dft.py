@@ -34,8 +34,6 @@ def _cfft(
     onesided: bool = False,
     normalize: bool = False,
 ) -> np.ndarray:
-    if normalize:
-        raise RuntimeError("DFT is not implemented when normalize is True.")
     if x.shape[-1] == 1:
         tmp = x
     else:
@@ -50,7 +48,14 @@ def _cfft(
     if onesided:
         slices = [slice(0, a) for a in res.shape]
         slices[axis] = slice(0, res.shape[axis] // 2 + 1)
-        return res[tuple(slices)]  # type: ignore
+        res = res[tuple(slices)]  # type: ignore
+    if normalize:
+        if len(fft_length) == 1:
+            res /= fft_length[0]
+        else:
+            raise NotImplementedError(
+                f"normalize=True not implemented for fft_length={fft_length}."
+            )
     return res
 
 
