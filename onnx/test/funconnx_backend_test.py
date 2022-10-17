@@ -743,10 +743,6 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test_resize_downsample_sizes_nearest_not_smaller",  # operands could not be broadcast together with shapes (2,) (4,)
             "test_resize_tf_crop_and_resize_axes_3_2",  # operands could not be broadcast together with shapes (2,) (4,)
             "test_resize_tf_crop_and_resize_axes_2_3",
-            "test_resize_upsample_scales_nearest_axes_2_3",
-            "test_resize_upsample_scales_nearest_axes_3_2",
-            "test_resize_upsample_sizes_nearest_axes_2_3",
-            "test_resize_upsample_sizes_nearest_axes_3_2",
             "test_resize_upsample_sizes_nearest_not_larger",
             "test_scatter_elements_with_reduction_min",
             "test_scatter_elements_with_duplicate_indices",
@@ -855,7 +851,11 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 if __name__ == "__main__":
     cl = TestOnnxBackEndWithProtoRun()
     cl.setUpClass(True)
-    cl.test__pytorch_converted_MaxPool3d(verbose=0)
+    #cl.test__pytorch_converted_Conv2d_padding()
+    #cl.test_center_crop_pad_crop_axes_hwc_expanded()
+    #cl.test_resize_upsample_scales_nearest_axes_2_3()
+    #cl.test_col2im_pads()
     # TestOnnxBackEndWithProtoRun().test__pytorch_converted_Conv2d_padding(print_io=True)
     # test__pytorch_converted_Conv2d_dilated
+    #stop
     unittest.main(verbosity=2)

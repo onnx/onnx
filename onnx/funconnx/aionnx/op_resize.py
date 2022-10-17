@@ -242,13 +242,42 @@ class Resize(OpRun):
         else:
             raise ValueError(f"Unexpected value {mode!r} for mode.")
 
-        output = _interpolate_nd(
-            X,
-            fct,
-            scale_factors=scales,
-            output_size=sizes,
-            roi=roi,
-            coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
-            extrapolation_value=extrapolation_value,  # type: ignore
-        ).astype(X.dtype)
-        return (output,)
+        if axes is None:
+            output = _interpolate_nd(
+                X,
+                fct,
+                scale_factors=scales,
+                output_size=sizes,
+                roi=roi,
+                coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
+                extrapolation_value=extrapolation_value,  # type: ignore
+            ).astype(X.dtype)
+            return (output,)
+
+        # axes is not None
+        not_axes = [a for a in range(len(X.shape)) if a not in axes]
+        perm = tuple(not_axes + axes)
+        permuted = np.transpose(X, perm)
+        new_shape = (-1,) + tuple(X.shape[a] for a in axes)
+        reshaped = permuted.reshape(new_shape)
+        res = None
+        for i in range(reshaped.shape[0]):
+            output = _interpolate_nd(
+                reshaped[i],
+                fct,
+                scale_factors=scales,
+                output_size=sizes,
+                roi=roi,
+                coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
+                extrapolation_value=extrapolation_value,  # type: ignore
+            ).astype(X.dtype)
+            if res is None:
+                res = np.empty((reshaped.shape[0],) + output.shape, dtype=output.dtype)
+            res[i] = output
+
+        res_reshaped = res.reshape((tuple(X.shape[a] for a in not_axes) + res[0].shape))
+        new_perm = list(perm)
+        for i, a in enumerate(perm):
+            new_perm[a] = i
+        final = np.transpose(res_reshaped, tuple(new_perm))
+        return (final,)
