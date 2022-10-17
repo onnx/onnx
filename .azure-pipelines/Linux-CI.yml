@@ -67,16 +67,6 @@ jobs:
   - script: |
       source venv/bin/activate
 
-      # style check (flake8, mypy, and clang-format)
-      python -m pip install -q -r requirements-dev.txt
-      if [ '$(documentation)' == '0' ]; then
-        bash tools/style.sh
-        if [ $? -ne 0 ]; then
-          echo "style check failed"
-          exit 1
-        fi
-      fi
-
       # check line endings to be UNIX
       find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
       git status
