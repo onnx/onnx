@@ -726,27 +726,21 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             "test_nesterov_momentum",
             # mismatches
             "test_center_crop_pad_crop_axes_hwc_expanded",  # shapes (10, 9, 3), (10, 8, 3) mismatch
-            "test_col2im_pads",  # mismatch
+            "test_col2im_pads",  # mismatch by one value
             "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
-            "test_resize_downsample_scales_cubic_antialias",  # mismatch
-            "test_resize_downsample_scales_linear_antialias",  # misatch
-            "test_resize_downsample_sizes_cubic_antialias",  # mismatch
-            "test_resize_downsample_sizes_linear_antialias",  # misatch
             "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
-            "test_dynamicquantizelinear_max_adjusted_expanded",  # problem of truncated values 0.5 -> 0 or 1?
-            "test_dynamicquantizelinear_min_adjusted_expanded",  # problem of truncated values 0.5 -> 0 or 1?
-            "test_dynamicquantizelinear_expanded",  # problem of truncated values 0.5 -> 0 or 1?
             "test_convtranspose_autopad_same",  # shapes (1, 2, 6, 6), (1, 2, 7, 7) mismatch, onnxruntime fails too
-            # bug
-            "test_gru_batchwise",  # shapes (3, 1, 1, 6), (1, 3, 1, 6) mismatch, onnxruntime fails too
-            "test_resize_downsample_sizes_nearest_not_larger",  # operands could not be broadcast together with shapes (2,) (4,)
-            "test_resize_downsample_sizes_nearest_not_smaller",  # operands could not be broadcast together with shapes (2,) (4,)
-            "test_resize_tf_crop_and_resize_axes_3_2",  # operands could not be broadcast together with shapes (2,) (4,)
-            "test_resize_tf_crop_and_resize_axes_2_3",
+            # antialias or keep_aspect_ratio_policy not implemented
+            "test_resize_downsample_scales_cubic_antialias",
+            "test_resize_downsample_scales_linear_antialias",
+            "test_resize_downsample_sizes_cubic_antialias",
+            "test_resize_downsample_sizes_linear_antialias",
+            "test_resize_downsample_sizes_nearest_not_larger",  # shape mismatch (1, 1, 1, 2), (1, 1, 1, 3)
+            "test_resize_downsample_sizes_nearest_not_smaller",  # shape mismatch (1, 1, 2, 3), (1, 1, 1, 3)
             "test_resize_upsample_sizes_nearest_not_larger",
+            # bug
             "test_scatter_elements_with_reduction_min",
             "test_scatter_elements_with_duplicate_indices",
-            "test_simple_rnn_batchwise",  # (shapes (3, 1, 4), (1, 1, 4) mismatch)
             "test_stft_with_window",  # RuntimeError: DFT is not implemented when normalize is True.
             "test_stft",  # RuntimeError: DFT is not implemented when normalize is True.
             # deprecated
@@ -851,11 +845,6 @@ TestOnnxBackEndWithProtoRun.add_test_methods()
 if __name__ == "__main__":
     cl = TestOnnxBackEndWithProtoRun()
     cl.setUpClass(True)
-    #cl.test__pytorch_converted_Conv2d_padding()
-    #cl.test_center_crop_pad_crop_axes_hwc_expanded()
-    #cl.test_resize_upsample_scales_nearest_axes_2_3()
-    #cl.test_col2im_pads()
-    # TestOnnxBackEndWithProtoRun().test__pytorch_converted_Conv2d_padding(print_io=True)
-    # test__pytorch_converted_Conv2d_dilated
-    #stop
+    cl.test_simple_rnn_batchwise()
+    # stop
     unittest.main(verbosity=2)

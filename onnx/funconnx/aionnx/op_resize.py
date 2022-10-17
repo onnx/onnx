@@ -229,7 +229,12 @@ class Resize(OpRun):
         mode=None,
         nearest_mode=None,
     ):
-
+        if antialias:
+            raise NotImplementedError(f"antialias={antialias!r} is not implemented.")
+        if keep_aspect_ratio_policy and keep_aspect_ratio_policy != "stretch":
+            raise NotImplementedError(
+                f"keep_aspect_ratio_policy={keep_aspect_ratio_policy!r} is not implemented."
+            )
         if mode == "nearest":  # type: ignore
             if nearest_mode is not None:
                 fct = lambda x: _nearest_coeffs(x, mode=nearest_mode)  # noqa
@@ -275,7 +280,7 @@ class Resize(OpRun):
                 res = np.empty((reshaped.shape[0],) + output.shape, dtype=output.dtype)
             res[i] = output
 
-        res_reshaped = res.reshape((tuple(X.shape[a] for a in not_axes) + res[0].shape))
+        res_reshaped = res.reshape((tuple(X.shape[a] for a in not_axes) + res[0].shape))  # type: ignore
         new_perm = list(perm)
         for i, a in enumerate(perm):
             new_perm[a] = i

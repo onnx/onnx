@@ -87,6 +87,11 @@ class CommonGRU(OpRun):
         # TODO: support overridden attributes.
         num_directions = W.shape[0]
 
+        from onnx.backend.test.case.node.gru import GRU_Helper
+
+        gru = GRU_Helper(X=X, W=W, R=R, layout=layout)
+        aY, aY_h = gru.step()
+
         if num_directions == 1:
             R = np.squeeze(R, axis=0)
             W = np.squeeze(W, axis=0)
@@ -100,6 +105,7 @@ class CommonGRU(OpRun):
             hidden_size = R.shape[-1]
             batch_size = X.shape[1]
 
+            X = X if layout == 0 else np.swapaxes(X, 0, 1)
             b = (
                 B
                 if B is not None
@@ -120,7 +126,6 @@ class CommonGRU(OpRun):
             )
 
         Y, Y_h = self._step(X, R, B, W, H_0, num_directions=num_directions)
-
         return (Y,) if self.n_outputs == 1 else (Y, Y_h)
 
 

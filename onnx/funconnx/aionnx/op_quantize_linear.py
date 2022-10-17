@@ -8,6 +8,7 @@ from ..op_run import OpRun
 
 class _CommonQuantizeLinear(OpRun):
     def common_run(self, x, y_scale, zero_point=None, axis=1):  # type: ignore
+        print("*", x, y_scale, zero_point, axis, type(y_scale), y_scale.shape, x.dtype)
         if len(y_scale.shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
         if len(y_scale.shape) > 0 and y_scale.size == 1:
@@ -25,7 +26,8 @@ class _CommonQuantizeLinear(OpRun):
                 x += zero_point.reshape(new_shape)
             else:
                 x += zero_point
-            np.around(x, 1, out=x)
+            # np.around(x, 0, out=x)
+            np.floor(x + 0.5, out=x)
             if dtype == np.uint8:
                 np.clip(x, 0, 255, out=x)
             elif dtype == np.int8:
@@ -35,7 +37,8 @@ class _CommonQuantizeLinear(OpRun):
             return (np.ceil(x).astype(dtype),)
 
         dtype = np.uint8
-        np.around(x, 1, out=x)
+        # np.around(x, 0, out=x)
+        np.floor(x + 0.5, out=x)
         np.clip(x, 0, 255, out=x)
         return (x.astype(dtype),)
 
