@@ -166,12 +166,16 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (nullptr == ctx.getInputType(0))
+            return;
           auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           if (TensorProto::STRING == input_elem_type) {
-            output_elem_type->set_elem_type(TensorProto::INT64);
+            updateOutputElemType(ctx, 0, TensorProto::INT64);
           } else if (TensorProto::INT64 == input_elem_type) {
-            output_elem_type->set_elem_type(TensorProto::STRING);
+            updateOutputElemType(ctx, 0, TensorProto::STRING);
+          }
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
           }
         }));
 
@@ -821,16 +825,6 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          std::vector<std::string> label_strs;
-          auto result = getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
-          bool using_strings = (result && !label_strs.empty());
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
-          if (using_strings) {
-            output_elem_type->set_elem_type(TensorProto::STRING);
-          } else {
-            output_elem_type->set_elem_type(TensorProto::INT64);
-          }
-
           auto* nodes_values = ctx.getAttribute("nodes_values");
           auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
           auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
@@ -856,6 +850,27 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             fail_shape_inference(
                 "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
           }
+
+          std::vector<std::string> label_strs;
+          auto result = getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
+          bool using_strings = (result && !label_strs.empty());
+          if (using_strings) {
+            updateOutputElemType(ctx, 0, TensorProto::STRING);
+          } else {
+            updateOutputElemType(ctx, 0, TensorProto::INT64);
+          }
+          updateOutputElemType(ctx, 1, TensorProto::FLOAT);
+
+          checkInputRank(ctx, 0, 2);
+          Dim N, E;
+          unifyInputDim(ctx, 0, 0, N);
+          std::vector<int64_t> class_ids;
+          auto has_ids = getRepeatedAttribute(ctx, "class_ids", class_ids);
+          if (has_ids) {
+            unifyDim(E, class_ids.size());
+          }
+          updateOutputShape(ctx, 0, {N});
+          updateOutputShape(ctx, 1, {N, E});
         }));
 
 static const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
@@ -975,6 +990,15 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             fail_shape_inference(
                 "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
           }
+
+          checkInputRank(ctx, 0, 2);
+          Dim N, E;
+          unifyInputDim(ctx, 0, 0, N);
+          if (nullptr != ctx.getAttribute("n_targets")) {
+            unifyDim(E, ctx.getAttribute("n_targets")->i());
+          }
+          updateOutputElemType(ctx, 0, TensorProto::FLOAT);
+          updateOutputShape(ctx, 0, {N, E});
         }));
 
 static const char* ZipMap_ver1_doc = R"DOC(
