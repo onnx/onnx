@@ -41,6 +41,8 @@ jobs:
         set -e
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
+        # Mac cannot work with Python Protobuf 3.18.3 https://github.com/protocolbuffers/protobuf/issues/10691
+        python -m pip install protobuf==3.19.5
 
     - name: Build, install and test ONNX
       shell: bash
