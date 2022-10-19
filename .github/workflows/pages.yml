@@ -2,10 +2,6 @@
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
-  push:
-    branches: ["main", "add-docs"]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -30,21 +26,45 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
       - name: Setup Pages
         uses: actions/configure-pages@v2
 
       - name: Install Dependencies
-        run: pip install -r docs/docsgen/source/requirements.txt
+        run: |
+          python -m pip install --quiet --upgrade pip setuptools wheel 
+          python -m pip install -r docs/docsgen/source/requirements.txt
 
       - name: Uninstall onnx
-        run: pip uninstall -y onnx
+        run: python -m pip uninstall -y onnx
 
       - name: Install onnx development version
-        run: python setup.py install
+        run: |
+          sudo apt-get install libprotobuf-dev protobuf-compiler
+          git submodule update --init --recursive
+          export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          python setup.py install
 
       - name: Build Docs
-        run: cd docs/docsgen && make html -j auto
-      
+        # TODO: fix warnings from "make html -j auto" so it can normally succeed without errors
+        continue-on-error: true
+        run: |
+          cd docs/docsgen
+          make html -j auto > stdout_stderror.log 2>&1
+      - name: Check whether previous build docs succeeded
+        run: |
+          cat docs/docsgen/stdout_stderror.log
+          if grep -F "build succeeded" docs/docsgen/stdout_stderror.log
+          then
+            echo "Build succeeded."
+          else
+            echo "Build failed."
+            exit 1
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:

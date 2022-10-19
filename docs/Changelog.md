@@ -13100,7 +13100,8 @@ This version of the operator has been available since version 11 of the default 
    `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor.
+  update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+  convention for counting backwards from the end, but are expected in the valid range.
 
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
@@ -17857,7 +17858,8 @@ This version of the operator has been available since version 13 of the default 
    `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor.
+  update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+  convention for counting backwards from the end, but are expected in the valid range.
 
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
@@ -19391,6 +19393,10 @@ This version of the operator has been available since version 14 of the default 
   Shape (second input) could be an empty shape, which means converting to a scalar.
   The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
+  If the attribute 'allowzero' is set, it is invalid for the specified shape to
+  contain both a zero value and -1, as the value of the dimension corresponding
+  to -1 cannot be determined uniquely.
+
 #### Version
 
 This version of the operator has been available since version 14 of the default ONNX operator set.
@@ -20678,13 +20684,15 @@ This version of the operator has been available since version 16 of the default 
   and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
   is produced by creating a copy of the input `data`, and then updating its value to values
   specified by `updates` at specific index positions specified by `indices`. Its output shape
-  is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
-  That is, two or more `updates` for the same index-location is not supported.
+  is the same as the shape of `data`.
+
   `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
    `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor.
+  update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+  convention for counting backwards from the end, but are expected in the valid range.
+
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
   The remaining dimensions of `updates` correspond to the dimensions of the
@@ -20692,6 +20700,7 @@ This version of the operator has been available since version 16 of the default 
   corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
   must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
   of shapes.
+
   The `output` is calculated via the following equation:
       output = np.copy(data)
       update_indices = indices.shape[:-1]
@@ -20700,6 +20709,7 @@ This version of the operator has been available since version 16 of the default 
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
   This ensures that the output value does not depend on the iteration order.
+
   `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
   tensor into `output` at the specified `indices`.
   In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
@@ -21280,6 +21290,40 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain output to a boolean tensor.</dd>
 </dl>
 
+### <a name="BitwiseAnd-18"></a>**BitwiseAnd-18**</a>
+
+  Returns the tensor resulting from performing the bitwise `and` operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the bitwise operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the bitwise operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input to integer tensors.</dd>
+</dl>
+
 ### <a name="BitwiseNot-18"></a>**BitwiseNot-18**</a>
 
   Returns the bitwise not of the input tensor element-wise.
@@ -21307,6 +21351,74 @@ This version of the operator has been available since version 18 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
 <dd>Constrain input/output to integer tensors.</dd>
+</dl>
+
+### <a name="BitwiseOr-18"></a>**BitwiseOr-18**</a>
+
+  Returns the tensor resulting from performing the bitwise `or` operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the bitwise operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the bitwise operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input to integer tensors.</dd>
+</dl>
+
+### <a name="BitwiseXor-18"></a>**BitwiseXor-18**</a>
+
+  Returns the tensor resulting from performing the bitwise `xor` operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the bitwise operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the bitwise operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input to integer tensors.</dd>
 </dl>
 
 ### <a name="CenterCropPad-18"></a>**CenterCropPad-18**</a>
@@ -21842,14 +21954,14 @@ This version of the operator has been available since version 18 of the default 
   and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
   is produced by creating a copy of the input `data`, and then updating its value to values
   specified by `updates` at specific index positions specified by `indices`. Its output shape
-  is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
-  That is, two or more `updates` for the same index-location is not supported.
+  is the same as the shape of `data`.
 
   `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
    `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor.
+  update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+  convention for counting backwards from the end, but are expected in the valid range.
 
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.

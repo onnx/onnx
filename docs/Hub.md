@@ -35,7 +35,7 @@ Any repository with the proper structure can be a ONNX model hub. To download fr
  or to specify a particular branch or commit on the main model hub one can provide the `repo` parameter:
 
 ```python
-model = hub.load("resnet50", repo='onnx/models:771185265efbdc049fb223bd68ab1aeb1aecde76')
+model = hub.load("resnet50", repo="onnx/models:771185265efbdc049fb223bd68ab1aeb1aecde76")
 ```
 
 #### Listing and inspecting Models:

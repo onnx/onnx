@@ -25,7 +25,10 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
 |<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
+|<a href="#BitwiseAnd">BitwiseAnd</a>|<a href="Changelog.md#BitwiseAnd-18">18</a>|
 |<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
+|<a href="#BitwiseOr">BitwiseOr</a>|<a href="Changelog.md#BitwiseOr-18">18</a>|
+|<a href="#BitwiseXor">BitwiseXor</a>|<a href="Changelog.md#BitwiseXor-18">18</a>|
 |<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
@@ -2746,6 +2749,97 @@ expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_uint8")
 </details>
 
 
+### <a name="BitwiseAnd"></a><a name="bitwiseand">**BitwiseAnd**</a>
+
+  Returns the tensor resulting from performing the bitwise `and` operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the bitwise operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the bitwise operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input to integer tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>bitwiseand</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseAnd",
+    inputs=["x", "y"],
+    outputs=["bitwiseand"],
+)
+
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.random.randn(3, 4).astype(np.int32)
+z = np.bitwise_and(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i32_2d")
+
+# 3d
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.bitwise_and(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i16_3d")
+```
+
+</details>
+
+
+<details>
+<summary>bitwiseand_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseAnd",
+    inputs=["x", "y"],
+    outputs=["bitwiseand"],
+)
+
+# 3d vs 1d
+x = np.random.randn(3, 4, 5).astype(np.uint64)
+y = np.random.randn(5).astype(np.uint64)
+z = np.bitwise_and(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui64_bcast_3v1d"
+)
+
+# 4d vs 3d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.random.randn(4, 5, 6).astype(np.uint8)
+z = np.bitwise_and(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui8_bcast_4v3d")
+```
+
+</details>
+
+
 ### <a name="BitwiseNot"></a><a name="bitwisenot">**BitwiseNot**</a>
 
   Returns the bitwise not of the input tensor element-wise.
@@ -2802,6 +2896,185 @@ expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
 x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_4d")
+```
+
+</details>
+
+
+### <a name="BitwiseOr"></a><a name="bitwiseor">**BitwiseOr**</a>
+
+  Returns the tensor resulting from performing the bitwise `or` operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the bitwise operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the bitwise operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input to integer tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>bitwiseor</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseOr",
+    inputs=["x", "y"],
+    outputs=["bitwiseor"],
+)
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.random.randn(3, 4).astype(np.int32)
+z = np.bitwise_or(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_i32_2d")
+
+# 4d
+x = np.random.randn(3, 4, 5, 6).astype(np.int8)
+y = np.random.randn(3, 4, 5, 6).astype(np.int8)
+z = np.bitwise_or(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_i16_4d")
+```
+
+</details>
+
+
+<details>
+<summary>bitwiseor_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseOr",
+    inputs=["x", "y"],
+    outputs=["bitwiseor"],
+)
+
+# 3d vs 1d
+x = np.random.randn(3, 4, 5).astype(np.uint64)
+y = np.random.randn(5).astype(np.uint64)
+z = np.bitwise_or(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui64_bcast_3v1d")
+
+# 4d vs 3d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.random.randn(4, 5, 6).astype(np.uint8)
+z = np.bitwise_or(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui8_bcast_4v3d")
+```
+
+</details>
+
+
+### <a name="BitwiseXor"></a><a name="bitwisexor">**BitwiseXor**</a>
+
+  Returns the tensor resulting from performing the bitwise `xor` operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the bitwise operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the bitwise operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input to integer tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>bitwiseor_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseXor",
+    inputs=["x", "y"],
+    outputs=["bitwisexor"],
+)
+
+# 3d vs 1d
+x = np.random.randn(3, 4, 5).astype(np.uint64)
+y = np.random.randn(5).astype(np.uint64)
+z = np.bitwise_xor(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui64_bcast_3v1d"
+)
+
+# 4d vs 3d
+x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+y = np.random.randn(4, 5, 6).astype(np.uint8)
+z = np.bitwise_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui8_bcast_4v3d")
+```
+
+</details>
+
+
+<details>
+<summary>bitwisexor</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitwiseXor",
+    inputs=["x", "y"],
+    outputs=["bitwisexor"],
+)
+
+# 2d
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.random.randn(3, 4).astype(np.int32)
+z = np.bitwise_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i32_2d")
+
+# 3d
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.bitwise_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i16_3d")
 ```
 
 </details>
@@ -18895,8 +19168,6 @@ data = np.array(
     dtype=np.float32,
 )
 reduced = np.maximum.reduce(data, axis=axes, keepdims=keepdims == 1)
-# print(reduced)
-[[[60.0]]]
 
 expect(
     node,
@@ -20319,6 +20590,10 @@ expect(node, inputs=[x], outputs=[y], name="test_relu")
   Shape (second input) could be an empty shape, which means converting to a scalar.
   The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
+  If the attribute 'allowzero' is set, it is invalid for the specified shape to
+  contain both a zero value and -1, as the value of the dimension corresponding
+  to -1 cannot be determined uniquely.
+
 #### Version
 
 This version of the operator has been available since version 14 of the default ONNX operator set.
@@ -21285,6 +21560,7 @@ node = onnx.helper.make_node(
     outputs=["Y"],
     mode="linear",
     coordinate_transformation_mode="tf_crop_and_resize",
+    axes=axes,
 )
 
 data = np.array(
@@ -21339,6 +21615,7 @@ node = onnx.helper.make_node(
     outputs=["Y"],
     mode="linear",
     coordinate_transformation_mode="tf_crop_and_resize",
+    axes=axes,
 )
 
 data = np.array(
@@ -23655,14 +23932,14 @@ expect(
   and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
   is produced by creating a copy of the input `data`, and then updating its value to values
   specified by `updates` at specific index positions specified by `indices`. Its output shape
-  is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
-  That is, two or more `updates` for the same index-location is not supported.
+  is the same as the shape of `data`.
 
   `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
    `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor.
+  update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+  convention for counting backwards from the end, but are expected in the valid range.
 
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.

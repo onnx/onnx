@@ -15,6 +15,7 @@ data types. Currently we focus on the capabilities needed for inferencing (scori
 ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in many frameworks, tools, and hardware. Enabling interoperability between different frameworks and streamlining the path from research to production helps increase the speed of innovation in the AI community. We invite the community to join us and further evolve ONNX.
 
 # Use ONNX
+* [Documentation of ONNX Python Package](https://github.com/onnx/onnx)
 * [Tutorials for creating ONNX models](https://github.com/onnx/tutorials).
 * [Pre-trained ONNX models](https://github.com/onnx/models)
 
@@ -22,7 +23,8 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [Overview](docs/Overview.md)
 * [ONNX intermediate representation spec](docs/IR.md)
 * [Versioning principles of the spec](docs/Versioning.md)
-* [Operators documentation](docs/Operators.md)
+* [Operators documentation](docs/Operators.md) (development version)
+* [Operators documentation](https://onnx.ai/onnx/onnx_doc_folder/index.html) (latest release)
 * [Python API Overview](docs/PythonAPIOverview.md)
 
 # Programming utilities for working with ONNX Graphs

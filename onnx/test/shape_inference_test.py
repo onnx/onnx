@@ -8425,6 +8425,120 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)],
         )
 
+    def test_category_mapper(self) -> None:
+        if ONNX_ML:
+            cat = make_node(
+                "CategoryMapper",
+                ["x"],
+                ["y"],
+                domain=ONNX_ML_DOMAIN,
+            )
+            graph_int = self._make_graph(
+                [("x", TensorProto.INT64, (30, 4, 5))],
+                [cat],
+                [],
+            )
+            self._assert_inferred(
+                graph_int,
+                [make_tensor_value_info("y", TensorProto.STRING, (30, 4, 5))],
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 1),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
+            graph_str = self._make_graph(
+                [("x", TensorProto.STRING, (30, 5, 4))],
+                [cat],
+                [],
+            )
+            self._assert_inferred(
+                graph_str,
+                [make_tensor_value_info("y", TensorProto.INT64, (30, 5, 4))],
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 1),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
+
+    def test_tree_ensemble_regressor(self) -> None:
+        if ONNX_ML:
+            tree = make_node(
+                "TreeEnsembleRegressor",
+                ["x"],
+                ["y"],
+                domain=ONNX_ML_DOMAIN,
+                n_targets=5,
+            )
+            graph = self._make_graph(
+                [("x", TensorProto.DOUBLE, (30, 3))],
+                [tree],
+                [],
+            )
+            self._assert_inferred(
+                graph,
+                [make_tensor_value_info("y", TensorProto.FLOAT, (30, 5))],
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 3),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
+
+    def test_tree_ensemble_classifier(self) -> None:
+        if ONNX_ML:
+            tree = make_node(
+                "TreeEnsembleClassifier",
+                ["x"],
+                ["y", "z"],
+                class_ids=[0, 1, 2, 3, 4],
+                domain=ONNX_ML_DOMAIN,
+            )
+            graph = self._make_graph(
+                [("x", TensorProto.DOUBLE, (30, 3))],
+                [tree],
+                [],
+            )
+            self._assert_inferred(
+                graph,
+                [
+                    make_tensor_value_info("y", TensorProto.INT64, (30,)),
+                    make_tensor_value_info("z", TensorProto.FLOAT, (30, 5)),
+                ],
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 3),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
+
+    def test_array_feature_extractor(self) -> None:
+        if ONNX_ML:
+            node = make_node(
+                "ArrayFeatureExtractor",
+                ["x", "y"],
+                ["z"],
+                domain=ONNX_ML_DOMAIN,
+            )
+            for (axes_shape, expected) in [
+                ((2,), 2),
+                (tuple(), "unk__0"),
+                (("N",), "N"),
+            ]:
+                graph = self._make_graph(
+                    [
+                        ("x", TensorProto.INT64, (3, 4, 5)),
+                        ("y", TensorProto.INT64, axes_shape),
+                    ],
+                    [node],
+                    [],
+                )
+                self._assert_inferred(
+                    graph,
+                    [make_tensor_value_info("z", TensorProto.INT64, (3, 4, expected))],  # type: ignore
+                    opset_imports=[
+                        make_opsetid(ONNX_ML_DOMAIN, 3),
+                        make_opsetid(ONNX_DOMAIN, 18),
+                    ],
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
