@@ -11,7 +11,7 @@ from ..onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto
 from .op_run import OpRun
 
 
-class ProtoRun:
+class ReferenceRuntime:
     """
     Executes an onnx model. The implementation relies on numpy
     for the most past and C++ through pybind11.
@@ -32,16 +32,16 @@ class ProtoRun:
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
     it uses this class to execute the subgraph or the function.
-    Next example shows how to run `ProtoRun` with an onnx model
+    Next example shows how to run `ReferenceRuntime` with an onnx model
     stored in file `model.onnx`.
 
     ::
 
         import numpy as np
-        from onnx.funconnx import ProtoRun
+        from onnx.funconnx import ReferenceRuntime
 
         X = np.array(...)
-        sess = ProtoRun("model.onnx")
+        sess = ReferenceRuntime("model.onnx")
         results = sess.run(None, {"X": X})
         print(results[0])  # display the first result
 
@@ -78,12 +78,12 @@ class ProtoRun:
     `alpha` is an attribute. It can be defined by the onnx node or
     be defined by the function using this node. It is safe to assume
     that attributes are known at the same time as the input.
-    Class `ProtoRun` must know about this new implementation
+    Class `ReferenceRuntime` must know about this new implementation
     and this can be done by specified argument *new_ops*.
 
     ::
 
-        sess = ProtoRun(onnx_model, new_ops=[InvAlpha])
+        sess = ReferenceRuntime(onnx_model, new_ops=[InvAlpha])
         got = sess.run(None, {"X": x})[0]
 
     A specific node can be simply evaluated.
@@ -114,7 +114,7 @@ class ProtoRun:
         self,
         proto: Any,
         opsets: Optional[Dict[str, int]] = None,
-        functions: Optional[List[Union["ProtoRun", FunctionProto]]] = None,  # type: ignore
+        functions: Optional[List[Union["ReferenceRuntime", FunctionProto]]] = None,  # type: ignore
         verbose: int = 0,
         new_ops: Optional[List[OpRun]] = None,
     ):
@@ -126,7 +126,7 @@ class ProtoRun:
         elif isinstance(proto, bytes):
             proto = load(BytesIO(proto))
         self.proto_ = proto
-        self.functions_: Dict[Tuple[str, str], ProtoRun] = {}
+        self.functions_: Dict[Tuple[str, str], ReferenceRuntime] = {}
         self.attributes_: List[str] = []
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
@@ -175,10 +175,10 @@ class ProtoRun:
             for f in functions:  # type: ignore
                 if isinstance(f, FunctionProto):
                     existing_functions = list(self.functions_.values())
-                    self.functions_[f.domain, f.name] = ProtoRun(
+                    self.functions_[f.domain, f.name] = ReferenceRuntime(
                         f, verbose=verbose, functions=existing_functions
                     )
-                elif isinstance(f, ProtoRun):
+                elif isinstance(f, ReferenceRuntime):
                     onx = f.proto_  # type: ignore
                     self.functions_[onx.domain, onx.name] = f
                 else:
@@ -287,23 +287,23 @@ class ProtoRun:
             return self.new_ops_[key]
 
         if node.domain == "":
-            from .aionnx import load_op
+            from .ops import load_op
 
             return load_op(node.domain, node.op_type, version)
 
         if node.domain == "ai.onnx.preview.training":
-            from .aionnx_preview_training import load_op as load_op_pt
+            from .ops.aionnx_preview_training import load_op as load_op_pt
 
             return load_op_pt(node.domain, node.op_type, version)
 
         if node.domain == "experimental":
-            from .experimental import load_op as load_op_exp
+            from .ops.experimental import load_op as load_op_exp
 
             return load_op_exp(node.domain, node.op_type, version)
 
         # It has to be a function.
         if key in self.functions_:
-            from .aionnx import load_op
+            from .ops import load_op
 
             impl = self.functions_[key]
             return load_op(node.domain, node.op_type, version, custom=impl)

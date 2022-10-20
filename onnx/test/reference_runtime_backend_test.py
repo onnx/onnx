@@ -2,7 +2,7 @@
 # type: ignore
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0613,W0640,W0703
 """
-These test evaluates the python runtime (class ProtoRun) against
+These test evaluates the python runtime (class ReferenceRuntime) against
 all the backend tests (in onnx/backend/test/case/node) and checks
 the runtime produces the expected outputs.
 """
@@ -27,8 +27,8 @@ from onnx import (
     load_tensor_from_string,
 )
 from onnx.backend.test import __file__ as backend_folder
-from onnx.funconnx import ProtoRun
-from onnx.funconnx.aionnx.op_cast import cast_to
+from onnx.reference import ReferenceRuntime
+from onnx.reference.ops.op_cast import cast_to
 from onnx.helper import __file__ as onnx_file
 from onnx.helper import bfloat16_to_float32
 from onnx.mapping import OPTIONAL_ELEMENT_TYPE_TO_FIELD, TENSOR_TYPE_TO_NP_TYPE
@@ -418,7 +418,7 @@ def enumerate_onnx_tests(series, fct_filter=None):
             yield OnnxBackendTest(folder)
 
 
-class TestOnnxBackEndWithProtoRun(unittest.TestCase):
+class TestOnnxBackEndWithReferenceRuntime(unittest.TestCase):
 
     folder = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), "onnx_backend_test_code"
@@ -454,7 +454,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                         print_io=print_io,
                     )
 
-                setattr(TestOnnxBackEndWithProtoRun, te.fname, _test_)
+                setattr(TestOnnxBackEndWithReferenceRuntime, te.fname, _test_)
 
     def test_onnx_backend_test_abs(self):
         name = "test_abs"
@@ -472,7 +472,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
 
     @staticmethod
     def load_fct(obj, verbose=0):
-        return ProtoRun(obj, verbose=verbose)
+        return ReferenceRuntime(obj, verbose=verbose)
 
     @staticmethod
     def run_fct(obj, *inputs, verbose=0):  # pylint: disable=W0613
@@ -524,9 +524,9 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
             self.assertIn(te.name, repr(te))
             self.assertGreater(len(te), 0)
             te.run(
-                TestOnnxBackEndWithProtoRun.load_fct,
-                TestOnnxBackEndWithProtoRun.run_fct,
-                comment="[runtime=ProtoRun]",
+                TestOnnxBackEndWithReferenceRuntime.load_fct,
+                TestOnnxBackEndWithReferenceRuntime.run_fct,
+                comment="[runtime=ReferenceRuntime]",
             )
             done += 1
         self.assertEqual(done, 1)
@@ -557,22 +557,22 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
                 print("  run")
             if verbose > 5:
                 te.run(
-                    lambda *args, verbose=verbose: TestOnnxBackEndWithProtoRun.load_fct(
+                    lambda *args, verbose=verbose: TestOnnxBackEndWithReferenceRuntime.load_fct(
                         *args, verbose
                     ),
-                    TestOnnxBackEndWithProtoRun.run_fct,
+                    TestOnnxBackEndWithReferenceRuntime.run_fct,
                     atol=atol.get(te.name, None),
                     rtol=rtol.get(te.name, None),
-                    comment=f"[runtime=ProtoRun, verbose={verbose}]",
+                    comment=f"[runtime=ReferenceRuntime, verbose={verbose}]",
                     print_io=print_io,
                 )
             else:
                 te.run(
-                    TestOnnxBackEndWithProtoRun.load_fct,
-                    TestOnnxBackEndWithProtoRun.run_fct,
+                    TestOnnxBackEndWithReferenceRuntime.load_fct,
+                    TestOnnxBackEndWithReferenceRuntime.run_fct,
                     atol=atol.get(te.fname, atol.get(te.name, None)),
                     rtol=rtol.get(te.fname, rtol.get(te.name, None)),
-                    comment="[runtime=ProtoRun]",
+                    comment="[runtime=ReferenceRuntime]",
                     print_io=print_io,
                 )
             if verbose > 7:
@@ -596,7 +596,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
 
                 te.run(
                     lambda obj: InferenceSession(obj.SerializeToString()),
-                    lambda *a, **b: TestOnnxBackEndWithProtoRun.run_fct(
+                    lambda *a, **b: TestOnnxBackEndWithReferenceRuntime.run_fct(
                         *a, verbose=1, **b
                     ),
                     atol=1e-5,
@@ -624,7 +624,7 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
 
                 te.run(
                     lambda obj: _Wrap(OnnxInference(obj)),
-                    lambda *a, **b: TestOnnxBackEndWithProtoRun.run_fct(
+                    lambda *a, **b: TestOnnxBackEndWithReferenceRuntime.run_fct(
                         *a, verbose=1, **b
                     ),
                     atol=atol.get(te.fname, None),
@@ -839,12 +839,12 @@ class TestOnnxBackEndWithProtoRun(unittest.TestCase):
         )
 
 
-TestOnnxBackEndWithProtoRun.add_test_methods()
+TestOnnxBackEndWithReferenceRuntime.add_test_methods()
 
 
 if __name__ == "__main__":
-    cl = TestOnnxBackEndWithProtoRun()
+    cl = TestOnnxBackEndWithReferenceRuntime()
     cl.setUpClass(True)
-    cl.test_stft()
+    # cl.test_stft()
     # stop
     unittest.main(verbosity=2)

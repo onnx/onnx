@@ -179,9 +179,9 @@ class OpRun(ABC):
         Converts an attribute value into a python value.
         """
         if att.type == AttributeProto.GRAPH:
-            from .proto_run import ProtoRun  # type: ignore
+            from .reference_runtime import ReferenceRuntime  # type: ignore
 
-            return ProtoRun(
+            return ReferenceRuntime(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
@@ -422,13 +422,13 @@ class OpRun(ABC):
         :param kwargs: node attributes
         :return: NodeProto
 
-        Method :meth:`eval <onnx.ProtoRun.op_run.eval>` creates an onnx node
-        returned by method :meth:`make_node <onnx.funconnx.op_run.make_node>`.
+        Method :meth:`eval <onnx.reference.op_run.OpRun.eval>` creates an onnx node
+        returned by method :meth:`make_node <onnx.reference.op_run.OpRun.make_node>`.
 
         .. exec_code::
 
             import numpy as np
-            from onnx.funconnx.aionnx._op_list import Celu
+            from onnx.reference.ops._op_list import Celu
 
             onnx_node = Celu.make_node(alpha=0.5)
             print(onnx_node)

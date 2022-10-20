@@ -8,7 +8,6 @@ from ..op_run import OpRun
 
 class _CommonQuantizeLinear(OpRun):
     def common_run(self, x, y_scale, zero_point=None, axis=1):  # type: ignore
-        print("*", x, y_scale, zero_point, axis, type(y_scale), y_scale.shape, x.dtype)
         if len(y_scale.shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
         if len(y_scale.shape) > 0 and y_scale.size == 1:

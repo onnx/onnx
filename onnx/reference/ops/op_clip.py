@@ -9,9 +9,9 @@ from ._op import OpRunUnaryNum
 
 
 class Clip_6(OpRunUnaryNum):
-    def _run(self, data):  # type: ignore
-        amin = getattr(self, "min", None)
-        amax = getattr(self, "max", None)
+    def _run(self, data, min=None, max=None):  # type: ignore
+        amin = min
+        amax = max
         if amin is None and amax is None:
             return (data,)
         res = np.clip(data, amin, amax)  # type: ignore

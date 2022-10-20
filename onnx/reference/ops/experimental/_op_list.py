@@ -4,7 +4,7 @@
 import textwrap
 from typing import Any, Union
 
-from ..op_run import OpFunction, _split_class_name
+from ...op_run import OpFunction, _split_class_name
 from ._op_run_experimental import OpRunExperimental
 from .op_im2col import Im2Col
 
