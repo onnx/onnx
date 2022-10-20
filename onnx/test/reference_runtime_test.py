@@ -15,16 +15,6 @@ from numpy.testing import assert_allclose  # type: ignore
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
-from onnx.reference import ReferenceRuntime
-from onnx.reference.ops import load_op
-from onnx.reference.ops._op_list import Celu
-from onnx.reference.ops.op_celu import _vcelu1
-from onnx.reference.ops.op_col2im import (
-    _col2im_naive_implementation_2d,
-    col2im_naive_implementation,
-)
-from onnx.reference.ops.aionnx_preview_training._op_list import Adam
-from onnx.reference.op_run import OpRun
 from onnx.helper import (
     make_function,
     make_graph,
@@ -38,6 +28,16 @@ from onnx.helper import (
     make_value_info,
 )
 from onnx.numpy_helper import from_array
+from onnx.reference import ReferenceRuntime
+from onnx.reference.op_run import OpRun
+from onnx.reference.ops import load_op
+from onnx.reference.ops._op_list import Celu
+from onnx.reference.ops.aionnx_preview_training._op_list import Adam
+from onnx.reference.ops.op_celu import _vcelu1
+from onnx.reference.ops.op_col2im import (
+    _col2im_naive_implementation_2d,
+    col2im_naive_implementation,
+)
 
 
 def skip_if_no_onnxruntime(fn):

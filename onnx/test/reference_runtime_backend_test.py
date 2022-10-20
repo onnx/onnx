@@ -27,12 +27,12 @@ from onnx import (
     load_tensor_from_string,
 )
 from onnx.backend.test import __file__ as backend_folder
-from onnx.reference import ReferenceRuntime
-from onnx.reference.ops.op_cast import cast_to
 from onnx.helper import __file__ as onnx_file
 from onnx.helper import bfloat16_to_float32
 from onnx.mapping import OPTIONAL_ELEMENT_TYPE_TO_FIELD, TENSOR_TYPE_TO_NP_TYPE
 from onnx.numpy_helper import to_array, to_list, to_optional
+from onnx.reference import ReferenceRuntime
+from onnx.reference.ops.op_cast import cast_to
 
 
 def assert_allclose_string(expected, value):
