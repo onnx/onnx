@@ -82,6 +82,6 @@ class Loop(OpRun):
         while len(outputs) < len(self.onnx_node.output):
             outputs.append(np.empty(shape=tuple()))
         res = tuple(outputs)
-        if any(r is None for r in res):
-            raise TypeError("Operator Loop produces a None value.")
+        # if self.K > 0:
+        #     res = res[:-self.K] + tuple(np.hstack(r) for r in res[-self.K:])
         return res
