@@ -3,7 +3,7 @@
 
 from math import erf
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ._op import OpRunUnaryNum
 

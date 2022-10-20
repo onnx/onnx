@@ -3,7 +3,7 @@
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from .. import load, numpy_helper
 from ..defs import onnx_opset_version
@@ -26,7 +26,7 @@ class ReferenceRuntime:
     :param functions: known onnx functions
     :param new_ops: this runtime can be used to test the implementations
         of new operators, *new_ops* is a list of classes
-        derived from :class:`OpRun <onnx.funconnx.op_run.OpRun>`,
+        derived from :class:`OpRun <onnx.reference.op_run.OpRun>`,
         every class must define the static attribute `domain`
 
     The class maps every node to its associated implementation.
@@ -38,7 +38,7 @@ class ReferenceRuntime:
     ::
 
         import numpy as np
-        from onnx.funconnx import ReferenceRuntime
+        from onnx.reference import ReferenceRuntime
 
         X = np.array(...)
         sess = ReferenceRuntime("model.onnx")
@@ -57,13 +57,13 @@ class ReferenceRuntime:
     a custom operator. Let's assume this new operator
     is `InvAlpha` from domain `custom`. The implementation
     must take place in a class inheriting from
-    :class:`OpRun <onnx.funconnx.op_run.OpRun>`.
+    :class:`OpRun <onnx.reference.op_run.OpRun>`.
     It must also define attribute `op_domain`.
     Here is an example which computes :math:`\\frac{1}{X + \\alpha}`.
 
     .. exec_code::
 
-        from onnx.funconnx.op_run import OpRun
+        from onnx.reference.op_run import OpRun
 
         class InvAlpha(OpRun):
 
@@ -91,7 +91,7 @@ class ReferenceRuntime:
     .. exec_code::
 
         import numpy as np
-        from onnx.funconnx.aionnx._op_list import Celu
+        from onnx.reference.ops._op_list import Celu
 
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Celu.eval(x, alpha=0.5)
@@ -102,7 +102,7 @@ class ReferenceRuntime:
     .. exec_code::
 
         import numpy as np
-        from onnx.funconnx.aionnx import load_op
+        from onnx.reference.ops import load_op
 
         Celu = load_op("", "Celu")  # domain is ""
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)

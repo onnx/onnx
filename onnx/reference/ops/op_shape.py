@@ -3,7 +3,7 @@
 
 from typing import Optional, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun

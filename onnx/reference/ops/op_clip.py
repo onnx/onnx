@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun
-from ._op import OpRunUnaryNum
 
 
-class Clip_6(OpRunUnaryNum):
+class Clip_6(OpRun):
     def _run(self, data, min=None, max=None):  # type: ignore
         amin = min
         amax = max

@@ -3,7 +3,7 @@
 
 import math
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ..op_run import OpRun
 

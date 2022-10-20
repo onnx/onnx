@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,R0915,W0613,W0221
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ..op_run import OpRun
 from .op_concat_from_sequence import _concat_from_sequence

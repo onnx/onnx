@@ -4,7 +4,7 @@
 from enum import IntEnum
 from typing import List
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ..op_run import OpRun
 

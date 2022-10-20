@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,W0221
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ...helper import tensor_dtype_to_np_dtype
 from ..op_run import OpRun

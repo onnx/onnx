@@ -845,6 +845,6 @@ TestOnnxBackEndWithReferenceRuntime.add_test_methods()
 if __name__ == "__main__":
     cl = TestOnnxBackEndWithReferenceRuntime()
     cl.setUpClass(True)
-    # cl.test_stft()
+    cl.test__pytorch_operator_operator_clip()
     # stop
     unittest.main(verbosity=2)

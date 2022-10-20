@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221,R0913,W0613
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ...defs import onnx_opset_version
 from ..op_run import OpRun

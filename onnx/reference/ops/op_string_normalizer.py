@@ -5,7 +5,7 @@ import locale as pylocale
 import unicodedata
 import warnings
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ..op_run import OpRun, RuntimeTypeError
 

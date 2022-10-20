@@ -4,7 +4,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ..defs import get_all_schemas_with_history, get_schema, onnx_opset_version
 from ..helper import make_node

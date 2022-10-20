@@ -3,7 +3,7 @@
 
 from warnings import catch_warnings, simplefilter
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ._op import OpRunUnaryNum
 

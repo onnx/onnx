@@ -4,7 +4,7 @@
 import itertools
 from typing import Optional, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from ..op_run import OpRun
 from ._op_common_indices import _get_index, _get_indices
