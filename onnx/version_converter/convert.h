@@ -476,6 +476,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("Constant", OpSetID(13), OpSetID(12)));
     registerAdapter(make_unique<AxesInputToAttribute>("ReduceSum", OpSetID(13), OpSetID(12)));
     registerAdapter(make_unique<AxesInputToAttribute>("Squeeze", OpSetID(13), OpSetID(12)));
+    registerAdapter(make_unique<CompatibleAdapter>("Sub", OpSetID(13), OpSetID(12)));
     registerAdapter(make_unique<AxesInputToAttribute>("Unsqueeze", OpSetID(13), OpSetID(12)));
     registerAdapter(make_unique<Split_13_12>());
 
