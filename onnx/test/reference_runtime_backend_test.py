@@ -843,8 +843,4 @@ TestOnnxBackEndWithReferenceRuntime.add_test_methods()
 
 
 if __name__ == "__main__":
-    cl = TestOnnxBackEndWithReferenceRuntime()
-    cl.setUpClass(True)
-    cl.test_range_float_type_positive_delta_expanded()
-    #stop
     unittest.main(verbosity=2)

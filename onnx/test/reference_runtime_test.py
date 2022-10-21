@@ -290,7 +290,9 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="max"):
-            lr, f = TestRuntimeReferenceRuntime._linear_regression(clip=True, min_value=None)
+            lr, f = TestRuntimeReferenceRuntime._linear_regression(
+                clip=True, min_value=None
+            )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
@@ -302,7 +304,9 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="min"):
-            lr, f = TestRuntimeReferenceRuntime._linear_regression(clip=True, max_value=None)
+            lr, f = TestRuntimeReferenceRuntime._linear_regression(
+                clip=True, max_value=None
+            )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)

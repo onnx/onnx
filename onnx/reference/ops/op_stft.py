@@ -39,7 +39,6 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
         new_dim = sliced_x.shape[-2:-1]
         missing = (window_size - new_dim[0],)
         new_shape = sliced_x.shape[:-2] + missing + sliced_x.shape[-1:]
-        print(sliced_x.shape, begin, end, new_shape)
         cst = np.zeros(new_shape, dtype=x.dtype)
         pad_sliced_x = _concat(sliced_x, cst, axis=-2)
 
