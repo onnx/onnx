@@ -6,10 +6,10 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 
-from ..defs import get_all_schemas_with_history, get_schema, onnx_opset_version
-from ..helper import make_node
-from ..numpy_helper import to_array
-from ..onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
+from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
+from onnx.helper import make_node
+from onnx.numpy_helper import to_array
+from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 
 
 def _split_class_name(name):  # type: ignore

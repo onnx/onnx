@@ -6,8 +6,8 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.random import RandomState  # type: ignore
 
-from ...defs import onnx_opset_version
-from ..op_run import OpRun
+from onnx.defs import onnx_opset_version
+from onnx.reference.op_run import OpRun
 
 
 def _dropout(

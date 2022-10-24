@@ -5,7 +5,7 @@ from typing import Any, List
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 def _concat_from_sequence(seq: List[Any], axis: int, new_axis: int = 0) -> np.ndarray:

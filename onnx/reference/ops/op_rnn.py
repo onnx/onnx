@@ -3,8 +3,8 @@
 
 import numpy as np
 
-from ...defs import onnx_opset_version
-from ..op_run import OpRun
+from onnx.defs import onnx_opset_version
+from onnx.reference.op_run import OpRun
 
 
 class CommonRNN(OpRun):

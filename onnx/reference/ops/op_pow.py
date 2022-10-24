@@ -5,7 +5,7 @@ from warnings import catch_warnings, simplefilter
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 class Pow(OpRun):

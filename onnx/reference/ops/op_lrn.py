@@ -5,7 +5,7 @@ import math
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 class LRN(OpRun):

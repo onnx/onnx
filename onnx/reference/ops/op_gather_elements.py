@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 def gather_numpy_2(self: np.ndarray, index: np.ndarray) -> np.ndarray:

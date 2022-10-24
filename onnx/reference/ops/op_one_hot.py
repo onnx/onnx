@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 def _one_hot(indices, depth, axis=-1, dtype=np.float32):  # type: ignore

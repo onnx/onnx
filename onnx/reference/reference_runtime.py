@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from .. import load, numpy_helper
-from ..defs import onnx_opset_version
-from ..onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto
+from onnx import load, numpy_helper
+from onnx.defs import onnx_opset_version
+from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto
 from .op_run import OpRun
 
 

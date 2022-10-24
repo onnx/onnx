@@ -3,8 +3,8 @@
 
 import numpy as np
 
-from ...defs import onnx_opset_version
-from ..op_run import RuntimeTypeError
+from onnx.defs import onnx_opset_version
+from onnx.reference.op_run import RuntimeTypeError
 from ._op import OpRunReduceNumpy
 
 

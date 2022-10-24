@@ -4,8 +4,8 @@ from typing import Any, Dict
 
 import numpy as np
 
-from ...onnx_pb import NodeProto
-from ..op_run import OpRun, RuntimeTypeError
+from onnx.onnx_pb import NodeProto
+from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 
 class OpRunUnary(OpRun):  # pylint: disable=W0223

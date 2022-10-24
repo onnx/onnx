@@ -3,9 +3,9 @@
 
 import numpy as np
 
-from ...helper import tensor_dtype_to_np_dtype
-from ...onnx_pb import TensorProto
-from ..op_run import OpRun
+from onnx.helper import tensor_dtype_to_np_dtype
+from onnx.onnx_pb import TensorProto
+from onnx.reference.op_run import OpRun
 
 
 class EyeLike(OpRun):

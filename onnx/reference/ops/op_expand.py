@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 def common_reference_implementation(data: np.ndarray, shape: np.ndarray) -> np.ndarray:

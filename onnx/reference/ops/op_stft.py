@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 from .op_concat_from_sequence import _concat_from_sequence
 from .op_dft import _cfft as _dft
 from .op_slice import _slice

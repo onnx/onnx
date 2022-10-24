@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 def _cartesian(arrays, out=None):  # type: ignore

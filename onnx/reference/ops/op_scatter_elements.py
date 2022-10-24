@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: ignore

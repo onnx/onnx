@@ -5,7 +5,7 @@ from typing import Tuple
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 def _gather_nd_impl(

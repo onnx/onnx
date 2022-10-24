@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ..op_run import OpRun
+from onnx.reference.op_run import OpRun
 
 
 def _scatter_nd_impl(data, indices, updates, reduction=None):  # type: ignore

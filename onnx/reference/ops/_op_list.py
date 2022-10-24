@@ -12,8 +12,8 @@ did not change the implementation.
 import textwrap
 from typing import Any, Union
 
-from ...defs import get_schema, onnx_opset_version
-from ..op_run import OpFunction, OpRun, _split_class_name
+from onnx.defs import get_schema, onnx_opset_version
+from onnx.reference.op_run import OpFunction, OpRun, _split_class_name
 from .op_abs import Abs
 from .op_acos import Acos
 from .op_acosh import Acosh
@@ -258,7 +258,7 @@ def load_op(
         # maybe the operator can be replacted by a function
         schema = get_schema(op_type, version, "")  # type: ignore
         if schema.has_function:  # type: ignore
-            from ..reference_runtime import ReferenceRuntime
+            from onnx.reference import ReferenceRuntime
 
             body = schema.function_body  # type: ignore
             sess = ReferenceRuntime(body)

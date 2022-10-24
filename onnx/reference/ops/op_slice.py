@@ -5,7 +5,7 @@ from typing import Optional
 
 import numpy as np
 
-from ...defs import onnx_opset_version
+from onnx.defs import onnx_opset_version
 from ._op import OpRun
 
 

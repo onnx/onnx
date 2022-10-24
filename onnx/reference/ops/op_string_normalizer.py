@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np
 
-from ..op_run import OpRun, RuntimeTypeError
+from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 
 class StringNormalizer(OpRun):
