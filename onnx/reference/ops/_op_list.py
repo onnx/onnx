@@ -259,10 +259,10 @@ def load_op(
         # maybe the operator can be replacted by a function
         schema = get_schema(op_type, version, "")  # type: ignore
         if schema.has_function:  # type: ignore
-            from onnx.reference import ReferenceRuntime
+            from onnx.reference import ReferenceEvaluator
 
             body = schema.function_body  # type: ignore
-            sess = ReferenceRuntime(body)
+            sess = ReferenceEvaluator(body)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         found = False
     if not found:

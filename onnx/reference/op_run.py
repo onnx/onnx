@@ -179,9 +179,9 @@ class OpRun(ABC):
         Converts an attribute value into a python value.
         """
         if att.type == AttributeProto.GRAPH:
-            from .reference_runtime import ReferenceRuntime  # type: ignore
+            from .reference_evaluator import ReferenceEvaluator  # type: ignore
 
-            return ReferenceRuntime(
+            return ReferenceEvaluator(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),

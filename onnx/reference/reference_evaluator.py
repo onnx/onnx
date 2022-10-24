@@ -12,10 +12,13 @@ from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto
 from .op_run import OpRun
 
 
-class ReferenceRuntime:
+class ReferenceEvaluator:
     """
-    Executes an onnx model. The implementation relies on numpy
-    for the most past and C++ through pybind11.
+    Computes the outputs of an ONNX proto
+    (`ModelProto`, `FunctionProto`, `GraphProto`, `NodeProto`).
+    This is a pure python implementation of ONNX specifications.
+    Mismatches may remain between the official specifications and the implementation here.
+    In the case of such a mismatch, the official spec overrides this implementation.
 
     :param proto: :class:`onnx.ModelProto`, :class:`onnx.GraphProto`,
         :class:`onnx.FunctionProto`, :class:`onnx.NodeProto`,
@@ -33,26 +36,26 @@ class ReferenceRuntime:
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
     it uses this class to execute the subgraph or the function.
-    Next example shows how to run `ReferenceRuntime` with an onnx model
+    Next example shows how to run `ReferenceEvaluator` with an onnx model
     stored in file `model.onnx`.
 
     ::
 
         import numpy as np
-        from onnx.reference import ReferenceRuntime
+        from onnx.reference import ReferenceEvaluator
 
         X = np.array(...)
-        sess = ReferenceRuntime("model.onnx")
+        sess = ReferenceEvaluator("model.onnx")
         results = sess.run(None, {"X": X})
         print(results[0])  # display the first result
 
-    The class can be use any implementation available in folder
-    `aionnx <https://github.com/onnx/onnx/tree/main/onnx/runtime/aionnx>`_.
-    Adding an implementation requires two changes. The first is
+    The class can use any implementation available in folder
+    `ops <https://github.com/onnx/onnx/tree/main/onnx/reference/ops>`_.
+    Adding an implementation requires two changes. The first one is
     the implementation itself. Any existing node can be used as a template.
     The second is one line in file `_op_list.py
-    <https://github.com/onnx/onnx/tree/main/onnx/runtime/aionnx/_op_file.py>`_
-    to import the file and let the runtime know it exists.
+    <https://github.com/onnx/onnx/tree/main/onnx/reference/ops/_op_file.py>`_
+    to import the file and let the reference evaluator know it exists.
 
     This class can also be used to test an implementation of
     a custom operator. Let's assume this new operator
@@ -73,18 +76,19 @@ class ReferenceRuntime:
             def _run(self, x, alpha=None):  # type: ignore
                 # None must be the default value, it is automatically
                 # replaced by class OpRun with either the default value
-                # defined by ONNX or the value specified in the NodeProto.
+                # specified in the NodeProto or an attribute value defined
+                # in a `FunctionProto`.
                 return (1 / (x + alpha),)
 
     `alpha` is an attribute. It can be defined by the onnx node or
     be defined by the function using this node. It is safe to assume
     that attributes are known at the same time as the input.
-    Class `ReferenceRuntime` must know about this new implementation
+    Class `ReferenceEvaluator` must know about this new implementation
     and this can be done by specified argument *new_ops*.
 
     ::
 
-        sess = ReferenceRuntime(onnx_model, new_ops=[InvAlpha])
+        sess = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
         got = sess.run(None, {"X": x})[0]
 
     A specific node can be simply evaluated.
@@ -115,7 +119,7 @@ class ReferenceRuntime:
         self,
         proto: Any,
         opsets: Optional[Dict[str, int]] = None,
-        functions: Optional[List[Union["ReferenceRuntime", FunctionProto]]] = None,  # type: ignore
+        functions: Optional[List[Union["ReferenceEvaluator", FunctionProto]]] = None,  # type: ignore
         verbose: int = 0,
         new_ops: Optional[List[OpRun]] = None,
     ):
@@ -127,7 +131,7 @@ class ReferenceRuntime:
         elif isinstance(proto, bytes):
             proto = load(BytesIO(proto))
         self.proto_ = proto
-        self.functions_: Dict[Tuple[str, str], ReferenceRuntime] = {}
+        self.functions_: Dict[Tuple[str, str], ReferenceEvaluator] = {}
         self.attributes_: List[str] = []
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
@@ -176,10 +180,10 @@ class ReferenceRuntime:
             for f in functions:  # type: ignore
                 if isinstance(f, FunctionProto):
                     existing_functions = list(self.functions_.values())
-                    self.functions_[f.domain, f.name] = ReferenceRuntime(
+                    self.functions_[f.domain, f.name] = ReferenceEvaluator(
                         f, verbose=verbose, functions=existing_functions
                     )
-                elif isinstance(f, ReferenceRuntime):
+                elif isinstance(f, ReferenceEvaluator):
                     onx = f.proto_  # type: ignore
                     self.functions_[onx.domain, onx.name] = f
                 else:

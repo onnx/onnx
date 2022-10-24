@@ -28,7 +28,7 @@ from onnx.helper import (
     make_value_info,
 )
 from onnx.numpy_helper import from_array
-from onnx.reference import ReferenceRuntime
+from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_list import Celu
@@ -71,7 +71,7 @@ def make_sequence_value_info(name, elem_type, shape):
     return make_value_info(name, s_type, shape)
 
 
-class TestRuntimeReferenceRuntime(unittest.TestCase):
+class TestRuntimeReferenceEvaluator(unittest.TestCase):
     m2_def = """
         <
             ir_version: 7,
@@ -149,15 +149,17 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             raise AssertionError(f"checker fails for\n{str(onnx_model)}") from e
         return onnx_model, f
 
-    def test_ReferenceRuntime_exceptions(self):
+    def test_ReferenceEvaluator_exceptions(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         with self.assertRaises(TypeError):
-            ReferenceRuntime(X)
+            ReferenceEvaluator(X)
 
-    def test_ReferenceRuntime_no_attribute(self):
-        m = TestRuntimeReferenceRuntime._load_model(TestRuntimeReferenceRuntime.m2_def)
+    def test_ReferenceEvaluator_no_attribute(self):
+        m = TestRuntimeReferenceEvaluator._load_model(
+            TestRuntimeReferenceEvaluator.m2_def
+        )
         checker.check_model(m)
-        sess = ReferenceRuntime(m)
+        sess = ReferenceEvaluator(m)
         self.assertEqual(sess.input_names, ["B01", "B11", "B21"])
         self.assertEqual(sess.output_names, ["D0"])
         self.assertEqual(sess.opsets, {"": 10, "com.microsoft": 1})
@@ -168,10 +170,12 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         expected = (x + y) * (y - z)
         assert_allclose(expected, res)
 
-    def test_ReferenceRuntime_no_attribute_bytes(self):
-        m = TestRuntimeReferenceRuntime._load_model(TestRuntimeReferenceRuntime.m2_def)
+    def test_ReferenceEvaluator_no_attribute_bytes(self):
+        m = TestRuntimeReferenceEvaluator._load_model(
+            TestRuntimeReferenceEvaluator.m2_def
+        )
         checker.check_model(m)
-        sess = ReferenceRuntime(m.SerializeToString())
+        sess = ReferenceEvaluator(m.SerializeToString())
         self.assertEqual(sess.input_names, ["B01", "B11", "B21"])
         self.assertEqual(sess.output_names, ["D0"])
         self.assertEqual(sess.opsets, {"": 10, "com.microsoft": 1})
@@ -182,14 +186,16 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         expected = (x + y) * (y - z)
         assert_allclose(expected, res)
 
-    def test_ReferenceRuntime_no_attribute_verbose(self):
-        m = TestRuntimeReferenceRuntime._load_model(TestRuntimeReferenceRuntime.m2_def)
+    def test_ReferenceEvaluator_no_attribute_verbose(self):
+        m = TestRuntimeReferenceEvaluator._load_model(
+            TestRuntimeReferenceEvaluator.m2_def
+        )
         x = np.array([[0, 1], [2, 3]], dtype=np.float32)
         y = np.array([[4, 5], [6, 7]], dtype=np.float32)
         z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
 
         with self.subTest(level=2):
-            sess = ReferenceRuntime(m, verbose=2)
+            sess = ReferenceEvaluator(m, verbose=2)
             stdout = StringIO()
             with redirect_stdout(stdout):
                 sess.run(None, {"B01": x, "B11": y, "B21": z})
@@ -198,7 +204,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             self.assertEqual(log, out)
 
         with self.subTest(level=3):
-            sess = ReferenceRuntime(m, verbose=3)
+            sess = ReferenceEvaluator(m, verbose=3)
             stdout = StringIO()
             with redirect_stdout(stdout):
                 sess.run(None, {"B01": x, "B11": y, "B21": z})
@@ -219,7 +225,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             self.assertEqual(log, out)
 
         with self.subTest(level=4):
-            sess = ReferenceRuntime(m, verbose=4)
+            sess = ReferenceEvaluator(m, verbose=4)
             stdout = StringIO()
             with redirect_stdout(stdout):
                 sess.run(None, {"B01": x, "B11": y, "B21": z})
@@ -240,7 +246,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             self.assertEqual(log, out)
 
         with self.subTest(level=15):
-            sess = ReferenceRuntime(m, verbose=15)
+            sess = ReferenceEvaluator(m, verbose=15)
             stdout = StringIO()
             with redirect_stdout(stdout):
                 sess.run(None, {"B01": x, "B11": y, "B21": z})
@@ -266,65 +272,67 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             ).lstrip("\n")
             self.assertEqual(log, out)
 
-    def test_ReferenceRuntime_lr(self):
-        lr, f = TestRuntimeReferenceRuntime._linear_regression()
+    def test_ReferenceEvaluator_lr(self):
+        lr, f = TestRuntimeReferenceEvaluator._linear_regression()
         x = np.array([[0, 1], [2, 3]], dtype=np.float32)
         a = np.array([1, 1], dtype=np.float32)
         b = np.array([11], dtype=np.float32)
         expected = f(x, a, b)
-        sess = ReferenceRuntime(lr)
+        sess = ReferenceEvaluator(lr)
         got = sess.run(None, {"X": a, "A": a, "B": b})[0]
         assert_allclose(expected, got)
 
-    def test_ReferenceRuntime_lr_clip(self):
+    def test_ReferenceEvaluator_lr_clip(self):
         with self.subTest(opt="min+max"):
-            lr, f = TestRuntimeReferenceRuntime._linear_regression(clip=True)
+            lr, f = TestRuntimeReferenceEvaluator._linear_regression(clip=True)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = ReferenceRuntime(lr)
+            sess = ReferenceEvaluator(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_allclose(expected, got)
 
         with self.subTest(opt="max"):
-            lr, f = TestRuntimeReferenceRuntime._linear_regression(
+            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
                 clip=True, min_value=None
             )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = ReferenceRuntime(lr)
+            sess = ReferenceEvaluator(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_allclose(expected, got)
 
         with self.subTest(opt="min"):
-            lr, f = TestRuntimeReferenceRuntime._linear_regression(
+            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
                 clip=True, max_value=None
             )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = ReferenceRuntime(lr)
+            sess = ReferenceEvaluator(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_11")
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_allclose(expected, got)
 
-    def test_ReferenceRuntime_lr_clip_6(self):
+    def test_ReferenceEvaluator_lr_clip_6(self):
         with self.subTest(opt="min+max"):
-            lr, f = TestRuntimeReferenceRuntime._linear_regression(clip=True, opset=10)
+            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
+                clip=True, opset=10
+            )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = ReferenceRuntime(lr)
+            sess = ReferenceEvaluator(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.min, -1)
@@ -333,14 +341,14 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="max"):
-            lr, f = TestRuntimeReferenceRuntime._linear_regression(
+            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
                 clip=True, opset=10, min_value=None
             )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = ReferenceRuntime(lr)
+            sess = ReferenceEvaluator(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.max, 1)
@@ -349,14 +357,14 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="min"):
-            lr, f = TestRuntimeReferenceRuntime._linear_regression(
+            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
                 clip=True, opset=10, max_value=None
             )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
             expected = f(x, a, b)
-            sess = ReferenceRuntime(lr)
+            sess = ReferenceEvaluator(lr)
             last_node = sess.rt_nodes_[-1]
             self.assertEqual(last_node.__class__.__name__, "Clip_6")
             self.assertEqual(last_node.min, -1)
@@ -410,7 +418,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         """
         )
 
-        sess = ReferenceRuntime(m)
+        sess = ReferenceEvaluator(m)
         x = np.array([0, 1, 3], dtype=np.uint8).reshape((1, 1, 3))
         result = sess.run(None, {"x": x})[0]
         expected = x
@@ -425,7 +433,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         check_model(onnx_model)
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
         expected = x.sum(axis=1, keepdims=1)
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x})[0]
         assert_allclose(expected, got)
 
@@ -440,7 +448,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
         a = np.array([1], dtype=np.int64)
         expected = x.sum(axis=1, keepdims=1)
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x, "A": a})[0]
         assert_allclose(expected, got)
 
@@ -455,7 +463,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
         a = np.array([], dtype=np.int64)
         expected = x.sum(keepdims=1)
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x, "A": a})[0]
         assert_allclose(expected, got)
 
@@ -467,7 +475,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 13)])
         check_model(onnx_model)
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x})[0]
         assert_allclose(x, got)
 
@@ -482,7 +490,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         x = np.arange(4).reshape((2, 2)).astype(np.float32)
         y = np.array([2], dtype=np.float32)
         expected = x > y
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(expected, got)
 
@@ -491,7 +499,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         x = np.arange(4).reshape((2, 2)).astype(np.float32)
         y = np.array([2], dtype=np.float32)
         expected = x > y
-        sess = ReferenceRuntime(node1)
+        sess = ReferenceEvaluator(node1)
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(expected, got)
 
@@ -506,7 +514,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         x = np.arange(4).reshape((2, 2)).astype(np.float32)
         y = np.array([2], dtype=np.float32)
         expected = x >= y
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(expected, got)
 
@@ -543,8 +551,8 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         graph = make_graph([greater, node_if], "g", [X], [Z], initializer=[zero])
         model_def = make_model(graph)
 
-        sess = ReferenceRuntime(model_def)
-        self.assertEqual(str(sess), "ReferenceRuntime(X) -> Z")
+        sess = ReferenceEvaluator(model_def)
+        self.assertEqual(str(sess), "ReferenceEvaluator(X) -> Z")
 
         x = np.array([1, 2], dtype=np.float32)
         got = sess.run(None, {"X": x})[0]
@@ -600,7 +608,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         )
         m.functions.extend([f])
 
-        sess = ReferenceRuntime(m)
+        sess = ReferenceEvaluator(m)
         result = sess.run(None, {"cond": np.array(True)})
         expected = np.array([1, 2, 3, 4, 5], dtype=np.float32)
         assert_allclose(expected, result[0])
@@ -653,7 +661,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         onnx_model = make_model(
             graph, opset_imports=opset_imports, functions=[linear_regression]
         )
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         x = np.arange(6).reshape((3, 2)).astype(np.float32)
         a = np.array([1, -1], dtype=np.float32)
         result = sess.run(None, {"X": x, "A": a})[0]
@@ -691,26 +699,26 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
         with self.assertRaises(NotImplementedError):
-            ReferenceRuntime(onnx_model)
+            ReferenceEvaluator(onnx_model)
 
         node1 = make_node("_InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(TypeError):
-            ReferenceRuntime(onnx_model, new_ops=[_InvAlpha])
+            ReferenceEvaluator(onnx_model, new_ops=[_InvAlpha])
 
         node1 = make_node("InvAlpha_", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(NotImplementedError):
-            ReferenceRuntime(onnx_model, new_ops=[InvAlpha_])
+            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha_])
 
         node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(ValueError):
-            ReferenceRuntime(onnx_model, new_ops=[InvAlpha, InvAlpha])
-        sess = ReferenceRuntime(onnx_model, new_ops=[InvAlpha])
+            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha, InvAlpha])
+        sess = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
         got = sess.run(None, {"X": x})[0]
         expected = 1 / (x + 0.5)
         assert_allclose(expected, got)
@@ -847,7 +855,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
             [1.0, 1.0, 2.0, 1.0, 2.0, 3.0, 1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0, 4.0, 5.0],
             dtype=np.float32,
         )
-        oinf = ReferenceRuntime(model_def)
+        oinf = ReferenceEvaluator(model_def)
         inputs = {"trip_count": trip_count, "cond": cond, "seq_empty": seq_empty}
         got = oinf.run(None, inputs)
         assert_allclose(expected, got[0])
@@ -859,7 +867,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         graph = make_graph([node1], "g", [X], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": np.zeros((2, 4), dtype=np.float32) + 0.5})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -872,7 +880,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         graph = make_graph([node1], "g", [], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -886,7 +894,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         graph = make_graph([node1], "g", [X], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": np.zeros((2, 4), dtype=np.float32)})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -899,7 +907,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         graph = make_graph([node1], "g", [], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -911,7 +919,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         graph = make_graph([node1], "g", [X], [Y])
         onnx_model = make_model(graph)
         check_model(onnx_model)
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": np.zeros((2, 4), dtype=np.float32)})[0]
         self.assertEqual(got.shape, (2, 4))
         self.assertEqual(got.dtype, np.float32)
@@ -958,7 +966,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
 
         sess1 = ort.InferenceSession(onnx_model.SerializeToString())
-        sess2 = ReferenceRuntime(onnx_model)
+        sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 5, 6
         for i in range(sH):
@@ -1010,7 +1018,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
 
         sess1 = ort.InferenceSession(onnx_model.SerializeToString())
-        sess2 = ReferenceRuntime(onnx_model)
+        sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 3, 3
         for i in range(sH):
@@ -1138,7 +1146,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         )
         graph_conv = make_graph([node], "g", [X, W], [Y1])
         onnx_model_conv = make_model(graph_conv, opset_imports=[make_opsetid("", 16)])
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
 
         try:
             import onnxruntime as ort
@@ -1231,7 +1239,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         )
         graph = make_graph([node], "g", [X, IS, BS], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
 
         X = np.array(
             [
@@ -1272,7 +1280,7 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
         )
         graph = make_graph([node], "g", [X, IS, BS], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-        sess = ReferenceRuntime(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
 
         fold = torch.nn.Fold(
             output_size=tuple(image_shape),
@@ -1329,5 +1337,5 @@ class TestRuntimeReferenceRuntime(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # TestRuntimeReferenceRuntime().test_conv_1d_group()
+    # TestRuntimeReferenceEvaluator().test_conv_1d_group()
     unittest.main(verbosity=2)
