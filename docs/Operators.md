@@ -19168,8 +19168,6 @@ data = np.array(
     dtype=np.float32,
 )
 reduced = np.maximum.reduce(data, axis=axes, keepdims=keepdims == 1)
-# print(reduced)
-[[[60.0]]]
 
 expect(
     node,
@@ -20592,6 +20590,10 @@ expect(node, inputs=[x], outputs=[y], name="test_relu")
   Shape (second input) could be an empty shape, which means converting to a scalar.
   The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
+  If the attribute 'allowzero' is set, it is invalid for the specified shape to
+  contain both a zero value and -1, as the value of the dimension corresponding
+  to -1 cannot be determined uniquely.
+
 #### Version
 
 This version of the operator has been available since version 14 of the default ONNX operator set.
@@ -21558,6 +21560,7 @@ node = onnx.helper.make_node(
     outputs=["Y"],
     mode="linear",
     coordinate_transformation_mode="tf_crop_and_resize",
+    axes=axes,
 )
 
 data = np.array(
@@ -21612,6 +21615,7 @@ node = onnx.helper.make_node(
     outputs=["Y"],
     mode="linear",
     coordinate_transformation_mode="tf_crop_and_resize",
+    axes=axes,
 )
 
 data = np.array(
