@@ -4,6 +4,7 @@
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
 from ._op_common_indices import _get_indices, _is_out
 
 

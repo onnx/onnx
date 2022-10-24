@@ -7,6 +7,7 @@ from typing import Optional, Tuple
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
 from ._op_common_indices import _get_index, _get_indices
 
 

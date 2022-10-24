@@ -2,6 +2,7 @@
 # pylint: disable=W0221
 
 from onnx.helper import np_dtype_to_tensor_dtype
+
 from ._op_common_random import _CommonRandom
 
 

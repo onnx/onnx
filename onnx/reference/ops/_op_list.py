@@ -14,6 +14,7 @@ from typing import Any, Union
 
 from onnx.defs import get_schema, onnx_opset_version
 from onnx.reference.op_run import OpFunction, OpRun, _split_class_name
+
 from .op_abs import Abs
 from .op_acos import Acos
 from .op_acosh import Acosh

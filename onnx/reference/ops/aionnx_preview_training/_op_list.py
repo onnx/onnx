@@ -5,6 +5,7 @@ import textwrap
 from typing import Any, Union
 
 from onnx.reference.op_run import OpFunction, _split_class_name
+
 from ._op_run_training import OpRunTraining
 from .op_adagrad import Adagrad
 from .op_adam import Adam
