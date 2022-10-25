@@ -2595,4 +2595,128 @@ ONNX_OPERATOR_SET_SCHEMA(
           schema.BuildFunction(functionProto);
           return true;
         }));
+
+static const char* GroupNormalization_ver18_doc = R"DOC(
+A GroupNormalization function. Carries out group normalization as described in 
+the paper https://arxiv.org/abs/1803.08494 
+
+This operator transforms input according to
+```
+y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
+```
+where the mean and variance are computed per instance per group of channels, and 
+`scale` and `bias` should be specified for each group of channels. The number of 
+groups `num_groups` should be divisible by the number of channels so that there are 
+an equal number of channels per group.
+
+When the number of groups is the same as the number of channels, this operator is 
+equivalent to InstanceNormalization. When there is only one group, this operator 
+is equivalent to LayerNormalization.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GroupNormalization,
+    18,
+    OpSchema()
+        .SetDoc(GroupNormalization_ver18_doc)
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
+        .Attr("num_groups", "The number of groups of channels. It should be a divisor of the number of channels `C`.", AttributeProto::INT, true)
+        .Input(
+            0,
+            "X",
+	    "Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, "
+	    "`C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are "
+	    "computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are "
+	    "in the form of `(N x C x D1 x D2 ... Dn)`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "scale",
+            "Scale tensor of shape `(num_groups)`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "bias",
+            "Bias tensor of shape `(num_groups)`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "The output tensor of the same shape as `X`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); })
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
+          auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+            tp.add_dims(1);
+            return tp;
+          };
+          FunctionBuilder builder(functionProto);
+          builder.Add("Epsilon = Constant <value_float: float = @epsilon> ()")
+              .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
+              .Add("Rank = Size (XShape)") // rank of input tensor: scalar
+              .Add("One1D = Constant()", "value", mktensor(1)) // [1] : 1D tensor
+              .Add("Two1D = Constant()", "value", mktensor(2)) // [1] : 1D tensor
+	      .Add("C = Slice (XShape, One1D, Two1D)") // number of channels
+	      .Add("NumGroups = Constant <value_int: int = @num_groups> ()")
+	      .Add("GroupSize = Div (C, NumGroups)")
+              .Add("Zero1D = Constant()", "value", mktensor(0)) // [0] : 1D tensor
+              .Add("IntMax1D = Constant()", "value", mktensor(LONG_MAX)) // [LONG_MAX] : 1D tensor
+	      .Add("N = Slice (XShape, Zero1D, One1D)") // batch size
+	      .Add("HW = Slice (XShape, Two1D, IntMax1D)") // data instance shape
+              
+	      // NewShape = [N, num_groups, group_size, H, W]
+	      .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, HW)")
+	      .Add("XReshaped = Reshape (X, NewShape)")
+	      .Add("RankPlusOne = Add (Rank, One1D)")
+	      .Add("Axes = Range(Two1D, RankPlusOne, One1D)")
+	      .Add("Mean = ReduceMean <axes = Axes> (XReshaped)")
+	      .Add("Square = Mul (XReshaped, XReshaped)")
+	      .Add("MeanOfSquare = ReduceMean <axes = Axes> (Square)")
+	      .Add("SquareOfMean = Mul (Mean, Mean)")
+	      .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
+	      .Add("VarPlusEpsilon = Add (Var, Epsilon)")
+	      .Add("StdDev = Sqrt (VarPlusEpsilon)")
+	      .Add("Deviation = Sub (XReshaped, Mean)")
+	      .Add("Normalized = Div (Deviation, StdDev)")
+
+	      // Reshape scale and bias for broadcasting
+	      .Add("NumExpandedAxes = Sub (Rank, Two1D)")
+	      .Add("DimOnes = ConstantOfShape (NumExpandedAxes)", "value", mktensor(1))
+              .Add("NegOne1D = Constant()", "value", mktensor(-1)) // [-1] : 1D tensor
+	      .Add("ScaleShape = Concat <axis = 0> (NegOne1D, DimOnes)")
+	      .Add("ScaleReshaped = Reshape (Scale, ScaleShape)")
+	      .Add("BiasReshaped = Reshape (Bias, ScaleShape)")
+
+	      // Calculate scaled and biased output
+	      .Add("Scaled = Mul (ScaleReshaped, Normalized)")
+	      .Add("Biased = Add (Scaled, BiasReshaped)")
+	      .Add("Y = Reshape (Biased, XShape)");
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
 } // namespace ONNX_NAMESPACE

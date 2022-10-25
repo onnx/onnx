@@ -176,6 +176,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
+|<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-18">18</a>|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
@@ -9843,6 +9844,133 @@ expect(
     inputs=[X, Grid],
     outputs=[Y_reflection],
     name="test_gridsample_reflection_padding",
+)
+```
+
+</details>
+
+
+### <a name="GroupNormalization"></a><a name="groupnormalization">**GroupNormalization**</a>
+
+  A GroupNormalization function. Carries out group normalization as described in
+  the paper https://arxiv.org/abs/1803.08494
+
+  This operator transforms input according to
+  ```
+  y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
+  ```
+  where the mean and variance are computed per instance per group of channels, and
+  `scale` and `bias` should be specified for each group of channels. The number of
+  groups `num_groups` should be divisible by the number of channels so that there are
+  an equal number of channels per group.
+
+  When the number of groups is the same as the number of channels, this operator is
+  equivalent to InstanceNormalization. When there is only one group, this operator
+  is equivalent to LayerNormalization.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>num_groups</tt> : int (required)</dt>
+<dd>The number of groups of channels. It should be a divisor of the number of channels `C`.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, `C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are in the form of `(N x C x D1 x D2 ... Dn)`.</dd>
+<dt><tt>scale</tt> (differentiable) : T</dt>
+<dd>Scale tensor of shape `(num_groups)`.</dd>
+<dt><tt>bias</tt> (differentiable) : T</dt>
+<dd>Bias tensor of shape `(num_groups)`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>The output tensor of the same shape as `X`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>groupnormalization</summary>
+
+```python
+def _groupnorm_test_mode(x, num_groups, scale, bias, epsilon=1e-5):
+    dims_x = len(x.shape)
+    # Assume channel is first dim
+    assert(x.shape[1] % num_groups == 0)
+    group_size = x.shape[1] // num_groups
+    # Reshape to [N, group_size, C/group_size, H, W, ...]
+    new_shape = [x.shape[0], num_groups, group_size] + list(x.shape[2:])
+    x_reshaped = x.reshape(new_shape)
+    axes = tuple(range(2,len(new_shape)))
+    mean = np.mean(x_reshaped, axis=axes, keepdims=True)
+    var = np.var(x_reshaped, axis=axes, keepdims=True)
+    dim_ones = (1,) * (len(new_shape) - 2)
+    scale = scale.reshape(-1, *dim_ones)
+    bias = bias.reshape(-1, *dim_ones)
+    res = scale * (x_reshaped - mean) / np.sqrt(var + epsilon) + bias
+    return res.reshape(x.shape)
+
+
+x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+num_groups = 2
+scale = np.random.randn(num_groups)
+bias = np.random.randn(num_groups)
+y = _groupnorm_test_mode(x, num_groups, scale, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_groupnorm_example"
+)
+
+x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+num_groups = 2
+scale = np.random.randn(num_groups)
+bias = np.random.randn(num_groups)
+epsilon = 1e-2
+y = _groupnorm_test_mode(x, num_groups, scale, bias, epsilon).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    epsilon=epsilon,
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_groupnorm_epsilon"
 )
 ```
 
