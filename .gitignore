@@ -106,6 +106,6 @@ venv
 
 # documentation
 docs/docsgen/source/onnx-api/modules/
-docs/docsgen/source/onnx_doc_folder/
+docs/docsgen/source/operators/
 docs/docsgen/**/*.onnx
 docs/docsgen/**/*.pb
