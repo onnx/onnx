@@ -2669,22 +2669,24 @@ ONNX_OPERATOR_SET_SCHEMA(
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {
           // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
-          auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
-            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
-            tp.add_dims(1);
-            return tp;
-          };
+          auto* epsilon_attr = ctx.getAttribute("epsilon");
+          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+          auto* num_groups_attr = ctx.getAttribute("num_groups");
+          if (num_groups_attr == nullptr)
+            return false;
+          int64_t num_groups = num_groups_attr->i();
+
           FunctionBuilder builder(functionProto);
-          builder.Add("Epsilon = Constant <value_float: float = @epsilon> ()")
+          builder.Const1D("Epsilon", epsilon)
               .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
               .Add("Rank = Size (XShape)") // rank of input tensor: scalar
-              .Add("One1D = Constant()", "value", mktensor(1)) // [1] : 1D tensor
-              .Add("Two1D = Constant()", "value", mktensor(2)) // [1] : 1D tensor
+	      .Const1D("One1D", int64_t(1))
+	      .Const1D("Two1D", int64_t(2))
 	      .Add("C = Slice (XShape, One1D, Two1D)") // number of channels
-	      .Add("NumGroups = Constant <value_int: int = @num_groups> ()")
+	      .Const1D("NumGroups", num_groups)
 	      .Add("GroupSize = Div (C, NumGroups)")
-              .Add("Zero1D = Constant()", "value", mktensor(0)) // [0] : 1D tensor
-              .Add("IntMax1D = Constant()", "value", mktensor(LONG_MAX)) // [LONG_MAX] : 1D tensor
+              .Const1D("Zero1D", int64_t(0))
+	      .Const1D("IntMax1D", std::numeric_limits<int64_t>::max())
 	      .Add("N = Slice (XShape, Zero1D, One1D)") // batch size
 	      .Add("HW = Slice (XShape, Two1D, IntMax1D)") // data instance shape
               
@@ -2705,8 +2707,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 	      // Reshape scale and bias for broadcasting
 	      .Add("NumExpandedAxes = Sub (Rank, Two1D)")
-	      .Add("DimOnes = ConstantOfShape (NumExpandedAxes)", "value", mktensor(1))
-              .Add("NegOne1D = Constant()", "value", mktensor(-1)) // [-1] : 1D tensor
+	      .Add("DimOnes = ConstantOfShape (NumExpandedAxes)", "value", std::vector<int64_t>{1})
+	      .Const1D("NegOne1D", int64_t(-1))
 	      .Add("ScaleShape = Concat <axis = 0> (NegOne1D, DimOnes)")
 	      .Add("ScaleReshaped = Reshape (Scale, ScaleShape)")
 	      .Add("BiasReshaped = Reshape (Bias, ScaleShape)")
