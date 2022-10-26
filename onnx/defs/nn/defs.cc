@@ -2620,14 +2620,18 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(GroupNormalization_ver18_doc)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
-        .Attr("num_groups", "The number of groups of channels. It should be a divisor of the number of channels `C`.", AttributeProto::INT, true)
+        .Attr(
+            "num_groups",
+            "The number of groups of channels. It should be a divisor of the number of channels `C`.",
+            AttributeProto::INT,
+            true)
         .Input(
             0,
             "X",
-	    "Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, "
-	    "`C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are "
-	    "computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are "
-	    "in the form of `(N x C x D1 x D2 ... Dn)`.",
+            "Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, "
+            "`C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are "
+            "computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are "
+            "in the form of `(N x C x D1 x D2 ... Dn)`.",
             "T",
             OpSchema::Single,
             true,
@@ -2665,60 +2669,64 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); })
-        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
-                                                   const OpSchema& schema,
-                                                   FunctionProto& functionProto) {
-          // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
-          auto* epsilon_attr = ctx.getAttribute("epsilon");
-          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
-          auto* num_groups_attr = ctx.getAttribute("num_groups");
-          if (num_groups_attr == nullptr)
-            return false;
-          int64_t num_groups = num_groups_attr->i();
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+              // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
+              auto* epsilon_attr = ctx.getAttribute("epsilon");
+              float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+              auto* num_groups_attr = ctx.getAttribute("num_groups");
+              if (num_groups_attr == nullptr)
+                return false;
+              int64_t num_groups = num_groups_attr->i();
 
-          FunctionBuilder builder(functionProto);
-          builder.Const1D("Epsilon", epsilon)
-              .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
-              .Add("Rank = Size (XShape)") // rank of input tensor: scalar
-	      .Const1D("One1D", int64_t(1))
-	      .Const1D("Two1D", int64_t(2))
-	      .Add("C = Slice (XShape, One1D, Two1D)") // number of channels
-	      .Const1D("NumGroups", num_groups)
-	      .Add("GroupSize = Div (C, NumGroups)")
-              .Const1D("Zero1D", int64_t(0))
-	      .Const1D("IntMax1D", std::numeric_limits<int64_t>::max())
-	      .Add("N = Slice (XShape, Zero1D, One1D)") // batch size
-	      .Add("HW = Slice (XShape, Two1D, IntMax1D)") // data instance shape
-              
-	      // NewShape = [N, num_groups, group_size, H, W]
-	      .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, HW)")
-	      .Add("XReshaped = Reshape (X, NewShape)")
-	      .Add("RankPlusOne = Add (Rank, One1D)")
-	      .Add("Axes = Range(Two1D, RankPlusOne, One1D)")
-	      .Add("Mean = ReduceMean <axes = Axes> (XReshaped)")
-	      .Add("Square = Mul (XReshaped, XReshaped)")
-	      .Add("MeanOfSquare = ReduceMean <axes = Axes> (Square)")
-	      .Add("SquareOfMean = Mul (Mean, Mean)")
-	      .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
-	      .Add("VarPlusEpsilon = Add (Var, Epsilon)")
-	      .Add("StdDev = Sqrt (VarPlusEpsilon)")
-	      .Add("Deviation = Sub (XReshaped, Mean)")
-	      .Add("Normalized = Div (Deviation, StdDev)")
+              auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+              int64_t input_ndim = input_shape.dim_size();
+              std::vector<int64_t> reduce_axes;
+	      for (int64_t i = 2; i < input_ndim + 1; i++) reduce_axes.push_back(i); 
 
-	      // Reshape scale and bias for broadcasting
-	      .Add("NumExpandedAxes = Sub (Rank, Two1D)")
-	      .Add("DimOnes = ConstantOfShape (NumExpandedAxes)", "value", std::vector<int64_t>{1})
-	      .Const1D("NegOne1D", int64_t(-1))
-	      .Add("ScaleShape = Concat <axis = 0> (NegOne1D, DimOnes)")
-	      .Add("ScaleReshaped = Reshape (Scale, ScaleShape)")
-	      .Add("BiasReshaped = Reshape (Bias, ScaleShape)")
+              FunctionBuilder builder(functionProto);
+              builder.Const1D("Epsilon", epsilon)
+                  .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
+                  .Add("Rank = Size (XShape)") // rank of input tensor: scalar
+                  .Const1D("One1D", int64_t(1))
+                  .Const1D("Two1D", int64_t(2))
+                  .Add("C = Slice (XShape, One1D, Two1D)") // number of channels
+                  .Const1D("NumGroups", num_groups)
+                  .Add("GroupSize = Div (C, NumGroups)")
+                  .Const1D("Zero1D", int64_t(0))
+                  .Const1D("IntMax1D", std::numeric_limits<int64_t>::max())
+                  .Add("N = Slice (XShape, Zero1D, One1D)") // batch size
+                  .Add("HW = Slice (XShape, Two1D, IntMax1D)") // data instance shape
 
-	      // Calculate scaled and biased output
-	      .Add("Scaled = Mul (ScaleReshaped, Normalized)")
-	      .Add("Biased = Add (Scaled, BiasReshaped)")
-	      .Add("Y = Reshape (Biased, XShape)");
+                  // NewShape = [N, num_groups, group_size, H, W]
+                  .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, HW)")
+                  .Add("XReshaped = Reshape (X, NewShape)")
+                  .Add("RankPlusOne = Add (Rank, One1D)")
+                  .Add("Axes = Range(Two1D, RankPlusOne, One1D)")
+                  .Add("Mean = ReduceMean (XReshaped)", "axes", reduce_axes)
+                  .Add("Square = Mul (XReshaped, XReshaped)")
+                  .Add("MeanOfSquare = ReduceMean (Square)", "axes", reduce_axes)
+                  .Add("SquareOfMean = Mul (Mean, Mean)")
+                  .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
+                  .Add("VarPlusEpsilon = Add (Var, Epsilon)")
+                  .Add("StdDev = Sqrt (VarPlusEpsilon)")
+                  .Add("Deviation = Sub (XReshaped, Mean)")
+                  .Add("Normalized = Div (Deviation, StdDev)")
 
-          schema.BuildFunction(functionProto);
-          return true;
-        }));
+                  // Reshape scale and bias for broadcasting
+                  .Add("NumExpandedAxes = Sub (Rank, Two1D)")
+                  .Add("DimOnes = ConstantOfShape (NumExpandedAxes)", "value", std::vector<int64_t>{1})
+                  .Const1D("NegOne1D", int64_t(-1))
+                  .Add("ScaleShape = Concat <axis = 0> (NegOne1D, DimOnes)")
+                  .Add("ScaleReshaped = Reshape (Scale, ScaleShape)")
+                  .Add("BiasReshaped = Reshape (Bias, ScaleShape)")
+
+                  // Calculate scaled and biased output
+                  .Add("Scaled = Mul (ScaleReshaped, Normalized)")
+                  .Add("Biased = Add (Scaled, BiasReshaped)")
+                  .Add("Y = Reshape (Biased, XShape)");
+
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 } // namespace ONNX_NAMESPACE

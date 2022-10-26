@@ -6492,14 +6492,13 @@ There are 1 test cases, listed as following:
 
 ```python
 def _groupnorm_test_mode(x, num_groups, scale, bias, epsilon=1e-5):
-    dims_x = len(x.shape)
     # Assume channel is first dim
-    assert(x.shape[1] % num_groups == 0)
+    assert x.shape[1] % num_groups == 0
     group_size = x.shape[1] // num_groups
     # Reshape to [N, group_size, C/group_size, H, W, ...]
     new_shape = [x.shape[0], num_groups, group_size] + list(x.shape[2:])
     x_reshaped = x.reshape(new_shape)
-    axes = tuple(range(2,len(new_shape)))
+    axes = tuple(range(2, len(new_shape)))
     mean = np.mean(x_reshaped, axis=axes, keepdims=True)
     var = np.var(x_reshaped, axis=axes, keepdims=True)
     dim_ones = (1,) * (len(new_shape) - 2)
@@ -6507,7 +6506,6 @@ def _groupnorm_test_mode(x, num_groups, scale, bias, epsilon=1e-5):
     bias = bias.reshape(-1, *dim_ones)
     res = scale * (x_reshaped - mean) / np.sqrt(var + epsilon) + bias
     return res.reshape(x.shape)
-
 
 x = np.random.randn(3, 4, 2, 2).astype(np.float32)
 num_groups = 2
