@@ -39,40 +39,24 @@ Initial proposal (noncomprehensive) list of metadata attached &amp; associated w
 <tr><td></td><td>Outputs</td><td>Map[String, NodeInfo]</td><td>Allows models within a domain to have the same default API </td></tr>
 <tr><td></td><td>Preprocessing</td><td>String</td><td>Instruction for preprocessing, such as input normalization</td></tr>
 <tr><td></td><td>Postprocessing</td><td>String</td><td>Instruction for postprocessing, such as SoftMax</td></tr>
-<tr><td></td><td>Data Provenance</td><td>Training data</td><td>URL</td></tr>
+<tr><th>Data Provenance</th></tr>
+<tr><td></td><td>Training data</td><td>URL</td></tr>
 <tr><td></td><td>Testing data</td><td>URL</td></tr>
 <tr><td></td><td>Number of training examples</td><td>Double</td></tr>
 <tr><td></td><td>Number of features/dimensionality</td><td>Double</td></tr>
 <tr><td></td><td>[Training] Environment</td><td>URL</td></tr>
 <tr><td></td><td>Geo groups</td><td>URL</td></tr>
 <tr><td></td><td>Trainer Provenance/Trainer algorithm</td><td>URL</td><td>Capture specifics like Single-ensemble-1, etc.. </td></tr>
-<!--
- | Hyperparameters | URL | Capture specifics like Learning rate, etc.. |
-|
- | Statistics dashboard | URL |
- |
-| Metrics | Top1-Accuracy | Double |
- |
-|
- | Top5-Accuracy | Double |
- |
-|
- | Average Precision | Double |
- |
-| Applications | Scope | String |
- |
-|
- | Out-of-Scope | String |
- |
-| Authors | Name | String | Individual, Company etc.. |
-|
- | Origination-Date | String | MM-DD-YYYY |
-| Citation | Citations | URL |
- |
-| Documentation | Documents | URL |
- |
-| Licensing | License | URL |
--->
+<tr><td></td><td>Hyperparameters</td><td>URL</td><td>Capture specifics like Learning rate, etc.. </td></tr>
+<tr><td></td><td>Statistics dashboard</td><td>URL</td></tr>
+<tr><td></td><td>Metrics</td><td>Double</td><td>Top1-Accuracy, Top5-Accuracy, Average Precision (e.g.)</td></tr>
+<tr><td></td><td>Applications Scope</td><td>String</td></tr>
+<tr><td></td><td>Out-of-Scope</td><td>String</td></tr>
+<tr><td></td><td>Authors</td><td>String</td><td>Individual, Company etc.. (FOAF ontology?)</td></tr>
+<tr><td></td><td>Origination-Date</td><td>String</td><td>MM-DD-YYYY</td></tr>
+<tr><td></td><td>Citation</td><td>URL</td></tr>
+<tr><td></td><td>Documentation</td><td>URL</td></tr>
+<tr><td></td><td>Licensing</td><td>URL</td></tr>
 </table>
 
 ## Metadata management mechanics
