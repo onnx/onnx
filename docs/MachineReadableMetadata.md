@@ -23,6 +23,10 @@ Expand on the fields implemented for model hub implementation. The metadata fiel
 
 This should be considered as an initial proposal for metadata fields to capture model provenance &amp; mixed precision representation. We encourage a broader discussion around what metadata should be included in the official model zoo when they get published.
 
+The workflow we envision for a model to be enriched with metadata assumes the aid of the creation tools (either exporters or converters) and is illustrated below:
+![Machine-readable metadata workflow diagram](machine-readable-metadata-workflow.png "Workflow to add and consume metadata")
+
+
 ## Example Metadata for model provenance and mixed precision
 
 Initial proposal (noncomprehensive) list of metadata attached &amp; associated with each model that gets published in the zoo:
