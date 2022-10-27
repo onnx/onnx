@@ -259,9 +259,14 @@ class OnnxBackendTest:
                     try:
                         assert_allclose(desired, output, atol=atol, rtol=rtl)
                     except AssertionError as ex:
+                        try:
+                            diff = output - desired
+                        except ValueError:
+                            diff = None
                         raise AssertionError(
                             f"Output {i_output} of test {index} in folder {self.folder!r} failed "
-                            f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----\n{output}."
+                            f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
+                            f"\n{output}\n-----\n{diff}."
                         ) from ex
             elif hasattr(output, "is_compatible"):
                 # A shape
@@ -360,7 +365,7 @@ class OnnxBackendTest:
             )
         res = dict(
             inputs=self.tests[index]["inputs"],
-            expected=self.tests[index]["inputs"],
+            expected=self.tests[index]["outputs"],
             results=got,
         )
         for i, (e, o) in enumerate(zip(expected, got)):
@@ -758,10 +763,8 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__simple_gradient_of_add",  # gradient not implemented
             "test__simple_gradient_of_add_and_mul",  # gradient not implemented
             # mismatch
-            "test__pytorch_converted_ConvTranspose2d",
+            # "test__pytorch_converted_ConvTranspose2d",
             "test__pytorch_converted_ConvTranspose2d_no_bias",
-            "test__pytorch_converted_MaxPool2d",
-            "test__pytorch_converted_MaxPool3d_stride_padding",
             "test__pytorch_operator_operator_convtranspose",
         }
         if all_tests:

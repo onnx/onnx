@@ -214,7 +214,9 @@ class MaxPool(CommonPool):
                 Yh = None
                 h_index = -1
                 for h in range(hstart, hend, dilation_h):
-                    if h < height and (Yh is None or X_data[x_d + h] > Yh):
+                    if h < 0 or h >= height:
+                        continue
+                    if Yh is None or X_data[x_d + h] > Yh:
                         Yh = X_data[x_d + h]
                         h_index = h
                 Y_data[y_d + ph] = Yh
@@ -277,16 +279,18 @@ class MaxPool(CommonPool):
                     h_index = -1
                     w_index = -1
                     for h in range(hstart, hend, dilation_h):
-                        if h < height:
-                            for w in range(wstart, wend, dilation_w):
-                                if w < width:
-                                    input_index = h * width + w
-                                    if input_index < 0 or input_index > X_data.shape[0]:
-                                        continue
-                                    if Yh is None or X_data[x_d + input_index] > Yh:
-                                        Yh = X_data[x_d + input_index]
-                                        h_index = h
-                                        w_index = w
+                        if h < 0 or h >= height:
+                            continue
+                        for w in range(wstart, wend, dilation_w):
+                            if w < 0 or w >= width:
+                                continue
+                            input_index = h * width + w
+                            if input_index < 0 or input_index > X_data.shape[0]:
+                                continue
+                            if Yh is None or X_data[x_d + input_index] > Yh:
+                                Yh = X_data[x_d + input_index]
+                                h_index = h
+                                w_index = w
                     if Yh is None:
                         continue
                     Y_data[y_d + pool_index] = Yh
@@ -365,22 +369,20 @@ class MaxPool(CommonPool):
                         w_index = -1
                         d_index = -1
                         for h in range(hstart, hend, dilation_h):
-                            if h < height:
-                                for w in range(wstart, wend, dilation_w):
-                                    if w < width:
-                                        for d in range(dstart, dend, dilation_d):
-                                            if d < depth:
-                                                input_index = (
-                                                    h * width * depth + w * depth + d
-                                                )
-                                                if (
-                                                    Yh is None
-                                                    or X_data[x_d + input_index] > Yh
-                                                ):
-                                                    Yh = X_data[x_d + input_index]
-                                                    h_index = h
-                                                    w_index = w
-                                                    d_index = d
+                            if h < 0 or h >= height:
+                                continue
+                            for w in range(wstart, wend, dilation_w):
+                                if w < 0 or w >= width:
+                                    continue
+                                for d in range(dstart, dend, dilation_d):
+                                    if d < 0 or d >= depth:
+                                        continue
+                                    input_index = h * width * depth + w * depth + d
+                                    if Yh is None or X_data[x_d + input_index] > Yh:
+                                        Yh = X_data[x_d + input_index]
+                                        h_index = h
+                                        w_index = w
+                                        d_index = d
 
                         Y_data[y_d + pool_index] = Yh
                         I_data[i_d + pool_index] = (

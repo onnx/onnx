@@ -1471,7 +1471,6 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         assert_allclose(Y, got1[0], atol=1e-5)
 
     def test_conv_strides(self):
-        # model 1
         X = make_tensor_value_info("X", TensorProto.FLOAT, [1, 3, 6, 6])
         W = make_tensor_value_info("W", TensorProto.FLOAT, [2, 3, 3, 3])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [2])
@@ -1509,6 +1508,89 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             dtype=np.float32,
         )
 
+        assert_allclose(expected, got1[0])
+
+    def test_max_pool_2d_1(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+
+        node = make_node(
+            "MaxPool",
+            ["X"],
+            ["Y"],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+        )
+        graph = make_graph([node], "g", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+
+        feeds = {"X": np.arange(49)[::-1].reshape((1, 1, 7, 7)).astype(np.float32)}
+        expected = np.array(
+            [
+                [
+                    [
+                        [48.0, 47.0, 45.0, 43.0],
+                        [41.0, 40.0, 38.0, 36.0],
+                        [27.0, 26.0, 24.0, 22.0],
+                        [13.0, 12.0, 10.0, 8.0],
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        assert_allclose(expected, got1[0])
+
+    def test_max_pool_2d_2(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+
+        node = make_node(
+            "MaxPool",
+            ["X"],
+            ["Y"],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+        )
+        graph = make_graph([node], "g", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+
+        feeds = {
+            "X": np.array(
+                [
+                    [
+                        [
+                            [683, 358, 726, 578, 650, 946, 200],
+                            [679, 260, 264, 5, 240, 255, 582],
+                            [322, 66, 687, 632, 852, 698, 428],
+                            [111, 452, 627, 332, 751, 842, 685],
+                            [472, 52, 956, 81, 807, 827, 360],
+                            [972, 574, 81, 799, 646, 499, 486],
+                            [892, 758, 75, 833, 972, 415, 736],
+                        ]
+                    ]
+                ],
+                dtype=np.float32,
+            )
+        }
+        expected = np.array(
+            [
+                [
+                    [
+                        [683.0, 726.0, 946.0, 946.0],
+                        [679.0, 687.0, 852.0, 842.0],
+                        [972.0, 956.0, 842.0, 842.0],
+                        [972.0, 833.0, 972.0, 736.0],
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
 
 
