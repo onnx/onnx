@@ -8,7 +8,6 @@ the runtime produces the expected outputs.
 """
 
 import os
-import pprint
 import unittest
 import warnings
 
