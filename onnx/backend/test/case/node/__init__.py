@@ -137,7 +137,7 @@ def function_testcase_helper(
     # opset versions include the op's since_version and other opset versions
     # if it is needed to define the op for a opset version other than the op's since_version.
     function_protos = []
-    for opset_version in schema.function_opset_versions:    # type: ignore
+    for opset_version in schema.function_opset_versions:  # type: ignore
         function_proto_str = schema.get_function_with_opset_version(opset_version)  # type: ignore
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)

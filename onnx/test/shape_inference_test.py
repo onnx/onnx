@@ -2324,7 +2324,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (24,))],
-            opset_imports=[operatorsetid]
+            opset_imports=[operatorsetid],
         )
 
     def test_reduce_op_shape_2_axis_opset_version_18(self) -> None:
@@ -2341,7 +2341,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (24,))],
-            opset_imports=[operatorsetid]
+            opset_imports=[operatorsetid],
         )
 
     def test_reduce_op_shape_keep_dims_opset_version_13(self) -> None:
@@ -2355,8 +2355,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         operatorsetid.domain = ""
         operatorsetid.version = 13
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))],
-            opset_imports=[operatorsetid]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))],
+            opset_imports=[operatorsetid],
         )
 
     def test_reduce_op_shape_keep_dims_opset_version_18(self) -> None:
@@ -2370,8 +2371,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         operatorsetid.domain = ""
         operatorsetid.version = 18
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))],
-            opset_imports=[operatorsetid]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))],
+            opset_imports=[operatorsetid],
         )
 
     def test_reduce_op_shape_default_value(self) -> None:
