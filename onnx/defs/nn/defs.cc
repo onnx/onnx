@@ -2405,7 +2405,7 @@ static const char* LayerNormalization_ver17_doc = R"DOC(
       ```
       Mean = ReduceMean<axes=normalized_axes>(X)
       D = Sub(X, Mean)
-      DD = Mul(Diff, Diff)
+      DD = Mul(D, D)
       Var = ReduceMean<axes=normalized_axes>(DD)
       VarEps = Add(Var, epsilon)
       StdDev = Sqrt(VarEps)
