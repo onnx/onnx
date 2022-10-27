@@ -748,8 +748,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_resize_downsample_sizes_nearest_not_smaller",  # shape mismatch (1, 1, 2, 3), (1, 1, 1, 3)
             "test_resize_upsample_sizes_nearest_not_larger",
             # bug
-            "test_scatter_elements_with_reduction_min",
-            "test_scatter_elements_with_duplicate_indices",
             "test_stft_with_window",  # RuntimeError: DFT is not implemented when normalize is True.
             "test_stft",  # RuntimeError: DFT is not implemented when normalize is True.
             # deprecated
@@ -763,7 +761,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__simple_gradient_of_add",  # gradient not implemented
             "test__simple_gradient_of_add_and_mul",  # gradient not implemented
             # mismatch
-            # "test__pytorch_converted_ConvTranspose2d",
+            "test__pytorch_converted_ConvTranspose2d",
             "test__pytorch_converted_ConvTranspose2d_no_bias",
             "test__pytorch_operator_operator_convtranspose",
         }

@@ -1593,6 +1593,32 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
 
+    def test_scatter_elements(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Ind = make_tensor_value_info("I", TensorProto.INT64, [None, None])
+        U = make_tensor_value_info("U", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+
+        node = make_node(
+            "ScatterElements",
+            ["X", "I", "U"],
+            ["Y"],
+            axis=1,
+            reduction="min",
+        )
+        graph = make_graph([node], "g", [X, Ind, U], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        feeds = {
+            "X": np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32),
+            "I": np.array([[1, 1]]),
+            "U": np.array([[1.1, 2.1]], dtype=np.float32),
+        }
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        expected = np.array([[1.0, 1.1, 3.0, 4.0, 5.0]], dtype=np.float32)
+        assert_allclose(expected, got1[0])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
