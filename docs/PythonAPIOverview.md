@@ -2,6 +2,8 @@
 
 # Python API Overview
 
+The full API is described at [API Reference](https://onnx.ai/onnx/api).
+
 ## Loading an ONNX Model
 ```python
 import onnx

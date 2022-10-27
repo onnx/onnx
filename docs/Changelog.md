@@ -14477,7 +14477,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>storage_order</tt> : int (default is 0)</dt>
-<dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major. This attribute is used only to convert an n-tuple index value into a single integer value for producing the second output. </dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
@@ -19393,6 +19393,10 @@ This version of the operator has been available since version 14 of the default 
   Shape (second input) could be an empty shape, which means converting to a scalar.
   The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
+  If the attribute 'allowzero' is set, it is invalid for the specified shape to
+  contain both a zero value and -1, as the value of the dimension corresponding
+  to -1 cannot be determined uniquely.
+
 #### Version
 
 This version of the operator has been available since version 14 of the default ONNX operator set.
@@ -20998,7 +21002,7 @@ This version of the operator has been available since version 17 of the default 
         ```
         Mean = ReduceMean<axes=normalized_axes>(X)
         D = Sub(X, Mean)
-        DD = Mul(Diff, Diff)
+        DD = Mul(D, D)
         Var = ReduceMean<axes=normalized_axes>(DD)
         VarEps = Add(Var, epsilon)
         StdDev = Sqrt(VarEps)

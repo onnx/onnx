@@ -72,8 +72,8 @@ def _rename_edges_helper(
                     )
 
                 def subgraph_rename_helper(name: str) -> Any:
-                    if name in sg_rename:
-                        return sg_rename[name]
+                    if name in sg_rename:  # noqa: B023
+                        return sg_rename[name]  # noqa: B023
                     else:
                         return rename_helper(name)
 

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
+import dataclasses
 from typing import Any, Callable, List, Optional, Union
 
 from onnx import ModelProto, NodeProto
@@ -8,11 +9,7 @@ from onnx import ModelProto, NodeProto
 # test item (ModelProto)
 
 
+@dataclasses.dataclass
 class TestItem:
-    def __init__(
-        self,
-        func: Callable[..., Any],
-        proto: List[Optional[Union[ModelProto, NodeProto]]],
-    ) -> None:
-        self.func = func
-        self.proto = proto
+    func: Callable[..., Any]
+    proto: List[Optional[Union[ModelProto, NodeProto]]]

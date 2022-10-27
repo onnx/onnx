@@ -163,7 +163,7 @@ def list_models(
                 ModelInfo(info) for info in json.load(cast(IO[str], response))
             ]
     except HTTPError as e:
-        raise AssertionError(f"Could not find manifest at {manifest_url}", e)
+        raise AssertionError(f"Could not find manifest at {manifest_url}") from e
 
     # Filter by model name first.
     matching_models = (
