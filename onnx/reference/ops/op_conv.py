@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,R0915,R1702,W0221
 
-from typing import List, Tuple
+from typing import Sequence, Tuple
 
 import numpy as np
 
@@ -77,9 +77,9 @@ def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  
 def im2col(
     img: np.ndarray,
     kernel_shape: Tuple[int, ...],
-    dilations: List[int],
-    pads: List[int],
-    strides: List[int],
+    dilations: Sequence[int],
+    pads: Sequence[int],
+    strides: Sequence[int],
 ) -> np.ndarray:
     res = None
     for n in range(img.shape[0]):
