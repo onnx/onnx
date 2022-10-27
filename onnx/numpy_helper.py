@@ -14,10 +14,14 @@ def combine_pairs_to_complex(fa: Sequence[int]) -> List[complex]:
 
 
 def bfloat16_to_float32(
-    data: np.ndarray, dims: Union[int, Sequence[int]]
+    data: np.ndarray, dims: Optional[Union[int, Sequence[int]]] = None
 ) -> np.ndarray:
     """Converts ndarray of bf16 (as uint32) to f32 (as uint32)."""
     shift = lambda x: x << 16  # noqa: E731
+    if dims is None:
+        if len(data.shape) == 0:
+            return shift(np.array([data]).astype(np.int32)).view(np.float32)[0]
+        return shift(data.astype(np.int32)).view(np.float32)
     return shift(data.astype(np.int32)).reshape(dims).view(np.float32)
 
 

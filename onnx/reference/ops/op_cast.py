@@ -3,11 +3,8 @@
 
 import numpy as np
 
-from onnx.helper import (
-    bfloat16_to_float32,
-    float32_to_bfloat16,
-    tensor_dtype_to_np_dtype,
-)
+from onnx.helper import float32_to_bfloat16, tensor_dtype_to_np_dtype
+from onnx.numpy_helper import bfloat16_to_float32
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
 
