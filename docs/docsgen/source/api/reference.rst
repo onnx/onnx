@@ -1,5 +1,5 @@
-onnx.funconnx
-=============
+onnx.reference
+==============
 
 .. contents::
     :local:
@@ -7,35 +7,35 @@ onnx.funconnx
 DefaultNone
 +++++++++++
 
-.. autoclass:: onnx.funconnx.op_run.DefaultNone
+.. autoclass:: onnx.reference.op_run.DefaultNone
     :members:
 
 Inference
 +++++++++
 
-.. autoclass:: onnx.funconnx.ProtoRun
+.. autoclass:: onnx.reference.ReferenceEvaluator
     :members: input_names, output_names, opsets, run
 
 OpFunction
 ++++++++++
 
-.. autoclass:: onnx.funconnx.op_run.OpFunction
+.. autoclass:: onnx.reference.op_run.OpFunction
     :members: create, eval, input, output, implicit_inputs, domain, need_context, run, make_node
 
 OpRun
 +++++
 
-.. autoclass:: onnx.funconnx.op_run.OpRun
+.. autoclass:: onnx.reference.op_run.OpRun
     :members: create, eval, input, output, implicit_inputs, domain, need_context, run, make_node
 
 RuntimeTypeError
 ++++++++++++++++
 
-.. autoclass:: onnx.funconnx.op_run.RuntimeTypeError
+.. autoclass:: onnx.reference.op_run.RuntimeTypeError
     :members:
 
 SparseTensor
 ++++++++++++
 
-.. autoclass:: onnx.funconnx.op_run.SparseTensor
+.. autoclass:: onnx.reference.op_run.SparseTensor
     :members:
