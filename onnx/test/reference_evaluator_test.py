@@ -1456,7 +1456,6 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         W = feeds["W"]
         B = feeds["B"]
         Y = np.empty((2, 4, 6, 6), dtype=X.dtype)
-        merged = []
         for b in range(X.shape[0]):
             for g in range(4):
                 x = X[b : b + 1, g : g + 1]

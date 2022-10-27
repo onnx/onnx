@@ -92,7 +92,7 @@ def im2col(
                 res = np.empty(new_shape, dtype=img.dtype)
             res[n, c, ...] = out
     new_shape = res.shape[: -len(kernel_shape)] + (-1,)  # type: ignore
-    return res.reshape(new_shape)
+    return res.reshape(new_shape)  # type: ignore
 
 
 def _conv_implementation_im2col(  # type: ignore
