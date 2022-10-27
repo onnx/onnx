@@ -366,7 +366,7 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   // ReduceMean in opset 18 is different from opset 17.
   // This requires us to define more than one function body
   std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
-    opset_version_to_function_builder_.find(OpSchema::kUninitializedSinceVersion);
+      opset_version_to_function_builder_.find(OpSchema::kUninitializedSinceVersion);
 
   if (it != opset_version_to_function_builder_.cend()) {
     opset_version_to_function_builder_[since_version_] = it->second;
@@ -701,8 +701,7 @@ void OpSchema::ParseAndSetTypes(
 OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(
     ContextDependentFunctionBodyBuilder functionBuilder,
     int opset_version) {
-  if (opset_version == OpSchema::kUninitializedSinceVersion &&
-    since_version_ != OpSchema::kUninitializedSinceVersion) {
+  if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version_to_function_builder_[since_version_] = std::move(functionBuilder);
   } else {
     opset_version_to_function_builder_[opset_version] = std::move(functionBuilder);
@@ -757,8 +756,7 @@ bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
 }
 
 OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
-  if (opset_version == OpSchema::kUninitializedSinceVersion &&
-    since_version_ != OpSchema::kUninitializedSinceVersion) {
+  if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
   std::shared_ptr<FunctionProto> function_proto(new FunctionProto());

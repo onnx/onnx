@@ -866,7 +866,9 @@ class OpSchema final {
     return opset_version_to_function_builder_.find(opset_version) != opset_version_to_function_builder_.end();
   }
 
-  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder, int opset_version = kUninitializedSinceVersion);
+  OpSchema& SetContextDependentFunctionBodyBuilder(
+      ContextDependentFunctionBodyBuilder,
+      int opset_version = kUninitializedSinceVersion);
 
   bool BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& function_proto) const;
   bool BuildContextDependentFunctionWithOpsetVersion(
