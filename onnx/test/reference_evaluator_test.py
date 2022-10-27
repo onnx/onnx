@@ -33,6 +33,7 @@ from onnx.reference.op_run import OpRun
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_list import Celu
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
+from onnx.reference.ops.experimental.op_im2col import im2col
 from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
@@ -149,12 +150,12 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             raise AssertionError(f"checker fails for\n{str(onnx_model)}") from e
         return onnx_model, f
 
-    def test_ReferenceEvaluator_exceptions(self):
+    def test_reference_evaluator_exceptions(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         with self.assertRaises(TypeError):
             ReferenceEvaluator(X)
 
-    def test_ReferenceEvaluator_no_attribute(self):
+    def test_reference_evaluator_no_attribute(self):
         m = TestRuntimeReferenceEvaluator._load_model(
             TestRuntimeReferenceEvaluator.m2_def
         )
@@ -170,7 +171,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         expected = (x + y) * (y - z)
         assert_allclose(expected, res)
 
-    def test_ReferenceEvaluator_no_attribute_bytes(self):
+    def test_reference_evaluator_no_attribute_bytes(self):
         m = TestRuntimeReferenceEvaluator._load_model(
             TestRuntimeReferenceEvaluator.m2_def
         )
@@ -186,7 +187,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         expected = (x + y) * (y - z)
         assert_allclose(expected, res)
 
-    def test_ReferenceEvaluator_no_attribute_verbose(self):
+    def test_reference_evaluator_no_attribute_verbose(self):
         m = TestRuntimeReferenceEvaluator._load_model(
             TestRuntimeReferenceEvaluator.m2_def
         )
@@ -272,7 +273,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             ).lstrip("\n")
             self.assertEqual(log, out)
 
-    def test_ReferenceEvaluator_lr(self):
+    def test_reference_evaluator_lr(self):
         lr, f = TestRuntimeReferenceEvaluator._linear_regression()
         x = np.array([[0, 1], [2, 3]], dtype=np.float32)
         a = np.array([1, 1], dtype=np.float32)
@@ -282,7 +283,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         got = sess.run(None, {"X": a, "A": a, "B": b})[0]
         assert_allclose(expected, got)
 
-    def test_ReferenceEvaluator_lr_clip(self):
+    def test_reference_evaluator_lr_clip(self):
         with self.subTest(opt="min+max"):
             lr, f = TestRuntimeReferenceEvaluator._linear_regression(clip=True)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
@@ -323,7 +324,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             got = sess.run(None, {"X": a, "A": a, "B": b})[0]
             assert_allclose(expected, got)
 
-    def test_ReferenceEvaluator_lr_clip_6(self):
+    def test_reference_evaluator_lr_clip_6(self):
         with self.subTest(opt="min+max"):
             lr, f = TestRuntimeReferenceEvaluator._linear_regression(
                 clip=True, opset=10
@@ -1335,7 +1336,182 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         )
         assert_allclose(r1, r2)
 
+    def test_conv_im2col_group4(self):
+        # model 1
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 4, 6, 6])
+        W = make_tensor_value_info("W", TensorProto.FLOAT, [4, 1, 3, 3])
+        B = make_tensor_value_info("B", TensorProto.FLOAT, [4])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2, 4, 6, 6])
+
+        node = make_node(
+            "Conv",
+            ["X", "W", "B"],
+            ["Y"],
+            group=4,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[1, 1],
+        )
+        graph = make_graph([node], "g", [X, W, B], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+
+        feeds = {
+            "X": np.arange(2 * 4 * 6 * 6).reshape((2, 4, 6, 6)).astype(np.float32),
+            "W": np.array(
+                [
+                    [
+                        [
+                            [
+                                -0.026239916682243347,
+                                0.07565222680568695,
+                                -0.03209298849105835,
+                            ],
+                            [
+                                -0.08708783239126205,
+                                0.0961190015077591,
+                                0.13418219983577728,
+                            ],
+                            [
+                                0.1598859578371048,
+                                0.03840477764606476,
+                                -0.13170936703681946,
+                            ],
+                        ]
+                    ],
+                    [
+                        [
+                            [
+                                -0.0689004510641098,
+                                0.1408083587884903,
+                                -0.03717087209224701,
+                            ],
+                            [
+                                0.030967697501182556,
+                                0.0263785719871521,
+                                -0.0899493545293808,
+                            ],
+                            [
+                                0.07828782498836517,
+                                -0.06266771256923676,
+                                0.10750330984592438,
+                            ],
+                        ]
+                    ],
+                    [
+                        [
+                            [
+                                0.020227551460266113,
+                                -0.04353883117437363,
+                                -0.10938453674316406,
+                            ],
+                            [
+                                -0.14101561903953552,
+                                -0.03393106162548065,
+                                0.12139306962490082,
+                            ],
+                            [
+                                0.02838282287120819,
+                                0.13864465057849884,
+                                -0.06065710633993149,
+                            ],
+                        ]
+                    ],
+                    [
+                        [
+                            [
+                                -0.06511610746383667,
+                                -0.05987360328435898,
+                                -0.008047685027122498,
+                            ],
+                            [
+                                0.07340313494205475,
+                                0.0326494425535202,
+                                0.012516498565673828,
+                            ],
+                            [
+                                0.13260947167873383,
+                                -0.022225692868232727,
+                                -0.11167611926794052,
+                            ],
+                        ]
+                    ],
+                ],
+                dtype=np.float32,
+            ),
+            "B": np.array(
+                [
+                    -0.1457933485507965,
+                    -0.07481209933757782,
+                    -0.05890338122844696,
+                    -0.11964251846075058,
+                ],
+                dtype=np.float32,
+            ),
+        }
+        feeds["B"][:] = 0
+
+        # model 2
+        X = feeds["X"]
+        W = feeds["W"]
+        B = feeds["B"]
+        Y = np.empty((2, 4, 6, 6), dtype=X.dtype)
+        merged = []
+        for b in range(X.shape[0]):
+            for g in range(4):
+                x = X[b : b + 1, g : g + 1]
+                w = W[g]
+                c2 = im2col(x, (3, 3), [1, 1], [1, 1, 1, 1], [1, 1])
+                mul = np.matmul(c2, w.flatten())
+                mul = mul + B[g]
+                Y[b, g, :, :] = mul
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+
+        assert_allclose(Y, got1[0], atol=1e-5)
+
+    def test_conv_strides(self):
+        # model 1
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [1, 3, 6, 6])
+        W = make_tensor_value_info("W", TensorProto.FLOAT, [2, 3, 3, 3])
+        B = make_tensor_value_info("B", TensorProto.FLOAT, [2])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+
+        node = make_node(
+            "Conv",
+            ["X", "W", "B"],
+            ["Y"],
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+        )
+        graph = make_graph([node], "g", [X, W, B], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+
+        feeds = {
+            "X": np.arange(1 * 3 * 6 * 6).reshape((1, 3, 6, 6)).astype(np.float32) + 1,
+            "W": np.zeros((2, 3, 3, 3), dtype=np.float32),
+            "B": np.zeros((2,), dtype=np.float32),
+        }
+        feeds["W"][0, 0, 0, 1] = 1
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        expected = np.array(
+            [
+                [
+                    [[0.0, 0.0, 0.0], [7.0, 9.0, 11.0], [19.0, 21.0, 23.0]],
+                    [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        assert_allclose(expected, got1[0])
+
 
 if __name__ == "__main__":
-    # TestRuntimeReferenceEvaluator().test_conv_1d_group()
     unittest.main(verbosity=2)

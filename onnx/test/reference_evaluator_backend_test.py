@@ -583,11 +583,15 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             if verbose > 7:
                 print("  ", e, type(e))
             missed.append((te, e))
+            with open(f"missed_{te.name}.onnx", "wb") as f:
+                f.write(te.onnx_model.SerializeToString())
             raise e
         except (AssertionError, ValueError) as e:
             if verbose > 7:
                 print("  ", e, type(e))
             mismatch.append((te, e))
+            with open(f"mismatch_{te.name}.onnx", "wb") as f:
+                f.write(te.onnx_model.SerializeToString())
             if check_other_runtime is None:
                 raise e
             if "onnxruntime" in check_other_runtime:
@@ -759,11 +763,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_MaxPool2d",
             "test__pytorch_converted_MaxPool3d_stride_padding",
             "test__pytorch_operator_operator_convtranspose",
-            # bug
-            "test__pytorch_converted_Conv2d_depthwise_padded",  # bug
-            "test__pytorch_converted_Conv2d_dilated",  # bug
-            "test__pytorch_converted_Conv2d_padding",  # bug
-            "test__pytorch_converted_Conv3d_stride_padding",  # bug
         }
         if all_tests:
             cls.skip_test = set()
