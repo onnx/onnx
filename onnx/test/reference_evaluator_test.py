@@ -1786,21 +1786,30 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             "B": np.array([0, 0, 0, 0], dtype=np.float32),
         }
 
-        # import torch
-        # ex = torch.nn.functional.conv_transpose2d(
-        #     torch.Tensor(feeds["X"]), torch.Tensor(feeds["W"]),
-        #     bias=None, stride=1, padding=1, output_padding=0, groups=1, dilation=1)
-        # print(ex)
+        expected = np.array(
+            [
+                [
+                    [
+                        [0.0, 0.0, 0.0, 1.0, 2.0, 2.0],
+                        [0.0, 0.0, 3.0, 4.0, 11.0, 8.0],
+                        [0.0, 3.0, 12.0, 11.0, 28.0, 19.0],
+                        [9.0, 12.0, 27.0, 16.0, 35.0, 20.0],
+                        [18.0, 27.0, 60.0, 35.0, 76.0, 43.0],
+                        [18.0, 24.0, 51.0, 28.0, 59.0, 32.0],
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
 
-        import onnxruntime
-
-        ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString())
-        got0 = ref0.run(None, feeds)
-        print(got0)
+        # import onnxruntime
+        # ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString())
+        # got0 = ref0.run(None, feeds)
+        # print(got0)
 
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
-        print(got1)
+        assert_allclose(expected, got1[0])
 
 
 if __name__ == "__main__":
