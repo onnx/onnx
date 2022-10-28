@@ -2668,10 +2668,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); })
+        //.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
+              auto* tp = ctx.getInputType(0);
+              if ((tp == nullptr) || (!tp->has_tensor_type()))
+                return false;
+              int64_t T = tp->tensor_type().elem_type();
+
               auto* epsilon_attr = ctx.getAttribute("epsilon");
               float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
               auto* num_groups_attr = ctx.getAttribute("num_groups");
@@ -2684,8 +2689,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               std::vector<int64_t> reduce_axes;
 	      for (int64_t i = 2; i < input_ndim + 1; i++) reduce_axes.push_back(i); 
 
+              auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+                auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+                tp.add_dims(1);
+                return tp;
+              };
               FunctionBuilder builder(functionProto);
-              builder.Const1D("Epsilon", epsilon)
+              builder.Const1D("FloatEpsilon", epsilon)
+                  .Add("Epsilon = Cast (FloatEpsilon)", "to", T)
                   .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
                   .Add("Rank = Size (XShape)") // rank of input tensor: scalar
                   .Const1D("One1D", int64_t(1))
@@ -2702,7 +2713,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, HW)")
                   .Add("XReshaped = Reshape (X, NewShape)")
                   .Add("RankPlusOne = Add (Rank, One1D)")
-                  .Add("Axes = Range(Two1D, RankPlusOne, One1D)")
                   .Add("Mean = ReduceMean (XReshaped)", "axes", reduce_axes)
                   .Add("Square = Mul (XReshaped, XReshaped)")
                   .Add("MeanOfSquare = ReduceMean (Square)", "axes", reduce_axes)
@@ -2715,11 +2725,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
                   // Reshape scale and bias for broadcasting
                   .Add("NumExpandedAxes = Sub (Rank, Two1D)")
-                  .Add("DimOnes = ConstantOfShape (NumExpandedAxes)", "value", std::vector<int64_t>{1})
+                  .Add("DimOnes = ConstantOfShape (NumExpandedAxes)", "value", mktensor(1))
                   .Const1D("NegOne1D", int64_t(-1))
                   .Add("ScaleShape = Concat <axis = 0> (NegOne1D, DimOnes)")
-                  .Add("ScaleReshaped = Reshape (Scale, ScaleShape)")
-                  .Add("BiasReshaped = Reshape (Bias, ScaleShape)")
+                  .Add("ScaleT = Cast (scale)", "to", T)
+                  .Add("BiasT = Cast (bias)", "to", T)
+                  .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
+                  .Add("BiasReshaped = Reshape (BiasT, ScaleShape)")
 
                   // Calculate scaled and biased output
                   .Add("Scaled = Mul (ScaleReshaped, Normalized)")
