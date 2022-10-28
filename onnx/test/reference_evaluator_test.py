@@ -1764,6 +1764,44 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         )
         assert_allclose(expected, got1[0])
 
+    def test_conv_transpose_2d_upper(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
+        B = make_tensor_value_info("B", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+
+        node = make_node(
+            "ConvTranspose",
+            ["X", "W", "B"],
+            ["Y"],
+            auto_pad="SAME_UPPER",
+            strides=[2, 2],
+            # output_shape=[6, 6],
+        )
+        graph = make_graph([node], "g", [X, W, B], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        feeds = {
+            "X": np.arange(1 * 1 * 3 * 3).reshape((1, 1, 3, 3)).astype(np.float32),
+            "W": np.arange(1 * 2 * 3 * 3).reshape((1, 2, 3, 3)).astype(np.float32),
+            "B": np.array([0, 0, 0, 0], dtype=np.float32),
+        }
+
+        # import torch
+        # ex = torch.nn.functional.conv_transpose2d(
+        #     torch.Tensor(feeds["X"]), torch.Tensor(feeds["W"]),
+        #     bias=None, stride=1, padding=1, output_padding=0, groups=1, dilation=1)
+        # print(ex)
+
+        import onnxruntime
+
+        ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString())
+        got0 = ref0.run(None, feeds)
+        print(got0)
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        print(got1)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

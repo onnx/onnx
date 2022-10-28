@@ -29,24 +29,17 @@ class ConvTranspose(OpRun):
             dilations = [1 for s in X.shape[2:]]
         if kernel_shape is None:
             kernel_shape = W.shape[2:]
-        if pads is None:
-            pads = [0 for s in X.shape[2:]] * 2
         if output_padding is None:
             output_padding = [0 for s in X.shape[2:]] * 2
         if strides is None:
             strides = [1 for s in X.shape[2:]]
-        if pads is not None:
-            n_dims = len(pads) // 2
-            new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
+        if pads is None and auto_pad not in {"SAME_UPPER", "SAME_LOWER"}:
+            pads = [0 for i in range(2 * len(strides))]
+        if pads is None:
             if output_shape is None:
                 output_shape = [
-                    strides[i] * (X.shape[i + 2] - 1)
-                    + output_padding[i]
-                    + ((kernel_shape[i] - 1) * dilations[i] + 1)
-                    - new_pads[i, :].sum()
-                    for i in range(n_dims)
+                    X.shape[i + 2] * strides[i] for i in range(len(strides))
                 ]
-        else:
             total_padding = [
                 strides[i] * (X.shape[i + 2] - 1)
                 + output_padding[i]
@@ -62,6 +55,18 @@ class ConvTranspose(OpRun):
                 else:
                     pads.append(total_padding[i] - (total_padding[i] // 2))
                     pads.append(total_padding[i] // 2)
+            n_dims = len(pads) // 2
+        else:
+            n_dims = len(X.shape) - 2
+            new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
+            if output_shape is None:
+                output_shape = [
+                    strides[i] * (X.shape[i + 2] - 1)
+                    + output_padding[i]
+                    + ((kernel_shape[i] - 1) * dilations[i] + 1)
+                    - new_pads[i, :].sum()
+                    for i in range(n_dims)
+                ]
 
         kernel_shape = W.shape[2:]
         kernel_size = np.prod(kernel_shape)
