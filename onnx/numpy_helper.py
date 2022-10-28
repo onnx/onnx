@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=C3001
 
 import sys
 from typing import Any, Dict, List, Optional, Sequence, Union

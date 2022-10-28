@@ -180,7 +180,7 @@ class MaxPool(CommonPool):
         dilations,
         kernel_shape,
         new_pads,
-        storage_order,
+        storage_order,  # pylint: disable=W0613
         strides,
         output_spatial_shape,
     ):
