@@ -8,6 +8,7 @@ the runtime produces the expected outputs.
 """
 
 import os
+import pprint
 import unittest
 import warnings
 
@@ -215,7 +216,7 @@ class OnnxBackendTest:
         return len(self.tests)
 
     def _compare_results(
-        self, index, i_output, desired, output, rtol=0, atol=0, comment=""
+        self, index, i_output, desired, output, rtol=0, atol=0, comment="", inputs=None
     ):
         """
         Compares the expected output and the output produced
@@ -228,6 +229,7 @@ class OnnxBackendTest:
         :param rtol: relative tolerance
         :param atol: absolute tolerance
         :param comment: addition text to give more insights to the user
+        :param inputs: inputs to the model
         """
         if comment == "":
             raise RuntimeError("Argument comment should be filled.")
@@ -264,7 +266,7 @@ class OnnxBackendTest:
                         raise AssertionError(
                             f"Output {i_output} of test {index} in folder {self.folder!r} failed "
                             f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
-                            f"\n{output}\n-----\n{diff}."
+                            f"\n{output}\n-----\n{diff}\n------INPUTS----\n{pprint.pformat(inputs)}."
                         ) from ex
             elif hasattr(output, "is_compatible"):
                 # A shape
@@ -387,6 +389,7 @@ class OnnxBackendTest:
                     atol=atol,
                     rtol=rtol,
                     comment=comment + "\n" + str(self.onnx_model),
+                    inputs=self.tests[index]["inputs"],
                 )
         return res
 
@@ -728,43 +731,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         # not supported yet
         # see http://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
         # to compare with onnxruntime
-        cls.skip_test = {
-            # incomplete implementation
-            "test_nesterov_momentum",
-            # mismatches
-            "test_center_crop_pad_crop_axes_hwc_expanded",  # shapes (10, 9, 3), (10, 8, 3) mismatch
-            "test_col2im_pads",  # mismatch by one value
-            "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
-            "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
-            "test_convtranspose_autopad_same",  # shapes (1, 2, 6, 6), (1, 2, 7, 7) mismatch, onnxruntime fails too
-            # antialias or keep_aspect_ratio_policy not implemented
-            "test_resize_downsample_scales_cubic_antialias",
-            "test_resize_downsample_scales_linear_antialias",
-            "test_resize_downsample_sizes_cubic_antialias",
-            "test_resize_downsample_sizes_linear_antialias",
-            "test_resize_downsample_sizes_nearest_not_larger",  # shape mismatch (1, 1, 1, 2), (1, 1, 1, 3)
-            "test_resize_downsample_sizes_nearest_not_smaller",  # shape mismatch (1, 1, 2, 3), (1, 1, 1, 3)
-            "test_resize_upsample_sizes_nearest_not_larger",
-            # bug
-            "test_stft_with_window",  # RuntimeError: DFT is not implemented when normalize is True.
-            "test_stft",  # RuntimeError: DFT is not implemented when normalize is True.
-            # deprecated
-            "test_scan_sum",  # deprecated, opset 8 -> not implemented
-            "test_scatter_with_axis",  # deprecated, scatter is removed
-            "test_scatter_without_axis",  # deprecated, scatter is removed
-        }
-        cls.skip_test |= {
-            # extended list
-            # not implemented
-            "test__simple_gradient_of_add",  # gradient not implemented
-            "test__simple_gradient_of_add_and_mul",  # gradient not implemented
-            # mismatch
-            "test__pytorch_converted_ConvTranspose2d",
-            "test__pytorch_converted_ConvTranspose2d_no_bias",
-            "test__pytorch_operator_operator_convtranspose",
-        }
-        if all_tests:
-            cls.skip_test = set()
+
         cls.rtol = {
             "test_adam_multiple": 1e-2,
             "test_blackmanwindow_expanded": 0,
@@ -775,6 +742,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv2d_no_bias": 1e-3,
             "test__pytorch_converted_Conv2d_strided": 1e-4,
         }
+
         cls.atol = {
             "test_blackmanwindow": 1e-7,
             "test_blackmanwindow_expanded": 1e-4,
@@ -795,6 +763,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_roialign_aligned_false": 1e-4,
             "test_roialign_aligned_true": 1e-4,
             # extended list
+            "test__pytorch_converted_ConvTranspose2d_no_bias": 1e-4,
             "test__pytorch_converted_Linear_no_bias": 1e-5,
             "test_Linear_no_bias": 1e-5,
             "test__pytorch_converted_Conv1d_pad1": 1e-6,
@@ -808,13 +777,44 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv2d_strided": 1e-4,
             "test__pytorch_operator_operator_symbolic_override": 1e-5,
             "test_operator_symbolic_override": 1e-4,
-            # "test__pytorch_converted_Conv3d": 1e-4,
-            # "test__pytorch_converted_Conv3d_dilated": 1e-4,
             "test__pytorch_converted_Conv3d_dilated_strided": 1e-4,
             "test__pytorch_converted_Conv3d_groups": 1e-4,
-            # "test__pytorch_converted_Conv3d_no_bias": 1e-4,
-            # "test__pytorch_converted_Conv3d_stride": 1e-4,
         }
+
+        cls.skip_test = {
+            # incomplete implementation
+            "test_nesterov_momentum",
+            # mismatches
+            "test_center_crop_pad_crop_axes_hwc_expanded",  # shapes (10, 9, 3), (10, 8, 3) mismatch
+            "test_col2im_pads",  # mismatch by one value, the onnx backend test is probably wrong
+            "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
+            "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
+            # "test_convtranspose_autopad_same",  # shapes (1, 2, 6, 6), (1, 2, 7, 7) mismatch, onnxruntime fails too
+            # antialias or keep_aspect_ratio_policy not implemented
+            "test_resize_downsample_scales_cubic_antialias",
+            "test_resize_downsample_scales_linear_antialias",
+            "test_resize_downsample_sizes_cubic_antialias",
+            "test_resize_downsample_sizes_linear_antialias",
+            "test_resize_downsample_sizes_nearest_not_larger",  # shape mismatch (1, 1, 1, 2), (1, 1, 1, 3)
+            "test_resize_downsample_sizes_nearest_not_smaller",  # shape mismatch (1, 1, 2, 3), (1, 1, 1, 3)
+            "test_resize_upsample_sizes_nearest_not_larger",
+            # bug
+            "test_stft_with_window",  # RuntimeError: DFT is not implemented when normalize is True.
+            "test_stft",  # RuntimeError: DFT is not implemented when normalize is True.
+            # deprecated
+            "test_scan_sum",  # deprecated, opset 8 -> not implemented
+            "test_scatter_with_axis",  # deprecated, scatter is removed
+            "test_scatter_without_axis",  # deprecated, scatter is removed
+        }
+
+        cls.skip_test |= {
+            # extended list
+            # not implemented
+            "test__simple_gradient_of_add",  # gradient not implemented
+            "test__simple_gradient_of_add_and_mul",  # gradient not implemented
+        }
+        if all_tests:
+            cls.skip_test = set()
         cls.successes = []
         cls.missed = []
         cls.skipped = []
@@ -825,6 +825,11 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if len(cls.successes) == 0:
+            failed = cls.mismatch + cls.missed + cls.load_failed + cls.exec_failed
+            if len(failed) > 0:
+                raise RuntimeError(
+                    f"No test was successful, {len(failed)} failed."
+                ) from failed[0][1]
             raise RuntimeError("No test was successful.")
         cls._postprocess(
             cls.successes,

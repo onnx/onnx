@@ -136,7 +136,7 @@ def _col2im_shape_check(X, output_shape, kernel_shape, dilations, pads, strides)
             f"Given n_input_plane={n_input_plane}, X.shape={X.shape}, "
             f"output_shape={output_shape}, kernel_shape={kernel_shape}, "
             f"dilations={dilations}, pads={pads}, strides={strides}, "
-            f"expected size of input's dimension 2 to match the calculated number of ",
+            f"expected size of input's dimension 2 to match the calculated number of "
             f"sliding blocks {n_blocks} = {block_size}, "
             f"but got input.size(2)={input_length}.",
         )

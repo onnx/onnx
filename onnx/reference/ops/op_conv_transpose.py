@@ -23,15 +23,6 @@ class ConvTranspose(OpRun):
         pads=None,
         strides=None,
     ):
-        auto_pad = auto_pad or self.auto_pad  # type: ignore
-        dilations = dilations or self.dilations  # type: ignore
-        group = group or self.group  # type: ignore
-        kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
-        output_padding = output_padding or self.output_padding  # type: ignore
-        output_shape = output_shape or self.output_shape  # type: ignore
-        pads = pads or self.pads  # type: ignore
-        strides = strides or self.strides  # type: ignore
-
         if group != 1:
             raise RuntimeError(f"group={group} != 1 is not implemented yet.")
         if dilations is None:
@@ -52,13 +43,12 @@ class ConvTranspose(OpRun):
                     strides[i] * (X.shape[i + 2] - 1)
                     + output_padding[i]
                     + ((kernel_shape[i] - 1) * dilations[i] + 1)
-                    - new_pads[i, 0]
-                    - new_pads[i, 1]
+                    - new_pads[i, :].sum()
                     for i in range(n_dims)
                 ]
         else:
             total_padding = [
-                strides[i] * (X.shape[i + 1] - 1)
+                strides[i] * (X.shape[i + 2] - 1)
                 + output_padding[i]
                 + ((kernel_shape[i] - 1) * dilations[i] + 1)
                 - output_shape[i]
@@ -78,17 +68,20 @@ class ConvTranspose(OpRun):
         num_output_channels = W.shape[1] * group
         kernel_dim = num_output_channels // group * kernel_size
 
-        C = X.shape[1]
-        m = kernel_dim
-        n = np.prod(X.shape[2:])
+        C = X.shape[1]  # num_inputs_channels
+        m = kernel_dim  # kernel_dim
+        n = np.prod(X.shape[2:])  # input_image_size
         k = C // group
-        w_reshaped = W.reshape((group, m, k))
+        w_reshaped = W.reshape((group, k, m))
         final = None
 
-        for image_id in range(X.shape[0]):
-            for group_id in range(group):
+        # N x C x H x W = X.shape
+        # C x M/group x k1 x k2 = W.shape
+        if group == 1:
 
-                gemm = np.matmul(w_reshaped[group_id], X[0].reshape((k, n)))
+            for image_id in range(X.shape[0]):
+                w_t = w_reshaped[0].T
+                gemm = np.matmul(w_t, X[image_id].reshape((k, n)))
                 gemmc = gemm.reshape((num_output_channels, -1, gemm.shape[-1]))
                 for c in range(num_output_channels):
                     res = col2im_naive_implementation(
@@ -102,5 +95,9 @@ class ConvTranspose(OpRun):
                     if B is not None:
                         res += B[c]
                     final[image_id, c, ...] = res[...]
+        else:
+            raise NotImplementedError(
+                f"Implementation for group={group} > 1 is not available yet."
+            )
 
         return (final,)
