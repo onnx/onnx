@@ -2686,8 +2686,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
               int64_t input_ndim = input_shape.dim_size();
               std::vector<int64_t> reduce_axes;
-	      for (int64_t i = 2; i < input_ndim + 1; i++)
-	        reduce_axes.push_back(i); 
+              for (int64_t i = 2; i < input_ndim + 1; i++)
+                reduce_axes.push_back(i); 
 
               auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
                 auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
