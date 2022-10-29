@@ -789,7 +789,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_col2im_pads",  # mismatch by one value, the onnx backend test is probably wrong
             "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
             "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
-            "test_convtranspose_autopad_same",  # bug
             # antialias or keep_aspect_ratio_policy not implemented
             "test_resize_downsample_scales_cubic_antialias",
             "test_resize_downsample_scales_linear_antialias",
