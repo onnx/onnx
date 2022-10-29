@@ -114,7 +114,8 @@ def _col2im_shape_check(X, output_shape, kernel_shape, dilations, pads, strides)
     if n_input_plane % kernel_size != 0:
         raise ValueError(
             f"Expected size of input's dimension 1 to be divisible by the "
-            f"product of kernel_size, but got input.size(1)={n_input_plane} "
+            f"product of kernel_size={kernel_size}, "
+            f"but got input.size(1)={n_input_plane} "
             f"and kernel_shape={kernel_shape}, X.shape={X.shape}, output_shape={output_shape}."
         )
 

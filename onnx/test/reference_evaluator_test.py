@@ -1736,7 +1736,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
                         [8424, 13185, 13536, 9423],
                         [9324, 14589, 14940, 10395],
                         [7197, 11229, 11490, 7971],
-                    ]
+                    ],
                 ]
             ],
             dtype=np.float32,
@@ -1790,13 +1790,21 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             [
                 [
                     [
-                        [0.0, 0.0, 0.0, 1.0, 2.0, 2.0],
-                        [0.0, 0.0, 3.0, 4.0, 11.0, 8.0],
-                        [0.0, 3.0, 12.0, 11.0, 28.0, 19.0],
-                        [9.0, 12.0, 27.0, 16.0, 35.0, 20.0],
-                        [18.0, 27.0, 60.0, 35.0, 76.0, 43.0],
-                        [18.0, 24.0, 51.0, 28.0, 59.0, 32.0],
-                    ]
+                        [0, 0, 0, 1, 2, 2],
+                        [0, 0, 3, 4, 11, 8],
+                        [0, 3, 12, 11, 28, 19],
+                        [9, 12, 27, 16, 35, 20],
+                        [18, 27, 60, 35, 76, 43],
+                        [18, 24, 51, 28, 59, 32],
+                    ],
+                    [
+                        [0, 0, 9, 10, 29, 20],
+                        [0, 0, 12, 13, 38, 26],
+                        [27, 30, 84, 56, 136, 82],
+                        [36, 39, 90, 52, 116, 65],
+                        [99, 108, 240, 134, 292, 160],
+                        [72, 78, 168, 91, 194, 104],
+                    ],
                 ]
             ],
             dtype=np.float32,
@@ -1805,7 +1813,6 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         # import onnxruntime
         # ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString())
         # got0 = ref0.run(None, feeds)
-        # print(got0)
 
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)

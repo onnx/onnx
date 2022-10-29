@@ -47,14 +47,16 @@ class ConvTranspose(OpRun):
                 - output_shape[i]
                 for i in range(len(output_shape))
             ]
-            pads = []
+            pads_1 = []
+            pads_2 = []
             for i in range(len(output_shape)):
                 if auto_pad == "SAME_UPPER":
-                    pads.append(total_padding[i] // 2)
-                    pads.append(total_padding[i] - (total_padding[i] // 2))
+                    pads_1.append(total_padding[i] // 2)
+                    pads_2.append(total_padding[i] - (total_padding[i] // 2))
                 else:
-                    pads.append(total_padding[i] - (total_padding[i] // 2))
-                    pads.append(total_padding[i] // 2)
+                    pads_1.append(total_padding[i] - (total_padding[i] // 2))
+                    pads_2.append(total_padding[i] // 2)
+            pads = pads_1 + pads_2
             n_dims = len(pads) // 2
         else:
             n_dims = len(X.shape) - 2
