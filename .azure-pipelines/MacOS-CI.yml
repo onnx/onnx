@@ -52,8 +52,6 @@ jobs:
       git submodule update --init --recursive
       python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt
-      # Mac cannot work with Python Protobuf 3.20.2 https://github.com/protocolbuffers/protobuf/issues/10691
-      python -m pip install protobuf==3.19.5
 
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
