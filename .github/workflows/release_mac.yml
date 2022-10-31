@@ -41,7 +41,7 @@ jobs:
       run: |
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
-        # Mac cannot work with Python Protobuf 3.18.3 https://github.com/protocolbuffers/protobuf/issues/10691
+        # Mac cannot work with Python Protobuf 3.20.2 https://github.com/protocolbuffers/protobuf/issues/10691
         python -m pip install protobuf==3.19.5
 
     - name: Build wheel and install
