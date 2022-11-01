@@ -21232,64 +21232,6 @@ This version of the operator has been available since version 17 of the default 
 </dl>
 
 ## Version 18 of the default ONNX operator set
-### <a name="AttributeHasValue-18"></a>**AttributeHasValue-18**</a>
-
-  Returns true if at least one of the attribute-value is specified.
-
-#### Version
-
-This version of the operator has been available since version 18 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>value_float</tt> : float</dt>
-<dd>The float attribute.</dd>
-<dt><tt>value_floats</tt> : list of floats</dt>
-<dd>The floats attribute.</dd>
-<dt><tt>value_graph</tt> : graph</dt>
-<dd>The graph attribute.</dd>
-<dt><tt>value_graphs</tt> : list of graphs</dt>
-<dd>The graphs attribute.</dd>
-<dt><tt>value_int</tt> : int</dt>
-<dd>The int attribute.</dd>
-<dt><tt>value_ints</tt> : list of ints</dt>
-<dd>The ints attribute.</dd>
-<dt><tt>value_sparse_tensor</tt> : sparse_tensor</dt>
-<dd>The sparse_tensor attribute.</dd>
-<dt><tt>value_sparse_tensors</tt> : list of sparse_tensors</dt>
-<dd>The sparse_tensors attribute.</dd>
-<dt><tt>value_string</tt> : string</dt>
-<dd>The string attribute.</dd>
-<dt><tt>value_strings</tt> : list of strings</dt>
-<dd>The strings attribute.</dd>
-<dt><tt>value_tensor</tt> : tensor</dt>
-<dd>The tensor attribute.</dd>
-<dt><tt>value_tensors</tt> : list of tensors</dt>
-<dd>The tensors attribute.</dd>
-<dt><tt>value_type_proto</tt> : type_proto</dt>
-<dd>The type_proto attribute.</dd>
-<dt><tt>value_type_protos</tt> : list of type_protos</dt>
-<dd>The type_protos attribute.</dd>
-</dl>
-
-#### Inputs
-
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : B</dt>
-<dd>A scalar boolean tensor. If true, it indicates that an attribute is provided.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Constrain output to a boolean tensor.</dd>
-</dl>
-
 ### <a name="BitwiseAnd-18"></a>**BitwiseAnd-18**</a>
 
   Returns the tensor resulting from performing the bitwise `and` operation
