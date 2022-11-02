@@ -1044,7 +1044,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "LogSoftmax",
             "log of softmax",
             "LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))"))
-            // Function for opset 13
+        // Function for opset 13
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
