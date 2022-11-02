@@ -2687,21 +2687,21 @@ ONNX_OPERATOR_SET_SCHEMA(
               builder.Const1D("FloatEpsilon", epsilon)
                   .Add("Epsilon = Cast (FloatEpsilon)", "to", T)
                   .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
-		  .Add("C = Shape <start = 1, end = 2> (X)")
+                  .Add("C = Shape <start = 1, end = 2> (X)")
                   .Const1D("NumGroups", num_groups)
                   .Add("GroupSize = Div (C, NumGroups)")
                   .Add("N = Shape <start = 0, end = 1> (X)") // batch size
-		  .Add("InstanceShape = Shape <start = 2> (X)") // data instance shape
+                  .Add("InstanceShape = Shape <start = 2> (X)") // data instance shape
 
                   // NewShape = [N, num_groups, group_size, H, W, (...)]
                   .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, InstanceShape)")
                   .Add("XReshaped = Reshape (X, NewShape)")
 
-		  // Flatten into 3D tensor: [N, num_groups, group_size x H x W (x ...)]
-		  .Add("Shape3D = Constant <value_ints = [0, 0, -1]> ()")
-		  .Add("X3D = Reshape(X, Shape3D)")
+                  // Flatten into 3D tensor: [N, num_groups, group_size x H x W (x ...)]
+                  .Add("Shape3D = Constant <value_ints = [0, 0, -1]> ()")
+                  .Add("X3D = Reshape(X, Shape3D)")
 
-		  // Calculate statistics
+                  // Calculate statistics
                   .Add("Mean = ReduceMean <axes = [2]> (X3D)")
                   .Add("Square = Mul (X3D, X3D)")
                   .Add("MeanOfSquare = ReduceMean <axes = [2]> (Square)")
@@ -2713,7 +2713,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("Normalized = Div (Deviation, StdDev)")
 
                   // Reshape scale and bias for broadcasting
-		  .Add("ScaleShape = Constant <value_ints = [-1, 1]> ()")
+                  .Add("ScaleShape = Constant <value_ints = [-1, 1]> ()")
                   .Add("ScaleT = Cast (scale)", "to", T)
                   .Add("BiasT = Cast (bias)", "to", T)
                   .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
