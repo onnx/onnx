@@ -2683,52 +2683,37 @@ ONNX_OPERATOR_SET_SCHEMA(
                 return false;
               int64_t num_groups = num_groups_attr->i();
 
-              auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-              int64_t input_ndim = input_shape.dim_size();
-              std::vector<int64_t> reduce_axes;
-              for (int64_t i = 2; i < input_ndim + 1; i++) {
-                reduce_axes.push_back(i);
-              }
-
-              auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
-                auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
-                tp.add_dims(1);
-                return tp;
-              };
               FunctionBuilder builder(functionProto);
               builder.Const1D("FloatEpsilon", epsilon)
                   .Add("Epsilon = Cast (FloatEpsilon)", "to", T)
                   .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
-                  .Add("Rank = Size (XShape)") // rank of input tensor: scalar
-                  .Const1D("One1D", int64_t(1))
-                  .Const1D("Two1D", int64_t(2))
-                  .Add("C = Slice (XShape, One1D, Two1D)") // number of channels
+		  .Add("C = Shape <start = 1, end = 2> (X)")
                   .Const1D("NumGroups", num_groups)
                   .Add("GroupSize = Div (C, NumGroups)")
-                  .Const1D("Zero1D", int64_t(0))
-                  .Const1D("IntMax1D", std::numeric_limits<int64_t>::max())
-                  .Add("N = Slice (XShape, Zero1D, One1D)") // batch size
-                  .Add("HW = Slice (XShape, Two1D, IntMax1D)") // data instance shape
+                  .Add("N = Shape <start = 0, end = 1> (X)") // batch size
+		  .Add("InstanceShape = Shape <start = 2> (X)") // data instance shape
 
-                  // NewShape = [N, num_groups, group_size, H, W]
-                  .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, HW)")
+                  // NewShape = [N, num_groups, group_size, H, W, (...)]
+                  .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, InstanceShape)")
                   .Add("XReshaped = Reshape (X, NewShape)")
-                  .Add("RankPlusOne = Add (Rank, One1D)")
-                  .Add("Mean = ReduceMean (XReshaped)", "axes", reduce_axes)
-                  .Add("Square = Mul (XReshaped, XReshaped)")
-                  .Add("MeanOfSquare = ReduceMean (Square)", "axes", reduce_axes)
+
+		  // Flatten into 3D tensor: [N, num_groups, group_size x H x W (x ...)]
+		  .Add("Shape3D = Constant <value_ints = [0, 0, -1]> ()")
+		  .Add("X3D = Reshape(X, Shape3D)")
+
+		  // Calculate statistics
+                  .Add("Mean = ReduceMean <axes = [2]> (X3D)")
+                  .Add("Square = Mul (X3D, X3D)")
+                  .Add("MeanOfSquare = ReduceMean <axes = [2]> (Square)")
                   .Add("SquareOfMean = Mul (Mean, Mean)")
                   .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
                   .Add("VarPlusEpsilon = Add (Var, Epsilon)")
                   .Add("StdDev = Sqrt (VarPlusEpsilon)")
-                  .Add("Deviation = Sub (XReshaped, Mean)")
+                  .Add("Deviation = Sub (X3D, Mean)")
                   .Add("Normalized = Div (Deviation, StdDev)")
 
                   // Reshape scale and bias for broadcasting
-                  .Add("NumExpandedAxes = Sub (Rank, Two1D)")
-                  .Add("DimOnes = ConstantOfShape (NumExpandedAxes)", "value", mktensor(1))
-                  .Const1D("NegOne1D", int64_t(-1))
-                  .Add("ScaleShape = Concat <axis = 0> (NegOne1D, DimOnes)")
+		  .Add("ScaleShape = Constant <value_ints = [-1, 1]> ()")
                   .Add("ScaleT = Cast (scale)", "to", T)
                   .Add("BiasT = Cast (bias)", "to", T)
                   .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
