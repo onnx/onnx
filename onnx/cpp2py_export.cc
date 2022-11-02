@@ -58,8 +58,7 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
     const py::bytes& nodeBytes,
     std::unordered_map<std::string, py::bytes> valueTypesByNameBytes,
     std::unordered_map<std::string, py::bytes> inputDataByNameBytes,
-    std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes,
-    std::unordered_map<std::string, py::bytes> outerScopeValueTypesByNameBytes) {
+    std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes) {
   NodeProto node{};
   ParseProtoFromPyBytes(&node, nodeBytes);
   // Early fail if node is badly defined - may throw ValidationError
@@ -69,11 +68,10 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
   const auto& valueTypes = ParseProtoFromBytesMap<TypeProto>(valueTypesByNameBytes);
   const auto& inputData = ParseProtoFromBytesMap<const TensorProto>(inputDataByNameBytes);
   const auto& inputSparseData = ParseProtoFromBytesMap<const SparseTensorProto>(inputSparseDataByNameBytes);
-  const auto& outerScopeValueTypes = ParseProtoFromBytesMap<TypeProto>(outerScopeValueTypesByNameBytes);
 
   std::unordered_map<std::string, int> opset_imports;
   opset_imports[schema->domain()] = schema->SinceVersion();
-  shape_inference::GraphInferenceContext graphInferenceContext(outerScopeValueTypes.second, opset_imports);
+  shape_inference::GraphInferenceContext graphInferenceContext(valueTypes.second, opset_imports);
 
   // Construct inference context and get results - may throw InferenceError
   shape_inference::InferenceContextImpl ctx(
@@ -149,8 +147,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::arg("nodeBytes"),
           py::arg("valueTypesByNameBytes"),
           py::arg("inputDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
-          py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
-          py::arg("outerScopeValueTypesByNameBytes") = std::unordered_map<std::string, py::bytes>{})
+          py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{})
       .def(
           "get_context_dependent_function",
           [](OpSchema* op, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes) -> py::bytes {
