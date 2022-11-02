@@ -6396,7 +6396,10 @@ node = onnx.helper.make_node(
 )
 
 expect(
-    node, inputs=[x, scale, bias], outputs=[y], name="test_group_normalization_example"
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_example",
 )
 
 x = np.random.randn(3, 4, 2, 2).astype(np.float32)
@@ -6415,7 +6418,10 @@ node = onnx.helper.make_node(
 )
 
 expect(
-    node, inputs=[x, scale, bias], outputs=[y], name="test_group_normalization_epsilon"
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_epsilon",
 )
 ```
 
