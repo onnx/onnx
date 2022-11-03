@@ -235,29 +235,40 @@ def _interpolate_nd_with_x(
     x: List[float],
     get_coeffs: Callable[[float, float], np.ndarray],
     roi: np.ndarray = None,
+    exclude_outside: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
     if n == 1:
         return _interpolate_1d_with_x(
-            data, scale_factors[0], x[0], get_coeffs, roi=roi, **kwargs
+            data,
+            scale_factors[0],
+            x[0],
+            get_coeffs,
+            roi=roi,
+            exclude_outside=exclude_outside,
+            **kwargs,
         )
+    res1d = []
+    for i in range(data.shape[0]):
+        r = _interpolate_nd_with_x(
+            data[i],
+            n - 1,
+            scale_factors[1:],
+            x[1:],
+            get_coeffs,
+            roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
+            exclude_outside=exclude_outside,
+            **kwargs,
+        )
+        res1d.append(r)
+
     return _interpolate_1d_with_x(
-        [
-            _interpolate_nd_with_x(
-                data[i],
-                n - 1,
-                scale_factors[1:],
-                x[1:],
-                get_coeffs,
-                roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
-                **kwargs,
-            )
-            for i in range(data.shape[0])
-        ],
+        res1d,
         scale_factors[0],
         x[0],
         get_coeffs,
         roi=None if roi is None else [roi[0], roi[n]],
+        exclude_outside=exclude_outside,
         **kwargs,
     )
 
@@ -274,6 +285,7 @@ def _interpolate_nd(
     axes: Optional[List[int]] = None,
     roi: np.ndarray = None,
     keep_aspect_ratio_policy: Optional[str] = "stretch",
+    exclude_outside: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
 
@@ -333,7 +345,14 @@ def _interpolate_nd(
     ret = np.zeros(output_size)
     for x in _get_all_coords(ret):
         ret[tuple(x)] = _interpolate_nd_with_x(
-            data, len(data.shape), scale_factors, x, get_coeffs, roi=roi, **kwargs
+            data,
+            len(data.shape),
+            scale_factors,
+            x,
+            get_coeffs,
+            roi=roi,
+            exclude_outside=exclude_outside,
+            **kwargs,
         )
     return ret
 
@@ -367,7 +386,8 @@ class Resize(OpRun):
             else:
                 fct = _nearest_coeffs
         elif mode == "cubic":
-            fct = _cubic_coeffs_antialias if antialias else _cubic_coeffs
+            fct_ = _cubic_coeffs_antialias if antialias else _cubic_coeffs
+            fct = lambda x, scale: fct_(x, scale, A=cubic_coeff_a)
         elif mode == "linear":
             fct = _linear_coeffs_antialias if antialias else _linear_coeffs
         else:
@@ -381,6 +401,7 @@ class Resize(OpRun):
                 output_size=sizes,
                 roi=roi,
                 keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                exclude_outside=exclude_outside,
                 coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
                 extrapolation_value=extrapolation_value,  # type: ignore
             ).astype(X.dtype)
@@ -401,6 +422,7 @@ class Resize(OpRun):
                 output_size=sizes,
                 roi=roi,
                 keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                exclude_outside=exclude_outside,
                 coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
                 extrapolation_value=extrapolation_value,  # type: ignore
             ).astype(X.dtype)

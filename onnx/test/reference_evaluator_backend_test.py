@@ -788,8 +788,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             # shapes (10, 9, 3), (10, 8, 3) shape mismatch unexpected as the operator is inlined
             "test_center_crop_pad_crop_axes_hwc_expanded",
             "test_col2im_pads",  # mismatch by one value, the onnx backend test is probably wrong
-            "test_resize_downsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
-            "test_resize_upsample_scales_cubic_A_n0p5_exclude_outside",  # mismatch
             # bug
             "test_stft_with_window",  # RuntimeError: DFT is not implemented when normalize is True.
             "test_stft",  # RuntimeError: DFT is not implemented when normalize is True.
