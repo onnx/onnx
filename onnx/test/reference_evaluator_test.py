@@ -1839,10 +1839,10 @@ class TestReferenceEvaluator(unittest.TestCase):
             c_out = complex_out[0:onesided_length]
             expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
 
+        # import torch
         # correspondance with torch
         # hop_length = frame_step
         # window = np.ones((frame_length,), dtype=np.float32)
-        # import torch
         # ex = torch.stft(
         #      torch.Tensor(feeds["signal"][:, :, 0]),
         #      n_fft=frame_length, window=torch.Tensor(window),
@@ -1894,8 +1894,8 @@ class TestReferenceEvaluator(unittest.TestCase):
             c_out = complex_out[0:onesided_length]
             expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
 
-        # hop_length = frame_step
         # import torch
+        # hop_length = frame_step
         # ex = torch.stft(
         #      torch.Tensor(feeds["signal"][:, :, 0]),
         #      n_fft=frame_length, window=torch.Tensor(window),
@@ -1903,9 +1903,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         #      onesided=True, return_complex=True, center=False,
         #      normalized=False)
         # ex = np.transpose(ex.numpy(), [0, 2, 1])
-        # print(expected.shape, ex.shape)
-        # print(expected.flatten()[:10])
-        # print(ex.flatten()[:10])
 
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
