@@ -336,7 +336,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             true))
         .Attr(
             "storage_order",
-            "The storage order of the tensor. 0 is row major, and 1 is column major.",
+            "The storage order of the tensor. 0 is row major, and 1 is column major. "
+            "This attribute is used only to convert an n-tuple index value into "
+            "a single integer value for producing the second output. ",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
@@ -2403,7 +2405,7 @@ static const char* LayerNormalization_ver17_doc = R"DOC(
       ```
       Mean = ReduceMean<axes=normalized_axes>(X)
       D = Sub(X, Mean)
-      DD = Mul(Diff, Diff)
+      DD = Mul(D, D)
       Var = ReduceMean<axes=normalized_axes>(DD)
       VarEps = Add(Var, epsilon)
       StdDev = Sqrt(VarEps)

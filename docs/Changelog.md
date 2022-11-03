@@ -14477,7 +14477,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>storage_order</tt> : int (default is 0)</dt>
-<dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major. This attribute is used only to convert an n-tuple index value into a single integer value for producing the second output. </dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
@@ -21002,7 +21002,7 @@ This version of the operator has been available since version 17 of the default 
         ```
         Mean = ReduceMean<axes=normalized_axes>(X)
         D = Sub(X, Mean)
-        DD = Mul(Diff, Diff)
+        DD = Mul(D, D)
         Var = ReduceMean<axes=normalized_axes>(DD)
         VarEps = Add(Var, epsilon)
         StdDev = Sqrt(VarEps)
@@ -21232,64 +21232,6 @@ This version of the operator has been available since version 17 of the default 
 </dl>
 
 ## Version 18 of the default ONNX operator set
-### <a name="AttributeHasValue-18"></a>**AttributeHasValue-18**</a>
-
-  Returns true if at least one of the attribute-value is specified.
-
-#### Version
-
-This version of the operator has been available since version 18 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>value_float</tt> : float</dt>
-<dd>The float attribute.</dd>
-<dt><tt>value_floats</tt> : list of floats</dt>
-<dd>The floats attribute.</dd>
-<dt><tt>value_graph</tt> : graph</dt>
-<dd>The graph attribute.</dd>
-<dt><tt>value_graphs</tt> : list of graphs</dt>
-<dd>The graphs attribute.</dd>
-<dt><tt>value_int</tt> : int</dt>
-<dd>The int attribute.</dd>
-<dt><tt>value_ints</tt> : list of ints</dt>
-<dd>The ints attribute.</dd>
-<dt><tt>value_sparse_tensor</tt> : sparse_tensor</dt>
-<dd>The sparse_tensor attribute.</dd>
-<dt><tt>value_sparse_tensors</tt> : list of sparse_tensors</dt>
-<dd>The sparse_tensors attribute.</dd>
-<dt><tt>value_string</tt> : string</dt>
-<dd>The string attribute.</dd>
-<dt><tt>value_strings</tt> : list of strings</dt>
-<dd>The strings attribute.</dd>
-<dt><tt>value_tensor</tt> : tensor</dt>
-<dd>The tensor attribute.</dd>
-<dt><tt>value_tensors</tt> : list of tensors</dt>
-<dd>The tensors attribute.</dd>
-<dt><tt>value_type_proto</tt> : type_proto</dt>
-<dd>The type_proto attribute.</dd>
-<dt><tt>value_type_protos</tt> : list of type_protos</dt>
-<dd>The type_protos attribute.</dd>
-</dl>
-
-#### Inputs
-
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : B</dt>
-<dd>A scalar boolean tensor. If true, it indicates that an attribute is provided.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Constrain output to a boolean tensor.</dd>
-</dl>
-
 ### <a name="BitwiseAnd-18"></a>**BitwiseAnd-18**</a>
 
   Returns the tensor resulting from performing the bitwise `and` operation
