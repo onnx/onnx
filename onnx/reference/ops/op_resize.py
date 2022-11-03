@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0123,C3001,R0912,R0913,R0914,W0221,W0613
 
+from typing import Any, Callable, List, Optional
+
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 
 
-def _cartesian(arrays, out=None):  # type: ignore
+def _cartesian(arrays: List[np.ndarray], out: np.ndarray = None) -> np.ndarray:
     """
     From https://stackoverflow.com/a/1235363
     Generate a cartesian product of input arrays.
@@ -54,7 +56,7 @@ def _cartesian(arrays, out=None):  # type: ignore
     return out
 
 
-def _nearest_coeffs(ratio, mode="round_prefer_floor"):  # type: ignore
+def _nearest_coeffs(ratio: float, mode: str = "round_prefer_floor") -> np.ndarray:
     if type(ratio) == int or ratio.is_integer():
         return np.array([0, 1])
     if mode == "round_prefer_floor":
@@ -68,7 +70,8 @@ def _nearest_coeffs(ratio, mode="round_prefer_floor"):  # type: ignore
     raise ValueError(f"Unexpected value {mode!r}.")
 
 
-def _cubic_coeffs(ratio, A=-0.75):  # type: ignore
+def _cubic_coeffs(ratio: float, scale: float, A: float = -0.75) -> np.ndarray:
+    # scale is unused
     coeffs = [
         ((A * (ratio + 1) - 5 * A) * (ratio + 1) + 8 * A) * (ratio + 1) - 4 * A,
         ((A + 2) * ratio - (A + 3)) * ratio * ratio + 1,
@@ -77,21 +80,83 @@ def _cubic_coeffs(ratio, A=-0.75):  # type: ignore
         * ((1 - ratio) + 1)
         - 4 * A,
     ]
-
     return np.array(coeffs)
 
 
-def _linear_coeffs(ratio):  # type: ignore
+def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.ndarray:
+    if scale > 1.0:  # Antialias is applied when downsampling
+        scale = 1.0
+
+    def W(x: float) -> float:
+        x = abs(x)
+        x_2 = x * x
+        x_3 = x * x_2
+        if x <= 1:
+            return (A + 2) * x_3 - (A + 3) * x_2 + 1
+        if x < 2:
+            return A * x_3 - 5 * A * x_2 + 8 * A * x - 4 * A
+        return 0.0
+
+    i_start = int(np.floor(-2 / scale) + 1)
+    i_end = 2 - i_start
+    args = [scale * (i - ratio) for i in range(i_start, i_end)]
+    coeffs = [W(x) for x in args]
+    return np.array(coeffs) / sum(coeffs)
+
+
+def _linear_coeffs(ratio: float, scale: float) -> np.ndarray:
+    # scale is unused
     return np.array([1 - ratio, ratio])
 
 
-def _get_neighbor_idxes(x, n, limit):  # type: ignore
+def _linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
+    if scale > 1.0:  # Antialias is applied when downsampling
+        scale = 1.0
+    start = int(np.floor(-1 / scale) + 1)
+    footprint = 2 - 2 * start
+    args = (np.arange(start, start + footprint) - ratio) * scale
+    coeffs = np.clip(1 - np.abs(args), 0, 1)
+    return np.array(coeffs) / sum(coeffs)
+
+
+def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
+    """
+    Return the n nearest indexes to x among `[0, limit)`,
+    prefer the indexes smaller than x.
+    As a result, the ratio must be in `(0, 1]`.
+
+    Examples::
+
+        get_neighbor_idxes(4, 2, 10) == [3, 4]
+        get_neighbor_idxes(4, 3, 10) == [3, 4, 5]
+        get_neighbor_idxes(4.4, 3, 10) == [3, 4, 5]
+        get_neighbor_idxes(4.5, 3, 10) == [3, 4, 5]
+        get_neighbor_idxes(4.6, 3, 10) == [4, 5, 6]
+        get_neighbor_idxes(4.4, 1, 10) == [4]
+        get_neighbor_idxes(4.6, 1, 10) == [5]
+
+    :param x:
+    :param n: the number of the wanted indexes
+    :param limit: the maximum value of index
+    :return: An np.array containing n nearest indexes in ascending order
+    """
     idxes = sorted(range(limit), key=lambda idx: (abs(x - idx), idx))[:n]
     idxes = sorted(idxes)
     return np.array(idxes)
 
 
-def _get_neighbor(x, n, data):  # type: ignore
+def _get_neighbor(x: float, n: int, data: np.ndarray) -> np.ndarray:
+    """
+    Pad `data` in 'edge' mode, and get n nearest elements in the padded array
+    and their indexes in the original array.
+
+    :param x: center index (in the unpadded coordinate system) of the found nearest elements.
+    :param n: the number of neighbors.
+    :param data: the array
+    :return: A tuple containing the indexes of neighbor elements
+        (the index can be smaller than 0 or higher than len(data))
+        and the value of these elements
+    """
     pad_width = np.ceil(n / 2).astype(int)
     padded = np.pad(data, pad_width, mode="edge")
     x += pad_width
@@ -101,16 +166,16 @@ def _get_neighbor(x, n, data):  # type: ignore
     return idxes - pad_width, ret
 
 
-def _interpolate_1d_with_x(  # type: ignore
-    data,
-    scale_factor,
-    x,
-    get_coeffs,
-    roi=None,
-    extrapolation_value=0.0,
-    coordinate_transformation_mode="half_pixel",
-    exclude_outside=False,
-):
+def _interpolate_1d_with_x(
+    data: np.ndarray,
+    scale_factor: float,
+    x: float,
+    get_coeffs: Callable[[float, float], np.ndarray],
+    roi: np.ndarray = None,
+    extrapolation_value: float = 0.0,
+    coordinate_transformation_mode: str = "half_pixel",
+    exclude_outside: bool = False,
+) -> np.ndarray:
 
     input_width = len(data)
     output_width = scale_factor * input_width
@@ -149,7 +214,7 @@ def _interpolate_1d_with_x(  # type: ignore
     else:
         ratio = x_ori - x_ori_int
 
-    coeffs = get_coeffs(ratio)
+    coeffs = get_coeffs(ratio, scale_factor)
     n = len(coeffs)
 
     idxes, points = _get_neighbor(x_ori, n, data)
@@ -163,7 +228,15 @@ def _interpolate_1d_with_x(  # type: ignore
     return np.dot(coeffs, points).item()
 
 
-def _interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, roi=None, **kwargs):  # type: ignore
+def _interpolate_nd_with_x(
+    data: np.ndarray,
+    n: int,
+    scale_factors: List[float],
+    x: List[float],
+    get_coeffs: Callable[[float, float], np.ndarray],
+    roi: np.ndarray = None,
+    **kwargs: Any,
+) -> np.ndarray:
     if n == 1:
         return _interpolate_1d_with_x(
             data, scale_factors[0], x[0], get_coeffs, roi=roi, **kwargs
@@ -189,19 +262,72 @@ def _interpolate_nd_with_x(data, n, scale_factors, x, get_coeffs, roi=None, **kw
     )
 
 
-def _get_all_coords(data):  # type: ignore
+def _get_all_coords(data: np.ndarray) -> np.ndarray:
     return _cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
 
 
-def _interpolate_nd(  # type: ignore
-    data, get_coeffs, output_size=None, scale_factors=None, roi=None, **kwargs
-):
+def _interpolate_nd(
+    data: np.ndarray,
+    get_coeffs: Callable[[float, float], np.ndarray],
+    output_size: Optional[List[int]] = None,
+    scale_factors: Optional[List[float]] = None,
+    axes: Optional[List[int]] = None,
+    roi: np.ndarray = None,
+    keep_aspect_ratio_policy: Optional[str] = "stretch",
+    **kwargs: Any,
+) -> np.ndarray:
 
     assert output_size is not None or scale_factors is not None
+
+    r = len(data.shape)
+    if axes is not None:
+        if scale_factors is not None:
+            new_scale_factors = [1.0] * r
+            for i, d in enumerate(axes):
+                new_scale_factors[d] = scale_factors[i]
+            scale_factors = new_scale_factors
+
+        if output_size is not None:
+            new_output_size = [data.shape[i] for i in range(r)]
+            for i, d in enumerate(axes):
+                new_output_size[d] = output_size[i]
+            output_size = new_output_size
+
+        if roi is not None:
+            new_roi = ([0.0] * r) + ([1.0] * r)
+            naxes = len(axes)
+            for i, d in enumerate(axes):
+                new_roi[d] = roi[i]
+                new_roi[r + d] = roi[naxes + i]
+            roi = new_roi
+    else:
+        axes = list(range(r))
+
     if output_size is not None:
-        scale_factors = np.array(output_size) / np.array(data.shape)
+        scale_factors = [output_size[i] / data.shape[i] for i in range(r)]
+        if keep_aspect_ratio_policy != "stretch":
+            if keep_aspect_ratio_policy == "not_larger":
+                scale = np.array(scale_factors)[axes].min()
+            elif keep_aspect_ratio_policy == "not_smaller":
+                scale = np.array(scale_factors)[axes].max()
+            else:
+                raise ValueError(
+                    f"Invalid keep_aspect_ratio_policy={keep_aspect_ratio_policy!r}"
+                )
+
+            scale_factors = [scale if i in axes else 1.0 for i in range(r)]
+
+            def round_half_up(x: float) -> int:
+                return int(x + 0.5)
+
+            output_size = [
+                round_half_up(scale * data.shape[i]) if i in axes else data.shape[i]
+                for i in range(r)
+            ]
+
     else:
         output_size = (scale_factors * np.array(data.shape)).astype(int)
+
     assert scale_factors is not None
 
     ret = np.zeros(output_size)
@@ -229,21 +355,21 @@ class Resize(OpRun):
         mode=None,
         nearest_mode=None,
     ):
-        if antialias:
-            raise NotImplementedError(f"antialias={antialias!r} is not implemented.")
-        if keep_aspect_ratio_policy and keep_aspect_ratio_policy != "stretch":
-            raise NotImplementedError(
-                f"keep_aspect_ratio_policy={keep_aspect_ratio_policy!r} is not implemented."
-            )
         if mode == "nearest":  # type: ignore
+            if antialias:
+                raise RuntimeError(
+                    f"antilias={antialias!r} is not supported for mode={mode!r}."
+                )
             if nearest_mode is not None:
-                fct = lambda x: _nearest_coeffs(x, mode=nearest_mode)  # noqa
+                fct = lambda x, scale_factor: _nearest_coeffs(  # noqa
+                    x, mode=nearest_mode
+                )
             else:
                 fct = _nearest_coeffs
         elif mode == "cubic":
-            fct = _cubic_coeffs
+            fct = _cubic_coeffs_antialias if antialias else _cubic_coeffs
         elif mode == "linear":
-            fct = _linear_coeffs
+            fct = _linear_coeffs_antialias if antialias else _linear_coeffs
         else:
             raise ValueError(f"Unexpected value {mode!r} for mode.")
 
@@ -254,6 +380,7 @@ class Resize(OpRun):
                 scale_factors=scales,
                 output_size=sizes,
                 roi=roi,
+                keep_aspect_ratio_policy=keep_aspect_ratio_policy,
                 coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
                 extrapolation_value=extrapolation_value,  # type: ignore
             ).astype(X.dtype)
@@ -273,6 +400,7 @@ class Resize(OpRun):
                 scale_factors=scales,
                 output_size=sizes,
                 roi=roi,
+                keep_aspect_ratio_policy=keep_aspect_ratio_policy,
                 coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
                 extrapolation_value=extrapolation_value,  # type: ignore
             ).astype(X.dtype)
