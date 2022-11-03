@@ -15,7 +15,8 @@ def combine_pairs_to_complex(fa: Sequence[int]) -> List[complex]:
 
 
 def bfloat16_to_float32(
-    data: np.ndarray, dims: Optional[Union[int, Sequence[int]]] = None
+    data: Union[np.int16, np.int32, np.ndarray],
+    dims: Optional[Union[int, Sequence[int]]] = None,
 ) -> np.ndarray:
     """Converts ndarray of bf16 (as uint32) to f32 (as uint32).
 
