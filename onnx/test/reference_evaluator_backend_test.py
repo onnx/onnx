@@ -782,8 +782,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         }
 
         cls.skip_test = {
-            # incomplete implementation
-            "test_nesterov_momentum",
             # mismatches
             # shapes (10, 9, 3), (10, 8, 3) shape mismatch unexpected as the operator is inlined
             "test_center_crop_pad_crop_axes_hwc_expanded",
