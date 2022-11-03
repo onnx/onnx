@@ -22,7 +22,7 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
     """
     Applies one dimensional FFT with window weights.
     torch defines the number of frames as:
-    `n_frames = 1 + (len - n_fft) / hop_length`.
+    `n_frames = 1 + (len - n_fft) // hop_length`.
     """
     last_axis = len(x.shape) - 1  # op.Sub(op.Shape(op.Shape(x)), one)
     axis = [-2]
@@ -53,7 +53,7 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
     # calling weighted dft with weights=window
     shape_x = new_x.shape
     shape_x_short = shape_x[:-2]
-    shape_x_short_one = tuple(1 for _ in shape_x_short) + (1,)
+    shape_x_short_one = tuple(1 for _ in shape_x_short)
     window_shape = shape_x_short_one + (window_size, 1)
     weights = np.reshape(window, window_shape)
     weighted_new_x = new_x * weights
@@ -62,12 +62,7 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
         weighted_new_x, fft_length, last_axis, onesided=onesided
     )  # normalize=False
 
-    # final transpose -3, -2
-    dim = len(result.shape)
-    ax1 = dim - 3
-    ax2 = dim - 2
-    final = np.swapaxes(result, ax1, ax2)
-    return np.squeeze(final, axis=1)
+    return result
 
 
 def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
@@ -155,10 +150,13 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
 class STFT(OpRun):
     def _run(self, x, frame_step, window=None, frame_length=None, onesided=None):  # type: ignore
         if frame_length is None:
-            frame_length = x.shape[-2]
-        hop_length = frame_length // 4
+            if window is None:
+                frame_length = x.shape[-2]
+            else:
+                frame_length = window.shape[0]
+        hop_length = frame_step
         if window is None:
             window = np.ones((frame_length,), dtype=x.dtype)
-        n_frames = 1  # int(1 + (x.shape[-2] - frame_length) / hop_length)
+        n_frames = 1 + (x.shape[-2] - frame_length) // frame_step
         res = _stft(x, [frame_length], hop_length, n_frames, window, onesided=onesided)
         return (res.astype(x.dtype),)

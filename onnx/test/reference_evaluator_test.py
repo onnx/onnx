@@ -72,7 +72,7 @@ def make_sequence_value_info(name, elem_type, shape):
     return make_value_info(name, s_type, shape)
 
 
-class TestRuntimeReferenceEvaluator(unittest.TestCase):
+class TestReferenceEvaluator(unittest.TestCase):
     m2_def = """
         <
             ir_version: 7,
@@ -156,9 +156,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             ReferenceEvaluator(X)
 
     def test_reference_evaluator_no_attribute(self):
-        m = TestRuntimeReferenceEvaluator._load_model(
-            TestRuntimeReferenceEvaluator.m2_def
-        )
+        m = TestReferenceEvaluator._load_model(TestReferenceEvaluator.m2_def)
         checker.check_model(m)
         sess = ReferenceEvaluator(m)
         self.assertEqual(sess.input_names, ["B01", "B11", "B21"])
@@ -172,9 +170,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         assert_allclose(expected, res)
 
     def test_reference_evaluator_no_attribute_bytes(self):
-        m = TestRuntimeReferenceEvaluator._load_model(
-            TestRuntimeReferenceEvaluator.m2_def
-        )
+        m = TestReferenceEvaluator._load_model(TestReferenceEvaluator.m2_def)
         checker.check_model(m)
         sess = ReferenceEvaluator(m.SerializeToString())
         self.assertEqual(sess.input_names, ["B01", "B11", "B21"])
@@ -188,9 +184,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         assert_allclose(expected, res)
 
     def test_reference_evaluator_no_attribute_verbose(self):
-        m = TestRuntimeReferenceEvaluator._load_model(
-            TestRuntimeReferenceEvaluator.m2_def
-        )
+        m = TestReferenceEvaluator._load_model(TestReferenceEvaluator.m2_def)
         x = np.array([[0, 1], [2, 3]], dtype=np.float32)
         y = np.array([[4, 5], [6, 7]], dtype=np.float32)
         z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
@@ -274,7 +268,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             self.assertEqual(log, out)
 
     def test_reference_evaluator_lr(self):
-        lr, f = TestRuntimeReferenceEvaluator._linear_regression()
+        lr, f = TestReferenceEvaluator._linear_regression()
         x = np.array([[0, 1], [2, 3]], dtype=np.float32)
         a = np.array([1, 1], dtype=np.float32)
         b = np.array([11], dtype=np.float32)
@@ -285,7 +279,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
 
     def test_reference_evaluator_lr_clip(self):
         with self.subTest(opt="min+max"):
-            lr, f = TestRuntimeReferenceEvaluator._linear_regression(clip=True)
+            lr, f = TestReferenceEvaluator._linear_regression(clip=True)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
@@ -297,9 +291,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="max"):
-            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
-                clip=True, min_value=None
-            )
+            lr, f = TestReferenceEvaluator._linear_regression(clip=True, min_value=None)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
@@ -311,9 +303,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="min"):
-            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
-                clip=True, max_value=None
-            )
+            lr, f = TestReferenceEvaluator._linear_regression(clip=True, max_value=None)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
@@ -326,9 +316,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
 
     def test_reference_evaluator_lr_clip_6(self):
         with self.subTest(opt="min+max"):
-            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
-                clip=True, opset=10
-            )
+            lr, f = TestReferenceEvaluator._linear_regression(clip=True, opset=10)
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
             a = np.array([1, 1], dtype=np.float32)
             b = np.array([11], dtype=np.float32)
@@ -342,7 +330,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="max"):
-            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
+            lr, f = TestReferenceEvaluator._linear_regression(
                 clip=True, opset=10, min_value=None
             )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
@@ -358,7 +346,7 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
             assert_allclose(expected, got)
 
         with self.subTest(opt="min"):
-            lr, f = TestRuntimeReferenceEvaluator._linear_regression(
+            lr, f = TestReferenceEvaluator._linear_regression(
                 clip=True, opset=10, max_value=None
             )
             x = np.array([[0, 1], [2, 3]], dtype=np.float32)
@@ -1813,6 +1801,111 @@ class TestRuntimeReferenceEvaluator(unittest.TestCase):
         # import onnxruntime
         # ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString())
         # got0 = ref0.run(None, feeds)
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        assert_allclose(expected, got1[0])
+
+    def test_stft(self):
+        signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
+        frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
+        frame_length = make_tensor_value_info("frame_length", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+
+        node = make_node(
+            "STFT",
+            ["signal", "frame_step", "", "frame_length"],
+            ["Y"],
+        )
+        graph = make_graph([node], "g", [signal, frame_step, frame_length], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 17)])
+        feeds = {
+            "signal": np.arange(128).reshape((1, 128, 1)).astype(np.float32),
+            "frame_step": np.array(8, dtype=np.int64),
+            "frame_length": np.array(16, dtype=np.int64),
+        }
+
+        signal = feeds["signal"]
+        frame_length = int(feeds["frame_length"])
+        frame_step = int(feeds["frame_step"])
+        onesided_length = (frame_length // 2) + 1
+        nstfts = ((feeds["signal"].shape[1] - frame_length) // frame_step) + 1
+        # [batch_size][frames][frame_length][2]
+        expected = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
+        for i in range(nstfts):
+            start = i * frame_step
+            stop = i * frame_step + frame_length
+            complex_out = np.fft.fft(signal[0, start:stop, 0])
+            c_out = complex_out[0:onesided_length]
+            expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
+
+        # correspondance with torch
+        # hop_length = frame_step
+        # window = np.ones((frame_length,), dtype=np.float32)
+        # import torch
+        # ex = torch.stft(
+        #      torch.Tensor(feeds["signal"][:, :, 0]),
+        #      n_fft=frame_length, window=torch.Tensor(window),
+        #      hop_length=hop_length, win_length=frame_length,
+        #      onesided=True, return_complex=True, center=False,
+        #      normalized=False)
+        # ex = np.transpose(ex.numpy(), [0, 2, 1])
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        assert_allclose(expected, got1[0])
+
+    def test_stft_with_window(self):
+        signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
+        frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
+        window = make_tensor_value_info("window", TensorProto.FLOAT, [None])
+        frame_length = make_tensor_value_info("frame_length", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+
+        node = make_node(
+            "STFT",
+            ["signal", "frame_step", "window", "frame_length"],
+            ["Y"],
+        )
+        graph = make_graph([node], "g", [signal, frame_step, window, frame_length], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 17)])
+        feeds = {
+            "signal": np.arange(128).reshape((1, 128, 1)).astype(np.float32),
+            "frame_step": np.array(8, dtype=np.int64),
+            "window": 0.5
+            + 0.5 * np.cos(2 * 3.1415 * np.arange(0, 16, 1, dtype=np.float32) / 16),
+            "frame_length": np.array(16, dtype=np.int64),
+        }
+
+        signal = feeds["signal"]
+        frame_length = int(feeds["frame_length"])
+        window = feeds["window"]
+        frame_step = int(feeds["frame_step"])
+        onesided_length = (frame_length // 2) + 1
+        nstfts = 1 + (signal.shape[1] - window.shape[0]) // 8
+        # [batch_size][frames][frame_length][2]
+        expected = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
+        for i in range(nstfts):
+            start = i * frame_step
+            stop = i * frame_step + frame_length
+            complex_out = np.fft.fft(signal[0, start:stop, 0] * window)[
+                0:onesided_length
+            ]
+            c_out = complex_out[0:onesided_length]
+            expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
+
+        # hop_length = frame_step
+        # import torch
+        # ex = torch.stft(
+        #      torch.Tensor(feeds["signal"][:, :, 0]),
+        #      n_fft=frame_length, window=torch.Tensor(window),
+        #      hop_length=hop_length, win_length=frame_length,
+        #      onesided=True, return_complex=True, center=False,
+        #      normalized=False)
+        # ex = np.transpose(ex.numpy(), [0, 2, 1])
+        # print(expected.shape, ex.shape)
+        # print(expected.flatten()[:10])
+        # print(ex.flatten()[:10])
 
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)

@@ -387,7 +387,7 @@ class Resize(OpRun):
                 fct = _nearest_coeffs
         elif mode == "cubic":
             fct_ = _cubic_coeffs_antialias if antialias else _cubic_coeffs
-            fct = lambda x, scale: fct_(x, scale, A=cubic_coeff_a)
+            fct = lambda x, scale: fct_(x, scale, A=cubic_coeff_a)  # noqa
         elif mode == "linear":
             fct = _linear_coeffs_antialias if antialias else _linear_coeffs
         else:
