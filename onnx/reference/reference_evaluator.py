@@ -49,6 +49,18 @@ class ReferenceEvaluator:
         results = sess.run(None, {"X": X})
         print(results[0])  # display the first result
 
+    Parameter *verbose* may be used to show intermediate results.
+
+    ::
+
+        import numpy as np
+        from onnx.reference import ReferenceEvaluator
+
+        X = np.array(...)
+        sess = ReferenceEvaluator("model.onnx", verbose=1)
+        results = sess.run(None, {"X": X})
+        print(results[0])  # display the first result
+
     The class can use any implementation available in folder
     `ops <https://github.com/onnx/onnx/tree/main/onnx/reference/ops>`_.
     Adding an implementation requires two changes. The first one is
