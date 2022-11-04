@@ -718,7 +718,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             raise AssertionError(
                 f"Mismatch in test {te.name!r}\n{te.onnx_model}."
             ) from e
-        if 30 < success < 907:
+        if 30 < success < 1156:
             raise AssertionError(
                 f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
                 f"the runtime among has decreased. New operators were added with no "
