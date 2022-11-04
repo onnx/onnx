@@ -2699,7 +2699,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
                   // Flatten into 3D tensor: [N, num_groups, group_size x H x W (x ...)]
                   .Add("Shape3D = Constant <value_ints = [0, 0, -1]> ()")
-                  .Add("X3D = Reshape(X, Shape3D)")
+                  .Add("X3D = Reshape(XReshaped, Shape3D)")
 
                   // Calculate statistics
                   .Add("Mean = ReduceMean <axes = [2]> (X3D)")
@@ -2713,7 +2713,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("Normalized = Div (Deviation, StdDev)")
 
                   // Reshape scale and bias for broadcasting
-                  .Add("ScaleShape = Constant <value_ints = [-1, 1]> ()")
+                  .Add("ScaleShape = Constant <value_ints = [1, -1, 1]> ()")
                   .Add("ScaleT = Cast (scale)", "to", T)
                   .Add("BiasT = Cast (bias)", "to", T)
                   .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
