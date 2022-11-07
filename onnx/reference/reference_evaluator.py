@@ -7,9 +7,10 @@ import numpy as np
 
 from onnx import load, numpy_helper
 from onnx.defs import onnx_opset_version
-from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto
+from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
+from onnx.shape_inference import infer_shapes
 
-from .op_run import OpRun
+from .op_run import OpRun, RuntimeContextError
 
 
 class ReferenceEvaluator:
@@ -180,6 +181,11 @@ class ReferenceEvaluator:
                 self.onnx_graph_.sparse_initializer  # type: ignore
             )
             self.nodes_ = self.onnx_graph_.node
+            all_types = {i.name: i.type for i in self.onnx_graph_.input}
+            if hasattr(self.proto_, "value_info"):
+                for shape_type in self.proto_.value_info:
+                    all_types[shape_type.name] = shape_type.type
+            self.all_types_ = all_types
         else:
             self.input_names_ = list(proto.input)
             self.output_names_ = list(proto.output)
@@ -268,6 +274,17 @@ class ReferenceEvaluator:
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(self.input_names)}) -> {', '.join(self.output_names)}"
 
+    def get_result_types(self, name: str) -> Any:
+        if self.all_types_ is None:
+            raise RuntimeError(
+                f"Unable to return type for name {name!r}. Run shape_inference first."
+            )
+        if name not in self.all_types_:
+            raise RuntimeError(
+                f"Unable to return type for name {name!r}, it was not found in {list(sorted(self.all_types_))}."
+            )
+        return self.all_types_[name]
+
     def _init(self) -> None:
         """
         Loads the implementation for every node in the graph.
@@ -281,12 +298,36 @@ class ReferenceEvaluator:
             "opsets": self.opsets,
             "verbose": self.verbose,
         }
+        if self.input_types_:
+            all_types = {i.name: i.type for i in self.onnx_graph_.input}
+            if hasattr(self.proto_, "value_info"):
+                for shape_type in self.proto_.value_info:
+                    all_types[shape_type.name] = shape_type.type
+            self.all_types_ = all_types
+        else:
+            self.all_types_ = None  # type: ignore
+
         for node in self.nodes_:
-            cl = self._load_impl(node)
+            try:
+                cl = self._load_impl(node)
+            except RuntimeContextError as e:
+                # A node has a context dependent implementation.
+                # Shape inference must be run to get the input types.
+                if self.all_types_:
+                    it = [self.get_result_types(i) for i in node.input]
+                    cl = self._load_impl(node, it)  # type: ignore
+                else:
+                    raise RuntimeContextError(
+                        f"No implementation was found for node type {node.op_type!r} from domain {node.domain!r}. "
+                        f"If this node has a context dependent implementation, you should run function infer_shapes "
+                        f"before calling ReferenceEvaluator."
+                    ) from e
             inst = cl(node, run_params)
             self.rt_nodes_.append(inst)
 
-    def _load_impl(self, node: NodeProto) -> Any:
+    def _load_impl(
+        self, node: NodeProto, input_types: Optional[TypeProto] = None
+    ) -> Any:
         """
         Loads the implementation for a specified runtime.
         """
@@ -306,7 +347,18 @@ class ReferenceEvaluator:
         if node.domain == "":
             from .ops import load_op
 
-            return load_op(node.domain, node.op_type, version)
+            try:
+                return load_op(node.domain, node.op_type, version)
+            except RuntimeContextError:
+                if input_types is None:
+                    raise
+                return load_op(
+                    node.domain,
+                    node.op_type,
+                    version,
+                    node=node,
+                    input_types=input_types,
+                )
 
         if node.domain == "ai.onnx.preview.training":
             from .ops.aionnx_preview_training import load_op as load_op_pt
@@ -377,7 +429,7 @@ class ReferenceEvaluator:
         for name in output_names:
             if name not in results:
                 raise RuntimeError(
-                    f"Unable to find output {name!r} in {list(sorted(results))}."
+                    f"Unable to find output name {name!r} in {list(sorted(results))}, proto is\n{self.proto_}"
                 )
             list_results.append(results[name])
         return list_results

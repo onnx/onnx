@@ -5,6 +5,17 @@
 These test evaluates the python runtime (class ReferenceEvaluator) against
 all the backend tests (in onnx/backend/test/case/node) and checks
 the runtime produces the expected outputs.
+
+You may run one specific test with following command line:
+
+::
+
+    python onnx/test/reference_evaluator_backend_test.py TestOnnxBackEndWithReferenceEvaluator.test_group_normalization_example
+
+You may bypass a test newly added by adding to the global variable `SKIP_TESTS`.
+You may refine the absolute or relative tolerance for a test by
+adding an item in method `setUpClass` and attributes
+`atol` or `rtol`.
 """
 
 import os
@@ -34,7 +45,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1158
+MIN_PASSING_TESTS = 1160
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
@@ -47,8 +58,6 @@ SKIP_TESTS = {
     "test_scatter_with_axis",  # deprecated, scatter is removed
     "test_scatter_without_axis",  # deprecated, scatter is removed
     # not implemented
-    "test_group_normalization_example",  # new operator
-    "test_group_normalization_epsilon",  # new operator
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
 }

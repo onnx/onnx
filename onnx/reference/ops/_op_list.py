@@ -10,11 +10,18 @@ The operator may have been updated to support more types but that
 did not change the implementation.
 """
 import textwrap
-from typing import Any, Union
+from typing import Any, List, Union
 
+from onnx import FunctionProto, NodeProto, TypeProto
 from onnx.defs import get_schema, onnx_opset_version
 from onnx.onnx_cpp2py_export.defs import SchemaError
-from onnx.reference.op_run import OpFunction, OpRun, _split_class_name
+from onnx.reference.op_run import (
+    OpFunction,
+    OpRun,
+    RuntimeContextError,
+    RuntimeImplementationError,
+    _split_class_name,
+)
 
 from .op_abs import Abs
 from .op_acos import Acos
@@ -211,6 +218,7 @@ def _build_registered_operators():  # type: ignore
             "clo",
             "class_name",
             "get_schema",
+            "List",
             "textwrap",
             "Union",
         }:
@@ -234,7 +242,12 @@ def _build_registered_operators():  # type: ignore
 
 
 def load_op(
-    domain: str, op_type: str, version: Union[None, int] = None, custom: Any = None
+    domain: str,
+    op_type: str,
+    version: Union[None, int] = None,
+    custom: Any = None,
+    node: Union[None, NodeProto] = None,
+    input_types: Union[None, List[TypeProto]] = None,
 ) -> Any:
     """
     Loads the implemented for a specified operator.
@@ -243,9 +256,14 @@ def load_op(
     :param op_type: oprator type
     :param version: requested version
     :param custom: custom implementation (like a function)
+    :param node: used if no implementation was found and the operator defines a function
+        which is context dependant
+    :param input_types: used if no implementation was found and the operator defines a function
+        which is context dependant
     :return: class
     """
     global _registered_operators
+    schema = None
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()
     if custom is not None:
@@ -259,22 +277,46 @@ def load_op(
     else:
         # maybe the operator can be replacted by a function
         try:
-            schema = get_schema(op_type, version, "")  # type: ignore
-            found = True
+            schema = get_schema(op_type, version, domain)  # type: ignore
         except SchemaError:
-            found = False
-        if found and schema.has_function:  # type: ignore
+            raise NotImplementedError(
+                f"No registered schema for operator {op_type!r} "
+                f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
+            )
+        if schema.has_function:  # type: ignore
             from onnx.reference import ReferenceEvaluator
 
             body = schema.function_body  # type: ignore
             sess = ReferenceEvaluator(body)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
+        if schema.has_context_dependent_function:  # type: ignore
+            if node is None or input_types is None:
+                raise RuntimeContextError(
+                    f"No registered implementation for operator {op_type!r} "
+                    f"and domain {domain!r}, the operator has a context dependent function. "
+                    f"but argument node or input_types is not defined."
+                )
+            from onnx.reference import ReferenceEvaluator
+
+            body = schema.get_context_dependent_function(  # type: ignore
+                node.SerializeToString(), [it.SerializeToString() for it in input_types]
+            )
+            proto = FunctionProto()
+            proto.ParseFromString(body)
+            sess = ReferenceEvaluator(proto)
+            return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         found = False
     if not found:
         available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
-        raise NotImplementedError(
+        has_function = schema.has_function if schema else None  # type: ignore
+        has_context_dependent_function = (
+            schema.has_context_dependent_function if schema else None  # type: ignore
+        )
+        raise RuntimeImplementationError(
             f"No registered implementation for operator {op_type!r} "
-            f"and domain {domain!r}. You may either add one or skip the test in "
+            f"and domain {domain!r}, schema.has_function is {has_function}, "
+            f"schema.has_context_dependent_function is {has_context_dependent_function}. "
+            f"You may either add one or skip the test in "
             f"'reference_evaluator_bakcend_test.py'. Available implementations:\n{available}"
         )
     impl = _registered_operators[op_type]  # type: ignore

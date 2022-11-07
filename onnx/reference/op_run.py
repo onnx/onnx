@@ -29,6 +29,18 @@ class RuntimeTypeError(RuntimeError):
     """
 
 
+class RuntimeContextError(RuntimeError):
+    """
+    Raised when the context is missing but an context dependent implementation is defined for an operator.
+    """
+
+
+class RuntimeImplementationError(NotImplementedError):
+    """
+    Raised when no implementation was found for an operator.
+    """
+
+
 class DefaultNone:
     """
     Default value for parameters when the parameter is not set
