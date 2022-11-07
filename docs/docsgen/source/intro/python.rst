@@ -363,7 +363,7 @@ how the initializers look like.
     onnx_model = make_model(graph)
     check_model(onnx_model)
 
-    print('** intializer **')
+    print('** initializer **')
     for init in onnx_model.graph.initializer:
         print(init)
 
@@ -379,7 +379,7 @@ Attributes
 
 Some operators need attributes such as :ref:`l-onnx-doc-Transpose` operator.
 Let's build the graph for expression :math:`y = XA' + B` or
-`y = Add(MatMul(X, Transpose(A)) + B)`. Tranpose needs an attribute
+`y = Add(MatMul(X, Transpose(A)) + B)`. Transpose needs an attribute
 defining the permutation of axes: `perm=[1, 0]`. It is added
 as a named attribute in function `make_node`.
 
@@ -625,7 +625,7 @@ The whole is easier to visualize with the following image.
 .. image:: images/dot_if_py.png
 
 Both else and then branches are very simple.
-Node *If* could even be replace with a node *Where* and
+Node *If* could even be replaced with a node *Where* and
 that would be faster. It becomes interesting when both branches
 are bigger and skipping one is more efficient.
 
@@ -869,7 +869,7 @@ the default implementation based on existing operators.
 
 Function `make_function` is used to define a function.
 It works like a graph with less types. It is more like a
-template. This API may evolve. It does not include intializers either.
+template. This API may evolve. It does not include initializers either.
 
 A function with no attribute
 ++++++++++++++++++++++++++++
@@ -930,7 +930,7 @@ A function with attributes
 
 .. index:: ref_attr_name
 
-The following functions is equivalent as the previous one except
+The following functions are equivalent to the previous one except
 one input, *B*, was converted into an argument named *bias*.
 The code is almost the same except the bias is now a constant.
 Inside the function definition, a node *Constant* is created
@@ -985,7 +985,7 @@ with the attribute `ref_attr_name`.
 
     graph = make_graph(
         [make_node('LinearRegression', ['X', 'A'], ['Y1'], domain=new_domain,
-                   # bias is now an argument of the function and defined as a tensor
+                   # bias is now an argument of the function and is defined as a tensor
                    bias=make_tensor('former_B', TensorProto.FLOAT, [1], [0.67])),
          make_node('Abs', ['Y1'], ['Y'])],
         'example',
