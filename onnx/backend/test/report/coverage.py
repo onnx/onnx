@@ -133,6 +133,7 @@ class Coverage:
                 tablefmt="plain",
             )
         )
+        writer.write("\n")
         if os.environ.get("CSVDIR") is not None:
             self.report_csv(all_ops, passed, experimental)
 

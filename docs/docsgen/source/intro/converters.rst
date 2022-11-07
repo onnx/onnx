@@ -64,7 +64,7 @@ They have to write the specific converter for this piece.
 Somehow, it is like implementing
 twice the prediction function. There is one easy case:
 deep learning frameworks have their own primitives to ensure
-the same code can be executed on different environment.
+the same code can be executed on different environments.
 As long as a custom layer or a subpart is using pieces of
 pytorch or tensorflow, there is not much to do.
 It is a different story for scikit-learn. This package
@@ -76,7 +76,7 @@ not it was implemented with numpy.
 Opsets
 ======
 
-ONNX releases package with version number like
+ONNX releases packages with version numbers like
 `major.minor.fix`. Every minor update means the list of operators
 is different or the signature has changed. It is also associated to
 an opset, version `1.10` is opset 15, `1.11` will be opset 16.
@@ -92,7 +92,7 @@ support newest opsets or at least not in the installed version.
 That's why every converting library offers the
 possibility to create an ONNX graph for a specific opset usually called
 ``target_opset``. ONNX language describes simple and complex operators.
-Changing the opset is similar to upgrade a library. onnx
+Changing the opset is similar to upgrading a library. onnx
 and onnx runtimes must support backward compatibility.
 
 Other API
@@ -121,7 +121,7 @@ sklearn-onnx defines two different API. The first one
 introduced in that example `Implement a converter
 <https://onnx.ai/sklearn-onnx/auto_tutorial/plot_jcustom_syntax.html>`_
 follows a similar design that tensorflow-onnx follows.
-Following line are extracted from the converter of a linear
+The following lines are extracted from the converter of a linear
 classifier.
 
 ::
@@ -313,7 +313,7 @@ of existing operators.
 
 File `onnx/defs/schema.h
 <https://github.com/onnx/onnx/tree/master/onnx/defs/schema.h>`_
-contains the latest opset version. It must updated too if one opset
+contains the latest opset version. It must be updated too if one opset
 was upgraded.
 
 File `onnx/version_converter/convert.h
@@ -323,7 +323,7 @@ This file may be updated too.
 
 The package must be compiled and the documentation must be generated
 again to automatically update the markdown documentation and it must
-be included into the PR.
+be included in the PR.
 
 Then unit test must be updated.
 

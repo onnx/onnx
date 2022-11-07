@@ -1765,6 +1765,15 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [TensorProto.INT16],
         )
 
+    def test_GroupNormalization(self) -> None:
+        self._test_op_upgrade(
+            "GroupNormalization",
+            18,
+            [[3, 4, 2, 2], [1], [1]],
+            [[3, 4, 2, 2]],
+            attrs={"epsilon": 1e-5, "num_groups": 2},
+        )
+
     def test_ops_tested(self) -> None:
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == ""]
