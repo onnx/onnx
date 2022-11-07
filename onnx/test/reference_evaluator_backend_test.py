@@ -33,6 +33,26 @@ from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optiona
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
+# Number of tests expected to pass without raising an exception.
+MIN_PASSING_TESTS = 1158
+
+# Update this list if one new operator does not have any implementation.
+SKIP_TESTS = {
+    # mismatches
+    # shapes (10, 9, 3), (10, 8, 3) shape mismatch unexpected as the operator is inlined
+    "test_center_crop_pad_crop_axes_hwc_expanded",
+    "test_col2im_pads",  # mismatch by one value, the onnx backend test is probably wrong
+    # deprecated
+    "test_scan_sum",  # deprecated, opset 8 -> not implemented
+    "test_scatter_with_axis",  # deprecated, scatter is removed
+    "test_scatter_without_axis",  # deprecated, scatter is removed
+    # not implemented
+    "test_group_normalization_example",  # new operator
+    "test_group_normalization_epsilon",  # new operator
+    "test__simple_gradient_of_add",  # gradient not implemented
+    "test__simple_gradient_of_add_and_mul",  # gradient not implemented
+}
+
 
 def assert_allclose_string(expected, value):
     """
@@ -718,7 +738,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             raise AssertionError(
                 f"Mismatch in test {te.name!r}\n{te.onnx_model}."
             ) from e
-        if 30 < success < 1156:
+        if 30 < success < MIN_PASSING_TESTS:
             raise AssertionError(
                 f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
                 f"the runtime among has decreased. New operators were added with no "
@@ -781,23 +801,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv3d_groups": 1e-4,
         }
 
-        cls.skip_test = {
-            # mismatches
-            # shapes (10, 9, 3), (10, 8, 3) shape mismatch unexpected as the operator is inlined
-            "test_center_crop_pad_crop_axes_hwc_expanded",
-            "test_col2im_pads",  # mismatch by one value, the onnx backend test is probably wrong
-            # deprecated
-            "test_scan_sum",  # deprecated, opset 8 -> not implemented
-            "test_scatter_with_axis",  # deprecated, scatter is removed
-            "test_scatter_without_axis",  # deprecated, scatter is removed
-        }
-
-        cls.skip_test |= {
-            # extended list
-            # not implemented
-            "test__simple_gradient_of_add",  # gradient not implemented
-            "test__simple_gradient_of_add_and_mul",  # gradient not implemented
-        }
+        cls.skip_test = SKIP_TESTS
         if all_tests:
             cls.skip_test = set()
         cls.successes = []

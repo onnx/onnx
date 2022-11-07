@@ -13,6 +13,7 @@ import textwrap
 from typing import Any, Union
 
 from onnx.defs import get_schema, onnx_opset_version
+from onnx.onnx_cpp2py_export.defs import SchemaError
 from onnx.reference.op_run import OpFunction, OpRun, _split_class_name
 
 from .op_abs import Abs
@@ -257,8 +258,12 @@ def load_op(
         found = True
     else:
         # maybe the operator can be replacted by a function
-        schema = get_schema(op_type, version, "")  # type: ignore
-        if schema.has_function:  # type: ignore
+        try:
+            schema = get_schema(op_type, version, "")  # type: ignore
+            found = True
+        except SchemaError:
+            found = False
+        if found and schema.has_function:  # type: ignore
             from onnx.reference import ReferenceEvaluator
 
             body = schema.function_body  # type: ignore
@@ -269,7 +274,8 @@ def load_op(
         available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
         raise NotImplementedError(
             f"No registered implementation for operator {op_type!r} "
-            f"and domain {domain!r} in\n{available}"
+            f"and domain {domain!r}. You may either add one or skip the test in "
+            f"'reference_evaluator_bakcend_test.py'. Available implementations:\n{available}"
         )
     impl = _registered_operators[op_type]  # type: ignore
     if None not in impl:
