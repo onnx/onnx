@@ -847,7 +847,26 @@ class OpSchema final {
 
   const FunctionProto* GetFunction() const;
 
-  const FunctionProto* GetFunctionWithOpsetVersion(int opset_version) const;
+  // since_version_ of an OpSchema tells the last opset version when an op is defined.
+  // When the op's definition is changed, a new OpSchema (of the same op_type) is created
+  // with a newer since_version_, reflecting the opset version at the time of change.
+  // For a function op, operators used to define its function body may change
+  // while there is no change to the function op definition itself.
+  // When this happens, mutiple function bodies are provided, each for a specific opset version.
+  // 
+  // Take LogSoftmax for example. Its latest opset version is 13.
+  // In LogSoftmax's function body, ReduceMax (with since_version_ 1, 11, 12, 18) is used.
+  // When a model containing LogSoftmax with opset_import version within 13 to 17 is loaded, function body
+  // with opset_version 13 is used for inlining.
+  // When the same model but opset_import version 18 is loaded, function body
+  // with opset_version 18 is used for inlining.
+  // Clearly function body for opset_import version 13 will not work
+  // in a model with opset_import version 18 because the function body make worng use of ReduceMax(18).
+  // Inside GetFunctionWithOpsetVersion we ensure that ops being used to construct a function body do not endure such issue.
+  const FunctionProto* GetFunctionWithOpsetVersion(
+      int opset_version,
+      const std::string& domain = ONNX_DOMAIN,
+      bool fail_on_invalid_op = false) const;
 
   std::vector<int> context_dependent_function_opset_versions() const {
     std::vector<int> opset_versions;
@@ -874,7 +893,9 @@ class OpSchema final {
   bool BuildContextDependentFunctionWithOpsetVersion(
       const FunctionBodyBuildContext& ctx,
       FunctionProto& function_proto,
-      int opset_version) const;
+      int opset_version,
+      const std::string& domain = ONNX_DOMAIN,
+      bool fail_on_invalid_op = false) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -888,7 +909,14 @@ class OpSchema final {
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
-  FunctionProto* GetFunctionWithOpsetInternal(int opset_version);
+  FunctionProto*
+  GetFunctionWithOpsetInternal(int opset_version, const std::string& domain, bool fail_on_invalid_op = false);
+  static void ValidateReferencedOpsInFunciton(
+      const FunctionProto* function,
+      int requested_opset_version,
+      int function_since_version,
+      const std::string& domain = ONNX_DOMAIN,
+      bool fail_on_invalid_op=false);
   void UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const;
 
   std::string name_;

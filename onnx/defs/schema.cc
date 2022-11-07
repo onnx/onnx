@@ -717,8 +717,10 @@ void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_pro
   bool opset_import_exist = false;
   for (int i = 0; i < function_proto.opset_import_size(); i++) {
     auto* schema_opset = function_proto.mutable_opset_import(i);
-    if (schema_opset->domain() == domain_ && schema_opset->version() != opset_version) {
-      schema_opset->set_version(opset_version);
+    if (schema_opset->domain() == domain_) {
+      if (schema_opset->version() != opset_version) {
+        schema_opset->set_version(opset_version);
+      }
       opset_import_exist = true;
     }
   }
@@ -733,27 +735,32 @@ void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_pro
 bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
     const FunctionBodyBuildContext& ctx,
     FunctionProto& function_proto,
-    int opset_version) const {
+    int opset_version,
+    const std::string& domain,
+    bool fail_on_invalid_op) const {
   if (opset_version == OpSchema::kUninitializedSinceVersion)
     opset_version = since_version_;
 
   std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
-      opset_version_to_function_builder_.find(opset_version);
-
-  if (it != opset_version_to_function_builder_.end()) {
+      opset_version_to_function_builder_.upper_bound(opset_version);
+  if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
+    ONNX_THROW_EX(std::out_of_range(
+        std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
+        this->name_ + ", opset_version = " + std::to_string(opset_version) + "."));
+  } else {
+    --it;
     const ContextDependentFunctionBodyBuilder& body_builder = it->second;
     if (!body_builder(ctx, *this, function_proto)) {
       return false;
     }
 
-    // default opset import may have been added to function_proto by OpSchema::BuildFunction
-    // we need to update its version with the specified opset_version
+    //// default opset import may have been added to function_proto by OpSchema::BuildFunction
+    //// we need to update its version with the specified opset_version
     UpdateFunctionProtoOpsetImportVersion(function_proto, opset_version);
+    ValidateReferencedOpsInFunciton(&function_proto, opset_version, it->first, domain, fail_on_invalid_op);
     return true;
   }
-
-  return false;
-}
+ }
 
 OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
@@ -820,18 +827,69 @@ const FunctionProto* OpSchema::GetFunction() const {
   return GetFunctionWithOpsetVersion(since_version_);
 }
 
-const FunctionProto* OpSchema::GetFunctionWithOpsetVersion(int opset_version) const {
-  return const_cast<OpSchema*>(this)->GetFunctionWithOpsetInternal(opset_version);
+const FunctionProto* OpSchema::GetFunctionWithOpsetVersion(
+    int opset_version,
+    const std::string& domain,
+    bool fail_on_invalid_op) const {
+  return const_cast<OpSchema*>(this)->GetFunctionWithOpsetInternal(opset_version, domain, fail_on_invalid_op);
 }
 
-FunctionProto* OpSchema::GetFunctionWithOpsetInternal(int opset_version) {
+void OpSchema::ValidateReferencedOpsInFunciton(
+    const FunctionProto* function,
+    int requested_opset_version,
+    int function_since_version,
+    const std::string& domain,
+    bool fail_on_invalid_op) {
+  if (requested_opset_version == function_since_version) {
+      // we validate that OpSchemas optained with requested_opset_version and function_since_version
+      // are the same for ops used in a function definition.
+    return;
+  }
+  std::stringstream err;
+  bool has_invalid_op = false;
+  for (int node_index = 0; node_index < function->node_size(); ++node_index) {
+    const ::onnx::NodeProto& node = function->node(node_index);
+    const OpSchema* op1 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, domain);
+    const OpSchema* op2 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), function_since_version, domain);
+    if (op1 != op2) {
+      if (!has_invalid_op) {
+        err << "A function op (" << function->name() << ") with opset version (" << requested_opset_version
+            << ") is requested.\n";
+        err << "A function definition of opset since_version (" << function_since_version << ") shall be used.\n";
+        err << "However, there is/are conflict(s) with operators used to define the function: \n";
+      }
+      err << "Operator (" << node.op_type() << ") of version " << requested_opset_version
+          << " is used but the op has been updated at least once since version " << function_since_version << ".\n";
+      has_invalid_op = true;
+    }
+  }
+
+  if (has_invalid_op) {
+    if (fail_on_invalid_op) {
+      fail_schema(err.str());
+    } else {
+      std::cout << err.str();
+    }
+  }
+}
+
+FunctionProto*
+OpSchema::GetFunctionWithOpsetInternal(int opset_version, const std::string& domain, bool fail_on_invalid_op) {
   std::map<int, std::shared_ptr<FunctionProto>>::iterator it =
-      opset_version_to_function_body_.lower_bound(opset_version);
-  if (it != opset_version_to_function_body_.cend())
-    return it->second.get();
-
-  return nullptr;
+      opset_version_to_function_body_.upper_bound(opset_version);
+  if (opset_version_to_function_body_.empty() || it == opset_version_to_function_body_.begin()) {
+    ONNX_THROW_EX(std::out_of_range(
+        std::string("Cannot find a function body that satisfies the requested opset version: op_type = ") +
+        this->name_ + ", opset_version = " + std::to_string(opset_version) + "."));
+  } else {
+    --it;
+    int function_since_version = it->first;
+    FunctionProto* function = it->second.get();
+    ValidateReferencedOpsInFunciton(function, opset_version, function_since_version, domain, fail_on_invalid_op);
+    return function;
+  }
 }
+
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {
   if (populator) {
     populator(*this);
