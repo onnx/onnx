@@ -282,7 +282,7 @@ def load_op(
             raise NotImplementedError(  # pylint: disable=W0707
                 f"No registered schema for operator {op_type!r} "
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
-            )
+            ) from None
         if schema.has_function:  # type: ignore
             from onnx.reference import ReferenceEvaluator
 
