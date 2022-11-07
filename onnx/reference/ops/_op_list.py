@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0415,R0912,W0611,W0603
+# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0611,W0603
 """
 Every class imported in this module defines an implementation of
 an operator of the main domain. Any class name uses `_` to specify a
@@ -279,7 +279,7 @@ def load_op(
         try:
             schema = get_schema(op_type, version, domain)  # type: ignore
         except SchemaError:
-            raise NotImplementedError(
+            raise NotImplementedError(  # pylint: disable=W0707
                 f"No registered schema for operator {op_type!r} "
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             )
