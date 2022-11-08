@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 169/184 (91.85%, 5 generators excluded) common operators.
+Node tests have covered 170/185 (91.89%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -6370,6 +6370,58 @@ expect(
     inputs=[X, Grid],
     outputs=[Y_reflection],
     name="test_gridsample_reflection_padding",
+)
+```
+
+</details>
+
+
+### GroupNormalization
+There are 1 test cases, listed as following:
+<details>
+<summary>groupnormalization</summary>
+
+```python
+x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+num_groups = 2
+scale = np.random.randn(num_groups).astype(np.float32)
+bias = np.random.randn(num_groups).astype(np.float32)
+y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_example",
+)
+
+x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+num_groups = 2
+scale = np.random.randn(num_groups).astype(np.float32)
+bias = np.random.randn(num_groups).astype(np.float32)
+epsilon = 1e-2
+y = _group_normalization(x, num_groups, scale, bias, epsilon).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    epsilon=epsilon,
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_epsilon",
 )
 ```
 
