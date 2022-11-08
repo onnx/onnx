@@ -112,6 +112,7 @@ jobs:
           deactivate'
 
     - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != '3.11'
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
