@@ -151,7 +151,9 @@ void RegisterCustomFunctionSchema() {
 
 void RegisterVersionedLogSoftmaxFunctionSchema(const std::string& op_type, bool with_missing_version) {
   // SinceVersion of a function operator tells the last opset version where its semantic is defined.
-  // the function's body 
+  // Function bodies and context dependent function builders also have versions.
+  // A function's version specifies its valid range since its since_version till the since_version
+  // of the next function of the same funtion op.
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName(op_type)
       .SetDomain(ONNX_DOMAIN)
@@ -200,7 +202,11 @@ void RegisterVersionedLogSoftmaxFunctionSchema(const std::string& op_type, bool 
   (void)unused;
 }
 
-void BuildLogSoftmaxFunction(const OpSchema& schema, const std::string& op_type, FunctionProto& fnProto, int requested_opset_version) {
+void BuildLogSoftmaxFunction(
+    const OpSchema& schema,
+    const std::string& op_type,
+    FunctionProto& fnProto,
+    int requested_opset_version) {
   NodeProto nodeProto;
   nodeProto.set_op_type(op_type);
   nodeProto.add_input("input");

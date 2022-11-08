@@ -121,7 +121,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "all_function_opset_versions",
           [](OpSchema* op) -> std::vector<int> {
             std::vector<int> all_function_opset_versions = op->function_opset_versions();
-            std::vector<int> context_dependent_function_opset_versions = op->context_dependent_function_opset_versions();
+            std::vector<int> context_dependent_function_opset_versions =
+                op->context_dependent_function_opset_versions();
             all_function_opset_versions.insert(
                 all_function_opset_versions.end(),
                 context_dependent_function_opset_versions.begin(),
