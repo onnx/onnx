@@ -757,6 +757,20 @@ class OpSchema final {
     return all_optional_types;
   }
 
+  static const std::vector<std::string>& all_map_key_types() {
+    static const std::vector<std::string> all_map_key_types = {
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "string"};
+    return all_map_key_types;
+  }
+
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
   OpSchema& FillUsing(const std::function<void(OpSchema&)>& populator);

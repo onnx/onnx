@@ -1010,6 +1010,14 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterElements);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, AttributeHasValue);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapEmpty);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapConstruct);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapKeys);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapValues);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapInsertPair);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapDeletePair);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapHasKey);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapGetValue);
 
 // Iterate over schema from ai.onnx version 18
 class OpSet_Onnx_ver18 {
@@ -1025,6 +1033,14 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterElements)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, AttributeHasValue)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapEmpty)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapConstruct)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapKeys)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapValues)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapInsertPair)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapDeletePair)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapHasKey)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, MapGetValue)>());
   }
 };
 

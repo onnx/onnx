@@ -786,6 +786,15 @@ def make_optional_type_proto(
     return type_proto
 
 
+def make_map_type_proto(
+    inner_type_proto: TypeProto,
+) -> TypeProto:
+    """Makes an map TypeProto."""
+    type_proto = TypeProto()
+    type_proto.map_type.elem_type.CopyFrom(inner_type_proto)
+    return type_proto
+
+
 def make_value_info(
     name: str,
     type_proto: TypeProto,
