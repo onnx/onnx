@@ -583,6 +583,117 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* Split_ver13_doc =
+    R"DOC(Split a tensor into a list of tensors, along the specified
+'axis'. Lengths of the parts can be specified using input 'split'.
+Otherwise, the tensor is split to equal sized parts.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Split,
+    13,
+    OpSchema()
+        .Input(0, "input", "The tensor to split", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "split",
+            "Optional length of each output. Values should be >= 0."
+            "Sum of the values must be equal to the dim value at 'axis' specified.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "outputs",
+            "One or more outputs forming list of tensors after splitting",
+            "T",
+            OpSchema::Variadic,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types.")
+        .Attr(
+            "axis",
+            "Which axis to split on. "
+            "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] "
+            "where r = rank(input).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .SetDoc(Split_ver13_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
+            propagateElemTypeFromInputToOutput(ctx, 0, i);
+          }
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+          int rank = shape.dim_size();
+          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          if (axis < -rank || axis >= rank) {
+            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis);
+          }
+          if (axis < 0) {
+            axis += rank;
+          }
+          const auto& split_dim = shape.dim(axis);
+          if (!split_dim.has_dim_value()) {
+            for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+              *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() = shape;
+              ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->Clear();
+            }
+            return;
+          }
+          int split_dim_value = static_cast<int>(split_dim.dim_value());
+
+          std::vector<int64_t> split;
+          size_t num_inputs = ctx.getNumInputs();
+          if ((num_inputs == 2) && ctx.getInputType(1)) { //'split' is input
+            auto split_proto = ctx.getInputData(1);
+            if (split_proto == nullptr) {
+              // skip if split is not an initializer
+              return;
+            }
+            split = ParseData<int64_t>(split_proto);
+            if (split.size() != ctx.getNumOutputs()) {
+              fail_shape_inference(
+                  "Mismatch between number of splits (", split.size(), ") and outputs (", ctx.getNumOutputs(), ")");
+            }
+            int64_t total_dim = 0;
+            for (int64_t d : split) {
+              total_dim += d;
+            }
+            if (total_dim != split_dim_value) {
+              fail_shape_inference(
+                  "Mismatch between the sum of 'split' (",
+                  total_dim,
+                  ") and the split dimension of the input (",
+                  split_dim_value,
+                  ")");
+            }
+          } else { // no value available for 'split'
+            int num_outputs = static_cast<int>(ctx.getNumOutputs());
+            if (split_dim_value % num_outputs != 0) {
+              fail_shape_inference("The input is not evenly splittable");
+            }
+            int chunk_size = split_dim_value / num_outputs;
+            split.reserve(ctx.getNumOutputs());
+            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
+              split.push_back(chunk_size);
+            }
+          }
+          for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+            *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() = shape;
+            ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->set_dim_value(split[i]);
+          }
+        }));
+
 static const char* Slice_ver11_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
@@ -876,13 +987,15 @@ ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of r
 and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
 is produced by creating a copy of the input `data`, and then updating its value to values
 specified by `updates` at specific index positions specified by `indices`. Its output shape
-is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
-That is, two or more `updates` for the same index-location is not supported.
+is the same as the shape of `data`.
+
 `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
 Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
 update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-update to a slice of the tensor.
+update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+convention for counting backwards from the end, but are expected in the valid range.
+
 `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
 first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
 The remaining dimensions of `updates` correspond to the dimensions of the
@@ -890,6 +1003,7 @@ replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional te
 corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
 must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
 of shapes.
+
 The `output` is calculated via the following equation:
     output = np.copy(data)
     update_indices = indices.shape[:-1]
@@ -898,6 +1012,7 @@ The `output` is calculated via the following equation:
 The order of iteration in the above loop is not specified.
 In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
 This ensures that the output value does not depend on the iteration order.
+
 `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
 tensor into `output` at the specified `indices`.
 In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
@@ -992,7 +1107,8 @@ That is, two or more `updates` for the same index-location is not supported.
  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
 Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
 update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-update to a slice of the tensor.
+update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+convention for counting backwards from the end, but are expected in the valid range.
 
 `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
 first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
@@ -1087,7 +1203,8 @@ That is, two or more `updates` for the same index-location is not supported.
  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
 Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
 update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-update to a slice of the tensor.
+update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+convention for counting backwards from the end, but are expected in the valid range.
 
 `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
 first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.

@@ -3,9 +3,8 @@
 import sys
 from typing import List, Optional, Sequence
 
-import numpy as np  # type: ignore
+import numpy as np
 
-import onnx.defs
 from onnx import ModelProto
 
 from ..test_case import TestCase

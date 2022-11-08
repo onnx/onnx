@@ -1,0 +1,56 @@
+name: Generate and publish ONNX docs
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+      - name: Install Dependencies
+        run: |
+          python -m pip install --quiet --upgrade pip setuptools wheel 
+          python -m pip install -r docs/docsgen/source/requirements.txt
+      - name: Uninstall onnx
+        run: python -m pip uninstall -y onnx
+      - name: Install onnx development version
+        run: |
+          sudo apt-get install libprotobuf-dev protobuf-compiler
+          git submodule update --init --recursive
+          export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          python setup.py install
+      - name: Build Docs
+        run: |
+          cd docs/docsgen
+          make html
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'docs/docsgen/build/html'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1

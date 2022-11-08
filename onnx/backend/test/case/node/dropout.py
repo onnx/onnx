@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import random
-
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from onnx import helper

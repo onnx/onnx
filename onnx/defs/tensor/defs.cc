@@ -209,7 +209,12 @@ could also be 0, in which case the actual dimension value is unchanged (i.e. tak
 from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
 dimension will be set explicitly to zero (i.e. not taken from input tensor).
 Shape (second input) could be an empty shape, which means converting to a scalar.
-The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.
+
+If the attribute 'allowzero' is set, it is invalid for the specified shape to
+contain both a zero value and -1, as the value of the dimension corresponding
+to -1 cannot be determined uniquely.
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -603,15 +608,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Split_ver13_doc =
-    R"DOC(Split a tensor into a list of tensors, along the specified
-'axis'. Lengths of the parts can be specified using input 'split'.
-Otherwise, the tensor is split to equal sized parts.
+static const char* Split_ver18_doc =
+    R"DOC(Split a tensor into a list of tensors, along the specified 'axis'.
+Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
+If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
+If the tensor is not evenly splittable into `num_outputs`, the last chunk will be smaller.
+If the input 'split' is specified, it indicates the sizes of each output in the split.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Split,
-    13,
+    18,
     OpSchema()
         .Input(0, "input", "The tensor to split", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
@@ -644,7 +651,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(Split_ver13_doc)
+        .Attr(
+            "num_outputs",
+            "Number of outputs to split parts of the tensor into. "
+            "If the tensor is not evenly splittable the last chunk will be smaller.",
+            AttributeProto::INT,
+            false)
+        .SetDoc(Split_ver18_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
@@ -652,7 +665,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
           int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
@@ -673,8 +685,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           int split_dim_value = static_cast<int>(split_dim.dim_value());
 
           std::vector<int64_t> split;
-          size_t num_inputs = ctx.getNumInputs();
-          if ((num_inputs == 2) && ctx.getInputType(1)) { //'split' is input
+          const auto num_outputs_attr = ctx.getAttribute("num_outputs");
+          if (ctx.hasInput(1) && num_outputs_attr) {
+            fail_shape_inference("Both 'split' input and 'num_outputs' attribute were given");
+          }
+          if (ctx.hasInput(1)) { //'split' is input
             auto split_proto = ctx.getInputData(1);
             if (split_proto == nullptr) {
               // skip if split is not an initializer
@@ -698,14 +713,22 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ")");
             }
           } else { // no value available for 'split'
-            int num_outputs = static_cast<int>(ctx.getNumOutputs());
-            if (split_dim_value % num_outputs != 0) {
-              fail_shape_inference("The input is not evenly splittable");
-            }
-            int chunk_size = split_dim_value / num_outputs;
-            split.reserve(ctx.getNumOutputs());
-            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
-              split.push_back(chunk_size);
+            if (num_outputs_attr) {
+              const auto num_outputs = num_outputs_attr->i();
+              if (num_outputs < 1) {
+                fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
+              }
+              if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
+                int chunk_size = split_dim_value / num_outputs;
+                split.resize(num_outputs, chunk_size);
+              } else { // tensor needs to be split unevenly
+                int chunk_size = (split_dim_value / num_outputs) + 1;
+                int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
+                split.resize(num_outputs - 1, chunk_size);
+                split.push_back(last_chunk_size);
+              }
+            } else {
+              fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");
             }
           }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
@@ -1229,14 +1252,14 @@ ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of r
 and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
 is produced by creating a copy of the input `data`, and then updating its value to values
 specified by `updates` at specific index positions specified by `indices`. Its output shape
-is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
-That is, two or more `updates` for the same index-location is not supported.
+is the same as the shape of `data`.
 
 `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
 Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
 update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-update to a slice of the tensor.
+update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+convention for counting backwards from the end, but are expected in the valid range.
 
 `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
 first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.

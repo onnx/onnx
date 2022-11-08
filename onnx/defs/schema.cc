@@ -81,8 +81,9 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // check all input types
-  for (size_t in_idx = 0; in_idx < ctx.getNumInputs() && in_idx < inputs_.size(); ++in_idx) {
-    const auto& param = inputs_[in_idx];
+  for (size_t in_idx = 0; in_idx < ctx.getNumInputs(); ++in_idx) {
+    // If the last input is Variadic by definition, checker still needs to check the rest of actual input's type
+    const auto& param = (in_idx < inputs_.size()) ? inputs_[in_idx] : inputs_.back();
     const auto& type_str = param.GetTypeStr();
     const auto& param_type = ctx.getInputType(in_idx);
     const auto& all_types = param.GetTypes();
@@ -108,8 +109,9 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     }
   } // for inputs
   // check all output types
-  for (size_t out_idx = 0; out_idx < ctx.getNumOutputs() && out_idx < outputs_.size(); ++out_idx) {
-    const auto& param = outputs_[out_idx];
+  for (size_t out_idx = 0; out_idx < ctx.getNumOutputs(); ++out_idx) {
+    // If the last output is Variadic by definition, checker still needs to check the rest of actual output's type
+    const auto& param = (out_idx < outputs_.size()) ? outputs_[out_idx] : outputs_.back();
     const auto& type_str = param.GetTypeStr();
     const auto& param_type = ctx.getOutputType(out_idx);
     const auto& all_types = param.GetTypes();
@@ -703,6 +705,13 @@ OpSchema& OpSchema::FunctionBody(
   }
 
   return FunctionBody(func_nodes);
+}
+
+OpSchema& OpSchema::FunctionAddOpset(const char* domain, int version) {
+  OperatorSetIdProto* onnx_opset = function_body_.mutable_opset_import()->Add();
+  onnx_opset->set_domain(domain);
+  onnx_opset->set_version(version);
+  return *this;
 }
 
 const FunctionProto* OpSchema::GetFunction() const {

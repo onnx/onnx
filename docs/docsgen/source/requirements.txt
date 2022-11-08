@@ -1,0 +1,12 @@
+markupsafe
+matplotlib
+myst-parser
+onnx
+onnxruntime
+pillow
+pydata_sphinx_theme
+pydot
+sphinx
+sphinx-exec-code
+sphinx-gallery
+sphinx-tabs

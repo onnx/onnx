@@ -17,6 +17,8 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#include <filesystem>
+
 #else // POSIX
 #include <sys/stat.h>
 #endif
@@ -127,9 +129,18 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        std::string relative_path = clean_relative_path(entry.value());
-        // Check that normalized relative path starts with "../" or "..\" on windows.
-        if (relative_path.rfind(".." + k_preferred_path_separator, 0) == 0) {
+#ifdef _WIN32
+        auto file_path = std::filesystem::path(utf8str_to_wstring(entry.value()));
+        if (file_path.is_absolute()) {
+          fail_check(
+              "Location of external TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be a relative path, but it is an absolute path: ",
+              entry.value());
+        }
+        auto relative_path = file_path.lexically_normal().make_preferred().wstring();
+        // Check that normalized relative path contains ".." on Windows.
+        if (relative_path.find(L"..", 0) != std::string::npos) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -139,7 +150,38 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               entry.value(),
               "' points outside the directory");
         }
-
+        std::wstring data_path = path_join(utf8str_to_wstring(ctx.get_model_dir()), relative_path);
+        struct _stat buff;
+        if (_wstat(data_path.c_str(), &buff) != 0) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be stored in ",
+              entry.value(),
+              ", but it doesn't exist or is not accessible.");
+        }
+#else // POSIX
+        if (entry.value().empty()) {
+          fail_check("Location of external TensorProto ( tensor name: ", tensor.name(), ") should not be empty.");
+        } else if (entry.value()[0] == '/') {
+          fail_check(
+              "Location of external TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be a relative path, but it is an absolute path: ",
+              entry.value());
+        }
+        std::string relative_path = clean_relative_path(entry.value());
+        // Check that normalized relative path contains ".." on POSIX
+        if (relative_path.find("..", 0) != std::string::npos) {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be file inside the ",
+              ctx.get_model_dir(),
+              ", but the '",
+              entry.value(),
+              "' points outside the directory");
+        }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
         // use stat to check whether the file exists
         struct stat buffer;
@@ -151,9 +193,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               data_path,
               ", but it doesn't exist or is not accessible.");
         }
-#ifdef _WIN32
-#else // POSIX
-      //  Do not allow symlinks or directories.
+        // Do not allow symlinks or directories.
         if (!S_ISREG(buffer.st_mode)) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
@@ -555,17 +595,23 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   }
 }
 
+void print_warning_if_has_experimental(const std::unordered_set<std::string>& used_experimental_ops) {
+  if (!used_experimental_ops.empty()) {
+    std::string all_experimental_ops;
+    for (const auto& op : used_experimental_ops) {
+      all_experimental_ops += " " + op + ",";
+    }
+    // Remove the last comma which is unnecessary
+    all_experimental_ops.pop_back();
+    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << std::endl;
+  }
+}
+
 void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(node, op_type);
 
   if (node.input().empty() && node.output().empty()) {
     fail_check("NodeProto (name: ", node.name(), ", type: ", node.op_type(), ") has zero input and zero output.");
-  }
-
-  // If encounter experimental op, stop checking
-  if (check_is_experimental_op(node.op_type())) {
-    std::cerr << "Warning: Checker does not support models with experimental ops: " << node.op_type() << std::endl;
-    return;
   }
 
   // Resolve domain for node
@@ -578,6 +624,11 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
 
   for (const auto& attr : node.attribute()) {
     check_attribute(attr, ctx, lex_ctx);
+  }
+
+  // This issue will be caught by check_graph instead
+  if (check_is_experimental_op(node)) {
+    return;
   }
 
   const auto* schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
@@ -672,7 +723,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     check_sparse_tensor(sparse_init, ctx);
     lex_ctx.add(name);
   }
-
+  std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : graph.node()) {
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
@@ -691,6 +742,10 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
             node.op_type(),
             "\n is not output of any previous nodes.");
       }
+    }
+
+    if (check_is_experimental_op(node)) {
+      used_experimental_ops.insert(node.op_type());
     }
 
     // This needs to happen before SSA check since we don't want to recurse and
@@ -722,6 +777,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       lex_ctx.add(output);
     }
   }
+  print_warning_if_has_experimental(used_experimental_ops);
 }
 
 // Utilify function to get the imported version of domain from opset imports
@@ -852,7 +908,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }
-
+  std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
@@ -876,7 +932,9 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     // check whether the opset version imported for a domain by function and model are
     // compatible
     check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
-
+    if (check_is_experimental_op(node)) {
+      used_experimental_ops.insert(node.op_type());
+    }
     check_node(node, ctx_copy, lex_ctx);
 
     // check for SSA form
@@ -894,6 +952,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       lex_ctx.add(output);
     }
   }
+  print_warning_if_has_experimental(used_experimental_ops);
 }
 
 void check_model(const ModelProto& model, CheckerContext& ctx) {
@@ -982,8 +1041,8 @@ std::set<std::string> experimental_ops = {
     "Scale",
     "ScaledTanh"};
 
-bool check_is_experimental_op(std::string node_op_type) {
-  return (experimental_ops.count(node_op_type)) ? true : false;
+bool check_is_experimental_op(const NodeProto& node) {
+  return (node.domain() == ONNX_DOMAIN || node.domain() == "ai.onnx") && experimental_ops.count(node.op_type());
 }
 
 #undef fail_check

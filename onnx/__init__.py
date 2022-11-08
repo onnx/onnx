@@ -3,7 +3,7 @@
 # isort:skip_file
 import os
 
-from .onnx_cpp2py_export import ONNX_ML
+from .onnx_cpp2py_export import ONNX_ML  # noqa
 from onnx.external_data_helper import (
     load_external_data_for_model,
     write_external_data_tensors,
@@ -77,7 +77,7 @@ def _serialize(proto: Union[bytes, google.protobuf.message.Message]) -> bytes:
                     "Please use save_as_external_data to save tensors separately from the model file."
                 ) from e
             raise
-        return result
+        return result  # type: ignore
     raise TypeError(
         f"No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}"
     )

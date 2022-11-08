@@ -284,7 +284,7 @@ class ShapeInferenceImplBase {
   }
 
   void preprocess(NodeProto& n) {
-    if (checker::check_is_experimental_op(n.op_type())) {
+    if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
     } else if (n.op_type() == "Constant" && n.output().size() == 1) {
       for (const auto& attr : n.attribute()) {
@@ -831,7 +831,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   return graph_output_types;
 }
 
-std::string GetErrorWithNodeInfo(NodeProto n, std::runtime_error err) {
+std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err) {
   std::string op_name = n.has_name() ? (", node name: " + n.name()) : "";
   return "(op_type:" + n.op_type() + op_name + "): " + err.what();
 }

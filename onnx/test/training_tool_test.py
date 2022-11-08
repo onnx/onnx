@@ -2,11 +2,10 @@
 
 import unittest
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from onnx import TensorProto, helper, numpy_helper, shape_inference
-from onnx.tools import update_model_dims
 
 
 class TestTrainingTool(unittest.TestCase):

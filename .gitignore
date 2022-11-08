@@ -103,3 +103,9 @@ venv
 # direnv, posh-direnv
 .envrc
 .psenvrc
+
+# documentation
+docs/docsgen/source/onnx-api/modules/
+docs/docsgen/source/operators/
+docs/docsgen/**/*.onnx
+docs/docsgen/**/*.pb

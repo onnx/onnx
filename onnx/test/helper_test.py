@@ -5,7 +5,8 @@ import struct
 import unittest
 from typing import Any, List, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
+import pytest
 
 from onnx import (
     AttributeProto,
@@ -225,21 +226,21 @@ class TestHelperAttributeFunctions(unittest.TestCase):
     def test_is_attr_legal_verbose(self) -> None:
         def _set(
             attr: AttributeProto,
-            type: AttributeProto.AttributeType,
+            type_: AttributeProto.AttributeType,
             var: str,
             value: Any,
         ) -> None:
             setattr(attr, var, value)
-            setattr(attr, "type", type)
+            attr.type = type_
 
         def _extend(
             attr: AttributeProto,
-            type: AttributeProto.AttributeType,
+            type_: AttributeProto.AttributeType,
             var: List[Any],
             value: Any,
         ) -> None:
             var.extend(value)
-            setattr(attr, "type", type)
+            attr.type = type_
 
         SET_ATTR = [
             (lambda attr: _set(attr, AttributeProto.FLOAT, "f", 1.0)),
@@ -396,25 +397,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
 
 
 class TestHelperTensorFunctions(unittest.TestCase):
-    def test_make_tensor(self) -> None:
-        np_array = np.random.randn(2, 3).astype(np.float32)
-
-        tensor = helper.make_tensor(
-            name="test", data_type=TensorProto.FLOAT, dims=(2, 3), vals=np_array
-        )
-        self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
-        # use raw_data field to store the data
-        tensor = helper.make_tensor(
-            name="test",
-            data_type=TensorProto.FLOAT,
-            dims=(2, 3),
-            vals=np_array.tobytes(),
-            raw=True,
-        )
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
+    def test_make_string_tensor(self) -> None:
         string_list = list(
             s.encode("utf-8") for s in ["Amy", "Billy", "Cindy", "David"]
         )
@@ -426,50 +409,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=False,
         )
         self.assertEqual(string_list, list(tensor.string_data))
-
-    def test_make_int8_tensor(self) -> None:
-        np_array = np.random.randn(2, 3).astype(np.int8)
-
-        tensor = helper.make_tensor(
-            name="test", data_type=TensorProto.INT8, dims=(2, 3), vals=np_array
-        )
-        self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
-        # use raw_data field to store the data
-        tensor = helper.make_tensor(
-            name="test",
-            data_type=TensorProto.INT8,
-            dims=(2, 3),
-            vals=np_array.tobytes(),
-            raw=True,
-        )
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
-    def test_make_float16_tensor(self) -> None:
-        np_array = np.random.randn(2, 3).astype(np.float16)
-
-        tensor = helper.make_tensor(
-            name="test",
-            data_type=TensorProto.FLOAT16,
-            dims=np_array.shape,
-            vals=np_array,
-        )
-        self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
-
-    def test_make_float16_tensor_raw(self) -> None:
-        np_array = np.random.randn(2, 3).astype(np.float16)
-
-        tensor = helper.make_tensor(
-            name="test",
-            data_type=TensorProto.FLOAT16,
-            dims=np_array.shape,
-            vals=np_array.view(dtype=np.uint16).flatten().tobytes(),
-            raw=True,
-        )
-        self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
     def test_make_bfloat16_tensor(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
@@ -737,5 +676,92 @@ class TestPrintableGraph(unittest.TestCase):
         )
 
 
+@pytest.mark.parametrize(
+    "tensor_dtype",
+    [
+        t
+        for t in helper.get_all_tensor_dtypes()
+        if t
+        not in {
+            TensorProto.BFLOAT16,
+            TensorProto.STRING,
+            TensorProto.COMPLEX64,
+            TensorProto.COMPLEX128,
+        }
+    ],
+    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
+)
+def test_make_tensor_vals(tensor_dtype: int) -> None:
+    np_array = np.random.randn(2, 3).astype(
+        helper.tensor_dtype_to_np_dtype(tensor_dtype)
+    )
+    tensor = helper.make_tensor(
+        name="test", data_type=tensor_dtype, dims=np_array.shape, vals=np_array
+    )
+    np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+
+@pytest.mark.parametrize(
+    "tensor_dtype",
+    [
+        t
+        for t in helper.get_all_tensor_dtypes()
+        if t not in {TensorProto.BFLOAT16, TensorProto.STRING}
+    ],
+    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
+)
+def test_make_tensor_raw(tensor_dtype: int) -> None:
+    np_array = np.random.randn(2, 3).astype(
+        helper.tensor_dtype_to_np_dtype(tensor_dtype)
+    )
+    tensor = helper.make_tensor(
+        name="test",
+        data_type=tensor_dtype,
+        dims=np_array.shape,
+        vals=np_array.tobytes(),
+        raw=True,
+    )
+    np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+
+class TestHelperMappingFunctions(unittest.TestCase):
+    # TODO (#4554): remove these tests about catching warnings after the deprecation period
+    # Test these new functions should not raise any deprecation warnings
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_tensor_dtype_to_np_dtype_not_throw_warning(self) -> None:
+        _ = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
+
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_tensor_dtype_to_storage_tensor_dtype_not_throw_warning(self) -> None:
+        _ = helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.FLOAT)
+
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_tensor_dtype_to_field_not_throw_warning(self) -> None:
+        _ = helper.tensor_dtype_to_field(TensorProto.FLOAT)
+
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_np_dtype_to_tensor_dtype_not_throw_warning(self) -> None:
+        _ = helper.np_dtype_to_tensor_dtype(np.dtype("float32"))
+
+    def test_tensor_dtype_to_np_dtype_bfloat16(self) -> None:
+        self.assertEqual(
+            helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16), np.dtype("float32")
+        )
+
+    def test_tensor_dtype_to_storage_tensor_dtype_bfloat16(self) -> None:
+        self.assertEqual(
+            helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.BFLOAT16),
+            TensorProto.UINT16,
+        )
+
+    # BFloat16 tensor uses TensorProto.UINT16 as storage type;
+    # And the field name for TensorProto.UINT16 is int32_data
+    def test_tensor_dtype_to_field_bfloat16(self) -> None:
+        self.assertEqual(
+            helper.tensor_dtype_to_field(TensorProto.BFLOAT16), "int32_data"
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
+    pytest.main([__file__])

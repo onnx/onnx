@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 import string
-import time
 import unittest
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
@@ -15,7 +14,7 @@ from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_c
 # shape inference on the upgraded model.
 ####################################################################################
 
-latest_opset = onnx.defs.onnx_opset_version()
+LATEST_OPSET = onnx.defs.onnx_opset_version()
 tested_ops = []
 
 
@@ -24,17 +23,20 @@ class TestAutomaticUpgrade(unittest.TestCase):
         self,
         op: str,
         from_opset: int,
-        input_shapes: List[Union[List[Optional[int]], str]] = [[3, 4, 5]],
-        output_shapes: List[List[Optional[int]]] = [[3, 4, 5]],
-        input_types: Union[List[Any], None] = None,
-        output_types: Union[List[Any], None] = None,
-        initializer: List[Any] = [],
-        attrs: Dict[str, Any] = {},
-        seq_inputs: List[int] = [],
-        seq_outputs: List[int] = [],
-        optional_inputs: List[int] = [],
-        optional_outputs: List[int] = [],
+        input_shapes: Sequence[Union[Sequence[Optional[int]], str]] = ((3, 4, 5),),
+        output_shapes: Sequence[Sequence[Optional[int]]] = ((3, 4, 5),),
+        input_types: Optional[Sequence[Any]] = None,
+        output_types: Optional[Sequence[Any]] = None,
+        initializer: Sequence[Any] = tuple(),
+        attrs: Optional[Dict[str, Any]] = None,
+        seq_inputs: Sequence[int] = tuple(),
+        seq_outputs: Sequence[int] = tuple(),
+        optional_inputs: Sequence[int] = tuple(),
+        optional_outputs: Sequence[int] = tuple(),
     ) -> None:
+        if attrs is None:
+            attrs = {}
+
         global tested_ops
         tested_ops.append(op)
 
@@ -105,7 +107,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
         onnx.checker.check_model(original)
         shape_inference.infer_shapes(original, strict_mode=True)
 
-        converted = version_converter.convert_version(original, latest_opset)
+        converted = version_converter.convert_version(original, LATEST_OPSET)
         onnx.checker.check_model(converted)
         shape_inference.infer_shapes(converted, strict_mode=True)
 
@@ -1721,6 +1723,55 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[3, 3]],
             [TensorProto.FLOAT, TensorProto.INT64],
             initializer=[input, shape],
+        )
+
+    def test_BitwiseNot(self) -> None:
+        self._test_op_upgrade(
+            "BitwiseNot",
+            18,
+            [[2, 3]],
+            [[2, 3]],
+            [TensorProto.INT32],
+            [TensorProto.INT32],
+        )
+
+    def test_BitwiseAnd(self) -> None:
+        self._test_op_upgrade(
+            "BitwiseAnd",
+            18,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [TensorProto.INT16, TensorProto.INT16],
+            [TensorProto.INT16],
+        )
+
+    def test_BitwiseOr(self) -> None:
+        self._test_op_upgrade(
+            "BitwiseOr",
+            18,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [TensorProto.INT16, TensorProto.INT16],
+            [TensorProto.INT16],
+        )
+
+    def test_BitwiseXor(self) -> None:
+        self._test_op_upgrade(
+            "BitwiseXor",
+            18,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [TensorProto.INT16, TensorProto.INT16],
+            [TensorProto.INT16],
+        )
+
+    def test_GroupNormalization(self) -> None:
+        self._test_op_upgrade(
+            "GroupNormalization",
+            18,
+            [[3, 4, 2, 2], [1], [1]],
+            [[3, 4, 2, 2]],
+            attrs={"epsilon": 1e-5, "num_groups": 2},
         )
 
     def test_ops_tested(self) -> None:

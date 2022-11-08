@@ -1,29 +1,27 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import re
 import sys
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from copy import deepcopy
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
-import onnx.mapping
-
-from ..test_case import TestCase
-from ..utils import import_recursive
-
-_NodeTestCases = []
-_TargetOpType = None
-
-
 from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
     GraphProto,
     ModelProto,
     NodeProto,
+    OperatorSetIdProto,
     TypeProto,
 )
+
+from ..test_case import TestCase
+from ..utils import import_recursive
+
+_NodeTestCases = []
+_TargetOpType = None
 
 
 def _rename_edges_helper(
@@ -74,8 +72,8 @@ def _rename_edges_helper(
                     )
 
                 def subgraph_rename_helper(name: str) -> Any:
-                    if name in sg_rename:
-                        return sg_rename[name]
+                    if name in sg_rename:  # noqa: B023
+                        return sg_rename[name]  # noqa: B023
                     else:
                         return rename_helper(name)
 
@@ -130,7 +128,7 @@ def function_expand_helper(
 
 def function_testcase_helper(
     node: NodeProto, input_types: List[TypeProto], name: str
-) -> List[NodeProto]:
+) -> Tuple[List[NodeProto], List[OperatorSetIdProto]]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
     schema = onnx.defs.get_schema(test_op, node.domain)
@@ -138,11 +136,13 @@ def function_testcase_helper(
     if schema.has_function:  # type: ignore
         function_proto = schema.function_body  # type: ignore
     elif schema.has_context_dependent_function:  # type: ignore
-        function_proto_str = schema.get_context_dependent_function(node.SerializeToString(), [t.SerializeToString() for t in input_types])  # type: ignore
+        function_proto_str = schema.get_context_dependent_function(  # type: ignore
+            node.SerializeToString(), [t.SerializeToString() for t in input_types]
+        )
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
     else:
-        return []
+        return [], []
 
     for attr in schema.attributes:
         if attr in [a.name for a in node.attribute]:
@@ -152,7 +152,7 @@ def function_testcase_helper(
 
     # function_proto.attributes
     node_list = function_expand_helper(node, function_proto, op_prefix)
-    return node_list
+    return node_list, function_proto.opset_import
 
 
 def _extract_value_info(
@@ -166,12 +166,12 @@ def _extract_value_info(
                 "_extract_value_info: both input and type_proto arguments cannot be None."
             )
         elif isinstance(input, list):
-            elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input[0].dtype]
+            elem_type = onnx.helper.np_dtype_to_tensor_dtype(input[0].dtype)
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
             type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
         else:
-            elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[input.dtype]
+            elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
             shape = input.shape
             type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
 
@@ -206,26 +206,29 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
     return onnx.helper.make_model_gen_version(graph, **kwargs)
 
 
-# In the case of ops with optional inputs and outputs, node.input and node.output indicate
+# In the case of ops with optional inputs and outputs, node_op.input and node_op.output indicate
 # which inputs/outputs are present and which are omitted. However, the parameter inputs
 # and outputs of this function include values only for inputs/outputs that are present.
 # E.g., for an op with 3 inputs, if the second parameter is optional and we wish to omit it,
-# node.inputs would look like ["Param1", "", "Param3"], while inputs would look like
+# node_op.inputs would look like ["Param1", "", "Param3"], while inputs would look like
 # [input-1-value, input-3-value]
 # Instead of creating model with latest version, it now generates models for since_version by default.
 # Thus it can make every model uses the same opset version after every opset change.
 # Besides, user can specify "use_max_opset_version" to generate models for
 # the latest opset vesion that supports before targeted opset version
 def expect(
-    node: onnx.NodeProto,
+    node_op: onnx.NodeProto,
     inputs: Sequence[np.ndarray],
     outputs: Sequence[np.ndarray],
     name: str,
     **kwargs: Any,
 ) -> None:
-    # skip if the node's op_type is not same as the given one
-    if _TargetOpType and node.op_type != _TargetOpType:
+    # skip if the node_op's op_type is not same as the given one
+    if _TargetOpType and node_op.op_type != _TargetOpType:
         return
+
+    # in case node_op is modified
+    node = deepcopy(node_op)
     present_inputs = [x for x in node.input if (x != "")]
     present_outputs = [x for x in node.output if (x != "")]
     input_type_protos = [None] * len(inputs)
@@ -292,7 +295,9 @@ def expect(
         return []
 
     merged_types = merge(list(node.input), inputs_vi)
-    expanded_function_nodes = function_testcase_helper(node, merged_types, name)
+    expanded_function_nodes, func_opset_import = function_testcase_helper(
+        node, merged_types, name
+    )
     if expanded_function_nodes:
         function_test_name = name + "_expanded"
         graph = onnx.helper.make_graph(
@@ -302,6 +307,22 @@ def expect(
             outputs=outputs_vi,
         )
         kwargs["producer_name"] = "backend-test"
+
+        # replace opset versions with what are specified in function proto
+        if "opset_imports" not in kwargs:
+            kwargs["opset_imports"] = func_opset_import
+        else:
+            for opset_import in func_opset_import:
+                matches = [
+                    opset
+                    for opset in kwargs["opset_imports"]
+                    if opset.domain == opset_import.domain
+                ]
+                if matches:
+                    matches[0].version = opset_import.version
+                else:
+                    kwargs["opset_imports"].append(opset_import)
+
         model = _make_test_model_gen_version(graph, **kwargs)
         _NodeTestCases.append(
             TestCase(

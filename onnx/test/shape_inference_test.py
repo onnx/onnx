@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx.shape_inference
 from onnx import (
@@ -100,7 +100,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         inferred_model = self._inferred(graph, **kwargs)
         inferred_vis = list(inferred_model.graph.value_info)
         vis = list(sorted(vis, key=lambda x: x.name))
-        inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))
+        inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))  # type: ignore
         assert len(vis) == len(inferred_vis)
         for i in range(len(vis)):
             self._compare_value_infos(vis[i].type, inferred_vis[i].type)
@@ -2493,7 +2493,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_split_negative_axis(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4))],
-            [make_node("Split", ["x"], ["y", "z"], axis=-1)],
+            [make_node("Split", ["x"], ["y", "z"], axis=-1, num_outputs=2)],
             [],
         )
         self._assert_inferred(
@@ -2540,7 +2540,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_split_from_GLU(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
-            [make_node("Split", ["x"], ["y", "z"], axis=1)],
+            [make_node("Split", ["x"], ["y", "z"], axis=1, num_outputs=2)],
             [],
         )
         self._assert_inferred(
@@ -2551,11 +2551,41 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_split_uneven_split_2d(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (8, 2))],
+            [make_node("Split", ["x"], ["y", "z", "a"], axis=0, num_outputs=3)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (3, 2)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (3, 2)),
+                make_tensor_value_info("a", TensorProto.FLOAT, (2, 2)),
+            ],
+        )
+
+    def test_split_uneven_split_3d(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 7, 3))],
+            [make_node("Split", ["x"], ["y", "z", "a"], axis=1, num_outputs=3)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (2, 3, 3)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 3)),
+                make_tensor_value_info("a", TensorProto.FLOAT, (2, 1, 3)),
+            ],
+        )
+
     def test_GLU_partial(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
             [
-                make_node("Split", ["x"], ["y", "z"], axis=1),
+                make_node("Split", ["x"], ["y", "z"], axis=1, num_outputs=2),
                 make_node("Sigmoid", ["z"], ["a"]),
             ],
             [],
@@ -2573,7 +2603,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
             [
-                make_node("Split", ["x"], ["y", "z"], axis=1),
+                make_node("Split", ["x"], ["y", "z"], axis=1, num_outputs=2),
                 make_node("Sigmoid", ["z"], ["a"]),
                 make_node("Mul", ["y", "a"], ["b"]),
             ],
@@ -5989,7 +6019,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Pad", "x", "y", pads=[1, 3, 1, 1, 0, 1])],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, None, 4))], opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 10)])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (3, None, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 10)],
+        )  # type: ignore
 
     def test_constant_pad_2d_opset10(self) -> None:
         graph = self._make_graph(
@@ -8390,6 +8424,120 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_tensor_value_info("y", TensorProto.FLOAT, (10, 8, 3))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 18)],
         )
+
+    def test_category_mapper(self) -> None:
+        if ONNX_ML:
+            cat = make_node(
+                "CategoryMapper",
+                ["x"],
+                ["y"],
+                domain=ONNX_ML_DOMAIN,
+            )
+            graph_int = self._make_graph(
+                [("x", TensorProto.INT64, (30, 4, 5))],
+                [cat],
+                [],
+            )
+            self._assert_inferred(
+                graph_int,
+                [make_tensor_value_info("y", TensorProto.STRING, (30, 4, 5))],
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 1),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
+            graph_str = self._make_graph(
+                [("x", TensorProto.STRING, (30, 5, 4))],
+                [cat],
+                [],
+            )
+            self._assert_inferred(
+                graph_str,
+                [make_tensor_value_info("y", TensorProto.INT64, (30, 5, 4))],
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 1),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
+
+    def test_tree_ensemble_regressor(self) -> None:
+        if ONNX_ML:
+            tree = make_node(
+                "TreeEnsembleRegressor",
+                ["x"],
+                ["y"],
+                domain=ONNX_ML_DOMAIN,
+                n_targets=5,
+            )
+            graph = self._make_graph(
+                [("x", TensorProto.DOUBLE, (30, 3))],
+                [tree],
+                [],
+            )
+            self._assert_inferred(
+                graph,
+                [make_tensor_value_info("y", TensorProto.FLOAT, (30, 5))],
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 3),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
+
+    def test_tree_ensemble_classifier(self) -> None:
+        if ONNX_ML:
+            tree = make_node(
+                "TreeEnsembleClassifier",
+                ["x"],
+                ["y", "z"],
+                class_ids=[0, 1, 2, 3, 4],
+                domain=ONNX_ML_DOMAIN,
+            )
+            graph = self._make_graph(
+                [("x", TensorProto.DOUBLE, (30, 3))],
+                [tree],
+                [],
+            )
+            self._assert_inferred(
+                graph,
+                [
+                    make_tensor_value_info("y", TensorProto.INT64, (30,)),
+                    make_tensor_value_info("z", TensorProto.FLOAT, (30, 5)),
+                ],
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 3),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
+
+    def test_array_feature_extractor(self) -> None:
+        if ONNX_ML:
+            node = make_node(
+                "ArrayFeatureExtractor",
+                ["x", "y"],
+                ["z"],
+                domain=ONNX_ML_DOMAIN,
+            )
+            for (axes_shape, expected) in [
+                ((2,), 2),
+                (tuple(), "unk__0"),
+                (("N",), "N"),
+            ]:
+                graph = self._make_graph(
+                    [
+                        ("x", TensorProto.INT64, (3, 4, 5)),
+                        ("y", TensorProto.INT64, axes_shape),
+                    ],
+                    [node],
+                    [],
+                )
+                self._assert_inferred(
+                    graph,
+                    [make_tensor_value_info("z", TensorProto.INT64, (3, 4, expected))],  # type: ignore
+                    opset_imports=[
+                        make_opsetid(ONNX_ML_DOMAIN, 3),
+                        make_opsetid(ONNX_DOMAIN, 18),
+                    ],
+                )
 
 
 if __name__ == "__main__":

@@ -239,7 +239,9 @@ class build_py(setuptools.command.build_py.build_py):
         for src in generated_python_files:
             dst = os.path.join(TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
             self.copy_file(src, dst)
-
+        # TODO (https://github.com/pypa/setuptools/issues/3606)
+        # Review the command customisations to enable editable_mode
+        self.editable_mode = False
         return setuptools.command.build_py.build_py.run(self)
 
 
@@ -305,8 +307,21 @@ ext_modules = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
 # Packages
 ################################################################################
 
-# no need to do fancy stuff so far
-packages = setuptools.find_packages()
+# Add package directories here if you want to package them with the source
+# TODO try to remove unnecessary .cpp files
+include_dirs = [
+    "onnx.backend.test.data.*",
+    "onnx.common",
+    "onnx.defs.*",
+    "onnx.examples*",
+    "onnx.shape_inference",
+    "onnx.test.cpp",
+    "onnx.version_converter*",
+]
+
+packages = setuptools.find_packages() + setuptools.find_namespace_packages(
+    include=include_dirs
+)
 
 requirements_file = "requirements.txt"
 requirements_path = os.path.join(os.getcwd(), requirements_file)
@@ -329,8 +344,8 @@ tests_require.append("tabulate")
 
 extras_require["lint"] = [
     "clang-format==13.0.0",
-    "flake8==5.0.2",
-    "mypy==0.782",
+    "flake8>=5.0.2",
+    "mypy>=0.971",
     "types-protobuf==3.18.4",
     "black>=22.3",
     "isort[colors]>=5.10",

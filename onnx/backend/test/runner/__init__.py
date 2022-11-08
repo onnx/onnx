@@ -28,10 +28,10 @@ from typing import (
 )
 from urllib.request import urlretrieve
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
-from onnx import ModelProto, NodeProto, TypeProto, helper, numpy_helper
+from onnx import ModelProto, NodeProto, TypeProto, numpy_helper
 from onnx.backend.base import Backend
 
 from ..case.test_case import TestCase
@@ -113,10 +113,10 @@ class Runner:
         return self
 
     def enable_report(self) -> Runner:
-        import pytest  # type: ignore
+        import pytest
 
         for category, items_map in self._test_items.items():
-            for name, item in items_map.items():
+            for item in items_map.values():
                 item.func = pytest.mark.onnx_coverage(item.proto, category)(item.func)
         return self
 
@@ -165,7 +165,9 @@ class Runner:
             unittest.TextTestRunner().run(BackendTest(backend).test_suite)
         """
         suite = unittest.TestSuite()
-        for case in sorted(self.test_cases.values()):
+        for case in sorted(
+            self.test_cases.values(), key=lambda cl: cl.__class__.__name__
+        ):
             suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))
         return suite
 
@@ -178,7 +180,9 @@ class Runner:
             onnx_backend_tests = BackendTest(backend).tests
         """
         tests = self._get_test_case("OnnxBackendTest")
-        for items_map in sorted(self._filtered_test_items.values()):
+        for items_map in sorted(
+            self._filtered_test_items.values(), key=lambda cl: cl.__class__.__name__
+        ):
             for name, item in sorted(items_map.items()):
                 setattr(tests, name, item.func)
         return tests
