@@ -850,7 +850,7 @@ void OpSchema::ValidateReferencedOpsInFunciton(
   std::stringstream err;
   bool has_invalid_op = false;
   for (int node_index = 0; node_index < function->node_size(); ++node_index) {
-    const ::onnx::NodeProto& node = function->node(node_index);
+    const NodeProto& node = function->node(node_index);
     const OpSchema* op1 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, domain);
     const OpSchema* op2 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), function_since_version, domain);
     if (op1 != op2) {

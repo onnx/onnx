@@ -2749,9 +2749,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("X3D = Reshape(XReshaped, Shape3D)")
 
                   // Calculate statistics
-                  .Add("Mean = ReduceMean <axes = [2]> (X3D)")
+                  .Const1D("Axes2", (int64_t)2)
+                  .Add("Mean = ReduceMean (X3D, Axes2)")
                   .Add("Square = Mul (X3D, X3D)")
-                  .Add("MeanOfSquare = ReduceMean <axes = [2]> (Square)")
+                  .Add("MeanOfSquare = ReduceMean (Square, Axes2)")
                   .Add("SquareOfMean = Mul (Mean, Mean)")
                   .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
                   .Add("VarPlusEpsilon = Add (Var, Epsilon)")
