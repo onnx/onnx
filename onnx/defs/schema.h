@@ -853,7 +853,7 @@ class OpSchema final {
   // For a function op, operators used to define its function body may change
   // while there is no change to the function op definition itself.
   // When this happens, mutiple function bodies are provided, each for a specific opset version.
-  // 
+  //
   // Take LogSoftmax for example. Its latest opset version is 13.
   // In LogSoftmax's function body, ReduceMax (with since_version_ 1, 11, 12, 18) is used.
   // When a model containing LogSoftmax with opset_import version within 13 to 17 is loaded, function body
@@ -862,7 +862,8 @@ class OpSchema final {
   // with opset_version 18 is used for inlining.
   // Clearly function body for opset_import version 13 will not work
   // in a model with opset_import version 18 because the function body make worng use of ReduceMax(18).
-  // Inside GetFunctionWithOpsetVersion we ensure that ops being used to construct a function body do not endure such issue.
+  // Inside GetFunctionWithOpsetVersion we ensure that ops being used to construct a function body do not endure such
+  // issue.
   const FunctionProto* GetFunctionWithOpsetVersion(
       int opset_version,
       const std::string& domain = ONNX_DOMAIN,
@@ -916,7 +917,7 @@ class OpSchema final {
       int requested_opset_version,
       int function_since_version,
       const std::string& domain = ONNX_DOMAIN,
-      bool fail_on_invalid_op=false);
+      bool fail_on_invalid_op = false);
   void UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const;
 
   std::string name_;

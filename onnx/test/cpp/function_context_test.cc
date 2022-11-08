@@ -176,22 +176,24 @@ void RegisterVersionedLogSoftmaxFunctionSchema(bool with_missing_version) {
                 )");
             schema.BuildFunction(functionProto);
             return true;
-          }, 13);
+          },
+          13);
   if (!with_missing_version) {
     schema.SetContextDependentFunctionBodyBuilder(
         [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
-            const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
-            FunctionBuilder builder(functionProto);
-            builder.Const1D("axes", axis).Add("X_ReduceMax = ReduceMax <keepdims = 1> (input, axes)").Add(R"(
+          const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+          FunctionBuilder builder(functionProto);
+          builder.Const1D("axes", axis).Add("X_ReduceMax = ReduceMax <keepdims = 1> (input, axes)").Add(R"(
                     X_Sub = Sub (input, X_ReduceMax)
                     X_Exp = Exp (X_Sub)
                     X_ReduceSum = ReduceSum <keepdims = 1> (X_Exp, axes)
                     X_Log = Log (X_ReduceSum)
                     output = Sub (X_Sub, X_Log)
                 )");
-            schema.BuildFunction(functionProto);
-            return true;
-        }, 18);
+          schema.BuildFunction(functionProto);
+          return true;
+        },
+        18);
   }
 
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
@@ -239,8 +241,7 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
     std::cout << err.what();
     EXPECT_TRUE(
         std::string(err.what())
-        .find(
-            "Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
+            .find("Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
         std::string::npos);
   } catch (...) {
     FAIL()
@@ -250,22 +251,21 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
   try {
     // It may not be ok to request a function body for a model with opset import version 18.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
-    // This is also because ReduceMax(18) exists and will be used, instead of ReduceMax(13), to execute the function body.
+    // This is also because ReduceMax(18) exists and will be used, instead of ReduceMax(13), to execute the function
+    // body.
     FunctionProto function_proto18;
     BuildLogSoftmaxFunction(*schema18, function_proto18, 18);
-    FAIL()
-        << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 18";
+    FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 18";
   } catch (std::runtime_error err) {
     std::cout << err.what();
     EXPECT_TRUE(
         std::string(err.what())
-        .find(
-            "Operator (ReduceMax) of version 18 is used but the op has been updated at least once since version 13.") !=
+            .find(
+                "Operator (ReduceMax) of version 18 is used but the op has been updated at least once since version 13.") !=
         std::string::npos);
     EXPECT_TRUE(
         std::string(err.what())
-            .find(
-                "Operator (Sub) of version 18 is used but the op has been updated at least once since version 13.") !=
+            .find("Operator (Sub) of version 18 is used but the op has been updated at least once since version 13.") !=
         std::string::npos);
   } catch (...) {
     FAIL() << "Expect runtime_error failure in getting function op schema for VersionedLogSoftMax with opset version 18";
@@ -317,9 +317,14 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   // This test illustrate issues of ONNX function ops.
   // It is over simplified in that only one primary op (Sub) is used in function body.
   // ONNX opset     1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18
-  // MySub:            2                    9                               // MySub function op is created at opset 2. Its semantic is updated at opset 7
-  // Body Ideal:       2           6  7     9          13 14    16          // Ideally function body shall be provided each time there is any version bump of used primary ops. It will be more frequent if more primary ops are used.
-  // Body Real:        2                    9                   16          // In real life, we seldom add function body due to primary op update
+  // MySub:            2                    9                               // MySub function op is created at opset 2.
+  //                                                                        // Its semantic is updated at opset 7
+  // Body Ideal:       2           6  7     9          13 14    16          // Ideally function body shall be provided
+  //                                                                        // each time there is any version bump of
+  //                                                                        // used primary ops. It will be more frequent
+  //                                                                        // if more primary ops are used.
+  // Body Real:        2                    9                   16          // In real life, we seldom add function body
+  //                                                                        // due to primary op update
   // Sub:           1              6  7                13 14                // Version bumps of Sub
   // Model:            y  y  y  y  n  n  n  y  y  y  y n  n  n  y  y  y     // Model can(y)/cannot(n) used
   // with opset import version.
@@ -373,7 +378,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
     try {
-      const FunctionProto* function = schema2->GetFunctionWithOpsetVersion(model_opset_import, onnx::ONNX_DOMAIN, true);
+      const FunctionProto* function = schema2->GetFunctionWithOpsetVersion(model_opset_import, ONNX_DOMAIN, true);
       ASSERT_TRUE(function);
     } catch (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8);
@@ -384,7 +389,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
     try {
-      const FunctionProto* function = schema9->GetFunctionWithOpsetVersion(model_opset_import, onnx::ONNX_DOMAIN, true);
+      const FunctionProto* function = schema9->GetFunctionWithOpsetVersion(model_opset_import, ONNX_DOMAIN, true);
       ASSERT_TRUE(function);
     } catch (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15);

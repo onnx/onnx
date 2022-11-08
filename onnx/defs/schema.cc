@@ -762,7 +762,7 @@ bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
     ValidateReferencedOpsInFunciton(&function_proto, opset_version, it->first, domain, fail_on_invalid_op);
     return true;
   }
- }
+}
 
 OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
@@ -829,10 +829,8 @@ const FunctionProto* OpSchema::GetFunction() const {
   return GetFunctionWithOpsetVersion(since_version_);
 }
 
-const FunctionProto* OpSchema::GetFunctionWithOpsetVersion(
-    int opset_version,
-    const std::string& domain,
-    bool fail_on_invalid_op) const {
+const FunctionProto*
+OpSchema::GetFunctionWithOpsetVersion(int opset_version, const std::string& domain, bool fail_on_invalid_op) const {
   return const_cast<OpSchema*>(this)->GetFunctionWithOpsetInternal(opset_version, domain, fail_on_invalid_op);
 }
 
@@ -843,8 +841,8 @@ void OpSchema::ValidateReferencedOpsInFunciton(
     const std::string& domain,
     bool fail_on_invalid_op) {
   if (requested_opset_version == function_since_version) {
-      // we validate that OpSchemas optained with requested_opset_version and function_since_version
-      // are the same for ops used in a function definition.
+    // we validate that OpSchemas optained with requested_opset_version and function_since_version
+    // are the same for ops used in a function definition.
     return;
   }
   std::stringstream err;
