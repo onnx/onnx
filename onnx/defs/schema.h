@@ -771,6 +771,20 @@ class OpSchema final {
     return all_map_key_types;
   }
 
+  static const std::vector<std::string>& all_map_key_tensor_types() {
+    static const std::vector<std::string> all_map_key_tensor_types = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(string)"};
+    return all_map_key_tensor_types;
+  }
+
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
   OpSchema& FillUsing(const std::function<void(OpSchema&)>& populator);
