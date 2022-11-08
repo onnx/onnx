@@ -149,11 +149,11 @@ void RegisterCustomFunctionSchema() {
   (void)unused;
 }
 
-void RegisterVersionedLogSoftmaxFunctionSchema(bool with_missing_version) {
-    // SinceVersion of a function operator tells the last opset version where its semantic is defined.
-    // the function's body 
+void RegisterVersionedLogSoftmaxFunctionSchema(const std::string& op_type, bool with_missing_version) {
+  // SinceVersion of a function operator tells the last opset version where its semantic is defined.
+  // the function's body 
   ONNX_NAMESPACE::OpSchema schema;
-  schema.SetName("VersionedLogSoftMax")
+  schema.SetName(op_type)
       .SetDomain(ONNX_DOMAIN)
       .SinceVersion(13)
       .SetDoc("A variation of LogSoftMax that takes axes as input instead of attribute.")
@@ -200,9 +200,9 @@ void RegisterVersionedLogSoftmaxFunctionSchema(bool with_missing_version) {
   (void)unused;
 }
 
-void BuildLogSoftmaxFunction(const OpSchema& schema, FunctionProto& fnProto, int requested_opset_version) {
+void BuildLogSoftmaxFunction(const OpSchema& schema, const std::string& op_type, FunctionProto& fnProto, int requested_opset_version) {
   NodeProto nodeProto;
-  nodeProto.set_op_type("VersionedLogSoftMax");
+  nodeProto.set_op_type(op_type);
   nodeProto.add_input("input");
   nodeProto.add_output("output");
 
@@ -214,28 +214,29 @@ void BuildLogSoftmaxFunction(const OpSchema& schema, FunctionProto& fnProto, int
 }
 
 TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
-  RegisterVersionedLogSoftmaxFunctionSchema(true);
+  std::string op_type = "VersionedLogSoftMax";
+  RegisterVersionedLogSoftmaxFunctionSchema(op_type, true);
 
   // The function op's since version is 13. there is no new version after version 13.
   // As a result, all OpSchema shall point to the same one.
-  const auto* schema13 = OpSchemaRegistry::Schema("VersionedLogSoftMax", 13, ONNX_DOMAIN);
+  const auto* schema13 = OpSchemaRegistry::Schema(op_type, 13, ONNX_DOMAIN);
   EXPECT_TRUE(schema13);
-  const auto* schema17 = OpSchemaRegistry::Schema("VersionedLogSoftMax", 17, ONNX_DOMAIN);
+  const auto* schema17 = OpSchemaRegistry::Schema(op_type, 17, ONNX_DOMAIN);
   EXPECT_TRUE(schema17 == schema13);
-  const auto* schema18 = OpSchemaRegistry::Schema("VersionedLogSoftMax", 18, ONNX_DOMAIN);
+  const auto* schema18 = OpSchemaRegistry::Schema(op_type, 18, ONNX_DOMAIN);
   EXPECT_TRUE(schema18 == schema13);
 
   // VersionedLogSoftMax has 1 function body for opset version 13.
   // It is ok to request a function body for a model with opset import version 13.
   FunctionProto function_proto13;
-  BuildLogSoftmaxFunction(*schema13, function_proto13, 13);
-  ASSERT_TRUE(function_proto13.name() == "VersionedLogSoftMax");
+  BuildLogSoftmaxFunction(*schema13, op_type, function_proto13, 13);
+  ASSERT_TRUE(function_proto13.name() == op_type);
 
   try {
     // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     FunctionProto function_proto17;
-    BuildLogSoftmaxFunction(*schema17, function_proto17, 17);
+    BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 17";
   } catch (std::runtime_error err) {
     std::cout << err.what();
@@ -254,7 +255,7 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
     // This is also because ReduceMax(18) exists and will be used, instead of ReduceMax(13), to execute the function
     // body.
     FunctionProto function_proto18;
-    BuildLogSoftmaxFunction(*schema18, function_proto18, 18);
+    BuildLogSoftmaxFunction(*schema18, op_type, function_proto18, 18);
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 18";
   } catch (std::runtime_error err) {
     std::cout << err.what();
@@ -268,34 +269,36 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
             .find("Operator (Sub) of version 18 is used but the op has been updated at least once since version 13.") !=
         std::string::npos);
   } catch (...) {
-    FAIL() << "Expect runtime_error failure in getting function op schema for VersionedLogSoftMax with opset version 18";
+    FAIL()
+        << "Expect runtime_error failure in getting function op schema for VersionedLogSoftMax with opset version 18";
   }
 }
 
 TEST(FunctionAPITest, VersionedFunctionTest) {
-  RegisterVersionedLogSoftmaxFunctionSchema(false);
+  std::string op_type = "VersionedLogSoftMax2";
+  RegisterVersionedLogSoftmaxFunctionSchema(op_type, false);
 
   // The function op's since version is 13. there is no new version after version 13.
   // As a result, all OpSchema shall point to the same one.
-  const auto* schema13 = OpSchemaRegistry::Schema("VersionedLogSoftMax", 13, ONNX_DOMAIN);
+  const auto* schema13 = OpSchemaRegistry::Schema(op_type, 13, ONNX_DOMAIN);
   EXPECT_TRUE(schema13);
-  const auto* schema17 = OpSchemaRegistry::Schema("VersionedLogSoftMax", 17, ONNX_DOMAIN);
+  const auto* schema17 = OpSchemaRegistry::Schema(op_type, 17, ONNX_DOMAIN);
   EXPECT_TRUE(schema17 == schema13);
-  const auto* schema18 = OpSchemaRegistry::Schema("VersionedLogSoftMax", 18, ONNX_DOMAIN);
+  const auto* schema18 = OpSchemaRegistry::Schema(op_type, 18, ONNX_DOMAIN);
   EXPECT_TRUE(schema18 == schema13);
 
   // VersionedLogSoftMax has 2 function bodies: for opset version 13 and 18.
   // It is ok to request a function body for a model with opset import version 13.
   FunctionProto function_proto13;
-  BuildLogSoftmaxFunction(*schema13, function_proto13, 13);
-  ASSERT_TRUE(function_proto13.name() == "VersionedLogSoftMax");
+  BuildLogSoftmaxFunction(*schema13, op_type, function_proto13, 13);
+  ASSERT_TRUE(function_proto13.name() == op_type);
 
   try {
     // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     FunctionProto function_proto17;
-    BuildLogSoftmaxFunction(*schema17, function_proto17, 17);
-    FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 17";
+    BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
+    FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax2 with opset version 17";
   } catch (std::runtime_error err) {
     std::cout << err.what();
     EXPECT_TRUE(
@@ -304,13 +307,13 @@ TEST(FunctionAPITest, VersionedFunctionTest) {
         std::string::npos);
   } catch (...) {
     FAIL()
-        << "Expect runtime_error failure in getting function op schema for VersionedLogSoftMax with opset version 17";
+        << "Expect runtime_error failure in getting function op schema for VersionedLogSoftMax2 with opset version 17";
   }
 
   // It is ok to request a function body for a model with opset import version 18.
   FunctionProto function_proto18;
-  BuildLogSoftmaxFunction(*schema13, function_proto18, 18);
-  ASSERT_TRUE(function_proto18.name() == "VersionedLogSoftMax");
+  BuildLogSoftmaxFunction(*schema13, op_type, function_proto18, 18);
+  ASSERT_TRUE(function_proto18.name() == op_type);
 }
 
 TEST(FunctionAPITest, VersionedFunctionBodyTest) {
@@ -321,7 +324,8 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   //                                                                        // Its semantic is updated at opset 7
   // Body Ideal:       2           6  7     9          13 14    16          // Ideally function body shall be provided
   //                                                                        // each time there is any version bump of
-  //                                                                        // used primary ops. It will be more frequent
+  //                                                                        // used primary ops. It will be more
+  //                                                                        // frequent
   //                                                                        // if more primary ops are used.
   // Body Real:        2                    9                   16          // In real life, we seldom add function body
   //                                                                        // due to primary op update
@@ -334,7 +338,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
       .SinceVersion(2)
       .SetDoc("Z = Sub (X, Y)")
       .Input(0, "X", "Input tensor X", "T", OpSchema::Single)
-      .Input(0, "Y", "Input tensor Y", "T", OpSchema::Single)
+      .Input(1, "Y", "Input tensor Y", "T", OpSchema::Single)
       .Output(0, "Z", "Output tensor Z", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
       .FunctionBody(
@@ -351,7 +355,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
       .SinceVersion(9)
       .SetDoc("Z = Sub (X, Y)")
       .Input(0, "X", "Input tensor X", "T", OpSchema::Single)
-      .Input(0, "Y", "Input tensor Y", "T", OpSchema::Single)
+      .Input(1, "Y", "Input tensor Y", "T", OpSchema::Single)
       .Output(0, "Z", "Output tensor Z", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
       .FunctionBody(

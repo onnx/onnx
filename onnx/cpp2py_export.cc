@@ -117,6 +117,18 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("function_opset_versions", &OpSchema::function_opset_versions)
       .def_property_readonly(
           "context_dependent_function_opset_versions", &OpSchema::context_dependent_function_opset_versions)
+      .def_property_readonly(
+          "all_function_opset_versions",
+          [](OpSchema* op) -> std::vector<int> {
+            std::vector<int> all_function_opset_versions = op->function_opset_versions();
+            std::vector<int> context_dependent_function_opset_versions = op->context_dependent_function_opset_versions();
+            all_function_opset_versions.insert(
+                all_function_opset_versions.end(),
+                context_dependent_function_opset_versions.begin(),
+                context_dependent_function_opset_versions.end());
+            std::sort(all_function_opset_versions.begin(), all_function_opset_versions.end());
+            return all_function_opset_versions;
+          })
       .def_property_readonly("name", &OpSchema::Name)
       .def_property_readonly("min_input", &OpSchema::min_input)
       .def_property_readonly("max_input", &OpSchema::max_input)
