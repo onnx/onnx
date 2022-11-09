@@ -52,14 +52,15 @@ jobs:
       run: |
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
+        export CMAKE_OSX_ARCHITECTURES="x86_64;arm64"
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
         # Currently GitHub Action agent is using macos-11, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
         if [ '${{ github.event_name }}' == 'schedule' ]; then
-          python setup.py bdist_wheel -p macosx_10_12_x86_64 --weekly_build
+          python setup.py bdist_wheel -p macosx_10_12_universal2 --weekly_build
         else
-          python setup.py bdist_wheel -p macosx_10_12_x86_64
+          python setup.py bdist_wheel -p macosx_10_12_universal2
         fi
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
 
