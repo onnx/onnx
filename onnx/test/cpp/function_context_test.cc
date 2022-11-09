@@ -247,7 +247,7 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
   ASSERT_TRUE(function_proto13.name() == op_type);
   std::cout << "Step2\n";
 
-  try {
+  ONNX_TRY {
     // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     FunctionProto function_proto17;
@@ -255,13 +255,17 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
     BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
     std::cout << "Step3\n";
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 17";
-  } catch (std::runtime_error err) {
-    std::cout << "Step4\n";
-    std::cout << err.what();
-    EXPECT_TRUE(
-        std::string(err.what())
-            .find("Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
-        std::string::npos);
+  }
+  ONNX_CATCH(std::runtime_error & err) {
+    ONNX_HANDLE_EXCEPTION([&]() {
+      std::cout << "Step4\n";
+      std::cout << err.what();
+      EXPECT_TRUE(
+          std::string(err.what())
+              .find(
+                  "Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
+          std::string::npos);
+    });
   }
 
   std::cout << "Step5\n";
