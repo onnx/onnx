@@ -11,6 +11,9 @@
 
 using namespace ONNX_NAMESPACE::checker;
 
+#pragma warning(push)
+#pragma warning(disable : 4530)
+
 namespace ONNX_NAMESPACE {
 namespace Test {
 
@@ -243,7 +246,7 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
   ASSERT_TRUE(function_proto13.name() == op_type);
   std::cout << "Step2\n"; 
 
-  ONNX_TRY {
+  try {
     // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     FunctionProto function_proto17;
@@ -251,7 +254,7 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
     BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
     std::cout << "Step3\n"; 
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 17";
-  } ONNX_CATCH (std::runtime_error err) {
+  } catch (std::runtime_error err) {
     std::cout << "Step4\n"; 
     std::cout << err.what();
     EXPECT_TRUE(
@@ -261,7 +264,7 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
   }
 
   std::cout << "Step5\n"; 
-  ONNX_TRY {
+  try {
     // It may not be ok to request a function body for a model with opset import version 18.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     // This is also because ReduceMax(18) exists and will be used, instead of ReduceMax(13), to execute the function
@@ -269,7 +272,7 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
     FunctionProto function_proto18;
     BuildLogSoftmaxFunction(*schema18, op_type, function_proto18, 18);
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 18";
-  } ONNX_CATCH (std::runtime_error err) {
+  } catch (std::runtime_error err) {
     std::cout << "Step6\n"; 
     std::cout << err.what();
     EXPECT_TRUE(
@@ -303,13 +306,13 @@ TEST(FunctionAPITest, VersionedFunctionTest) {
   BuildLogSoftmaxFunction(*schema13, op_type, function_proto13, 13);
   ASSERT_TRUE(function_proto13.name() == op_type);
 
-  ONNX_TRY {
+  try {
     // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     FunctionProto function_proto17;
     BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax2 with opset version 17";
-  } ONNX_CATCH (std::runtime_error err) {
+  } catch (std::runtime_error err) {
     std::cout << err.what();
     EXPECT_TRUE(
         std::string(err.what())
@@ -388,10 +391,10 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
-    ONNX_TRY {
+    try {
       const FunctionProto* function = schema2->GetFunctionWithOpsetVersion(model_opset_import, ONNX_DOMAIN, true);
       ASSERT_TRUE(function);
-    } ONNX_CATCH (std::runtime_error err) {
+    } catch (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8);
     }
   }
@@ -399,10 +402,10 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   const auto* schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
-    ONNX_TRY {
+    try {
       const FunctionProto* function = schema9->GetFunctionWithOpsetVersion(model_opset_import, ONNX_DOMAIN, true);
       ASSERT_TRUE(function);
-    } ONNX_CATCH (std::runtime_error err) {
+    } catch (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15);
     }
   }
@@ -439,3 +442,4 @@ TEST(FunctionAPITest, TypeContextTest) {
 
 } // namespace Test
 } // namespace ONNX_NAMESPACE
+#pragma warning(pop)
