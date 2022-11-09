@@ -9,44 +9,9 @@
 #include <numeric>
 
 namespace ONNX_NAMESPACE {
-static std::vector<std::string> all_map_value_types() {
-    auto map_key_types = OpSchema::all_map_key_types();
-    // Values have to be one of the following data types
-    // TENSOR, SPARSE_TENSOR, MAP, SEQUENCE.
-    auto tensor_types = OpSchema::all_tensor_types();
-    auto sequence_types = OpSchema::all_tensor_sequence_types();
-
-    static std::vector<std::string> all_map_value_types;
-    all_map_value_types.insert(all_map_value_types.end(), tensor_types.begin(), tensor_types.end());
-    all_map_value_types.insert(all_map_value_types.end(), sequence_types.begin(), sequence_types.end());
-    for (auto key_type : map_key_types) {
-        for (auto value_type : tensor_types) {
-            std::string map_type = "map("+ key_type + ", " + value_type + ")";
-            all_map_value_types.emplace_back(map_type);
-        }
-    }
-    for (auto key_type : map_key_types) {
-        for (auto value_type : sequence_types) {
-            std::string map_type = "map("+ key_type + ", " + value_type + ")";
-            all_map_value_types.emplace_back(map_type);
-        }
-    }
-    return all_map_value_types;
-}
-
-static std::vector<std::string> all_map_seq_types() {
-    auto map_value_types = all_map_value_types();
-    static std::vector<std::string> all_map_seq_types;
-    for (auto value_type : map_value_types) {
-        std::string seq_map_type = "seq("+ value_type +")";
-        all_map_seq_types.emplace_back(seq_map_type);
-    }
-    return all_map_seq_types;
-}
-
 static std::vector<std::string> all_map_types() {
     auto map_key_types = OpSchema::all_map_key_types();
-    auto map_value_types = all_map_value_types();
+    auto map_value_types = OpSchema::all_tensor_sequence_types();
     static std::vector<std::string> all_map_types;
     for (auto key_type : map_key_types) {
         for (auto value_type : map_value_types) {
@@ -81,7 +46,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::TYPE_PROTO,
             OPTIONAL_VALUE)
         .Input(0, "keys", "Keys.", "T", OpSchema::Optional)
-        .Input(0, "values", "Sequence enclosing the values.", "S", OpSchema::Optional)
+        .Input(1, "values", "Sequence enclosing the values.", "S", OpSchema::Optional)
         .Output(0, "map", "Map.", "M")
         .TypeConstraint(
             "T",
@@ -89,7 +54,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to integral and string tensor types.")
         .TypeConstraint(
             "S",
-            all_map_seq_types(),
+            OpSchema::all_tensor_sequence_types(),
             "Constrain input types to any sequence type.")
         .TypeConstraint(
             "M",
@@ -124,7 +89,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_type_inference("'Values' type is null. Type information is expected for this input.");
             }
             ctx.getOutputType(0)->mutable_map_type()->set_key_type(key_type->tensor_type().elem_type());
-            ctx.getOutputType(0)->mutable_map_type()->mutable_value_type()->CopyFrom(value_type->sequence_type().elem_type());
+            ctx.getOutputType(0)->mutable_map_type()->mutable_value_type()->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(
+              value_type->sequence_type().elem_type().tensor_type().elem_type());
           } else {
             fail_type_inference("MapConstruct is expected to have either have both inputs or both the type attributes set.");
           }
@@ -134,7 +100,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("MapConstruct is expected to have 1 output.");
           }
 
-          // TODO: Shape Inference 
+          if (!hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+            return;
+          }
+
+          auto* output_tensor_type =
+              ctx.getOutputType(0)->mutable_map_type()->mutable_value_type()->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
+          const auto& input_shape = ctx.getInputType(1)->sequence_type().elem_type().tensor_type().shape();
+          *(output_tensor_type->mutable_shape()) = input_shape;
+          UnionShapeInfo(input_shape, *output_tensor_type);
+          
         }));
 
 static const char* MapKeys_ver18_doc = R"DOC(
@@ -169,7 +144,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (numOutputs != 1) {
             fail_type_inference("MapKeys is expected to have 1 output.");
           }
-          // TODO: Shape Inference
+          
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+          const auto& input_shape = ctx.getInputType(0)->map_type().value_type().sequence_type().elem_type().tensor_type().shape();
+          *(output_tensor_type->mutable_shape()) = input_shape;
+          UnionShapeInfo(input_shape, *output_tensor_type);
+
         }));
 
 
@@ -191,21 +175,30 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to any map type.")
         .TypeConstraint(
             "S",
-            all_map_seq_types(),
+            OpSchema::all_tensor_sequence_types(),
             "Constrain output types to any sequence type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input_type = ctx.getInputType(0);
           if (nullptr == input_type) {
             fail_type_inference("Input map is expected to have type info. Current type is null.");
           }
-          ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->CopyFrom(input_type->map_type().value_type());
+          ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(
+              input_type->map_type().value_type().sequence_type().elem_type().tensor_type().elem_type());
 
           const size_t numOutputs = ctx.getNumOutputs();
           if (numOutputs != 1) {
             fail_type_inference("MapValues is expected to have 1 output.");
           }
 
-          // TODO: Shape Inference
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          auto* output_tensor_type = ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
+          const auto& input_shape = ctx.getInputType(0)->map_type().value_type().sequence_type().elem_type().tensor_type().shape();
+          *(output_tensor_type->mutable_shape()) = input_shape;
+          UnionShapeInfo(input_shape, *output_tensor_type);
+
         }));
 
 static const char* MapInsertPair_ver18_doc = R"DOC(
@@ -221,8 +214,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(MapInsertPair_ver18_doc)
         .Input(0, "map", "Input map.", "M")
-        .Input(0, "key", "Key.", "t")
-        .Input(0, "value", "Value.", "V")
+        .Input(1, "key", "Key.", "t")
+        .Input(2, "value", "Value.", "V")
         .Output(0, "output_map", "Output map that contains the new key value pair.", "M")
         .TypeConstraint(
             "t",
@@ -230,7 +223,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to integral and string types.")
         .TypeConstraint(
             "V",
-            all_map_value_types(),
+           OpSchema::all_tensor_types(),
             "Constrain input types to any sequence, tensor or map type.")
         .TypeConstraint(
             "M",
@@ -250,15 +243,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("Input map keys and key to be inserted are expected to have same type. Current types differ.");
           }
 
-          ctx.getOutputType(0)->mutable_map_type()->set_key_type(key_type);
-          ctx.getOutputType(0)->mutable_map_type()->mutable_value_type()->CopyFrom(value_type);
+          ctx.getOutputType(0)->CopyFrom(*input0_type);
 
           const size_t numOutputs = ctx.getNumOutputs();
           if (numOutputs != 1) {
             fail_type_inference("MapInsertPair is expected to have 1 output.");
           }
 
-          // TODO: Shape Inference
         }));
 
 static const char* MapDeletePair_ver18_doc = R"DOC(
@@ -271,7 +262,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(MapDeletePair_ver18_doc)
         .Input(0, "map", "Input map.", "M")
-        .Input(0, "key", "Key.", "t")
+        .Input(1, "key", "Key.", "t")
         .Output(0, "output_map", "Output map without the provided key value pair.", "M")
         .TypeConstraint(
             "t",
@@ -294,15 +285,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("Input map keys and key to be inserted are expected to have same type. Current types differ.");
           }
 
-          ctx.getOutputType(0)->mutable_map_type()->set_key_type(key_type);
-          ctx.getOutputType(0)->mutable_map_type()->mutable_value_type()->CopyFrom(value_type);
+          ctx.getOutputType(0)->CopyFrom(*input0_type);
 
           const size_t numOutputs = ctx.getNumOutputs();
           if (numOutputs != 1) {
             fail_type_inference("MapDeletePair is expected to have 1 output.");
           }
 
-          // TODO: Shape Inference
         }));
 
 static const char* MapHasKey_ver18_doc = R"DOC(
@@ -316,7 +305,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(MapHasKey_ver18_doc)
         .Input(0, "map", "Input map.", "M")
-        .Input(0, "key", "Key.", "t")
+        .Input(1, "key", "Key.", "t")
         .Output(
             0,
             "output",
@@ -349,7 +338,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("MapHasKey is expected to have 1 output.");
           }
 
-          // TODO: Shape Inference
         }));
 
 static const char* MapGetValue_ver18_doc = R"DOC(
@@ -363,7 +351,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(MapGetValue_ver18_doc)
         .Input(0, "map", "Input map.", "M")
-        .Input(0, "key", "Key for which the value is retrieved.", "T")
+        .Input(1, "key", "Key for which the value is retrieved.", "T")
         .Output(0, "value", "Value corresponding to the provided key", "V")
         .TypeConstraint(
             "T",
@@ -371,7 +359,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to integral and string tensor types.")
         .TypeConstraint(
             "V",
-            all_map_value_types(),
+            OpSchema::all_tensor_types(),
             "Constrain input types to any sequence, tensor or map type.")
         .TypeConstraint(
             "M",
@@ -385,19 +373,27 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           const auto key_type = input0_type->map_type().key_type();
-          const auto value_type = input0_type->map_type().value_type();
           if (key_type != input1_type->tensor_type().elem_type()) {
             fail_type_inference("Input map keys and key to be inserted are expected to have same type. Current types differ.");
           }
 
-          ctx.getOutputType(0)->CopyFrom(value_type);
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
+              input0_type->map_type().value_type().sequence_type().elem_type().tensor_type().elem_type());
 
           const size_t numOutputs = ctx.getNumOutputs();
           if (numOutputs != 1) {
             fail_type_inference("MapGetValue is expected to have 1 output.");
           }
 
-          // TODO: Shape Inference
+          if (!hasNInputShapes(ctx, 2)) {
+            return;
+          }
+
+          auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+          const auto& input_shape = ctx.getInputType(0)->map_type().value_type().sequence_type().elem_type().tensor_type().shape();
+          *(output_tensor_type->mutable_shape()) = input_shape;
+          UnionShapeInfo(input_shape, *output_tensor_type);
+
         }));
 
 } // namespace ONNX_NAMESPACE

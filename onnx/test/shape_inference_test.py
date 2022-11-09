@@ -28,6 +28,7 @@ from onnx.helper import (
     make_opsetid,
     make_tensor,
     make_tensor_sequence_value_info,
+    make_tensor_sequence_map_value_info,
     make_tensor_value_info,
 )
 
@@ -143,6 +144,11 @@ class TestShapeInferenceHelper(unittest.TestCase):
             assert inferred_vi_type.HasField("optional_type")
             vi = vi_type.optional_type.elem_type
             inferred_vi = inferred_vi_type.optional_type.elem_type
+            self._compare_value_infos(vi, inferred_vi)
+        elif vi_type.HasField("map_type"):
+            assert inferred_vi_type.HasField("map_type")
+            vi = vi_type.map_type.value_type
+            inferred_vi = inferred_vi_type.map_type.value_type
             self._compare_value_infos(vi, inferred_vi)
         else:
             raise NotImplementedError(
@@ -7313,6 +7319,35 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "in_sequence", TensorProto.FLOAT, (None, None, 3)
                 ),
                 make_tensor_sequence_value_info("shapes", TensorProto.INT64, (3,)),
+            ],
+        )  # type: ignore
+
+    def test_map_construct(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input1", TensorProto.FLOAT, (2, 3, 4)),
+                ("input2", TensorProto.FLOAT, (2, 3, 4)),
+                ("input3", TensorProto.FLOAT, (2, 3, 4)),
+                ("keys", TensorProto.INT64, (3,)),
+            ],
+            [
+                make_node(
+                    "SequenceConstruct", ["input1", "input2", "input3"], ["values"]
+                ),
+                make_node("MapConstruct", ["keys", "values"], ["map"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("keys", TensorProto.INT64, (3,), (10, 20, 30))
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_sequence_value_info(
+                    "values", TensorProto.FLOAT, (2, 3, 4)
+                ),
+                make_tensor_sequence_map_value_info("map", TensorProto.INT64, TensorProto.FLOAT, (2, 3, 4)),
             ],
         )  # type: ignore
 
