@@ -60,6 +60,7 @@ static std::vector<std::string> all_map_types() {
 static const char* MapConstruct_ver18_doc = R"DOC(
 Constructs either an empty map of a certain type specified by the key_type and value_type attributes,
 or a map structure with specified 'keys' and 'values'
+'keys' and 'values' must have the same number of elements.
 All 'keys' must have the same data type.
 All 'values' must all be of the same type (tensor, sequence or map) and have the same data type.
 )DOC";

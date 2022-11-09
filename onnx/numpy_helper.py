@@ -281,7 +281,7 @@ def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
         TensorProto.UINT64,
     ]
 
-    if not all(isinstance(key, raw_key_type) for key in keys):
+    if not all(isinstance(key, type(keys[0])) for key in keys):
         raise TypeError(
             "The key type in the input dictionary is not the same "
             "for all keys and therefore is not valid as a map."
