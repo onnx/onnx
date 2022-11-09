@@ -21,7 +21,8 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10']
-        architecture: ['x64']
+        host-architecture: ['x64']
+        target-architecture: ['x86_64', 'universal2']
 
     steps:
     - uses: actions/checkout@v3
@@ -35,7 +36,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        architecture: ${{ matrix.architecture }}
+        architecture: ${{ matrix.host-architecture }}
 
     - name: Install Python dependencies
       run: |
@@ -52,15 +53,19 @@ jobs:
       run: |
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
-        export CMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+        if [ '${{ matrix.target-architecture }}' == 'x86_64' ]; then
+          export CMAKE_OSX_ARCHITECTURES=x86_64
+        elif [ '${{ matrix.target-architecture }}' == 'universal2' ]; then
+          export CMAKE_OSX_ARCHITECTURES='arm64;x86_64'
+        fi
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
         # Currently GitHub Action agent is using macos-11, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
         if [ '${{ github.event_name }}' == 'schedule' ]; then
-          python setup.py bdist_wheel -p macosx_10_12_universal2 --weekly_build
+          python setup.py bdist_wheel -p macosx_10_12_${{ matrix.target-architecture }} --weekly_build
         else
-          python setup.py bdist_wheel -p macosx_10_12_universal2
+          python setup.py bdist_wheel -p macosx_10_12_${{ matrix.target-architecture }}
         fi
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
 
