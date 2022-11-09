@@ -1036,10 +1036,11 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    public:
     OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load = 0) {
       ONNX_TRY {
+        std::cout << "StepF "; 
         op_schema.Finalize();
-
+        std::cout << "StepG "; 
         auto& m = GetMapWithoutEnsuringRegistration();
-
+        std::cout << "StepH "; 
         auto& op_name = op_schema.Name();
         auto& op_domain = op_schema.domain();
         auto ver = op_schema.SinceVersion();
@@ -1047,7 +1048,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         if (opset_version_to_load != 0 && ver > opset_version_to_load) {
           return;
         }
-
+        std::cout << "StepI "; 
         if (m[op_name][op_domain].count(ver)) {
           const auto& schema = m[op_name][op_domain][ver];
           std::stringstream err;
@@ -1060,7 +1061,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         if (opset_version_to_load != 0 && !m[op_name][op_domain].empty()) {
           return;
         }
-
+        std::cout << "StepJ "; 
         auto ver_range_map = DomainToVersionRange::Instance().Map();
         auto ver_range_it = ver_range_map.find(op_domain);
         if (ver_range_it == ver_range_map.end()) {
@@ -1071,6 +1072,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
           fail_schema(err.str());
         }
+        std::cout << "StepK\n"; 
         auto lower_bound_incl = ver_range_it->second.first;
         auto upper_bound_incl = ver_range_it->second.second;
         if (!(lower_bound_incl <= ver && upper_bound_incl >= ver)) {

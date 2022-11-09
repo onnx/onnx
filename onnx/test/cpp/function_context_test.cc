@@ -9,9 +9,6 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
-#pragma warning(push)
-#pragma warning(disable : 4530)
-
 using namespace ONNX_NAMESPACE::checker;
 
 namespace ONNX_NAMESPACE {
@@ -157,6 +154,7 @@ void RegisterVersionedLogSoftmaxFunctionSchema(const std::string& op_type, bool 
   // Function bodies and context dependent function builders also have versions.
   // A function's version specifies its valid range since its since_version till the since_version
   // of the next function of the same funtion op.
+  std::cout << "StepA\n"; 
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName(op_type)
       .SetDomain(ONNX_DOMAIN)
@@ -183,6 +181,7 @@ void RegisterVersionedLogSoftmaxFunctionSchema(const std::string& op_type, bool 
             return true;
           },
           13);
+  std::cout << "StepB\n"; 
   if (!with_missing_version) {
     schema.SetContextDependentFunctionBodyBuilder(
         [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
@@ -200,7 +199,7 @@ void RegisterVersionedLogSoftmaxFunctionSchema(const std::string& op_type, bool 
         },
         18);
   }
-
+  std::cout << "StepD\n"; 
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;
 }
@@ -224,6 +223,7 @@ void BuildLogSoftmaxFunction(
 
 TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
   std::string op_type = "VersionedLogSoftMax";
+  std::cout << "StepA\n"; 
   RegisterVersionedLogSoftmaxFunctionSchema(op_type, true);
 
   // The function op's since version is 13. there is no new version after version 13.
@@ -235,20 +235,24 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
   const auto* schema18 = OpSchemaRegistry::Schema(op_type, 18, ONNX_DOMAIN);
   EXPECT_TRUE(schema18 == schema13);
 
+  std::cout << "Step1\n"; 
   // VersionedLogSoftMax has 1 function body for opset version 13.
   // It is ok to request a function body for a model with opset import version 13.
   FunctionProto function_proto13;
   BuildLogSoftmaxFunction(*schema13, op_type, function_proto13, 13);
   ASSERT_TRUE(function_proto13.name() == op_type);
+  std::cout << "Step2\n"; 
 
-  try {
+  ONNX_TRY {
     // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     FunctionProto function_proto17;
 
     BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
+    std::cout << "Step3\n"; 
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 17";
-  } catch (std::runtime_error err) {
+  } ONNX_CATCH (std::runtime_error err) {
+    std::cout << "Step4\n"; 
     std::cout << err.what();
     EXPECT_TRUE(
         std::string(err.what())
@@ -256,7 +260,8 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
         std::string::npos);
   }
 
-  try {
+  std::cout << "Step5\n"; 
+  ONNX_TRY {
     // It may not be ok to request a function body for a model with opset import version 18.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     // This is also because ReduceMax(18) exists and will be used, instead of ReduceMax(13), to execute the function
@@ -264,7 +269,8 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
     FunctionProto function_proto18;
     BuildLogSoftmaxFunction(*schema18, op_type, function_proto18, 18);
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 18";
-  } catch (std::runtime_error err) {
+  } ONNX_CATCH (std::runtime_error err) {
+    std::cout << "Step6\n"; 
     std::cout << err.what();
     EXPECT_TRUE(
         std::string(err.what())
@@ -297,13 +303,13 @@ TEST(FunctionAPITest, VersionedFunctionTest) {
   BuildLogSoftmaxFunction(*schema13, op_type, function_proto13, 13);
   ASSERT_TRUE(function_proto13.name() == op_type);
 
-  try {
+  ONNX_TRY {
     // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     FunctionProto function_proto17;
     BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax2 with opset version 17";
-  } catch (std::runtime_error err) {
+  } ONNX_CATCH (std::runtime_error err) {
     std::cout << err.what();
     EXPECT_TRUE(
         std::string(err.what())
@@ -382,10 +388,10 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
-    try {
+    ONNX_TRY {
       const FunctionProto* function = schema2->GetFunctionWithOpsetVersion(model_opset_import, ONNX_DOMAIN, true);
       ASSERT_TRUE(function);
-    } catch (std::runtime_error err) {
+    } ONNX_CATCH (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8);
     }
   }
@@ -393,10 +399,10 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   const auto* schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
-    try {
+    ONNX_TRY {
       const FunctionProto* function = schema9->GetFunctionWithOpsetVersion(model_opset_import, ONNX_DOMAIN, true);
       ASSERT_TRUE(function);
-    } catch (std::runtime_error err) {
+    } ONNX_CATCH (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15);
     }
   }
@@ -433,5 +439,3 @@ TEST(FunctionAPITest, TypeContextTest) {
 
 } // namespace Test
 } // namespace ONNX_NAMESPACE
-
-#pragma warning(pop)
