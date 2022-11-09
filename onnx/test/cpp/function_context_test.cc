@@ -256,7 +256,7 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
     std::cout << "Step3\n";
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 17";
   }
-  ONNX_CATCH(std::runtime_error & err) {
+  ONNX_CATCH(SchemaError & err) {
     ONNX_HANDLE_EXCEPTION([&]() {
       std::cout << "Step4\n";
       std::cout << err.what();
