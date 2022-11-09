@@ -60,7 +60,7 @@ class BackendRep:
     BackendRep to retrieve the corresponding results.
     """
 
-    def run(self, inputs: Any, **kwargs: Any) -> Tuple[Any, ...]:
+    def run(self, inputs: Any, **kwargs: Any) -> Tuple[Any, ...]:  # type: ignore
         pass
 
 

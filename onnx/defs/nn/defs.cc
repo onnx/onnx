@@ -579,6 +579,11 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
         AttributeProto::INTS,
         OPTIONAL_VALUE);
+    schema.Attr(
+        "dilations",
+        "dilation value along each spatial axis of the filter. If not present, the dilation defaults is 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr("auto_pad", conv_auto_pad_doc, AttributeProto::STRING, std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
@@ -621,7 +626,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      convPoolShapeInference(ctx, false, true, 0, 1);
+      convPoolShapeInference(ctx, true, true, 0, 1);
     });
   };
 }
