@@ -256,16 +256,17 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
     std::cout << "Step3\n";
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 17";
   }
-  ONNX_CATCH(SchemaError & err) {
-    ONNX_HANDLE_EXCEPTION([&]() {
-      std::cout << "Step4\n";
-      std::cout << err.what();
-      EXPECT_TRUE(
-          std::string(err.what())
-              .find(
-                  "Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
-          std::string::npos);
-    });
+  ONNX_CATCH(SchemaError & ex) {
+    ONNX_HANDLE_EXCEPTION([&]() { fail_check(ex.what()); });
+    //ONNX_HANDLE_EXCEPTION([&]() {
+    //  std::cout << "Step4\n";
+    //  std::cout << err.what();
+    //  EXPECT_TRUE(
+    //      std::string(err.what())
+    //          .find(
+    //              "Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
+    //      std::string::npos);
+    //});
   }
 
   std::cout << "Step5\n";
