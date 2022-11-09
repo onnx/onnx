@@ -10,18 +10,20 @@ In what follows we describe a method to enrich and structure metadata (which is 
 
 ## Goals
 
-* Model details, Domain, Datasets, Applicable areas, Fairness, Transparency, Human centered approach, Trusted, Secure, Privacy protections, ..
-* Facilitate metadata checks to be implemented in runtime(s) as part of Preprocessing element of ONNX Graph
-* Leverage Semantic Web infrastructure (RDF) for defining the structured metadata to keep it extensible, machine readable, Embeddable (compatible with existing ONNX metadata fields). Rely on industry wide initiatives for introducing Controlled vocabularies for Provenance, Explainable and Ethical ML are already being developed (eg [IEEE P7003](https://standards.ieee.org/project/7003.html))
-* Enables queries to be performed on model zoo to filter for relevant use cases
-
-Simplify the user interactions with multiple variants hosted in ONNX model zoo and allow the ONNX community to simplify sharing from various industry contributors.
+* Target domain areas: Identify an approach to capture model details, domain, datasets, and applicable areas such as fairness, transparency, human centered approaches, trustworthiness, security, and privacy protections, etc.
+* Facilitate metadata checks to be implemented in runtime(s) as part of Preprocessing element of ONNX Graph.
+* Incorporate principles of data governance for scientific and industrial workflows (in particular the "[FAIR](https://www.nature.com/articles/sdata201618)" (Findable, Accessible, Interoperable and Reusable) framework).
+* Leverage Semantic Web infrastructure (RDF) for defining the structured metadata to keep it extensible, machine readable, Embeddable (compatible with existing ONNX metadata fields). Rely on industry-wide initiatives for introducing Controlled vocabularies for Provenance, Explainable and Ethical ML are already being developed (eg [IEEE P7003](https://standards.ieee.org/project/7003.html)).
+* Enables queries to be performed on model zoo to filter for relevant use cases.
+* Simplify the user interactions with multiple variants hosted in ONNX model zoo and allow the ONNX community to simplify sharing from various industry contributors.
 
 ## ONNX Model provenance metadata
 
-Expand on the fields implemented for model hub implementation. The metadata fields hold optional information not required for the basic level of functionality
-
 This should be considered as an initial proposal for metadata fields to capture model provenance &amp; mixed precision representation. We encourage a broader discussion around what metadata should be included in the official model zoo when they get published.
+
+The existing metadata fields supported by ONNX hold optional information that we see are not required for the basic level of functionality.
+
+We would like to encourage a broader discussion around what metadata should be included in the official model zoo when they get published.
 
 The workflow we envision for a model to be enriched with metadata assumes the aid of the creation tools (either exporters or converters) and is illustrated below:
 ![Machine-readable metadata workflow diagram](machine-readable-metadata-workflow.png "Workflow to add and consume metadata")
