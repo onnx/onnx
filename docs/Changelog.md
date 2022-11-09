@@ -14477,7 +14477,7 @@ This version of the operator has been available since version 12 of the default 
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>storage_order</tt> : int (default is 0)</dt>
-<dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major. This attribute is used only to convert an n-tuple index value into a single integer value for producing the second output. </dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
@@ -19393,6 +19393,10 @@ This version of the operator has been available since version 14 of the default 
   Shape (second input) could be an empty shape, which means converting to a scalar.
   The input tensor's shape and the output tensor's shape are required to have the same number of elements.
 
+  If the attribute 'allowzero' is set, it is invalid for the specified shape to
+  contain both a zero value and -1, as the value of the dimension corresponding
+  to -1 cannot be determined uniquely.
+
 #### Version
 
 This version of the operator has been available since version 14 of the default ONNX operator set.
@@ -20998,7 +21002,7 @@ This version of the operator has been available since version 17 of the default 
         ```
         Mean = ReduceMean<axes=normalized_axes>(X)
         D = Sub(X, Mean)
-        DD = Mul(Diff, Diff)
+        DD = Mul(D, D)
         Var = ReduceMean<axes=normalized_axes>(DD)
         VarEps = Add(Var, epsilon)
         StdDev = Sqrt(VarEps)
@@ -21228,64 +21232,6 @@ This version of the operator has been available since version 17 of the default 
 </dl>
 
 ## Version 18 of the default ONNX operator set
-### <a name="AttributeHasValue-18"></a>**AttributeHasValue-18**</a>
-
-  Returns true if at least one of the attribute-value is specified.
-
-#### Version
-
-This version of the operator has been available since version 18 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>value_float</tt> : float</dt>
-<dd>The float attribute.</dd>
-<dt><tt>value_floats</tt> : list of floats</dt>
-<dd>The floats attribute.</dd>
-<dt><tt>value_graph</tt> : graph</dt>
-<dd>The graph attribute.</dd>
-<dt><tt>value_graphs</tt> : list of graphs</dt>
-<dd>The graphs attribute.</dd>
-<dt><tt>value_int</tt> : int</dt>
-<dd>The int attribute.</dd>
-<dt><tt>value_ints</tt> : list of ints</dt>
-<dd>The ints attribute.</dd>
-<dt><tt>value_sparse_tensor</tt> : sparse_tensor</dt>
-<dd>The sparse_tensor attribute.</dd>
-<dt><tt>value_sparse_tensors</tt> : list of sparse_tensors</dt>
-<dd>The sparse_tensors attribute.</dd>
-<dt><tt>value_string</tt> : string</dt>
-<dd>The string attribute.</dd>
-<dt><tt>value_strings</tt> : list of strings</dt>
-<dd>The strings attribute.</dd>
-<dt><tt>value_tensor</tt> : tensor</dt>
-<dd>The tensor attribute.</dd>
-<dt><tt>value_tensors</tt> : list of tensors</dt>
-<dd>The tensors attribute.</dd>
-<dt><tt>value_type_proto</tt> : type_proto</dt>
-<dd>The type_proto attribute.</dd>
-<dt><tt>value_type_protos</tt> : list of type_protos</dt>
-<dd>The type_protos attribute.</dd>
-</dl>
-
-#### Inputs
-
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : B</dt>
-<dd>A scalar boolean tensor. If true, it indicates that an attribute is provided.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Constrain output to a boolean tensor.</dd>
-</dl>
-
 ### <a name="BitwiseAnd-18"></a>**BitwiseAnd-18**</a>
 
   Returns the tensor resulting from performing the bitwise `and` operation
@@ -21515,6 +21461,62 @@ This version of the operator has been available since version 18 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all numeric tensor types.</dd>
+</dl>
+
+### <a name="GroupNormalization-18"></a>**GroupNormalization-18**</a>
+
+  A GroupNormalization function. Carries out group normalization as described in
+  the paper https://arxiv.org/abs/1803.08494
+
+  This operator transforms input according to
+  ```
+  y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
+  ```
+  where the mean and variance are computed per instance per group of channels, and
+  `scale` and `bias` should be specified for each group of channels. The number of
+  groups `num_groups` should be divisible by the number of channels so that there are
+  an equal number of channels per group.
+
+  When the number of groups is the same as the number of channels, this operator is
+  equivalent to InstanceNormalization. When there is only one group, this operator
+  is equivalent to LayerNormalization.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>num_groups</tt> : int (required)</dt>
+<dd>The number of groups of channels. It should be a divisor of the number of channels `C`.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, `C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are in the form of `(N x C x D1 x D2 ... Dn)`.</dd>
+<dt><tt>scale</tt> (differentiable) : T</dt>
+<dd>Scale tensor of shape `(num_groups)`.</dd>
+<dt><tt>bias</tt> (differentiable) : T</dt>
+<dd>Bias tensor of shape `(num_groups)`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>The output tensor of the same shape as `X`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="LpPool-18"></a>**LpPool-18**</a>

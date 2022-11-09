@@ -51,9 +51,7 @@ html_theme = "pydata_sphinx_theme"
 language = "en"
 mathdef_link_only = True
 master_doc = "index"
-onnx_doc_folder = os.path.join(
-    os.path.abspath(os.path.dirname(__file__)), "onnx_doc_folder"
-)
+onnx_doc_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "operators")
 pygments_style = "sphinx"
 source_suffix = [".rst"]
 templates_path = ["_templates"]
