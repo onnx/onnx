@@ -24,7 +24,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 * [ONNX intermediate representation spec](docs/IR.md)
 * [Versioning principles of the spec](docs/Versioning.md)
 * [Operators documentation](docs/Operators.md) (development version)
-* [Operators documentation](https://onnx.ai/onnx/onnx_doc_folder/index.html) (latest release)
+* [Operators documentation](https://onnx.ai/onnx/operators/index.html) (latest release)
 * [Python API Overview](docs/PythonAPIOverview.md)
 
 # Programming utilities for working with ONNX Graphs
