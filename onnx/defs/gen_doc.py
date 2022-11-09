@@ -349,7 +349,7 @@ def main(args: Args) -> None:
             for _, namemap in supportmap:
                 for n, schema, versions in namemap:
                     if schema.has_function or schema.has_context_dependent_function:  # type: ignore
-                        function_versions = schema.all_function_opset_versions
+                        function_versions = schema.all_function_opset_versions  # type: ignore
                         function_ops.append((n, schema, versions, function_versions))
                         continue
                     s = '|{}<a href="#{}">{}</a>{}|{}|\n'.format(
