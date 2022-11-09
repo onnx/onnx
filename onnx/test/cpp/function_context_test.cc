@@ -9,6 +9,9 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
+#pragma warning(push)
+#pragma warning(disable : 4530)
+
 using namespace ONNX_NAMESPACE::checker;
 
 namespace ONNX_NAMESPACE {
@@ -430,3 +433,5 @@ TEST(FunctionAPITest, TypeContextTest) {
 
 } // namespace Test
 } // namespace ONNX_NAMESPACE
+
+#pragma warning(pop)
