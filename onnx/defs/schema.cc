@@ -743,22 +743,26 @@ bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
   if (opset_version == OpSchema::kUninitializedSinceVersion)
     opset_version = since_version_;
 
+  std::cout << "Step21";
   std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
       opset_version_to_function_builder_.upper_bound(opset_version);
   if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
+    std::cout << "Step22";
     ONNX_THROW_EX(std::out_of_range(
         std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
         this->name_ + ", opset_version = " + std::to_string(opset_version) + "."));
   } else {
+    std::cout << "Step23";
     --it;
     const ContextDependentFunctionBodyBuilder& body_builder = it->second;
     if (!body_builder(ctx, *this, function_proto)) {
       return false;
     }
-
+    std::cout << "Step24";
     //// default opset import may have been added to function_proto by OpSchema::BuildFunction
     //// we need to update its version with the specified opset_version
     UpdateFunctionProtoOpsetImportVersion(function_proto, opset_version);
+    std::cout << "Step25";
     ValidateReferencedOpsInFunciton(&function_proto, opset_version, it->first, domain, fail_on_invalid_op);
     return true;
   }
@@ -845,6 +849,7 @@ void OpSchema::ValidateReferencedOpsInFunciton(
     // are the same for ops used in a function definition.
     return;
   }
+  std::cout << "Step26";
   std::stringstream err;
   bool has_invalid_op = false;
   for (int node_index = 0; node_index < function->node_size(); ++node_index) {
@@ -852,12 +857,14 @@ void OpSchema::ValidateReferencedOpsInFunciton(
     const OpSchema* op1 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, domain);
     const OpSchema* op2 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), function_since_version, domain);
     if (op1 != op2) {
+      std::cout << "Step27";
       if (!has_invalid_op) {
         err << "A function op (" << function->name() << ") with opset version (" << requested_opset_version
             << ") is requested.\n";
         err << "A function definition of opset since_version (" << function_since_version << ") shall be used.\n";
         err << "However, there is/are conflict(s) with operators used to define the function: \n";
       }
+      std::cout << "Step28";
       err << "Operator (" << node.op_type() << ") of version " << requested_opset_version
           << " is used but the op has been updated at least once since version " << function_since_version << ".\n";
       has_invalid_op = true;
@@ -865,9 +872,12 @@ void OpSchema::ValidateReferencedOpsInFunciton(
   }
 
   if (has_invalid_op) {
+    std::cout << "Step29";
     if (fail_on_invalid_op) {
+      std::cout << "Step30";
       fail_schema(err.str());
     } else {
+      std::cout << "Step31";
       std::cout << err.str();
     }
   }
