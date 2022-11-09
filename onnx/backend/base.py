@@ -62,7 +62,7 @@ class BackendRep:
 
     def run(self, inputs: Any, **kwargs: Any) -> Tuple[Any, ...]:
         """Abstract function."""
-        return (None, )
+        return (None,)
 
 
 class Backend:
