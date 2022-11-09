@@ -875,7 +875,7 @@ void OpSchema::ValidateReferencedOpsInFunciton(
     std::cout << "Step29";
     if (fail_on_invalid_op) {
       std::cout << "Step30";
-      fail_schema(err.str());
+      fail_schema("err.str()");
     } else {
       std::cout << "Step31";
       std::cout << err.str();
