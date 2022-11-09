@@ -242,6 +242,7 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
     // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
     // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
     FunctionProto function_proto17;
+
     BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
     FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 17";
   } catch (std::runtime_error err) {
@@ -250,9 +251,6 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
         std::string(err.what())
             .find("Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
         std::string::npos);
-  } catch (...) {
-    FAIL()
-        << "Expect runtime_error failure in getting function op schema for VersionedLogSoftMax with opset version 17";
   }
 
   try {
@@ -274,9 +272,6 @@ TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
         std::string(err.what())
             .find("Operator (Sub) of version 18 is used but the op has been updated at least once since version 13.") !=
         std::string::npos);
-  } catch (...) {
-    FAIL()
-        << "Expect runtime_error failure in getting function op schema for VersionedLogSoftMax with opset version 18";
   }
 }
 
@@ -311,9 +306,6 @@ TEST(FunctionAPITest, VersionedFunctionTest) {
         std::string(err.what())
             .find("Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
         std::string::npos);
-  } catch (...) {
-    FAIL()
-        << "Expect runtime_error failure in getting function op schema for VersionedLogSoftMax2 with opset version 17";
   }
 
   // It is ok to request a function body for a model with opset import version 18.
