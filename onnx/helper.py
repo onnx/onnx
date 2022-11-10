@@ -792,7 +792,7 @@ def make_map_type_proto(
 ) -> TypeProto:
     """Makes an map TypeProto."""
     type_proto = TypeProto()
-    type_proto.map_type.key_type= key_type
+    type_proto.map_type.key_type = key_type
     type_proto.map_type.value_type.CopyFrom(inner_type_proto)
     return type_proto
 
