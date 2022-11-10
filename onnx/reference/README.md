@@ -2,7 +2,7 @@
 
 This is a first attempt to provide an implementation for all operators
 defined by onnx. This is a pure python implementation.
-Mismatches may remain between the official specifications and the implementation here.
+Mismatches may remain between the official specification and the implementation here.
 In the case of such a mismatch, the official spec overrides this implementation.
 The class can use any implementation available in folder
 [ops](https://github.com/onnx/onnx/tree/main/onnx/reference/ops).
@@ -13,7 +13,6 @@ and reported on [ONNX Backend Scoreboard](http://onnx.ai/backend-scoreboard/).
 The class `ReferenceEvaluator` is used as follows:
 
 ```python
-
 import numpy as np
 from onnx.reference import ReferenceEvaluator
 
