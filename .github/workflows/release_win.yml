@@ -94,12 +94,16 @@ jobs:
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
-
+    # TODO: Remove one if condition after using consistent NumPy version for all Python versions
     - name: Verify ONNX with the minimum supported numpy  (from requirements.txt)
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+        if ('${{ matrix.python-version }}' -eq '3.11') {
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+        } else {
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+        }
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
