@@ -851,8 +851,10 @@ bool OpSchema::ValidateReferencedOpsInFuncton(
     return has_no_invalid_op;
   }
   for (auto& node : function->node()) {
-    const OpSchema* op1 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, node.domain());
-    const OpSchema* op2 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), function_since_version, node.domain());
+    const OpSchema* op1 =
+        OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, node.domain());
+    const OpSchema* op2 =
+        OpSchemaRegistry::Instance()->GetSchema(node.op_type(), function_since_version, node.domain());
     if (op1 != op2) {
       if (updated_ops) {
         updated_ops->insert(node.op_type());

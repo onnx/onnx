@@ -905,8 +905,7 @@ class OpSchema final {
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
-  FunctionProto*
-  GetFunctionWithOpsetInternal(int opset_version);
+  FunctionProto* GetFunctionWithOpsetInternal(int opset_version);
   bool ValidateReferencedOpsInFuncton(
       const FunctionProto* function,
       int requested_opset_version,
