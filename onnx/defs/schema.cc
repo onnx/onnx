@@ -715,13 +715,18 @@ bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx
   return BuildContextDependentFunctionWithOpsetVersion(ctx, function_proto, since_version_);
 }
 
-void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const {
+// A function of a schema (either stored in opset_version_to_function_body_ or built with one of function builder
+// in opset_version_to_function_builder_) has predefined opset_imports. Before returning the function, we shall
+// update the predefined opset_imports so that it is consistent with the requested version.
+// Note that this call only update opset_import of the default domain.
+// TODO: extend this call to work for no-default domains.
+void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int requested_opset_version) const {
   bool opset_import_exist = false;
   for (int i = 0; i < function_proto.opset_import_size(); i++) {
     auto* schema_opset = function_proto.mutable_opset_import(i);
     if (schema_opset->domain() == domain_) {
-      if (schema_opset->version() != opset_version) {
-        schema_opset->set_version(opset_version);
+      if (schema_opset->version() != requested_opset_version) {
+        schema_opset->set_version(requested_opset_version);
       }
       opset_import_exist = true;
     }
@@ -730,25 +735,23 @@ void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_pro
   if (!opset_import_exist) {
     auto* schema_opset = function_proto.mutable_opset_import()->Add();
     schema_opset->set_domain(domain_);
-    schema_opset->set_version(opset_version);
+    schema_opset->set_version(requested_opset_version);
   }
 }
 
 bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
     const FunctionBodyBuildContext& ctx,
     FunctionProto& function_proto,
-    int opset_version,
-    const std::string& domain,
-    bool fail_on_invalid_op) const {
-  if (opset_version == OpSchema::kUninitializedSinceVersion)
-    opset_version = since_version_;
+    int requested_opset_version) const {
+  if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
+    requested_opset_version = since_version_;
 
   std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
-      opset_version_to_function_builder_.upper_bound(opset_version);
+      opset_version_to_function_builder_.upper_bound(requested_opset_version);
   if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
     ONNX_THROW_EX(std::out_of_range(
         std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
-        this->name_ + ", opset_version = " + std::to_string(opset_version) + "."));
+        this->name_ + ", opset_version = " + std::to_string(requested_opset_version) + "."));
   } else {
     --it;
     const ContextDependentFunctionBodyBuilder& body_builder = it->second;
@@ -757,8 +760,8 @@ bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
     }
     //// default opset import may have been added to function_proto by OpSchema::BuildFunction
     //// we need to update its version with the specified opset_version
-    UpdateFunctionProtoOpsetImportVersion(function_proto, opset_version);
-    ValidateReferencedOpsInFunciton(&function_proto, opset_version, it->first, domain, fail_on_invalid_op);
+    UpdateFunctionProtoOpsetImportVersion(function_proto, requested_opset_version);
+    ValidateReferencedOpsInFuncton(&function_proto, requested_opset_version, it->first);
     return true;
   }
 }
@@ -828,63 +831,50 @@ const FunctionProto* OpSchema::GetFunction() const {
   return GetFunctionWithOpsetVersion(since_version_);
 }
 
-const FunctionProto*
-OpSchema::GetFunctionWithOpsetVersion(int opset_version, const std::string& domain, bool fail_on_invalid_op) const {
-  return const_cast<OpSchema*>(this)->GetFunctionWithOpsetInternal(opset_version, domain, fail_on_invalid_op);
+const FunctionProto* OpSchema::GetFunctionWithOpsetVersion(int requested_opset_version) const {
+  return const_cast<OpSchema*>(this)->GetFunctionWithOpsetInternal(requested_opset_version);
 }
 
-void OpSchema::ValidateReferencedOpsInFunciton(
+// when requesting a function at loading time,
+// requested_opset_version does not have to be the same as function_since_version.
+// When they are not the same, it is necessary to verify that ops used to define the function
+// are not updated between function_since_version and requested_opset_version (include requested_opset_version).
+// this call only validate ops in the default domain.
+// TODO: validate ops in other domains.
+bool OpSchema::ValidateReferencedOpsInFuncton(
     const FunctionProto* function,
     int requested_opset_version,
     int function_since_version,
-    const std::string& domain,
-    bool fail_on_invalid_op) {
+    std::set<std::string>* updated_ops) const {
+  bool has_no_invalid_op = true;
   if (requested_opset_version == function_since_version) {
-    // we validate that OpSchemas optained with requested_opset_version and function_since_version
-    // are the same for ops used in a function definition.
-    return;
+    return has_no_invalid_op;
   }
-  std::stringstream err;
-  bool has_invalid_op = false;
-  for (int node_index = 0; node_index < function->node_size(); ++node_index) {
-    const NodeProto& node = function->node(node_index);
-    const OpSchema* op1 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, domain);
-    const OpSchema* op2 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), function_since_version, domain);
+  for (auto& node : function->node()) {
+    const OpSchema* op1 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, node.domain());
+    const OpSchema* op2 = OpSchemaRegistry::Instance()->GetSchema(node.op_type(), function_since_version, node.domain());
     if (op1 != op2) {
-      if (!has_invalid_op) {
-        err << "A function op (" << function->name() << ") with opset version (" << requested_opset_version
-            << ") is requested.\n";
-        err << "A function definition of opset since_version (" << function_since_version << ") shall be used.\n";
-        err << "However, there is/are conflict(s) with operators used to define the function: \n";
+      if (updated_ops) {
+        updated_ops->insert(node.op_type());
       }
-      err << "Operator (" << node.op_type() << ") of version " << requested_opset_version
-          << " is used but the op has been updated at least once since version " << function_since_version << ".\n";
-      has_invalid_op = true;
+      has_no_invalid_op = true;
     }
   }
 
-  if (has_invalid_op) {
-    if (fail_on_invalid_op) {
-      fail_schema(err.str());
-    } else {
-      std::cout << err.str();
-    }
-  }
+  return has_no_invalid_op;
 }
 
 FunctionProto*
-OpSchema::GetFunctionWithOpsetInternal(int opset_version, const std::string& domain, bool fail_on_invalid_op) {
+OpSchema::GetFunctionWithOpsetInternal(int requested_opset_version) {
   std::map<int, std::shared_ptr<FunctionProto>>::iterator it =
-      opset_version_to_function_body_.upper_bound(opset_version);
+      opset_version_to_function_body_.upper_bound(requested_opset_version);
   if (opset_version_to_function_body_.empty() || it == opset_version_to_function_body_.begin()) {
-    ONNX_THROW_EX(std::out_of_range(
-        std::string("Cannot find a function body that satisfies the requested opset version: op_type = ") +
-        this->name_ + ", opset_version = " + std::to_string(opset_version) + "."));
+    return nullptr;
   } else {
     --it;
     int function_since_version = it->first;
     FunctionProto* function = it->second.get();
-    ValidateReferencedOpsInFunciton(function, opset_version, function_since_version, domain, fail_on_invalid_op);
+    ValidateReferencedOpsInFuncton(function, requested_opset_version, function_since_version);
     return function;
   }
 }

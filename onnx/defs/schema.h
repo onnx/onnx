@@ -864,10 +864,7 @@ class OpSchema final {
   // in a model with opset_import version 18 because the function body make worng use of ReduceMax(18).
   // Inside GetFunctionWithOpsetVersion we ensure that ops being used to construct a function body do not endure such
   // issue.
-  const FunctionProto* GetFunctionWithOpsetVersion(
-      int opset_version,
-      const std::string& domain = ONNX_DOMAIN,
-      bool fail_on_invalid_op = false) const;
+  const FunctionProto* GetFunctionWithOpsetVersion(int requested_opset_version) const;
 
   std::vector<int> context_dependent_function_opset_versions() const {
     std::vector<int> opset_versions;
@@ -894,9 +891,7 @@ class OpSchema final {
   bool BuildContextDependentFunctionWithOpsetVersion(
       const FunctionBodyBuildContext& ctx,
       FunctionProto& function_proto,
-      int opset_version,
-      const std::string& domain = ONNX_DOMAIN,
-      bool fail_on_invalid_op = false) const;
+      int opset_version) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -911,13 +906,12 @@ class OpSchema final {
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
   FunctionProto*
-  GetFunctionWithOpsetInternal(int opset_version, const std::string& domain, bool fail_on_invalid_op = false);
-  static void ValidateReferencedOpsInFunciton(
+  GetFunctionWithOpsetInternal(int opset_version);
+  bool ValidateReferencedOpsInFuncton(
       const FunctionProto* function,
       int requested_opset_version,
       int function_since_version,
-      const std::string& domain = ONNX_DOMAIN,
-      bool fail_on_invalid_op = false);
+      std::set<std::string>* updated_ops = nullptr) const;
   void UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const;
 
   std::string name_;
@@ -944,6 +938,7 @@ class OpSchema final {
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
   DataPropagationFunction data_propagation_function_;
+
   std::map<int, std::shared_ptr<FunctionProto>> opset_version_to_function_body_;
   std::map<int, ContextDependentFunctionBodyBuilder> opset_version_to_function_builder_;
 };

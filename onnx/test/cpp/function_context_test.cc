@@ -152,172 +152,6 @@ void RegisterCustomFunctionSchema() {
   (void)unused;
 }
 
-void RegisterVersionedLogSoftmaxFunctionSchema(const std::string& op_type, bool with_missing_version) {
-  // SinceVersion of a function operator tells the last opset version where its semantic is defined.
-  // Function bodies and context dependent function builders also have versions.
-  // A function's version specifies its valid range since its since_version till the since_version
-  // of the next function of the same funtion op.
-  ONNX_NAMESPACE::OpSchema schema;
-  schema.SetName(op_type)
-      .SetDomain(ONNX_DOMAIN)
-      .SinceVersion(13)
-      .SetDoc("A variation of LogSoftMax that takes axes as input instead of attribute.")
-      .Attr("axis", "", AttributeProto::INT, static_cast<int64_t>(-1))
-      .Input(0, "input", "Input tensor", "T", OpSchema::Single)
-      .Output(0, "output", "Output tensor", "T", OpSchema::Single)
-      .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
-      .SetContextDependentFunctionBodyBuilder(
-          [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
-            const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
-            FunctionBuilder builder(functionProto);
-            builder.Const1D("axes", axis)
-                .Add("X_ReduceMax = ReduceMax <keepdims = 1> (input)", "axes", std::vector<int64_t>({axis}))
-                .Add(R"(
-                    X_Sub = Sub (input, X_ReduceMax)
-                    X_Exp = Exp (X_Sub)
-                    X_ReduceSum = ReduceSum <keepdims = 1> (X_Exp, axes)
-                    X_Log = Log (X_ReduceSum)
-                    output = Sub (X_Sub, X_Log)
-                )");
-            schema.BuildFunction(functionProto);
-            return true;
-          },
-          13);
-  if (!with_missing_version) {
-    schema.SetContextDependentFunctionBodyBuilder(
-        [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
-          const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
-          FunctionBuilder builder(functionProto);
-          builder.Const1D("axes", axis).Add("X_ReduceMax = ReduceMax <keepdims = 1> (input, axes)").Add(R"(
-                    X_Sub = Sub (input, X_ReduceMax)
-                    X_Exp = Exp (X_Sub)
-                    X_ReduceSum = ReduceSum <keepdims = 1> (X_Exp, axes)
-                    X_Log = Log (X_ReduceSum)
-                    output = Sub (X_Sub, X_Log)
-                )");
-          schema.BuildFunction(functionProto);
-          return true;
-        },
-        18);
-  }
-  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
-  (void)unused;
-}
-
-void BuildLogSoftmaxFunction(
-    const OpSchema& schema,
-    const std::string& op_type,
-    FunctionProto& fnProto,
-    int requested_opset_version) {
-  NodeProto nodeProto;
-  nodeProto.set_op_type(op_type);
-  nodeProto.add_input("input");
-  nodeProto.add_output("output");
-
-  TypeProto floatTypeProto;
-  floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
-
-  FunctionBodyBuildContextImpl ctx(nodeProto, {floatTypeProto});
-  schema.BuildContextDependentFunctionWithOpsetVersion(ctx, fnProto, requested_opset_version, "", true);
-}
-
-TEST(FunctionAPITest, VersionedFunctionWithMissingVersionTest) {
-  std::string op_type = "VersionedLogSoftMax";
-  RegisterVersionedLogSoftmaxFunctionSchema(op_type, true);
-
-  // The function op's since version is 13. there is no new version after version 13.
-  // As a result, all OpSchema shall point to the same one.
-  const auto* schema13 = OpSchemaRegistry::Schema(op_type, 13, ONNX_DOMAIN);
-  EXPECT_TRUE(schema13);
-  const auto* schema17 = OpSchemaRegistry::Schema(op_type, 17, ONNX_DOMAIN);
-  EXPECT_TRUE(schema17 == schema13);
-  const auto* schema18 = OpSchemaRegistry::Schema(op_type, 18, ONNX_DOMAIN);
-  EXPECT_TRUE(schema18 == schema13);
-
-  // VersionedLogSoftMax has 1 function body for opset version 13.
-  // It is ok to request a function body for a model with opset import version 13.
-  FunctionProto function_proto13;
-  BuildLogSoftmaxFunction(*schema13, op_type, function_proto13, 13);
-  ASSERT_TRUE(function_proto13.name() == op_type);
-
-  ONNX_TRY {
-    // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
-    // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
-    FunctionProto function_proto17;
-
-    BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
-    FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 17";
-  }
-  ONNX_CATCH(SchemaError& err) {
-    ONNX_HANDLE_EXCEPTION([&]() {
-      EXPECT_TRUE(
-          std::string(err.what())
-              .find(
-                  "Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
-          std::string::npos);
-    });
-  }
-
-  try {
-    // It may not be ok to request a function body for a model with opset import version 18.
-    // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
-    // This is also because ReduceMax(18) exists and will be used, instead of ReduceMax(13), to execute the function
-    // body.
-    FunctionProto function_proto18;
-    BuildLogSoftmaxFunction(*schema18, op_type, function_proto18, 18);
-    FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax with opset version 18";
-  } catch (SchemaError& err) {
-    EXPECT_TRUE(
-        std::string(err.what())
-            .find(
-                "Operator (ReduceMax) of version 18 is used but the op has been updated at least once since version 13.") !=
-        std::string::npos);
-    EXPECT_TRUE(
-        std::string(err.what())
-            .find("Operator (Sub) of version 18 is used but the op has been updated at least once since version 13.") !=
-        std::string::npos);
-  }
-}
-
-TEST(FunctionAPITest, VersionedFunctionTest) {
-  std::string op_type = "VersionedLogSoftMax2";
-  RegisterVersionedLogSoftmaxFunctionSchema(op_type, false);
-
-  // The function op's since version is 13. there is no new version after version 13.
-  // As a result, all OpSchema shall point to the same one.
-  const auto* schema13 = OpSchemaRegistry::Schema(op_type, 13, ONNX_DOMAIN);
-  EXPECT_TRUE(schema13);
-  const auto* schema17 = OpSchemaRegistry::Schema(op_type, 17, ONNX_DOMAIN);
-  EXPECT_TRUE(schema17 == schema13);
-  const auto* schema18 = OpSchemaRegistry::Schema(op_type, 18, ONNX_DOMAIN);
-  EXPECT_TRUE(schema18 == schema13);
-
-  // VersionedLogSoftMax has 2 function bodies: for opset version 13 and 18.
-  // It is ok to request a function body for a model with opset import version 13.
-  FunctionProto function_proto13;
-  BuildLogSoftmaxFunction(*schema13, op_type, function_proto13, 13);
-  ASSERT_TRUE(function_proto13.name() == op_type);
-
-  try {
-    // It may not be ok to request a function body for a model with opset import version 14, 15, 16, and 17.
-    // This is because Sub(14) exists and will be used, instead of Sub(13), to execute the function body.
-    FunctionProto function_proto17;
-    BuildLogSoftmaxFunction(*schema17, op_type, function_proto17, 17);
-    FAIL() << "Expect runtime_error failure in building function for VersionedLogSoftMax2 with opset version 17";
-  } catch (std::runtime_error err) {
-    std::cout << err.what();
-    EXPECT_TRUE(
-        std::string(err.what())
-            .find("Operator (Sub) of version 17 is used but the op has been updated at least once since version 13.") !=
-        std::string::npos);
-  }
-
-  // It is ok to request a function body for a model with opset import version 18.
-  FunctionProto function_proto18;
-  BuildLogSoftmaxFunction(*schema13, op_type, function_proto18, 18);
-  ASSERT_TRUE(function_proto18.name() == op_type);
-}
-
 TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   // This test illustrate issues of ONNX function ops.
   // It is over simplified in that only one primary op (Sub) is used in function body.
@@ -384,7 +218,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
     try {
-      const FunctionProto* function = schema2->GetFunctionWithOpsetVersion(model_opset_import, ONNX_DOMAIN, true);
+      const FunctionProto* function = schema2->GetFunctionWithOpsetVersion(model_opset_import);
       ASSERT_TRUE(function);
     } catch (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8);
@@ -395,7 +229,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
     try {
-      const FunctionProto* function = schema9->GetFunctionWithOpsetVersion(model_opset_import, ONNX_DOMAIN, true);
+      const FunctionProto* function = schema9->GetFunctionWithOpsetVersion(model_opset_import);
       ASSERT_TRUE(function);
     } catch (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15);
