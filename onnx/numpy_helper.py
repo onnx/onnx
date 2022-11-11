@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=C3001
 
 import sys
 from typing import Any, Dict, List, Optional, Sequence, Union
@@ -14,10 +15,20 @@ def combine_pairs_to_complex(fa: Sequence[int]) -> List[complex]:
 
 
 def bfloat16_to_float32(
-    data: np.ndarray, dims: Union[int, Sequence[int]]
+    data: Union[np.int16, np.int32, np.ndarray],
+    dims: Optional[Union[int, Sequence[int]]] = None,
 ) -> np.ndarray:
-    """Converts ndarray of bf16 (as uint32) to f32 (as uint32)."""
+    """Converts ndarray of bf16 (as uint32) to f32 (as uint32).
+
+    :param data: a numpy array, empty dimensions are allowed if dims is None
+    :param dims: if specified, the function reshapes the results
+    :return: a numpy array of float32 with the same dimension if dims is None,
+        or reshaped to dims if specified"""
     shift = lambda x: x << 16  # noqa: E731
+    if dims is None:
+        if len(data.shape) == 0:
+            return shift(np.array([data]).astype(np.int32)).view(np.float32)[0]
+        return shift(data.astype(np.int32)).view(np.float32)
     return shift(data.astype(np.int32)).reshape(dims).view(np.float32)
 
 
