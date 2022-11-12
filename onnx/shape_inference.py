@@ -88,6 +88,8 @@ def infer_node_outputs(
     input_types: Dict[str, onnx.TypeProto],
     input_data: Optional[Dict[str, onnx.TensorProto]] = None,
     input_sparse_data: Optional[Dict[str, onnx.SparseTensorProto]] = None,
+    opset_imports: Optional[Dict[str, int]] = None,
+    ir_version: int = onnx.IR_VERSION,
 ) -> Dict[str, onnx.TypeProto]:
     if not schema.has_type_and_shape_inference_function:  # type: ignore
         return {}
@@ -95,11 +97,16 @@ def infer_node_outputs(
         input_data = {}
     if input_sparse_data is None:
         input_sparse_data = {}
-
-    # To avoid copying on C++ side, pass only what is needed for this inference call
+    if opset_imports is None:
+        opset_imports = {}
+    # catch KeyError if node's input does not exist in input_types
     passed_input_types = {
         key: input_types[key].SerializeToString() for key in node.input
     }
+    # input_types will also be used as outer_scope_value_types so do not filter by node's input here
+    for key in input_types:
+        if key not in passed_input_types:
+            passed_input_types[key] = input_types[key].SerializeToString()
     passed_input_data = {
         key: input_data[key].SerializeToString()
         for key in node.input
@@ -116,7 +123,9 @@ def infer_node_outputs(
         passed_input_types,
         passed_input_data,
         passed_sparse_input_data,
-    )
+        opset_imports,
+        ir_version,
+    )  # type: ignore[call-arg]
     return {key: onnx.TypeProto.FromString(out) for key, out in outputs.items()}
 
 
