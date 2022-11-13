@@ -61,6 +61,7 @@ verify a model with the following helpers.
     numpy_helper
     parser
     printer
+    reference
     shape_inference
     tools
     utils
