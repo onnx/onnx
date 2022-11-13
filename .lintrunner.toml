@@ -1,0 +1,284 @@
+# Configuration for lintrunner https://github.com/suo/lintrunner
+
+[[linter]]
+code = 'FLAKE8'
+include_patterns = [
+    '**/*.py',
+]
+exclude_patterns = [
+    '*_pb2*',
+    '.setuptools-cmake-build/*',
+    'docs/**',
+]
+command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'flake8_linter',
+    '--',
+    '@{{PATHSFILE}}'
+]
+init_command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'pip_init',
+    '--dry-run={{DRYRUN}}',
+    'flake8==5.0.4',
+    'flake8-bugbear==22.10.27',
+    'flake8-pyi==22.10.0',
+    'dlint==0.13.0',
+]
+
+[[linter]]
+code = 'MYPY'
+include_patterns = [
+    'onnx/**/*.py',
+]
+exclude_patterns = [
+    'onnx/backend/test/**',
+    'onnx/reference/ops/**',  # FIXME: Enable this once typing is fixed
+    'onnx/test/parser_test.py',
+    'onnx/test/numpy_helper_test.py',
+    'onnx/reference/reference_evaluator.py',
+]
+command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'mypy_linter',
+    '--config=pyproject.toml',
+    '--',
+    '@{{PATHSFILE}}'
+]
+init_command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'pip_init',
+    '--dry-run={{DRYRUN}}',
+    'mypy==0.971',
+    'types-protobuf==3.18.4',
+]
+
+# TODO: Enable NOQA
+# [[linter]]
+# code = 'NOQA'
+# include_patterns = ['**/*.py', '**/*.pyi']
+# exclude_patterns = ['third_party/**']
+# command = [
+#     'python3',
+#     '-m',
+#     'lintrunner_adapters',
+#     'run',
+#     'grep_linter',
+#     '--pattern=# noqa([^:]|$)',
+#     '--linter-name=NOQA',
+#     '--error-name=unqualified noqa',
+#     """--error-description=\
+#         This line has an unqualified `noqa`; \
+#         please convert it to `noqa: XXXX`\
+#     """,
+#     '--',
+#     '@{{PATHSFILE}}'
+# ]
+
+[[linter]]
+code = 'NEWLINE'
+include_patterns=[
+    '**/*.py',
+    '**/*.pyi',
+    '**/*.cc',
+    '**/*.h',
+    '**/*.md',
+    '**/*.cpp',
+]
+exclude_patterns = [
+    '*_pb2*',
+    '.setuptools-cmake-build/*',
+    'cmake/**',
+    'docs/**',
+    '**/*.onnx',
+    '**/*.pb',
+    '**/*.pbtxt',
+    '**/*.proto',
+    '**/*.proto3',
+    'community/sc-election-guidelines.md',
+]
+command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'newlines_linter',
+    '--',
+    '@{{PATHSFILE}}',
+]
+is_formatter = true
+
+[[linter]]
+code = 'SPACES'
+include_patterns = ['**']
+exclude_patterns = [
+    '*_pb2*',
+    '.setuptools-cmake-build/*',
+    'cmake/**',
+    'docs/**',
+    '**/*.onnx',
+    '**/*.pb',
+    '**/*.proto*',
+]
+command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'grep_linter',
+    '--pattern=[[:blank:]]$',
+    '--linter-name=SPACES',
+    '--error-name=trailing spaces',
+    '--replace-pattern=s/[[:blank:]]+$//',
+    """--error-description=\
+        This line has trailing spaces; please remove them.\
+    """,
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
+code = 'TABS'
+include_patterns = ['**']
+exclude_patterns = [
+    '.lintrunner.toml',
+    '*_pb2*',
+    '.setuptools-cmake-build/*',
+    'cmake/**',
+    'docs/**',
+    '**/*.onnx',
+    '**/*.pb',
+    '**/*.proto*',
+]
+command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'grep_linter',
+    # @lint-ignore TXT2
+    '--pattern=	',
+    '--linter-name=TABS',
+    '--error-name=saw some tabs',
+    '--replace-pattern=s/\t/    /',
+    """--error-description=\
+        This line has tabs; please replace them with spaces.\
+    """,
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
+code = 'BLACK-ISORT'
+include_patterns = [
+    '**/*.py',
+]
+exclude_patterns = [
+    '*_pb2*',
+    '.setuptools-cmake-build/*',
+    'cmake/**',
+    'docs/**',
+]
+command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'black_isort_linter',
+    '--',
+    '@{{PATHSFILE}}'
+]
+init_command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'pip_init',
+    '--dry-run={{DRYRUN}}',
+    'black==22.10.0',
+    'isort==5.10.1',
+]
+is_formatter = true
+
+[[linter]]
+code = 'NAMESPACE'
+include_patterns = ['**/*.cc', '**/*.h']
+exclude_patterns = ['third_party/**']
+command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'grep_linter',
+    '--pattern=namespace onnx|onnx::',
+    '--linter-name=NAMESPACE',
+    '--error-name=hardcoded onnx namespace',
+    """--error-description=\
+        Do not hardcode onnx's namespace in the c++ source code, so that \
+        other libraries that statically link with onnx can hide onnx symbols \
+        in a private namespace.\
+    """,
+    '--',
+    '@{{PATHSFILE}}'
+]
+
+[[linter]]
+code = 'CLANGFORMAT'
+include_patterns = [
+    'onnx/**/*.h',
+    'onnx/**/*.cc',
+]
+exclude_patterns = [
+]
+command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'clangformat_linter',
+    '--binary=clang-format',
+    '--fallback',
+    '--',
+    '@{{PATHSFILE}}'
+]
+is_formatter = true
+
+# TODO: Enable pylint
+# [[linter]]
+# code = 'PYLINT'
+# include_patterns = [
+#     '**/*.py',
+# ]
+# exclude_patterns = [
+# ]
+# command = [
+#     'python3',
+#     '-m',
+#     'lintrunner_adapters',
+#     'run',
+#     'pylint_linter',
+#     '--rcfile=pyproject.toml',
+#     '--',
+#     '@{{PATHSFILE}}'
+# ]
+# init_command = [
+#     'python3',
+#     '-m',
+#     'lintrunner_adapters',
+#     'run',
+#     'pip_init',
+#     '--dry-run={{DRYRUN}}',
+#     'pylint==2.15.5',
+# ]

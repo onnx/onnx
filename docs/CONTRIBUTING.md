@@ -57,7 +57,7 @@ You can run these checks by:
 ```
 pip install -e .[lint]
 
-./tools/style.sh
+lintrunner
 ```
 
 # Testing

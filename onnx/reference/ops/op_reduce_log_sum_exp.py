@@ -15,7 +15,7 @@ class ReduceLogSumExp(OpRunReduceNumpy):
         mx = data_max.max(axis=tax, keepdims=True)
         sub = np.subtract(data, mx)
         exp = np.exp(sub, out=sub)
-        mxs = np.sum(exp, axis=tax, keepdims=True, dtype=data.dtype)
+        mxs = np.sum(exp, axis=tax, keepdims=True, dtype=data.dtype)  # type: ignore[arg-type]
         res = np.log(mxs) + mx
         if not keepdims:  # type: ignore
             res = np.squeeze(res, axis=tax)

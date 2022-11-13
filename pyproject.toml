@@ -2,12 +2,13 @@
 strict_optional = true
 warn_return_any = true
 warn_no_return = true
-# TODO warn_unused_ignores = true
+warn_unused_ignores = true
 warn_redundant_casts = true
 warn_incomplete_stub = true
 # TODO disallow_untyped_calls = true
 check_untyped_defs = true
-disallow_any_generics = true
+# Allow bare generics like np.ndarray
+disallow_any_generics = false
 no_implicit_optional = true
 # TODO disallow_incomplete_defs = true
 # TODO disallow_subclassing_any = true
@@ -15,6 +16,7 @@ warn_unused_configs = true
 show_error_codes = true
 show_column_numbers = true
 ignore_missing_imports = true
+warn-return-any = false
 exclude = [
     '\.git',
     '__pycache__',

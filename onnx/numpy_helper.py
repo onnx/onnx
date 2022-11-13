@@ -27,9 +27,9 @@ def bfloat16_to_float32(
     shift = lambda x: x << 16  # noqa: E731
     if dims is None:
         if len(data.shape) == 0:
-            return shift(np.array([data]).astype(np.int32)).view(np.float32)[0]
-        return shift(data.astype(np.int32)).view(np.float32)
-    return shift(data.astype(np.int32)).reshape(dims).view(np.float32)
+            return shift(np.array([data]).astype(np.int32)).view(np.float32)[0]  # type: ignore[no-any-return]
+        return shift(data.astype(np.int32)).view(np.float32)  # type: ignore[no-any-return]
+    return shift(data.astype(np.int32)).reshape(dims).view(np.float32)  # type: ignore[no-any-return]
 
 
 def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
@@ -75,7 +75,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
             data = np.frombuffer(tensor.raw_data, dtype=np.int16)
             return bfloat16_to_float32(data, dims)
 
-        return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)
+        return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
     else:
         # float16 is stored as int32 (uint16 type); Need view to get the original value
         if tensor_dtype == TensorProto.FLOAT16:
@@ -173,9 +173,9 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     """
     elem_type = sequence.elem_type
     if elem_type == SequenceProto.TENSOR:
-        return [to_array(v) for v in sequence.tensor_values]
+        return [to_array(v) for v in sequence.tensor_values]  # type: ignore[arg-type]
     if elem_type == SequenceProto.SPARSE_TENSOR:
-        return [to_array(v) for v in sequence.sparse_tensor_values]
+        return [to_array(v) for v in sequence.sparse_tensor_values]  # type: ignore[arg-type]
     if elem_type == SequenceProto.SEQUENCE:
         return [to_list(v) for v in sequence.sequence_values]
     if elem_type == SequenceProto.MAP:
@@ -334,7 +334,7 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
     if elem_type == OptionalProto.TENSOR:
         return to_array(optional.tensor_value)
     if elem_type == OptionalProto.SPARSE_TENSOR:
-        return to_array(optional.sparse_tensor_value)
+        return to_array(optional.sparse_tensor_value)  # type: ignore[arg-type]
     if elem_type == OptionalProto.SEQUENCE:
         return to_list(optional.sequence_value)
     if elem_type == OptionalProto.MAP:
