@@ -19937,15 +19937,16 @@ This version of the operator has been available since version 16 of the default 
 
 ### <a name="GridSample-16"></a>**GridSample-16**</a>
 
-  Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
-  Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
-  the `output` will have shape (N, C, H_out, W_out).
+  Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from `grid`.
+  Currently, only spatial (4-D) inputs are supported. For input `X` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
+  the output `Y` will have shape (N, C, H_out, W_out).
 
-  Input are pixels in 2-dimensional space with each pixel as a square whose value is at the square center.
-  Output are samples from the 2-dimensional space whose values are obtained using a specified interpolation method (the mode), and a padding mode,
-  if a sample position is out of the input image.
-  For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
-  which are used to interpolate the output value `output[N, C, H_out, W_out]`.
+  The tensor `X` contains values at centers of square pixels in a H by W 2-dimensional image.
+  The tensor `grid` describes normalized positions where the output `Y` is to be computed
+  using a specified interpolation method (the mode) and a padding mode (for grid positions falling outside the 2-dimensional image).
+
+  Elements in `grid[N, H_out, W_out]` are size-2 vectors specifying positions in the 2-dimentional space of `X`.
+  They are used to interpolate output values of `Y[N, C, H_out, W_out]`.
 
   The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
   See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
