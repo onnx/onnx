@@ -2372,6 +2372,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("zeros"))
         .Attr(
             "align_corners",
+            "Geometrically, we consider the pixels of the input as squares rather than points. "
             "If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. "
             "If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.",
             AttributeProto::INT,
@@ -2395,7 +2396,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Grid specifies the sampling pixel locations normalized by the input spatial dimensions. "
             "Therefore, it should have most values in the range of [-1, 1]. "
             "If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.",
-            "T1",
+            "T2",
             OpSchema::Single,
             true,
             1,
@@ -2409,14 +2410,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("T1", OpSchema::all_tensor_types(), "Constrain input types to all tensor types.")
+        .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+            "Constrain grid and output types to float tensors.")
         .SetDoc(GridSample_ver16_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 1, 0);
 
           size_t input_param = 0, grid_param = 1;
 
