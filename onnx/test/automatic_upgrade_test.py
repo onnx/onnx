@@ -1736,7 +1736,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == ""]
         excluded_ops = [
-            # Sequence-based and Optional-based ops disabled because
+            # Sequence-based, Optional-based and Map-based ops disabled because
             # the version converter doesn't play nicely with sequences
             "ConcatFromSequence",
             "SequenceAt",
@@ -1750,6 +1750,13 @@ class TestAutomaticUpgrade(unittest.TestCase):
             "Optional",
             "OptionalGetElement",
             "OptionalHasElement",
+            "MapConstruct",
+            "MapKeys",
+            "MapValues",
+            "MapInsertPair",
+            "MapDeletePair",
+            "MapHasKey",
+            "MapGetValue",
         ]
         all_op_names = [op for op in all_op_names if op not in excluded_ops]
 
