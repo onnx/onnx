@@ -2343,8 +2343,9 @@ static const char* GridSample_ver16_doc = R"DOC(
 Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
 Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
 the `output` will have shape (N, C, H_out, W_out).
-Input are pixels in 2 dimensional space with each pixel as a square whose value is at the square center.
-Output are samples from the 2 demension space whose values are obtained using a specified intepolation method (the mode), and a padding mode,
+
+Input are pixels in 2-dimensional space with each pixel as a square whose value is at the square center.
+Output are samples from the 2-dimensional space whose values are obtained using a specified interpolation method (the mode), and a padding mode,
 if a sample position is out of the input image.
 For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
 which are used to interpolate the output value `output[N, C, H_out, W_out]`.
@@ -2406,8 +2407,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "Y",
-            "4-D tensor of shape (N, C, H_out, W_out).",
-            "T2",
+            "4-D tensor of shape (N, C, H_out, W_out) of sampled values. "
+            "For integer input types, intermediate values are computed as floating point and cast to integer at the end.",
+            "T1",
             OpSchema::Single,
             true,
             1,
@@ -2419,7 +2421,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain grid and output types to float tensors.")
         .SetDoc(GridSample_ver16_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 1, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           size_t input_param = 0, grid_param = 1;
 
