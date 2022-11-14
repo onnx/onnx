@@ -34,8 +34,6 @@ jobs:
         set -e
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
-        # Mac cannot work with Python Protobuf 3.18.3 https://github.com/protocolbuffers/protobuf/issues/10691
-        python -m pip install protobuf==3.19.5
 
     - name: Build, install and test ONNX
       shell: bash
@@ -47,8 +45,6 @@ jobs:
         export CC=clang
         export CXX=clang++
         export ONNX_ML=1
-        export ONNX_NAMESPACE=ONNX_REL_1_8
-        export MACOSX_DEPLOYMENT_TARGET=10.15
         python setup.py --quiet install
   
     - name: Test all models with onnx.checker and onnx.shape_inference
