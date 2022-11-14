@@ -31,7 +31,9 @@
 |ScatterElement and ScatterND|Add `max` and `min` as supported reduction attributes||[#4411](https://github.com/onnx/onnx/pull/4411)|
 |Split|Add support for uneven tensor splitting and new `num_outputs` attribute||[#4481](https://github.com/onnx/onnx/pull/4481)|
 |BitwiseNot|New operator||[#4497](https://github.com/onnx/onnx/pull/4497)|
+|BitwiseAnd, BitwiseOr and BitwiseXor|New operators||[#4496](https://github.com/onnx/onnx/pull/4496)|
 |AttributeHasValue|New operator||[#4525](https://github.com/onnx/onnx/pull/4525)|
+|LpPool IN PROGRESS|New attributes: `ceil_mode` and `dilations`||[#4534](https://github.com/onnx/onnx/pull/4534)|
 
 ### Function updates in ai.onnx opset 18
 #### all new and updated operators are to be validated by TBD
@@ -39,6 +41,15 @@
 |---------|:-------------------------:|:------------:|:------------:|
 |CenterCropPad|New function, center crops or pads an input to given dimensions||[#4190](https://github.com/onnx/onnx/pull/4190)|
 |mish|New function, used for example in YoloV4||[#4350](https://github.com/onnx/onnx/pull/4350)|
+|GroupNormalization|New normalization function||[#4621](https://github.com/onnx/onnx/pull/4621)|
+
+### Reference Python runtime
+Reference Python runtime dependent on only Python and numpy has been added.
+ONNX PR: https://github.com/onnx/onnx/pull/4483
+
+### Python 3.11 support
+ONNX now supports Python 3.11.
+ONNX PR: https://github.com/onnx/onnx/pull/4490 [IN PROGRESS]
 
 ### Bugfixes and infrastructure improvements
 | Description | PR | Status | Notes |      
@@ -93,6 +104,7 @@
 |Make `check_model` with `full_check` always not modify the model in place|[#4456](https://github.com/onnx/onnx/pull/4456)|Merged||
 |Use `find_namespace_packages` to get needed subdirectories to silent lots of warnings|[#4457](https://github.com/onnx/onnx/pull/4457)|Merged||
 |Primary ops to function milestone 1|[#4458](https://github.com/onnx/onnx/pull/4458)|Merged||
+|Primary ops to function milestone 2|[#4512](https://github.com/onnx/onnx/pull/4512)|In progress||
 |Use filesystem to load filename to prevent encoding issues on Windows|[#4470](https://github.com/onnx/onnx/pull/4470)|Merged||
 |Remove unnecessary import|[#4484](https://github.com/onnx/onnx/pull/4484)|Merged||
 |Reduces the number of ignored mypy errors|[#4495](https://github.com/onnx/onnx/pull/4495)|Merged||
@@ -102,6 +114,18 @@
 |Move mypy config from `setup.cfg` to `pyproject.toml`|[#4542](https://github.com/onnx/onnx/pull/4542)|Merged||
 |Fix several issues regarding recent mapping update|[#4551](https://github.com/onnx/onnx/pull/4551)|Merged||
 |Fix shebang for `protoc-gen-mypy.sh` script|[#4568](https://github.com/onnx/onnx/pull/4568)|Merged||
+|Catch >2GB models in checker|[#2744](https://github.com/onnx/onnx/pull/2744)|Merged||
+|Relax protobuf version requirement for version below 4|[#4535](https://github.com/onnx/onnx/pull/4535)|Merged||
+|Bump protobuf from 3.16.0 to 3.18.3|[#4544](https://github.com/onnx/onnx/pull/4544)|Merged||
+|Move check_is_experimental_op from check_node to check_graph|[#4556](https://github.com/onnx/onnx/pull/4556)|Merged||
+|Find python libs only if BUILD_ONNX_PYTHON is set to ON|[#4579](https://github.com/onnx/onnx/pull/4579)|Merged||
+|Enable partial data propagation for Resize's sizes|[#4582](https://github.com/onnx/onnx/pull/4582)|Merged||
+|Add type inference for CategoryMapper & TreeEnsembleRegressor/Classifier|[#4600](https://github.com/onnx/onnx/pull/4600)|Merged||
+|Check the rest of actual input/output type if Variadic|[#4622](https://github.com/onnx/onnx/pull/4622)|Merged||
+|Add 32 and 64 bit unsigned integers as tensor types in IR|[#4634](https://github.com/onnx/onnx/pull/4634)|Merged||
+|Upgrade pybind11 to 2.9.2 to improve Python 3.11 support|[#4635](https://github.com/onnx/onnx/pull/4635)|Merged||
+|Output missing last new line from coverage reporter|[#4636](https://github.com/onnx/onnx/pull/4636)|Merged||
+|provide macos universal2 wheel|[#4642](https://github.com/onnx/onnx/pull/4642)|Merged||
 
 ### CI improvements
 | Description | PR | Status | Notes |      
@@ -126,6 +150,18 @@
 |Install specified mypy version first in Python Lint CI to make mypy version consistent|[#4498](https://github.com/onnx/onnx/pull/4498)|Merged||
 |Validate the generated number of `input.pb` and `output.pb` and new node files in CIs|[#4514](https://github.com/onnx/onnx/pull/4514)|Merged||
 |Use GitHub code scanning before retiring deprecated LGTM.com|[#4524](https://github.com/onnx/onnx/pull/4524)|Merged||
+|Add flake8-bugbear in checks|[#4557](https://github.com/onnx/onnx/pull/4557)|Merged||
+|Editable_mode=False for now to enable pip install -e . with latest setuptools|[#4558](https://github.com/onnx/onnx/pull/4558)|Merged||
+|Build onnx in page creating CI|[#4570](https://github.com/onnx/onnx/pull/4570)|Merged||
+|Implement type and shape inference for ArrayFeatureExtractor|[#4572](https://github.com/onnx/onnx/pull/4572)|Merged||
+|Manually catch build succeeded for page creating CI|[#4576](https://github.com/onnx/onnx/pull/4576)|Merged||
+|Only manually trigger page deployment and remove duplicate style check in Linux-CI|[#4597](https://github.com/onnx/onnx/pull/4597)|Merged||
+|Fix LayerNormalization equation|[#4607](https://github.com/onnx/onnx/pull/4607)|Merged||
+|Upgrade to newer Protobuf 3.20.2|[#4629](https://github.com/onnx/onnx/pull/4629)|In progress||
+|revert AttributeHasValue|[#4630](https://github.com/onnx/onnx/pull/4630)|In progress||
+|Use Python 3.10 in CI job CodeQL|[#4633](https://github.com/onnx/onnx/pull/4633)|In progress||
+|Fix enforce-style CI error: solve empty-body issue raised by mypy 0.990|[#4643](https://github.com/onnx/onnx/pull/4643)|In progress||
+|Fix _parse_repo_info|[#4648](https://github.com/onnx/onnx/pull/4648)|In progress||
 
 ### Documentation updates
 | Description | PR | Status | Notes |      
@@ -145,6 +181,16 @@
 |Create feature request form|[#4479](https://github.com/onnx/onnx/pull/4479)|Merged||
 |Add `vcpkg` instruct step|[#4531](https://github.com/onnx/onnx/pull/4531)|Merged||
 |Fix documentation generation|[#4564](https://github.com/onnx/onnx/pull/4564)|Merged||
+|Format Python code in documents with black|[#4530](https://github.com/onnx/onnx/pull/4530)|Merged||
+|Updating based on steering committee discussion on 2022-09-14|[#4573](https://github.com/onnx/onnx/pull/4573)|Merged||
+|Update ScatterND documentation|[#4575](https://github.com/onnx/onnx/pull/4575)|Merged||
+|fix spelling new python doc|[#4598](https://github.com/onnx/onnx/pull/4598)|Merged||
+|Add a link to the HTML documentation from the main page|[#4594](https://github.com/onnx/onnx/pull/4594)|Merged||
+|Clarify reshape behavior|[#4601](https://github.com/onnx/onnx/pull/4601)|Merged||
+|Update maxpool doc|[#4612](https://github.com/onnx/onnx/pull/4612)|Merged||
+|Rename onnx_docs_folder to operator in docs|[#4623](https://github.com/onnx/onnx/pull/4623)|Merged||
+|fix some spelling and grammar issues|[#4637](https://github.com/onnx/onnx/pull/4637)|Merged||
+|Fix link to package documentation on README.md|[#4649](https://github.com/onnx/onnx/pull/4649)|Merged||
 
 ### Security updates
 | Description | PR | Status | Notes |      
@@ -154,7 +200,7 @@
 |Solve vulnerability issue while loading external tensors|[#4508](https://github.com/onnx/onnx/pull/4508)|Merged||
 
 ### Deprecation notice
-* `TENOSR_TYPE_TO_NP_TYPE` has been deprecated [#4270](https://github.com/onnx/onnx/pull/4270)
+* `TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE` has been deprecated [#4270](https://github.com/onnx/onnx/pull/4270)
 * ONNXIFI: ONNX Interface for Framework Integration has been deprecated [#4431](https://github.com/onnx/onnx/pull/4431)
 
 ### Partner validation requests
@@ -169,5 +215,5 @@
 * [onnx-coreml](https://github.com/onnx/onnx-coreml/issues/TBD)
 
 # Contributors
-TODO: Update contributors close to release
+TODO: Update contributors at CF
 Thanks to these individuals for their contributions in this release since last 1.12.0 release. (Contributor list obtained with: https://github.com/onnx/onnx/graphs/contributors?from=2022-02-08&to=2022-05-24&type=c): @jcwchen, @gramalingam, @xuzijian629, @garymm, @diyessi, @liqunfu, @jantonguirao, @daquexian, @fdwr, @andife, @wschin, @xadupre, @xkszltl, @snnn
