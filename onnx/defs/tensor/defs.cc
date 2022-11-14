@@ -2418,7 +2418,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain grid and output types to float tensors.")
+            "Constrain grid types to float tensors.")
         .SetDoc(GridSample_ver16_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
