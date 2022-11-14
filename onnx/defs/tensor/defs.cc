@@ -2343,6 +2343,9 @@ static const char* GridSample_ver16_doc = R"DOC(
 Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
 Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
 the `output` will have shape (N, C, H_out, W_out).
+Input are pixels in 2 dimensional space with each pixel as a square whose value is at the square center.
+Output are samples from the 2 demension space whose values are obtained using a specified intepolation method (the mode), and a padding mode,
+if a sample position is out of the input image.
 For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
 which are used to interpolate the output value `output[N, C, H_out, W_out]`.
 
@@ -2372,7 +2375,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("zeros"))
         .Attr(
             "align_corners",
-            "Geometrically, we consider the pixels of the input as squares rather than points. "
             "If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. "
             "If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.",
             AttributeProto::INT,
