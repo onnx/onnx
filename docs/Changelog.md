@@ -19986,7 +19986,7 @@ This version of the operator has been available since version 16 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input types to all tensor types.</dd>
+<dd>Constrain input `X` and output `Y` types to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
