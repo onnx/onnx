@@ -286,6 +286,8 @@ inline bool hasShape(const TypeProto& type) {
     return hasShape(type.sequence_type().elem_type());
   } else if (type.has_optional_type() && type.optional_type().has_elem_type()) {
     return hasShape(type.optional_type().elem_type());
+  } else if (type.has_map_type() && type.map_type().has_value_type()) {
+    return hasShape(type.map_type().value_type());
   }
   return false;
 }

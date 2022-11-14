@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, Dict, Sequence, Any
+from typing import Dict, Any, Union
 
 import numpy as np
 
@@ -12,10 +12,10 @@ from . import expect
 
 def map_insert_pair_reference_implementation(
     mapping: Dict[Any, Any],
-    key: np.ndarray = None,
+    key: Union[int, str] = None,
     value: Any = None,
 ) -> Dict[Any, Any]: 
-    mapping[key.tolist()[0]] = value
+    mapping[key] = value
     return mapping
     
 
@@ -27,7 +27,7 @@ class MapInsertPair(Base):
             200 : np.array([5, 6, 7, 8]).astype(np.int32)
         }
 
-        key = np.array([300]).astype(np.int32)
+        key = 300
         value = np.array([7, 8, 9, 0]).astype(np.int32)
 
         key_type_proto = onnx.helper.make_tensor_type_proto(
@@ -43,12 +43,13 @@ class MapInsertPair(Base):
         map_proto = onnx.helper.make_map_type_proto(onnx.TensorProto.INT32, seq_type_proto)
 
         node = onnx.helper.make_node(
-            "MapConstruct",
+            "MapInsertPair",
             inputs=["map", "key", "value"],
             outputs=["output_map"],
         )
 
         map_out = map_insert_pair_reference_implementation(mapping, key, value)
+        key = np.array([key]).astype(np.int32)
         
         expect(
             node, 

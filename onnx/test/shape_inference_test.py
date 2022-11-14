@@ -7355,6 +7355,58 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )  # type: ignore
 
+    def test_map_construct_diff_rank(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input1", TensorProto.FLOAT, (2, 3, 4)),
+                ("input2", TensorProto.FLOAT, (2, 3)),
+                ("input3", TensorProto.FLOAT, (2, 3)),
+                ("keys", TensorProto.INT64, (3,)),
+            ],
+            [
+                make_node(
+                    "SequenceConstruct", ["input1", "input2", "input3"], ["values"]
+                ),
+                make_node("MapConstruct", ["keys", "values"], ["map"]),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_sequence_value_info(
+                    "values", TensorProto.FLOAT, None
+                ),
+                make_tensor_sequence_map_value_info("map", TensorProto.INT64, TensorProto.FLOAT, None),
+            ],
+        )  # type: ignore
+
+    def test_map_construct_diff_dim_size(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input1", TensorProto.FLOAT, (2, 3, 4)),
+                ("input2", TensorProto.FLOAT, (2, 3, 5)),
+                ("input3", TensorProto.FLOAT, (2, 3, 6)),
+                ("keys", TensorProto.INT64, (3,)),
+            ],
+            [
+                make_node(
+                    "SequenceConstruct", ["input1", "input2", "input3"], ["values"]
+                ),
+                make_node("MapConstruct", ["keys", "values"], ["map"]),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_sequence_value_info(
+                    "values", TensorProto.FLOAT, (2, 3, None)
+                ),
+                make_tensor_sequence_map_value_info("map", TensorProto.INT64, TensorProto.FLOAT, (2, 3, None)),
+            ],
+        )  # type: ignore
+
     def test_map_construct_no_inputs(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(TensorProto.FLOAT, (2, 3, 4))
         sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
@@ -7472,6 +7524,72 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ),
                 make_tensor_sequence_map_value_info("map", TensorProto.INT64, TensorProto.FLOAT, (2, 3, 4)),
                 make_tensor_sequence_map_value_info("output_map", TensorProto.INT64, TensorProto.FLOAT, (2, 3, 4)),
+            ],
+        )  # type: ignore
+
+    def test_map_insert_pair_diff_rank(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input1", TensorProto.FLOAT, (2, 3, 4)),
+                ("input2", TensorProto.FLOAT, (2, 3, 4)),
+                ("input3", TensorProto.FLOAT, (2, 3, 4)),
+                ("keys", TensorProto.INT64, (3,)),
+                ("key", TensorProto.INT64, (1,)),
+                ("value", TensorProto.FLOAT, (2, 3)),
+            ],
+            [
+                make_node(
+                    "SequenceConstruct", ["input1", "input2", "input3"], ["values"]
+                ),
+                make_node("MapConstruct", ["keys", "values"], ["map"]),
+                make_node("MapInsertPair", ["map", "key", "value"], ["output_map"])
+            ],
+            [],
+            initializer=[
+                make_tensor("keys", TensorProto.INT64, (3,), (10, 20, 30))
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_sequence_value_info(
+                    "values", TensorProto.FLOAT, (2, 3, 4)
+                ),
+                make_tensor_sequence_map_value_info("map", TensorProto.INT64, TensorProto.FLOAT, (2, 3, 4)),
+                make_tensor_sequence_map_value_info("output_map", TensorProto.INT64, TensorProto.FLOAT, None),
+            ],
+        )  # type: ignore
+
+    def test_map_insert_pair_diff_shape(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input1", TensorProto.FLOAT, (2, 3, 4)),
+                ("input2", TensorProto.FLOAT, (2, 3, 4)),
+                ("input3", TensorProto.FLOAT, (2, 3, 4)),
+                ("keys", TensorProto.INT64, (3,)),
+                ("key", TensorProto.INT64, (1,)),
+                ("value", TensorProto.FLOAT, (2, 3, 5)),
+            ],
+            [
+                make_node(
+                    "SequenceConstruct", ["input1", "input2", "input3"], ["values"]
+                ),
+                make_node("MapConstruct", ["keys", "values"], ["map"]),
+                make_node("MapInsertPair", ["map", "key", "value"], ["output_map"])
+            ],
+            [],
+            initializer=[
+                make_tensor("keys", TensorProto.INT64, (3,), (10, 20, 30))
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_sequence_value_info(
+                    "values", TensorProto.FLOAT, (2, 3, 4)
+                ),
+                make_tensor_sequence_map_value_info("map", TensorProto.INT64, TensorProto.FLOAT, (2, 3, 4)),
+                make_tensor_sequence_map_value_info("output_map", TensorProto.INT64, TensorProto.FLOAT, (2, 3, None)),
             ],
         )  # type: ignore
 

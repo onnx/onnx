@@ -51,15 +51,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_map_key_tensor_types(),
-            "Constrain input types to integral and string tensor types.")
+            "Constrain input keys to integral and string tensor types.")
         .TypeConstraint(
             "S",
             OpSchema::all_tensor_sequence_types(),
-            "Constrain input types to any sequence type.")
+            "Constrain input values to a sequence of any tensor type.")
         .TypeConstraint(
             "M",
             all_map_types(),
-            "Constrain output types to any map type.")
+            "Constrain output to a map type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 
           const size_t numInputs = ctx.getNumInputs();
@@ -101,18 +101,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("MapConstruct is expected to have 1 output.");
           }
 
+          if (numInputs == 0) {
+            return;
+          }
           if (!hasNInputShapes(ctx, static_cast<int>(numInputs))) {
             return;
           }
 
-          if (numInputs == 0) {
-            return;
-          }
           auto* output_tensor_type =
               ctx.getOutputType(0)->mutable_map_type()->mutable_value_type()->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
           const auto& input_shape = ctx.getInputType(1)->sequence_type().elem_type().tensor_type().shape();
           *(output_tensor_type->mutable_shape()) = input_shape;
-          UnionShapeInfo(input_shape, *output_tensor_type);
           
         }));
 
@@ -131,11 +130,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "M",
             all_map_types(),
-            "Constrain input types to any map type.")
+            "Constrain input to a map type.")
         .TypeConstraint(
             "T",
             OpSchema::all_map_key_tensor_types(),
-            "Constrain output types to integral and string tensor types.")
+            "Constrain output type to integral and string tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input_type = ctx.getInputType(0);
           if (nullptr == input_type) {
@@ -146,6 +145,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           const size_t numOutputs = ctx.getNumOutputs();
           if (numOutputs != 1) {
             fail_type_inference("MapKeys is expected to have 1 output.");
+          }
+
+          if (!hasNInputShapes(ctx, static_cast<int>(ctx.getNumInputs()))) {
+            return;
           }
 
           const auto& input_shape = ctx.getInputType(0)->map_type().value_type().sequence_type().elem_type().tensor_type().shape();
@@ -169,11 +172,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "M",
             all_map_types(),
-            "Constrain input types to any map type.")
+            "Constrain input to a map type.")
         .TypeConstraint(
             "S",
             OpSchema::all_tensor_sequence_types(),
-            "Constrain output types to any sequence type.")
+            "Constrain output to a sequence of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input_type = ctx.getInputType(0);
           if (nullptr == input_type) {
@@ -207,15 +210,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "t",
             OpSchema::all_map_key_types(),
-            "Constrain input types to integral and string types.")
+            "Constrain key type to integral and string types.")
         .TypeConstraint(
             "V",
            OpSchema::all_tensor_types(),
-            "Constrain input types to any sequence, tensor or map type.")
+            "Constrain value type to any tensor type.")
         .TypeConstraint(
             "M",
             all_map_types(),
-            "Constrain output types to any map type.")
+            "Constrain output type to a map type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
           const auto input1_type = ctx.getInputType(1);
@@ -230,12 +233,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("Input map keys and key to be inserted are expected to have same type. Current types differ.");
           }
 
-          ctx.getOutputType(0)->CopyFrom(*input0_type);
+          auto output_map_type = ctx.getOutputType(0)->mutable_map_type();
+          output_map_type->mutable_value_type()->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(
+            value_type.sequence_type().elem_type().tensor_type().elem_type());
+          output_map_type->set_key_type(key_type);
 
           const size_t numOutputs = ctx.getNumOutputs();
           if (numOutputs != 1) {
             fail_type_inference("MapInsertPair is expected to have 1 output.");
           }
+
+          if (!hasNInputShapes(ctx, static_cast<int>(ctx.getNumInputs()))) {
+            return;
+          }
+
+          auto* output_tensor_type =
+              ctx.getOutputType(0)->mutable_map_type()->mutable_value_type()->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
+          *(output_tensor_type->mutable_shape()) = value_type.sequence_type().elem_type().tensor_type().shape();
+          const auto& input_shape = input2_type->tensor_type().shape();
+          UnionShapeInfo(input_shape, *output_tensor_type);
 
         }));
 
@@ -254,11 +270,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "t",
             OpSchema::all_map_key_types(),
-            "Constrain input types to integral and string tensor types.")
+            "Constrain input type to integral and string tensor types.")
         .TypeConstraint(
             "M",
             all_map_types(),
-            "Constrain output types to any map type.")
+            "Constrain output type to a map type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
           const auto input1_type = ctx.getInputType(1);
@@ -301,11 +317,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "t",
             OpSchema::all_map_key_types(),
-            "Constrain input types to integral and string tensor types.")
+            "Constrain input type to integral and string tensor types.")
         .TypeConstraint(
             "M",
             all_map_types(),
-            "Constrain output types to any map type.")
+            "Constrain output type to a map type.")
         .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
@@ -344,15 +360,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_map_key_types(),
-            "Constrain input types to integral and string tensor types.")
+            "Constrain input type to integral and string tensor types.")
         .TypeConstraint(
             "V",
             OpSchema::all_tensor_types(),
-            "Constrain input types to any sequence, tensor or map type.")
+            "Constrain input type to a tensor type.")
         .TypeConstraint(
             "M",
             all_map_types(),
-            "Constrain output types to any map type.")
+            "Constrain output type to a map type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
           const auto input1_type = ctx.getInputType(1);
@@ -373,10 +389,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("MapGetValue is expected to have 1 output.");
           }
 
+          if (!hasNInputShapes(ctx, static_cast<int>(ctx.getNumInputs()))) {
+            return;
+          }
+
           auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           const auto& input_shape = ctx.getInputType(0)->map_type().value_type().sequence_type().elem_type().tensor_type().shape();
           *(output_tensor_type->mutable_shape()) = input_shape;
-          UnionShapeInfo(input_shape, *output_tensor_type);
 
         }));
 

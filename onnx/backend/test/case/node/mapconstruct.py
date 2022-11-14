@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, Dict, Sequence, Any
+from typing import List, Dict, Any
 
 import numpy as np
 
