@@ -9330,7 +9330,7 @@ Other versions of this operator: <a href="Changelog.md#GreaterOrEqual-12">12</a>
   The tensor `grid` describes normalized positions where the output `Y` is to be computed
   using a specified interpolation method (the mode) and a padding mode (for grid positions falling outside the 2-dimensional image).
 
-  Elements in `grid[N, H_out, W_out]` are size-2 vectors specifying positions in the 2-dimentional space of `X`.
+  Elements in `grid[N, H_out, W_out]` are size-2 vectors specifying positions in the 2-dimensional space of `X`.
   They are used to interpolate output values of `Y[N, C, H_out, W_out]`.
 
   The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
