@@ -167,3 +167,16 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
                 self.axes = None
             elif isinstance(self.axes, list):
                 self.axes = tuple(self.axes)
+
+    def IsAxesEmpty(self, axes):
+        return axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
+
+    def HandleAxes(self, axes):
+        if (axes is not None and len(axes.shape) > 0 and axes.shape[0] > 0) and not isinstance(axes, int):
+            if isinstance(axes, np.ndarray) and len(axes.shape) == 0:
+                axes = int(axes)
+            else:
+                axes = tuple(axes.ravel().tolist()) if len(axes) > 0 else None
+        if isinstance(axes, np.ndarray) and (len(axes.shape) == 0 or 0 in axes.shape):
+            axes = None
+        return axes
