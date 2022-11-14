@@ -2414,7 +2414,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
+        .TypeConstraint("T1", OpSchema::all_tensor_types(), "Constrain input types to all tensor types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
