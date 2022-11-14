@@ -47,7 +47,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '${{ env.py }} -m pip install -q virtualenv && ${{ env.py }} -m venv .env && \
           source .env/bin/activate && \
-          ${{ env.py }} -m pip install -U numpy protobuf==3.16.0 && \
+          ${{ env.py }} -m pip install -q -r requirements-release.txt && \
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 

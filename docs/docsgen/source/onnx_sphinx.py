@@ -899,7 +899,7 @@ def setup(app):
     """
     import sphinx
 
-    app.add_config_value("onnx_doc_folder", "onnx_doc_folder", "env")
+    app.add_config_value("onnx_doc_folder", "operators", "env")
     app.connect("builder-inited", _generate_op_doc)
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
 

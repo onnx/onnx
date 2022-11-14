@@ -191,16 +191,6 @@ class TestAutomaticUpgrade(unittest.TestCase):
     def test_Atan(self) -> None:
         self._test_op_upgrade("Atan", 7)
 
-    def test_AttributeHasValue(self) -> None:
-        self._test_op_upgrade(
-            "AttributeHasValue",
-            18,
-            [],
-            [[]],
-            output_types=[TensorProto.BOOL],
-            attrs={"value_int": 1},
-        )
-
     def test_AveragePool(self) -> None:
         self._test_op_upgrade(
             "AveragePool",
@@ -1773,6 +1763,15 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[2, 3]],
             [TensorProto.INT16, TensorProto.INT16],
             [TensorProto.INT16],
+        )
+
+    def test_GroupNormalization(self) -> None:
+        self._test_op_upgrade(
+            "GroupNormalization",
+            18,
+            [[3, 4, 2, 2], [1], [1]],
+            [[3, 4, 2, 2]],
+            attrs={"epsilon": 1e-5, "num_groups": 2},
         )
 
     def test_ops_tested(self) -> None:

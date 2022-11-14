@@ -166,7 +166,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|
-|<a href="#AttributeHasValue">AttributeHasValue</a>|<a href="Changelog.md#AttributeHasValue-18">18</a>|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|
@@ -176,6 +175,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
+|<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-18">18</a>|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
@@ -1462,174 +1462,6 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh_example")
 x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
 y = np.arctanh(x)
 expect(node, inputs=[x], outputs=[y], name="test_atanh")
-```
-
-</details>
-
-
-### <a name="AttributeHasValue"></a><a name="attributehasvalue">**AttributeHasValue**</a>
-
-  Returns true if at least one of the attribute-value is specified.
-
-#### Version
-
-This version of the operator has been available since version 18 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>value_float</tt> : float</dt>
-<dd>The float attribute.</dd>
-<dt><tt>value_floats</tt> : list of floats</dt>
-<dd>The floats attribute.</dd>
-<dt><tt>value_graph</tt> : graph</dt>
-<dd>The graph attribute.</dd>
-<dt><tt>value_graphs</tt> : list of graphs</dt>
-<dd>The graphs attribute.</dd>
-<dt><tt>value_int</tt> : int</dt>
-<dd>The int attribute.</dd>
-<dt><tt>value_ints</tt> : list of ints</dt>
-<dd>The ints attribute.</dd>
-<dt><tt>value_sparse_tensor</tt> : sparse_tensor</dt>
-<dd>The sparse_tensor attribute.</dd>
-<dt><tt>value_sparse_tensors</tt> : list of sparse_tensors</dt>
-<dd>The sparse_tensors attribute.</dd>
-<dt><tt>value_string</tt> : string</dt>
-<dd>The string attribute.</dd>
-<dt><tt>value_strings</tt> : list of strings</dt>
-<dd>The strings attribute.</dd>
-<dt><tt>value_tensor</tt> : tensor</dt>
-<dd>The tensor attribute.</dd>
-<dt><tt>value_tensors</tt> : list of tensors</dt>
-<dd>The tensors attribute.</dd>
-<dt><tt>value_type_proto</tt> : type_proto</dt>
-<dd>The type_proto attribute.</dd>
-<dt><tt>value_type_protos</tt> : list of type_protos</dt>
-<dd>The type_protos attribute.</dd>
-</dl>
-
-#### Inputs
-
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : B</dt>
-<dd>A scalar boolean tensor. If true, it indicates that an attribute is provided.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Constrain output to a boolean tensor.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>attributehasvalue</summary>
-
-```python
-def test_one_attribute(name: str, **kwargs: Any) -> None:
-    node = onnx.helper.make_node(
-        "AttributeHasValue",
-        inputs=[],
-        outputs=["output"],
-    )
-
-    output = np.array(False)
-    expect(
-        node,
-        inputs=[],
-        outputs=[output],
-        name=f"test_attribute_has_{name}_false",
-    )
-
-    node = onnx.helper.make_node(
-        "AttributeHasValue",
-        inputs=[],
-        outputs=["output"],
-        **kwargs,
-    )
-
-    output = np.array(True)
-    expect(
-        node,
-        inputs=[],
-        outputs=[output],
-        name=f"test_attribute_has_{name}_true",
-    )
-
-value_float = 0.1
-test_one_attribute("value_float", value_float=value_float)
-
-value_int = 1
-test_one_attribute("value_int", value_int=value_int)
-
-value_string = "test"
-test_one_attribute("value_string", value_string=value_string)
-
-tensor_values = np.random.randn(5, 5).astype(np.float32)
-value_tensor = onnx.helper.make_tensor(
-    name="const_tensor",
-    data_type=onnx.TensorProto.FLOAT,
-    dims=tensor_values.shape,
-    vals=tensor_values.flatten().astype(float),
-)
-test_one_attribute("value_tensor", value_tensor=value_tensor)
-
-value_graph = onnx.parser.parse_graph("agraph (X) => (Y) {Y = Identity(X)}")
-test_one_attribute("value_graph", value_graph=value_graph)
-
-value_sparse_tensor = onnx.helper.make_sparse_tensor(
-    onnx.helper.make_tensor(
-        name="",
-        data_type=onnx.TensorProto.FLOAT,
-        dims=(5,),
-        vals=[1.1, 2.2, 3.3, 4.4, 5.5],
-    ),
-    onnx.helper.make_tensor(
-        name="",
-        data_type=onnx.TensorProto.INT64,
-        dims=(5,),
-        vals=[1, 3, 5, 7, 9],
-    ),
-    [10],
-)
-
-test_one_attribute(
-    "value_sparse_tensor", value_sparse_tensor=value_sparse_tensor
-)
-
-value_type_proto = onnx.helper.make_tensor_type_proto(
-    onnx.TensorProto.FLOAT, shape=[5]
-)
-test_one_attribute("value_type_proto", value_type_proto=value_type_proto)
-
-value_floats = [0.0, 1.1]
-test_one_attribute("value_floats", value_floats=value_floats)
-
-value_ints = [0, 1]
-test_one_attribute("value_ints", value_ints=value_ints)
-
-value_strings = ["test strings"]
-test_one_attribute("value_strings", value_strings=value_strings)
-
-value_tensors = [value_tensor, value_tensor]
-test_one_attribute("value_tensors", value_tensors=value_tensors)
-
-value_graphs = [value_graph, value_graph]
-test_one_attribute("value_graphs", value_graphs=value_graphs)
-
-value_sparse_tensors = [value_sparse_tensor, value_sparse_tensor]
-test_one_attribute(
-    "value_sparse_tensors", value_sparse_tensors=value_sparse_tensors
-)
-
-value_type_protos = [value_type_proto, value_type_proto]
-test_one_attribute("value_type_protos", value_type_protos=value_type_protos)
 ```
 
 </details>
@@ -9849,6 +9681,115 @@ expect(
 </details>
 
 
+### <a name="GroupNormalization"></a><a name="groupnormalization">**GroupNormalization**</a>
+
+  A GroupNormalization function. Carries out group normalization as described in
+  the paper https://arxiv.org/abs/1803.08494
+
+  This operator transforms input according to
+  ```
+  y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
+  ```
+  where the mean and variance are computed per instance per group of channels, and
+  `scale` and `bias` should be specified for each group of channels. The number of
+  groups `num_groups` should be divisible by the number of channels so that there are
+  an equal number of channels per group.
+
+  When the number of groups is the same as the number of channels, this operator is
+  equivalent to InstanceNormalization. When there is only one group, this operator
+  is equivalent to LayerNormalization.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>num_groups</tt> : int (required)</dt>
+<dd>The number of groups of channels. It should be a divisor of the number of channels `C`.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, `C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are in the form of `(N x C x D1 x D2 ... Dn)`.</dd>
+<dt><tt>scale</tt> (differentiable) : T</dt>
+<dd>Scale tensor of shape `(num_groups)`.</dd>
+<dt><tt>bias</tt> (differentiable) : T</dt>
+<dd>Bias tensor of shape `(num_groups)`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>The output tensor of the same shape as `X`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>groupnormalization</summary>
+
+```python
+x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+num_groups = 2
+scale = np.random.randn(num_groups).astype(np.float32)
+bias = np.random.randn(num_groups).astype(np.float32)
+y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_example",
+)
+
+x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+num_groups = 2
+scale = np.random.randn(num_groups).astype(np.float32)
+bias = np.random.randn(num_groups).astype(np.float32)
+epsilon = 1e-2
+y = _group_normalization(x, num_groups, scale, bias, epsilon).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    epsilon=epsilon,
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_epsilon",
+)
+```
+
+</details>
+
+
 ### <a name="HammingWindow"></a><a name="hammingwindow">**HammingWindow**</a>
 
   Generates a Hamming window as described in the paper https://ieeexplore.ieee.org/document/1455106.
@@ -11374,7 +11315,7 @@ expect(
         ```
         Mean = ReduceMean<axes=normalized_axes>(X)
         D = Sub(X, Mean)
-        DD = Mul(Diff, Diff)
+        DD = Mul(D, D)
         Var = ReduceMean<axes=normalized_axes>(DD)
         VarEps = Add(Var, epsilon)
         StdDev = Sqrt(VarEps)
@@ -13067,7 +13008,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>storage_order</tt> : int (default is 0)</dt>
-<dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major. This attribute is used only to convert an n-tuple index value into a single integer value for producing the second output. </dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
 </dl>
@@ -20589,6 +20530,10 @@ expect(node, inputs=[x], outputs=[y], name="test_relu")
   dimension will be set explicitly to zero (i.e. not taken from input tensor).
   Shape (second input) could be an empty shape, which means converting to a scalar.
   The input tensor's shape and the output tensor's shape are required to have the same number of elements.
+
+  If the attribute 'allowzero' is set, it is invalid for the specified shape to
+  contain both a zero value and -1, as the value of the dimension corresponding
+  to -1 cannot be determined uniquely.
 
 #### Version
 
