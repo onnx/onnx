@@ -16,7 +16,7 @@ if [ "$(uname -m)" == "aarch64" ]; then
  PYTHON_COMMAND="$PY_VERSION"
 else
  declare -A python_map=( ["3.7"]="cp37-cp37m" ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311")
- declare -A python_include=( ["3.8"]="3.8" ["3.9"]="3.9" ["3.10"]="3.10", ["3.11"]="3.11")
+ declare -A python_include=( ["3.8"]="3.8" ["3.9"]="3.9" ["3.10"]="3.10" ["3.11"]="3.11")
  PY_VER=${python_map[$PY_VERSION]}
  PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir -q"
  PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
