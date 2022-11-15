@@ -22,7 +22,7 @@ def _unsqueeze(a, axis):  # type: ignore
         if len(axis) == 1:
             return np.expand_dims(a, axis=tuple(axis)[0])
         for x in reversed(axis):
-            a = np.expand_dims(a, axis=a)
+            a = np.expand_dims(a, axis=x)
         return a
 
 
