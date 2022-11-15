@@ -37,8 +37,8 @@ class ReduceSumSquare_18(OpRunReduceNumpy):
 if onnx_opset_version() >= 18:
     ReduceSumSquare = ReduceSumSquare_18
 elif onnx_opset_version() >= 13:
-    ReduceSumSquare = ReduceSumSquare_13    # type: ignore
+    ReduceSumSquare = ReduceSumSquare_13  # type: ignore
 elif onnx_opset_version() >= 11:
-    ReduceSumSquare = ReduceSumSquare_11    # type: ignore
+    ReduceSumSquare = ReduceSumSquare_11  # type: ignore
 else:
     ReduceSumSquare = ReduceSumSquare_1  # type: ignore

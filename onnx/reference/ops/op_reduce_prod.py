@@ -37,8 +37,8 @@ class ReduceProd_18(OpRunReduceNumpy):
 if onnx_opset_version() >= 18:
     ReduceProd = ReduceProd_18
 elif onnx_opset_version() >= 13:
-    ReduceProd = ReduceProd_13    # type: ignore
+    ReduceProd = ReduceProd_13  # type: ignore
 elif onnx_opset_version() >= 11:
-    ReduceProd = ReduceProd_11    # type: ignore
+    ReduceProd = ReduceProd_11  # type: ignore
 else:
     ReduceProd = ReduceProd_1  # type: ignore

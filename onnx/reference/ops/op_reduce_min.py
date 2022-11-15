@@ -42,10 +42,10 @@ class ReduceMin_18(OpRunReduceNumpy):
 if onnx_opset_version() >= 18:
     ReduceMin = ReduceMin_18
 elif onnx_opset_version() >= 13:
-    ReduceMin = ReduceMin_13    # type: ignore
+    ReduceMin = ReduceMin_13  # type: ignore
 elif onnx_opset_version() >= 12:
-    ReduceMin = ReduceMin_12    # type: ignore
+    ReduceMin = ReduceMin_12  # type: ignore
 elif onnx_opset_version() >= 11:
-    ReduceMin = ReduceMin_11    # type: ignore
+    ReduceMin = ReduceMin_11  # type: ignore
 else:
     ReduceMin = ReduceMin_1  # type: ignore

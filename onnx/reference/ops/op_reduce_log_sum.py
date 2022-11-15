@@ -45,8 +45,8 @@ class ReduceLogSum_18(OpRunReduceNumpy):
 if onnx_opset_version() >= 18:
     ReduceLogSum = ReduceLogSum_18
 elif onnx_opset_version() >= 13:
-    ReduceLogSum = ReduceLogSum_13    # type: ignore
+    ReduceLogSum = ReduceLogSum_13  # type: ignore
 elif onnx_opset_version() >= 11:
-    ReduceLogSum = ReduceLogSum_11    # type: ignore
+    ReduceLogSum = ReduceLogSum_11  # type: ignore
 else:
     ReduceLogSum = ReduceLogSum_1  # type: ignore

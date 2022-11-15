@@ -45,8 +45,8 @@ class ReduceL2_18(OpRunReduceNumpy):
 if onnx_opset_version() >= 18:
     ReduceL2 = ReduceL2_18
 elif onnx_opset_version() >= 13:
-    ReduceL2 = ReduceL2_13    # type: ignore
+    ReduceL2 = ReduceL2_13  # type: ignore
 elif onnx_opset_version() >= 11:
-    ReduceL2 = ReduceL2_11    # type: ignore
+    ReduceL2 = ReduceL2_11  # type: ignore
 else:
     ReduceL2 = ReduceL2_1  # type: ignore
