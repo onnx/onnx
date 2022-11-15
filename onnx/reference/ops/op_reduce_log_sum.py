@@ -26,7 +26,7 @@ class ReduceLogSum_18(OpRunReduceNumpy):
             return (data,)
 
         axes = self.HandleAxes(axes)
-        keepdims = self.keepdims != 0   # type: ignore
+        keepdims = self.keepdims != 0  # type: ignore
 
         res = np.sum(data, axis=axes, keepdims=keepdims)
         if len(res.shape) > 0:

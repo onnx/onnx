@@ -22,7 +22,7 @@ class ReduceProd_18(OpRunReduceNumpy):
             return (data,)
 
         axes = self.HandleAxes(axes)
-        keepdims = self.keepdims != 0   # type: ignore
+        keepdims = self.keepdims != 0  # type: ignore
         return (np.prod(data, axis=axes, keepdims=keepdims, dtype=data.dtype),)
 
 

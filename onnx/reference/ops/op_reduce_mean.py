@@ -24,7 +24,7 @@ class ReduceMean_18(OpRunReduceNumpy):
             return (data,)
 
         axes = self.HandleAxes(axes)
-        keepdims = self.keepdims != 0   # type: ignore
+        keepdims = self.keepdims != 0  # type: ignore
         try:
             return (
                 np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype),  # type: ignore

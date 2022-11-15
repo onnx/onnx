@@ -98,7 +98,10 @@ class ReduceMean(Base):
         keepdims = 1
 
         node = onnx.helper.make_node(
-            "ReduceMean", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
+            "ReduceMean",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
         )
 
         data = np.array(

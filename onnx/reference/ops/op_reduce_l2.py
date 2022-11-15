@@ -26,7 +26,7 @@ class ReduceL2_18(OpRunReduceNumpy):
             return (data,)
 
         axes = self.HandleAxes(axes)
-        keepdims = self.keepdims != 0   # type: ignore
+        keepdims = self.keepdims != 0  # type: ignore
         return (
             np.sqrt(np.sum(np.square(data), axis=axes, keepdims=keepdims)).astype(
                 dtype=data.dtype

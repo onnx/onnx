@@ -37,7 +37,7 @@ class ReduceLogSumExp_18(OpRunReduceNumpy):
             return (data,)
 
         axes = self.HandleAxes(axes)
-        keepdims = self.keepdims != 0   # type: ignore
+        keepdims = self.keepdims != 0  # type: ignore
 
         return compute_log_sum_exp(data, axes, keepdims)
 

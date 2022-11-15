@@ -172,7 +172,9 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
         return axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
 
     def HandleAxes(self, axes):
-        if (axes is not None and len(axes.shape) > 0 and axes.shape[0] > 0) and not isinstance(axes, int):
+        if (
+            axes is not None and len(axes.shape) > 0 and axes.shape[0] > 0
+        ) and not isinstance(axes, int):
             if isinstance(axes, np.ndarray) and len(axes.shape) == 0:
                 axes = int(axes)
             else:
