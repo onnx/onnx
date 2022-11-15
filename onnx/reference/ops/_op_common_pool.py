@@ -181,7 +181,12 @@ def _pool(
             no_nan = window_vals[np.where(~np.isnan(window_vals))]
             y[shape] = fpool(no_nan)
             if indices:
-                window_vals_min = np.nan_to_num(window_vals, nan=no_nan.min())
+                try:
+                    window_vals_min = np.nan_to_num(window_vals, nan=no_nan.min())
+                except TypeError:
+                    # argument nan was introduced in numpy 1.17
+                    window_vals_min = window_vals.copy()
+                    window_vals_min[np.isnan(window_vals_min)] = no_nan.min()
                 arg = np.argmax(window_vals_min)
                 coordinates = _get_indices(arg, out_shape)
                 delta = shape[2:] - pads[:, 0]  # type: ignore
