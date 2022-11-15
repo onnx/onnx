@@ -89,10 +89,10 @@ def _parse_repo_info(repo: str) -> Tuple[str, str, str]:
     """
     Gets the repo owner, name and ref from a repo specification string.
     """
-    repo_owner = repo.split("/")[0]
-    repo_name = repo.split("/")[1].split(":")[0]
+    repo_owner = repo.split(":")[0].split("/")[0]
+    repo_name = repo.split(":")[0].split("/")[1]
     if ":" in repo:
-        repo_ref = repo.split("/")[1].split(":")[1]
+        repo_ref = repo.split(":")[1]
     else:
         repo_ref = "main"
     return repo_owner, repo_name, repo_ref
