@@ -21,10 +21,11 @@ def compute_log_sum_exp(data, axes, keepdims):
         res = np.squeeze(res, axis=axes)
     return (res,)
 
+
 class ReduceLogSumExp_1_11_13(OpRunReduceNumpy):
     def run(self, data, axes=None, keepdims=None):  # type: ignore
         tax = tuple(axes) if axes else None
-        return compute_log_sum_exp(data, axes, keepdims)
+        return compute_log_sum_exp(data, tax, keepdims)
 
 
 class ReduceLogSumExp_18(OpRunReduceNumpy):
@@ -32,7 +33,7 @@ class ReduceLogSumExp_18(OpRunReduceNumpy):
         return self._run(data, axes)
 
     def _run(self, data, axes):  # type: ignore
-        if self.IsAxesEmpty(axes) and self.noop_with_empty_axes:
+        if self.is_axes_empty(axes) and self.noop_with_empty_axes:
             return (data,)
 
         axes = self.HandleAxes(axes)

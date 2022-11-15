@@ -19,7 +19,7 @@ class ReduceMax_18(OpRunReduceNumpy):
         return self._run(data, axes)
 
     def _run(self, data, axes):  # type: ignore
-        if self.IsAxesEmpty(axes) and self.noop_with_empty_axes != 0:
+        if self.is_axes_empty(axes) and self.noop_with_empty_axes != 0:
             return (data,)
 
         axes = self.HandleAxes(axes)
@@ -31,4 +31,3 @@ if onnx_opset_version() >= 18:
     ReduceMax = ReduceMax_18
 else:
     ReduceMax = ReduceMax_1_11_12  # type: ignore
-

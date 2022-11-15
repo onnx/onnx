@@ -18,7 +18,7 @@ class ReduceSumSquare_18(OpRunReduceNumpy):
         return self._run(data, axes)
 
     def _run(self, data, axes):  # type: ignore
-        if self.IsAxesEmpty(axes) and self.noop_with_empty_axes != 0:
+        if self.is_axes_empty(axes) and self.noop_with_empty_axes != 0:
             return (np.square(data),)
 
         axes = self.HandleAxes(axes)

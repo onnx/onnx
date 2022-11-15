@@ -168,7 +168,7 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
             elif isinstance(self.axes, list):
                 self.axes = tuple(self.axes)
 
-    def IsAxesEmpty(self, axes):
+    def is_axes_empty(self, axes):
         return axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
 
     def HandleAxes(self, axes):

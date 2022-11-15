@@ -7,6 +7,7 @@ from onnx.defs import onnx_opset_version
 
 from ._op import OpRunReduceNumpy
 
+
 class ReduceMean_1_11(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
         if axes is not None:
@@ -19,7 +20,7 @@ class ReduceMean_18(OpRunReduceNumpy):
         return self._run(data, axes)
 
     def _run(self, data, axes):  # type: ignore
-        if self.IsAxesEmpty(axes) and self.noop_with_empty_axes:
+        if self.is_axes_empty(axes) and self.noop_with_empty_axes:
             return (data,)
 
         axes = self.HandleAxes(axes)

@@ -22,8 +22,8 @@ class ReduceLogSum_18(OpRunReduceNumpy):
         return self._run(data, axes)
 
     def _run(self, data, axes):  # type: ignore
-        if self.IsAxesEmpty(axes) and self.noop_with_empty_axes:
-            return (res,)
+        if self.is_axes_empty(axes) and self.noop_with_empty_axes:
+            return (data,)
 
         axes = self.HandleAxes(axes)
         keepdims = self.keepdims != 0

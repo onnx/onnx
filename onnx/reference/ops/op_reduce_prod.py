@@ -12,12 +12,13 @@ class ReduceProd_1_11_13(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
         return (np.prod(data, axis=axes, keepdims=keepdims, dtype=data.dtype),)
 
+
 class ReduceProd_18(OpRunReduceNumpy):
     def run(self, data, axes=None):  # type: ignore
         return self._run(data, axes)
 
     def _run(self, data, axes):  # type: ignore
-        if self.IsAxesEmpty(axes) and self.noop_with_empty_axes:
+        if self.is_axes_empty(axes) and self.noop_with_empty_axes:
             return (data,)
 
         axes = self.HandleAxes(axes)

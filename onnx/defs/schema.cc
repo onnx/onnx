@@ -866,8 +866,7 @@ bool OpSchema::ValidateReferencedOpsInFuncton(
   return has_no_invalid_op;
 }
 
-FunctionProto*
-OpSchema::GetFunctionWithOpsetInternal(int requested_opset_version) {
+FunctionProto* OpSchema::GetFunctionWithOpsetInternal(int requested_opset_version) {
   std::map<int, std::shared_ptr<FunctionProto>>::iterator it =
       opset_version_to_function_body_.upper_bound(requested_opset_version);
   if (opset_version_to_function_body_.empty() || it == opset_version_to_function_body_.begin()) {
