@@ -19,7 +19,6 @@ adding an item in method `setUpClass` and attributes
 """
 
 import os
-import platform
 import pprint
 import unittest
 import warnings
@@ -82,26 +81,6 @@ if version(npver) < version("1.21.5"):
         "test_castlike_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16_expanded",
     }
-    if platform.architecture() == ("32bit", "WindowsPE"):
-        # np.take(..., indices, ...) is casting int64 into int32 and that raises
-        # an exception saying the cast is unsafe.
-        SKIP_TESTS |= {
-            "test__pytorch_converted_Embedding",
-            "test_gather_0",
-            "test_gather_1",
-            "test_gather_2d_indices",
-            "test_gather_elements_0",
-            "test_gather_elements_1",
-            "test_gather_negative_indices",
-            "test_nllloss_NC_expanded",
-            "test_nllloss_NCd1_expanded",
-            "test_nllloss_NCd1_ii_expanded",
-            "test_nllloss_NCd1_weight_expanded",
-            "test_nllloss_NCd1d2_expanded",
-            "test_top_k",
-            "test_top_k_negative_axis",
-            "test_top_k_smallest",
-        }
     MIN_PASSING_TESTS -= len(SKIP_TESTS)
 
 
