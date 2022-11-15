@@ -8,11 +8,22 @@ from onnx.defs import onnx_opset_version
 from ._op import OpRunReduceNumpy
 
 
-class ReduceMax_1_11_12(OpRunReduceNumpy):
+class ReduceMax_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
         axes = tuple(axes) if axes else None
         return (np.maximum.reduce(data, axis=axes, keepdims=keepdims == 1),)
 
+
+class ReduceMax_11(ReduceMax_1):
+    pass
+
+
+class ReduceMax_12(ReduceMax_1):
+    pass
+
+
+class ReduceMax_13(ReduceMax_1):
+    pass
 
 class ReduceMax_18(OpRunReduceNumpy):
     def run(self, data, axes=None):  # type: ignore
@@ -29,5 +40,11 @@ class ReduceMax_18(OpRunReduceNumpy):
 
 if onnx_opset_version() >= 18:
     ReduceMax = ReduceMax_18
+elif onnx_opset_version() >= 13:
+    ReduceMax = ReduceMax_13    # type: ignore
+elif onnx_opset_version() >= 12:
+    ReduceMax = ReduceMax_12    # type: ignore
+elif onnx_opset_version() >= 11:
+    ReduceMax = ReduceMax_11    # type: ignore
 else:
-    ReduceMax = ReduceMax_1_11_12  # type: ignore
+    ReduceMax = ReduceMax_1  # type: ignore

@@ -8,11 +8,19 @@ from onnx.defs import onnx_opset_version
 from ._op import OpRunReduceNumpy
 
 
-class ReduceL1_1_11_13(OpRunReduceNumpy):
+class ReduceL1_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
         return (
             np.sum(np.abs(data), axis=axes, keepdims=keepdims).astype(dtype=data.dtype),
         )
+
+
+class ReduceL1_11(ReduceL1_1):
+    pass
+
+
+class ReduceL1_13(ReduceL1_1):
+    pass
 
 
 class ReduceL1_18(OpRunReduceNumpy):
@@ -32,5 +40,9 @@ class ReduceL1_18(OpRunReduceNumpy):
 
 if onnx_opset_version() >= 18:
     ReduceL1 = ReduceL1_18
+elif onnx_opset_version() >= 13:
+    ReduceL1 = ReduceL1_13    # type: ignore
+elif onnx_opset_version() >= 11:
+    ReduceL1 = ReduceL1_11    # type: ignore
 else:
-    ReduceL1 = ReduceL1_1_11_13  # type: ignore
+    ReduceL1 = ReduceL1_1  # type: ignore

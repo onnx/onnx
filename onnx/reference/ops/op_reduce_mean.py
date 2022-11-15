@@ -8,11 +8,19 @@ from onnx.defs import onnx_opset_version
 from ._op import OpRunReduceNumpy
 
 
-class ReduceMean_1_11(OpRunReduceNumpy):
+class ReduceMean_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
         if axes is not None:
             axes = tuple(axes)
         return (np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype),)
+
+
+class ReduceMean_11(ReduceMean_1):
+    pass
+
+
+class ReduceMean_13(ReduceMean_1):
+    pass
 
 
 class ReduceMean_18(OpRunReduceNumpy):
@@ -37,5 +45,9 @@ class ReduceMean_18(OpRunReduceNumpy):
 
 if onnx_opset_version() >= 18:
     ReduceMean = ReduceMean_18
+elif onnx_opset_version() >= 13:
+    ReduceMean = ReduceMean_13  # type: ignore
+elif onnx_opset_version() >= 11:
+    ReduceMean = ReduceMean_11  # type: ignore
 else:
-    ReduceMean = ReduceMean_1_11  # type: ignore
+    ReduceMean = ReduceMean_1  # type: ignore

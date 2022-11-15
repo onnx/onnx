@@ -8,13 +8,21 @@ from onnx.defs import onnx_opset_version
 from ._op import OpRunReduceNumpy
 
 
-class ReduceLogSum_1_11_13(OpRunReduceNumpy):
+class ReduceLogSum_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=True):  # type: ignore
         tax = tuple(axes) if axes else None
         res = np.sum(data, axis=tax, keepdims=keepdims)
         if len(res.shape) > 0:
             return (np.log(res, out=res),)
         return (np.log(res),)
+
+
+class ReduceLogSum_11(ReduceLogSum_1):
+    pass
+
+
+class ReduceLogSum_13(ReduceLogSum_1):
+    pass
 
 
 class ReduceLogSum_18(OpRunReduceNumpy):
@@ -36,5 +44,9 @@ class ReduceLogSum_18(OpRunReduceNumpy):
 
 if onnx_opset_version() >= 18:
     ReduceLogSum = ReduceLogSum_18
+elif onnx_opset_version() >= 13:
+    ReduceLogSum = ReduceLogSum_13    # type: ignore
+elif onnx_opset_version() >= 11:
+    ReduceLogSum = ReduceLogSum_11    # type: ignore
 else:
-    ReduceLogSum = ReduceLogSum_1_11_13  # type: ignore
+    ReduceLogSum = ReduceLogSum_1  # type: ignore
