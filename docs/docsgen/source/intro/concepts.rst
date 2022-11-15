@@ -51,7 +51,7 @@ It is just a kind of pseudo-code to illustrate the model.
     Output: float[M, N] y
 
     r = onnx.MatMul(a, x)
-    y = onnx.Add(ax, c)
+    y = onnx.Add(r, c)
 
 This code implements a function `f(x, a, c) -> y = a @ x + c`.
 And *x*, *a*, *c* are the **inputs**, *y* is the **output**.
