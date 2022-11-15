@@ -19,11 +19,11 @@ class ReduceMin_18(OpRunReduceNumpy):
         return self._run(data, axes)
 
     def _run(self, data, axes):  # type: ignore
-        if self.is_axes_empty(axes) and self.noop_with_empty_axes != 0:
+        if self.is_axes_empty(axes) and self.noop_with_empty_axes != 0:     # type: ignore
             return (data,)
 
         axes = self.HandleAxes(axes)
-        keepdims = self.keepdims != 0
+        keepdims = self.keepdims != 0   # type: ignore
         return (np.minimum.reduce(data, axis=axes, keepdims=keepdims),)
 
 
