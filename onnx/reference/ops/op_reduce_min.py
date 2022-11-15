@@ -3,9 +3,9 @@
 
 import numpy as np
 
-from ._op import OpRunReduceNumpy
-
 from onnx.defs import onnx_opset_version
+
+from ._op import OpRunReduceNumpy
 
 
 class ReduceMin_1_11_12(OpRunReduceNumpy):
