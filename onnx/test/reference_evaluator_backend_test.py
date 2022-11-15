@@ -23,7 +23,13 @@ import pprint
 import unittest
 import warnings
 
+try:
+    from packaging.version import parse as version
+except ImportError:
+    from distutils.version import StrictVersion as version
+
 import numpy as np
+from numpy import __version__ as npver
 from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
@@ -45,6 +51,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
+
 MIN_PASSING_TESTS = 1160
 
 # Update this list if one new operator does not have any implementation.
@@ -61,6 +68,14 @@ SKIP_TESTS = {
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
 }
+
+if version(npver) < version("1.21.5"):
+    SKIP_TESTS |= {
+        "test_cast_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16_expanded",
+    }
+    MIN_PASSING_TESTS -= len(SKIP_TESTS)
 
 
 def assert_allclose_string(expected, value):
@@ -809,6 +824,15 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv3d_dilated_strided": 1e-4,
             "test__pytorch_converted_Conv3d_groups": 1e-4,
         }
+
+        if version(npver) < version("1.21.5"):
+            cls.atol.update(
+                {
+                    "test_dft": 1e-11,
+                    "test_dft_axis": 1e-11,
+                    "test_dft_inverse": 1e-11,
+                }
+            )
 
         cls.skip_test = SKIP_TESTS
         if all_tests:
