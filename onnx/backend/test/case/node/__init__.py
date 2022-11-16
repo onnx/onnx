@@ -152,8 +152,7 @@ def function_testcase_helper(
         function_proto.ParseFromString(function_proto_str)
         function_protos.append(function_proto)
 
-    node_lists = []
-    function_proto_opset_imports = []
+    expanded_tests = []
     for function_proto in function_protos:
         for attr in schema.attributes:
             if attr in [a.name for a in node.attribute]:
@@ -163,10 +162,9 @@ def function_testcase_helper(
 
         # function_proto.attributes
         node_list = function_expand_helper(node, function_proto, op_prefix)
-        node_lists.append(node_list)
-        function_proto_opset_imports.append(function_proto.opset_import)
+        expanded_tests.append((node_list, function_proto.opset_import))
 
-    return node_lists, function_proto_opset_imports, schema.since_version
+    return expanded_tests, schema.since_version
 
 
 def _extract_value_info(
@@ -310,13 +308,10 @@ def expect(
 
     merged_types = merge(list(node.input), inputs_vi)
     (
-        expanded_function_node_list,
-        func_opset_import_list,
+        expanded_tests,
         since_version,
     ) = function_testcase_helper(node, merged_types, name)
-    for expanded_function_nodes, func_opset_import in zip(
-        expanded_function_node_list, func_opset_import_list
-    ):
+    for expanded_function_nodes, func_opset_import in expanded_tests:
         kwargs["producer_name"] = "backend-test"
 
         # TODO: if kwargs["opset_imports"] already exists, only generate test case for the opset version.

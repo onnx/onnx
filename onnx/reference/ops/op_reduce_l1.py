@@ -24,15 +24,17 @@ class ReduceL1_13(ReduceL1_1):
 
 
 class ReduceL1_18(OpRunReduceNumpy):
-    def run(self, data, axes=None):  # type: ignore
-        return self._run(data, axes)
+    def run(self, data, axes=None, keepdims=None, noop_with_empty_axes=None):  # type: ignore
+        keepdims = keepdims or self.keepdims  # type: ignore
+        noop_with_empty_axes = noop_with_empty_axes or self.noop_with_empty_axes
+        return self._run(data, axes, keepdims, noop_with_empty_axes)
 
-    def _run(self, data, axes):  # type: ignore
-        if self.is_axes_empty(axes) and self.noop_with_empty_axes:  # type: ignore
+    def _run(self, data, axes, keepdims=1, noop_with_empty_axes=0):  # type: ignore
+        if self.is_axes_empty(axes) and noop_with_empty_axes:  # type: ignore
             return (data,)
 
-        axes = self.HandleAxes(axes)
-        keepdims = self.keepdims != 0  # type: ignore
+        axes = self.handle_axes(axes)
+        keepdims = keepdims != 0  # type: ignore
         return (
             np.sum(np.abs(data), axis=axes, keepdims=keepdims).astype(dtype=data.dtype),
         )

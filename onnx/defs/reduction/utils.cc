@@ -78,7 +78,6 @@ False instead of True.)DOC";
     if (func_body) {
       schema.FunctionBody(func_body);
     } else if (function_builder) {
-      std::cout << "schema.SetContextDependentFunctionBodyBuilder(function_builder);" << std::endl;
       schema.SetContextDependentFunctionBodyBuilder(function_builder);
     }
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -98,7 +97,7 @@ False instead of True.)DOC";
       }
       std::vector<int64_t> axes;
       size_t num_inputs = ctx.getNumInputs();
-      if ((num_inputs == 2) && ctx.getInputType(1)) { // axes is input
+      if (ctx.hasInput(1)) { // axes is input
         if (ctx.getAttribute("axes")) {
           fail_shape_inference("axes as an input and attribute cannot be specified at the same time.");
         }
