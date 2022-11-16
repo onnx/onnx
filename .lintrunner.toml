@@ -256,30 +256,30 @@ command = [
 ]
 is_formatter = true
 
-# TODO: Enable pylint
-# [[linter]]
-# code = 'PYLINT'
-# include_patterns = [
-#     '**/*.py',
-# ]
-# exclude_patterns = [
-# ]
-# command = [
-#     'python3',
-#     '-m',
-#     'lintrunner_adapters',
-#     'run',
-#     'pylint_linter',
-#     '--rcfile=pyproject.toml',
-#     '--',
-#     '@{{PATHSFILE}}'
-# ]
-# init_command = [
-#     'python3',
-#     '-m',
-#     'lintrunner_adapters',
-#     'run',
-#     'pip_init',
-#     '--dry-run={{DRYRUN}}',
-#     'pylint==2.15.5',
-# ]
+
+[[linter]]
+code = 'PYLINT'
+include_patterns = [
+    # TODO: Opt in to pylint
+]
+exclude_patterns = [
+]
+command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'pylint_linter',
+    '--rcfile=pyproject.toml',
+    '--',
+    '@{{PATHSFILE}}'
+]
+init_command = [
+    'python3',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'pip_init',
+    '--dry-run={{DRYRUN}}',
+    'pylint==2.15.5',
+]
