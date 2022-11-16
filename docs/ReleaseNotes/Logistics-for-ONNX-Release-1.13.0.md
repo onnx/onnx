@@ -157,11 +157,11 @@ ONNX PR: https://github.com/onnx/onnx/pull/4490 [IN PROGRESS]
 |Manually catch build succeeded for page creating CI|[#4576](https://github.com/onnx/onnx/pull/4576)|Merged||
 |Only manually trigger page deployment and remove duplicate style check in Linux-CI|[#4597](https://github.com/onnx/onnx/pull/4597)|Merged||
 |Fix LayerNormalization equation|[#4607](https://github.com/onnx/onnx/pull/4607)|Merged||
-|Upgrade to newer Protobuf 3.20.2|[#4629](https://github.com/onnx/onnx/pull/4629)|In progress||
-|revert AttributeHasValue|[#4630](https://github.com/onnx/onnx/pull/4630)|In progress||
-|Use Python 3.10 in CI job CodeQL|[#4633](https://github.com/onnx/onnx/pull/4633)|In progress||
-|Fix enforce-style CI error: solve empty-body issue raised by mypy 0.990|[#4643](https://github.com/onnx/onnx/pull/4643)|In progress||
-|Fix _parse_repo_info|[#4648](https://github.com/onnx/onnx/pull/4648)|In progress||
+|Upgrade to newer Protobuf 3.20.2|[#4629](https://github.com/onnx/onnx/pull/4629)|Merged||
+|revert AttributeHasValue|[#4630](https://github.com/onnx/onnx/pull/4630)|Merged||
+|Use Python 3.10 in CI job CodeQL|[#4633](https://github.com/onnx/onnx/pull/4633)|Merged||
+|Fix enforce-style CI error: solve empty-body issue raised by mypy 0.990|[#4643](https://github.com/onnx/onnx/pull/4643)|Merged||
+|Fix _parse_repo_info|[#4648](https://github.com/onnx/onnx/pull/4648)|Merged||
 
 ### Documentation updates
 | Description | PR | Status | Notes |      
