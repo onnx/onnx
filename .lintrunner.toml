@@ -38,6 +38,7 @@ include_patterns = [
     'onnx/**/*.py',
 ]
 exclude_patterns = [
+    '**/*.pyi',
     'onnx/backend/test/**',
     'onnx/reference/ops/**',  # FIXME: Enable this once typing is fixed
     'onnx/test/parser_test.py',
