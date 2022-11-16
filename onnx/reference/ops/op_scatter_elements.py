@@ -111,14 +111,9 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
 
     scattered = np.copy(data)
     if reduction == "min":
-        print()
-        print("I", idx, updates_idx)
-        print(scattered[tuple(idx)], updates[tuple(updates_idx)])
-        print("*", np.minimum(scattered[tuple(idx)], updates[tuple(updates_idx)]))
         scattered[tuple(idx)] = np.minimum(
             scattered[tuple(idx)], updates[tuple(updates_idx)]
         )
-        print("F", scattered)
     elif reduction == "max":
         scattered[tuple(idx)] = np.maximum(
             scattered[tuple(idx)], updates[tuple(updates_idx)]
