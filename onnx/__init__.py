@@ -201,13 +201,18 @@ def save_model(
     Arguments:
         proto: should be a in-memory ModelProto
         f: can be a file-like object (has "write" function) or a string containing a file name format for future use
-        all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
+        save_as_external_data: If true, save tensors to external file(s).
+        all_tensors_to_one_file: Effective only if save_as_external_data is True.
+            If true, save all tensors to one external file specified by location.
             If false, save each tensor to a file named with the tensor name.
-        location: specify the external file that all tensors to save to.
+        location: Effective only if save_as_external_data is true.
+            Specify the external file that all tensors to save to.
             If not specified, will use the model name.
-        size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold it will be converted
+        size_threshold: Effective only if save_as_external_data is True.
+            Threshold for size of data. Only when tensor's data is >= the size_threshold it will be converted
             to external data. To convert every tensor with raw data to external data set size_threshold=0.
-        convert_attribute: If true, convert all tensors to external data
+        convert_attribute: Effective only if save_as_external_data is True.
+            If true, convert all tensors to external data
             If false, convert only non-attribute tensors to external data
     """
     if isinstance(proto, bytes):
