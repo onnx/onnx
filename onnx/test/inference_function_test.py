@@ -24,8 +24,6 @@ RESHAPE_SCHEMA = max(
     key=lambda s: s.since_version,
 )
 
-_tensor = onnx.helper.make_tensor_type_proto
-
 
 def _to_tensor_types(
     tensor_types: Dict[str, Tuple[int, Tuple[Union[int, str, None], ...]]]
@@ -42,6 +40,9 @@ def _run_case(
     output_names: List[str],
     input_types: Dict[str, onnx.TypeProto],
     input_data: Optional[Dict[str, np.ndarray]] = None,
+    input_sparse_data: Optional[Dict[str, np.ndarray]] = None,
+    opset_imports: Optional[List[Dict[str, int]]] = None,
+    ir_version: int = onnx.IR_VERSION,
 ) -> Dict[str, onnx.TypeProto]:
     if input_data is None:
         input_data = {}
@@ -52,6 +53,9 @@ def _run_case(
         ),
         input_types,
         {key: onnx.numpy_helper.from_array(arr) for key, arr in input_data.items()},
+        input_sparse_data,
+        opset_imports,
+        ir_version,
     )
 
 
