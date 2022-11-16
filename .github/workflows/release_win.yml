@@ -16,8 +16,9 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        # TODO: Freeze as 3.10.5 for now; Follow-up this issue by https://github.com/actions/setup-python/issues/481
-        python-version: ['3.7', '3.8', '3.9', '3.10.5']
+        # TODO: Freeze as 3.10.5 for now and use the latest 3.10 after future numpy upgrade in ONNX;
+        # related issue: https://github.com/actions/setup-python/issues/481
+        python-version: ['3.7', '3.8', '3.9', '3.10.5', '3.11']
         architecture: ['x64', 'x86']
     steps:        
     - name: Checkout ONNX
@@ -93,12 +94,16 @@ jobs:
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
-
+    # TODO: Remove one if condition after using consistent NumPy version for all Python versions
     - name: Verify ONNX with the minimum supported numpy  (from requirements.txt)
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+        if ('${{ matrix.python-version }}' -eq '3.11') {
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+        } else {
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+        }
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
@@ -119,6 +124,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != '3.11'
       run: |
         python -m pip install -q onnxruntime
         python onnx\onnx\test\test_with_ort.py
