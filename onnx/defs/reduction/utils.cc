@@ -96,7 +96,6 @@ False instead of True.)DOC";
         noop_with_empty_axes = noop_attr_proto->i();
       }
       std::vector<int64_t> axes;
-      size_t num_inputs = ctx.getNumInputs();
       if (ctx.hasInput(1)) { // axes is input
         if (ctx.getAttribute("axes")) {
           fail_shape_inference("axes as an input and attribute cannot be specified at the same time.");
