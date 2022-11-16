@@ -118,7 +118,7 @@ def _linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
     footprint = 2 - 2 * start
     args = (np.arange(start, start + footprint) - ratio) * scale
     coeffs = np.clip(1 - np.abs(args), 0, 1)
-    return np.array(coeffs) / coeffs  # type: ignore[no-any-return]
+    return np.array(coeffs) / np.sum(coeffs)
 
 
 def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
