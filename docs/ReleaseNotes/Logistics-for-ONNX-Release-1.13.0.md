@@ -32,7 +32,6 @@
 |Split|Add support for uneven tensor splitting and new `num_outputs` attribute||[#4481](https://github.com/onnx/onnx/pull/4481)|
 |BitwiseNot|New operator||[#4497](https://github.com/onnx/onnx/pull/4497)|
 |BitwiseAnd, BitwiseOr and BitwiseXor|New operators||[#4496](https://github.com/onnx/onnx/pull/4496)|
-|AttributeHasValue|New operator||[#4525](https://github.com/onnx/onnx/pull/4525)|
 |LpPool IN PROGRESS|New attributes: `ceil_mode` and `dilations`||[#4534](https://github.com/onnx/onnx/pull/4534)|
 
 ### Function updates in ai.onnx opset 18
