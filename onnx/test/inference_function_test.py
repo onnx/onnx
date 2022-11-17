@@ -191,6 +191,8 @@ class TestInferenceFunctionCall(unittest.TestCase):
                     "scan_input": (TensorProto.FLOAT, (seq_len, input_size)),
                 }
             ),
+            subgraph_opset_imports=[make_opsetid("", 9)],
+            subgraph_ir_version=4,
         ) == _to_tensor_types(
             {
                 "loop_state_final": (onnx.TensorProto.FLOAT, (loop_state_size,)),
