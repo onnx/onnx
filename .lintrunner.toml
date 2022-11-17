@@ -256,13 +256,14 @@ command = [
 ]
 is_formatter = true
 
-
 [[linter]]
 code = 'PYLINT'
 include_patterns = [
-    # TODO: Opt in to pylint
+    # TODO: Opt in to pylint by adding paths here
+    'onnx/reference/**/*.py',
 ]
 exclude_patterns = [
+    'onnx/reference/reference_evaluator.py',
 ]
 command = [
     'python3',
