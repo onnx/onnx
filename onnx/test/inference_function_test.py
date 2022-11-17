@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from onnx import IR_VERSION, GraphProto, OperatorSetIdProto, TensorProto, TypeProto
+from onnx import TensorProto, TypeProto
 from onnx.checker import ValidationError
 from onnx.defs import OpSchema, get_all_schemas_with_history, get_schema
 from onnx.helper import (
