@@ -88,7 +88,7 @@ def infer_node_outputs(
     input_types: Dict[str, onnx.TypeProto],
     input_data: Optional[Dict[str, onnx.TensorProto]] = None,
     input_sparse_data: Optional[Dict[str, onnx.SparseTensorProto]] = None,
-    graph_opset_imports: Optional[List[Dict[str, int]]] = None,
+    graph_opset_imports: Optional[List[onnx.OperatorSetIdProto]] = None,
     graph_ir_version: int = onnx.IR_VERSION,
 ) -> Dict[str, onnx.TypeProto]:
     if not schema.has_type_and_shape_inference_function:  # type: ignore

@@ -41,7 +41,7 @@ def _run_case(
     input_types: Dict[str, onnx.TypeProto],
     input_data: Optional[Dict[str, np.ndarray]] = None,
     input_sparse_data: Optional[Dict[str, np.ndarray]] = None,
-    opset_imports: Optional[List[Dict[str, int]]] = None,
+    opset_imports: Optional[List[onnx.OperatorSetIdProto]] = None,
     ir_version: int = onnx.IR_VERSION,
 ) -> Dict[str, onnx.TypeProto]:
     if input_data is None:
