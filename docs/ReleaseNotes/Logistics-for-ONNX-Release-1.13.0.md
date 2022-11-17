@@ -18,28 +18,33 @@
 
 ## Changelog
 
-### Operator updates in ai.onnx opset 18
-#### all new and updated operators are to be validated by TBD
+### New operators introduced in ai.onnx opset 18
+#### all new operators are to be validated by TBD
 | Op Name | Description |Validation status | ONNX PR 
 |---------|:-------------------------:|:------------:|:------------:|
-|Col2Im|New operator, rearranges input tensor into blocks||[#3948](https://github.com/onnx/onnx/pull/3948)|
+|Col2Im|Rearranges input tensor into blocks||[#3948](https://github.com/onnx/onnx/pull/3948)|
+|BitwiseNot|Bitwise operations set||[#4497](https://github.com/onnx/onnx/pull/4497)|
+|BitwiseAnd, BitwiseOr and BitwiseXor|Bitwise operations set||[#4496](https://github.com/onnx/onnx/pull/4496)|
+
+### Operator updates in ai.onnx opset 18
+#### all updated operators are to be validated by TBD
+| Op Name | Description |Validation status | ONNX PR 
+|---------|:-------------------------:|:------------:|:------------:|
 |Resize|New attributes: `antialias`, `axes` and `keep_aspect_ratio_policy`||[#4126](https://github.com/onnx/onnx/pull/4126)|
 |Resize|Allow for both `scales` and `sizes` to be provided when one of them is an empty constant||[#4388](https://github.com/onnx/onnx/pull/4388)|
 |Pad|New attribute `axes`||[#4190](https://github.com/onnx/onnx/pull/4190)|
-|OptionalHasElement|New operator||[#4326](https://github.com/onnx/onnx/pull/4326)|
+|OptionalHasElement|New input types handling||[#4326](https://github.com/onnx/onnx/pull/4326)|
 |OptionalHasElement and OptionalGetElement|Accept tensor and sequence types||[#4421](https://github.com/onnx/onnx/pull/4421)|
 |ScatterElement and ScatterND|Add `max` and `min` as supported reduction attributes||[#4411](https://github.com/onnx/onnx/pull/4411)|
 |Split|Add support for uneven tensor splitting and new `num_outputs` attribute||[#4481](https://github.com/onnx/onnx/pull/4481)|
-|BitwiseNot|New operator||[#4497](https://github.com/onnx/onnx/pull/4497)|
-|BitwiseAnd, BitwiseOr and BitwiseXor|New operators||[#4496](https://github.com/onnx/onnx/pull/4496)|
-|LpPool IN PROGRESS|New attributes: `ceil_mode` and `dilations`||[#4534](https://github.com/onnx/onnx/pull/4534)|
+|LpPool IN REVIEW|New attributes: `ceil_mode` and `dilations`||[#4534](https://github.com/onnx/onnx/pull/4534)|
 
 ### Function updates in ai.onnx opset 18
 #### all new and updated operators are to be validated by TBD
 | Function Name | Description |Validation status | ONNX PR 
 |---------|:-------------------------:|:------------:|:------------:|
 |CenterCropPad|New function, center crops or pads an input to given dimensions||[#4190](https://github.com/onnx/onnx/pull/4190)|
-|mish|New function, used for example in YoloV4||[#4350](https://github.com/onnx/onnx/pull/4350)|
+|mish|New activation function||[#4350](https://github.com/onnx/onnx/pull/4350)|
 |GroupNormalization|New normalization function||[#4621](https://github.com/onnx/onnx/pull/4621)|
 
 ### Reference Python runtime
@@ -48,7 +53,7 @@ ONNX PR: https://github.com/onnx/onnx/pull/4483
 
 ### Python 3.11 support
 ONNX now supports Python 3.11.
-ONNX PR: https://github.com/onnx/onnx/pull/4490 [IN PROGRESS]
+ONNX PR: https://github.com/onnx/onnx/pull/4490
 
 ### Bugfixes and infrastructure improvements
 | Description | PR | Status | Notes |      
@@ -125,6 +130,7 @@ ONNX PR: https://github.com/onnx/onnx/pull/4490 [IN PROGRESS]
 |Upgrade pybind11 to 2.9.2 to improve Python 3.11 support|[#4635](https://github.com/onnx/onnx/pull/4635)|Merged||
 |Output missing last new line from coverage reporter|[#4636](https://github.com/onnx/onnx/pull/4636)|Merged||
 |provide macos universal2 wheel|[#4642](https://github.com/onnx/onnx/pull/4642)|Merged||
+|Fix backend test for ReferenceEvaluator with numpy 1.16.6|[#4658](https://github.com/onnx/onnx/pull/4658)|Merged||
 
 ### CI improvements
 | Description | PR | Status | Notes |      
@@ -161,6 +167,8 @@ ONNX PR: https://github.com/onnx/onnx/pull/4490 [IN PROGRESS]
 |Use Python 3.10 in CI job CodeQL|[#4633](https://github.com/onnx/onnx/pull/4633)|Merged||
 |Fix enforce-style CI error: solve empty-body issue raised by mypy 0.990|[#4643](https://github.com/onnx/onnx/pull/4643)|Merged||
 |Fix _parse_repo_info|[#4648](https://github.com/onnx/onnx/pull/4648)|Merged||
+|Fix weekly mac release CI: only submit source distribution in one CI|[#4656](https://github.com/onnx/onnx/pull/4656)|Merged||
+|Correct types in GridSample def.cc|[#4655](https://github.com/onnx/onnx/pull/4655)|Merged||
 
 ### Documentation updates
 | Description | PR | Status | Notes |      
@@ -190,6 +198,8 @@ ONNX PR: https://github.com/onnx/onnx/pull/4490 [IN PROGRESS]
 |Rename onnx_docs_folder to operator in docs|[#4623](https://github.com/onnx/onnx/pull/4623)|Merged||
 |fix some spelling and grammar issues|[#4637](https://github.com/onnx/onnx/pull/4637)|Merged||
 |Fix link to package documentation on README.md|[#4649](https://github.com/onnx/onnx/pull/4649)|Merged||
+|update docs for onnx.save_model|[#4662](https://github.com/onnx/onnx/pull/4662)|Merged||
+|Fixed Typo in concepts.rst|[#4661](https://github.com/onnx/onnx/pull/4661)|Merged||
 
 ### Security updates
 | Description | PR | Status | Notes |      
