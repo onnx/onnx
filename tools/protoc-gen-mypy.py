@@ -34,7 +34,7 @@ d: Any = d_typed
 GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is generated
 HEADER = (
     f"# {GENERATED} by protoc-gen-mypy.py.  Do not edit!\n"
-    + "# type: ignore[override]\n"
+    + "# mypy: disable-error-code=override\n"
 )
 
 

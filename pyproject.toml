@@ -33,6 +33,19 @@ exclude = [
 module = ['setup']
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = [
+    'onnx.onnx_data_pb',
+    'onnx.onnx_data_pb2',
+    'onnx.onnx_pb',
+    'onnx.onnx_pb2',
+    'onnx.onnx_ml_pb2',
+    'onnx.onnx_ml_pb2',
+    'onnx.onnx_operators_pb',
+    'onnx.onnx_operators_ml_pb2',
+]
+ignore_errors = true
+
 [tool.black]
 # extend-exclude needs to be a regular expression
 extend-exclude = "third_party/|venv/"
@@ -47,7 +60,7 @@ extend_skip_glob = [
     "venv",
 ]
 
-[tool.pylint.'MESSAGES CONTROL']
+[tool.pylint.message_control]
 disable = [
     "cyclic-import",
     "fixme",
