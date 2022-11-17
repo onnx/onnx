@@ -147,7 +147,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
       ++function_counter;
       std::vector<int> function_versions = s.function_opset_versions();
       for (int function_version : function_versions) {
-        auto function_body = s.GetFunctionWithOpsetVersion(function_version);
+        auto function_body = s.GetFunction(function_version);
         VerifyFunction(s, function_body, verified_counter);
       }
     }

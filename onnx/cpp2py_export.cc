@@ -128,6 +128,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                 context_dependent_function_opset_versions.begin(),
                 context_dependent_function_opset_versions.end());
             std::sort(all_function_opset_versions.begin(), all_function_opset_versions.end());
+            all_function_opset_versions.erase(
+                std::unique(all_function_opset_versions.begin(), all_function_opset_versions.end()),
+                all_function_opset_versions.end());
             return all_function_opset_versions;
           })
       .def_property_readonly("name", &OpSchema::Name)
@@ -162,7 +165,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "get_function_with_opset_version",
           [](OpSchema* op, int opset_version) -> py::bytes {
             std::string bytes = "";
-            const FunctionProto* function_proto = op->GetFunctionWithOpsetVersion(opset_version);
+            const FunctionProto* function_proto = op->GetFunction(opset_version);
             if (function_proto) {
               function_proto->SerializeToString(&bytes);
             }
@@ -207,7 +210,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               }
               FunctionBodyBuildContextImpl ctx(proto, input_types);
               FunctionProto func_proto;
-              op->BuildContextDependentFunctionWithOpsetVersion(ctx, func_proto, opset_version);
+              op->BuildContextDependentFunction(ctx, func_proto, opset_version);
               func_proto.SerializeToString(&func_bytes);
             }
             return py::bytes(func_bytes);

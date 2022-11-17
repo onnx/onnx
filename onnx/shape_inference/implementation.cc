@@ -295,7 +295,7 @@ class ShapeInferenceImplBase {
           } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
             input_sparse_data_by_name[n.output(0)] = &attr.sparse_tensor();
           }
-        } else if (attr.name() == "value_ints" && attr.type() == AttributeProto::INTS) {
+        } else if (attr.type() == AttributeProto::INTS && attr.name() == "value_ints") {
           std::vector<int64_t> ints{attr.ints().begin(), attr.ints().end()};
           input_data_by_name_holder[n.output(0)] = ToTensor(ints);
           input_data_by_name[n.output(0)] = &input_data_by_name_holder[n.output(0)];
@@ -470,10 +470,6 @@ class ShapeInferenceImplBase {
       }
       processInitializer(tp.values().name(), tp, initializer_type, input_sparse_data_by_name);
     }
-    // // Collect data from constant nodes and check if any experimental ops exist
-    // for (const auto& n : graph.node()) {
-    //   preprocess(n); // process constant node
-    // }
     for (auto& n : *graph.mutable_node()) {
       process(n);
     }
@@ -535,10 +531,6 @@ class ShapeInferenceImplBase {
       if (ctx.getAttribute(attr) != nullptr) {
         attr_map[attr] = ctx.getAttribute(attr);
       }
-    }
-
-    for (auto& n : func_proto.node()) {
-      preprocess(n); // process constant node
     }
 
     for (auto& n : func_proto.node()) {

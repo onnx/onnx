@@ -845,8 +845,6 @@ class OpSchema final {
 
   OpSchema& FunctionBody(const char* func_body, int opset_version = kUninitializedSinceVersion);
 
-  const FunctionProto* GetFunction() const;
-
   // since_version_ of an OpSchema tells the last opset version when an op is defined.
   // When the op's definition is changed, a new OpSchema (of the same op_type) is created
   // with a newer since_version_, reflecting the opset version at the time of change.
@@ -862,9 +860,9 @@ class OpSchema final {
   // with opset_version 18 is used for inlining.
   // Clearly function body for opset_import version 13 will not work
   // in a model with opset_import version 18 because the function body make worng use of ReduceMax(18).
-  // Inside GetFunctionWithOpsetVersion we ensure that ops being used to construct a function body do not endure such
+  // Inside GetFunction we ensure that ops being used to construct a function body do not endure such
   // issue.
-  const FunctionProto* GetFunctionWithOpsetVersion(int requested_opset_version) const;
+  const FunctionProto* GetFunction(int requested_opset_version = OpSchema::kUninitializedSinceVersion) const;
 
   std::vector<int> context_dependent_function_opset_versions() const {
     std::vector<int> opset_versions;
@@ -887,11 +885,10 @@ class OpSchema final {
       ContextDependentFunctionBodyBuilder,
       int opset_version = kUninitializedSinceVersion);
 
-  bool BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& function_proto) const;
-  bool BuildContextDependentFunctionWithOpsetVersion(
-      const FunctionBodyBuildContext& ctx,
-      FunctionProto& function_proto,
-      int opset_version) const;
+  bool BuildContextDependentFunction(
+    const FunctionBodyBuildContext& ctx,
+    FunctionProto& function_proto,
+    int requested_opset_version=OpSchema::kUninitializedSinceVersion) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -905,7 +902,6 @@ class OpSchema final {
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
-  FunctionProto* GetFunctionWithOpsetInternal(int opset_version);
   bool ValidateReferencedOpsInFuncton(
       const FunctionProto* function,
       int requested_opset_version,

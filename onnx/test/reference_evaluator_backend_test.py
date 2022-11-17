@@ -45,7 +45,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1072
+MIN_PASSING_TESTS = 1211
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
@@ -67,19 +67,18 @@ SKIP_TESTS = {
     "test_layer_normalization_3d_axis_negative_1_epsilon_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_layer_normalization_3d_axis_negative_2_epsilon_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_layer_normalization_4d_axis1_expanded",  # https://github.com/onnx/onnx/issues/4653
-    "test_layer_normalization_4d_axis1_expanded_ver18",  # https://github.com/onnx/onnx/issues/4653
     "test_layer_normalization_4d_axis2_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_layer_normalization_4d_axis3_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_layer_normalization_4d_axis_negative_1_expanded",  # https://github.com/onnx/onnx/issues/4653
-    "test_layer_normalization_4d_axis_negative_1_expanded_ver18",  # https://github.com/onnx/onnx/issues/4653
     "test_layer_normalization_4d_axis_negative_2_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_layer_normalization_4d_axis_negative_3_expanded",  # https://github.com/onnx/onnx/issues/4653
-    "test_layer_normalization_4d_axis_negative_3_expanded_ver18",  # https://github.com/onnx/onnx/issues/4653
     "test_layer_normalization_default_axis_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_mvn",  # https://github.com/onnx/onnx/issues/4653
     "test_mvn_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_softmax_large_number_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_logsoftmax_large_number_expanded",  # https://github.com/onnx/onnx/issues/4653
+    "test__pytorch_operator_operator_reduced_mean_keepdim", # https://github.com/onnx/onnx/issues/4653
+    "test__pytorch_operator_operator_reduced_mean", # https://github.com/onnx/onnx/issues/4653
 }
 
 
@@ -481,7 +480,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
 
     @classmethod
     def add_test_methods(cls):
-        for folder in ["node"]:
+        for folder in ["node", "pytorch-converted", "pytorch-operator", "simple"]:
             for te in enumerate_onnx_tests(folder):
 
                 def _test_(
@@ -511,12 +510,12 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
 
                 setattr(TestOnnxBackEndWithReferenceEvaluator, te.fname, _test_)
 
-    # def test_onnx_backend_test_abs(self):
-    #     name = "test_abs"
-    #     code = []
-    #     for te in enumerate_onnx_tests("node", lambda folder: folder == name):
-    #         code.append(te)
-    #     self.assertEqual(len(code), 1)
+    def test_onnx_backend_test_abs(self):
+        name = "test_abs"
+        code = []
+        for te in enumerate_onnx_tests("node", lambda folder: folder == name):
+            code.append(te)
+        self.assertEqual(len(code), 1)
 
     def test_onnx_backend_test_expand_shape_model1(self):
         name = "test_expand_shape_model1"
@@ -790,6 +789,9 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv2d": 1e-5,
             "test__pytorch_converted_Conv2d_no_bias": 1e-3,
             "test__pytorch_converted_Conv2d_strided": 1e-4,
+            "test_layer_normalization_4d_axis1_expanded_ver18": 1e-4,
+            "test_layer_normalization_4d_axis_negative_1_expanded_ver18": 1e-4,
+            "test_layer_normalization_4d_axis_negative_3_expanded_ver18": 1e-4,
         }
 
         cls.atol = {

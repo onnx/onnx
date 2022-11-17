@@ -711,8 +711,31 @@ OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(
   return *this;
 }
 
-bool OpSchema::BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& function_proto) const {
-  return BuildContextDependentFunctionWithOpsetVersion(ctx, function_proto, since_version_);
+bool OpSchema::BuildContextDependentFunction(
+  const FunctionBodyBuildContext& ctx,
+  FunctionProto& function_proto,
+  int requested_opset_version) const {
+  if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
+    requested_opset_version = since_version_;
+
+  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
+      opset_version_to_function_builder_.upper_bound(requested_opset_version);
+  if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
+    ONNX_THROW_EX(std::out_of_range(
+        std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
+        this->name_ + ", opset_version = " + std::to_string(requested_opset_version) + "."));
+  } else {
+    --it;
+    const ContextDependentFunctionBodyBuilder& body_builder = it->second;
+    if (!body_builder(ctx, *this, function_proto)) {
+      return false;
+    }
+    //// default opset import may have been added to function_proto by OpSchema::BuildFunction
+    //// we need to update its version with the specified opset_version
+    UpdateFunctionProtoOpsetImportVersion(function_proto, requested_opset_version);
+    ValidateReferencedOpsInFuncton(&function_proto, requested_opset_version, it->first);
+    return true;
+  }
 }
 
 // A function of a schema (either stored in opset_version_to_function_body_ or built with one of function builder
@@ -736,33 +759,6 @@ void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_pro
     auto* schema_opset = function_proto.mutable_opset_import()->Add();
     schema_opset->set_domain(domain_);
     schema_opset->set_version(requested_opset_version);
-  }
-}
-
-bool OpSchema::BuildContextDependentFunctionWithOpsetVersion(
-    const FunctionBodyBuildContext& ctx,
-    FunctionProto& function_proto,
-    int requested_opset_version) const {
-  if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
-    requested_opset_version = since_version_;
-
-  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
-      opset_version_to_function_builder_.upper_bound(requested_opset_version);
-  if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
-    ONNX_THROW_EX(std::out_of_range(
-        std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
-        this->name_ + ", opset_version = " + std::to_string(requested_opset_version) + "."));
-  } else {
-    --it;
-    const ContextDependentFunctionBodyBuilder& body_builder = it->second;
-    if (!body_builder(ctx, *this, function_proto)) {
-      return false;
-    }
-    //// default opset import may have been added to function_proto by OpSchema::BuildFunction
-    //// we need to update its version with the specified opset_version
-    UpdateFunctionProtoOpsetImportVersion(function_proto, requested_opset_version);
-    ValidateReferencedOpsInFuncton(&function_proto, requested_opset_version, it->first);
-    return true;
   }
 }
 
@@ -827,12 +823,20 @@ OpSchema& OpSchema::FunctionBody(
   return *this;
 }
 
-const FunctionProto* OpSchema::GetFunction() const {
-  return GetFunctionWithOpsetVersion(since_version_);
-}
-
-const FunctionProto* OpSchema::GetFunctionWithOpsetVersion(int requested_opset_version) const {
-  return const_cast<OpSchema*>(this)->GetFunctionWithOpsetInternal(requested_opset_version);
+const FunctionProto* OpSchema::GetFunction(int requested_opset_version) const {
+  if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
+    requested_opset_version = since_version_;
+  std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it =
+      opset_version_to_function_body_.upper_bound(requested_opset_version);
+  if (opset_version_to_function_body_.empty() || it == opset_version_to_function_body_.begin()) {
+    return nullptr;
+  } else {
+    --it;
+    int function_since_version = it->first;
+    const FunctionProto* function = it->second.get();
+    ValidateReferencedOpsInFuncton(function, requested_opset_version, function_since_version);
+    return function;
+  }
 }
 
 // when requesting a function at loading time,
@@ -866,20 +870,6 @@ bool OpSchema::ValidateReferencedOpsInFuncton(
   }
 
   return has_no_invalid_op;
-}
-
-FunctionProto* OpSchema::GetFunctionWithOpsetInternal(int requested_opset_version) {
-  std::map<int, std::shared_ptr<FunctionProto>>::iterator it =
-      opset_version_to_function_body_.upper_bound(requested_opset_version);
-  if (opset_version_to_function_body_.empty() || it == opset_version_to_function_body_.begin()) {
-    return nullptr;
-  } else {
-    --it;
-    int function_since_version = it->first;
-    FunctionProto* function = it->second.get();
-    ValidateReferencedOpsInFuncton(function, requested_opset_version, function_since_version);
-    return function;
-  }
 }
 
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {

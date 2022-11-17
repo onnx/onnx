@@ -218,7 +218,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
     try {
-      const FunctionProto* function = schema2->GetFunctionWithOpsetVersion(model_opset_import);
+      const FunctionProto* function = schema2->GetFunction(model_opset_import);
       ASSERT_TRUE(function);
     } catch (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8);
@@ -229,7 +229,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
     try {
-      const FunctionProto* function = schema9->GetFunctionWithOpsetVersion(model_opset_import);
+      const FunctionProto* function = schema9->GetFunction(model_opset_import);
       ASSERT_TRUE(function);
     } catch (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15);
