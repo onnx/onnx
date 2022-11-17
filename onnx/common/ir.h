@@ -202,7 +202,9 @@ struct Attributes {
   Derived* method##_(Symbol name, Kind##Attr::ConstructorType v) {              \
     return set<Kind##Attr>(name, std::forward<Kind##Attr::ConstructorType>(v)); \
   }                                                                             \
-  const Kind##Attr::ValueType& method(Symbol name) const { return get<Kind##Attr>(name); }
+  const Kind##Attr::ValueType& method(Symbol name) const {                      \
+    return get<Kind##Attr>(name);                                               \
+  }
   CREATE_ACCESSOR(Float, f)
   CREATE_ACCESSOR(Floats, fs)
   CREATE_ACCESSOR(String, s)
