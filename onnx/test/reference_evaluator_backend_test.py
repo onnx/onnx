@@ -23,7 +23,13 @@ import pprint
 import unittest
 import warnings
 
+try:
+    from packaging.version import parse as version
+except ImportError:
+    from distutils.version import StrictVersion as version
+
 import numpy as np
+from numpy import __version__ as npver
 from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
@@ -80,6 +86,20 @@ SKIP_TESTS = {
     "test__pytorch_operator_operator_reduced_mean_keepdim", # https://github.com/onnx/onnx/issues/4653
     "test__pytorch_operator_operator_reduced_mean", # https://github.com/onnx/onnx/issues/4653
 }
+
+if version(npver) < version("1.21.5"):
+    SKIP_TESTS |= {
+        "test_cast_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16_expanded",
+    }
+if version(npver) < version("1.21.5"):
+    SKIP_TESTS |= {
+        "test_cast_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16_expanded",
+    }
+    MIN_PASSING_TESTS -= len(SKIP_TESTS)
 
 
 def assert_allclose_string(expected, value):
@@ -831,6 +851,15 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv3d_dilated_strided": 1e-4,
             "test__pytorch_converted_Conv3d_groups": 1e-4,
         }
+
+        if version(npver) < version("1.21.5"):
+            cls.atol.update(
+                {
+                    "test_dft": 1e-11,
+                    "test_dft_axis": 1e-11,
+                    "test_dft_inverse": 1e-11,
+                }
+            )
 
         cls.skip_test = SKIP_TESTS
         if all_tests:

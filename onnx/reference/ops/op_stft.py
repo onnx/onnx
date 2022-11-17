@@ -15,7 +15,15 @@ def _concat(*args, axis=0):  # type: ignore
 
 
 def _unsqueeze(a, axis):  # type: ignore
-    return np.expand_dims(a, axis=axis)
+    try:
+        return np.expand_dims(a, axis=axis)
+    except TypeError:
+        # numpy 1.18 supports axes as a tuple
+        if len(axis) == 1:
+            return np.expand_dims(a, axis=tuple(axis)[0])
+        for x in reversed(axis):
+            a = np.expand_dims(a, axis=x)
+        return a
 
 
 def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type: ignore

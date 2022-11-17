@@ -14,4 +14,8 @@ class Gather(OpRun):
             indices = indices.ascontiguousarray()
         if indices.size == 0:
             return (np.empty((0,), dtype=x.dtype),)
-        return (np.take(x, indices, axis=axis),)
+        try:
+            return (np.take(x, indices, axis=axis),)
+        except TypeError:
+            # distribution x86 requires int32.
+            return (np.take(x, indices.astype(int), axis=axis),)
