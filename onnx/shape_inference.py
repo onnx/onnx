@@ -88,8 +88,8 @@ def infer_node_outputs(
     input_types: Dict[str, onnx.TypeProto],
     input_data: Optional[Dict[str, onnx.TensorProto]] = None,
     input_sparse_data: Optional[Dict[str, onnx.SparseTensorProto]] = None,
-    graph_opset_imports: Optional[List[onnx.OperatorSetIdProto]] = None,
-    graph_ir_version: int = onnx.IR_VERSION,
+    subgraph_opset_imports: Optional[List[onnx.OperatorSetIdProto]] = None,
+    subgraph_ir_version: int = onnx.IR_VERSION,
 ) -> Dict[str, onnx.TypeProto]:
     if not schema.has_type_and_shape_inference_function:  # type: ignore
         return {}
@@ -97,11 +97,11 @@ def infer_node_outputs(
         input_data = {}
     if input_sparse_data is None:
         input_sparse_data = {}
-    if graph_opset_imports is None:
+    if subgraph_opset_imports is None:
         passed_opset_imports = {}
     else:
         passed_opset_imports = {
-            opset.domain: opset.version for opset in graph_opset_imports
+            opset.domain: opset.version for opset in subgraph_opset_imports
         }
 
     # catch KeyError if node's input does not exist in input_types
@@ -129,7 +129,7 @@ def infer_node_outputs(
         passed_input_data,
         passed_sparse_input_data,
         passed_opset_imports,
-        graph_ir_version,
+        subgraph_ir_version,
     )  # type: ignore[call-arg]
     return {key: onnx.TypeProto.FromString(out) for key, out in outputs.items()}
 

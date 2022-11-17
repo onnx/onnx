@@ -59,8 +59,8 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
     std::unordered_map<std::string, py::bytes> valueTypesByNameBytes,
     std::unordered_map<std::string, py::bytes> inputDataByNameBytes,
     std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes,
-    std::unordered_map<std::string, int> graphOpsetImports,
-    const int graphIrVersion) {
+    std::unordered_map<std::string, int> subgraphOpsetImports,
+    const int subgraphIrVersion) {
   NodeProto node{};
   ParseProtoFromPyBytes(&node, nodeBytes);
   // Early fail if node is badly defined - may throw ValidationError
@@ -70,12 +70,12 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
   const auto& valueTypes = ParseProtoFromBytesMap<TypeProto>(valueTypesByNameBytes);
   const auto& inputData = ParseProtoFromBytesMap<const TensorProto>(inputDataByNameBytes);
   const auto& inputSparseData = ParseProtoFromBytesMap<const SparseTensorProto>(inputSparseDataByNameBytes);
-  if (graphOpsetImports.empty()) {
-    graphOpsetImports[schema->domain()] = schema->SinceVersion();
+  if (subgraphOpsetImports.empty()) {
+    subgraphOpsetImports[schema->domain()] = schema->SinceVersion();
   }
 
   shape_inference::GraphInferenceContext graphInferenceContext(
-      valueTypes.second, graphOpsetImports, nullptr, {}, OpSchemaRegistry::Instance(), nullptr, graphIrVersion);
+      valueTypes.second, subgraphOpsetImports, nullptr, {}, OpSchemaRegistry::Instance(), nullptr, subgraphIrVersion);
   // Construct inference context and get results - may throw InferenceError
   shape_inference::InferenceContextImpl ctx(
       node, valueTypes.second, inputData.second, inputSparseData.second, nullptr, &graphInferenceContext);
@@ -151,8 +151,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::arg("valueTypesByNameBytes"),
           py::arg("inputDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
           py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
-          py::arg("graphOpsetImports") = std::unordered_map<std::string, int>{},
-          py::arg("graphIrVersion") = int(IR_VERSION))
+          py::arg("subgraphOpsetImports") = std::unordered_map<std::string, int>{},
+          py::arg("subgraphIrVersion") = int(IR_VERSION))
       .def(
           "get_context_dependent_function",
           [](OpSchema* op, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes) -> py::bytes {
