@@ -20,7 +20,7 @@ The linear regression is the most simple model
 in machine learning described by the following expression
 :math:`Y = XA + B`. We can see it as a function of three
 variables :math:`Y = f(X, A, B)` decomposed into
-`y = Add(MatMul(X, A), B))`. That what's we need to represent
+`y = Add(MatMul(X, A), B)`. That what's we need to represent
 with ONNX operators. The first thing is to implement a function
 with :ref:`ONNX operators <l-onnx-operators>`.
 ONNX is strongly typed. Shape and type must be defined for both
