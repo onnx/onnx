@@ -183,8 +183,8 @@ class TestInferenceFunctionCall(unittest.TestCase):
                 }
             ),
             # Same as default value in Scan-9
-            subgraph_opset_imports=[make_opsetid("", 9)],
-            subgraph_ir_version=4,
+            opset_imports=[make_opsetid("", 9)],
+            ir_version=4,
         ) == _to_tensor_types(
             {
                 "loop_state_final": (TensorProto.FLOAT, (loop_state_size,)),
