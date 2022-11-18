@@ -1014,6 +1014,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseAnd);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, GroupNormalization);
 
 // Iterate over schema from ai.onnx version 18
 class OpSet_Onnx_ver18 {
@@ -1033,6 +1034,7 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, GroupNormalization)>());
   }
 };
 

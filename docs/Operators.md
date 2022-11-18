@@ -175,6 +175,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
+|<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-18">18</a>|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
@@ -9321,11 +9322,16 @@ Other versions of this operator: <a href="Changelog.md#GreaterOrEqual-12">12</a>
 
 ### <a name="GridSample"></a><a name="gridsample">**GridSample**</a>
 
-  Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
-  Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
-  the `output` will have shape (N, C, H_out, W_out).
-  For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
-  which are used to interpolate the output value `output[N, C, H_out, W_out]`.
+  Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from `grid`.
+  Currently, only spatial (4-D) inputs are supported. For input `X` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
+  the output `Y` will have shape (N, C, H_out, W_out).
+
+  The tensor `X` contains values at centers of square pixels in a H by W 2-dimensional image.
+  The tensor `grid` describes normalized positions where the output `Y` is to be computed
+  using a specified interpolation method (the mode) and a padding mode (for grid positions falling outside the 2-dimensional image).
+
+  Elements in `grid[N, H_out, W_out]` are size-2 vectors specifying positions in the 2-dimensional space of `X`.
+  They are used to interpolate output values of `Y[N, C, H_out, W_out]`.
 
   The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
   See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
@@ -9350,24 +9356,24 @@ This version of the operator has been available since version 16 of the default 
 <dl>
 <dt><tt>X</tt> (differentiable) : T1</dt>
 <dd>4-D tensor of shape (N, C, H, W), where N is the batch size, C is the numbers of channels, H and W are the height and width of the input data.</dd>
-<dt><tt>grid</tt> (non-differentiable) : T1</dt>
+<dt><tt>grid</tt> (non-differentiable) : T2</dt>
 <dd>Input offset, 4-D tensor of shape (N, H_out, W_out, 2), where H_out and W_out are the height and width of grid and output, Grid specifies the sampling pixel locations normalized by the input spatial dimensions. Therefore, it should have most values in the range of [-1, 1]. If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (differentiable) : T2</dt>
-<dd>4-D tensor of shape (N, C, H_out, W_out).</dd>
+<dt><tt>Y</tt> (differentiable) : T1</dt>
+<dd>4-D tensor of shape (N, C, H_out, W_out) of sampled values. For integer input types, intermediate values are computed as floating point and cast to integer at the end.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input types to all tensor types.</dd>
+<dd>Constrain input `X` and output `Y` types to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to float tensors.</dd>
+<dd>Constrain grid types to float tensors.</dd>
 </dl>
 
 
@@ -9674,6 +9680,115 @@ expect(
     inputs=[X, Grid],
     outputs=[Y_reflection],
     name="test_gridsample_reflection_padding",
+)
+```
+
+</details>
+
+
+### <a name="GroupNormalization"></a><a name="groupnormalization">**GroupNormalization**</a>
+
+  A GroupNormalization function. Carries out group normalization as described in
+  the paper https://arxiv.org/abs/1803.08494
+
+  This operator transforms input according to
+  ```
+  y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
+  ```
+  where the mean and variance are computed per instance per group of channels, and
+  `scale` and `bias` should be specified for each group of channels. The number of
+  groups `num_groups` should be divisible by the number of channels so that there are
+  an equal number of channels per group.
+
+  When the number of groups is the same as the number of channels, this operator is
+  equivalent to InstanceNormalization. When there is only one group, this operator
+  is equivalent to LayerNormalization.
+
+#### Version
+
+This version of the operator has been available since version 18 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>num_groups</tt> : int (required)</dt>
+<dd>The number of groups of channels. It should be a divisor of the number of channels `C`.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, `C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are in the form of `(N x C x D1 x D2 ... Dn)`.</dd>
+<dt><tt>scale</tt> (differentiable) : T</dt>
+<dd>Scale tensor of shape `(num_groups)`.</dd>
+<dt><tt>bias</tt> (differentiable) : T</dt>
+<dd>Bias tensor of shape `(num_groups)`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>The output tensor of the same shape as `X`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>groupnormalization</summary>
+
+```python
+x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+num_groups = 2
+scale = np.random.randn(num_groups).astype(np.float32)
+bias = np.random.randn(num_groups).astype(np.float32)
+y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_example",
+)
+
+x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+num_groups = 2
+scale = np.random.randn(num_groups).astype(np.float32)
+bias = np.random.randn(num_groups).astype(np.float32)
+epsilon = 1e-2
+y = _group_normalization(x, num_groups, scale, bias, epsilon).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    epsilon=epsilon,
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_epsilon",
 )
 ```
 

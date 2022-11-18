@@ -51,7 +51,7 @@ It is just a kind of pseudo-code to illustrate the model.
     Output: float[M, N] y
 
     r = onnx.MatMul(a, x)
-    y = onnx.Add(ax, c)
+    y = onnx.Add(r, c)
 
 This code implements a function `f(x, a, c) -> y = a @ x + c`.
 And *x*, *a*, *c* are the **inputs**, *y* is the **output**.
@@ -113,7 +113,7 @@ Metadata
 Machine learned models are continuously refreshed. It is important
 to keep track of the model version, the author of the model and 
 how it was trained. ONNX offers the possibility to store additional data
-into the model itself.
+in the model itself.
 
 * **doc_string**: Human-readable documentation for this model.
     Markdown is allowed.
@@ -152,7 +152,7 @@ A few operators in this list are dedicated to text but they hardly cover
 the needs. The main list is also missing tree based models very
 popular in standard machine learning.
 These are part of another domain **ai.onnx.ml**,
-it includes tree bases models (TreeEnsmble Regressor, ...),
+it includes tree bases models (TreeEnsemble Regressor, ...),
 preprocessing (OneHotEncoder, LabelEncoder, ...), SVM models
 (SVMRegressor, ...), imputer (Imputer).
 
@@ -280,7 +280,7 @@ Scan
 ~~~~
 
 Operator :ref:`l-onnx-doc-Scan` implements a loop with a fixed number of iterations.
-It loops over the rows (or any other dimension) of the inputs and concatenate
+It loops over the rows (or any other dimension) of the inputs and concatenates
 the outputs along the same axis. Let's see an example which implements
 pairwise distances: :math:`M(i,j) = \norm{X_i - X_j}^2`.
 
