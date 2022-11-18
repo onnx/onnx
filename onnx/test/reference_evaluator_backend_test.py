@@ -83,8 +83,8 @@ SKIP_TESTS = {
     "test_mvn_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_softmax_large_number_expanded",  # https://github.com/onnx/onnx/issues/4653
     "test_logsoftmax_large_number_expanded",  # https://github.com/onnx/onnx/issues/4653
-    "test__pytorch_operator_operator_reduced_mean_keepdim", # https://github.com/onnx/onnx/issues/4653
-    "test__pytorch_operator_operator_reduced_mean", # https://github.com/onnx/onnx/issues/4653
+    "test__pytorch_operator_operator_reduced_mean_keepdim",  # https://github.com/onnx/onnx/issues/4653
+    "test__pytorch_operator_operator_reduced_mean",  # https://github.com/onnx/onnx/issues/4653
 }
 
 if version(npver) < version("1.21.5"):

@@ -886,9 +886,9 @@ class OpSchema final {
       int opset_version = kUninitializedSinceVersion);
 
   bool BuildContextDependentFunction(
-    const FunctionBodyBuildContext& ctx,
-    FunctionProto& function_proto,
-    int requested_opset_version=OpSchema::kUninitializedSinceVersion) const;
+      const FunctionBodyBuildContext& ctx,
+      FunctionProto& function_proto,
+      int requested_opset_version=OpSchema::kUninitializedSinceVersion) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid

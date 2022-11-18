@@ -712,9 +712,9 @@ OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(
 }
 
 bool OpSchema::BuildContextDependentFunction(
-  const FunctionBodyBuildContext& ctx,
-  FunctionProto& function_proto,
-  int requested_opset_version) const {
+    const FunctionBodyBuildContext& ctx,
+    FunctionProto& function_proto,
+    int requested_opset_version) const {
   if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
     requested_opset_version = since_version_;
 
