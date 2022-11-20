@@ -80,7 +80,7 @@ intermediate results. This is how it looks like.
                         [Y])  # outputs
 
     # onnx graph
-    # there is no metata in this case.
+    # there is no metadata in this case.
 
     onnx_model = make_model(graph)
 
@@ -167,7 +167,7 @@ Serialization
 =============
 
 ONNX is built on the top of protobuf. It adds the necessary definitions
-to describes a machine learned and most of the time, ONNX is used
+to describe a machine learning model and most of the time, ONNX is used
 to serialize or deserialize a model. First section addresses this need.
 Second section introduces the serialization and deserialization of
 data such as tensors, sparse tensors...
@@ -230,7 +230,7 @@ overcome that limit.
 Data Serialization
 ++++++++++++++++++
 
-The serialization of tensor usually happens the following:
+The serialization of tensor usually happens like the following:
 
 .. exec_code::
 
@@ -250,7 +250,7 @@ The serialization of tensor usually happens the following:
     with open("saved_tensor.pb", "wb") as f:
         f.write(serialized_tensor)
 
-And the deserialization.
+And the deserialization like:
 
 .. exec_code::
 
@@ -269,7 +269,7 @@ And the deserialization.
     numpy_tensor = to_array(onnx_tensor)
     print(numpy_tensor)
 
-The same schema can be used for :ref:`l-tensorproto` but not only:
+The same schema can be used for but not limited to :ref:`l-tensorproto`:
 
 .. exec_code::
 
@@ -1003,7 +1003,7 @@ Parsing
 =======
 
 Module onnx provides a faster way to define a graph
-a lot easier to read. That's easy to use when the graph is built
+and is lot easier to read. That's easy to use when the graph is built
 in a single function, less easy when the graph is built from many
 different functions converting each piece of a machine learning
 pipeline.
