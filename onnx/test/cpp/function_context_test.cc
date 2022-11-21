@@ -218,8 +218,13 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
     try {
-      const FunctionProto* function = schema2->GetFunction(model_opset_import);
-      ASSERT_TRUE(function);
+      bool validate = true;
+      const FunctionProto* function = schema2->GetFunction(model_opset_import, validate);
+      if (model_opset_import >= 6) {    // function body should be updated at opset 6 where Sub is updated
+        ASSERT_TRUE(function == nullptr);
+      } else {
+        ASSERT_TRUE(function);
+      }
     } catch (std::runtime_error err) {
       ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8);
     }

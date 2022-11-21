@@ -862,7 +862,9 @@ class OpSchema final {
   // in a model with opset_import version 18 because the function body make worng use of ReduceMax(18).
   // Inside GetFunction we ensure that ops being used to construct a function body do not endure such
   // issue.
-  const FunctionProto* GetFunction(int requested_opset_version = OpSchema::kUninitializedSinceVersion) const;
+  const FunctionProto* GetFunction(
+      int requested_opset_version = OpSchema::kUninitializedSinceVersion,
+      bool validate = false) const;
 
   std::vector<int> context_dependent_function_opset_versions() const {
     std::vector<int> opset_versions;

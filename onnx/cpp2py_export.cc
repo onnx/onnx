@@ -58,7 +58,9 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
     const py::bytes& nodeBytes,
     std::unordered_map<std::string, py::bytes> valueTypesByNameBytes,
     std::unordered_map<std::string, py::bytes> inputDataByNameBytes,
-    std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes) {
+    std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes,
+    std::unordered_map<std::string, int> opsetImports,
+    const int irVersion) {
   NodeProto node{};
   ParseProtoFromPyBytes(&node, nodeBytes);
   // Early fail if node is badly defined - may throw ValidationError
@@ -68,9 +70,15 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
   const auto& valueTypes = ParseProtoFromBytesMap<TypeProto>(valueTypesByNameBytes);
   const auto& inputData = ParseProtoFromBytesMap<const TensorProto>(inputDataByNameBytes);
   const auto& inputSparseData = ParseProtoFromBytesMap<const SparseTensorProto>(inputSparseDataByNameBytes);
+  if (opsetImports.empty()) {
+    opsetImports[schema->domain()] = schema->SinceVersion();
+  }
 
+  shape_inference::GraphInferenceContext graphInferenceContext(
+      valueTypes.second, opsetImports, nullptr, {}, OpSchemaRegistry::Instance(), nullptr, irVersion);
   // Construct inference context and get results - may throw InferenceError
-  shape_inference::InferenceContextImpl ctx(node, valueTypes.second, inputData.second, inputSparseData.second);
+  shape_inference::InferenceContextImpl ctx(
+      node, valueTypes.second, inputData.second, inputSparseData.second, nullptr, &graphInferenceContext);
   schema->GetTypeAndShapeInferenceFunction()(ctx);
   // Verify the inference succeeded - may also throw ValidationError
   // Note that input types were not validated until now (except that their count was correct)
@@ -151,7 +159,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::arg("nodeBytes"),
           py::arg("valueTypesByNameBytes"),
           py::arg("inputDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
-          py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{})
+          py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
+          py::arg("opsetImports") = std::unordered_map<std::string, int>{},
+          py::arg("irVersion") = int(IR_VERSION))
       .def_property_readonly("has_function", &OpSchema::HasFunction)
       .def_property_readonly(
           "_function_body",

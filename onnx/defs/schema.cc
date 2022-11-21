@@ -823,20 +823,20 @@ OpSchema& OpSchema::FunctionBody(
   return *this;
 }
 
-const FunctionProto* OpSchema::GetFunction(int requested_opset_version) const {
+const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool validate) const {
   if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
     requested_opset_version = since_version_;
   std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it =
       opset_version_to_function_body_.upper_bound(requested_opset_version);
-  if (opset_version_to_function_body_.empty() || it == opset_version_to_function_body_.begin()) {
-    return nullptr;
-  } else {
+  if (!opset_version_to_function_body_.empty() && it != opset_version_to_function_body_.begin()) {
     --it;
     int function_since_version = it->first;
     const FunctionProto* function = it->second.get();
-    ValidateReferencedOpsInFuncton(function, requested_opset_version, function_since_version);
-    return function;
+    if (!validate || ValidateReferencedOpsInFuncton(function, requested_opset_version, function_since_version)) {
+      return function;
+    }
   }
+  return nullptr;
 }
 
 // when requesting a function at loading time,
@@ -850,9 +850,9 @@ bool OpSchema::ValidateReferencedOpsInFuncton(
     int requested_opset_version,
     int function_since_version,
     std::set<std::string>* updated_ops) const {
-  bool has_no_invalid_op = true;
+  bool all_ops_are_invalid = true;
   if (requested_opset_version == function_since_version) {
-    return has_no_invalid_op;
+    return all_ops_are_invalid;
   }
   for (auto& node : function->node()) {
     if (node.domain() == "" || node.domain() == "ai.onnx") {
@@ -864,12 +864,12 @@ bool OpSchema::ValidateReferencedOpsInFuncton(
         if (updated_ops) {
           updated_ops->insert(node.op_type());
         }
-        has_no_invalid_op = true;
+        all_ops_are_invalid = false;
       }
     }
   }
 
-  return has_no_invalid_op;
+  return all_ops_are_invalid;
 }
 
 OpSchema& OpSchema::FillUsing(const std::function<void(OpSchema&)>& populator) {

@@ -2310,7 +2310,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("out", TensorProto.FLOAT, (13, 17))]
         )
 
-    def test_reduce_op_shape_2_axis_opset_version_13(self) -> None:
+    def test_reduce_op_shape_2_axis_opset13(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11))],
             [make_node("ReduceL1", "x", "y", axes=(1, 2), keepdims=0)],
@@ -2327,7 +2327,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[operatorsetid],
         )
 
-    def test_reduce_op_shape_2_axis_opset_version_18(self) -> None:
+    def test_reduce_op_shape_2_axis_opset18(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11)), ("axes", TensorProto.INT64, (2,))],
             [make_node("ReduceL1", ["x", "axes"], "y", keepdims=0)],
@@ -2344,7 +2344,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[operatorsetid],
         )
 
-    def test_reduce_op_shape_keep_dims_opset_version_13(self) -> None:
+    def test_reduce_op_shape_keep_dims_opset13(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11))],
             [make_node("ReduceL1", "x", "y", axes=(1, 2), keepdims=1)],
@@ -2360,7 +2360,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[operatorsetid],
         )
 
-    def test_reduce_op_shape_keep_dims_opset_version_18(self) -> None:
+    def test_reduce_op_shape_keep_dims_opset18(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11)), ("axes", TensorProto.INT64, (2,))],
             [make_node("ReduceL1", ["x", "axes"], "y", keepdims=1)],
