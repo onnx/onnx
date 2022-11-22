@@ -3,20 +3,60 @@
 
 import numpy as np
 
+from onnx.defs import onnx_opset_version
+
 from ._op import OpRunReduceNumpy
 
 
-class ReduceLogSumExp(OpRunReduceNumpy):
-    def _run(self, data, axes=None, keepdims=None):  # type: ignore
+def compute_log_sum_exp(data, axes, keepdims):
+    data_max = data.copy()
+    ind = np.isinf(data_max)
+    data_max[ind] = -np.inf
+    mx = data_max.max(axis=axes, keepdims=True)
+    sub = np.subtract(data, mx)
+    exp = np.exp(sub, out=sub)
+    mxs = np.sum(exp, axis=axes, keepdims=True, dtype=data.dtype)
+    res = np.log(mxs) + mx
+    if not keepdims:  # type: ignore
+        res = np.squeeze(res, axis=axes)
+    return (res,)
+
+
+class ReduceLogSumExp_1(OpRunReduceNumpy):
+    def run(self, data, axes=None, keepdims=None):  # type: ignore
         tax = tuple(axes) if axes else None
-        data_max = data.copy()
-        ind = np.isinf(data_max)
-        data_max[ind] = -np.inf
-        mx = data_max.max(axis=tax, keepdims=True)
-        sub = np.subtract(data, mx)
-        exp = np.exp(sub, out=sub)
-        mxs = np.sum(exp, axis=tax, keepdims=True, dtype=data.dtype)
-        res = np.log(mxs) + mx
-        if not keepdims:  # type: ignore
-            res = np.squeeze(res, axis=tax)
-        return (res,)
+        return compute_log_sum_exp(data, tax, keepdims)
+
+
+class ReduceLogSumExp_11(ReduceLogSumExp_1):
+    pass
+
+
+class ReduceLogSumExp_13(ReduceLogSumExp_1):
+    pass
+
+
+class ReduceLogSumExp_18(OpRunReduceNumpy):
+    def run(self, data, axes=None, keepdims=None, noop_with_empty_axes=None):  # type: ignore
+        keepdims = keepdims or self.keepdims  # type: ignore
+        noop_with_empty_axes = noop_with_empty_axes or self.noop_with_empty_axes  # type: ignore
+        return self._run(data, axes, keepdims, noop_with_empty_axes)
+
+    def _run(self, data, axes, keepdims=1, noop_with_empty_axes=0):  # type: ignore
+        if self.is_axes_empty(axes) and noop_with_empty_axes:  # type: ignore
+            return (data,)
+
+        axes = self.handle_axes(axes)
+        keepdims = keepdims != 0  # type: ignore
+
+        return compute_log_sum_exp(data, axes, keepdims)
+
+
+if onnx_opset_version() >= 18:
+    ReduceLogSumExp = ReduceLogSumExp_18
+elif onnx_opset_version() >= 13:
+    ReduceLogSumExp = ReduceLogSumExp_13  # type: ignore
+elif onnx_opset_version() >= 11:
+    ReduceLogSumExp = ReduceLogSumExp_11  # type: ignore
+else:
+    ReduceLogSumExp = ReduceLogSumExp_1  # type: ignore

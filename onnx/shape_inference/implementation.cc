@@ -8,6 +8,7 @@
 #include "onnx/checker.h"
 #include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
+#include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -283,7 +284,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void preprocess(NodeProto& n) {
+  void preprocess(const NodeProto& n) {
     if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
     } else if (n.op_type() == "Constant" && n.output().size() == 1) {
@@ -294,6 +295,10 @@ class ShapeInferenceImplBase {
           } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
             input_sparse_data_by_name[n.output(0)] = &attr.sparse_tensor();
           }
+        } else if (attr.type() == AttributeProto::INTS && attr.name() == "value_ints") {
+          std::vector<int64_t> ints{attr.ints().begin(), attr.ints().end()};
+          input_data_by_name_holder[n.output(0)] = ToTensor(ints);
+          input_data_by_name[n.output(0)] = &input_data_by_name_holder[n.output(0)];
         }
       }
     }
@@ -388,6 +393,8 @@ class ShapeInferenceImplBase {
           updateType(n.output(i), ctx.getOutputType(i));
       }
 
+      preprocess(n);
+
       // If data propagation is enabled, propagate shape data if it exists.
       if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
         if (generated_shape_data_by_name == nullptr) {
@@ -463,10 +470,6 @@ class ShapeInferenceImplBase {
       }
       processInitializer(tp.values().name(), tp, initializer_type, input_sparse_data_by_name);
     }
-    // Collect data from constant nodes and check if any experimental ops exist
-    for (auto& n : *graph.mutable_node()) {
-      preprocess(n); // process constant node
-    }
     for (auto& n : *graph.mutable_node()) {
       process(n);
     }
@@ -529,6 +532,7 @@ class ShapeInferenceImplBase {
         attr_map[attr] = ctx.getAttribute(attr);
       }
     }
+
     for (auto& n : func_proto.node()) {
       process(n, attr_map);
     }
@@ -596,6 +600,7 @@ class ShapeInferenceImplBase {
 
   std::unordered_map<std::string, TypeProto*> undefined_value_types_by_name;
   std::unordered_map<std::string, const TensorProto*> input_data_by_name;
+  std::unordered_map<std::string, TensorProto> input_data_by_name_holder;
   std::unordered_map<std::string, const SparseTensorProto*> input_sparse_data_by_name;
 
   bool has_experimental_op = false;

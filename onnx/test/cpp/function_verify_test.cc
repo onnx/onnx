@@ -145,8 +145,11 @@ TEST(FunctionVerification, VerifyFunctionOps) {
       continue;
     ONNX_TRY {
       ++function_counter;
-      auto function_body = s.GetFunction();
-      VerifyFunction(s, function_body, verified_counter);
+      std::vector<int> function_versions = s.function_opset_versions();
+      for (int function_version : function_versions) {
+        auto function_body = s.GetFunction(function_version);
+        VerifyFunction(s, function_body, verified_counter);
+      }
     }
     ONNX_CATCH(ONNX_NAMESPACE::checker::ValidationError e) {
       ONNX_HANDLE_EXCEPTION([&]() { FAIL() << e.what(); });

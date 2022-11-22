@@ -13,6 +13,7 @@ from onnx import (
     GraphProto,
     ModelProto,
     NodeProto,
+    OperatorSetIdProto,
     SparseTensorProto,
     TensorProto,
     TypeProto,
@@ -2309,24 +2310,70 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("out", TensorProto.FLOAT, (13, 17))]
         )
 
-    def test_reduce_op_shape_2_axis(self) -> None:
+    def test_reduce_op_shape_2_axis_opset13(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11))],
             [make_node("ReduceL1", "x", "y", axes=(1, 2), keepdims=0)],
             [],
+            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (1, 2))],
         )
+        operatorsetid = OperatorSetIdProto()
+        operatorsetid.domain = ""
+        operatorsetid.version = 13
+
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (24,))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (24,))],
+            opset_imports=[operatorsetid],
         )
 
-    def test_reduce_op_shape_keep_dims(self) -> None:
+    def test_reduce_op_shape_2_axis_opset18(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (24, 4, 11)), ("axes", TensorProto.INT64, (2,))],
+            [make_node("ReduceL1", ["x", "axes"], "y", keepdims=0)],
+            [],
+            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (1, 2))],
+        )
+        operatorsetid = OperatorSetIdProto()
+        operatorsetid.domain = ""
+        operatorsetid.version = 18
+
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (24,))],
+            opset_imports=[operatorsetid],
+        )
+
+    def test_reduce_op_shape_keep_dims_opset13(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11))],
             [make_node("ReduceL1", "x", "y", axes=(1, 2), keepdims=1)],
             [],
+            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (1, 2))],
         )
+        operatorsetid = OperatorSetIdProto()
+        operatorsetid.domain = ""
+        operatorsetid.version = 13
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))],
+            opset_imports=[operatorsetid],
+        )
+
+    def test_reduce_op_shape_keep_dims_opset18(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (24, 4, 11)), ("axes", TensorProto.INT64, (2,))],
+            [make_node("ReduceL1", ["x", "axes"], "y", keepdims=1)],
+            [],
+            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (1, 2))],
+        )
+        operatorsetid = OperatorSetIdProto()
+        operatorsetid.domain = ""
+        operatorsetid.version = 18
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))],
+            opset_imports=[operatorsetid],
         )
 
     def test_reduce_op_shape_default_value(self) -> None:
@@ -2351,9 +2398,10 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_reduce_op_shape_negative_axis(self) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (24, 4, 11))],
-            [make_node("ReduceL1", "x", "y", axes=(-1, -2))],
+            [("x", TensorProto.FLOAT, (24, 4, 11)), ("axes", TensorProto.INT64, (2,))],
+            [make_node("ReduceL1", ["x", "axes"], "y")],
             [],
+            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (-1, -2))],
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 1))]

@@ -9,8 +9,8 @@ For an operator input/output's differentiability, it can be differentiable,
             is not specified, that variable has undefined differentiability.
 
 ### ai.onnx (default)
-|**Operator**|**Since version**|
-|-|-|
+|**Operator**|**Since version**||
+|-|-|-|
 |<a href="#Abs">Abs</a>|<a href="Changelog.md#Abs-13">13</a>, <a href="Changelog.md#Abs-6">6</a>, <a href="Changelog.md#Abs-1">1</a>|
 |<a href="#Acos">Acos</a>|<a href="Changelog.md#Acos-7">7</a>|
 |<a href="#Acosh">Acosh</a>|<a href="Changelog.md#Acosh-9">9</a>|
@@ -112,16 +112,11 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#RandomUniform">RandomUniform</a>|<a href="Changelog.md#RandomUniform-1">1</a>|
 |<a href="#RandomUniformLike">RandomUniformLike</a>|<a href="Changelog.md#RandomUniformLike-1">1</a>|
 |<a href="#Reciprocal">Reciprocal</a>|<a href="Changelog.md#Reciprocal-13">13</a>, <a href="Changelog.md#Reciprocal-6">6</a>, <a href="Changelog.md#Reciprocal-1">1</a>|
-|<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|
-|<a href="#ReduceL2">ReduceL2</a>|<a href="Changelog.md#ReduceL2-13">13</a>, <a href="Changelog.md#ReduceL2-11">11</a>, <a href="Changelog.md#ReduceL2-1">1</a>|
-|<a href="#ReduceLogSum">ReduceLogSum</a>|<a href="Changelog.md#ReduceLogSum-13">13</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>, <a href="Changelog.md#ReduceLogSum-1">1</a>|
-|<a href="#ReduceLogSumExp">ReduceLogSumExp</a>|<a href="Changelog.md#ReduceLogSumExp-13">13</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>, <a href="Changelog.md#ReduceLogSumExp-1">1</a>|
-|<a href="#ReduceMax">ReduceMax</a>|<a href="Changelog.md#ReduceMax-13">13</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-1">1</a>|
-|<a href="#ReduceMean">ReduceMean</a>|<a href="Changelog.md#ReduceMean-13">13</a>, <a href="Changelog.md#ReduceMean-11">11</a>, <a href="Changelog.md#ReduceMean-1">1</a>|
-|<a href="#ReduceMin">ReduceMin</a>|<a href="Changelog.md#ReduceMin-13">13</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-1">1</a>|
-|<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
+|<a href="#ReduceMax">ReduceMax</a>|<a href="Changelog.md#ReduceMax-18">18</a>, <a href="Changelog.md#ReduceMax-13">13</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-1">1</a>|
+|<a href="#ReduceMean">ReduceMean</a>|<a href="Changelog.md#ReduceMean-18">18</a>, <a href="Changelog.md#ReduceMean-13">13</a>, <a href="Changelog.md#ReduceMean-11">11</a>, <a href="Changelog.md#ReduceMean-1">1</a>|
+|<a href="#ReduceMin">ReduceMin</a>|<a href="Changelog.md#ReduceMin-18">18</a>, <a href="Changelog.md#ReduceMin-13">13</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-1">1</a>|
+|<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-18">18</a>, <a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
 |<a href="#ReduceSum">ReduceSum</a>|<a href="Changelog.md#ReduceSum-13">13</a>, <a href="Changelog.md#ReduceSum-11">11</a>, <a href="Changelog.md#ReduceSum-1">1</a>|
-|<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
 |<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
@@ -165,43 +160,48 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
-|**Function**|**Since version**|
-|<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|
-|<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|
-|<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|
-|<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|
-|<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|
-|<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|
-|<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|
-|<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|
-|<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|
-|<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-18">18</a>|
-|<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|
-|<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|
-|<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|
-|<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|
-|<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|
-|<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|
-|<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|
-|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|
-|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|
-|<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-18">18</a>|
-|<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|
-|<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|
-|<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|
-|<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|
-|<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|
-|<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|
-|<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|
-|<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|
-|<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|
-|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|
-|<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|
-|<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-10">10</a>|
+|**Function**|**Since version**|**Function version**|
+|<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|15|
+|<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
+|<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-15">15</a>|15|
+|<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|12|
+|<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
+|<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
+|<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
+|<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
+|<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
+|<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-18">18</a>|18|
+|<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|17|
+|<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|17|
+|<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|18|
+|<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|14|
+|<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|17, 18|
+|<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
+|<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
+|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18|
+|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
+|<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-18">18</a>|18|
+|<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|13|
+|<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
+|<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|11|
+|<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
+|<a href="#ReduceL2">ReduceL2</a>|<a href="Changelog.md#ReduceL2-18">18</a>, <a href="Changelog.md#ReduceL2-13">13</a>, <a href="Changelog.md#ReduceL2-11">11</a>, <a href="Changelog.md#ReduceL2-1">1</a>|18|
+|<a href="#ReduceLogSum">ReduceLogSum</a>|<a href="Changelog.md#ReduceLogSum-18">18</a>, <a href="Changelog.md#ReduceLogSum-13">13</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>, <a href="Changelog.md#ReduceLogSum-1">1</a>|18|
+|<a href="#ReduceLogSumExp">ReduceLogSumExp</a>|<a href="Changelog.md#ReduceLogSumExp-18">18</a>, <a href="Changelog.md#ReduceLogSumExp-13">13</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>, <a href="Changelog.md#ReduceLogSumExp-1">1</a>|18|
+|<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-18">18</a>, <a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|18|
+|<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|18|
+|<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|18|
+|<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|17|
+|<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|18|
+|<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|13, 18|
+|<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
+|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|1|
+|<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|18|
+|<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
 
 ### ai.onnx.preview.training
-|**Operator**|**Since version**|
-|-|-|
+|**Operator**|**Since version**||
+|-|-|-|
 |<a href="#ai.onnx.preview.training.Adagrad">ai.onnx.preview.training.Adagrad</a>|<a href="Changelog.md#ai.onnx.preview.training.Adagrad-1">1</a>|
 |<a href="#ai.onnx.preview.training.Adam">ai.onnx.preview.training.Adam</a>|<a href="Changelog.md#ai.onnx.preview.training.Adam-1">1</a>|
 |<a href="#ai.onnx.preview.training.Gradient">ai.onnx.preview.training.Gradient</a>|<a href="Changelog.md#ai.onnx.preview.training.Gradient-1">1</a>|
@@ -18241,24 +18241,26 @@ expect(node, inputs=[x], outputs=[y], name="test_reciprocal")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a href="Changelog.md#ReduceL1-11">11</a>
+Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -18283,35 +18285,35 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 
 ```python
 shape = [3, 2, 2]
-axes = None
+axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
-    "ReduceL1", inputs=["data"], outputs=["reduced"], keepdims=keepdims
+    "ReduceL1", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
 )
 
 data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
 # print(data)
 # [[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
 
-reduced = np.sum(a=np.abs(data), axis=axes, keepdims=keepdims == 1)
+reduced = np.sum(a=np.abs(data), axis=None, keepdims=keepdims == 1)
 # print(reduced)
 # [[[78.]]]
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_default_axes_keepdims_example",
 )
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sum(a=np.abs(data), axis=axes, keepdims=keepdims == 1)
+reduced = np.sum(a=np.abs(data), axis=None, keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_default_axes_keepdims_random",
 )
@@ -18325,14 +18327,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [2]
+axes = np.array([2], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
     "ReduceL1",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -18346,7 +18347,7 @@ reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_do_not_keepdims_example",
 )
@@ -18357,7 +18358,7 @@ reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_do_not_keepdims_random",
 )
@@ -18371,14 +18372,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [2]
+axes = np.array([2], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceL1",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -18392,7 +18392,7 @@ reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_keep_dims_example",
 )
@@ -18403,7 +18403,7 @@ reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_keep_dims_random",
 )
@@ -18417,14 +18417,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [-1]
+axes = np.array([-1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceL1",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -18438,7 +18437,7 @@ reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_negative_axes_keep_dims_example",
 )
@@ -18449,7 +18448,7 @@ reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_negative_axes_keep_dims_random",
 )
@@ -18469,24 +18468,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a href="Changelog.md#ReduceL2-11">11</a>
+Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a href="Changelog.md#ReduceL2-11">11</a>, <a href="Changelog.md#ReduceL2-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -18511,35 +18512,35 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 
 ```python
 shape = [3, 2, 2]
-axes = None
+axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
-    "ReduceL2", inputs=["data"], outputs=["reduced"], keepdims=keepdims
+    "ReduceL2", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
 )
 
 data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
 # print(data)
 # [[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
 
-reduced = np.sqrt(np.sum(a=np.square(data), axis=axes, keepdims=keepdims == 1))
+reduced = np.sqrt(np.sum(a=np.square(data), axis=None, keepdims=keepdims == 1))
 # print(reduced)
 # [[[25.49509757]]]
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_default_axes_keepdims_example",
 )
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sqrt(np.sum(a=np.square(data), axis=axes, keepdims=keepdims == 1))
+reduced = np.sqrt(np.sum(a=np.square(data), axis=None, keepdims=keepdims == 1))
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_default_axes_keepdims_random",
 )
@@ -18553,14 +18554,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [2]
+axes = np.array([2], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
     "ReduceL2",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -18578,7 +18578,7 @@ reduced = np.sqrt(
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_do_not_keepdims_example",
 )
@@ -18591,7 +18591,7 @@ reduced = np.sqrt(
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_do_not_keepdims_random",
 )
@@ -18605,14 +18605,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [2]
+axes = np.array([2], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceL2",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -18630,7 +18629,7 @@ reduced = np.sqrt(
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_keep_dims_example",
 )
@@ -18643,7 +18642,7 @@ reduced = np.sqrt(
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_keep_dims_random",
 )
@@ -18657,14 +18656,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [-1]
+axes = np.array([-1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceL2",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -18682,7 +18680,7 @@ reduced = np.sqrt(
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_negative_axes_keep_dims_example",
 )
@@ -18695,7 +18693,7 @@ reduced = np.sqrt(
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_negative_axes_keep_dims_random",
 )
@@ -18715,24 +18713,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>
+Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>, <a href="Changelog.md#ReduceLogSum-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -18757,12 +18757,16 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 
 ```python
 node = onnx.helper.make_node(
-    "ReduceLogSum", inputs=["data"], outputs=["reduced"]
+    "ReduceLogSum", inputs=["data", "axes"], outputs=["reduced"]
 )
 data = np.random.ranf([3, 4, 5]).astype(np.float32)
 reduced = np.log(np.sum(data, keepdims=True))
+axes = np.array([], dtype=np.int64)
 expect(
-    node, inputs=[data], outputs=[reduced], name="test_reduce_log_sum_default"
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_default",
 )
 ```
 
@@ -18773,15 +18777,16 @@ expect(
 <summary>negative_axes_keepdims</summary>
 
 ```python
+axes = np.array([-2], dtype=np.int64)
 node = onnx.helper.make_node(
-    "ReduceLogSum", inputs=["data"], outputs=["reduced"], axes=[-2]
+    "ReduceLogSum", inputs=["data", "axes"], outputs=["reduced"]
 )
 data = np.random.ranf([3, 4, 5]).astype(np.float32)
-reduced = np.log(np.sum(data, axis=(-2), keepdims=True))
+reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=True))
 # print(reduced)
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_negative_axes",
 )
@@ -18794,30 +18799,38 @@ expect(
 <summary>nokeepdims</summary>
 
 ```python
-node = onnx.helper.make_node(
-    "ReduceLogSum",
-    inputs=["data"],
-    outputs=["reduced"],
-    axes=[2, 1],
-    keepdims=0,
-)
-data = np.random.ranf([3, 4, 5]).astype(np.float32)
-reduced = np.log(np.sum(data, axis=(2, 1), keepdims=False))
-expect(
-    node, inputs=[data], outputs=[reduced], name="test_reduce_log_sum_desc_axes"
-)
+shape = [3, 4, 5]
+axes = np.array([2, 1], dtype=np.int64)
 
 node = onnx.helper.make_node(
     "ReduceLogSum",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=[0, 1],
     keepdims=0,
 )
-data = np.random.ranf([3, 4, 5]).astype(np.float32)
-reduced = np.log(np.sum(data, axis=(0, 1), keepdims=False))
+data = np.random.ranf(shape).astype(np.float32)
+reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=False))
 expect(
-    node, inputs=[data], outputs=[reduced], name="test_reduce_log_sum_asc_axes"
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_desc_axes",
+)
+
+axes = np.array([0, 1], dtype=np.int64)
+node = onnx.helper.make_node(
+    "ReduceLogSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=0,
+)
+data = np.random.ranf(shape).astype(np.float32)
+reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=False))
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_asc_axes",
 )
 ```
 
@@ -18835,24 +18848,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>
+Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>, <a href="Changelog.md#ReduceLogSumExp-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -18877,33 +18892,36 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 
 ```python
 shape = [3, 2, 2]
-axes = None
+axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
-    "ReduceLogSumExp", inputs=["data"], outputs=["reduced"], keepdims=keepdims
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
 )
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.double
 )
-reduced = np.log(np.sum(np.exp(data), axis=axes, keepdims=keepdims == 1))
+reduced = np.log(np.sum(np.exp(data), axis=None, keepdims=keepdims == 1))
 # print(reduced)
 # [[[60.00671387]]]
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_default_axes_keepdims_example",
 )
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.double)
-reduced = np.log(np.sum(np.exp(data), axis=axes, keepdims=keepdims == 1))
+reduced = np.log(np.sum(np.exp(data), axis=None, keepdims=keepdims == 1))
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_default_axes_keepdims_random",
 )
@@ -18917,13 +18935,12 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 0
 node = onnx.helper.make_node(
     "ReduceLogSumExp",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -18938,7 +18955,7 @@ reduced = np.log(np.sum(np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_do_not_keepdims_example",
 )
@@ -18949,7 +18966,7 @@ reduced = np.log(np.sum(np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_do_not_keepdims_random",
 )
@@ -18963,13 +18980,12 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 1
 node = onnx.helper.make_node(
     "ReduceLogSumExp",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -18984,7 +19000,7 @@ reduced = np.log(np.sum(np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_keepdims_example",
 )
@@ -18995,7 +19011,7 @@ reduced = np.log(np.sum(np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_keepdims_random",
 )
@@ -19009,13 +19025,12 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [-2]
+axes = np.array([-2], dtype=np.int64)
 keepdims = 1
 node = onnx.helper.make_node(
     "ReduceLogSumExp",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19030,18 +19045,20 @@ reduced = np.log(np.sum(np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_negative_axes_keepdims_example",
 )
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.double)
-reduced = np.log(np.sum(np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
+reduced = np.log(
+    np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1)
+)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_negative_axes_keepdims_random",
 )
@@ -19061,24 +19078,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-12">12</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -19142,14 +19161,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
     "ReduceMax",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19165,7 +19183,7 @@ reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_example",
 )
@@ -19176,7 +19194,7 @@ reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_random",
 )
@@ -19190,14 +19208,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceMax",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19213,7 +19230,7 @@ reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_keepdims_example",
 )
@@ -19224,7 +19241,7 @@ reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_keepdims_random",
 )
@@ -19238,14 +19255,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [-2]
+axes = np.array([-2], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceMax",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19261,7 +19277,7 @@ reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_negative_axes_keepdims_example",
 )
@@ -19272,7 +19288,7 @@ reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_negative_axes_keepdims_random",
 )
@@ -19292,24 +19308,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a href="Changelog.md#ReduceMean-11">11</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a href="Changelog.md#ReduceMean-11">11</a>, <a href="Changelog.md#ReduceMean-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -19334,35 +19352,38 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 
 ```python
 shape = [3, 2, 2]
-axes = None
+axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
-    "ReduceMean", inputs=["data"], outputs=["reduced"], keepdims=keepdims
+    "ReduceMean",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
 )
 
 data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
     dtype=np.float32,
 )
-reduced = np.mean(data, axis=axes, keepdims=keepdims == 1)
+reduced = np.mean(data, axis=None, keepdims=keepdims == 1)
 # print(reduced)
 # [[[18.25]]]
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_mean_default_axes_keepdims_example",
 )
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.mean(data, axis=axes, keepdims=keepdims == 1)
+reduced = np.mean(data, axis=None, keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_mean_default_axes_keepdims_random",
 )
@@ -19376,14 +19397,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
     "ReduceMean",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19399,7 +19419,7 @@ reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_mean_do_not_keepdims_example",
 )
@@ -19410,7 +19430,7 @@ reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_mean_do_not_keepdims_random",
 )
@@ -19424,14 +19444,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceMean",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19447,7 +19466,7 @@ reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_mean_keepdims_example",
 )
@@ -19458,7 +19477,7 @@ reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_mean_keepdims_random",
 )
@@ -19472,14 +19491,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [-2]
+axes = np.array([-2], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceMean",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19495,7 +19513,7 @@ reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_mean_negative_axes_keepdims_example",
 )
@@ -19506,7 +19524,7 @@ reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_mean_negative_axes_keepdims_random",
 )
@@ -19526,24 +19544,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-12">12</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -19610,14 +19630,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
     "ReduceMin",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19633,7 +19652,7 @@ reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_do_not_keepdims_example",
 )
@@ -19644,7 +19663,7 @@ reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_do_not_keepdims_random",
 )
@@ -19658,14 +19677,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceMin",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19681,7 +19699,7 @@ reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_keepdims_example",
 )
@@ -19692,7 +19710,7 @@ reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_keepdims_random",
 )
@@ -19706,14 +19724,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [-2]
+axes = np.array([-2], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceMin",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19729,7 +19746,7 @@ reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_negative_axes_keepdims_example",
 )
@@ -19740,7 +19757,7 @@ reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_negative_axes_keepdims_random",
 )
@@ -19760,24 +19777,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a href="Changelog.md#ReduceProd-11">11</a>
+Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -19842,14 +19861,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
     "ReduceProd",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19864,7 +19882,7 @@ reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_prod_do_not_keepdims_example",
 )
@@ -19874,7 +19892,7 @@ data = np.random.uniform(-10, 10, shape).astype(np.float32)
 reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_prod_do_not_keepdims_random",
 )
@@ -19888,14 +19906,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceProd",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19910,7 +19927,7 @@ reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_prod_keepdims_example",
 )
@@ -19920,7 +19937,7 @@ data = np.random.uniform(-10, 10, shape).astype(np.float32)
 reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_prod_keepdims_random",
 )
@@ -19934,14 +19951,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [-2]
+axes = np.array([-2], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceProd",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -19956,7 +19972,7 @@ reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_prod_negative_axes_keepdims_example",
 )
@@ -19966,7 +19982,7 @@ data = np.random.uniform(-10, 10, shape).astype(np.float32)
 reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_prod_negative_axes_keepdims_random",
 )
@@ -19996,7 +20012,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behaviour if 'axes' is empty. Default behaviour with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -20251,24 +20267,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 18 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>
+Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-13">13</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
+<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (1 - 2)
 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -20293,34 +20311,37 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 
 ```python
 shape = [3, 2, 2]
-axes = None
+axes = np.array([], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
-    "ReduceSumSquare", inputs=["data"], outputs=["reduced"], keepdims=keepdims
+    "ReduceSumSquare",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
 )
 
 data = np.array(
     [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32
 )
-reduced = np.sum(np.square(data), axis=axes, keepdims=keepdims == 1)
+reduced = np.sum(np.square(data), axis=None, keepdims=keepdims == 1)
 # print(reduced)
 # [[[650.]]]
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_default_axes_keepdims_example",
 )
 
 np.random.seed(0)
 data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = np.sum(np.square(data), axis=axes, keepdims=keepdims == 1)
+reduced = np.sum(np.square(data), axis=None, keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_default_axes_keepdims_random",
 )
@@ -20334,14 +20355,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 0
 
 node = onnx.helper.make_node(
     "ReduceSumSquare",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -20356,7 +20376,7 @@ reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_do_not_keepdims_example",
 )
@@ -20367,7 +20387,7 @@ reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_do_not_keepdims_random",
 )
@@ -20381,14 +20401,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [1]
+axes = np.array([1], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceSumSquare",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -20403,7 +20422,7 @@ reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_keepdims_example",
 )
@@ -20414,7 +20433,7 @@ reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_keepdims_random",
 )
@@ -20428,14 +20447,13 @@ expect(
 
 ```python
 shape = [3, 2, 2]
-axes = [-2]
+axes = np.array([-2], dtype=np.int64)
 keepdims = 1
 
 node = onnx.helper.make_node(
     "ReduceSumSquare",
-    inputs=["data"],
+    inputs=["data", "axes"],
     outputs=["reduced"],
-    axes=axes,
     keepdims=keepdims,
 )
 
@@ -20450,7 +20468,7 @@ reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_negative_axes_keepdims_example",
 )
@@ -20461,7 +20479,7 @@ reduced = np.sum(np.square(data), axis=tuple(axes), keepdims=keepdims == 1)
 
 expect(
     node,
-    inputs=[data],
+    inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_negative_axes_keepdims_random",
 )

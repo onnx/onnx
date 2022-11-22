@@ -9,8 +9,8 @@ For an operator input/output's differentiability, it can be differentiable,
             is not specified, that variable has undefined differentiability.
 
 ### ai.onnx.ml
-|**Operator**|**Since version**|
-|-|-|
+|**Operator**|**Since version**||
+|-|-|-|
 |<a href="#ai.onnx.ml.ArrayFeatureExtractor">ai.onnx.ml.ArrayFeatureExtractor</a>|<a href="Changelog-ml.md#ai.onnx.ml.ArrayFeatureExtractor-1">1</a>|
 |<a href="#ai.onnx.ml.Binarizer">ai.onnx.ml.Binarizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Binarizer-1">1</a>|
 |<a href="#ai.onnx.ml.CastMap">ai.onnx.ml.CastMap</a>|<a href="Changelog-ml.md#ai.onnx.ml.CastMap-1">1</a>|
