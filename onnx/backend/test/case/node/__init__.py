@@ -333,9 +333,7 @@ def expect(
         onnx_ai_opset_version = ""
         if "opset_imports" in kwargs:
             onnx_ai_opset_imports = [
-                oi
-                for oi in kwargs["opset_imports"]
-                if oi.domain in ("", "ai.onnx")
+                oi for oi in kwargs["opset_imports"] if oi.domain in ("", "ai.onnx")
             ]
             if len(onnx_ai_opset_imports) == 1:
                 onnx_ai_opset_version = onnx_ai_opset_imports[0].version
