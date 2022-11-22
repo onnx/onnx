@@ -220,7 +220,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
     try {
       bool validate = true;
       const FunctionProto* function = schema2->GetFunction(model_opset_import, validate);
-      if (model_opset_import >= 6) {    // function body should be updated at opset 6 where Sub is updated
+      if (model_opset_import >= 6) { // function body should be updated at opset 6 where Sub is updated
         ASSERT_TRUE(function == nullptr);
       } else {
         ASSERT_TRUE(function);
