@@ -28,21 +28,8 @@ class ReduceLogSumExp_1(OpRunReduceNumpy):
         return compute_log_sum_exp(data, tax, keepdims)
 
 
-class ReduceLogSumExp_11(ReduceLogSumExp_1):
-    pass
-
-
-class ReduceLogSumExp_13(ReduceLogSumExp_1):
-    pass
-
-
 class ReduceLogSumExp_18(OpRunReduceNumpy):
-    def run(self, data, axes=None, keepdims=None, noop_with_empty_axes=None):  # type: ignore
-        keepdims = keepdims or self.keepdims  # type: ignore
-        noop_with_empty_axes = noop_with_empty_axes or self.noop_with_empty_axes  # type: ignore
-        return self._run(data, axes, keepdims, noop_with_empty_axes)
-
-    def _run(self, data, axes, keepdims=1, noop_with_empty_axes=0):  # type: ignore
+    def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):  # type: ignore
         if self.is_axes_empty(axes) and noop_with_empty_axes:  # type: ignore
             return (data,)
 
@@ -54,9 +41,5 @@ class ReduceLogSumExp_18(OpRunReduceNumpy):
 
 if onnx_opset_version() >= 18:
     ReduceLogSumExp = ReduceLogSumExp_18
-elif onnx_opset_version() >= 13:
-    ReduceLogSumExp = ReduceLogSumExp_13  # type: ignore
-elif onnx_opset_version() >= 11:
-    ReduceLogSumExp = ReduceLogSumExp_11  # type: ignore
 else:
     ReduceLogSumExp = ReduceLogSumExp_1  # type: ignore
