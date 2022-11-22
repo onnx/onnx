@@ -525,6 +525,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<Split_17_18>());
     registerAdapter(make_unique<CompatibleAdapter>("ScatterND", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("ScatterElements", OpSetID(17), OpSetID(18)));
+    registerAdapter("LpPool", 17, 18, SetAttribute(kceil_mode, 0));
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceL1", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceL2", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceLogSum", OpSetID(17), OpSetID(18)));
