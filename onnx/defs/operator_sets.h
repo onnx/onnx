@@ -1010,11 +1010,21 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Split);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterElements);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceSumSquare);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSumExp);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL1);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL2);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMax);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMin);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMean);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceProd);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseAnd);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, GroupNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LpPool);
 
 // Iterate over schema from ai.onnx version 18
 class OpSet_Onnx_ver18 {
@@ -1030,11 +1040,21 @@ class OpSet_Onnx_ver18 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterElements)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceSumSquare)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSumExp)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL1)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL2)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMax)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMin)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMean)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceProd)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseAnd)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, GroupNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LpPool)>());
   }
 };
 

@@ -12,14 +12,13 @@ class ReduceMax(Base):
     @staticmethod
     def export_do_not_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [1]
+        axes = np.array([1], dtype=np.int64)
         keepdims = 0
 
         node = onnx.helper.make_node(
             "ReduceMax",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -35,7 +34,7 @@ class ReduceMax(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_do_not_keepdims_example",
         )
@@ -46,7 +45,7 @@ class ReduceMax(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_do_not_keepdims_random",
         )
@@ -54,14 +53,13 @@ class ReduceMax(Base):
     @staticmethod
     def export_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [1]
+        axes = np.array([1], dtype=np.int64)
         keepdims = 1
 
         node = onnx.helper.make_node(
             "ReduceMax",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -77,7 +75,7 @@ class ReduceMax(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_keepdims_example",
         )
@@ -88,7 +86,7 @@ class ReduceMax(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_keepdims_random",
         )
@@ -129,14 +127,13 @@ class ReduceMax(Base):
     @staticmethod
     def export_negative_axes_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [-2]
+        axes = np.array([-2], dtype=np.int64)
         keepdims = 1
 
         node = onnx.helper.make_node(
             "ReduceMax",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -152,7 +149,7 @@ class ReduceMax(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_negative_axes_keepdims_example",
         )
@@ -163,7 +160,7 @@ class ReduceMax(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_negative_axes_keepdims_random",
         )
