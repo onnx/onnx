@@ -8568,6 +8568,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ["x"],
                 ["y", "z"],
                 class_ids=[0, 1, 2, 3, 4],
+                classlabels_strings=["a", "b", "c", "d", "e"],
                 domain=ONNX_ML_DOMAIN,
             )
             graph = self._make_graph(

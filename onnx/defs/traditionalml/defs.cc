@@ -851,9 +851,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                 "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
           }
 
-          std::vector<std::string> label_strs;
-          auto result = getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
-          bool using_strings = (result && !label_strs.empty());
+          std::vector<std::string> classlabels_strings;
+          auto result = getRepeatedAttribute(ctx, "classlabels_strings", classlabels_strings);
+          bool using_strings = (result && !classlabels_strings.empty());
           if (using_strings) {
             updateOutputElemType(ctx, 0, TensorProto::STRING);
           } else {
@@ -864,10 +864,16 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           checkInputRank(ctx, 0, 2);
           Dim N, E;
           unifyInputDim(ctx, 0, 0, N);
-          std::vector<int64_t> class_ids;
-          auto has_ids = getRepeatedAttribute(ctx, "class_ids", class_ids);
-          if (has_ids) {
-            unifyDim(E, class_ids.size());
+
+          if (using_strings) {
+            unifyDim(E, classlabels_strings.size());
+          } else {
+            std::vector<int64_t> classlabels_int64s;
+            result = getRepeatedAttribute(ctx, "classlabels_int64s", classlabels_int64s);
+            if (!result || classlabels_int64s.empty()) {
+              fail_shape_inference("Non of classlabels_int64s or classlabels_strings is set.");
+            }
+            unifyDim(E, classlabels_int64s.size());
           }
           updateOutputShape(ctx, 0, {N});
           updateOutputShape(ctx, 1, {N, E});
