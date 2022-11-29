@@ -12,13 +12,12 @@ class ReduceLogSumExp(Base):
     @staticmethod
     def export_do_not_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [1]
+        axes = np.array([1], dtype=np.int64)
         keepdims = 0
         node = onnx.helper.make_node(
             "ReduceLogSumExp",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -33,7 +32,7 @@ class ReduceLogSumExp(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_log_sum_exp_do_not_keepdims_example",
         )
@@ -44,7 +43,7 @@ class ReduceLogSumExp(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_log_sum_exp_do_not_keepdims_random",
         )
@@ -52,13 +51,12 @@ class ReduceLogSumExp(Base):
     @staticmethod
     def export_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [1]
+        axes = np.array([1], dtype=np.int64)
         keepdims = 1
         node = onnx.helper.make_node(
             "ReduceLogSumExp",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -73,7 +71,7 @@ class ReduceLogSumExp(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_log_sum_exp_keepdims_example",
         )
@@ -84,7 +82,7 @@ class ReduceLogSumExp(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_log_sum_exp_keepdims_random",
         )
@@ -92,33 +90,36 @@ class ReduceLogSumExp(Base):
     @staticmethod
     def export_default_axes_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = None
+        axes = np.array([], dtype=np.int64)
         keepdims = 1
 
         node = onnx.helper.make_node(
-            "ReduceLogSumExp", inputs=["data"], outputs=["reduced"], keepdims=keepdims
+            "ReduceLogSumExp",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
         )
 
         data = np.array(
             [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.double
         )
-        reduced = np.log(np.sum(np.exp(data), axis=axes, keepdims=keepdims == 1))
+        reduced = np.log(np.sum(np.exp(data), axis=None, keepdims=keepdims == 1))
         # print(reduced)
         # [[[60.00671387]]]
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_log_sum_exp_default_axes_keepdims_example",
         )
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.double)
-        reduced = np.log(np.sum(np.exp(data), axis=axes, keepdims=keepdims == 1))
+        reduced = np.log(np.sum(np.exp(data), axis=None, keepdims=keepdims == 1))
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_log_sum_exp_default_axes_keepdims_random",
         )
@@ -126,13 +127,12 @@ class ReduceLogSumExp(Base):
     @staticmethod
     def export_negative_axes_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [-2]
+        axes = np.array([-2], dtype=np.int64)
         keepdims = 1
         node = onnx.helper.make_node(
             "ReduceLogSumExp",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -147,18 +147,20 @@ class ReduceLogSumExp(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_log_sum_exp_negative_axes_keepdims_example",
         )
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.double)
-        reduced = np.log(np.sum(np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
+        reduced = np.log(
+            np.sum(np.exp(data), axis=tuple(axes.tolist()), keepdims=keepdims == 1)
+        )
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_log_sum_exp_negative_axes_keepdims_random",
         )

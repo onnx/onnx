@@ -41,6 +41,10 @@ def format_name_with_domain(domain: str, schema_name: str) -> str:
     return schema_name
 
 
+def format_function_versions(function_versions: Sequence[int]) -> str:
+    return "{}".format(", ".join([str(v) for v in function_versions]))
+
+
 def format_versions(versions: Sequence[OpSchema]) -> str:
     return "{}".format(
         ", ".join(
@@ -338,14 +342,15 @@ def main(args: Args) -> None:
             s = f"### {display_domain_short(domain)}\n"
             fout.write(s)
 
-            fout.write("|**Operator**|**Since version**|\n")
-            fout.write("|-|-|\n")
+            fout.write("|**Operator**|**Since version**||\n")
+            fout.write("|-|-|-|\n")
 
             function_ops = list()
             for _, namemap in supportmap:
                 for n, schema, versions in namemap:
                     if schema.has_function or schema.has_context_dependent_function:  # type: ignore
-                        function_ops.append((n, schema, versions))
+                        function_versions = schema.all_function_opset_versions  # type: ignore
+                        function_ops.append((n, schema, versions, function_versions))
                         continue
                     s = '|{}<a href="#{}">{}</a>{}|{}|\n'.format(
                         support_level_str(schema.support_level),
@@ -356,13 +361,14 @@ def main(args: Args) -> None:
                     )
                     fout.write(s)
             if len(function_ops):
-                fout.write("|**Function**|**Since version**|\n")
-                for n, schema, versions in function_ops:
-                    s = '|{}<a href="#{}">{}</a>|{}|\n'.format(
+                fout.write("|**Function**|**Since version**|**Function version**|\n")
+                for n, schema, versions, function_versions in function_ops:
+                    s = '|{}<a href="#{}">{}</a>|{}|{}|\n'.format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),
                         format_versions(versions),
+                        format_function_versions(function_versions),
                     )
                     fout.write(s)
 

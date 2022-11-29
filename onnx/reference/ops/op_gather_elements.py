@@ -38,5 +38,8 @@ class GatherElements(OpRun):
     def _run(self, data, indices, axis=None):  # type: ignore
         if indices.size == 0:
             return (np.empty((0,), dtype=data.dtype),)
-        y = gather_numpy(data, axis, indices)
-        return (y,)
+        try:
+            return (gather_numpy(data, axis, indices),)
+        except TypeError:
+            # distribution x86 requires int32.
+            return (gather_numpy(data, axis, indices.astype(int)),)

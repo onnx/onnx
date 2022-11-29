@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
@@ -548,7 +549,29 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
- data into the output tensor Y for further processing.)DOC";
+ data into the output tensor Y for further processing. The output spatial shape will be following:
+ ```
+ output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+ ```
+ or
+ ```
+ output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+ ```
+ if ceil_mode is enabled
+
+ ```
+ * pad_shape[i] is sum of pads along axis i
+ ```
+
+ `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+ ```
+ VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
+ SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+ ```
+ And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+ ```
+ pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + {kernelSpatialShape} - input_spatial_shape[i]
+ ```)DOC";
                         ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS);
@@ -557,10 +580,20 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.",
         AttributeProto::INTS,
         OPTIONAL_VALUE);
+    schema.Attr(
+        "dilations",
+        "dilation value along each spatial axis of the filter. If not present, the dilation defaults is 1 along each spatial axis.",
+        AttributeProto::INTS,
+        OPTIONAL_VALUE);
     schema.Attr("auto_pad", conv_auto_pad_doc, AttributeProto::STRING, std::string("NOTSET"));
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL_VALUE);
     schema.Attr(
         "p", "p value of the Lp norm used to pool over the input data.", AttributeProto::INT, static_cast<int64_t>(2));
+    schema.Attr(
+        "ceil_mode",
+        "Whether to use ceil or floor (default) to compute the output shape.",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
     schema.Input(
         0,
         "X",
@@ -594,12 +627,12 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      convPoolShapeInference(ctx, false, true, 0, 1);
+      convPoolShapeInference(ctx, true, true, 0, 1);
     });
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(LpPool, 11, OpSchema().FillUsing(LpPoolOpSchemaGenerator("LpPool")));
+ONNX_OPERATOR_SET_SCHEMA(LpPool, 18, OpSchema().FillUsing(LpPoolOpSchemaGenerator("LpPool")));
 
 // For ROI pool operations.
 void roiPoolTypeShapeInference(InferenceContext& ctx) {
@@ -1842,7 +1875,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Lambd = Constant <value_float: float = @lambd>()
             LambdCast = CastLike (Lambd, input)
@@ -1858,8 +1892,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             InputSubBiasOrZero = Where (LambdaLessThanInput, InputSubBias, ZeroCast)
             output = Where(InputLessThanNegLambda, InputAddBias, InputSubBiasOrZero)
 		      }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+            18));
 
 static const char* Flatten_ver13_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -2173,7 +2207,7 @@ static const char* mvn_ver13_doc = R"DOC(
       on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 )DOC";
 
-static std::vector<int64_t> mvn_default_axes = {0, 2, 3};
+static const std::vector<int64_t> mvn_default_axes = {0, 2, 3};
 
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
@@ -2208,7 +2242,25 @@ ONNX_OPERATOR_SET_SCHEMA(
           Processed_STD = Add (STD, Epsilon)
           Y = Div (X_variance, Processed_STD)
         }
-        )ONNX"));
+        )ONNX")
+        .FunctionBody(
+            R"ONNX(
+        {
+          Exponent = Constant <value = float {2.0}>()
+          Epsilon = Constant <value = float {1e-9}>()
+          axes = Constant <value_ints: ints = @axes>()
+          X_RM = ReduceMean (X, axes)
+          EX_squared = Pow (X_RM, Exponent)
+          X_squared = Pow (X, Exponent)
+          E_Xsquared = ReduceMean (X_squared, axes)
+          Variance = Sub (E_Xsquared, EX_squared)
+          STD = Sqrt (Variance)
+          X_variance = Sub (X, X_RM)
+          Processed_STD = Add (STD, Epsilon)
+          Y = Div (X_variance, Processed_STD)
+        }
+        )ONNX",
+            18));
 
 void col2imShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2437,6 +2489,110 @@ static const char* LayerNormalization_ver17_doc = R"DOC(
       `Y` and `X` have the same shape.
 )DOC";
 
+bool BuildContextDependentFunctionBodyLayerNormalization(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto,
+    int sinceVersion) {
+  ONNX_ASSERT(sinceVersion == 17 || sinceVersion == 18);
+  // LayerNormalization <axis, epsilon, stash_type> (X, Scale, B) => (Y, Mean?, InvStdDev?)
+  auto* tp = ctx.getInputType(0);
+  if ((tp == nullptr) || (!tp->has_tensor_type()))
+    return false;
+  int64_t T = tp->tensor_type().elem_type();
+
+  auto type_attr = ctx.getAttribute("stash_type");
+  int64_t U =
+      (type_attr != nullptr) ? type_attr->i() : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+  if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) && (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16))
+    return false; // Error
+
+  auto* axis_attr = ctx.getAttribute("axis");
+  int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
+  auto* epsilon_attr = ctx.getAttribute("epsilon");
+  float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+
+  auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+    auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+    tp.add_dims(1);
+    return tp;
+  };
+  // The treatment of "axis" is different in "LayerNormalization" and in Reduction operations.
+  // This complicates the function definition, requiring reshaping inputs/outputs.
+  // Input X shape: [d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]
+  // This is treated as a 2D shape [d[0] * ... * d[axis-1], d[axis] * ... * d[rank-1]]
+  // Normalization is applied to the second dimension.
+  // Output Y has same shape as X
+  // Outputs Mean and InvStdDev have shape: [d[0], ..., d[axis-1], 1, ..., 1]
+  FunctionBuilder builder(functionProto);
+  builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
+      .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+      .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
+      .Add("Rank = Size (XShape)") // rank of input tensor: scalar
+      .Add("Zero1D = Constant()", "value", mktensor(0)) // [0] : 1D tensor
+      .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
+      .Add("PrefixShape = Slice (XShape, Zero1D, Axis1D)") // [d[0], ..., d[axis-1]]
+      .Add(
+          axis >= 0 // number of axes that are reduced =
+              ? "NumReducedAxes = Sub (Rank, Axis1D)" // [rank - axis]: 1D tensor
+              : "NumReducedAxes = Neg (Axis1D)") // [-axis] : 1D tensor
+      .Add(
+          "SuffixShape = ConstantOfShape (NumReducedAxes)",
+          "value",
+          mktensor(1)) // [1, ..., 1] for reduced axes
+      .Add("ReducedShape = Concat <axis = 0> (PrefixShape, SuffixShape)") // [d[0], ..., d[axis-1], 1, ..., 1]
+      .Add("X2D = Flatten (X)", "axis", axis)
+      .Add("XU = Cast (X2D)", "to", U);
+  if (sinceVersion == 17) {
+    builder.Add("Mean2D = ReduceMean <axes = [1]> (XU)")
+        .Add("Square = Mul (XU, XU)")
+        .Add("MeanOfSquare = ReduceMean <axes = [1]> (Square)");
+  } else if (sinceVersion == 18) {
+    builder.Add("Axes_1 = Constant()", "value", mktensor(1))
+        .Add("Mean2D = ReduceMean (XU, Axes_1)")
+        .Add("Square = Mul (XU, XU)")
+        .Add("MeanOfSquare = ReduceMean (Square, Axes_1)");
+  }
+  builder.Add("SquareOfMean = Mul (Mean2D, Mean2D)")
+      .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
+      .Add("VarPlusEpsilon = Add (Var, Epsilon)")
+      .Add("StdDev = Sqrt (VarPlusEpsilon)")
+      .Add("Deviation = Sub (XU, Mean2D)")
+      .Add("Normalized = Div (Deviation, StdDev)")
+      .Add("NormalizedT = Cast (Normalized)", "to", T)
+      .Add("Scale2D = Flatten <axis = 0> (Scale)")
+      .Add("Scaled = Mul (NormalizedT, Scale2D)");
+  if (ctx.hasInput(2)) {
+    builder.Add("B2D = Flatten <axis=0> (B)");
+    builder.Add("Biased = Add (Scaled, B2D)");
+  } else {
+    builder.Add("Biased = Identity (Scaled)");
+  }
+  builder.Add("Y = Reshape (Biased, XShape)");
+  builder.Add("InvStdDev2D = Reciprocal (StdDev)");
+  if (ctx.hasOutput(1))
+    builder.Add("Mean = Reshape (Mean2D, ReducedShape)");
+  if (ctx.hasOutput(2))
+    builder.Add("InvStdDev = Reshape (InvStdDev2D, ReducedShape)");
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+bool BuildContextDependentFunctionBodyLayerNormalizationVer17(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildContextDependentFunctionBodyLayerNormalization(ctx, schema, functionProto, 17);
+}
+
+bool BuildContextDependentFunctionBodyLayerNormalizationVer18(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildContextDependentFunctionBodyLayerNormalization(ctx, schema, functionProto, 18);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     LayerNormalization,
     17,
@@ -2471,6 +2627,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input types and output Y type to float tensors.")
         .TypeConstraint("U", {"tensor(float)", "tensor(bfloat16)"}, "Type of Mean and InvStdDev tensors.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer17, 17)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer18, 18)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           auto stash_type = static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
@@ -2515,85 +2673,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int d = static_cast<int>(axis); d < input_ndim; ++d)
               inv_std_dev_shape->mutable_dim(d)->set_dim_value(1);
           }
-        })
-        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
-                                                   const OpSchema& schema,
-                                                   FunctionProto& functionProto) {
-          // LayerNormalization <axis, epsilon, stash_type> (X, Scale, B) => (Y, Mean?, InvStdDev?)
-          auto* tp = ctx.getInputType(0);
-          if ((tp == nullptr) || (!tp->has_tensor_type()))
-            return false;
-          int64_t T = tp->tensor_type().elem_type();
-
-          auto type_attr = ctx.getAttribute("stash_type");
-          int64_t U = (type_attr != nullptr) ? type_attr->i()
-                                             : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-          if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) && (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16))
-            return false; // Error
-
-          auto* axis_attr = ctx.getAttribute("axis");
-          int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
-          auto* epsilon_attr = ctx.getAttribute("epsilon");
-          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
-
-          auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
-            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
-            tp.add_dims(1);
-            return tp;
-          };
-          // The treatment of "axis" is different in "LayerNormalization" and in Reduction operations.
-          // This complicates the function definition, requiring reshaping inputs/outputs.
-          // Input X shape: [d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]
-          // This is treated as a 2D shape [d[0] * ... * d[axis-1], d[axis] * ... * d[rank-1]]
-          // Normalization is applied to the second dimension.
-          // Output Y has same shape as X
-          // Outputs Mean and InvStdDev have shape: [d[0], ..., d[axis-1], 1, ..., 1]
-          FunctionBuilder builder(functionProto);
-          builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
-              .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
-              .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
-              .Add("Rank = Size (XShape)") // rank of input tensor: scalar
-              .Add("Zero1D = Constant()", "value", mktensor(0)) // [0] : 1D tensor
-              .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
-              .Add("PrefixShape = Slice (XShape, Zero1D, Axis1D)") // [d[0], ..., d[axis-1]]
-              .Add(
-                  axis >= 0 // number of axes that are reduced =
-                      ? "NumReducedAxes = Sub (Rank, Axis1D)" // [rank - axis]: 1D tensor
-                      : "NumReducedAxes = Neg (Axis1D)") // [-axis] : 1D tensor
-              .Add(
-                  "SuffixShape = ConstantOfShape (NumReducedAxes)",
-                  "value",
-                  mktensor(1)) // [1, ..., 1] for reduced axes
-              .Add("ReducedShape = Concat <axis = 0> (PrefixShape, SuffixShape)") // [d[0], ..., d[axis-1], 1, ..., 1]
-              .Add("X2D = Flatten (X)", "axis", axis)
-              .Add("XU = Cast (X2D)", "to", U)
-              .Add("Mean2D = ReduceMean <axes = [1]> (XU)")
-              .Add("Square = Mul (XU, XU)")
-              .Add("MeanOfSquare = ReduceMean <axes = [1]> (Square)")
-              .Add("SquareOfMean = Mul (Mean2D, Mean2D)")
-              .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
-              .Add("VarPlusEpsilon = Add (Var, Epsilon)")
-              .Add("StdDev = Sqrt (VarPlusEpsilon)")
-              .Add("Deviation = Sub (XU, Mean2D)")
-              .Add("Normalized = Div (Deviation, StdDev)")
-              .Add("NormalizedT = Cast (Normalized)", "to", T)
-              .Add("Scale2D = Flatten <axis = 0> (Scale)")
-              .Add("Scaled = Mul (NormalizedT, Scale2D)");
-          if (ctx.hasInput(2)) {
-            builder.Add("B2D = Flatten <axis=0> (B)");
-            builder.Add("Biased = Add (Scaled, B2D)");
-          } else {
-            builder.Add("Biased = Identity (Scaled)");
-          }
-          builder.Add("Y = Reshape (Biased, XShape)");
-          builder.Add("InvStdDev2D = Reciprocal (StdDev)");
-          if (ctx.hasOutput(1))
-            builder.Add("Mean = Reshape (Mean2D, ReducedShape)");
-          if (ctx.hasOutput(2))
-            builder.Add("InvStdDev = Reshape (InvStdDev2D, ReducedShape)");
-
-          schema.BuildFunction(functionProto);
-          return true;
         }));
 
 static const char* GroupNormalization_ver18_doc = R"DOC(
@@ -2702,9 +2781,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("X3D = Reshape(XReshaped, Shape3D)")
 
                   // Calculate statistics
-                  .Add("Mean = ReduceMean <axes = [2]> (X3D)")
+                  .Const1D("Axes2", (int64_t)2)
+                  .Add("Mean = ReduceMean (X3D, Axes2)")
                   .Add("Square = Mul (X3D, X3D)")
-                  .Add("MeanOfSquare = ReduceMean <axes = [2]> (Square)")
+                  .Add("MeanOfSquare = ReduceMean (Square, Axes2)")
                   .Add("SquareOfMean = Mul (Mean, Mean)")
                   .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
                   .Add("VarPlusEpsilon = Add (Var, Epsilon)")

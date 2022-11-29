@@ -17,6 +17,8 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
         if k.size != 1:
             raise RuntimeError(f"k must be an integer not {k!r}.")
         k = k[0]
+    # This conversion is needed for distribution x86.
+    k = int(k)
     if len(X.shape) == 2 and axis == 1:
         sample_range = np.arange(X.shape[0])[:, None]
         if largest == 0:

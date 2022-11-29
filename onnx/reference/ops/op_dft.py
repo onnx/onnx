@@ -11,7 +11,13 @@ from onnx.reference.op_run import OpRun
 def _fft(x: np.ndarray, fft_length: Sequence[int], axis: int) -> np.ndarray:
     if fft_length is None:
         fft_length = [x.shape[axis]]
-    ft = np.fft.fft(x, fft_length[0], axis=axis)
+    try:
+        ft = np.fft.fft(x, fft_length[0], axis=axis)
+    except TypeError:
+        # numpy 1.16.6, an array cannot be a key in the dictionary
+        # fixed in numpy 1.21.5.
+        ft = np.fft.fft(x, int(fft_length[0]), axis=axis)
+
     r = np.real(ft)
     i = np.imag(ft)
     merged = np.vstack([r[np.newaxis, ...], i[np.newaxis, ...]])

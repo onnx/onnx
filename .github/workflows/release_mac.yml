@@ -20,8 +20,9 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
-        architecture: ['x64']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        host-architecture: ['x64']
+        target-architecture: ['x86_64', 'universal2']
 
     steps:
     - uses: actions/checkout@v3
@@ -35,14 +36,12 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        architecture: ${{ matrix.architecture }}
+        architecture: ${{ matrix.host-architecture }}
 
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
-        # Mac cannot work with Python Protobuf 3.18.3 https://github.com/protocolbuffers/protobuf/issues/10691
-        python -m pip install protobuf==3.19.5
 
     - name: Build wheel and install
       env:
@@ -52,14 +51,19 @@ jobs:
       run: |
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
+        if [ '${{ matrix.target-architecture }}' == 'x86_64' ]; then
+          export CMAKE_OSX_ARCHITECTURES=x86_64
+        elif [ '${{ matrix.target-architecture }}' == 'universal2' ]; then
+          export CMAKE_OSX_ARCHITECTURES='arm64;x86_64'
+        fi
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
         # Currently GitHub Action agent is using macos-11, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
         if [ '${{ github.event_name }}' == 'schedule' ]; then
-          python setup.py bdist_wheel -p macosx_10_12_x86_64 --weekly_build
+          python setup.py bdist_wheel -p macosx_10_12_${{ matrix.target-architecture }} --weekly_build
         else
-          python setup.py bdist_wheel -p macosx_10_12_x86_64
+          python setup.py bdist_wheel -p macosx_10_12_${{ matrix.target-architecture }}
         fi
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
 
@@ -94,26 +98,26 @@ jobs:
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
       if: ${{ always() }}
       run: |
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.20.2
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != '3.11'
       run: |
         python -m pip install -q onnxruntime
         python onnx/test/test_with_ort.py
-
+  
+    # Only triggered by weekly event on certain CI
     - name: Build and upload source distribution to TestPyPI weekly
-      if: github.event_name == 'schedule' && matrix.python-version == '3.10' # Only triggered by weekly event on Python 3.10
+      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'x86_64'
       run: |
         # Build and upload source distribution to TestPyPI
         git clean -xdf
         python setup.py sdist --weekly_build
         twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
-
-    - name: Test source distribution from TestPyPI
-      if: github.event_name == 'schedule' && matrix.python-version == '3.10'
-      run: |
+        
+        # Test source distribution from TestPyPI
         python -m pip uninstall -y onnx
         python -m pip install setuptools
         python -m pip install --index-url https://test.pypi.org/simple --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly

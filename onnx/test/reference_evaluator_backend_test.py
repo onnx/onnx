@@ -23,7 +23,13 @@ import pprint
 import unittest
 import warnings
 
+try:
+    from packaging.version import parse as version
+except ImportError:
+    from distutils.version import StrictVersion as version
+
 import numpy as np
+from numpy import __version__ as npver
 from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
@@ -45,7 +51,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1160
+MIN_PASSING_TESTS = 1230
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
@@ -61,6 +67,20 @@ SKIP_TESTS = {
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
 }
+
+if version(npver) < version("1.21.5"):
+    SKIP_TESTS |= {
+        "test_cast_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16_expanded",
+    }
+if version(npver) < version("1.21.5"):
+    SKIP_TESTS |= {
+        "test_cast_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16",
+        "test_castlike_FLOAT_to_BFLOAT16_expanded",
+    }
+    MIN_PASSING_TESTS -= len(SKIP_TESTS)
 
 
 def assert_allclose_string(expected, value):
@@ -553,18 +573,18 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         got = obj.run(None, feeds)
         return got
 
-    def test_onnx_test_run_test_abs(self):
-        done = 0
-        for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
-            self.assertIn(te.name, repr(te))
-            self.assertGreater(len(te), 0)
-            te.run(
-                TestOnnxBackEndWithReferenceEvaluator.load_fct,
-                TestOnnxBackEndWithReferenceEvaluator.run_fct,
-                comment="[runtime=ReferenceEvaluator]",
-            )
-            done += 1
-        self.assertEqual(done, 1)
+    # def test_onnx_test_run_test_abs(self):
+    #     done = 0
+    #     for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
+    #         self.assertIn(te.name, repr(te))
+    #         self.assertGreater(len(te), 0)
+    #         te.run(
+    #             TestOnnxBackEndWithReferenceEvaluator.load_fct,
+    #             TestOnnxBackEndWithReferenceEvaluator.run_fct,
+    #             comment="[runtime=ReferenceEvaluator]",
+    #         )
+    #         done += 1
+    #     self.assertEqual(done, 1)
 
     def common_test_onnx_test_run(
         self,
@@ -770,6 +790,9 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv2d": 1e-5,
             "test__pytorch_converted_Conv2d_no_bias": 1e-3,
             "test__pytorch_converted_Conv2d_strided": 1e-4,
+            "test_layer_normalization_4d_axis1_expanded_ver18": 1e-4,
+            "test_layer_normalization_4d_axis_negative_1_expanded_ver18": 1e-4,
+            "test_layer_normalization_4d_axis_negative_3_expanded_ver18": 1e-4,
         }
 
         cls.atol = {
@@ -809,6 +832,15 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv3d_dilated_strided": 1e-4,
             "test__pytorch_converted_Conv3d_groups": 1e-4,
         }
+
+        if version(npver) < version("1.21.5"):
+            cls.atol.update(
+                {
+                    "test_dft": 1e-11,
+                    "test_dft_axis": 1e-11,
+                    "test_dft_inverse": 1e-11,
+                }
+            )
 
         cls.skip_test = SKIP_TESTS
         if all_tests:
