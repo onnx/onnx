@@ -14,10 +14,6 @@ class ReduceSum_1(OpRunReduceNumpy):
         return (np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype),)
 
 
-class ReduceSum_11(ReduceSum_1):
-    pass
-
-
 class ReduceSum_13(OpRunReduceNumpy):
     def run(self, x, axes=None, keepdims=None):  # type: ignore
         keepdims = keepdims or self.keepdims  # type: ignore
@@ -57,7 +53,5 @@ class ReduceSum_13(OpRunReduceNumpy):
 
 if onnx_opset_version() >= 13:
     ReduceSum = ReduceSum_13
-elif onnx_opset_version() >= 11:
-    ReduceSum = ReduceSum_11  # type: ignore
 else:
     ReduceSum = ReduceSum_1  # type: ignore
