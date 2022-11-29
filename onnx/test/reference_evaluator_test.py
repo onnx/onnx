@@ -426,6 +426,19 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(expected, got)
 
+    def test_reduce_sum_square_11(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("ReduceSumSquare", ["X"], ["Y"], axes=[1], keepdims=1)
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 11)])
+        check_model(onnx_model)
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
+        expected = (x * x).sum(axis=1, keepdims=1)
+        sess = ReferenceEvaluator(onnx_model)
+        got = sess.run(None, {"X": x})[0]
+        assert_allclose(expected, got)
+
     def test_reduce_sum_13(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         A = make_tensor_value_info("A", TensorProto.INT64, [None, None])
@@ -437,6 +450,21 @@ class TestReferenceEvaluator(unittest.TestCase):
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
         a = np.array([1], dtype=np.int64)
         expected = x.sum(axis=1, keepdims=1)
+        sess = ReferenceEvaluator(onnx_model)
+        got = sess.run(None, {"X": x, "A": a})[0]
+        assert_allclose(expected, got)
+
+    def test_reduce_sum_square_18(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        A = make_tensor_value_info("A", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("ReduceSumSquare", ["X", "A"], ["Y"], keepdims=1)
+        graph = make_graph([node1], "rs", [X, A], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        check_model(onnx_model)
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
+        a = np.array([1], dtype=np.int64)
+        expected = (x * x).sum(axis=1, keepdims=1)
         sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x, "A": a})[0]
         assert_allclose(expected, got)
@@ -456,6 +484,21 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = sess.run(None, {"X": x, "A": a})[0]
         assert_allclose(expected, got)
 
+    def test_reduce_sum_square_18_empty_axes(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        A = make_tensor_value_info("A", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("ReduceSumSquare", ["X", "A"], ["Y"], keepdims=1)
+        graph = make_graph([node1], "rs", [X, A], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        check_model(onnx_model)
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
+        a = np.array([], dtype=np.int64)
+        expected = (x * x).sum(keepdims=1)
+        sess = ReferenceEvaluator(onnx_model)
+        got = sess.run(None, {"X": x, "A": a})[0]
+        assert_allclose(expected, got)
+
     def test_reduce_sum_13_empty_axes_noop(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
@@ -467,6 +510,20 @@ class TestReferenceEvaluator(unittest.TestCase):
         sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x})[0]
         assert_allclose(x, got)
+
+    def test_reduce_sum_square_18_empty_axes_noop(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node(
+            "ReduceSumSquare", ["X"], ["Y"], keepdims=1, noop_with_empty_axes=1
+        )
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        check_model(onnx_model)
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
+        sess = ReferenceEvaluator(onnx_model)
+        got = sess.run(None, {"X": x})[0]
+        assert_allclose(x * x, got)
 
     def test_greater(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
