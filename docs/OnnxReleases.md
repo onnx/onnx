@@ -59,11 +59,11 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
   * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
   * Utilize the following matrix to check:
 
-    |   | 3.7 | 3.8 | 3.9 | 3.10 |
-    -- | -- | -- | -- | -- |
-    Linux |   |   |   |   |
-    Windows |   |   |   |   |
-    Mac |   |   |   |   |
+    |   | 3.7 | 3.8 | 3.9 | 3.10 | 3.11 |
+    -- | -- | -- | -- | -- | -- |
+    Linux |   |   |   |   |   |
+    Windows |   |   |   |   |   |
+    Mac |   |   |   |   |   |
 
 
 * After installing the PyPI package, run `pytest` in the release branch.
@@ -78,7 +78,6 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
    * https://github.com/onnx/tensorflow-onnx
    * https://github.com/onnx/sklearn-onnx
    * https://github.com/onnx/onnxmltools
-   * https://github.com/onnx/keras-onnx
    * https://github.com/onnx/onnx-tensorrt
    * https://github.com/onnx/onnx-coreml
 
