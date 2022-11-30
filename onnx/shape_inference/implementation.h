@@ -146,8 +146,8 @@ struct InferenceContextImpl : public InferenceContext {
 
       // input data can be in 1 of the 3 containers
       // inputDataByName - this is when input is TensorProto
-      // inputSparseDataByName - this is when input is SparseTesnorProto
-      // generatedShapeData - this is when input was geenrated as part of partial data propagation
+      // inputSparseDataByName - this is when input is SparseTensorProto
+      // generatedShapeData - this is when input was generated as part of partial data propagation
       const auto inputDataIter = inputDataByName.find(input);
       if (inputDataIter != inputDataByName.cend()) {
         allInputData_.push_back(inputDataIter->second);
@@ -472,7 +472,7 @@ void InferShapeForFunctionNode(
     SymbolTable* symbolTable = nullptr,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr);
 
-std::string GetErrorWithNodeInfo(NodeProto n, std::runtime_error err);
+std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err);
 
 void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable);
 

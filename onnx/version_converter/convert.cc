@@ -76,9 +76,9 @@ void DefaultVersionConverter::convert_graph(
                "Please be advised the converted model may not be working properly if target runtime does not support this "
                "experimental op."
             << std::endl;
-        continue;
-      }
-      if (op_name != "Undefined" && op_name != "Captured") {
+      } else if (cur_op->domain() != "" && cur_op->domain() != "ai.onnx") {
+        std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << std::endl;
+      } else if (op_name != "Undefined" && op_name != "Captured") {
         auto& op_domain_map = all_schemas.at(op_name);
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);

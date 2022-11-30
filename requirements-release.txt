@@ -1,5 +1,7 @@
-numpy == 1.21.5
-protobuf == 3.16.0
+
+numpy==1.23.2; python_version >= "3.11"
+numpy==1.21.5; python_version < "3.11"
+protobuf == 3.20.2
 pytest
 nbval
 ipython

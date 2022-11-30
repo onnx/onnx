@@ -13,7 +13,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Before creating the release branch, increase `VERSION_NUMBER` in the main branch. The following files will be updated: [VERSION_NUMBER file](/VERSION_NUMBER) and
 [version.h](/onnx/common/version.h)
 
-* Please use a VERSION_NUMBER smaller than the target (release VERSION_NUMBER) and larger than the previous one to test TestPyPI before using the target VERSION_NUMBER. 
+* Please use target VERSION_NUMBER with `rc` (e.g., `1.x.0rc1`) to test TestPyPI in advance before using target VERSION_NUMBER (e.g., `1.x.0`) for final release.
 
 * Make sure that the IR version number and opset version numbers are up-to-date in
 [ONNX proto files](/onnx/onnx.in.proto),
@@ -108,6 +108,10 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Announce in slack, for instance, `onnx-general` channel.
 * Notify ONNX partners like converter team and runtime team.
 * Create a news by updating `js/news.json` to announce ONNX release under [onnx/onnx.github.io](https://github.com/onnx/onnx.github.io) repo. For instance: https://github.com/onnx/onnx.github.io/pull/83.
+
+**Deploy released content to document website**
+* To update the website https://onnx.ai/onnx/ with the released content, manually deploy released content to document website by running [pages.yml](https://github.com/onnx/onnx/blob/main/.github/workflows/pages.yml).
+* Steps: start [actions](https://github.com/onnx/onnx/actions) -> Workflows -> Deploy static content to Pages -> Run workflow -> Use workflow from "rel-*" -> Run workflow.
 
 **Update conda-forge package with the new ONNX version**
 * Conda builds of ONNX are done via conda-forge, which runs infrastructure for building packages and uploading them to conda-forge. If it does not happen automatically, you need to submit a PR to https://github.com/conda-forge/onnx-feedstock (see https://github.com/conda-forge/onnx-feedstock/pull/1/files or https://github.com/conda-forge/onnx-feedstock/pull/50/files for example PRs) You will need to have uploaded to PyPI already, and update the version number and tarball hash of the PyPI uploaded tarball.

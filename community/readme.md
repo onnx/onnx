@@ -6,7 +6,7 @@
 
 ONNX is rolling out open governance to encourage broader participation beyond the founding companies. We hope this will make the decision making process more transparent, enable better technical decisions with consideration of more viewpoints, and share the work of maintenance. We want ONNX to be the standard the whole community rallies to without reservations.
 
-ONNX open governance creates 3 roles: Member, Contributor, Approver. 3 structures are also created: Steering Committee, Special Interest Groups (SIGs), Working Groups. Contributors and Approvers can vote for the Steering Committee members. The Steering Committee charters SIGs and appoints SIG chairs. Every piece of ONNX belongs to some SIG. Contributors and Approvers participate in one or more SIGs. Our governance structured is based on the successful model of Kubernetes.
+ONNX open governance creates 3 roles: Member, Contributor and Approver. 3 structures are also created: Steering Committee, Special Interest Groups (SIGs), Working Groups. Contributors and Approvers can vote for the Steering Committee members. The Steering Committee charters SIGs and appoints SIG chairs. Every piece of ONNX belongs to some SIG. Contributors and Approvers participate in one or more SIGs. Our governance structure is based on the successful model of Kubernetes.
 
 The effort is bootstrapped with an initial Steering Committee and set of SIGs with the first elections to occur after 1 year.
 
@@ -14,7 +14,7 @@ The effort is bootstrapped with an initial Steering Committee and set of SIGs wi
 
 The ONNX community adheres to the following principles:
 
-* __Open__: ONNX is open source. See repository guidelines and CLA, below.
+* __Open__: ONNX is open source. See repository guidelines and DCO, below.
 * __Welcoming and respectful__: See Code of Conduct, below.
 * __Transparent and accessible__: Work and collaboration should be done in public. See SIG governance, below.
 * __Merit__: Ideas and contributions are accepted according to their technical merit and alignment with project objectives, scope and design principles. Engineering investment >> corporate sponsorship
@@ -26,7 +26,7 @@ The ONNX community adheres to the following principles:
 Members are individuals who are interested in or participate in the ONNX community. Members are able to follow and participate in all public modes of communication used by the ONNX community including but not limited to GitHub, Slack, Stack Overflow, email announcements and discussion aliases. Members are expected to adhere to the Code of Conduct but do not have any specific responsibilities.
 
 ### Contributors
-Contributors are Members who are active contributors in the community. They can have issues and PRs assigned to them. They also have voting privileges. Contributors can be active in many ways including but not limited to:
+Contributors are Members who are active contributors to the community. They can have issues and PRs assigned to them. They also have voting privileges. Contributors can be active in many ways including but not limited to:
 
 * Authoring or reviewing PRs on GitHub
 * Filing or commenting on issues on GitHub
@@ -75,7 +75,7 @@ The Steering Committee has a set of rights and responsibilities including the fo
 * Decide how and when official releases of ONNX artifacts are made and what they include.
 * Declare releases when quality/feature/other requirements are met.
 * Control access to, establish processes regarding, and provide a final escalation path for any ONNX repository, which currently includes all repositories under the ONNX GitHub organizations
-* Control and delegate access to and establish  processes regarding other project resources/assets, including artifact repositories, build and test infrastructure, web sites and their domains, blogs, social-media accounts, etc.
+* Control and delegate access to and establish processes regarding other project resources/assets, including artifact repositories, build and test infrastructure, web sites and their domains, blogs, social-media accounts, etc.
 * Define any certification process.
 * Manage the ONNX brand and any outbound marketing.
 * Make decisions by majority vote if consensus cannot be reached.
@@ -103,7 +103,7 @@ The ONNX project is organized primarily into Special Interest Groups, or SIGs. E
 Our goal is to enable a distributed decision structure and code ownership, as well as providing focused forums for getting work done, making decisions, and on-boarding new contributors. Every identifiable part of the project (e.g., repository, subdirectory, API, test, issue, PR, Slack channel) is intended to be owned by some SIG. At the time of inception of this organizational structure, the following SIGs will be present:
 
 * Architecture & Infra
-    * This SIG is responsible for defining and maintaining the core ONNX format, the build and CI/CD systems for ONNX repositories, publishing release packages for ONNX, the onnx-docker repository, and creating tools to help integrate with and test against the ONNX standard. This SIG is also the defacto owner of files in the main ONNX repository unless explicitly owned by another SIG.
+    * This SIG is responsible for defining and maintaining the core ONNX format, the build and CI/CD systems for ONNX repositories, publishing release packages for ONNX, and creating tools to help integrate with and test against the ONNX standard. This SIG is also the defacto owner of files in the main ONNX repository unless explicitly owned by another SIG.
 * Operator Standardization
     * This SIG is responsible for determining the operators that are part of the ONNX spec (ONNX and ONNX-ML domains), ensuring high quality operator definitions and documentation, establishing criteria for adding new operators, managing ops domains and compliance tiers, and enforcing versioning mechanisms.
 * Converters
@@ -124,13 +124,13 @@ A primary reason that SIGs exist is as forums for collaboration. Much work in a 
 * Announce meeting agenda and minutes after each meeting, on their SIG mailing list and/or Slack channel
 * Ensure the SIG's mailing list is archived (i.e on GitHub)
 * Report activity in overall ONNX community meetings
-* Participate in release planning meetings, retrospective, etc (if relevant)
+* Participate in release planning meetings, retrospectives, etc (if relevant)
 * Actively triage issues, PRs, test failures, etc. related to code and tests owned by the SIG
 * Use the above forums as the primary means of working, communicating, and collaborating, as opposed to private emails and meetings
 
 #### Decision making
 
-When it is time to formalize the work-product from a SIG, votes are taken from every contributor who participates in the SIG. The list of active contributors is determined by the one (or two) SIG leads to ensure that only those who have actively participated in the SIG can vote. At this time there is no restrictions on how many contributors from any one Member Company can participate (and hence vote). The Steering Committee will monitor how the community behaves and apply constraints if needed in the future.
+When it is time to formalize the work-product from a SIG, votes are taken from every contributor who participates in the SIG. The list of active contributors is determined by the one (or two) SIG leads to ensure that only those who have actively participated in the SIG can vote. At this time there are no restrictions on how many contributors from any one Member Company can participate (and hence vote). The Steering Committee will monitor how the community behaves and apply constraints if needed in the future.
 
 While most work shouldn’t require expensive coordination with other SIGs, there will be efforts (features, refactoring, etc.) that cross SIG boundaries. In this case, it is expected that the SIGs coordinate with each other and come to mutually agreed solutions. In some cases, it may make sense to form a Working Group for joint work. Cross-SIG coordination will naturally require more time and implies a certain amount of overhead. This is intentional to encourage changes to be well encapsulated whenever possible.
 
@@ -152,7 +152,7 @@ Working Groups can create specifications, recommendations, or implementations fo
 Working Groups are formed by submitting a proposal via PR to the Steering Committee. The proposal should cover:
 
 * what is the exact problem being worked on
-* what is the exit criteria
+* what are the exit criteria
 * who are the chairs (up to 2)
 * what are the meeting and discussion mechanics
 

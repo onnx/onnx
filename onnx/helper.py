@@ -1,20 +1,46 @@
 # SPDX-License-Identifier: Apache-2.0
-import collections.abc  # type: ignore
+# pylint: disable=C0302,R0912
+import collections.abc
 import numbers
-from cmath import isnan
 import struct
-from typing import Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
+from cmath import isnan
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    KeysView,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import google.protobuf.message
-import numpy as np  # type: ignore
+import numpy as np
 
-from onnx import TensorProto, SparseTensorProto, AttributeProto, ValueInfoProto, \
-    TensorShapeProto, NodeProto, ModelProto, GraphProto, OperatorSetIdProto, \
-    TypeProto, SequenceProto, MapProto, IR_VERSION, TrainingInfoProto, OptionalProto, \
-    FunctionProto
-from onnx import defs
-from onnx import mapping
-from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
+from onnx import (
+    IR_VERSION,
+    AttributeProto,
+    FunctionProto,
+    GraphProto,
+    MapProto,
+    ModelProto,
+    NodeProto,
+    OperatorSetIdProto,
+    OptionalProto,
+    SequenceProto,
+    SparseTensorProto,
+    TensorProto,
+    TensorShapeProto,
+    TrainingInfoProto,
+    TypeProto,
+    ValueInfoProto,
+    defs,
+    mapping,
+)
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
 VersionTableType = List[VersionRowType]
@@ -24,23 +50,24 @@ AssignmentBindingType = List[Tuple[str, str]]
 # Both must be updated whenever a new version of ONNX is released.
 VERSION_TABLE: VersionTableType = [
     # Release-version, IR version, ai.onnx version, ai.onnx.ml version, (optional) ai.onnx.training version
-    ('1.0', 3, 1, 1),
-    ('1.1', 3, 5, 1),
-    ('1.1.2', 3, 6, 1),
-    ('1.2', 3, 7, 1),
-    ('1.3', 3, 8, 1),
-    ('1.4.1', 4, 9, 1),
-    ('1.5.0', 5, 10, 1),
-    ('1.6.0', 6, 11, 2),
-    ('1.7.0', 7, 12, 2, 1),
-    ('1.8.0', 7, 13, 2, 1),
-    ('1.8.1', 7, 13, 2, 1),
-    ('1.9.0', 7, 14, 2, 1),
-    ('1.10.0', 8, 15, 2, 1),
-    ('1.10.1', 8, 15, 2, 1),
-    ('1.10.2', 8, 15, 2, 1),
-    ('1.11.0', 8, 16, 3, 1),
-    ('1.12.0', 8, 17, 3, 1)
+    ("1.0", 3, 1, 1),
+    ("1.1", 3, 5, 1),
+    ("1.1.2", 3, 6, 1),
+    ("1.2", 3, 7, 1),
+    ("1.3", 3, 8, 1),
+    ("1.4.1", 4, 9, 1),
+    ("1.5.0", 5, 10, 1),
+    ("1.6.0", 6, 11, 2),
+    ("1.7.0", 7, 12, 2, 1),
+    ("1.8.0", 7, 13, 2, 1),
+    ("1.8.1", 7, 13, 2, 1),
+    ("1.9.0", 7, 14, 2, 1),
+    ("1.10.0", 8, 15, 2, 1),
+    ("1.10.1", 8, 15, 2, 1),
+    ("1.10.2", 8, 15, 2, 1),
+    ("1.11.0", 8, 16, 3, 1),
+    ("1.12.0", 8, 17, 3, 1),
+    ("1.13.0", 8, 18, 3, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -51,11 +78,12 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     result: VersionMapType = dict()
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
-        for pair in zip(['ai.onnx', 'ai.onnx.ml', 'ai.onnx.training'], args):
-            if (pair not in result):
+        for pair in zip(["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args):
+            if pair not in result:
                 result[pair] = ir_version
-                if pair[0] == 'ai.onnx.training':
-                    result['ai.onnx.preview.training', pair[1]] = ir_version
+                if pair[0] == "ai.onnx.training":
+                    result["ai.onnx.preview.training", pair[1]] = ir_version
+
     for row in table:
         process(*row)
     return result
@@ -69,24 +97,25 @@ def find_min_ir_version_for(opsetidlist: List[OperatorSetIdProto]) -> int:
     default_min_version = 3
 
     def find_min(domain: Union[str, None], version: int) -> int:
-        key = (domain if domain else 'ai.onnx', version)
-        if (key in OP_SET_ID_VERSION_MAP):
+        key = (domain if domain else "ai.onnx", version)
+        if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
         else:
             raise ValueError("Unsupported opset-version.")
-    if (opsetidlist):
+
+    if opsetidlist:
         return max(find_min(x.domain, x.version) for x in opsetidlist)
     return default_min_version  # if no opsets specified
 
 
 def make_node(
-        op_type: str,
-        inputs: Sequence[str],
-        outputs: Sequence[str],
-        name: Optional[str] = None,
-        doc_string: Optional[str] = None,
-        domain: Optional[str] = None,
-        **kwargs: Any
+    op_type: str,
+    inputs: Sequence[str],
+    outputs: Sequence[str],
+    name: Optional[str] = None,
+    doc_string: Optional[str] = None,
+    domain: Optional[str] = None,
+    **kwargs: Any,
 ) -> NodeProto:
     """Construct a NodeProto.
 
@@ -118,13 +147,14 @@ def make_node(
         node.attribute.extend(
             make_attribute(key, value)
             for key, value in sorted(kwargs.items())
-            if value is not None)
+            if value is not None
+        )
     return node
 
 
 def make_operatorsetid(
-        domain: str,
-        version: int,
+    domain: str,
+    version: int,
 ) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
@@ -147,7 +177,7 @@ def make_graph(
     outputs: Sequence[ValueInfoProto],
     initializer: Optional[Sequence[TensorProto]] = None,
     doc_string: Optional[str] = None,
-    value_info: Sequence[ValueInfoProto] = [],
+    value_info: Optional[Sequence[ValueInfoProto]] = None,
     sparse_initializer: Optional[Sequence[SparseTensorProto]] = None,
 ) -> GraphProto:
     """Construct a GraphProto
@@ -205,9 +235,11 @@ def make_function(
     outputs: Sequence[str],
     nodes: Sequence[NodeProto],
     opset_imports: Sequence[OperatorSetIdProto],
-    attributes: Optional[Sequence[str]] = [],
-    doc_string: Optional[str] = None
+    attributes: Optional[Sequence[str]] = None,
+    doc_string: Optional[str] = None,
 ) -> FunctionProto:
+    if attributes is None:
+        attributes = []
     f = FunctionProto()
     f.domain = domain
     f.name = fname
@@ -237,7 +269,7 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     model.graph.CopyFrom(graph)
 
     opset_imports: Optional[Sequence[OperatorSetIdProto]] = None
-    opset_imports = kwargs.pop('opset_imports', None)  # type: ignore
+    opset_imports = kwargs.pop("opset_imports", None)  # type: ignore
     if opset_imports is not None:
         model.opset_import.extend(opset_imports)
     else:
@@ -246,7 +278,7 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
         imp.version = defs.onnx_opset_version()
 
     functions: Optional[Sequence[FunctionProto]] = None
-    functions = kwargs.pop('functions', None)  # type: ignore
+    functions = kwargs.pop("functions", None)  # type: ignore
     if functions is not None:
         model.functions.extend(functions)
 
@@ -259,10 +291,10 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
 # An extension of make_model that infers an IR_VERSION for the model,
 # if not specified, using a best-effort-basis.
 def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
-    ir_version_field = 'ir_version'
-    if (ir_version_field not in kwargs):
-        opset_imports_field = 'opset_imports'
-        imports = (kwargs[opset_imports_field] if opset_imports_field in kwargs else [])
+    ir_version_field = "ir_version"
+    if ir_version_field not in kwargs:
+        opset_imports_field = "opset_imports"
+        imports = kwargs[opset_imports_field] if opset_imports_field in kwargs else []
         kwargs[ir_version_field] = find_min_ir_version_for(imports)
     return make_model(graph, **kwargs)
 
@@ -277,8 +309,10 @@ def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
 
 
 def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
-    return [(ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
-            for i in range(len(ca) * 2)]
+    return [
+        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
+        for i in range(len(ca) * 2)
+    ]
 
 
 # convert a float32 value to a bfloat16 (as int)
@@ -288,7 +322,7 @@ def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
 # the significand. In this mode an error of up to 1 bit may be introduced and
 # preservation of NaN values is not be guaranteed.
 def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
-    ival = int.from_bytes(struct.pack('<f', fval), 'little')
+    ival = int.from_bytes(struct.pack("<f", fval), "little")
     if truncate:
         return ival >> 16
     # NaN requires at least 1 significand bit set
@@ -296,18 +330,14 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
         return 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
     # drop bottom 16-bits
     # round remaining bits using round-to-nearest-even
-    round = ((ival >> 16) & 1) + 0x7fff
+    round = ((ival >> 16) & 1) + 0x7FFF
     return (ival + round) >> 16
 
 
 def make_tensor(
-        name: str,
-        data_type: int,
-        dims: Sequence[int],
-        vals: Any,
-        raw: bool = False
+    name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
-    '''
+    """
     Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
     values based on data_type. If raw is True, use "raw_data" proto
@@ -319,12 +349,12 @@ def make_tensor(
         data_type (int): a value such as onnx.TensorProto.FLOAT
         dims (List[int]): shape
         vals: values
-        raw (bool): if True, vals contains the seralized content of the tensor,
+        raw (bool): if True, vals contains the serialized content of the tensor,
             otherwise, vals should be a list of values of the type defined by *data_type*
 
     Returns:
         TensorProto
-    '''
+    """
     tensor = TensorProto()
     tensor.data_type = data_type
     tensor.name = name
@@ -332,7 +362,7 @@ def make_tensor(
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
 
-    np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[data_type]
+    np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     # Check number of vals specified equals tensor size
     expected_size = 1
@@ -350,29 +380,38 @@ def make_tensor(
         expected_size *= d
 
     if len(vals) != expected_size:
-        raise ValueError("Number of values does not match tensor's size. Expected {}, but it is {}. "
-            .format(expected_size, len(vals)))
+        raise ValueError(
+            "Number of values does not match tensor's size. Expected {}, but it is {}. ".format(
+                expected_size, len(vals)
+            )
+        )
 
     if raw:
         tensor.raw_data = vals
     else:
-        if (data_type == TensorProto.COMPLEX64 or data_type == TensorProto.COMPLEX128):
+        if data_type == TensorProto.COMPLEX64 or data_type == TensorProto.COMPLEX128:
             vals = split_complex_to_pairs(vals)
         elif data_type == TensorProto.FLOAT16:
-            vals = np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
+            vals = (
+                np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
+            )
         elif data_type == TensorProto.BFLOAT16:
-            vals = list(map(float32_to_bfloat16, np.array(vals).astype(np_dtype).flatten().tolist()))
-        field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
-            mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]]
+            vals = list(
+                map(
+                    float32_to_bfloat16,
+                    np.array(vals).astype(np_dtype).flatten().tolist(),
+                )
+            )
+        elif data_type == TensorProto.BOOL:
+            vals = np.array(vals).astype(int)
+        field = tensor_dtype_to_field(data_type)
         getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)
     return tensor
 
 
 def make_sparse_tensor(
-    values: TensorProto,
-    indices: TensorProto,
-    dims: Sequence[int]
+    values: TensorProto, indices: TensorProto, dims: Sequence[int]
 ) -> SparseTensorProto:
     """Construct a SparseTensorProto
 
@@ -392,39 +431,58 @@ def make_sparse_tensor(
 
 
 def make_sequence(
-        name: str,
-        elem_type: SequenceProto.DataType,
-        values: Sequence[Any],
+    name: str,
+    elem_type: SequenceProto.DataType,
+    values: Sequence[Any],
 ) -> SequenceProto:
-    '''
+    """
     Make a Sequence with specified value arguments.
-    '''
+    """
     sequence = SequenceProto()
     sequence.name = name
     sequence.elem_type = elem_type
-    values_field = mapping.STORAGE_ELEMENT_TYPE_TO_FIELD[elem_type]
-    getattr(sequence, values_field).extend(values)
+
+    if elem_type == SequenceProto.UNDEFINED:
+        return sequence
+    if elem_type == SequenceProto.TENSOR:
+        attribute = sequence.tensor_values
+    elif elem_type == SequenceProto.SPARSE_TENSOR:
+        attribute = sequence.sparse_tensor_values
+    elif elem_type == SequenceProto.SEQUENCE:
+        attribute = sequence.sequence_values
+    elif elem_type == SequenceProto.MAP:
+        attribute = sequence.map_values
+    elif elem_type == OptionalProto.OPTIONAL:
+        attribute = sequence.optional_values
+    else:
+        raise TypeError("The element type in the input sequence is not supported.")
+
+    attribute.extend(values)
     return sequence
 
 
 def make_map(
-        name: str,
-        key_type: int,
-        keys: List[Any],
-        values: SequenceProto
+    name: str, key_type: int, keys: List[Any], values: SequenceProto
 ) -> MapProto:
-    '''
+    """
     Make a Map with specified key-value pair arguments.
 
     Criteria for conversion:
     - Keys and Values must have the same number of elements
     - Every key in keys must be of the same type
     - Every value in values must be of the same type
-    '''
+    """
     map = MapProto()
-    valid_key_int_types = [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32,
-                           TensorProto.INT64, TensorProto.UINT8, TensorProto.UINT16,
-                           TensorProto.UINT32, TensorProto.UINT64]
+    valid_key_int_types = [
+        TensorProto.INT8,
+        TensorProto.INT16,
+        TensorProto.INT32,
+        TensorProto.INT64,
+        TensorProto.UINT8,
+        TensorProto.UINT16,
+        TensorProto.UINT32,
+        TensorProto.UINT64,
+    ]
     map.name = name
     map.key_type = key_type
     if key_type == TensorProto.STRING:
@@ -436,19 +494,33 @@ def make_map(
 
 
 def make_optional(
-        name: str,
-        elem_type: OptionalProto.DataType,
-        value: Optional[Any],
+    name: str,
+    elem_type: OptionalProto.DataType,
+    value: Optional[Any],
 ) -> OptionalProto:
-    '''
+    """
     Make an Optional with specified value arguments.
-    '''
+    """
     optional = OptionalProto()
     optional.name = name
     optional.elem_type = elem_type
-    if elem_type != 0:
-        values_field = mapping.OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
-        getattr(optional, values_field).CopyFrom(value)
+
+    if elem_type == OptionalProto.UNDEFINED:
+        return optional
+    if elem_type == OptionalProto.TENSOR:
+        attribute = optional.tensor_value
+    elif elem_type == OptionalProto.SPARSE_TENSOR:
+        attribute = optional.sparse_tensor_value
+    elif elem_type == OptionalProto.SEQUENCE:
+        attribute = optional.sequence_value
+    elif elem_type == OptionalProto.MAP:
+        attribute = optional.map_value
+    elif elem_type == OptionalProto.OPTIONAL:
+        attribute = optional.optional_value
+    else:
+        raise TypeError("The element type in the input optional is not supported.")
+
+    attribute.CopyFrom(value)
     return optional
 
 
@@ -464,15 +536,13 @@ def _to_bytes_or_false(val: Union[str, bytes]) -> Union[bytes, bool]:
     if isinstance(val, bytes):
         return val
     try:
-        return val.encode('utf-8')
+        return val.encode("utf-8")
     except AttributeError:
         return False
 
 
 def make_attribute(
-        key: str,
-        value: Any,
-        doc_string: Optional[str] = None
+    key: str, value: Any, doc_string: Optional[str] = None
 ) -> AttributeProto:
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
@@ -538,14 +608,28 @@ def make_attribute(
         else:
             raise ValueError(
                 "You passed in an iterable attribute but I cannot figure out "
-                "its applicable type.")
+                "its applicable type."
+            )
     else:
-        raise TypeError(
-            f'value "{value}" is not valid attribute data type.')
+        raise TypeError(f'value "{value}" is not valid attribute data type.')
+    return attr
+
+
+def make_attribute_ref(
+    name: str, attr_type: AttributeProto.AttributeType, doc_string: Optional[str] = None
+) -> AttributeProto:
+    """Make an AttributeProto holding a reference to the parent function's attribute of given name and type."""
+    attr = AttributeProto()
+    attr.name = name
+    attr.type = attr_type
+    if doc_string:
+        attr.doc_string = doc_string
     return attr
 
 
 def get_attribute_value(attr: AttributeProto) -> Any:
+    if attr.ref_attr_name:
+        raise ValueError(f"Cannot get value of reference attribute: {attr}")
     if attr.type == AttributeProto.FLOAT:
         return attr.f
     if attr.type == AttributeProto.INT:
@@ -584,9 +668,9 @@ def make_empty_tensor_value_info(name: str) -> ValueInfoProto:
 
 
 def make_tensor_type_proto(
-        elem_type: int,
-        shape: Optional[Sequence[Union[str, int, None]]],
-        shape_denotation: Optional[List[str]] = None,
+    elem_type: int,
+    shape: Optional[Sequence[Union[str, int, None]]],
+    shape_denotation: Optional[List[str]] = None,
 ) -> TypeProto:
     """Makes a Tensor TypeProto based on the data type and shape."""
 
@@ -608,8 +692,8 @@ def make_tensor_type_proto(
         if shape_denotation:
             if len(shape_denotation) != len(shape):
                 raise ValueError(
-                    'Invalid shape_denotation. '
-                    'Must be of the same length as shape.')
+                    "Invalid shape_denotation. " "Must be of the same length as shape."
+                )
 
         for i, d in enumerate(shape):
             dim = tensor_shape_proto.dim.add()
@@ -621,7 +705,8 @@ def make_tensor_type_proto(
                 dim.dim_param = d
             else:
                 raise ValueError(
-                    f'Invalid item in shape: {d}. Needs to be of int or str.')
+                    f"Invalid item in shape: {d}. Needs to be of int or str."
+                )
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
@@ -630,11 +715,11 @@ def make_tensor_type_proto(
 
 
 def make_tensor_value_info(
-        name: str,
-        elem_type: int,
-        shape: Optional[Sequence[Union[str, int, None]]],
-        doc_string: str = "",
-        shape_denotation: Optional[List[str]] = None,
+    name: str,
+    elem_type: int,
+    shape: Optional[Sequence[Union[str, int, None]]],
+    doc_string: str = "",
+    shape_denotation: Optional[List[str]] = None,
 ) -> ValueInfoProto:
     """Makes a ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
@@ -648,9 +733,9 @@ def make_tensor_value_info(
 
 
 def make_sparse_tensor_type_proto(
-        elem_type: int,
-        shape: Optional[Sequence[Union[str, int, None]]],
-        shape_denotation: Optional[List[str]] = None,
+    elem_type: int,
+    shape: Optional[Sequence[Union[str, int, None]]],
+    shape_denotation: Optional[List[str]] = None,
 ) -> TypeProto:
     """Makes a SparseTensor TypeProto based on the data type and shape."""
 
@@ -672,8 +757,8 @@ def make_sparse_tensor_type_proto(
         if shape_denotation:
             if len(shape_denotation) != len(shape):
                 raise ValueError(
-                    'Invalid shape_denotation. '
-                    'Must be of the same length as shape.')
+                    "Invalid shape_denotation. " "Must be of the same length as shape."
+                )
 
         for i, d in enumerate(shape):
             dim = sparse_tensor_shape_proto.dim.add()
@@ -685,7 +770,8 @@ def make_sparse_tensor_type_proto(
                 dim.dim_param = d
             else:
                 raise ValueError(
-                    f'Invalid item in shape: {d}. Needs to be of int or text.')
+                    f"Invalid item in shape: {d}. Needs to be of int or text."
+                )
 
             if shape_denotation:
                 dim.denotation = shape_denotation[i]
@@ -694,11 +780,11 @@ def make_sparse_tensor_type_proto(
 
 
 def make_sparse_tensor_value_info(
-        name: str,
-        elem_type: int,
-        shape: Optional[Sequence[Union[str, int, None]]],
-        doc_string: str = "",
-        shape_denotation: Optional[List[str]] = None,
+    name: str,
+    elem_type: int,
+    shape: Optional[Sequence[Union[str, int, None]]],
+    doc_string: str = "",
+    shape_denotation: Optional[List[str]] = None,
 ) -> ValueInfoProto:
     """Makes a SparseTensor ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
@@ -706,13 +792,17 @@ def make_sparse_tensor_value_info(
     if doc_string:
         value_info_proto.doc_string = doc_string
 
-    sparse_tensor_type_proto = make_sparse_tensor_type_proto(elem_type, shape, shape_denotation)
-    value_info_proto.type.sparse_tensor_type.CopyFrom(sparse_tensor_type_proto.sparse_tensor_type)
+    sparse_tensor_type_proto = make_sparse_tensor_type_proto(
+        elem_type, shape, shape_denotation
+    )
+    value_info_proto.type.sparse_tensor_type.CopyFrom(
+        sparse_tensor_type_proto.sparse_tensor_type
+    )
     return value_info_proto
 
 
 def make_sequence_type_proto(
-        inner_type_proto: TypeProto,
+    inner_type_proto: TypeProto,
 ) -> TypeProto:
     """Makes a sequence TypeProto."""
     type_proto = TypeProto()
@@ -721,7 +811,7 @@ def make_sequence_type_proto(
 
 
 def make_optional_type_proto(
-        inner_type_proto: TypeProto,
+    inner_type_proto: TypeProto,
 ) -> TypeProto:
     """Makes an optional TypeProto."""
     type_proto = TypeProto()
@@ -730,9 +820,9 @@ def make_optional_type_proto(
 
 
 def make_value_info(
-        name: str,
-        type_proto: TypeProto,
-        doc_string: str = "",
+    name: str,
+    type_proto: TypeProto,
+    doc_string: str = "",
 ) -> ValueInfoProto:
     """Makes a ValueInfoProto with the given type_proto."""
     value_info_proto = ValueInfoProto()
@@ -748,20 +838,20 @@ def _sanitize_str(s: Union[str, bytes]) -> str:
     if isinstance(s, str):
         sanitized = s
     elif isinstance(s, bytes):
-        sanitized = s.decode('utf-8', errors='ignore')
+        sanitized = s.decode("utf-8", errors="ignore")
     else:
         sanitized = str(s)
     if len(sanitized) < 64:
         return sanitized
-    return sanitized[:64] + '...<+len=%d>' % (len(sanitized) - 64)
+    return sanitized[:64] + "...<+len=%d>" % (len(sanitized) - 64)
 
 
 def make_tensor_sequence_value_info(
-        name: str,
-        elem_type: int,
-        shape: Optional[Sequence[Union[str, int, None]]],
-        doc_string: str = "",
-        elem_shape_denotation: Optional[List[str]] = None,
+    name: str,
+    elem_type: int,
+    shape: Optional[Sequence[Union[str, int, None]]],
+    doc_string: str = "",
+    elem_shape_denotation: Optional[List[str]] = None,
 ) -> ValueInfoProto:
     """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
@@ -776,7 +866,9 @@ def make_tensor_sequence_value_info(
     return value_info_proto
 
 
-def printable_attribute(attr: AttributeProto, subgraphs: bool = False) -> Union[str, Tuple[str, List[GraphProto]]]:
+def printable_attribute(
+    attr: AttributeProto, subgraphs: bool = False
+) -> Union[str, Tuple[str, List[GraphProto]]]:
     content = []
     content.append(attr.name)
     content.append("=")
@@ -785,15 +877,15 @@ def printable_attribute(attr: AttributeProto, subgraphs: bool = False) -> Union[
         # NB: Different Python versions print different numbers of trailing
         # decimals, specifying this explicitly keeps it consistent for all
         # versions
-        return f'{f:.15g}'
+        return f"{f:.15g}"
 
     def str_int(i: int) -> str:
         return str(i)
 
-    _T = TypeVar('_T')  # noqa
+    _T = TypeVar("_T")  # noqa
 
     def str_list(str_elem: Callable[[_T], str], xs: Sequence[_T]) -> str:
-        return '[' + ', '.join(map(str_elem, xs)) + ']'
+        return "[" + ", ".join(map(str_elem, xs)) + "]"
 
     # for now, this logic should continue to work as long as we are running on a proto3
     # implementation. If/when we switch to proto3, we will need to use attr.type
@@ -814,8 +906,8 @@ def printable_attribute(attr: AttributeProto, subgraphs: bool = False) -> Union[
             content.append("<Tensor>")
         else:
             # special case to print scalars
-            field = STORAGE_TENSOR_TYPE_TO_FIELD[attr.t.data_type]
-            content.append(f'<Scalar Tensor {str(getattr(attr.t, field))}>')
+            field = tensor_dtype_to_field(attr.t.data_type)
+            content.append(f"<Scalar Tensor {str(getattr(attr.t, field))}>")
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)
@@ -831,71 +923,72 @@ def printable_attribute(attr: AttributeProto, subgraphs: bool = False) -> Union[
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
     elif attr.type_protos:
-        content.append('[')
+        content.append("[")
         for i, tp in enumerate(attr.type_protos):
-            comma = ',' if i != len(attr.type_protos) - 1 else ''
-            content.append(f'<Type Proto {tp}>{comma}')
-        content.append(']')
+            comma = "," if i != len(attr.type_protos) - 1 else ""
+            content.append(f"<Type Proto {tp}>{comma}")
+        content.append("]")
     elif attr.graphs:
-        content.append('[')
+        content.append("[")
         for i, g in enumerate(attr.graphs):
-            comma = ',' if i != len(attr.graphs) - 1 else ''
-            content.append(f'<graph {g.name}>{comma}')
-        content.append(']')
+            comma = "," if i != len(attr.graphs) - 1 else ""
+            content.append(f"<graph {g.name}>{comma}")
+        content.append("]")
         graphs.extend(attr.graphs)
     else:
         content.append("<Unknown>")
     if subgraphs:
-        return ' '.join(content), graphs
+        return " ".join(content), graphs
     else:
-        return ' '.join(content)
+        return " ".join(content)
 
 
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
-    which = dim.WhichOneof('value')
+    which = dim.WhichOneof("value")
     assert which is not None
     return str(getattr(dim, which))
 
 
 def printable_type(t: TypeProto) -> str:
-    if t.WhichOneof('value') == "tensor_type":
+    if t.WhichOneof("value") == "tensor_type":
         s = TensorProto.DataType.Name(t.tensor_type.elem_type)
-        if t.tensor_type.HasField('shape'):
+        if t.tensor_type.HasField("shape"):
             if len(t.tensor_type.shape.dim):
-                s += str(', ' + 'x'.join(map(printable_dim, t.tensor_type.shape.dim)))
+                s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
             else:
-                s += ', scalar'
+                s += ", scalar"
         return s
-    if t.WhichOneof('value') is None:
+    if t.WhichOneof("value") is None:
         return ""
     return f"Unknown type {t.WhichOneof('value')}"
 
 
 def printable_value_info(v: ValueInfoProto) -> str:
-    s = f'%{v.name}'
+    s = f"%{v.name}"
     if v.type:
-        s = f'{s}[{printable_type(v.type)}]'
+        s = f"{s}[{printable_type(v.type)}]"
     return s
 
 
 def printable_tensor_proto(t: TensorProto) -> str:
-    s = f'%{t.name}['
+    s = f"%{t.name}["
     s += TensorProto.DataType.Name(t.data_type)
     if t.dims is not None:
         if len(t.dims):
-            s += str(', ' + 'x'.join(map(str, t.dims)))
+            s += str(", " + "x".join(map(str, t.dims)))
         else:
-            s += ', scalar'
-    s += ']'
+            s += ", scalar"
+    s += "]"
     return s
 
 
-def printable_node(node: NodeProto, prefix: str = '', subgraphs: bool = False) -> Union[str, Tuple[str, List[GraphProto]]]:
+def printable_node(
+    node: NodeProto, prefix: str = "", subgraphs: bool = False
+) -> Union[str, Tuple[str, List[GraphProto]]]:
     content = []
     if len(node.output):
-        content.append(
-            ', '.join([f'%{name}' for name in node.output]))
-        content.append('=')
+        content.append(", ".join([f"%{name}" for name in node.output]))
+        content.append("=")
     # To deal with nested graphs
     graphs: List[GraphProto] = []
     printed_attrs = []
@@ -909,19 +1002,19 @@ def printable_node(node: NodeProto, prefix: str = '', subgraphs: bool = False) -
             printed = printable_attribute(attr)
             assert isinstance(printed, str)
             printed_attrs.append(printed)
-    printed_attributes = ', '.join(sorted(printed_attrs))
-    printed_inputs = ', '.join([f'%{name}' for name in node.input])
+    printed_attributes = ", ".join(sorted(printed_attrs))
+    printed_inputs = ", ".join([f"%{name}" for name in node.input])
     if node.attribute:
         content.append(f"{node.op_type}[{printed_attributes}]({printed_inputs})")
     else:
         content.append(f"{node.op_type}({printed_inputs})")
     if subgraphs:
-        return prefix + ' '.join(content), graphs
+        return prefix + " ".join(content), graphs
     else:
-        return prefix + ' '.join(content)
+        return prefix + " ".join(content)
 
 
-def printable_graph(graph: GraphProto, prefix: str = '') -> str:
+def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     """
     Display a GraphProto as a string.
 
@@ -933,49 +1026,54 @@ def printable_graph(graph: GraphProto, prefix: str = '') -> str:
         string
     """
     content = []
-    indent = prefix + '  '
+    indent = prefix + "  "
     # header
-    header = ['graph', graph.name]
+    header = ["graph", graph.name]
     initializers = {t.name for t in graph.initializer}
     if len(graph.input):
         header.append("(")
         in_strs = []  # required inputs
-        in_with_init_strs = []  # optional inputs with initializer providing default value
+        in_with_init_strs = (
+            []
+        )  # optional inputs with initializer providing default value
         for inp in graph.input:
             if inp.name not in initializers:
                 in_strs.append(printable_value_info(inp))
             else:
                 in_with_init_strs.append(printable_value_info(inp))
         if in_strs:
-            content.append(prefix + ' '.join(header))
+            content.append(prefix + " ".join(header))
             header = []
             for line in in_strs:
-                content.append(prefix + '  ' + line)
+                content.append(prefix + "  " + line)
         header.append(")")
 
         if in_with_init_strs:
             header.append("optional inputs with matching initializers (")
-            content.append(prefix + ' '.join(header))
+            content.append(prefix + " ".join(header))
             header = []
             for line in in_with_init_strs:
-                content.append(prefix + '  ' + line)
+                content.append(prefix + "  " + line)
             header.append(")")
 
         # from IR 4 onwards an initializer is not required to have a matching graph input
         # so output the name, type and shape of those as well
         if len(in_with_init_strs) < len(initializers):
             graph_inputs = {i.name for i in graph.input}
-            init_strs = [printable_tensor_proto(i) for i in graph.initializer
-                         if i.name not in graph_inputs]
+            init_strs = [
+                printable_tensor_proto(i)
+                for i in graph.initializer
+                if i.name not in graph_inputs
+            ]
             header.append("initializers (")
-            content.append(prefix + ' '.join(header))
+            content.append(prefix + " ".join(header))
             header = []
             for line in init_strs:
-                content.append(prefix + '  ' + line)
+                content.append(prefix + "  " + line)
             header.append(")")
 
-    header.append('{')
-    content.append(prefix + ' '.join(header))
+    header.append("{")
+    content.append(prefix + " ".join(header))
     graphs: List[GraphProto] = []
     # body
     for node in graph.node:
@@ -984,16 +1082,15 @@ def printable_graph(graph: GraphProto, prefix: str = '') -> str:
         content.append(contents_subgraphs[0])
         graphs.extend(contents_subgraphs[1])
     # tail
-    tail = ['return']
+    tail = ["return"]
     if len(graph.output):
-        tail.append(
-            ', '.join([f'%{out.name}' for out in graph.output]))
-    content.append(indent + ' '.join(tail))
+        tail.append(", ".join([f"%{out.name}" for out in graph.output]))
+    content.append(indent + " ".join(tail))
     # closing bracket
-    content.append(prefix + '}')
+    content.append(prefix + "}")
     for g in graphs:
-        content.append('\n' + printable_graph(g))
-    return '\n'.join(content)
+        content.append("\n" + printable_graph(g))
+    return "\n".join(content)
 
 
 def strip_doc_string(proto: google.protobuf.message.Message) -> None:
@@ -1002,7 +1099,7 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
     """
     assert isinstance(proto, google.protobuf.message.Message)
     for descriptor in proto.DESCRIPTOR.fields:
-        if descriptor.name == 'doc_string':
+        if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)
         elif descriptor.type == descriptor.TYPE_MESSAGE:
             if descriptor.label == descriptor.LABEL_REPEATED:
@@ -1012,7 +1109,12 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
                 strip_doc_string(getattr(proto, descriptor.name))
 
 
-def make_training_info(algorithm: GraphProto, algorithm_bindings: AssignmentBindingType, initialization: Optional[GraphProto], initialization_bindings: Optional[AssignmentBindingType]) -> TrainingInfoProto:
+def make_training_info(
+    algorithm: GraphProto,
+    algorithm_bindings: AssignmentBindingType,
+    initialization: Optional[GraphProto],
+    initialization_bindings: Optional[AssignmentBindingType],
+) -> TrainingInfoProto:
     training_info = TrainingInfoProto()
     training_info.algorithm.CopyFrom(algorithm)
     for k, v in algorithm_bindings:
@@ -1029,3 +1131,65 @@ def make_training_info(algorithm: GraphProto, algorithm_bindings: AssignmentBind
             binding.value = v
 
     return training_info
+
+
+# Following functions are used for mapping
+def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
+    """
+    Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: numpy's data_type
+    """
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
+
+
+def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
+    """
+    Convert a TensorProto's data_type to corresponding data_type for storage.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: data_type for storage
+    """
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+
+
+def tensor_dtype_to_string(tensor_dtype: int) -> str:
+    """
+    Get the name of given TensorProto's data_type.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: the name of data_type
+    """
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype].name
+
+
+def tensor_dtype_to_field(tensor_dtype: int) -> str:
+    """
+    Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
+
+    :param tensor_dtype: TensorProto's data_type
+    :return: field name
+    """
+    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
+        mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    ]
+
+
+def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
+    """
+    Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
+
+    :param np_dtype: numpy's data_type
+    :return: TensorsProto's data_type
+    """
+    return cast(int, mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype])
+
+
+def get_all_tensor_dtypes() -> KeysView[int]:
+    """
+    Get all tensor types from TensorProto.
+
+    :return: all tensor types from TensorProto
+    """
+    return mapping.TENSOR_TYPE_MAP.keys()

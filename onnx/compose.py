@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, Set, Tuple, Optional, MutableMapping
-from onnx import ModelProto, GraphProto, helper, checker
+from typing import List, MutableMapping, Optional, Set, Tuple
+
+from onnx import GraphProto, ModelProto
 from onnx import TensorProto as tp
-from onnx import utils
+from onnx import checker, helper, utils
 
 
 def check_overlapping_names(
-    g1: GraphProto,
-    g2: GraphProto,
-    io_map: Optional[List[Tuple[str, str]]] = None
+    g1: GraphProto, g2: GraphProto, io_map: Optional[List[Tuple[str, str]]] = None
 ) -> List[Tuple[str, List[str]]]:
     """Checks whether there are name collisions between two graphs
 
@@ -28,14 +27,16 @@ def check_overlapping_names(
     def _overlapping(c1: List[str], c2: List[str]) -> List[str]:
         return list(set(c1) & set(c2))
 
-    def _edge_names(graph: GraphProto, exclude: Set[str] = set()) -> List[str]:
+    def _edge_names(graph: GraphProto, exclude: Optional[Set[str]] = None) -> List[str]:
+        if exclude is None:
+            exclude = set()
         edges = []
         for n in graph.node:
             for i in n.input:
-                if i != '' and i not in exclude:
+                if i != "" and i not in exclude:
                     edges.append(i)
             for o in n.output:
-                if o != '' and o not in exclude:
+                if o != "" and o not in exclude:
                     edges.append(o)
         return edges
 
@@ -46,40 +47,45 @@ def check_overlapping_names(
     io_map_inputs = {elem[1] for elem in io_map}
 
     # Edges already cover input/output
+    overlap = _overlapping(_edge_names(g1), _edge_names(g2, exclude=io_map_inputs))
+    if len(overlap) > 0:
+        result.append(("edge", overlap))
+
     overlap = _overlapping(
-        _edge_names(g1), _edge_names(g2, exclude=io_map_inputs)
+        [e.name for e in g1.value_info], [e.name for e in g2.value_info]
     )
     if len(overlap) > 0:
-        result.append(('edge', overlap))
+        result.append(("value_info", overlap))
 
-    overlap = _overlapping([e.name for e in g1.value_info], [e.name for e in g2.value_info])
+    overlap = _overlapping(
+        [e.name for e in g1.initializer], [e.name for e in g2.initializer]
+    )
     if len(overlap) > 0:
-        result.append(('value_info', overlap))
+        result.append(("initializer", overlap))
 
-    overlap = _overlapping([e.name for e in g1.initializer], [e.name for e in g2.initializer])
+    overlap = _overlapping(
+        [e.values.name for e in g1.sparse_initializer],
+        [e.values.name for e in g2.sparse_initializer],
+    ) + _overlapping(
+        [e.indices.name for e in g1.sparse_initializer],
+        [e.indices.name for e in g2.sparse_initializer],
+    )
     if len(overlap) > 0:
-        result.append(('initializer', overlap))
-
-    overlap = _overlapping([e.values.name for e in g1.sparse_initializer],
-                           [e.values.name for e in g2.sparse_initializer]) + \
-              _overlapping([e.indices.name for e in g1.sparse_initializer],
-                           [e.indices.name for e in g2.sparse_initializer])
-    if len(overlap) > 0:
-        result.append(('sparse_initializer', overlap))
+        result.append(("sparse_initializer", overlap))
 
     return result
 
 
 def merge_graphs(
-        g1: GraphProto,
-        g2: GraphProto,
-        io_map: List[Tuple[str, str]],
-        inputs: Optional[List[str]] = None,
-        outputs: Optional[List[str]] = None,
-        prefix1: Optional[str] = None,
-        prefix2: Optional[str] = None,
-        name: Optional[str] = None,
-        doc_string: Optional[str] = None,
+    g1: GraphProto,
+    g2: GraphProto,
+    io_map: List[Tuple[str, str]],
+    inputs: Optional[List[str]] = None,
+    outputs: Optional[List[str]] = None,
+    prefix1: Optional[str] = None,
+    prefix2: Optional[str] = None,
+    name: Optional[str] = None,
+    doc_string: Optional[str] = None,
 ) -> GraphProto:
     """Combines two ONNX graphs into a single one.
 
@@ -126,9 +132,12 @@ def merge_graphs(
             g2 = g2_copy
             g2 = add_prefix_graph(g2, prefix=prefix2)
         io_map = [
-            (prefix1 + io[0] if prefix1 else io[0],
-             prefix2 + io[1] if prefix2 else io[1])
-            for io in io_map]
+            (
+                prefix1 + io[0] if prefix1 else io[0],
+                prefix2 + io[1] if prefix2 else io[1],
+            )
+            for io in io_map
+        ]
 
     io_map_g1_outs = {io[0] for io in io_map}
     io_map_g2_ins = {io[1] for io in io_map}
@@ -144,14 +153,22 @@ def merge_graphs(
         else:
             input_set = set(inputs)
             g1_inputs = [i.name for i in g1.input if i.name in input_set]
-            g2_inputs = [i.name for i in g2.input if i.name in input_set or i.name in io_map_g2_ins]
+            g2_inputs = [
+                i.name
+                for i in g2.input
+                if i.name in input_set or i.name in io_map_g2_ins
+            ]
 
         if not outputs:
             g1_outputs = [o.name for o in g1.input]
             g2_outputs = [o.name for o in g2.input]
         else:
             output_set = set(outputs)
-            g1_outputs = [o.name for o in g1.output if o.name in output_set or o.name in io_map_g1_outs]
+            g1_outputs = [
+                o.name
+                for o in g1.output
+                if o.name in output_set or o.name in io_map_g1_outs
+            ]
             g2_outputs = [o.name for o in g2.output if o.name in output_set]
 
         if len(g1_inputs) < len(g1.input) or len(g1_outputs) < len(g1.output):
@@ -175,7 +192,9 @@ def merge_graphs(
         category, names = overlapping_names[0]
         raise ValueError(
             "Cant merge two graphs with overlapping names. "
-            f"Found repeated {category} names: " + ", ".join(names) + "\n"
+            f"Found repeated {category} names: "
+            + ", ".join(names)
+            + "\n"
             + "Consider using ``onnx.compose.add_prefix`` to add a prefix to names in one of the graphs."
         )
 
@@ -211,11 +230,17 @@ def merge_graphs(
 
     g.initializer.extend(g1.initializer)
     g.initializer.extend(
-        [init for init in g2.initializer if init.name not in io_map_g2_ins])
+        [init for init in g2.initializer if init.name not in io_map_g2_ins]
+    )
 
     g.sparse_initializer.extend(g1.sparse_initializer)
     g.sparse_initializer.extend(
-        [init for init in g2.sparse_initializer if init.values.name not in io_map_g2_ins])
+        [
+            init
+            for init in g2.sparse_initializer
+            if init.values.name not in io_map_g2_ins
+        ]
+    )
 
     g.value_info.extend(g1.value_info)
     g.value_info.extend([vi for vi in g2.value_info if vi.name not in io_map_g2_ins])
@@ -223,27 +248,35 @@ def merge_graphs(
     g.name = name if name is not None else "_".join([g1.name, g2.name])
 
     if doc_string is None:
-        doc_string = f"Graph combining {g1.name} and {g2.name}\n" + \
-            g1.name + "\n\n" + g1.doc_string + "\n\n" + g2.name + "\n\n" + g2.doc_string
+        doc_string = (
+            f"Graph combining {g1.name} and {g2.name}\n"
+            + g1.name
+            + "\n\n"
+            + g1.doc_string
+            + "\n\n"
+            + g2.name
+            + "\n\n"
+            + g2.doc_string
+        )
     g.doc_string = doc_string
 
     return g
 
 
 def merge_models(
-        m1: ModelProto,
-        m2: ModelProto,
-        io_map: List[Tuple[str, str]],
-        inputs: Optional[List[str]] = None,
-        outputs: Optional[List[str]] = None,
-        prefix1: Optional[str] = None,
-        prefix2: Optional[str] = None,
-        name: Optional[str] = None,
-        doc_string: Optional[str] = None,
-        producer_name: Optional[str] = 'onnx.compose.merge_models',
-        producer_version: Optional[str] = "1.0",
-        domain: Optional[str] = "",
-        model_version: Optional[int] = 1
+    m1: ModelProto,
+    m2: ModelProto,
+    io_map: List[Tuple[str, str]],
+    inputs: Optional[List[str]] = None,
+    outputs: Optional[List[str]] = None,
+    prefix1: Optional[str] = None,
+    prefix2: Optional[str] = None,
+    name: Optional[str] = None,
+    doc_string: Optional[str] = None,
+    producer_name: Optional[str] = "onnx.compose.merge_models",
+    producer_version: Optional[str] = "1.0",
+    domain: Optional[str] = "",
+    model_version: Optional[int] = 1,
 ) -> ModelProto:
     """Combines two ONNX models into a single one.
 
@@ -287,13 +320,14 @@ def merge_models(
     if m1.ir_version != m2.ir_version:
         raise ValueError(
             f"IR version mismatch {m1.ir_version} != {m2.ir_version}."
-            " Both models should have the same IR version")
+            " Both models should have the same IR version"
+        )
     ir_version = m1.ir_version
 
     opset_import_map: MutableMapping[str, int] = {}
-    opset_imports = \
-        [entry for entry in m1.opset_import] + \
-        [entry for entry in m2.opset_import]
+    opset_imports = [entry for entry in m1.opset_import] + [
+        entry for entry in m2.opset_import
+    ]
 
     for entry in opset_imports:
         if entry.domain in opset_import_map:
@@ -301,7 +335,8 @@ def merge_models(
             if entry.version != found_version:
                 raise ValueError(
                     "Can't merge two models with different operator set ids for a given domain. "
-                    f"Got: {m1.opset_import} and {m2.opset_import}")
+                    f"Got: {m1.opset_import} and {m2.opset_import}"
+                )
         else:
             opset_import_map[entry.domain] = entry.version
 
@@ -318,20 +353,31 @@ def merge_models(
             m2 = m2_copy
             m2 = add_prefix(m2, prefix=prefix2)
         io_map = [
-            (prefix1 + io[0] if prefix1 else io[0],
-             prefix2 + io[1] if prefix2 else io[1])
-            for io in io_map]
+            (
+                prefix1 + io[0] if prefix1 else io[0],
+                prefix2 + io[1] if prefix2 else io[1],
+            )
+            for io in io_map
+        ]
 
-    graph = merge_graphs(m1.graph, m2.graph, io_map,
-                         inputs=inputs, outputs=outputs,
-                         name=name, doc_string=doc_string)
-    model = helper.make_model(graph,
-                              producer_name=producer_name,
-                              producer_version=producer_version,
-                              domain=domain,
-                              model_version=model_version,
-                              opset_imports=opset_imports,
-                              ir_version=ir_version)
+    graph = merge_graphs(
+        m1.graph,
+        m2.graph,
+        io_map,
+        inputs=inputs,
+        outputs=outputs,
+        name=name,
+        doc_string=doc_string,
+    )
+    model = helper.make_model(
+        graph,
+        producer_name=producer_name,
+        producer_version=producer_version,
+        domain=domain,
+        model_version=model_version,
+        opset_imports=opset_imports,
+        ir_version=ir_version,
+    )
 
     # Merging model metadata props
     model_props = {}
@@ -350,11 +396,13 @@ def merge_models(
     helper.set_model_props(model, model_props)
 
     # Merging functions
-    function_overlap = list({f.name for f in m1.functions} & {f.name for f in m2.functions})
+    function_overlap = list(
+        {f.name for f in m1.functions} & {f.name for f in m2.functions}
+    )
     if function_overlap:
         raise ValueError(
             "Can't merge models with overlapping local function names."
-            " Found in both graphs: " + ', '.join(function_overlap)
+            " Found in both graphs: " + ", ".join(function_overlap)
         )
     model.functions.MergeFrom(m1.functions)
     model.functions.MergeFrom(m2.functions)
@@ -364,15 +412,15 @@ def merge_models(
 
 
 def add_prefix_graph(
-        graph: GraphProto,
-        prefix: str,
-        rename_nodes: Optional[bool] = True,
-        rename_edges: Optional[bool] = True,
-        rename_inputs: Optional[bool] = True,
-        rename_outputs: Optional[bool] = True,
-        rename_initializers: Optional[bool] = True,
-        rename_value_infos: Optional[bool] = True,
-        inplace: Optional[bool] = False,
+    graph: GraphProto,
+    prefix: str,
+    rename_nodes: Optional[bool] = True,
+    rename_edges: Optional[bool] = True,
+    rename_inputs: Optional[bool] = True,
+    rename_outputs: Optional[bool] = True,
+    rename_initializers: Optional[bool] = True,
+    rename_value_infos: Optional[bool] = True,
+    inplace: Optional[bool] = False,
 ) -> GraphProto:
     """Adds a prefix to names of elements in a graph: nodes, edges, inputs, outputs,
     initializers, sparse initializer, value infos.
@@ -430,8 +478,12 @@ def add_prefix_graph(
         for init in g.initializer:
             name_map[init.name] = _prefixed(prefix, init.name)
         for sparse_init in g.sparse_initializer:
-            name_map[sparse_init.values.name] = _prefixed(prefix, sparse_init.values.name)
-            name_map[sparse_init.indices.name] = _prefixed(prefix, sparse_init.indices.name)
+            name_map[sparse_init.values.name] = _prefixed(
+                prefix, sparse_init.values.name
+            )
+            name_map[sparse_init.indices.name] = _prefixed(
+                prefix, sparse_init.indices.name
+            )
 
     if rename_value_infos:
         for entry in g.value_info:
@@ -469,16 +521,16 @@ def add_prefix_graph(
 
 
 def add_prefix(
-        model: ModelProto,
-        prefix: str,
-        rename_nodes: Optional[bool] = True,
-        rename_edges: Optional[bool] = True,
-        rename_inputs: Optional[bool] = True,
-        rename_outputs: Optional[bool] = True,
-        rename_initializers: Optional[bool] = True,
-        rename_value_infos: Optional[bool] = True,
-        rename_functions: Optional[bool] = True,
-        inplace: Optional[bool] = False,
+    model: ModelProto,
+    prefix: str,
+    rename_nodes: Optional[bool] = True,
+    rename_edges: Optional[bool] = True,
+    rename_inputs: Optional[bool] = True,
+    rename_outputs: Optional[bool] = True,
+    rename_initializers: Optional[bool] = True,
+    rename_value_infos: Optional[bool] = True,
+    rename_functions: Optional[bool] = True,
+    inplace: Optional[bool] = False,
 ) -> ModelProto:
     """Adds a prefix to names of elements in a graph: nodes, edges, inputs, outputs,
     initializers, sparse initializer, value infos, and local functions.
@@ -511,14 +563,15 @@ def add_prefix(
         model = m
 
     add_prefix_graph(
-        model.graph, prefix,
+        model.graph,
+        prefix,
         rename_nodes=rename_nodes,
         rename_edges=rename_edges,
         rename_inputs=rename_inputs,
         rename_outputs=rename_outputs,
         rename_initializers=rename_initializers,
         rename_value_infos=rename_value_infos,
-        inplace=True  # No need to create a copy, since it's a new model
+        inplace=True,  # No need to create a copy, since it's a new model
     )
 
     if rename_functions:
@@ -542,9 +595,9 @@ def add_prefix(
 
 
 def expand_out_dim_graph(
-        graph: GraphProto,
-        dim_idx: int,
-        inplace: Optional[bool] = False,
+    graph: GraphProto,
+    dim_idx: int,
+    inplace: Optional[bool] = False,
 ) -> GraphProto:
     """Inserts an extra dimension with extent 1 to each output in the graph.
 
@@ -575,37 +628,56 @@ def expand_out_dim_graph(
     for n in g.node:
         for i in range(len(n.output)):
             if n.output[i] in orig_out_names:
-                n.output[i] = n.output[i] + f'_collapsed_dim_{dim_idx}'
+                n.output[i] = n.output[i] + f"_collapsed_dim_{dim_idx}"
         for i in range(len(n.input)):
             if n.input[i] in orig_out_names:
-                n.input[i] = n.input[i] + f'_collapsed_dim_{dim_idx}'
+                n.input[i] = n.input[i] + f"_collapsed_dim_{dim_idx}"
 
     expand_dim_k = g.name + "_expand_out_dim_idx"
     g.node.append(
         helper.make_node(
-            'Constant', inputs=[], outputs=[expand_dim_k], name=f"{expand_dim_k}-constant",
-            value=helper.make_tensor(name=f"{expand_dim_k}-value", data_type=tp.INT64,
-                                     dims=[1, ], vals=[dim_idx, ]))
+            "Constant",
+            inputs=[],
+            outputs=[expand_dim_k],
+            name=f"{expand_dim_k}-constant",
+            value=helper.make_tensor(
+                name=f"{expand_dim_k}-value",
+                data_type=tp.INT64,
+                dims=[
+                    1,
+                ],
+                vals=[
+                    dim_idx,
+                ],
+            ),
+        )
     )
 
     for _ in range(len(g.output)):
         o = g.output.pop(0)
-        prev_output = o.name + f'_collapsed_dim_{dim_idx}'
+        prev_output = o.name + f"_collapsed_dim_{dim_idx}"
         g.node.append(
-            helper.make_node('Unsqueeze', inputs=[prev_output, expand_dim_k],
-                             outputs=[o.name], name=f"unsqueeze-{o.name}")
+            helper.make_node(
+                "Unsqueeze",
+                inputs=[prev_output, expand_dim_k],
+                outputs=[o.name],
+                name=f"unsqueeze-{o.name}",
+            )
         )
         new_shape = [d.dim_value for d in o.type.tensor_type.shape.dim]
         new_shape.insert(dim_idx, 1)
         g.output.append(
-            helper.make_tensor_value_info(o.name, o.type.tensor_type.elem_type, new_shape))
+            helper.make_tensor_value_info(
+                o.name, o.type.tensor_type.elem_type, new_shape
+            )
+        )
     return g
 
 
 def expand_out_dim(
-        model: ModelProto,
-        dim_idx: int,
-        inplace: Optional[bool] = False,
+    model: ModelProto,
+    dim_idx: int,
+    inplace: Optional[bool] = False,
 ) -> ModelProto:
     """Inserts an extra dimension with extent 1 to each output in the graph.
 
@@ -633,6 +705,6 @@ def expand_out_dim(
     expand_out_dim_graph(
         model.graph,
         dim_idx,
-        inplace=True  # No need to create a copy, since it's a new model
+        inplace=True,  # No need to create a copy, since it's a new model
     )
     return model

@@ -15,12 +15,8 @@ jobs:
   build:
     if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'test ONNX Model Zoo')
     runs-on: macos-latest
-    strategy:
-      matrix:
-        python-version: ['3.9']
-        architecture: ['x64']
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       name: Checkout repo
     - name: Checkout submodules
       shell: bash
@@ -28,13 +24,10 @@ jobs:
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
-        architecture: ${{ matrix.architecture }}
-
+        python-version: '3.10'
     - name: Install dependencies
       shell: bash
       run: |
@@ -52,8 +45,6 @@ jobs:
         export CC=clang
         export CXX=clang++
         export ONNX_ML=1
-        export ONNX_NAMESPACE=ONNX_REL_1_8
-        export MACOSX_DEPLOYMENT_TARGET=10.15
         python setup.py --quiet install
   
     - name: Test all models with onnx.checker and onnx.shape_inference

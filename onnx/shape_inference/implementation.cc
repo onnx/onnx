@@ -6,7 +6,9 @@
 #include <fstream>
 #include <list>
 #include "onnx/checker.h"
+#include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
+#include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -282,8 +284,8 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void preprocess(NodeProto& n) {
-    if (checker::check_is_experimental_op(n.op_type())) {
+  void preprocess(const NodeProto& n) {
+    if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
     } else if (n.op_type() == "Constant" && n.output().size() == 1) {
       for (const auto& attr : n.attribute()) {
@@ -293,6 +295,10 @@ class ShapeInferenceImplBase {
           } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
             input_sparse_data_by_name[n.output(0)] = &attr.sparse_tensor();
           }
+        } else if (attr.type() == AttributeProto::INTS && attr.name() == "value_ints") {
+          std::vector<int64_t> ints{attr.ints().begin(), attr.ints().end()};
+          input_data_by_name_holder[n.output(0)] = ToTensor(ints);
+          input_data_by_name[n.output(0)] = &input_data_by_name_holder[n.output(0)];
         }
       }
     }
@@ -387,6 +393,8 @@ class ShapeInferenceImplBase {
           updateType(n.output(i), ctx.getOutputType(i));
       }
 
+      preprocess(n);
+
       // If data propagation is enabled, propagate shape data if it exists.
       if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
         if (generated_shape_data_by_name == nullptr) {
@@ -462,10 +470,6 @@ class ShapeInferenceImplBase {
       }
       processInitializer(tp.values().name(), tp, initializer_type, input_sparse_data_by_name);
     }
-    // Collect data from constant nodes and check if any experimental ops exist
-    for (auto& n : *graph.mutable_node()) {
-      preprocess(n); // process constant node
-    }
     for (auto& n : *graph.mutable_node()) {
       process(n);
     }
@@ -528,6 +532,7 @@ class ShapeInferenceImplBase {
         attr_map[attr] = ctx.getAttribute(attr);
       }
     }
+
     for (auto& n : func_proto.node()) {
       process(n, attr_map);
     }
@@ -595,6 +600,7 @@ class ShapeInferenceImplBase {
 
   std::unordered_map<std::string, TypeProto*> undefined_value_types_by_name;
   std::unordered_map<std::string, const TensorProto*> input_data_by_name;
+  std::unordered_map<std::string, TensorProto> input_data_by_name_holder;
   std::unordered_map<std::string, const SparseTensorProto*> input_sparse_data_by_name;
 
   bool has_experimental_op = false;
@@ -691,15 +697,7 @@ void InferShapes(
     const ShapeInferenceOptions& options,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
   ModelProto model;
-  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
-  if (!model_stream.good()) {
-    fail_check("Unable to open model file:", model_path, ". Please check if it is a valid file.");
-  }
-  std::string data{std::istreambuf_iterator<char>{model_stream}, std::istreambuf_iterator<char>{}};
-  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())) {
-    fail_check(
-        "Unable to parse model from file:", model_path, ". Please check if it is a valid protobuf file of model.");
-  }
+  LoadProtoFromPath(model_path, model);
   InferShapes(model, schema_registry, options, generated_shape_data_by_name);
   // Save the inferred model to the original model path
   // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
@@ -838,7 +836,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   return graph_output_types;
 }
 
-std::string GetErrorWithNodeInfo(NodeProto n, std::runtime_error err) {
+std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err) {
   std::string op_name = n.has_name() ? (", node name: " + n.name()) : "";
   return "(op_type:" + n.op_type() + op_name + "): " + err.what();
 }

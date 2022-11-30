@@ -1,0 +1,58 @@
+[tool.mypy]
+strict_optional = true
+warn_return_any = true
+warn_no_return = true
+# TODO warn_unused_ignores = true
+warn_redundant_casts = true
+warn_incomplete_stub = true
+# TODO disallow_untyped_calls = true
+check_untyped_defs = true
+disallow_any_generics = true
+no_implicit_optional = true
+# TODO disallow_incomplete_defs = true
+# TODO disallow_subclassing_any = true
+warn_unused_configs = true
+show_error_codes = true
+show_column_numbers = true
+ignore_missing_imports = true
+exclude = [
+    '\.git',
+    '__pycache__',
+    '^build',
+    '^third_party',
+    '_pb2.py$',
+    '\.cache',
+    '\.eggs',
+    '\.setuptools-cmake-build',
+    'venv/',
+]
+
+[[tool.mypy.overrides]]
+module = ['setup']
+ignore_errors = true
+
+[tool.black]
+# extend-exclude needs to be a regular expression
+extend-exclude = "third_party/|venv/"
+target-version = ["py37", "py38", "py39", "py310"]
+
+[tool.isort]
+profile = "black"
+extend_skip_glob = [
+    "third_party/*",
+    "*_pb2*",
+    ".setuptools-cmake-build/*",
+    "venv",
+]
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+    "missing-docstring",
+    "import-error",
+    "no-member",
+    "line-too-long",
+    "fixme",
+    "too-few-public-methods",
+    "no-name-in-module",
+    "invalid-name",           # TODO: Add naming guidance and enable this check.
+]
