@@ -244,6 +244,13 @@ def merge_graphs(
 
     g.value_info.extend(g1.value_info)
     g.value_info.extend([vi for vi in g2.value_info if vi.name not in io_map_g2_ins])
+    
+    g.quantization_annotation.extend(g1.quantization_annotation)
+    g.quantization_annotation.extend(
+        [
+            qa for qa in g2.quantization_annotation if qa.tensor_name not in io_map_g2_ins
+        ]
+    )
 
     g.name = name if name is not None else "_".join([g1.name, g2.name])
 
