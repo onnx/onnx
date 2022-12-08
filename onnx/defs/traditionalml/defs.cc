@@ -26,16 +26,15 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
-
-          auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           if (input_ndim == 1) {
-            output_shape->add_dim()->set_dim_value(1);
-          } else {
-            // This operator only applies to the last dimension; thus -1
-            for (int i = 0; i < input_ndim - 1; ++i) {
-              *output_shape->add_dim() = input_shape.dim(i);
-            }
+            return;
           }
+          auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          // This operator only applies to the last dimension; thus -1
+          for (int i = 0; i < input_ndim - 1; ++i) {
+            *output_shape->add_dim() = input_shape.dim(i);
+          }
+          
           // value of the output's last dimension is the total amount of indices
           // set Unknown length for the last dimension if it cannot be calculated
           auto last_dim = output_shape->add_dim();
