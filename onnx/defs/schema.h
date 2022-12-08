@@ -1033,6 +1033,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         auto& op_name = op_schema.Name();
         auto& op_domain = op_schema.domain();
         auto ver = op_schema.SinceVersion();
+        if (OpSchema::kUninitializedSinceVersion == ver) {
+          op_schema.SinceVersion(1);
+          ver = op_schema.SinceVersion();
+        }
         // Stops because the opset_version is higher than opset_version_to_load
         if (opset_version_to_load != 0 && ver > opset_version_to_load) {
           return;
