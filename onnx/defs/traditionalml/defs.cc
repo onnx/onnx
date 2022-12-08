@@ -34,7 +34,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < input_ndim - 1; ++i) {
             *output_shape->add_dim() = input_shape.dim(i);
           }
-          
+
           // value of the output's last dimension is the total amount of indices
           // set Unknown length for the last dimension if it cannot be calculated
           auto last_dim = output_shape->add_dim();
