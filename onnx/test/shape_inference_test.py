@@ -8567,7 +8567,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 "TreeEnsembleClassifier",
                 ["x"],
                 ["y", "z"],
-                class_ids=[0, 1, 2, 3, 4],
+                classlabels_int64s=[0, 1, 2, 3, 4],
                 domain=ONNX_ML_DOMAIN,
             )
             graph = self._make_graph(
