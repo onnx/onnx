@@ -13,7 +13,7 @@ err=0
 trap 'err=1' ERR
 
 echo -e "\n::group:: ===> check flake8..."
-flake8 onnx tools workflow_scripts
+flake8 --ignore=B905 onnx tools workflow_scripts
 echo -e "::endgroup::"
 
 echo -e "\n::group:: ===> check isort..."
