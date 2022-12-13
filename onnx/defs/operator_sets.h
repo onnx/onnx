@@ -1064,6 +1064,7 @@ class OpSet_Onnx_ver18 {
 class OpSet_Onnx_ver19 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    (void) fn;
   }
 };
 
