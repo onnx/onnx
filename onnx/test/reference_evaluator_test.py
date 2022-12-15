@@ -1011,7 +1011,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         graph = make_graph([node], "g", [X, W, B], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
 
-        sess1 = ort.InferenceSession(onnx_model.SerializeToString())
+        sess1 = ort.InferenceSession(
+            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
+        )
         sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 5, 6
@@ -1063,7 +1065,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
 
-        sess1 = ort.InferenceSession(onnx_model.SerializeToString())
+        sess1 = ort.InferenceSession(
+            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
+        )
         sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 3, 3
@@ -1197,7 +1201,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         try:
             import onnxruntime as ort
 
-            sess_conv = ort.InferenceSession(onnx_model_conv.SerializeToString())
+            sess_conv = ort.InferenceSession(
+                onnx_model_conv.SerializeToString(), providers=["CPUExecutionProvider"]
+            )
         except ImportError:
             sess_conv = None
 
@@ -1856,7 +1862,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
         # import onnxruntime
-        # ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString())
+        # ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString(), providers=["CPUExecutionProvider"])
         # got0 = ref0.run(None, feeds)
 
         ref1 = ReferenceEvaluator(onnx_model)
@@ -1964,6 +1970,30 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
+
+    def test_argmin(self):
+        X = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
+        node = make_node("ArgMin", ["X"], ["Y"], axis=1)
+        graph = make_graph([node], "g", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        feeds = {"X": np.arange(12).reshape((3, 4)).astype(np.float32)}
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        expected = np.array([0, 0, 0], dtype=np.int64)
+        self.assertEqual(expected.tolist(), got1[0].tolist())
+
+    def test_argmax(self):
+        X = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
+        node = make_node("ArgMax", ["X"], ["Y"], axis=1)
+        graph = make_graph([node], "g", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        feeds = {"X": np.arange(12).reshape((3, 4)).astype(np.float32)}
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        expected = np.array([3, 3, 3], dtype=np.int64)
+        self.assertEqual(expected.tolist(), got1[0].tolist())
 
 
 if __name__ == "__main__":

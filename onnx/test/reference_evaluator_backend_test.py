@@ -51,11 +51,13 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1230
+MIN_PASSING_TESTS = 1229
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
     # mismatches
+    # expected is [0] when output is 0.
+    "test__pytorch_operator_operator_index",
     # shapes (10, 9, 3), (10, 8, 3) shape mismatch unexpected as the operator is inlined
     "test_center_crop_pad_crop_axes_hwc_expanded",
     "test_col2im_pads",  # mismatch by one value, the onnx backend test is probably wrong
@@ -317,6 +319,15 @@ class OnnxBackendTest:
                             f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
                             f"\n{output}\n-----\n{diff}\n------INPUTS----\n{pprint.pformat(inputs)}."
                         ) from ex
+                if desired.shape != output.shape and not (
+                    len(desired.shape) == 0 and output.shape == (1,)
+                ):
+                    raise AssertionError(
+                        f"Output {i_output} of test {index} in folder {self.folder!r} failed "
+                        f"(expected shape={desired.shape} but shape={output.shape}), "
+                        f"comment={comment}\n---\n{desired}\n----"
+                        f"\n{output}\n------INPUTS----\n{pprint.pformat(inputs)}."
+                    )
             elif hasattr(output, "is_compatible"):
                 # A shape
                 if desired.dtype != output.dtype:
