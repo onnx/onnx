@@ -121,4 +121,4 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Steps: Login and go [here](https://test.pypi.org/manage/project/onnx-weekly/releases/) -> Choose target package -> Options -> Delete.
 
 **Bump opset version for ai.onnx**
-* Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes. For example, this [demo PR](https://github.com/onnx/onnx/pull/4134/files).
+* Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes. For example, this [demo PR](https://github.com/onnx/onnx/pull/4701).
