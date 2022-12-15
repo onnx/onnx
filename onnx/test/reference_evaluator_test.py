@@ -1980,7 +1980,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         feeds = {"X": np.arange(12).reshape((3, 4)).astype(np.float32)}
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
-        expected = np.array([0, 0, 0], dtype=np.int64)
+        expected = np.array([0, 0, 0], dtype=np.int64).reshape((-1, 1))
         self.assertEqual(expected.tolist(), got1[0].tolist())
 
     def test_argmax(self):
@@ -1992,7 +1992,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         feeds = {"X": np.arange(12).reshape((3, 4)).astype(np.float32)}
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
-        expected = np.array([3, 3, 3], dtype=np.int64)
+        expected = np.array([3, 3, 3], dtype=np.int64).reshape((-1, 1))
         self.assertEqual(expected.tolist(), got1[0].tolist())
 
 
