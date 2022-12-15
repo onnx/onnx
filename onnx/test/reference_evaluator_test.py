@@ -1972,7 +1972,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(expected, got1[0])
 
     def test_argmin(self):
-        X = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
         node = make_node("ArgMin", ["X"], ["Y"], axis=1)
         graph = make_graph([node], "g", [X], [Y])
@@ -1984,7 +1984,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(expected.tolist(), got1[0].tolist())
 
     def test_argmax(self):
-        X = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
         node = make_node("ArgMax", ["X"], ["Y"], axis=1)
         graph = make_graph([node], "g", [X], [Y])
@@ -1993,6 +1993,44 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         expected = np.array([3, 3, 3], dtype=np.int64).reshape((-1, 1))
+        self.assertEqual(expected.tolist(), got1[0].tolist())
+
+    def test_slice_squeeze(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        starts = make_tensor_value_info("starts", TensorProto.INT64, [None])
+        ends = make_tensor_value_info("ends", TensorProto.INT64, [None])
+        axes = make_tensor_value_info("axes", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
+        nodes = [
+            make_node("Slice", ["X", "starts", "ends", "axes"], ["T"]),
+            make_node("Squeeze", ["T", "axes"], ["Y"]),
+        ]
+        graph = make_graph(nodes, "g", [X, starts, ends, axes], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        feeds = {
+            "X": np.array([[0]], dtype=np.int64),
+            "starts": np.array([0], dtype=np.int64),
+            "ends": np.array([1], dtype=np.int64),
+            "axes": np.array([0], dtype=np.int64),
+        }
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        expected = np.array([0], dtype=np.int64)
+        self.assertEqual(expected.tolist(), got1[0].tolist())
+
+    def test_slice_squeeze_6(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
+        nodes = [
+            make_node("Slice", ["X"], ["T"], axes=[0], starts=[0], ends=[1]),
+            make_node("Squeeze", ["T"], ["Y"], axes=[0]),
+        ]
+        graph = make_graph(nodes, "g", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 6)])
+        feeds = {"X": np.array([[0]], dtype=np.int64)}
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        expected = np.array([0], dtype=np.int64)
         self.assertEqual(expected.tolist(), got1[0].tolist())
 
 

@@ -6,10 +6,8 @@ import numpy as np
 from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
-from ._op import OpRunUnaryNum
 
-
-class Squeeze_1(OpRunUnaryNum):
+class Squeeze_1(OpRun):
     def _run(self, data, axes=None):  # type: ignore
         if isinstance(axes, np.ndarray):
             axes = tuple(axes)
