@@ -97,7 +97,7 @@ class DeprecatedWarningDict(dict):  # type: ignore
             warnings.warn(
                 str(
                     f"`mapping.{self._origin_function}` is now deprecated and will be removed in the next release or so."
-                    + "To silence this warning, please use `helper.{self._future_function}` instead."
+                    + f"To silence this warning, please use `helper.{self._future_function}` instead."
                 ),
                 DeprecationWarning,
                 stacklevel=2,
