@@ -824,7 +824,8 @@ OpSchema& OpSchema::FunctionBody(
 }
 
 const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool validate) const {
-  if (opset_version_to_function_body_.empty()) return nullptr;
+  if (opset_version_to_function_body_.empty())
+    return nullptr;
   // Return latest FunctionProto when opset version request is not set
   if (requested_opset_version == OpSchema::kUninitializedSinceVersion) {
     return opset_version_to_function_body_.rbegin()->second.get();
