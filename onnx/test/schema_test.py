@@ -16,6 +16,9 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(type(v), AttributeProto)
         self.assertEqual(v.type, AttributeProto.FLOAT)
 
+    def test_function_body(self) -> None:
+        defs.get_schema("Selu").function_body
+
 
 if __name__ == "__main__":
     unittest.main()
