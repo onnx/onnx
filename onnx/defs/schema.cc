@@ -827,9 +827,8 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
   if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
     requested_opset_version = since_version_;
   std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it =
-      opset_version_to_function_body_.upper_bound(requested_opset_version);
-  if (!opset_version_to_function_body_.empty() && it != opset_version_to_function_body_.begin()) {
-    --it;
+      opset_version_to_function_body_.lower_bound(requested_opset_version);
+  if (it != opset_version_to_function_body_.end()) {
     int function_since_version = it->first;
     const FunctionProto* function = it->second.get();
     if (!validate || ValidateReferencedOpsInFuncton(function, requested_opset_version, function_since_version)) {
