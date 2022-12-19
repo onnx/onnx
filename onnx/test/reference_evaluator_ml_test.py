@@ -3,34 +3,21 @@
 # pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
 
 import unittest
-from contextlib import redirect_stdout
-from functools import wraps
-from io import StringIO
-from textwrap import dedent
 from typing import Any, List
 
 import numpy as np  # type: ignore
 from numpy.testing import assert_allclose  # type: ignore
 
-from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
+from onnx import TensorProto
 from onnx.checker import check_model
-from onnx.defs import onnx_opset_version
 from onnx.helper import (
-    make_function,
     make_graph,
     make_model,
     make_node,
     make_opsetid,
-    make_sequence_type_proto,
-    make_tensor,
-    make_tensor_sequence_value_info,
     make_tensor_value_info,
-    make_value_info,
 )
-from onnx.numpy_helper import from_array
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.op_run import OpRun
-from onnx.reference.ops import load_op
 
 
 def has_onnxruntime():
