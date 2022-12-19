@@ -211,12 +211,10 @@ class ReferenceEvaluator:
         if new_ops is not None:
             for cl in new_ops:
                 if not issubclass(cl, OpRun):  # type: ignore
-                    raise TypeError(
-                        f"Class {type(cl)} must inherit from OpRun (in new_ops)."
-                    )
+                    raise TypeError(f"Class {cl} must inherit from OpRun (in new_ops).")
                 if not hasattr(cl, "op_domain"):
                     raise AttributeError(
-                        f"Class {type(cl)} must define attribute 'op_domain'."
+                        f"Class {cl} must define attribute 'op_domain'."
                     )
                 key = cl.op_domain, cl.__name__  # type: ignore
                 if key in self.new_ops_:
@@ -297,6 +295,7 @@ class ReferenceEvaluator:
             "log": lambda pattern, *args: self._log(10, pattern, *args),
             "opsets": self.opsets,
             "verbose": self.verbose,
+            "new_ops": self.new_ops_,
         }
         if self.input_types_:
             all_types = {i.name: i.type for i in self.onnx_graph_.input}

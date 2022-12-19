@@ -166,6 +166,12 @@ class OpRun(ABC):
     ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
+        for att in ["opsets", "new_ops"]:
+            if att not in run_params:
+                raise RuntimeError(
+                    f"Attribute {att!r} must be in run_params, only "
+                    f"{list(sorted(run_params))} was found."
+                )
         if "log" not in run_params:
             raise KeyError("run_params must contains key 'log'.")
         self.onnx_node = onnx_node
@@ -193,10 +199,12 @@ class OpRun(ABC):
         if att.type == AttributeProto.GRAPH:
             from .reference_evaluator import ReferenceEvaluator  # type: ignore
 
+            new_ops = self.run_params.get("new_ops", None)
             return ReferenceEvaluator(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
+                new_ops=None if new_ops is None else new_ops.values(),
             )
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
@@ -484,7 +492,12 @@ class OpRun(ABC):
                 print(pattern % tuple(args))
 
         node = cls.make_node(n_inputs, n_outputs, **kwargs)
-        run_params = dict(verbose=verbose, log=log_function)
+        run_params = dict(
+            verbose=verbose,
+            log=log_function,
+            new_ops=None,
+            opsets={"": onnx_opset_version()},
+        )
         cl = cls(node, run_params)
         return cl
 
