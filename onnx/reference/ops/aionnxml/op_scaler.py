@@ -5,9 +5,6 @@ from ._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class Scaler(OpRunAiOnnxMl):
-
-    op_domain = "ai.onnx.ml"
-
-    def _run(self, x, offset=None, scale=None):
+    def _run(self, x, offset=None, scale=None):  # type: ignore
         dx = x - offset
         return (dx * scale,)
