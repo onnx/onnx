@@ -322,7 +322,12 @@ class ReferenceEvaluator:
                         f"If this node has a context dependent implementation, you should run function infer_shapes "
                         f"before calling ReferenceEvaluator."
                     ) from e
-            inst = cl(node, run_params)
+            try:
+                inst = cl(node, run_params)
+            except TypeError as e:
+                raise TypeError(
+                    f"Unable to instantiate class {cl!r} with "
+                    f"run_params={run_params} and node={node}.") from e
             self.rt_nodes_.append(inst)
 
     def _load_impl(
