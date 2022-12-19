@@ -327,7 +327,8 @@ class ReferenceEvaluator:
             except TypeError as e:
                 raise TypeError(
                     f"Unable to instantiate class {cl!r} with "
-                    f"run_params={run_params} and node={node}.") from e
+                    f"run_params={run_params} and node={node}."
+                ) from e
             self.rt_nodes_.append(inst)
 
     def _load_impl(

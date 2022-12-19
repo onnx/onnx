@@ -2033,6 +2033,30 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = np.array([0], dtype=np.int64)
         self.assertEqual(expected.tolist(), got1[0].tolist())
 
+    def test_onnxrt_reduce_mean(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node("ReduceMean", ["X"], ["Y"])
+        graph = make_graph([node1], "g", [X], [Y])
+
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 17)])
+        check_model(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
+        cls = sess.rt_nodes_[0]
+        self.assertEqual(cls.__class__.__name__, "ReduceMean_1")
+        got = sess.run(None, {"X": np.ones((2, 4), dtype=np.float32)})[0]
+        self.assertEqual(got.shape, (1, 1))
+        self.assertEqual(got[0, 0], 1)
+
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        check_model(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
+        cls = sess.rt_nodes_[0]
+        self.assertEqual(cls.__class__.__name__, "ReduceMean_18")
+        got = sess.run(None, {"X": np.ones((2, 4), dtype=np.float32)})[0]
+        self.assertEqual(got.shape, (1, 1))
+        self.assertEqual(got[0, 0], 1)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
