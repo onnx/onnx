@@ -9,7 +9,7 @@ from typing import Any, List
 import numpy as np  # type: ignore
 from numpy.testing import assert_allclose  # type: ignore
 
-from onnx import TensorProto
+from onnx import TensorProto, ONNX_ML
 from onnx.checker import check_model
 from onnx.helper import (
     make_graph,
@@ -71,6 +71,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 err_msg=f"Discrepancies for output {i}.",
             )
 
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_scaler(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
