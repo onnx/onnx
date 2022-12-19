@@ -3,6 +3,7 @@
 # pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
 
 import unittest
+from functools import wraps
 from typing import Any, List
 
 import numpy as np  # type: ignore
