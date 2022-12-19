@@ -8,7 +8,7 @@ from functools import wraps
 import numpy as np  # type: ignore
 from numpy.testing import assert_allclose  # type: ignore
 
-from onnx import TensorProto, ONNX_ML
+from onnx import ONNX_ML, TensorProto
 from onnx.checker import check_model
 from onnx.helper import (
     make_graph,

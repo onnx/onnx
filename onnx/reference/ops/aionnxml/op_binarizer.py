@@ -9,7 +9,7 @@ from ._op_run_aionnxml import OpRunAiOnnxMl
 class Binarizer(OpRunAiOnnxMl):
     def _run(self, x, threshold=None):  # type: ignore
         X = x.copy()
-        cond = X > self.threshold
+        cond = X > threshold
         not_cond = np.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0
