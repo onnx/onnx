@@ -10,6 +10,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceProd_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
+        axes = tuple(axes) if axes is not None else None
         return (np.prod(data, axis=axes, keepdims=keepdims, dtype=data.dtype),)
 
 

@@ -24,7 +24,7 @@ def compute_log_sum_exp(data, axes, keepdims):
 
 class ReduceLogSumExp_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
-        tax = tuple(axes) if axes else None
+        tax = tuple(axes) if axes is not None else None
         return compute_log_sum_exp(data, tax, keepdims)
 
 

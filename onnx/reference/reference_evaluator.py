@@ -126,6 +126,25 @@ class ReferenceEvaluator:
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Celu.eval(x, alpha=0.5)
         print(y)
+
+    It is possible to overwrite an existing operator.
+    The class name must be the same. The domain does not have
+    to be specified for the default domain. However, by default,
+    class `OpRun` will load the most recent for this operator.
+    It can be explicirely specified by adding static attribute
+    `op_schema` of type :class:`OpSchema
+    <onnx.onnx_cpp2py_export.defs.OpSchema>`.
+
+    ::
+
+        from onnx.reference.op_run.op_conv import Conv as _Conv
+
+        class Conv(_Conv):
+
+            op_schema = instance_of_OpSchema()
+
+            def _run(self, ...):
+                ...
     """
 
     def __init__(  # type: ignore
