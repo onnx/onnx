@@ -370,6 +370,81 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         self.assertEqual(expected.tolist(), got.tolist())
 
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_one_hot_encoder_int(self):
+        X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+        node1 = make_node(
+            "OneHotEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            zeros=1,
+            cats_int64s=[1, 2, 3],
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.array([[5, 1, 3], [2, 1, 3]], dtype=np.int64)
+        expected = np.array(
+            [[[0, 0, 0], [1, 0, 0], [0, 0, 1]], [[0, 1, 0], [1, 0, 0], [0, 0, 1]]],
+            dtype=np.float32,
+        )
+        self._check_ort(onx, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        self.assertEqual(expected.tolist(), got.tolist())
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_one_hot_encoder_string(self):
+        X = make_tensor_value_info("X", TensorProto.STRING, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+        node1 = make_node(
+            "OneHotEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            zeros=1,
+            cats_strings=["c1", "c2", "c3"],
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.array([["c5", "c1", "c3"], ["c2", "c1", "c3"]])
+        expected = np.array(
+            [[[0, 0, 0], [1, 0, 0], [0, 0, 1]], [[0, 1, 0], [1, 0, 0], [0, 0, 1]]],
+            dtype=np.float32,
+        )
+        self._check_ort(onx, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        self.assertEqual(expected.tolist(), got.tolist())
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_one_hot_encoder_zeros(self):
+        X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+        node1 = make_node(
+            "OneHotEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            zeros=0,
+            cats_int64s=[1, 2, 3],
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.array([[2, 1, 3], [2, 1, 3]], dtype=np.int64)
+        expected = np.array(
+            [[[0, 1, 0], [1, 0, 0], [0, 0, 1]], [[0, 1, 0], [1, 0, 0], [0, 0, 1]]],
+            dtype=np.float32,
+        )
+        self._check_ort(onx, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        self.assertEqual(expected.tolist(), got.tolist())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

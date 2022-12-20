@@ -14,6 +14,7 @@ from .op_feature_vectorizer import FeatureVectorizer
 from .op_imputer import Imputer
 from .op_label_encoder import LabelEncoder
 from .op_normalizer import Normalizer
+from .op_one_hot_encoder import OneHotEncoder
 from .op_scaler import Scaler
 
 

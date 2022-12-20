@@ -8,7 +8,6 @@ from ._op_run_aionnxml import OpRunAiOnnxMl
 
 class DictVectorizer(OpRunAiOnnxMl):
     def _run(self, x, int64_vocabulary=None, string_vocabulary=None):  # type: ignore
-
         if isinstance(x, (np.ndarray, list)):
 
             dict_labels = {}
@@ -34,11 +33,17 @@ class DictVectorizer(OpRunAiOnnxMl):
             values = np.array(values)
             rows = np.array(rows)
             cols = np.array(cols)
-            return (
-                coo_matrix(
-                    (values, (rows, cols)), shape=(len(x), len(dict_labels))
-                ).todense(),
-            )
+
+            res = np.zeros((len(x), len(dict_labels)), dtype=values.dtype)
+            for r, c, v in zip(rows, cols, values):
+                res[r, c] = v
+            return (res,)
+
+            # return (
+            #     coo_matrix(
+            #         (values, (rows, cols)), shape=(len(x), len(dict_labels))
+            #     ).todense(),
+            # )
 
         if isinstance(x, dict):
             keys = int64_vocabulary or string_vocabulary
