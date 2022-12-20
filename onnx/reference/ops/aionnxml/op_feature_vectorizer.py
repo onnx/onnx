@@ -21,6 +21,8 @@ class FeatureVectorizer(OpRunAiOnnxMl):
         return a
 
     def _run(self, *args, inputdimensions=None):  # type: ignore
-        args = [self._preprocess(a, axis) for a, axis in zip(args, inputdimensions)]
+        args = [  # type: ignore
+            self._preprocess(a, axis) for a, axis in zip(args, inputdimensions)
+        ]
         res = np.concatenate(args, axis=1)
         return (res,)

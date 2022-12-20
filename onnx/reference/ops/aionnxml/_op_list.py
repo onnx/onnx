@@ -9,6 +9,7 @@ from onnx.reference.op_run import OpFunction, _split_class_name
 from ._op_run_aionnxml import OpRunAiOnnxMl
 from .op_array_feature_extractor import ArrayFeatureExtractor
 from .op_binarizer import Binarizer
+from .op_dict_vectorizer import DictVectorizer
 from .op_feature_vectorizer import FeatureVectorizer
 from .op_imputer import Imputer
 from .op_label_encoder import LabelEncoder

@@ -8,7 +8,7 @@ from functools import wraps
 import numpy as np  # type: ignore
 from numpy.testing import assert_allclose  # type: ignore
 
-from onnx import ONNX_ML, TensorProto
+from onnx import ONNX_ML, TensorProto, TypeProto, ValueInfoProto
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
@@ -335,6 +335,37 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         x = np.array([[0, 1, 3, 4]], dtype=np.int64).T
         expected = np.array([["NONE"], ["a"], ["cc"], ["ddd"]])
         self._check_ort(onx, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        self.assertEqual(expected.tolist(), got.tolist())
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_dict_vectorizer(self):
+        value_type = TypeProto()
+        value_type.tensor_type.elem_type = TensorProto.INT64
+        onnx_type = TypeProto()
+        onnx_type.map_type.key_type = TensorProto.STRING
+        onnx_type.map_type.value_type.CopyFrom(value_type)
+        value_info = ValueInfoProto()
+        value_info.name = "X"
+        value_info.type.CopyFrom(onnx_type)
+
+        X = value_info
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None, None])
+        node1 = make_node(
+            "DictVectorizer",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            string_vocabulary=["a", "c", "b", "z"],
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = {"a": np.array(4, dtype=np.int64), "c": np.array(8, dtype=np.int64)}
+        expected = np.array([4, 8, 0, 0], dtype=np.int64)
+        # Unexpected input data type. Actual: ((map(string,tensor(float)))) , expected: ((map(string,tensor(int64))))
+        # self._check_ort(onx, {"X": x}, equal=True)
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})[0]
         self.assertEqual(expected.tolist(), got.tolist())

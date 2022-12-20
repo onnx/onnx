@@ -24,7 +24,7 @@ def _array_feature_extrator(data, indices):  # type: ignore
     if len(data.shape) == 1:
         new_shape = (1, add)
     else:
-        new_shape = list(data.shape[:-1]) + [add]
+        new_shape = list(data.shape[:-1]) + [add]  # type: ignore
     try:
         tem = data[..., index]
     except IndexError as e:

@@ -7,7 +7,7 @@ from ._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class LabelEncoder(OpRunAiOnnxMl):
-    def _run(
+    def _run(  # type: ignore
         self,
         x,
         default_float=None,
@@ -26,9 +26,9 @@ class LabelEncoder(OpRunAiOnnxMl):
         if id(keys) == id(keys_floats):
             cast = float
         elif id(keys) == id(keys_int64s):
-            cast = int
+            cast = int  # type: ignore
         else:
-            cast = str
+            cast = str  # type: ignore
         if id(values) == id(values_floats):
             defval = default_float
             dtype = np.float32
