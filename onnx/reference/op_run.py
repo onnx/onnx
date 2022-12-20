@@ -179,7 +179,6 @@ class OpRun(ABC):
         if schema is None:
             if hasattr(self.__class__, "op_schema"):
                 self._schema = self.__class__.op_schema
-                print(self.__class__.op_schema)
             elif self.__class__.__name__ in _schemas:
                 self._schema = _schemas[self.__class__.__name__]
             elif onnx_node.op_type in _schemas:
