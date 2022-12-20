@@ -10,6 +10,8 @@ from ._op_run_aionnxml import OpRunAiOnnxMl
 from .op_array_feature_extractor import ArrayFeatureExtractor
 from .op_binarizer import Binarizer
 from .op_feature_vectorizer import FeatureVectorizer
+from .op_imputer import Imputer
+from .op_label_encoder import LabelEncoder
 from .op_normalizer import Normalizer
 from .op_scaler import Scaler
 

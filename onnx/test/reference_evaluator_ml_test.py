@@ -46,7 +46,7 @@ def skip_if_no_onnxruntime(fn):
 
 class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
     @staticmethod
-    def _check_ort(onx, feeds, atol=0, rtol=0):
+    def _check_ort(onx, feeds, atol=0, rtol=0, equal=False):
         if not has_onnxruntime():
             return
         from onnxruntime import InferenceSession
@@ -68,13 +68,17 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     f"Unexpected shape {g.shape} for output {i} "
                     f"(expecting {e.shape})\n{e!r}\n---\n{g!r}."
                 )
-            assert_allclose(
-                actual=g,
-                desired=e,
-                atol=atol,
-                rtol=rtol,
-                err_msg=f"Discrepancies for output {i}.",
-            )
+            if equal:
+                if e.tolist() != g.tolist():
+                    raise AssertionError(f"Discrepancies\n{e}\n!=\n{g}")
+            else:
+                assert_allclose(
+                    actual=g,
+                    desired=e,
+                    atol=atol,
+                    rtol=rtol,
+                    err_msg=f"Discrepancies for output {i}.",
+                )
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_binarizer(self):
@@ -222,6 +226,118 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, feeds)[0]
                 assert_allclose(value, got, atol=1e-6)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_imputer_float(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "Imputer",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            imputed_value_floats=np.array([0], dtype=np.float32),
+            replaced_value_float=np.nan,
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.array([[0, 1, np.nan, 3]], dtype=np.float32).T
+        expected = np.array([[0, 1, 0, 3]], dtype=np.float32).T
+        self._check_ort(onx, {"X": x})
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        assert_allclose(expected, got)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_imputer_float_2d(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "Imputer",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            imputed_value_floats=np.array([0, 0.1], dtype=np.float32),
+            replaced_value_float=np.nan,
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.array([[0, 1, np.nan, 3], [0, 1, np.nan, 3]], dtype=np.float32).T
+        expected = np.array([[0, 1, 0, 3], [0, 1, 0.1, 3]], dtype=np.float32).T
+        self._check_ort(onx, {"X": x})
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        assert_allclose(expected, got)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_imputer_int(self):
+        X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None, None])
+        node1 = make_node(
+            "Imputer",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            imputed_value_int64s=np.array([0], dtype=np.int64),
+            replaced_value_int64=-1,
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.array([[0, 1, -1, 3]], dtype=np.int64).T
+        expected = np.array([[0, 1, 0, 3]], dtype=np.int64).T
+        self._check_ort(onx, {"X": x})
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        assert_allclose(expected, got)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_label_encoder_float_int(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None, None])
+        node1 = make_node(
+            "LabelEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            default_int64=-5,
+            keys_floats=[4.0, 1.0, 2.0, 3.0],
+            values_int64s=[0, 1, 2, 3],
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.array([[0, 1, np.nan, 3, 4]], dtype=np.float32).T
+        expected = np.array([[-5, 1, -5, 3, 0]], dtype=np.int64).T
+        self._check_ort(onx, {"X": x})
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        assert_allclose(expected, got)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_label_encoder_int_string(self):
+        X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.STRING, [None, None])
+        node1 = make_node(
+            "LabelEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            default_string="NONE",
+            keys_int64s=[1, 2, 3, 4],
+            values_strings=["a", "b", "cc", "ddd"],
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.array([[0, 1, 3, 4]], dtype=np.int64).T
+        expected = np.array([["NONE"], ["a"], ["cc"], ["ddd"]])
+        self._check_ort(onx, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        self.assertEqual(expected.tolist(), got.tolist())
 
 
 if __name__ == "__main__":
