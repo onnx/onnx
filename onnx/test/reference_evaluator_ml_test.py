@@ -689,6 +689,208 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 assert_allclose(expected[1], got[1], atol=1e-6)
                 assert_allclose(expected[0], got[0])
 
+    @staticmethod
+    def _get_test_tree_ensemble_regressor(aggregate_function, rule="BRANCH_LEQ"):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "TreeEnsembleRegressor",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            n_targets=1,
+            aggregate_function=aggregate_function,
+            nodes_falsenodeids=[4, 3, 0, 0, 0, 2, 0, 4, 0, 0],
+            nodes_featureids=[0, 2, 0, 0, 0, 0, 0, 2, 0, 0],
+            nodes_hitrates=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            nodes_missing_value_tracks_true=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            nodes_modes=[
+                rule,
+                rule,
+                "LEAF",
+                "LEAF",
+                "LEAF",
+                rule,
+                "LEAF",
+                rule,
+                "LEAF",
+                "LEAF",
+            ],
+            nodes_nodeids=[0, 1, 2, 3, 4, 0, 1, 2, 3, 4],
+            nodes_treeids=[0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+            nodes_truenodeids=[1, 2, 0, 0, 0, 1, 0, 3, 0, 0],
+            nodes_values=[
+                0.26645058393478394,
+                0.6214364767074585,
+                0.0,
+                0.0,
+                0.0,
+                -0.7208403944969177,
+                0.0,
+                -0.5592705607414246,
+                0.0,
+                0.0,
+            ],
+            post_transform="NONE",
+            target_ids=[0, 0, 0, 0, 0, 0],
+            target_nodeids=[2, 3, 4, 1, 3, 4],
+            target_treeids=[0, 0, 0, 1, 1, 1],
+            target_weights=[
+                0.07692307978868484,
+                0.5,
+                0.5,
+                0.0,
+                0.2857142984867096,
+                0.5,
+            ],
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        return onx
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_tree_ensemble_regressor(self):
+        x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
+        expected_agg = {
+            "SUM": np.array([[0.576923], [0.576923], [0.576923]], dtype=np.float32),
+            "AVERAGE": np.array([[0.288462], [0.288462], [0.288462]], dtype=np.float32),
+            "MIN": np.array([[0.076923], [0.076923], [0.076923]], dtype=np.float32),
+            "MAX": np.array([[0.5], [0.5], [0.5]], dtype=np.float32),
+        }
+        for agg in ["SUM", "AVERAGE", "MIN", "MAX"]:
+            expected = expected_agg[agg]
+            with self.subTest(aggregate_function=agg):
+                onx = self._get_test_tree_ensemble_regressor(agg)
+                self._check_ort(onx, {"X": x}, equal=True)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected, got[0], atol=1e-6)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_tree_ensemble_regressor_rule(self):
+        x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
+        expected_agg = {
+            "BRANCH_LEQ": np.array(
+                [[0.576923], [0.576923], [0.576923]], dtype=np.float32
+            ),
+            "BRANCH_GT": np.array([[0.5], [0.5], [0.5]], dtype=np.float32),
+            "BRANCH_LT": np.array(
+                [[0.576923], [0.576923], [0.576923]], dtype=np.float32
+            ),
+            "BRANCH_GTE": np.array([[0.5], [0.5], [0.5]], dtype=np.float32),
+            "BRANCH_EQ": np.array([[1.0], [1.0], [1.0]], dtype=np.float32),
+            "BRANCH_NEQ": np.array(
+                [[0.076923], [0.076923], [0.076923]], dtype=np.float32
+            ),
+        }
+        for rule, expected in expected_agg.items():
+            with self.subTest(rule=rule):
+                onx = self._get_test_tree_ensemble_regressor("SUM", rule)
+                self._check_ort(onx, {"X": x}, equal=True)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected, got[0], atol=1e-6)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_tree_ensemble_regressor_2_targets(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "TreeEnsembleRegressor",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            n_targets=2,
+            nodes_falsenodeids=[4, 3, 0, 0, 6, 0, 0, 4, 3, 0, 0, 6, 0, 0],
+            nodes_featureids=[0, 2, 0, 0, 2, 0, 0, 0, 1, 0, 0, 2, 0, 0],
+            nodes_hitrates=[
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+            ],
+            nodes_missing_value_tracks_true=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            nodes_modes=[
+                "BRANCH_LEQ",
+                "BRANCH_LEQ",
+                "LEAF",
+                "LEAF",
+                "BRANCH_LEQ",
+                "LEAF",
+                "LEAF",
+                "BRANCH_LEQ",
+                "BRANCH_LEQ",
+                "LEAF",
+                "LEAF",
+                "BRANCH_LEQ",
+                "LEAF",
+                "LEAF",
+            ],
+            nodes_nodeids=[0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6],
+            nodes_treeids=[0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+            nodes_truenodeids=[1, 2, 0, 0, 5, 0, 0, 1, 2, 0, 0, 5, 0, 0],
+            nodes_values=[
+                -0.3367232382297516,
+                1.5326381921768188,
+                0.0,
+                0.0,
+                -0.24646544456481934,
+                0.0,
+                0.0,
+                -0.3367232382297516,
+                0.6671845316886902,
+                0.0,
+                0.0,
+                -0.24646544456481934,
+                0.0,
+                0.0,
+            ],
+            post_transform="NONE",
+            target_ids=[0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+            target_nodeids=[2, 2, 3, 3, 5, 5, 6, 6, 2, 2, 3, 3, 5, 5, 6, 6],
+            target_treeids=[0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+            target_weights=[
+                0.0,
+                2.5,
+                0.5,
+                3.0,
+                0.15000000596046448,
+                2.6500000953674316,
+                0.5,
+                3.0,
+                0.02777777798473835,
+                2.527777671813965,
+                0.5,
+                3.0,
+                0.20000000298023224,
+                2.700000047683716,
+                0.5,
+                3.0,
+            ],
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
+        expected = np.array(
+            [[0.027778, 5.027778], [1.0, 6.0], [1.0, 6.0]], dtype=np.float32
+        )
+        self._check_ort(onx, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})
+        assert_allclose(expected, got[0], atol=1e-6)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

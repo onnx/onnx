@@ -15,10 +15,10 @@ class LinearRegressor(OpRunAiOnnxMl):
         n = coefficients.shape[0] // targets
         coefficients = coefficients.reshape(targets, n).T
         score = np.dot(x, coefficients)
-        if self.intercepts is not None:
+        if intercepts is not None:
             score += intercepts
         if post_transform == "NONE":
             return (score,)
         raise NotImplementedError(
-            f"post_transform: {self.post_transform!r} is not implemented."
+            f"post_transform: {post_transform!r} is not implemented."
         )
