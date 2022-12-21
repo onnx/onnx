@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0912,W0611,W0603
+# Operator ZipMap is not implemented. Its use should
+# be discouraged. It is just a different way to output
+# probabilites not consumed by any operator.
 
 import textwrap
 from typing import Any, Union

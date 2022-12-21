@@ -1362,6 +1362,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 assert_allclose(expected[0], got[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @unittest.skipIf(True, reason="not supported yet")
     def test_svm_classifier_binary_noprob(self):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
         expected_post = {

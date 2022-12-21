@@ -11,6 +11,7 @@ from ._common_classifier import (
     softmax,
     softmax_zero,
 )
+from ._common_classifier import compute_probit
 from ._op_run_aionnxml import OpRunAiOnnxMl
 from .op_svm_helper import SVMCommon
 
@@ -82,7 +83,7 @@ def write_scores(n_classes, scores, post_transform, add_second_class):
         return scores
     if n_classes == 1:
         if post_transform == "PROBIT":
-            return np.array([ComputeProbit(scores[0])], dtype=scores.dtype)
+            return np.array([compute_probit(scores[0])], dtype=scores.dtype)
         if add_second_class == 0:
             res = np.array([1 - scores[0], scores[0]], dtype=scores.dtype)
         elif add_second_class == 1:
