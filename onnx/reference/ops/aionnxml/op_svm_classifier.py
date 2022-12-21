@@ -147,11 +147,11 @@ class SVMClassifier(OpRunAiOnnxMl):
         scores = []
         for i in range(class_count_):
             si_i = starting_vector_[i]
-            class_i_sc = self._svm.atts.vectors_per_class[i]
+            class_i_sc = self._svm.atts.vectors_per_class[i]  # type: ignore
 
             for j in range(i + 1, class_count_):
                 si_j = starting_vector_[j]
-                class_j_sc = self._svm.atts.vectors_per_class[j]
+                class_j_sc = self._svm.atts.vectors_per_class[j]  # type: ignore
 
                 s1 = np.dot(
                     coefs[j - 1, si_i : si_i + class_i_sc],
@@ -162,7 +162,7 @@ class SVMClassifier(OpRunAiOnnxMl):
                     kernels[si_j : si_j + class_j_sc],
                 )
 
-                s = self._svm.atts.rho[evals] + s1 + s2
+                s = self._svm.atts.rho[evals] + s1 + s2  # type: ignore
                 scores.append(s)
                 if s > 0:
                     votes[i] += 1
@@ -179,8 +179,8 @@ class SVMClassifier(OpRunAiOnnxMl):
             for j in range(i + 1, class_count_):
                 val1 = sigmoid_probability(
                     scores[index],
-                    self._svm.atts.prob_a[index],
-                    self._svm.atts.prob_b[index],
+                    self._svm.atts.prob_a[index],  # type: ignore
+                    self._svm.atts.prob_b[index],  # type: ignore
                 )
                 val2 = max(val1, 1.0e-7)
                 val2 = min(val2, (1 - 1.0e-7))
@@ -202,12 +202,12 @@ class SVMClassifier(OpRunAiOnnxMl):
             max_weight = scores[max_class]
 
         write_additional_scores = -1
-        if self._svm.atts.rho.size == 1:
+        if self._svm.atts.rho.size == 1:  # type: ignore
             label, write_additional_scores = set_score_svm(
                 max_weight,
                 max_class,
                 0,
-                self._svm.atts.post_transform,
+                self._svm.atts.post_transform,  # type: ignore
                 has_proba,
                 weights_are_all_positive_,
                 classlabels_ints,
@@ -220,7 +220,7 @@ class SVMClassifier(OpRunAiOnnxMl):
             label = max_class
 
         new_scores = write_scores(
-            scores.size, scores, self._svm.atts.post_transform, write_additional_scores
+            scores.size, scores, self._svm.atts.post_transform, write_additional_scores  # type: ignore
         )
         return label, new_scores
 
@@ -255,27 +255,27 @@ class SVMClassifier(OpRunAiOnnxMl):
         vector_count_ = 0
         class_count_ = 0
         starting_vector_ = []
-        for vc in svm.atts.vectors_per_class:
+        for vc in svm.atts.vectors_per_class:  # type: ignore
             starting_vector_.append(vector_count_)
             vector_count_ += vc
 
         class_count_ = max(len(classlabels_ints or classlabels_strings or []), 1)
         if vector_count_ > 0:
             # length of each support vector
-            mode_ = "SVM_SVC"
-            sv = svm.atts.support_vectors.reshape((vector_count_, -1))
-            kernel_type_ = svm.atts.kernel_type
-            coefs = svm.atts.coefficients.reshape((-1, vector_count_))
+            mode = "SVM_SVC"
+            sv = svm.atts.support_vectors.reshape((vector_count_, -1))  # type: ignore
+            kernel_type_ = svm.atts.kernel_type  # type: ignore
+            coefs = svm.atts.coefficients.reshape((-1, vector_count_))  # type: ignore
         else:
             # liblinear mode
-            mode_ = "SVM_LINEAR"
+            mode = "SVM_LINEAR"
             kernel_type_ = "LINEAR"
-            coefs = svm.atts.coefficients.reshape((class_count_, -1))
+            coefs = svm.atts.coefficients.reshape((class_count_, -1))  # type: ignore
 
-        weights_are_all_positive_ = min(svm.atts.coefficients) >= 0
+        weights_are_all_positive_ = min(svm.atts.coefficients) >= 0  # type: ignore
 
         # SVM part
-        if vector_count_ == 0 and mode_ == "SVM_LINEAR":
+        if vector_count_ == 0 and mode == "SVM_LINEAR":
             res = np.empty((X.shape[0], class_count_), dtype=X.dtype)
             for n in range(X.shape[0]):
                 scores = self._run_linear(X[n], coefs, class_count_, kernel_type_)
@@ -300,9 +300,9 @@ class SVMClassifier(OpRunAiOnnxMl):
 
         # proba
         if (
-            self._svm.atts.prob_a is not None
-            and len(self._svm.atts.prob_a) > 0
-            and mode_ == "SVM_SVC"
+            self._svm.atts.prob_a is not None  # type: ignore
+            and len(self._svm.atts.prob_a) > 0  # type: ignore
+            and mode == "SVM_SVC"
         ):
             scores = np.empty((res.shape[0], class_count_), dtype=X.dtype)
             for n in range(scores.shape[0]):
