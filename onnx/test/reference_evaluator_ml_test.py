@@ -71,7 +71,10 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 )
             if equal:
                 if e.tolist() != g.tolist():
-                    raise AssertionError(f"Discrepancies\n{e}\n!=\n{g}")
+                    raise AssertionError(
+                        f"Discrepancies for output {i}"
+                        f"\nexpected=\n{e}\n!=\nresults=\n{g}"
+                    )
             else:
                 assert_allclose(
                     actual=g,
@@ -918,7 +921,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self.assertIn("op_type=TreeEnsembleRegressor", str(sess.rt_nodes_[0]))
 
     @staticmethod
-    def _get_test_svm_regressor(kernel_type, kernel_params, post_transform="NONE"):
+    def _get_test_svm_regressor(kernel_type, kernel_params):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
         node1 = make_node(
@@ -998,6 +1001,264 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 got = sess.run(None, {"X": x})
                 assert_allclose(expected, got[0], atol=1e-6)
 
+    @staticmethod
+    def _get_test_tree_ensemble_classifier_binary(post_transform):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        In = make_tensor_value_info("I", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "TreeEnsembleClassifier",
+            ["X"],
+            ["I", "Y"],
+            domain="ai.onnx.ml",
+            class_ids=[0, 0, 0, 0, 0, 0, 0],
+            class_nodeids=[2, 3, 5, 6, 1, 3, 4],
+            class_treeids=[0, 0, 0, 0, 1, 1, 1],
+            class_weights=[
+                0.0,
+                0.1764705926179886,
+                0.0,
+                0.5,
+                0.0,
+                0.0,
+                0.4285714328289032,
+            ],
+            classlabels_int64s=[0, 1],
+            nodes_falsenodeids=[4, 3, 0, 0, 6, 0, 0, 2, 0, 4, 0, 0],
+            nodes_featureids=[2, 2, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0],
+            nodes_hitrates=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            nodes_missing_value_tracks_true=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            nodes_modes=[
+                "BRANCH_LEQ",
+                "BRANCH_LEQ",
+                "LEAF",
+                "LEAF",
+                "BRANCH_LEQ",
+                "LEAF",
+                "LEAF",
+                "BRANCH_LEQ",
+                "LEAF",
+                "BRANCH_LEQ",
+                "LEAF",
+                "LEAF",
+            ],
+            nodes_nodeids=[0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4],
+            nodes_treeids=[0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+            nodes_truenodeids=[1, 2, 0, 0, 5, 0, 0, 1, 0, 3, 0, 0],
+            nodes_values=[
+                0.6874135732650757,
+                -0.3654803931713104,
+                0.0,
+                0.0,
+                -1.926770806312561,
+                0.0,
+                0.0,
+                -0.3654803931713104,
+                0.0,
+                -2.0783839225769043,
+                0.0,
+                0.0,
+            ],
+            post_transform=post_transform,
+        )
+        graph = make_graph([node1], "ml", [X], [In, Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        return onx
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_tree_ensemble_classifier_binary(self):
+        x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
+        expected_post = {
+            "NONE": (
+                np.array([0, 1, 1], dtype=np.int64),
+                np.array(
+                    [[1.0, 0.0], [0.394958, 0.605042], [0.394958, 0.605042]],
+                    dtype=np.float32,
+                ),
+            ),
+            "LOGISTIC": (
+                np.array([0, 1, 1], dtype=np.int64),
+                np.array(
+                    [[0.5, 0.5], [0.353191, 0.646809], [0.353191, 0.646809]],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX": (
+                np.array([0, 1, 1], dtype=np.int64),
+                np.array(
+                    [[0.5, 0.5], [0.229686, 0.770314], [0.229686, 0.770314]],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX_ZERO": (
+                np.array([0, 1, 1], dtype=np.int64),
+                np.array(
+                    [[0.5, 0.5], [0.229686, 0.770314], [0.229686, 0.770314]],
+                    dtype=np.float32,
+                ),
+            ),
+            "PROBIT": (
+                np.array([0, 1, 1], dtype=np.int64),
+                np.array(
+                    [[0.0, 0.0], [-0.266426, 0.266426], [-0.266426, 0.266426]],
+                    dtype=np.float32,
+                ),
+            ),
+        }
+        for post, expected in expected_post.items():
+            with self.subTest(post_transform=post):
+                onx = self._get_test_tree_ensemble_classifier_binary(post)
+                if post in ("NONE",):
+                    self._check_ort(onx, {"X": x})
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected[1], got[1], atol=1e-6)
+                assert_allclose(expected[0], got[0])
+
+    @staticmethod
+    def _get_test_tree_ensemble_classifier_multi(post_transform):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        In = make_tensor_value_info("I", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "TreeEnsembleClassifier",
+            ["X"],
+            ["I", "Y"],
+            domain="ai.onnx.ml",
+            class_ids=[0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2],
+            class_nodeids=[2, 2, 2, 3, 3, 3, 4, 4, 4, 1, 1, 1, 3, 3, 3, 4, 4, 4],
+            class_treeids=[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            class_weights=[
+                0.46666666865348816,
+                0.0,
+                0.03333333507180214,
+                0.20000000298023224,
+                0.23999999463558197,
+                0.05999999865889549,
+                0.0,
+                0.5,
+                0.0,
+                0.5,
+                0.0,
+                0.0,
+                0.44999998807907104,
+                0.0,
+                0.05000000074505806,
+                0.10294117778539658,
+                0.19117647409439087,
+                0.20588235557079315,
+            ],
+            classlabels_int64s=[0, 1, 2],
+            nodes_falsenodeids=[4, 3, 0, 0, 0, 2, 0, 4, 0, 0],
+            nodes_featureids=[1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            nodes_hitrates=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            nodes_missing_value_tracks_true=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            nodes_modes=[
+                "BRANCH_LEQ",
+                "BRANCH_LEQ",
+                "LEAF",
+                "LEAF",
+                "LEAF",
+                "BRANCH_LEQ",
+                "LEAF",
+                "BRANCH_LEQ",
+                "LEAF",
+                "LEAF",
+            ],
+            nodes_nodeids=[0, 1, 2, 3, 4, 0, 1, 2, 3, 4],
+            nodes_treeids=[0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+            nodes_truenodeids=[1, 2, 0, 0, 0, 1, 0, 3, 0, 0],
+            nodes_values=[
+                1.2495747804641724,
+                -0.3050493597984314,
+                0.0,
+                0.0,
+                0.0,
+                -1.6830512285232544,
+                0.0,
+                -0.6751254796981812,
+                0.0,
+                0.0,
+            ],
+            post_transform=post_transform,
+        )
+        graph = make_graph([node1], "ml", [X], [In, Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        return onx
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_tree_ensemble_classifier_multi(self):
+        x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
+        expected_post = {
+            "NONE": (
+                np.array([0, 0, 1], dtype=np.int64),
+                np.array(
+                    [
+                        [0.916667, 0.0, 0.083333],
+                        [0.569608, 0.191176, 0.239216],
+                        [0.302941, 0.431176, 0.265882],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "LOGISTIC": (
+                np.array([0, 0, 1], dtype=np.int64),
+                np.array(
+                    [
+                        [0.714362, 0.5, 0.520821],
+                        [0.638673, 0.547649, 0.55952],
+                        [0.575161, 0.606155, 0.566082],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX": (
+                np.array([0, 0, 1], dtype=np.int64),
+                np.array(
+                    [
+                        [0.545123, 0.217967, 0.23691],
+                        [0.416047, 0.284965, 0.298988],
+                        [0.322535, 0.366664, 0.310801],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX_ZERO": (
+                np.array([0, 0, 1], dtype=np.int64),
+                np.array(
+                    [
+                        [0.697059, 0.0, 0.302941],
+                        [0.416047, 0.284965, 0.298988],
+                        [0.322535, 0.366664, 0.310801],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "PROBIT": (
+                np.array([0, 0, 1], dtype=np.int64),
+                np.array(
+                    [
+                        [1.383104, 0, -1.383105],
+                        [0.175378, -0.873713, -0.708922],
+                        [-0.516003, -0.173382, -0.625385],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+        }
+        for post, expected in expected_post.items():
+            with self.subTest(post_transform=post):
+                onx = self._get_test_tree_ensemble_classifier_multi(post)
+                if post != "PROBIT":
+                    self._check_ort(onx, {"X": x}, atol=1e-5)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected[1], got[1], atol=1e-6)
+                assert_allclose(expected[0], got[0])
+
 
 if __name__ == "__main__":
+    TestReferenceEvaluatorAiOnnxMl().test_tree_ensemble_classifier_binary()
     unittest.main(verbosity=2)

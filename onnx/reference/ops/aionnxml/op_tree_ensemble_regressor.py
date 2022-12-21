@@ -59,7 +59,7 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
         self._tree = tr  # pylint: disable=W0201
         leaves_index = tr.leave_index_tree(X)
         res = np.zeros((leaves_index.shape[0], n_targets), dtype=X.dtype)
-        n_trees = len(set(tr.atts.nodes_treeids))
+        n_trees = len(set(tr.atts.nodes_treeids))  # type: ignore
 
         target_index = {}  # type: ignore
         for i, (tid, nid) in enumerate(zip(target_treeids, target_nodeids)):

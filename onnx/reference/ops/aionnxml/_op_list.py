@@ -19,6 +19,7 @@ from .op_normalizer import Normalizer
 from .op_one_hot_encoder import OneHotEncoder
 from .op_scaler import Scaler
 from .op_svm_regressor import SVMRegressor
+from .op_tree_ensemble_classifier import TreeEnsembleClassifier
 from .op_tree_ensemble_regressor import TreeEnsembleRegressor
 
 

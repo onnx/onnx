@@ -38,7 +38,7 @@ class SVMCommon:
         for name, value in kwargs.items():
             self.atts.add(name, value)
 
-        if self.atts.kernel_params:
+        if self.atts.kernel_params:  # type: ignore
             self.gamma_ = self.atts.kernel_params[0]  # type: ignore
             self.coef0_ = self.atts.kernel_params[1]  # type: ignore
             self.degree_ = int(self.atts.kernel_params[2])  # type: ignore
@@ -48,7 +48,7 @@ class SVMCommon:
             self.degree_ = 0
 
     def __str__(self) -> str:
-        rows = ["TreeEnsemble", f"root_index={self.root_index}", str(self.atts)]
+        rows = ["TreeEnsemble", f"root_index={self.root_index}", str(self.atts)]  # type: ignore
         return "\n".join(rows)
 
     def kernel_dot(self, pA: np.ndarray, pB: np.ndarray, kernel: str) -> np.ndarray:
@@ -88,7 +88,7 @@ class SVMCommon:
                 for j in range(self.atts.n_supports):  # type: ignore
                     d = self.kernel_dot(X[n], sv[j], kernel_type_)
                     s += self.atts.coefficients[j] * d  # type: ignore
-                s += self.atts.rho[0]
+                s += self.atts.rho[0]  # type: ignore
             elif mode_ == "SVM_LINEAR":
                 s = self.kernel_dot(X, self.atts.coefficients, kernel_type_)  # type: ignore
                 s += self.atts.rho[0]  # type: ignore
