@@ -1,18 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0913,R0914,W0221
+# pylint: disable=R0911,R0913,R0914,W0221
+
+from typing import Any, Union
 
 import numpy as np
 
-from onnx import numpy_helper  # noqa
+from onnx import AttributeProto, numpy_helper  # noqa
 
 
-def _to_str(s):
+def _to_str(s: Union[str, bytes]) -> str:
     if isinstance(s, bytes):
         return s.decode("utf-8")
     return s
 
 
-def _attribute_value(attr):
+def _attribute_value(attr: AttributeProto) -> Any:
     if attr.HasField("f"):
         return attr.f
     if attr.HasField("i"):
@@ -27,7 +29,7 @@ def _attribute_value(attr):
         return list(attr.ints)
     if attr.strings:
         return list(map(_to_str, attr.strings))
-    raise NotImplementedError("Unable to return a value for attribute %r." % attr)
+    raise NotImplementedError(f"Unable to return a value for attribute {attr!r}.")
 
 
 class TreeEnsembleAttributes:
@@ -76,11 +78,11 @@ class TreeEnsemble:
             )
         }
 
-    def __str__(self):
+    def __str__(self) -> str:
         rows = ["TreeEnsemble", f"root_index={self.root_index}", str(self.atts)]
         return "\n".join(rows)
 
-    def leaf_index_tree(self, X, tree_id):
+    def leaf_index_tree(self, X: np.ndarray, tree_id: int) -> int:
         """
         Computes the leaf index for one tree.
         """
@@ -111,7 +113,7 @@ class TreeEnsemble:
             index = self.node_index[tree_id, nid]
         return index
 
-    def leave_index_tree(self, X):
+    def leave_index_tree(self, X: np.ndarray) -> np.ndarray:
         """
         Computes the leave index for all trees.
         """

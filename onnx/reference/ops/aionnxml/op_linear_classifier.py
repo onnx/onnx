@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0913,R0914,W0221
+# pylint: disable=R0912,R0913,R0914,W0221
 
 import numpy as np
 
 from ._op_run_aionnxml import OpRunAiOnnxMl
 
 
-def compute_softmax_zero(values):  # type: ignore
+def compute_softmax_zero(values: np.ndarray) -> np.ndarray:
+    """
+    The function modifies the input inplace.
+    """
     v_max = values.max()
     exp_neg_v_max = np.exp(-v_max)
     s = 0
-    for i in range(len(values)):
+    for i in range(len(values)):  # pylint: disable=C0200
         v = values[i]
         if v > 0.0000001 or v < -0.0000001:
             values[i] = np.exp(v - v_max)
@@ -21,7 +24,7 @@ def compute_softmax_zero(values):  # type: ignore
     return values
 
 
-def erf_inv(x):  # type: ignore
+def erf_inv(x: float) -> float:
     sgn = -1.0 if x < 0 else 1.0
     x = (1.0 - x) * (1 + x)
     log = np.log(x)
@@ -32,11 +35,11 @@ def erf_inv(x):  # type: ignore
     return x
 
 
-def compute_probit(val):  # type: ignore
+def compute_probit(val: float) -> float:
     return 1.41421356 * erf_inv(val * 2 - 1)
 
 
-def expit(x):  # type: ignore
+def expit(x: np.ndarray) -> np.ndarray:
     return (1.0 / (1.0 + np.exp(-x))).astype(x.dtype)
 
 
@@ -58,9 +61,10 @@ class LinearClassifier(OpRunAiOnnxMl):
         classlabels_strings=None,
         coefficients=None,
         intercepts=None,
-        multi_class=None,
+        multi_class=None,  # pylint: disable=W0613
         post_transform=None,
     ):
+        # multi_class is unused
         dtype = x.dtype
         if dtype != np.float64:
             x = x.astype(np.float32)

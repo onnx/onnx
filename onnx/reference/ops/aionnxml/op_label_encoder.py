@@ -22,7 +22,7 @@ class LabelEncoder(OpRunAiOnnxMl):
     ):
         keys = keys_floats or keys_int64s or keys_strings
         values = values_floats or values_int64s or values_strings
-        classes = {k: v for k, v in zip(keys, values)}
+        classes = dict(zip(keys, values))
         if id(keys) == id(keys_floats):
             cast = float
         elif id(keys) == id(keys_int64s):

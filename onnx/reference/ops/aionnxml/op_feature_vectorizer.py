@@ -14,7 +14,7 @@ class FeatureVectorizer(OpRunAiOnnxMl):
             raise ValueError(f"Every input must have 1 or 2 dimensions not {a.shape}.")
         if cut < a.shape[1]:
             return a[:, :cut]
-        elif cut > a.shape[1]:
+        if cut > a.shape[1]:
             b = np.zeros((a.shape[0], cut), dtype=a.dtype)
             b[:, : a.shape[1]] = a
             return b
