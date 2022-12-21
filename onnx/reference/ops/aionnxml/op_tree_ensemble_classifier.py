@@ -61,7 +61,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
         else:
             res[:, :] = np.array(base_values).reshape((1, -1))
 
-        class_index = {}
+        class_index = {}  # type: ignore
         for i, (tid, nid) in enumerate(zip(class_treeids, class_nodeids)):
             if (tid, nid) not in class_index:
                 class_index[tid, nid] = []
@@ -71,7 +71,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
             t_index = [class_index[nodes_treeids[i], nodes_nodeids[i]] for i in indices]
             for its in t_index:
                 for it in its:
-                    res[i, class_ids[it]] += tr.atts.class_weights[it]
+                    res[i, class_ids[it]] += tr.atts.class_weights[it]  # type: ignore
 
         # post_transform
         binary = len(set(class_ids)) == 1
