@@ -915,6 +915,88 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})
         assert_allclose(expected, got[0], atol=1e-6)
+        self.assertIn("op_type=TreeEnsembleRegressor", str(sess.rt_nodes_[0]))
+
+    @staticmethod
+    def _get_test_svm_regressor(kernel_type, kernel_params, post_transform="NONE"):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "SVMRegressor",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            coefficients=[
+                1.0,
+                -1.0,
+                0.8386201858520508,
+                -0.8386201858520508,
+                0.4470679759979248,
+                -1.0,
+                0.5529320240020752,
+            ],
+            kernel_params=kernel_params,
+            kernel_type=kernel_type,
+            n_supports=7,
+            post_transform="NONE",
+            rho=[0.5460880398750305],
+            support_vectors=[
+                -0.12850627303123474,
+                0.08915442228317261,
+                0.06881910562515259,
+                -0.07938569784164429,
+                -0.22557435929775238,
+                -0.26520243287086487,
+                0.9246066212654114,
+                -0.025557516142725945,
+                -0.5900523662567139,
+                0.9735698699951172,
+                -1.3385062217712402,
+                0.3393094539642334,
+                0.9432410001754761,
+                -0.5228781700134277,
+                0.5557093620300293,
+                0.4191802740097046,
+                0.43368014693260193,
+                -1.0569839477539062,
+                2.3318440914154053,
+                0.06202844902873039,
+                -0.9502395987510681,
+            ],
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        return onx
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_regressor(self):
+        x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
+        expected_kernel = {
+            "LINEAR": (
+                [0.42438405752182007, 0.0, 3.0],
+                np.array([[-0.468206], [0.227487], [0.92318]], dtype=np.float32),
+            ),
+            "POLY": (
+                [0.3426632285118103, 0.0, 3.0],
+                np.array([[0.527084], [0.543578], [0.546506]], dtype=np.float32),
+            ),
+            "RBF": (
+                [0.30286383628845215, 0.0, 3.0],
+                np.array([[0.295655], [0.477876], [0.695292]], dtype=np.float32),
+            ),
+            "SIGMOID": (
+                [0.30682486295700073, 0.0, 3.0],
+                np.array([[0.239304], [0.448929], [0.661689]], dtype=np.float32),
+            ),
+        }
+        for kernel, (params, expected) in expected_kernel.items():
+            with self.subTest(kernel=kernel):
+                onx = self._get_test_svm_regressor(kernel, params)
+                self._check_ort(onx, {"X": x}, atol=1e-6)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected, got[0], atol=1e-6)
 
 
 if __name__ == "__main__":

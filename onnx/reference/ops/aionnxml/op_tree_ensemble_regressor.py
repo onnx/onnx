@@ -61,7 +61,7 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
         res = np.zeros((leaves_index.shape[0], n_targets), dtype=X.dtype)
         n_trees = len(set(tr.atts.nodes_treeids))
 
-        target_index = {}  # type: ignored
+        target_index = {}  # type: ignore
         for i, (tid, nid) in enumerate(zip(target_treeids, target_nodeids)):
             if (tid, nid) not in target_index:
                 target_index[tid, nid] = []
@@ -74,20 +74,20 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
             if aggregate_function in ("SUM", "AVERAGE"):
                 for its in t_index:
                     for it in its:
-                        res[i, target_ids[it]] += tr.atts.target_weights[it]  # type: ignored
+                        res[i, target_ids[it]] += tr.atts.target_weights[it]  # type: ignore
             elif aggregate_function == "MIN":
                 res[i, :] = np.finfo(res.dtype).max
                 for its in t_index:
                     for it in its:
                         res[i, target_ids[it]] = min(
-                            res[i, target_ids[it]], tr.atts.target_weights[it]  # type: ignored
+                            res[i, target_ids[it]], tr.atts.target_weights[it]  # type: ignore
                         )
             elif aggregate_function == "MAX":
                 res[i, :] = np.finfo(res.dtype).min
                 for its in t_index:
                     for it in its:
                         res[i, target_ids[it]] = max(
-                            res[i, target_ids[it]], tr.atts.target_weights[it]  # type: ignored
+                            res[i, target_ids[it]], tr.atts.target_weights[it]  # type: ignore
                         )
             else:
                 raise NotImplementedError(

@@ -1,35 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0911,R0913,R0914,W0221
 
-from typing import Any, Union
-
 import numpy as np
-
-from onnx import AttributeProto, numpy_helper  # noqa
-
-
-def _to_str(s: Union[str, bytes]) -> str:
-    if isinstance(s, bytes):
-        return s.decode("utf-8")
-    return s
-
-
-def _attribute_value(attr: AttributeProto) -> Any:
-    if attr.HasField("f"):
-        return attr.f
-    if attr.HasField("i"):
-        return attr.i
-    if attr.HasField("s"):
-        return _to_str(attr.s)
-    if attr.HasField("t"):
-        return numpy_helper.to_array(attr.t)
-    if attr.floats:
-        return list(attr.floats)
-    if attr.ints:
-        return list(attr.ints)
-    if attr.strings:
-        return list(map(_to_str, attr.strings))
-    raise NotImplementedError(f"Unable to return a value for attribute {attr!r}.")
 
 
 class TreeEnsembleAttributes:
