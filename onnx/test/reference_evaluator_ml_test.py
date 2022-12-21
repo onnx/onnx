@@ -46,7 +46,7 @@ def skip_if_no_onnxruntime(fn):
 
 class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
     @staticmethod
-    def _check_ort(onx, feeds, atol=0, rtol=0, equal=False):
+    def _check_ort(onx, feeds, atol=0, rtol=0, equal=False, rev=False):
         if not has_onnxruntime():
             return
         from onnxruntime import InferenceSession
@@ -62,7 +62,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 f"onnxruntime returns a different number of output "
                 f"{len(expected)} != {len(sess)} (ReferenceEvaluator)."
             )
-        for i, (e, g) in enumerate(zip(expected, got)):
+        look = zip(reversed(expected), reversed(got)) if rev else zip(expected, got)
+        for i, (e, g) in enumerate(look):
             if e.shape != g.shape:
                 raise AssertionError(
                     f"Unexpected shape {g.shape} for output {i} "
@@ -77,7 +78,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     desired=e,
                     atol=atol,
                     rtol=rtol,
-                    err_msg=f"Discrepancies for output {i}.",
+                    err_msg=f"Discrepancies for output {i} expected[0]={e.ravel()[0]}.",
                 )
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
@@ -444,6 +445,249 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})[0]
         self.assertEqual(expected.tolist(), got.tolist())
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_linear_regressor(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "LinearRegressor",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            coefficients=[0.3, -0.77],
+            intercepts=[0.5],
+            post_transform="NONE",
+            targets=1,
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.arange(6).reshape((-1, 2)).astype(np.float32)
+        expected = np.array([[-0.27], [-1.21], [-2.15]], dtype=np.float32)
+        self._check_ort(onx, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})
+        assert_allclose(expected, got[0], atol=1e-6)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_linear_regressor_2(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "LinearRegressor",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            coefficients=[0.3, -0.77, 0.3, -0.77],
+            intercepts=[0.5, 0.7],
+            post_transform="NONE",
+            targets=2,
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        x = np.arange(6).reshape((-1, 2)).astype(np.float32)
+        expected = np.array(
+            [[-0.27, -0.07], [-1.21, -1.01], [-2.15, -1.95]], dtype=np.float32
+        )
+        self._check_ort(onx, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})
+        assert_allclose(expected, got[0], atol=1e-6)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_linear_classifier_multi(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        In = make_tensor_value_info("I", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        expected_post = {
+            "NONE": [
+                np.array([0, 2, 2], dtype=np.int64),
+                np.array(
+                    [[2.41, -2.12, 0.59], [0.67, -1.14, 1.35], [-1.07, -0.16, 2.11]],
+                    dtype=np.float32,
+                ),
+            ],
+            "LOGISTIC": [
+                np.array([0, 2, 2], dtype=np.int64),
+                np.array(
+                    [
+                        [0.917587, 0.107168, 0.643365],
+                        [0.661503, 0.24232, 0.79413],
+                        [0.255403, 0.460085, 0.891871],
+                    ],
+                    dtype=np.float32,
+                ),
+            ],
+            "SOFTMAX": [
+                np.array([0, 2, 2], dtype=np.int64),
+                np.array(
+                    [
+                        [0.852656, 0.009192, 0.138152],
+                        [0.318722, 0.05216, 0.629118],
+                        [0.036323, 0.090237, 0.87344],
+                    ],
+                    dtype=np.float32,
+                ),
+            ],
+            "SOFTMAX_ZERO": [
+                np.array([0, 2, 2], dtype=np.int64),
+                np.array(
+                    [
+                        [0.852656, 0.009192, 0.138152],
+                        [0.318722, 0.05216, 0.629118],
+                        [0.036323, 0.090237, 0.87344],
+                    ],
+                    dtype=np.float32,
+                ),
+            ],
+            "PROBIT": [
+                np.array([1, 1, 1], dtype=np.int64),
+                np.array(
+                    [
+                        [-0.527324, -0.445471, -1.080504],
+                        [-0.067731, 0.316014, -0.310748],
+                        [0.377252, 1.405167, 0.295001],
+                    ],
+                    dtype=np.float32,
+                ),
+            ],
+        }
+        for post in ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"]:
+            if post == "PROBIT":
+                coefficients = [0.058, 0.029, 0.09, 0.058, 0.029, 0.09]
+                intercepts = [0.27, 0.27, 0.05]
+            else:
+                coefficients = [-0.58, -0.29, -0.09, 0.58, 0.29, 0.09]
+                intercepts = [2.7, -2.7, 0.5]
+            with self.subTest(post_transform=post):
+                node1 = make_node(
+                    "LinearClassifier",
+                    ["X"],
+                    ["I", "Y"],
+                    domain="ai.onnx.ml",
+                    classlabels_ints=[0, 1, 2],
+                    coefficients=coefficients,
+                    intercepts=intercepts,
+                    multi_class=0,
+                    post_transform=post,
+                )
+                graph = make_graph([node1], "ml", [X], [In, Y])
+                onx = make_model(graph, opset_imports=OPSETS)
+                check_model(onx)
+                x = np.arange(6).reshape((-1, 2)).astype(np.float32)
+                self._check_ort(onx, {"X": x}, rev=True, atol=1e-4)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                expected = expected_post[post]
+                assert_allclose(expected[1], got[1], atol=1e-4)
+                assert_allclose(expected[0], got[0])
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_linear_classifier_binary(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        In = make_tensor_value_info("I", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        expected_post = {
+            "NONE": [
+                np.array([1, 1], dtype=np.int64),
+                np.array([[-9.53, 9.53], [-6.65, 6.65]], dtype=np.float32),
+            ],
+            "LOGISTIC": [
+                np.array([1, 1], dtype=np.int64),
+                np.array(
+                    [[7.263436e-05, 9.999274e-01], [1.292350e-03, 9.987077e-01]],
+                    dtype=np.float32,
+                ),
+            ],
+            "SOFTMAX": [
+                np.array([1, 1], dtype=np.int64),
+                np.array(
+                    [[5.276517e-09, 1.000000e00], [1.674492e-06, 9.999983e-01]],
+                    dtype=np.float32,
+                ),
+            ],
+            "SOFTMAX_ZERO": [
+                np.array([1, 1], dtype=np.int64),
+                np.array(
+                    [[5.276517e-09, 1.000000e00], [1.674492e-06, 9.999983e-01]],
+                    dtype=np.float32,
+                ),
+            ],
+        }
+        x = np.arange(6).reshape((-1, 3)).astype(np.float32)
+        for post in ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO"]:
+            expected = expected_post[post]
+            with self.subTest(post_transform=post):
+                node1 = make_node(
+                    "LinearClassifier",
+                    ["X"],
+                    ["I", "Y"],
+                    domain="ai.onnx.ml",
+                    classlabels_ints=[0, 1],
+                    coefficients=[-0.58, -0.29, -0.09],
+                    intercepts=[10.0],
+                    multi_class=0,
+                    post_transform=post,
+                )
+                graph = make_graph([node1], "ml", [X], [In, Y])
+                onx = make_model(graph, opset_imports=OPSETS)
+                check_model(onx)
+                # onnxruntime answer seems odd.
+                # self._check_ort(onx, {"X": x}, rev=True)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected[1], got[1], atol=1e-6)
+                assert_allclose(expected[0], got[0])
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_linear_classifier_unary(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        In = make_tensor_value_info("I", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        expected_post = {
+            "NONE": [
+                np.array([1, 0], dtype=np.int64),
+                np.array([[2.23], [-0.65]], dtype=np.float32),
+            ],
+            "LOGISTIC": [
+                np.array([1, 0], dtype=np.int64),
+                np.array([[0.902911], [0.34299]], dtype=np.float32),
+            ],
+            "SOFTMAX": [
+                np.array([1, 1], dtype=np.int64),
+                np.array([[1.0], [1.0]], dtype=np.float32),
+            ],
+            "SOFTMAX_ZERO": [
+                np.array([1, 1], dtype=np.int64),
+                np.array([[1.0], [1.0]], dtype=np.float32),
+            ],
+        }
+        x = np.arange(6).reshape((-1, 3)).astype(np.float32)
+        for post in ["NONE", "LOGISTIC", "SOFTMAX_ZERO", "SOFTMAX"]:
+            expected = expected_post[post]
+            with self.subTest(post_transform=post):
+                node1 = make_node(
+                    "LinearClassifier",
+                    ["X"],
+                    ["I", "Y"],
+                    domain="ai.onnx.ml",
+                    classlabels_ints=[1],
+                    coefficients=[-0.58, -0.29, -0.09],
+                    intercepts=[2.7],
+                    multi_class=0,
+                    post_transform=post,
+                )
+                graph = make_graph([node1], "ml", [X], [In, Y])
+                onx = make_model(graph, opset_imports=OPSETS)
+                check_model(onx)
+                # onnxruntime answer seems odd.
+                # self._check_ort(onx, {"X": x}, rev=True)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected[1], got[1], atol=1e-6)
+                assert_allclose(expected[0], got[0])
 
 
 if __name__ == "__main__":

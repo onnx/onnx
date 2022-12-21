@@ -34,7 +34,7 @@ class DictVectorizer(OpRunAiOnnxMl):
             rows = np.array(rows)
             cols = np.array(cols)
 
-            res = np.zeros((len(x), len(dict_labels)), dtype=values.dtype)
+            res = np.zeros((len(x), len(dict_labels)), dtype=values.dtype)  # type: ignore
             for r, c, v in zip(rows, cols, values):
                 res[r, c] = v
             return (res,)

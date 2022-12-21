@@ -13,6 +13,8 @@ from .op_dict_vectorizer import DictVectorizer
 from .op_feature_vectorizer import FeatureVectorizer
 from .op_imputer import Imputer
 from .op_label_encoder import LabelEncoder
+from .op_linear_classifier import LinearClassifier
+from .op_linear_regressor import LinearRegressor
 from .op_normalizer import Normalizer
 from .op_one_hot_encoder import OneHotEncoder
 from .op_scaler import Scaler
