@@ -39,9 +39,9 @@ class SVMCommon:
             self.atts.add(name, value)
 
         if self.atts.kernel_params:
-            self.gamma_ = self.atts.kernel_params[0]
-            self.coef0_ = self.atts.kernel_params[1]
-            self.degree_ = int(self.atts.kernel_params[2])
+            self.gamma_ = self.atts.kernel_params[0]  # type: ignore
+            self.coef0_ = self.atts.kernel_params[1]  # type: ignore
+            self.degree_ = int(self.atts.kernel_params[2])  # type: ignore
         else:
             self.gamma_ = 0.0
             self.coef0_ = 0.0
@@ -71,11 +71,11 @@ class SVMCommon:
 
     def run_reg(self, X: np.ndarray) -> np.ndarray:
 
-        if self.atts.n_supports > 0:
+        if self.atts.n_supports > 0:  # type: ignore
             # length of each support vector
             mode_ = "SVM_SVC"
-            kernel_type_ = self.atts.kernel_type
-            sv = self.atts.support_vectors.reshape((self.atts.n_supports, -1))
+            kernel_type_ = self.atts.kernel_type  # type: ignore
+            sv = self.atts.support_vectors.reshape((self.atts.n_supports, -1))  # type: ignore
         else:
             mode_ = "SVM_LINEAR"
             kernel_type_ = "LINEAR"
@@ -85,15 +85,15 @@ class SVMCommon:
             s = 0.0
 
             if mode_ == "SVM_SVC":
-                for j in range(self.atts.n_supports):
+                for j in range(self.atts.n_supports):  # type: ignore
                     d = self.kernel_dot(X[n], sv[j], kernel_type_)
-                    s += self.atts.coefficients[j] * d
+                    s += self.atts.coefficients[j] * d  # type: ignore
                 s += self.atts.rho[0]
             elif mode_ == "SVM_LINEAR":
-                s = self.kernel_dot(X, self.atts.coefficients, kernel_type_)
-                s += self.atts.rho[0]
+                s = self.kernel_dot(X, self.atts.coefficients, kernel_type_)  # type: ignore
+                s += self.atts.rho[0]  # type: ignore
 
-            if self.atts.one_class:
+            if self.atts.one_class:  # type: ignore
                 z[n, 0] = 1 if s > 0 else -1
             else:
                 z[n, 0] = s
