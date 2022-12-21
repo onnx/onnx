@@ -690,9 +690,29 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 assert_allclose(expected[0], got[0])
 
     @staticmethod
-    def _get_test_tree_ensemble_regressor(aggregate_function, rule="BRANCH_LEQ"):
+    def _get_test_tree_ensemble_regressor(
+        aggregate_function, rule="BRANCH_LEQ", unique_targets=False
+    ):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        if unique_targets:
+            targets = [
+                1.0,
+                10.0,
+                100.0,
+                1000.0,
+                10000.0,
+                100000.0,
+            ]
+        else:
+            targets = [
+                0.07692307978868484,
+                0.5,
+                0.5,
+                0.0,
+                0.2857142984867096,
+                0.5,
+            ]
         node1 = make_node(
             "TreeEnsembleRegressor",
             ["X"],
@@ -735,14 +755,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             target_ids=[0, 0, 0, 0, 0, 0],
             target_nodeids=[2, 3, 4, 1, 3, 4],
             target_treeids=[0, 0, 0, 1, 1, 1],
-            target_weights=[
-                0.07692307978868484,
-                0.5,
-                0.5,
-                0.0,
-                0.2857142984867096,
-                0.5,
-            ],
+            target_weights=targets,
         )
         graph = make_graph([node1], "ml", [X], [Y])
         onx = make_model(graph, opset_imports=OPSETS)
@@ -886,6 +899,18 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         expected = np.array(
             [[0.027778, 5.027778], [1.0, 6.0], [1.0, 6.0]], dtype=np.float32
         )
+        self._check_ort(onx, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})
+        assert_allclose(expected, got[0], atol=1e-6)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_tree_ensemble_regressor_missing(self):
+        x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
+        x[2, 0] = 5
+        x[1, :] = np.nan
+        expected = np.array([[100001.0], [100100.0], [100100.0]], dtype=np.float32)
+        onx = self._get_test_tree_ensemble_regressor("SUM", unique_targets=True)
         self._check_ort(onx, {"X": x}, equal=True)
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})

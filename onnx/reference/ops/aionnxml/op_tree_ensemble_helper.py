@@ -67,14 +67,16 @@ class TreeEnsemble:
         for name, value in kwargs.items():
             self.atts.add(name, value)
 
-        self.tree_ids = list(sorted(set(self.atts.nodes_treeids)))
-        self.root_index = {tid: len(self.atts.nodes_treeids) for tid in self.tree_ids}
-        for index, tree_id in enumerate(self.atts.nodes_treeids):
+        self.tree_ids = list(sorted(set(self.atts.nodes_treeids)))  # type: ignore
+        self.root_index = {
+            tid: len(self.atts.nodes_treeids) for tid in self.tree_ids  # type: ignore
+        }
+        for index, tree_id in enumerate(self.atts.nodes_treeids):  # type: ignore
             self.root_index[tree_id] = min(self.root_index[tree_id], index)
         self.node_index = {
             (tid, nid): i
             for i, (tid, nid) in enumerate(
-                zip(self.atts.nodes_treeids, self.atts.nodes_nodeids)
+                zip(self.atts.nodes_treeids, self.atts.nodes_nodeids)  # type: ignore
             )
         }
 
@@ -87,28 +89,33 @@ class TreeEnsemble:
         Computes the leaf index for one tree.
         """
         index = self.root_index[tree_id]
-        while self.atts.nodes_modes[index] != "LEAF":
-            x = X[self.atts.nodes_featureids[index]]
-            rule = self.atts.nodes_modes[index]
-            th = self.atts.nodes_values[index]
-            if rule == "BRANCH_LEQ":
-                r = x <= th
-            elif rule == "BRANCH_LT":
-                r = x < th
-            elif rule == "BRANCH_GTE":
-                r = x >= th
-            elif rule == "BRANCH_GT":
-                r = x > th
-            elif rule == "BRANCH_EQ":
-                r = x == th
-            elif rule == "BRANCH_NEQ":
-                r = x != th
+        while self.atts.nodes_modes[index] != "LEAF":  # type: ignore
+            x = X[self.atts.nodes_featureids[index]]  # type: ignore
+            if np.isnan(x):
+                r = self.atts.nodes_missing_value_tracks_true[index] >= 1  # type: ignore
             else:
-                raise ValueError(f"Unexpected rule {rule!r} for node index {index}.")
+                rule = self.atts.nodes_modes[index]  # type: ignore
+                th = self.atts.nodes_values[index]  # type: ignore
+                if rule == "BRANCH_LEQ":
+                    r = x <= th
+                elif rule == "BRANCH_LT":
+                    r = x < th
+                elif rule == "BRANCH_GTE":
+                    r = x >= th
+                elif rule == "BRANCH_GT":
+                    r = x > th
+                elif rule == "BRANCH_EQ":
+                    r = x == th
+                elif rule == "BRANCH_NEQ":
+                    r = x != th
+                else:
+                    raise ValueError(
+                        f"Unexpected rule {rule!r} for node index {index}."
+                    )
             nid = (
-                self.atts.nodes_truenodeids[index]
+                self.atts.nodes_truenodeids[index]  # type: ignore
                 if r
-                else self.atts.nodes_falsenodeids[index]
+                else self.atts.nodes_falsenodeids[index]  # type: ignore
             )
             index = self.node_index[tree_id, nid]
         return index
