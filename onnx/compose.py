@@ -481,7 +481,9 @@ def add_prefix_graph(
             if rename_attribute_graph:
                 for attribute in n.attribute:
                     if attribute.g:
-                        add_prefix_graph(attribute.g, prefix, inplace=True, name_map=name_map)
+                        add_prefix_graph(
+                            attribute.g, prefix, inplace=True, name_map=name_map
+                        )
 
     if rename_initializers:
         for init in g.initializer:
