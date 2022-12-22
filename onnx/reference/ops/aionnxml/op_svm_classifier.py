@@ -11,7 +11,6 @@ from ._common_classifier import (
     softmax,
     softmax_zero,
 )
-from ._common_classifier import compute_probit
 from ._op_run_aionnxml import OpRunAiOnnxMl
 from .op_svm_helper import SVMCommon
 
