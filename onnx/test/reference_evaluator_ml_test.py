@@ -1417,4 +1417,5 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    TestReferenceEvaluatorAiOnnxMl().test_tree_ensemble_classifier_binary()
     unittest.main(verbosity=2)

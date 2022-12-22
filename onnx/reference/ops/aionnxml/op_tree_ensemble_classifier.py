@@ -3,9 +3,9 @@
 
 import numpy as np
 
+from ._common_classifier import logistic, probit, softmax, softmax_zero
 from ._op_run_aionnxml import OpRunAiOnnxMl
 from .op_tree_ensemble_helper import TreeEnsemble
-from ._common_classifier import logistic, probit, softmax, softmax_zero
 
 
 class TreeEnsembleClassifier(OpRunAiOnnxMl):
@@ -36,6 +36,8 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
     ):
         nmv = nodes_missing_value_tracks_true
         tr = TreeEnsemble(
+            base_values=base_values,
+            base_values_as_tensor=base_values_as_tensor,
             nodes_falsenodeids=nodes_falsenodeids,
             nodes_featureids=nodes_featureids,
             nodes_hitrates=nodes_hitrates,
@@ -50,16 +52,17 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
             class_weights=class_weights,
             class_weights_as_tensor=class_weights_as_tensor,
         )
-        self._tree = tr
+        # unused unless for debugging purposes
+        self._tree = tr  # pylint: disable=W0201
         if X.dtype not in (np.float32, np.float64):
             X = X.astype(np.float32)
         leaves_index = tr.leave_index_tree(X)
         n_classes = max(len(classlabels_int64s or []), len(classlabels_strings or []))
         res = np.empty((leaves_index.shape[0], n_classes), dtype=np.float32)
-        if base_values is None:
+        if tr.atts.base_values is None:  # type: ignore
             res[:, :] = 0
         else:
-            res[:, :] = np.array(base_values).reshape((1, -1))
+            res[:, :] = np.array(tr.atts.base_values).reshape((1, -1))  # type: ignore
 
         class_index = {}  # type: ignore
         for i, (tid, nid) in enumerate(zip(class_treeids, class_nodeids)):

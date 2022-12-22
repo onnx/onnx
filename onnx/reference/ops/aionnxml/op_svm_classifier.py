@@ -32,7 +32,7 @@ def multiclass_probability(k, R):
             Q[t, t] += R[j, t] * R[j, t]
             Q[t, j] = -R[j, t] * R[t, j]
 
-    for it in range(max_iter):
+    for _ in range(max_iter):
         # stopping condition, recalculate QP,pQP for numerical accuracy
         pQp = 0
         for t in range(0, k):
@@ -248,7 +248,8 @@ class SVMClassifier(OpRunAiOnnxMl):
             support_vectors=support_vectors,
             vectors_per_class=vectors_per_class,
         )
-        self._svm = svm
+        # unused unless for debugging purposes
+        self._svm = svm  # pylint: disable=W0201
 
         vector_count_ = 0
         class_count_ = 0
@@ -298,8 +299,8 @@ class SVMClassifier(OpRunAiOnnxMl):
 
         # proba
         if (
-            self._svm.atts.prob_a is not None  # type: ignore
-            and len(self._svm.atts.prob_a) > 0  # type: ignore
+            svm.atts.prob_a is not None  # type: ignore
+            and len(svm.atts.prob_a) > 0  # type: ignore
             and mode == "SVM_SVC"
         ):
             scores = np.empty((res.shape[0], class_count_), dtype=X.dtype)
