@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, MutableMapping, Optional, Set, Tuple
+from typing import Dict, List, MutableMapping, Optional, Set, Tuple
 
 from onnx import GraphProto, ModelProto
 from onnx import TensorProto as tp
@@ -420,7 +420,9 @@ def add_prefix_graph(
     rename_outputs: Optional[bool] = True,
     rename_initializers: Optional[bool] = True,
     rename_value_infos: Optional[bool] = True,
+    rename_attribute_graph: Optional[bool] = True,
     inplace: Optional[bool] = False,
+    name_map: Dict[str, str] = {},
 ) -> GraphProto:
     """Adds a prefix to names of elements in a graph: nodes, edges, inputs, outputs,
     initializers, sparse initializer, value infos.
@@ -455,7 +457,6 @@ def add_prefix_graph(
     def _prefixed(prefix: str, name: str) -> str:
         return prefix + name if len(name) > 0 else name
 
-    name_map = {}
     if rename_edges:
         for n in g.node:
             for e in n.input:
@@ -473,6 +474,10 @@ def add_prefix_graph(
     if rename_nodes:
         for n in g.node:
             n.name = _prefixed(prefix, n.name)
+            if rename_attribute_graph:
+                for attribute in n.attribute:
+                    if attribute.g:
+                        add_prefix_graph(attribute.g, prefix, inplace=True, name_map=name_map)
 
     if rename_initializers:
         for init in g.initializer:
