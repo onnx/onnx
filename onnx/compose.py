@@ -422,7 +422,7 @@ def add_prefix_graph(
     rename_value_infos: Optional[bool] = True,
     rename_attribute_graph: Optional[bool] = True,
     inplace: Optional[bool] = False,
-    name_map: Dict[str, str] = {},
+    name_map: Optional[Dict[str, str]] = None,
 ) -> GraphProto:
     """Adds a prefix to names of elements in a graph: nodes, edges, inputs, outputs,
     initializers, sparse initializer, value infos.
@@ -439,8 +439,10 @@ def add_prefix_graph(
         rename_outputs (bool): Whether to prefix output names
         rename_initializers (bool): Whether to prefix initializer and sparse initializer names
         rename_value_infos (bool): Whether to prefix value info names
+        rename_attribute_graph: (bool): Whether to prefix attribute's graph
         inplace (bool): If True, mutates the graph directly.
                         Otherwise, a copy will be created
+        name_map: (Dict): shared name_map in subgraph
 
     Returns:
         GraphProto
@@ -457,6 +459,8 @@ def add_prefix_graph(
     def _prefixed(prefix: str, name: str) -> str:
         return prefix + name if len(name) > 0 else name
 
+    if name_map is None:
+        name_map = {}
     if rename_edges:
         for n in g.node:
             for e in n.input:
