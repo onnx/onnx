@@ -118,7 +118,6 @@ def set_score_svm(
                 return classlabels[maxclass], write_additional_scores
         return classlabels[maxclass], write_additional_scores
     if max_weight > 0:
-        stop
         return posclass, write_additional_scores
     return negclass, write_additional_scores
 
@@ -128,7 +127,7 @@ class SVMClassifier(OpRunAiOnnxMl):
         scores = []
         for j in range(class_count_):
             d = self._svm.kernel_dot(X, coefs[j], kernel_type_)
-            score = self._svm.rho[0] + d
+            score = self._svm.rho[0] + d  # type: ignore
             scores.append(score)
         return np.array(scores, dtype=X.dtype)
 
