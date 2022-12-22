@@ -6,8 +6,15 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from onnx import load, numpy_helper
-from onnx.defs import onnx_opset_version
-from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
+from onnx.defs import get_schema, onnx_opset_version
+from onnx.onnx_pb import (
+    AttributeProto,
+    FunctionProto,
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    TypeProto,
+)
 from onnx.shape_inference import infer_shapes
 
 from .op_run import OpRun, RuntimeContextError
@@ -135,6 +142,7 @@ class ReferenceEvaluator:
         functions: Optional[List[Union["ReferenceEvaluator", FunctionProto]]] = None,  # type: ignore
         verbose: int = 0,
         new_ops: Optional[List[OpRun]] = None,
+        original_node: Optional[NodeProto] = None,
     ):
         self.output_types_ = None
         self.input_types_ = None
@@ -146,6 +154,7 @@ class ReferenceEvaluator:
         self.proto_ = proto
         self.functions_: Dict[Tuple[str, str], ReferenceEvaluator] = {}
         self.attributes_: List[str] = []
+        self.original_node = original_node
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
@@ -307,7 +316,31 @@ class ReferenceEvaluator:
         else:
             self.all_types_ = None  # type: ignore
 
+        original_node_attrs: Dict[str, AttributeProto] = {}
+        if self.original_node is not None:
+            for attr in self.original_node.attribute:
+                original_node_attrs[attr.name] = attr
+            schema = get_schema(
+                self.original_node.op_type,
+                self.opsets_[self.original_node.domain],
+                self.original_node.domain,
+            )
+            for name, attr in schema.attributes.items():
+                original_node_attrs[name] = attr.default_value
+
         for node in self.nodes_:
+            if self.original_node is not None:
+                new_node = NodeProto()
+                new_node.CopyFrom(node)
+                has_ref_name = False
+                for attr in new_node.attribute:
+                    if attr.HasField("ref_attr_name"):
+                        has_ref_name = True
+                        orig_name = attr.name
+                        attr.CopyFrom(original_node_attrs[attr.ref_attr_name])
+                        attr.name = orig_name
+                if has_ref_name:
+                    node = new_node
             try:
                 cl = self._load_impl(node)
             except RuntimeContextError as e:
@@ -348,7 +381,7 @@ class ReferenceEvaluator:
             from .ops import load_op
 
             try:
-                return load_op(node.domain, node.op_type, version)
+                return load_op(node.domain, node.op_type, version, node=node)
             except RuntimeContextError:
                 if input_types is None:
                     raise

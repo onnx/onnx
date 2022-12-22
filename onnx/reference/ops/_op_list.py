@@ -291,7 +291,7 @@ def load_op(
             from onnx.reference import ReferenceEvaluator
 
             body = schema.function_body  # type: ignore
-            sess = ReferenceEvaluator(body)
+            sess = ReferenceEvaluator(body, original_node=node)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         if schema.has_context_dependent_function:  # type: ignore
             if node is None or input_types is None:
