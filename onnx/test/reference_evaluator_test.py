@@ -785,8 +785,8 @@ class TestReferenceEvaluator(unittest.TestCase):
                     ["X", "A"],
                     ["Y1"],
                     domain=new_domain,
-                    bias1=make_tensor("former_B", TensorProto.FLOAT, [1], [0.67]),
-                    bias2=make_tensor("former_B", TensorProto.FLOAT, [1], [777]),
+                    bias1=make_tensor("former_B1", TensorProto.FLOAT, [1], [0.67]),
+                    bias2=make_tensor("former_B2", TensorProto.FLOAT, [1], [777]),
                 ),
                 make_node("Abs", ["Y1"], ["Y"]),
             ],
@@ -798,6 +798,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         onnx_model = make_model(
             graph, opset_imports=opset_imports, functions=[linear_regression]
         )
+        check_model(onnx_model)
         sess = ReferenceEvaluator(onnx_model)
 
         self.assertEqual(sess.rt_nodes_[0].__class__.__name__, "OpFunction")
@@ -816,7 +817,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 checked = True
         if not checked:
             raise AssertionError(
-                f"No node 'If' was found, has_linked_attribute could not be checked."
+                "No node 'If' was found, has_linked_attribute could not be checked."
             )
 
         x = np.arange(6).reshape((3, 2)).astype(np.float32)
@@ -828,6 +829,131 @@ class TestReferenceEvaluator(unittest.TestCase):
 
         result = sess.run(None, {"X": x - 10, "A": a})[0]
         expected = np.abs(x @ a + 777)
+        assert_allclose(expected, result)
+
+    def test_function_attribute_nested_nested_graph(self):
+        opset = onnx_opset_version()
+        new_domain = "custom"
+        opset_imports = [make_opsetid("", opset), make_opsetid(new_domain, 1)]
+
+        # first If
+        cst1 = make_node("Constant", [], ["B1"])
+        att = AttributeProto()
+        att.name = "value"
+        att.ref_attr_name = "bias1"
+        att.type = AttributeProto.TENSOR
+        cst1.attribute.append(att)
+
+        cst2 = make_node("Constant", [], ["B2"])
+        att = AttributeProto()
+        att.name = "value"
+        att.ref_attr_name = "bias2"
+        att.type = AttributeProto.TENSOR
+        cst2.attribute.append(att)
+
+        then_out = make_tensor_value_info("B1", TensorProto.FLOAT, [None])
+        else_out = make_tensor_value_info("B2", TensorProto.FLOAT, [None])
+        then_body1 = make_graph([cst1], "then_body", [], [then_out])
+        else_body1 = make_graph([cst2], "else_body", [], [else_out])
+
+        # sub graph 2
+        c100 = make_node(
+            "Constant",
+            inputs=[],
+            outputs=["c100"],
+            value=from_array(np.array([100], dtype=np.float32)),
+        )
+        f_cond = make_node("Greater", ["Xmin", "c100"], ["f_cond_100"])
+        if_node = make_node(
+            "If",
+            inputs=["f_cond_100"],
+            outputs=["B4"],
+            then_branch=then_body1,
+            else_branch=else_body1,
+        )
+
+        # second If
+        cst3 = make_node("Constant", [], ["B3"])
+        att = AttributeProto()
+        att.name = "value"
+        att.ref_attr_name = "bias3"
+        att.type = AttributeProto.TENSOR
+        cst3.attribute.append(att)
+
+        then_out = make_tensor_value_info("B3", TensorProto.FLOAT, [None])
+        then_body2 = make_graph([cst3], "then_body", [], [then_out])
+        else_out = make_tensor_value_info("B4", TensorProto.FLOAT, [None])
+        else_body2 = make_graph([c100, f_cond, if_node], "else_body", [], [else_out])
+
+        # function
+        zero = make_node(
+            "Constant",
+            inputs=[],
+            outputs=["zero"],
+            value=from_array(np.array([0], dtype=np.float32)),
+        )
+        mini = make_node("ReduceMin", ["X"], ["Xmin"])
+        f_cond = make_node("Less", ["Xmin", "zero"], ["f_cond_zero"])
+        if_node = make_node(
+            "If",
+            inputs=["f_cond_zero"],
+            outputs=["B"],
+            then_branch=then_body2,
+            else_branch=else_body2,
+        )
+        node1 = make_node("MatMul", ["X", "A"], ["XA"])
+        node2 = make_node("Add", ["XA", "B"], ["Y"])
+
+        linear_regression = make_function(
+            new_domain,
+            "LinearRegression",
+            ["X", "A"],
+            ["Y"],
+            [zero, mini, f_cond, if_node, node1, node2],
+            opset_imports,
+            ["bias1", "bias2", "bias3"],
+        )
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        A = make_tensor_value_info("A", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+
+        graph = make_graph(
+            [
+                make_node(
+                    "LinearRegression",
+                    ["X", "A"],
+                    ["Y1"],
+                    domain=new_domain,
+                    bias1=make_tensor("former_B1", TensorProto.FLOAT, [1], [0.67]),
+                    bias2=make_tensor("former_B2", TensorProto.FLOAT, [1], [777]),
+                    bias3=make_tensor("former_B3", TensorProto.FLOAT, [1], [-888]),
+                ),
+                make_node("Abs", ["Y1"], ["Y"]),
+            ],
+            "example",
+            [X, A],
+            [Y],
+        )
+        onnx_model = make_model(
+            graph, opset_imports=opset_imports, functions=[linear_regression]
+        )
+        check_model(onnx_model)
+        sess = ReferenceEvaluator(onnx_model)
+
+        x = np.arange(6).reshape((3, 2)).astype(np.float32)
+        a = np.array([1, -1], dtype=np.float32)
+
+        result = sess.run(None, {"X": x + 1, "A": a})[0]
+        expected = np.abs(x @ a + 777)
+        assert_allclose(expected, result)
+
+        result = sess.run(None, {"X": x - 10, "A": a})[0]
+        expected = np.abs(x @ a - 888)
+        assert_allclose(expected, result)
+
+        result = sess.run(None, {"X": x + 1000, "A": a})[0]
+        expected = np.abs(x @ a + 0.67)
         assert_allclose(expected, result)
 
     def test_custom_node(self):

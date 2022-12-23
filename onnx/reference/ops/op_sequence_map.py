@@ -5,7 +5,7 @@ from onnx.reference.op_run import OpRun
 
 
 class SequenceMap(OpRun):
-    def _run(self, input_sequence, *additional_inputs, body=None):  # type: ignore
+    def _run(self, input_sequence, *additional_inputs, body=None, attributes=None):  # type: ignore
         if len(additional_inputs) == 1 and isinstance(additional_inputs[0], list):
             res = None
             for obj1, obj2 in zip(input_sequence, additional_inputs[0]):
