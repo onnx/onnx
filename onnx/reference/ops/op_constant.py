@@ -4,7 +4,7 @@
 import numpy as np
 
 from onnx.defs import onnx_opset_version
-from onnx.reference.op_run import OpRun
+from onnx.reference.op_run import OpRun, RefAttrName
 
 
 def _check_dtype(val):  # type: ignore
@@ -88,27 +88,59 @@ class Constant_12(ConstantCommon):
         if hasattr(self, "sparse_value") and self.sparse_value is not None:  # type: ignore
             self.cst_name = "sparse_value"
             self.cst = self.sparse_value  # type: ignore
+            self.cst_convert = lambda v: v
         elif hasattr(self, "value_float") and self.value_float is not None:  # type: ignore
             self.cst_name = "value_float"
-            self.cst = np.array(self.value_float, dtype=np.float32)  # type: ignore
+            self.cst = (
+                self.value_float  # type: ignore
+                if isinstance(self.value_float, RefAttrName)  # type: ignore
+                else np.array(self.value_float, dtype=np.float32)  # type: ignore
+            )
+            self.cst_convert = lambda v: np.array(v, dtype=np.float32)
         elif hasattr(self, "value_floats") and self.value_floats is not None:  # type: ignore
             self.cst_name = "value_floats"
-            self.cst = np.array(self.value_floats, dtype=np.float32)  # type: ignore
+            self.cst = (
+                self.value_floats  # type: ignore
+                if isinstance(self.value_floats, RefAttrName)  # type: ignore
+                else np.array(self.value_floats, dtype=np.float32)  # type: ignore
+            )
+            self.cst_convert = lambda v: np.array(v, dtype=np.float32)
         elif hasattr(self, "value_int") and self.value_int is not None:  # type: ignore
             self.cst_name = "value_int"
-            self.cst = np.array(self.value_int, dtype=np.int64)  # type: ignore
+            self.cst = (
+                self.value_int  # type: ignore
+                if isinstance(self.value_int, RefAttrName)  # type: ignore
+                else np.array(self.value_int, dtype=np.int64)  # type: ignore
+            )
+            self.cst_convert = lambda v: np.array(v, dtype=np.int64)
         elif hasattr(self, "value_ints") and self.value_ints is not None:  # type: ignore
             self.cst_name = "value_ints"
-            self.cst = np.array(self.value_ints, dtype=np.int64)  # type: ignore
+            self.cst = (
+                self.value_ints  # type: ignore
+                if isinstance(self.value_ints, RefAttrName)  # type: ignore
+                else np.array(self.value_ints, dtype=np.int64)  # type: ignore
+            )
+            self.cst_convert = lambda v: np.array(v, dtype=np.int64)
         elif hasattr(self, "value_string") and self.value_string is not None:  # type: ignore
             self.cst_name = "value_string"
-            self.cst = np.array(self.value_string)  # type: ignore
+            self.cst = (
+                self.value_string  # type: ignore
+                if isinstance(self.value_string, RefAttrName)  # type: ignore
+                else np.array(self.value_string)  # type: ignore
+            )
+            self.cst_convert = lambda v: np.array(v)
         elif hasattr(self, "value_strings") and self.value_strings is not None:  # type: ignore
             self.cst_name = "value_strings"
-            self.cst = np.array(self.value_strings)  # type: ignore
+            self.cst = (
+                self.value_strings  # type: ignore
+                if isinstance(self.value_strings, RefAttrName)  # type: ignore
+                else np.array(self.value_strings)  # type: ignore
+            )
+            self.cst_convert = lambda v: np.array(v)
         elif hasattr(self, "value") and self.value is not None:  # type: ignore
-            self.cst_name = "value"
-            self.cst = self.value  # type: ignore
+            self.cst_name = "value"  # type: ignore
+            self.cst = self.value if isinstance(self.value, RefAttrName) else self.value  # type: ignore
+            self.cst_convert = lambda v: v
         else:
             raise AttributeError("No constant is defined for operator 'Constant'.")
 
@@ -122,7 +154,10 @@ class Constant_12(ConstantCommon):
                 raise RuntimeError(
                     f"Cannot find attribute {self.cst_name!r} in {list(overridden_attributes)!r}."
                 )
-            return (overridden_attributes[self.cst_name],)
+            value = overridden_attributes[self.cst_name]
+            if isinstance(value, np.ndarray):
+                return (value,)
+            return (self.cst_convert(value),)
         return (self._check(self.cst),)
 
 

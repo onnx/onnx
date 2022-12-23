@@ -2590,6 +2590,29 @@ class TestReferenceEvaluator(unittest.TestCase):
                                 f"Discrepancies (max={diff}) for {reduce_op!r}, {baseline} != {k}\n{a}\n!=\n{b}"
                             )
 
+    def test_mvn(self):
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        nodes = [
+            make_node("MeanVarianceNormalization", ["X"], ["Y"]),
+        ]
+        graph = make_graph(nodes, "g", [X], [Y])
+        x = np.random.rand(3, 3, 3, 1).astype(np.float32)
+        expected = None
+        for opset in [13, 17, 18]:
+            with self.subTest(opset=opset):
+                onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
+                ref = ReferenceEvaluator(onnx_model)
+                got = ref.run(None, {"X": x})[0]
+                if expected is None:
+                    expected = got
+                    continue
+                self.assertEqual(expected.shape, got.shape)
+                assert_allclose(expected, got)
+            if expected is None:
+                break
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
