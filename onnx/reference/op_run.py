@@ -242,7 +242,7 @@ class OpRun(ABC):
             added_attributes.append(name)
             if att.type == AttributeProto.GRAPH:
                 self.has_subgraph = True
-                self.has_linked_attribute |= value.has_linked_attribute
+                self.has_linked_attribute |= value.has_linked_attribute  # type: ignore
                 setattr(
                     self,
                     f"_run_{att.name}",
