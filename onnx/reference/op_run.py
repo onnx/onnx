@@ -187,6 +187,7 @@ class OpRun(ABC):
                 self._schema = None  # type: ignore
         else:
             self._schema = schema
+        self.has_subgraph = False
         self._load_attributes()
 
     def _log(self, pattern, *args):  # type: ignore
@@ -222,6 +223,10 @@ class OpRun(ABC):
             f"domain {self.onnx_node.domain!r}\n{att}\n{ref_att}."
         )
 
+    @staticmethod
+    def _evaluate_subgraph(context, value, attributes):
+        return value.run(None, context or {}, attributes=attributes)
+
     def _load_attributes(self) -> None:
         "Checks and loads attributes."
         self.has_linked_attribute = False
@@ -236,10 +241,14 @@ class OpRun(ABC):
             setattr(self, name, value)
             added_attributes.append(name)
             if att.type == AttributeProto.GRAPH:
+                self.has_subgraph = True
+                self.has_linked_attribute |= value.has_linked_attribute
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, value=value: value.run(None, context or {}),
+                    lambda context, value=value, attributes=None: OpRun._evaluate_subgraph(
+                        context, value, attributes
+                    ),
                 )
 
         if self._schema and self.onnx_node.op_type not in {"Constant"}:
@@ -397,6 +406,12 @@ class OpRun(ABC):
                     f"Attribute {att!r} is missing in operator {self.__class__.__name__!r}."
                 )
             kwargs[att] = getattr(self, att)
+        if self.has_subgraph:
+            if self.has_linked_attribute and len(linked_attributes) == 0:
+                raise RuntimeError(
+                    f"A subgraph has linked attribute but none was given to {type(self)}."
+                )
+            kwargs["attributes"] = linked_attributes
         if context is not None:
             kwargs["context"] = context
         try:
