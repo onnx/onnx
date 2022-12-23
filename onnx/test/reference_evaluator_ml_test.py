@@ -1358,7 +1358,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
+                assert_allclose(expected[1], got[1], atol=1e-5)
                 assert_allclose(expected[0], got[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
