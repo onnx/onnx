@@ -110,7 +110,7 @@ class Constant_12(ConstantCommon):
                         if isinstance(v, RefAttrName)  # type: ignore
                         else np.array(v, dtype=np_dtype)  # type: ignore
                     )
-                    self.cst_convert = lambda v, np_dtype=np_dtype: np.array(
+                    self.cst_convert = lambda v, np_dtype=np_dtype: np.array(  # type: ignore
                         v, dtype=np_dtype
                     )
                     break
