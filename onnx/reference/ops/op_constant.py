@@ -89,59 +89,30 @@ class Constant_12(ConstantCommon):
             self.cst_name = "sparse_value"
             self.cst = self.sparse_value  # type: ignore
             self.cst_convert = lambda v: v
-        elif hasattr(self, "value_float") and self.value_float is not None:  # type: ignore
-            self.cst_name = "value_float"
-            self.cst = (
-                self.value_float  # type: ignore
-                if isinstance(self.value_float, RefAttrName)  # type: ignore
-                else np.array(self.value_float, dtype=np.float32)  # type: ignore
-            )
-            self.cst_convert = lambda v: np.array(v, dtype=np.float32)
-        elif hasattr(self, "value_floats") and self.value_floats is not None:  # type: ignore
-            self.cst_name = "value_floats"
-            self.cst = (
-                self.value_floats  # type: ignore
-                if isinstance(self.value_floats, RefAttrName)  # type: ignore
-                else np.array(self.value_floats, dtype=np.float32)  # type: ignore
-            )
-            self.cst_convert = lambda v: np.array(v, dtype=np.float32)
-        elif hasattr(self, "value_int") and self.value_int is not None:  # type: ignore
-            self.cst_name = "value_int"
-            self.cst = (
-                self.value_int  # type: ignore
-                if isinstance(self.value_int, RefAttrName)  # type: ignore
-                else np.array(self.value_int, dtype=np.int64)  # type: ignore
-            )
-            self.cst_convert = lambda v: np.array(v, dtype=np.int64)
-        elif hasattr(self, "value_ints") and self.value_ints is not None:  # type: ignore
-            self.cst_name = "value_ints"
-            self.cst = (
-                self.value_ints  # type: ignore
-                if isinstance(self.value_ints, RefAttrName)  # type: ignore
-                else np.array(self.value_ints, dtype=np.int64)  # type: ignore
-            )
-            self.cst_convert = lambda v: np.array(v, dtype=np.int64)
-        elif hasattr(self, "value_string") and self.value_string is not None:  # type: ignore
-            self.cst_name = "value_string"
-            self.cst = (
-                self.value_string  # type: ignore
-                if isinstance(self.value_string, RefAttrName)  # type: ignore
-                else np.array(self.value_string)  # type: ignore
-            )
-            self.cst_convert = lambda v: np.array(v)
-        elif hasattr(self, "value_strings") and self.value_strings is not None:  # type: ignore
-            self.cst_name = "value_strings"
-            self.cst = (
-                self.value_strings  # type: ignore
-                if isinstance(self.value_strings, RefAttrName)  # type: ignore
-                else np.array(self.value_strings)  # type: ignore
-            )
-            self.cst_convert = lambda v: np.array(v)
         elif hasattr(self, "value") and self.value is not None:  # type: ignore
             self.cst_name = "value"  # type: ignore
             self.cst = self.value if isinstance(self.value, RefAttrName) else self.value  # type: ignore
             self.cst_convert = lambda v: v
         else:
+            for attr, np_dtype in {
+                "value_float": np.float32,
+                "value_floats": np.float32,
+                "value_int": np.int64,
+                "value_ints": np.int64,
+                "value_string": np.str_,
+                "value_strings": np.str_,
+            }.items():
+                if hasattr(self, attr) and getattr(self, attr) is not None:  # type: ignore
+                    self.cst_name = attr
+                    v = getattr(self, attr)
+                    self.cst = (
+                        v  # type: ignore
+                        if isinstance(v, RefAttrName)  # type: ignore
+                        else np.array(v, dtype=np_dtype)  # type: ignore
+                    )
+                    self.cst_convert = lambda v: np.array(v, dtype=np_dtype)
+                    break
+        if not hasattr(self, "cst_name"):
             raise AttributeError("No constant is defined for operator 'Constant'.")
 
     def _run(self, **overridden_attributes):  # type: ignore
