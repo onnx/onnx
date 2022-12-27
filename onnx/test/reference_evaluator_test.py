@@ -2610,8 +2610,6 @@ class TestReferenceEvaluator(unittest.TestCase):
                     continue
                 self.assertEqual(expected.shape, got.shape)
                 assert_allclose(expected, got)
-            if expected is None:
-                break
 
 
 if __name__ == "__main__":
