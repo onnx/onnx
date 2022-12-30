@@ -16,7 +16,7 @@ You can find the schedule of meetings on the [LF AI wiki](https://wiki.lfai.foun
 
 | Working Group      | Objectives    |
 | ------------------ | ------------- |
-| [Release](https://lfaifoundation.slack.com/archives/C018VGGJUGK) | Improve the release process for ONNX |
+
 | [Training](https://lfaifoundation.slack.com/archives/C018K560U14) | Expand ONNX to support training as well as inference |
 | [Preprocessing](https://lfaifoundation.slack.com/archives/C02AANGFBJB) | Make data preprocessing part of ONNX |
 
@@ -24,6 +24,7 @@ You can find the schedule of meetings on the [LF AI wiki](https://wiki.lfai.foun
 
 | Working Group      | Objectives    | Status |
 | ------------------ | ------------- | ------ |
+| [Release](https://lfaifoundation.slack.com/archives/C018VGGJUGK) | Improve the release process for ONNX | Integrated in Architecture & Infra SIG |
 | [Control Flow and Loops](https://gitter.im/onnx/ControlFlowWG) | Enable dynamic control structures to enable advanced models for NLP, speech, and video/image processing | Completed - If, Loop, and Scan operators were added in ONNX 1.3 release. |
 | [Quantization](https://gitter.im/onnx/quantization) | Enhance ONNX to support quantized data types and operators on a variety of runtimes and hardware devices | Completed - added in ONNX 1.5 release. |
 | [Foundation](https://gitter.im/onnx/foundation) | Identify and evaluate non-profit foundation options for the ONNX consortium.  Execute on best option. | Completed - ONNX joined LF AI in November 2019|
