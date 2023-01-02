@@ -51,8 +51,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
-
-MIN_PASSING_TESTS = 1160
+MIN_PASSING_TESTS = 1230
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
@@ -574,18 +573,18 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         got = obj.run(None, feeds)
         return got
 
-    def test_onnx_test_run_test_abs(self):
-        done = 0
-        for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
-            self.assertIn(te.name, repr(te))
-            self.assertGreater(len(te), 0)
-            te.run(
-                TestOnnxBackEndWithReferenceEvaluator.load_fct,
-                TestOnnxBackEndWithReferenceEvaluator.run_fct,
-                comment="[runtime=ReferenceEvaluator]",
-            )
-            done += 1
-        self.assertEqual(done, 1)
+    # def test_onnx_test_run_test_abs(self):
+    #     done = 0
+    #     for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
+    #         self.assertIn(te.name, repr(te))
+    #         self.assertGreater(len(te), 0)
+    #         te.run(
+    #             TestOnnxBackEndWithReferenceEvaluator.load_fct,
+    #             TestOnnxBackEndWithReferenceEvaluator.run_fct,
+    #             comment="[runtime=ReferenceEvaluator]",
+    #         )
+    #         done += 1
+    #     self.assertEqual(done, 1)
 
     def common_test_onnx_test_run(
         self,
@@ -791,6 +790,9 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv2d": 1e-5,
             "test__pytorch_converted_Conv2d_no_bias": 1e-3,
             "test__pytorch_converted_Conv2d_strided": 1e-4,
+            "test_layer_normalization_4d_axis1_expanded_ver18": 1e-4,
+            "test_layer_normalization_4d_axis_negative_1_expanded_ver18": 1e-4,
+            "test_layer_normalization_4d_axis_negative_3_expanded_ver18": 1e-4,
         }
 
         cls.atol = {

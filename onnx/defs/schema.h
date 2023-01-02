@@ -145,6 +145,7 @@ using TypeConstraintMap = std::unordered_map<std::string, std::pair<DataTypeSet,
  */
 class OpSchema final {
  public:
+  static constexpr int kUninitializedSinceVersion = -1;
   // Formal parameter options.
   enum FormalParameterOption : uint8_t {
     // The formal parameter is single and not optional.
@@ -822,27 +823,74 @@ class OpSchema final {
     return data_propagation_function_ ? true : false;
   }
 
-  bool HasFunction() const {
-    return function_body_.node_size() > 0;
+  std::vector<int> function_opset_versions() const {
+    std::vector<int> opset_versions;
+    std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it = opset_version_to_function_body_.cbegin();
+    for (; it != opset_version_to_function_body_.cend(); ++it) {
+      opset_versions.push_back(it->first);
+    }
+    return opset_versions;
   }
 
-  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes);
+  bool HasFunction() const {
+    return !opset_version_to_function_body_.empty();
+  }
 
-  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, const std::vector<OperatorSetIdProto>& opsets);
+  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version = kUninitializedSinceVersion);
 
-  OpSchema& FunctionBody(const char* func_body);
+  OpSchema& FunctionBody(
+      const std::vector<NodeProto>& func_nodes,
+      const std::vector<OperatorSetIdProto>& opsets,
+      int opset_version = kUninitializedSinceVersion);
 
-  OpSchema& FunctionAddOpset(const char* domain, int version);
+  OpSchema& FunctionBody(const char* func_body, int opset_version = kUninitializedSinceVersion);
 
-  const FunctionProto* GetFunction() const;
+  // since_version_ of an OpSchema tells the last opset version when an op is defined.
+  // When the op's definition is changed, a new OpSchema (of the same op_type) is created
+  // with a newer since_version_, reflecting the opset version at the time of change.
+  // For a function op, operators used to define its function body may change
+  // while there is no change to the function op definition itself.
+  // When this happens, mutiple function bodies are provided, each for a specific opset version.
+  //
+  // Take LogSoftmax for example. Its latest opset version is 13.
+  // In LogSoftmax's function body, ReduceMax (with since_version_ 1, 11, 12, 18) is used.
+  // When a model containing LogSoftmax with opset_import version within 13 to 17 is loaded, function body
+  // with opset_version 13 is used for inlining.
+  // When the same model but opset_import version 18 is loaded, function body
+  // with opset_version 18 is used for inlining.
+  // Clearly function body for opset_import version 13 will not work
+  // in a model with opset_import version 18 because the function body make worng use of ReduceMax(18).
+  // Inside GetFunction we ensure that ops being used to construct a function body do not endure such
+  // issue.
+  const FunctionProto* GetFunction(
+      int requested_opset_version = OpSchema::kUninitializedSinceVersion,
+      bool validate = false) const;
+
+  std::vector<int> context_dependent_function_opset_versions() const {
+    std::vector<int> opset_versions;
+    std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it = opset_version_to_function_builder_.cbegin();
+    for (; it != opset_version_to_function_builder_.cend(); ++it) {
+      opset_versions.push_back(it->first);
+    }
+    return opset_versions;
+  }
 
   bool HasContextDependentFunction() const {
-    return functionBuilder_ != nullptr;
+    return !opset_version_to_function_builder_.empty();
   }
 
-  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder);
+  bool HasContextDependentFunctionWithOpsetVersion(int opset_version) const {
+    return opset_version_to_function_builder_.find(opset_version) != opset_version_to_function_builder_.end();
+  }
 
-  bool BuildContextDependentFunction(const FunctionBodyBuildContext& ctx, FunctionProto& functionProto) const;
+  OpSchema& SetContextDependentFunctionBodyBuilder(
+      ContextDependentFunctionBodyBuilder,
+      int opset_version = kUninitializedSinceVersion);
+
+  bool BuildContextDependentFunction(
+      const FunctionBodyBuildContext& ctx,
+      FunctionProto& function_proto,
+      int requested_opset_version = OpSchema::kUninitializedSinceVersion) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -856,6 +904,12 @@ class OpSchema final {
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
+  bool ValidateReferencedOpsInFuncton(
+      const FunctionProto* function,
+      int requested_opset_version,
+      int function_since_version,
+      std::set<std::string>* updated_ops = nullptr) const;
+  void UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const;
 
   std::string name_;
   std::string file_;
@@ -875,14 +929,15 @@ class OpSchema final {
   int min_output_ = 0;
   int max_output_ = 0;
   // The default is a little goofy, since it is never what you want
-  OperatorSetVersion since_version_ = 1;
+  OperatorSetVersion since_version_ = kUninitializedSinceVersion;
   bool deprecated_{};
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
   DataPropagationFunction data_propagation_function_;
-  FunctionProto function_body_;
-  ContextDependentFunctionBodyBuilder functionBuilder_;
+
+  std::map<int, std::shared_ptr<FunctionProto>> opset_version_to_function_body_;
+  std::map<int, ContextDependentFunctionBodyBuilder> opset_version_to_function_builder_;
 };
 
 // Map type to store operator schemas. The format is,
@@ -911,7 +966,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 18);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 19);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 3);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
@@ -921,7 +976,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 17;
+      last_release_version_map_[ONNX_DOMAIN] = 18;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 3;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
@@ -974,17 +1029,18 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load = 0) {
       ONNX_TRY {
         op_schema.Finalize();
-
         auto& m = GetMapWithoutEnsuringRegistration();
-
         auto& op_name = op_schema.Name();
         auto& op_domain = op_schema.domain();
         auto ver = op_schema.SinceVersion();
+        if (OpSchema::kUninitializedSinceVersion == ver) {
+          op_schema.SinceVersion(1);
+          ver = op_schema.SinceVersion();
+        }
         // Stops because the opset_version is higher than opset_version_to_load
         if (opset_version_to_load != 0 && ver > opset_version_to_load) {
           return;
         }
-
         if (m[op_name][op_domain].count(ver)) {
           const auto& schema = m[op_name][op_domain][ver];
           std::stringstream err;
@@ -997,7 +1053,6 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         if (opset_version_to_load != 0 && !m[op_name][op_domain].empty()) {
           return;
         }
-
         auto ver_range_map = DomainToVersionRange::Instance().Map();
         auto ver_range_it = ver_range_map.find(op_domain);
         if (ver_range_it == ver_range_map.end()) {
