@@ -343,7 +343,8 @@ tests_require.append("nbval")
 tests_require.append("tabulate")
 
 extras_require["lint"] = [
-    "lintrunner==0.9.3",
+    "lintrunner>=0.10.0",
+    "lintrunner-adapters>=0.3",
 ]
 
 ################################################################################
