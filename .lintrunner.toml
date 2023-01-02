@@ -98,127 +98,6 @@ init_command = [
     'types-protobuf==3.20.4',
 ]
 
-
-[[linter]]
-code = 'NOQA'
-include_patterns = [
-    # TODO(#4664): Enable NOQA
-]
-exclude_patterns = []
-command = [
-    'python3',
-    '-m',
-    'lintrunner_adapters',
-    'run',
-    'grep_linter',
-    '--pattern=# noqa([^:]|$)',
-    '--linter-name=NOQA',
-    '--error-name=unqualified noqa',
-    """--error-description=\
-        This line has an unqualified `noqa`; \
-        please convert it to `noqa: XXXX`\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
-
-# NEWLINE: Checks files to make sure there are no trailing newlines
-# and ensures UNIX-style newlines.
-[[linter]]
-code = 'NEWLINE'
-include_patterns=[
-    '**/*.py',
-    '**/*.pyi',
-    '**/*.cc',
-    '**/*.h',
-    '**/*.md',
-    '**/*.cpp',
-]
-exclude_patterns = [
-    '*_pb2*',
-    '.setuptools-cmake-build/*',
-    'cmake/**',
-    'docs/**',
-    '**/*.onnx',
-    '**/*.pb',
-    '**/*.pbtxt',
-    '**/*.proto',
-    '**/*.proto3',
-    'community/sc-election-guidelines.md',
-]
-command = [
-    'python3',
-    '-m',
-    'lintrunner_adapters',
-    'run',
-    'newlines_linter',
-    '--',
-    '@{{PATHSFILE}}',
-]
-is_formatter = true
-
-# SPACES: Ensures no trailing spaces in the codebase
-[[linter]]
-code = 'SPACES'
-include_patterns = ['**']
-exclude_patterns = [
-    '*_pb2*',
-    '.setuptools-cmake-build/*',
-    'cmake/**',
-    'docs/**',
-    '**/*.onnx',
-    '**/*.pb',
-    '**/*.proto*',
-]
-command = [
-    'python3',
-    '-m',
-    'lintrunner_adapters',
-    'run',
-    'grep_linter',
-    '--pattern=[[:blank:]]$',
-    '--linter-name=SPACES',
-    '--error-name=trailing spaces',
-    '--replace-pattern=s/[[:blank:]]+$//',
-    """--error-description=\
-        This line has trailing spaces; please remove them.\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
-
-# TABS: Ensures no tabs are used in the codebase
-[[linter]]
-code = 'TABS'
-include_patterns = ['**']
-exclude_patterns = [
-    '.lintrunner.toml',
-    '*_pb2*',
-    '.setuptools-cmake-build/*',
-    'cmake/**',
-    'docs/**',
-    '**/*.onnx',
-    '**/*.pb',
-    '**/*.proto*',
-]
-command = [
-    'python3',
-    '-m',
-    'lintrunner_adapters',
-    'run',
-    'grep_linter',
-    # @lint-ignore TXT2
-    '--pattern=	',
-    '--linter-name=TABS',
-    '--error-name=saw some tabs',
-    '--replace-pattern=s/\t/    /',
-    """--error-description=\
-        This line has tabs; please replace them with spaces.\
-    """,
-    '--',
-    '@{{PATHSFILE}}'
-]
-
 [[linter]]
 code = 'BLACK-ISORT'
 include_patterns = [
@@ -330,4 +209,40 @@ init_command = [
     'pip_init',
     '--dry-run={{DRYRUN}}',
     'pylint==2.15.5',
+]
+
+[[linter]]
+code = 'EDITORCONFIG-CHECKER'
+include_patterns=[
+    '**/*.py',
+    '**/*.pyi',
+    '**/*.cc',
+    '**/*.h',
+    '**/*.md',
+    '**/*.cpp',
+]
+exclude_patterns = [
+    '*_pb2*',
+    '.setuptools-cmake-build/*',
+    'cmake/**',
+    'docs/**',
+    'community/sc-election-guidelines.md',
+]
+command = [
+    'python',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'editorconfig_checker_linter',
+    '--',
+    '@{{PATHSFILE}}'
+]
+init_command = [
+    'python',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'pip_init',
+    '--dry-run={{DRYRUN}}',
+    'editorconfig-checker==2.6.2',
 ]
