@@ -428,7 +428,7 @@ def _conv_implementation(  # type: ignore
                                         kz, kz + sZ - (z + oz + kz)
                                     )
                                     w_ = w[:1, :1, jh1:jh2, jw1:jw2, jz1:jz2]
-                                    if img.shape != w.shape:
+                                    if img.shape != w_.shape:
                                         raise RuntimeError(
                                             f"Unexpected shape {img.shape} != {w_.shape}, oh={oh}, ow={ow}, oz={oz}, "
                                             f"i={i}, j={j}, z={z}, kh={kh}, kw={kw}, kz={kz}, "
