@@ -25,8 +25,8 @@ class Bernoulli(Base):
             outputs=["y"],
         )
 
-        x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
-        y = bernoulli_reference_implementation(x, np.float)
+        x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+        y = bernoulli_reference_implementation(x, np.float32)
         expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
 
     @staticmethod
@@ -44,7 +44,7 @@ class Bernoulli(Base):
 
     @staticmethod
     def export_bernoulli_with_seed() -> None:
-        seed = np.float(0)
+        seed = np.float32(0)
         node = onnx.helper.make_node(
             "Bernoulli",
             inputs=["x"],

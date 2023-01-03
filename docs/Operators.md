@@ -2235,7 +2235,7 @@ s = np.random.randn(3).astype(np.float32)
 bias = np.random.randn(3).astype(np.float32)
 mean = np.random.randn(3).astype(np.float32)
 var = np.random.rand(3).astype(np.float32)
-# using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
+# using np.bool_(1) while generating test data with "'bool' object has no attribute 'dtype'"
 # working around by using np.byte(1).astype(bool)
 training_mode = 1
 y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
@@ -2359,7 +2359,7 @@ expect(node, inputs=[x], outputs=[y], name="test_bernoulli_double")
 <summary>bernoulli_with_seed</summary>
 
 ```python
-seed = np.float(0)
+seed = np.float32(0)
 node = onnx.helper.make_node(
     "Bernoulli",
     inputs=["x"],
@@ -2385,8 +2385,8 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
-y = bernoulli_reference_implementation(x, np.float)
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+y = bernoulli_reference_implementation(x, np.float32)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
 ```
 

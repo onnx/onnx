@@ -85,7 +85,7 @@ class BatchNormalization(Base):
         bias = np.random.randn(3).astype(np.float32)
         mean = np.random.randn(3).astype(np.float32)
         var = np.random.rand(3).astype(np.float32)
-        # using np.bool(1) while generating test data with "'bool' object has no attribute 'dtype'"
+        # using np.bool_(1) while generating test data with "'bool' object has no attribute 'dtype'"
         # working around by using np.byte(1).astype(bool)
         training_mode = 1
         y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
