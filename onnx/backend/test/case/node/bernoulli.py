@@ -44,7 +44,7 @@ class Bernoulli(Base):
 
     @staticmethod
     def export_bernoulli_with_seed() -> None:
-        seed = np.float32(0)
+        seed = 0
         node = onnx.helper.make_node(
             "Bernoulli",
             inputs=["x"],
