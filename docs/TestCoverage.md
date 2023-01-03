@@ -1682,7 +1682,7 @@ expect(node, inputs=[x], outputs=[y], name="test_bernoulli_double")
 <summary>bernoulli_with_seed</summary>
 
 ```python
-seed = float(0)
+seed = np.float(0)
 node = onnx.helper.make_node(
     "Bernoulli",
     inputs=["x"],
@@ -1706,8 +1706,8 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
-y = bernoulli_reference_implementation(x, np.float32)
+x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
+y = bernoulli_reference_implementation(x, np.float)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
 ```
 
@@ -2286,14 +2286,14 @@ for from_type, to_type in test_cases:
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
         if "STRING" == to_type:
-            # Converting input to str, then give it np.object_ dtype for generating script
+            # Converting input to str, then give it np.object dtype for generating script
             ss = []
             for i in input.flatten():
                 s = str(i).encode("utf-8")
                 su = s.decode("utf-8")
                 ss.append(su)
 
-            output = np.array(ss).astype(np.object_).reshape([3, 4])
+            output = np.array(ss).astype(np.object).reshape([3, 4])
         else:
             output = input.astype(
                 helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
@@ -2314,7 +2314,7 @@ for from_type, to_type in test_cases:
                 "+INF",
                 "-INF",
             ],
-            dtype=np.dtype(np.object_),
+            dtype=np.dtype(np.object),
         ).reshape([3, 4])
         output = input.astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
