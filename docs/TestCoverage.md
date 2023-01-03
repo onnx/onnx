@@ -1682,7 +1682,7 @@ expect(node, inputs=[x], outputs=[y], name="test_bernoulli_double")
 <summary>bernoulli_with_seed</summary>
 
 ```python
-seed = np.float32(0)
+seed = 0
 node = onnx.helper.make_node(
     "Bernoulli",
     inputs=["x"],
