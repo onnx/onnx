@@ -33,6 +33,9 @@ def compute_softmax_zero(values: np.ndarray) -> np.ndarray:
 
 def softmax_zero(values: np.ndarray) -> np.ndarray:
     "Modifications in place."
+    if len(values.shape) == 1:
+        compute_softmax_zero(values)
+        return values
     for row in values:
         compute_softmax_zero(row)
     return values

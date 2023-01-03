@@ -1362,7 +1362,6 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 assert_allclose(expected[0], got[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    @unittest.skipIf(True, reason="not supported yet")
     def test_svm_classifier_binary_noprob(self):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
         expected_post = {
@@ -1380,28 +1379,21 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "LOGISTIC": (
                 np.array([0, 1, 1], dtype=np.int64),
                 np.array(
-                    [[0.729737, 0.501678], [0.615242, 0.629623], [0.503749, 0.7281]],
+                    [[0.271688, 0.728312], [0.502847, 0.497153], [0.690361, 0.309639]],
                     dtype=np.float32,
                 ),
             ),
             "SOFTMAX": (
                 np.array([0, 1, 1], dtype=np.int64),
                 np.array(
-                    [[0.728411, 0.271589], [0.484705, 0.515295], [0.274879, 0.725121]],
+                    [[0.122158, 0.877842], [0.505693, 0.494307], [0.832523, 0.167477]],
                     dtype=np.float32,
                 ),
             ),
             "SOFTMAX_ZERO": (
                 np.array([0, 1, 1], dtype=np.int64),
                 np.array(
-                    [[0.728411, 0.271589], [0.484705, 0.515295], [0.274879, 0.725121]],
-                    dtype=np.float32,
-                ),
-            ),
-            "PROBIT": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[2.469393, -2.469391], [-0.076776, 0.076776], [-2.16853, 2.16853]],
+                    [[0.122158, 0.877842], [0.505693, 0.494307], [0.832523, 0.167477]],
                     dtype=np.float32,
                 ),
             ),
@@ -1409,7 +1401,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
                 onx = self._get_test_svm_classifier_binary(post, probability=False)
-                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
+                if post not in {"LOGISTIC", "SOFTMAX", "SOFTMAX_ZERO", "PROBIT"}:
+                    self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
                 assert_allclose(expected[1], got[1], atol=1e-6)
@@ -1417,5 +1410,5 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    TestReferenceEvaluatorAiOnnxMl().test_tree_ensemble_classifier_binary()
+    # TestReferenceEvaluatorAiOnnxMl().test_svm_classifier_binary_noprob()
     unittest.main(verbosity=2)

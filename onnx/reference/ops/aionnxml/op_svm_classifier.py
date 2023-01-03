@@ -24,22 +24,16 @@ def multiclass_probability(k, R):
 
     for t in range(0, k):
         P[t] = 1.0 / k
-        Q[t, t] = 0
-        for j in range(t):
-            Q[t, t] += R[j, t] * R[j, t]
-            Q[t, j] = Q[j, t]
-        for j in range(t + 1, k):
-            Q[t, t] += R[j, t] * R[j, t]
-            Q[t, j] = -R[j, t] * R[t, j]
+        Q[t, t] = (R[:t, t] ** 2).sum()
+        Q[t, :t] = Q[:t, t]
+
+        Q[t, t] += (R[t + 1 :, t] ** 2).sum()
+        Q[t, t + 1 :] = -R[t + 1 :, t] @ R[t, t + 1 :]
 
     for _ in range(max_iter):
         # stopping condition, recalculate QP,pQP for numerical accuracy
-        pQp = 0
-        for t in range(0, k):
-            Qp[t] = 0
-            for j in range(k):
-                Qp[t] += Q[t, j] * P[j]
-            pQp += P[t] * Qp[t]
+        Qp[:] = Q @ P
+        pQp = (P * Qp).sum()
 
         max_error = 0
         for t in range(0, k):
@@ -53,9 +47,9 @@ def multiclass_probability(k, R):
             diff = (-Qp[t] + pQp) / Q[t, t]
             P[t] += diff
             pQp = (pQp + diff * (diff * Q[t, t] + 2 * Qp[t])) / (1 + diff) ** 2
-            for j in range(k):
-                Qp[j] = (Qp[j] + diff * Q[t, j]) / (1 + diff)
-                P[j] /= 1 + diff
+            P /= 1 + diff
+            Qp[:] = (Qp + diff * Q[t, :]) / (1 + diff)
+
     return P
 
 
@@ -92,6 +86,16 @@ def write_scores(n_classes, scores, post_transform, add_second_class):
                 return np.array(
                     [logistic(-scores[0]), logistic(scores[0])], dtype=scores.dtype
                 )
+            if post_transform == "SOFTMAX":
+                return softmax(np.array([-scores[0], scores[0]], dtype=scores.dtype))
+            if post_transform == "SOFTMAX_ZERO":
+                return softmax_zero(
+                    np.array([-scores[0], scores[0]], dtype=scores.dtype)
+                )
+            if post_transform == "PROBIT":
+                raise RuntimeError(
+                    f"post_transform={post_transform!r} not applicable here."
+                )
             return np.array([-scores[0], scores[0]], dtype=scores.dtype)
         return np.array([scores[0]], dtype=scores.dtype)
     raise NotImplementedError(f"n_classes={n_classes} not supported.")
@@ -110,7 +114,7 @@ def set_score_svm(
 ):
     write_additional_scores = -1
     if len(classlabels) == 2:
-        write_additional_scores = 2 if post_transform == "NONE" else 0
+        write_additional_scores = 2
         if not has_proba:
             if weights_are_all_positive_ and max_weight >= 0.5:
                 return classlabels[1], write_additional_scores
