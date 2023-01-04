@@ -1259,47 +1259,72 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 assert_allclose(expected[0], got[0])
 
     @staticmethod
-    def _get_test_svm_classifier_binary(post_transform, probability=True):
+    def _get_test_svm_classifier_binary(post_transform, probability=True, linear=False):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         In = make_tensor_value_info("I", TensorProto.INT64, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
-        kwargs = dict(
-            classlabels_ints=[0, 1],
-            coefficients=[1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0],
-            kernel_params=[0.3824487328529358, 0.0, 3.0],
-            kernel_type="RBF",
-            prob_a=[-5.139118194580078],
-            prob_b=[0.06399919837713242],
-            rho=[0.16708599030971527],
-            support_vectors=[
-                0.19125767052173615,
-                -1.062204122543335,
-                0.5006636381149292,
-                -0.5892484784126282,
-                -0.3196830451488495,
-                0.0984845906496048,
-                0.24746321141719818,
-                -1.1535362005233765,
-                0.4109955430030823,
-                -0.5937694907188416,
-                -1.3183348178863525,
-                -1.6423596143722534,
-                0.558641254901886,
-                -0.9218668341636658,
-                0.6264089345932007,
-                -0.16060839593410492,
-                -0.6365169882774353,
-                0.8335472345352173,
-                0.7539799213409424,
-                -0.3970031440258026,
-                -0.1780400276184082,
-                -0.616622805595398,
-                0.49261474609375,
-                0.4470972716808319,
-            ],
-            vectors_per_class=[4, 4],
-            post_transform=post_transform,
-        )
+        if linear:
+            kwargs = dict(
+                classlabels_ints=[0, 1, 2, 3],
+                coefficients=[
+                    -1.55181212e-01,
+                    2.42698956e-01,
+                    7.01893432e-03,
+                    4.07614474e-01,
+                    -3.24927823e-02,
+                    2.79897536e-04,
+                    -1.95771302e-01,
+                    -3.52437368e-01,
+                    -2.15973096e-02,
+                    -4.38190277e-01,
+                    4.56869105e-02,
+                    -1.29375499e-02,
+                ],
+                kernel_params=[0.001, 0.0, 3.0],
+                kernel_type="LINEAR",
+                prob_a=[-5.139118194580078],
+                prob_b=[0.06399919837713242],
+                rho=[-0.07489691, -0.1764396, -0.21167431, -0.51619097],
+                post_transform=post_transform,
+            )
+        else:
+            kwargs = dict(
+                classlabels_ints=[0, 1],
+                coefficients=[1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0],
+                kernel_params=[0.3824487328529358, 0.0, 3.0],
+                kernel_type="RBF",
+                prob_a=[-5.139118194580078],
+                prob_b=[0.06399919837713242],
+                rho=[0.16708599030971527],
+                support_vectors=[
+                    0.19125767052173615,
+                    -1.062204122543335,
+                    0.5006636381149292,
+                    -0.5892484784126282,
+                    -0.3196830451488495,
+                    0.0984845906496048,
+                    0.24746321141719818,
+                    -1.1535362005233765,
+                    0.4109955430030823,
+                    -0.5937694907188416,
+                    -1.3183348178863525,
+                    -1.6423596143722534,
+                    0.558641254901886,
+                    -0.9218668341636658,
+                    0.6264089345932007,
+                    -0.16060839593410492,
+                    -0.6365169882774353,
+                    0.8335472345352173,
+                    0.7539799213409424,
+                    -0.3970031440258026,
+                    -0.1780400276184082,
+                    -0.616622805595398,
+                    0.49261474609375,
+                    0.4470972716808319,
+                ],
+                vectors_per_class=[4, 4],
+                post_transform=post_transform,
+            )
 
         if not probability:
             del kwargs["prob_a"]
@@ -1408,7 +1433,151 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 assert_allclose(expected[1], got[1], atol=1e-6)
                 assert_allclose(expected[0], got[0])
 
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_classifier_binary_noprob_linear(self):
+        x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
+        nan = np.nan
+        expected_post = {
+            "NONE": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [-0.118086, -0.456685, 0.415783, 0.334506],
+                        [-0.061364, -0.231444, 0.073899, 0.091242],
+                        [-0.004642, -0.006203, -0.267985, -0.152023],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "LOGISTIC": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [0.470513, 0.387773, 0.602474, 0.582855],
+                        [0.484664, 0.442396, 0.518466, 0.522795],
+                        [0.498839, 0.498449, 0.433402, 0.462067],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [0.200374, 0.14282, 0.341741, 0.315065],
+                        [0.240772, 0.203115, 0.275645, 0.280467],
+                        [0.275491, 0.275061, 0.211709, 0.237739],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX_ZERO": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [0.200374, 0.14282, 0.341741, 0.315065],
+                        [0.240772, 0.203115, 0.275645, 0.280467],
+                        [0.275491, 0.275061, 0.211709, 0.237739],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "PROBIT": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [nan, nan, -0.212698, -0.427529],
+                        [nan, nan, -1.447414, -1.333286],
+                        [nan, nan, nan, nan],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+        }
+        for post, expected in expected_post.items():
+            with self.subTest(post_transform=post):
+                onx = self._get_test_svm_classifier_binary(
+                    post, probability=False, linear=True
+                )
+                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected[1], got[1], atol=1e-6)
+                assert_allclose(expected[0], got[0])
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_classifier_binary_linear(self):
+        # prob_a, prob_b are not used in this case.
+        x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
+        nan = np.nan
+        expected_post = {
+            "NONE": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [-0.118086, -0.456685, 0.415783, 0.334506],
+                        [-0.061364, -0.231444, 0.073899, 0.091242],
+                        [-0.004642, -0.006203, -0.267985, -0.152023],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "LOGISTIC": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [0.470513, 0.387773, 0.602474, 0.582855],
+                        [0.484664, 0.442396, 0.518466, 0.522795],
+                        [0.498839, 0.498449, 0.433402, 0.462067],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [0.200374, 0.14282, 0.341741, 0.315065],
+                        [0.240772, 0.203115, 0.275645, 0.280467],
+                        [0.275491, 0.275061, 0.211709, 0.237739],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX_ZERO": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [0.200374, 0.14282, 0.341741, 0.315065],
+                        [0.240772, 0.203115, 0.275645, 0.280467],
+                        [0.275491, 0.275061, 0.211709, 0.237739],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            "PROBIT": (
+                np.array([2, 3, 0], dtype=np.int64),
+                np.array(
+                    [
+                        [nan, nan, -0.212698, -0.427529],
+                        [nan, nan, -1.447414, -1.333286],
+                        [nan, nan, nan, nan],
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+        }
+        for post, expected in expected_post.items():
+            with self.subTest(post_transform=post):
+                onx = self._get_test_svm_classifier_binary(
+                    post, probability=True, linear=True
+                )
+                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected[1], got[1], atol=1e-6)
+                assert_allclose(expected[0], got[0])
+
 
 if __name__ == "__main__":
-    # TestReferenceEvaluatorAiOnnxMl().test_svm_classifier_binary_noprob()
     unittest.main(verbosity=2)

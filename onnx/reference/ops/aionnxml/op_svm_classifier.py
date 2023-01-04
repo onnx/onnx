@@ -131,7 +131,7 @@ class SVMClassifier(OpRunAiOnnxMl):
         scores = []
         for j in range(class_count_):
             d = self._svm.kernel_dot(X, coefs[j], kernel_type_)
-            score = self._svm.rho[0] + d  # type: ignore
+            score = self._svm.atts.rho[0] + d  # type: ignore
             scores.append(score)
         return np.array(scores, dtype=X.dtype)
 
@@ -196,7 +196,7 @@ class SVMClassifier(OpRunAiOnnxMl):
     ):
 
         max_weight = 0
-        if len(votes):
+        if votes is not None and len(votes) > 0:
             max_class = np.argmax(votes)
             max_weight = votes[max_class]
         else:
@@ -256,13 +256,13 @@ class SVMClassifier(OpRunAiOnnxMl):
         self._svm = svm  # pylint: disable=W0201
 
         vector_count_ = 0
-        class_count_ = 0
-        starting_vector_ = []
-        for vc in svm.atts.vectors_per_class:  # type: ignore
-            starting_vector_.append(vector_count_)
-            vector_count_ += vc
-
         class_count_ = max(len(classlabels_ints or classlabels_strings or []), 1)
+        starting_vector_ = []
+        if svm.atts.vectors_per_class is not None:
+            for vc in svm.atts.vectors_per_class:  # type: ignore
+                starting_vector_.append(vector_count_)
+                vector_count_ += vc
+
         if vector_count_ > 0:
             # length of each support vector
             mode = "SVM_SVC"
@@ -283,6 +283,7 @@ class SVMClassifier(OpRunAiOnnxMl):
             for n in range(X.shape[0]):
                 scores = self._run_linear(X[n], coefs, class_count_, kernel_type_)
                 res[n, :] = scores
+            votes = None
         else:
             res = np.empty(
                 (X.shape[0], class_count_ * (class_count_ - 1) // 2), dtype=X.dtype
@@ -321,7 +322,7 @@ class SVMClassifier(OpRunAiOnnxMl):
         labels = []
         for n in range(scores.shape[0]):
             label, new_scores = self._compute_final_scores(
-                votes[n],
+                None if votes is None else votes[n],
                 scores[n],
                 weights_are_all_positive_,
                 has_proba,
