@@ -90,7 +90,7 @@ class SVMCommon:
                     s += self.atts.coefficients[j] * d  # type: ignore
                 s += self.atts.rho[0]  # type: ignore
             elif mode_ == "SVM_LINEAR":
-                s = self.kernel_dot(X, self.atts.coefficients, kernel_type_)  # type: ignore
+                s = self.kernel_dot(X[n], self.atts.coefficients, kernel_type_)  # type: ignore
                 s += self.atts.rho[0]  # type: ignore
 
             if self.atts.one_class:  # type: ignore

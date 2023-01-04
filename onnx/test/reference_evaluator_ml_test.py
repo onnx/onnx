@@ -1434,7 +1434,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 assert_allclose(expected[0], got[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_classifier_binary_noprob_linear(self):
+    def test_svm_classifier_noprob_linear(self):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
         nan = np.nan
         expected_post = {
@@ -1506,7 +1506,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 assert_allclose(expected[0], got[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_classifier_binary_linear(self):
+    def test_svm_classifier_linear(self):
         # prob_a, prob_b are not used in this case.
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
         nan = np.nan
@@ -1577,6 +1577,157 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 got = sess.run(None, {"X": x})
                 assert_allclose(expected[1], got[1], atol=1e-6)
                 assert_allclose(expected[0], got[0])
+
+    @staticmethod
+    def _get_test_svm_classifier_linear_sv(post_transform, probability=True):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        In = make_tensor_value_info("I", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        kwargs = dict(
+            classlabels_ints=[0, 1],
+            coefficients=[
+                0.766398549079895,
+                0.0871576070785522,
+                0.110420741140842,
+                -0.963976919651031,
+            ],
+            support_vectors=[
+                4.80000019073486,
+                3.40000009536743,
+                1.89999997615814,
+                5.0,
+                3.0,
+                1.60000002384186,
+                4.5,
+                2.29999995231628,
+                1.29999995231628,
+                5.09999990463257,
+                2.5,
+                3.0,
+            ],
+            kernel_params=[0.122462183237076, 0.0, 3.0],
+            kernel_type="LINEAR",
+            prob_a=[-5.139118194580078],
+            prob_b=[0.06399919837713242],
+            rho=[2.23510527610779],
+            post_transform=post_transform,
+            vectors_per_class=[3, 1],
+        )
+
+        if not probability:
+            del kwargs["prob_a"]
+            del kwargs["prob_b"]
+        node1 = make_node(
+            "SVMClassifier", ["X"], ["I", "Y"], domain="ai.onnx.ml", **kwargs
+        )
+        graph = make_graph([node1], "ml", [X], [In, Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        return onx
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_classifier_binary_noprob_linear_sv(self):
+        x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
+        nan = np.nan
+        expected_post = {
+            "NONE": (
+                np.array([0, 0, 0], dtype=np.int64),
+                np.array(
+                    [[-2.662655, 2.662655], [-2.21481, 2.21481], [-1.766964, 1.766964]],
+                    dtype=np.float32,
+                ),
+            ),
+            "LOGISTIC": (
+                np.array([0, 0, 0], dtype=np.int64),
+                np.array(
+                    [[0.065213, 0.934787], [0.098428, 0.901572], [0.14592, 0.85408]],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX": (
+                np.array([0, 0, 0], dtype=np.int64),
+                np.array(
+                    [[0.004843, 0.995157], [0.011779, 0.988221], [0.028362, 0.971638]],
+                    dtype=np.float32,
+                ),
+            ),
+            "SOFTMAX_ZERO": (
+                np.array([0, 0, 0], dtype=np.int64),
+                np.array(
+                    [[0.004843, 0.995157], [0.011779, 0.988221], [0.028362, 0.971638]],
+                    dtype=np.float32,
+                ),
+            ),
+        }
+        for post, expected in expected_post.items():
+            with self.subTest(post_transform=post):
+                onx = self._get_test_svm_classifier_linear_sv(post, probability=False)
+                if post not in {"LOGISTIC", "SOFTMAX", "SOFTMAX_ZERO"}:
+                    self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected[1], got[1], atol=1e-6)
+                assert_allclose(expected[0], got[0])
+
+    @staticmethod
+    def _get_test_svm_regressor_linear(post_transform, one_class=0):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        kwargs = dict(
+            coefficients=[0.28290501, -0.0266512, 0.01674867],
+            kernel_params=[0.001, 0.0, 3.0],
+            kernel_type="LINEAR",
+            rho=[1.24032312],
+            post_transform=post_transform,
+            n_supports=0,
+            one_class=one_class,
+        )
+
+        node1 = make_node("SVMRegressor", ["X"], ["Y"], domain="ai.onnx.ml", **kwargs)
+        graph = make_graph([node1], "ml", [X], [Y])
+        onx = make_model(graph, opset_imports=OPSETS)
+        check_model(onx)
+        return onx
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_regressor_linear(self):
+        x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
+        nan = np.nan
+        expected_post = {
+            "NONE": (
+                np.array(
+                    [[0.96869], [1.132491], [1.296293]],
+                    dtype=np.float32,
+                ),
+            ),
+        }
+        for post, expected in expected_post.items():
+            with self.subTest(post_transform=post):
+                onx = self._get_test_svm_regressor_linear(post)
+                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected[0], got[0], atol=1e-6)
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_regressor_linear_one_class(self):
+        x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
+        nan = np.nan
+        expected_post = {
+            "NONE": (
+                np.array(
+                    [[1.0], [1.0], [1.0]],
+                    dtype=np.float32,
+                ),
+            ),
+        }
+        for post, expected in expected_post.items():
+            with self.subTest(post_transform=post):
+                onx = self._get_test_svm_regressor_linear(post, one_class=1)
+                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(onx)
+                got = sess.run(None, {"X": x})
+                assert_allclose(expected[0], got[0], atol=1e-6)
 
 
 if __name__ == "__main__":

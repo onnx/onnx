@@ -258,7 +258,7 @@ class SVMClassifier(OpRunAiOnnxMl):
         vector_count_ = 0
         class_count_ = max(len(classlabels_ints or classlabels_strings or []), 1)
         starting_vector_ = []
-        if svm.atts.vectors_per_class is not None:
+        if svm.atts.vectors_per_class is not None:  # type: ignore
             for vc in svm.atts.vectors_per_class:  # type: ignore
                 starting_vector_.append(vector_count_)
                 vector_count_ += vc
