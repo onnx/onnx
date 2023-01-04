@@ -1628,7 +1628,6 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_classifier_binary_noprob_linear_sv(self):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        nan = np.nan
         expected_post = {
             "NONE": (
                 np.array([0, 0, 0], dtype=np.int64),
@@ -1692,7 +1691,6 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_regressor_linear(self):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        nan = np.nan
         expected_post = {
             "NONE": (
                 np.array(
@@ -1712,7 +1710,6 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_regressor_linear_one_class(self):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        nan = np.nan
         expected_post = {
             "NONE": (
                 np.array(
