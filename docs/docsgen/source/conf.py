@@ -67,7 +67,6 @@ html_theme_options = {
         {"name": "github", "url": "https://github.com/onnx/onnx"},
     ],
     "github_url": "https://github.com/onnx/onnx",
-    "logo": {"image_dark": "onnx-horizontal-white.png"},
     "navbar_center": [],
     "navigation_depth": 5,
     "page_sidebar_items": [],  # default setting is: ["page-toc", "edit-this-page", "sourcelink"],
@@ -78,7 +77,7 @@ html_theme_options = {
     "logo": {
         "text": project,
         "image_light": html_favicon,
-        "image_dark": html_favicon,
+        "image_dark": onnx-horizontal-white.png,
         "alt_text": project,
     },
 }
