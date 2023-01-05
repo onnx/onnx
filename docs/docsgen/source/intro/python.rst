@@ -608,7 +608,8 @@ in a matrix based on the sign, returns 1 or -1.
         f.write(onnx_model.SerializeToString())
 
     # Let's see the output.
-    sess = InferenceSession(onnx_model.SerializeToString())
+    sess = InferenceSession(onnx_model.SerializeToString(),
+                            providers=["CPUExecutionProvider"])
 
     x = numpy.ones((3, 2), dtype=numpy.float32)
     res = sess.run(None, {'X': x})
@@ -1246,7 +1247,8 @@ This case is still puzzling.
     print("----------- case 1: 2D x 2D -> 2D")
     onnx_model = create_model({'X': [None, None], 'A': [None, None], 'Y': [None, None]})
     check_model(onnx_model)
-    sess = InferenceSession(onnx_model.SerializeToString())
+    sess = InferenceSession(onnx_model.SerializeToString(),
+                            providers=["CPUExecutionProvider"])
     res = sess.run(None, {
         'X': numpy.random.randn(2, 2).astype(numpy.float32),
         'A': numpy.random.randn(2, 2).astype(numpy.float32)})
@@ -1255,7 +1257,8 @@ This case is still puzzling.
     print("----------- case 2: 2D x 1D -> 1D")
     onnx_model = create_model({'X': [None, None], 'A': [None], 'Y': [None]})
     check_model(onnx_model)
-    sess = InferenceSession(onnx_model.SerializeToString())
+    sess = InferenceSession(onnx_model.SerializeToString(),
+                            providers=["CPUExecutionProvider"])
     res = sess.run(None, {
         'X': numpy.random.randn(2, 2).astype(numpy.float32),
         'A': numpy.random.randn(2).astype(numpy.float32)})
@@ -1265,7 +1268,8 @@ This case is still puzzling.
     onnx_model = create_model({'X': [None, None], 'A': [], 'Y': []})
     check_model(onnx_model)
     try:
-        InferenceSession(onnx_model.SerializeToString())
+        InferenceSession(onnx_model.SerializeToString(),
+                         providers=["CPUExecutionProvider"])
     except Exception as e:
         print(e)
 
@@ -1275,7 +1279,8 @@ This case is still puzzling.
         check_model(onnx_model)
     except Exception as e:
         print(type(e), e)
-    sess = InferenceSession(onnx_model.SerializeToString())
+    sess = InferenceSession(onnx_model.SerializeToString(),
+                            providers=["CPUExecutionProvider"])
     res = sess.run(None, {
         'X': numpy.random.randn(2, 2).astype(numpy.float32),
         'A': numpy.random.randn(2).astype(numpy.float32)})
