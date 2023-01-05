@@ -10386,11 +10386,7 @@ This version of the operator has been available since version 11 of the default 
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled
-
-   ```
-   * pad_shape[i] is sum of pads along axis i
-   ```
+   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
@@ -10449,16 +10445,16 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="BitShift-11"></a>**BitShift-11**</a>
 
   Bitwise shift operator performs element-wise operation. For each input element, if the
-   attribute "direction" is "RIGHT", this operator moves its binary representation toward
-   the right side so that the input value is effectively decreased. If the attribute "direction"
-   is "LEFT", bits of binary representation moves toward the left side, which results the
-   increase of its actual value. The input X is the tensor to be shifted and another input
-   Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
-   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
-   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+  attribute "direction" is "RIGHT", this operator moves its binary representation toward
+  the right side so that the input value is effectively decreased. If the attribute "direction"
+  is "LEFT", bits of binary representation moves toward the left side, which results the
+  increase of its actual value. The input X is the tensor to be shifted and another input
+  Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+  and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+  X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
 
-   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
-   not necessarily identical.
+  Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+  not necessarily identical.
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -10969,24 +10965,29 @@ This version of the operator has been available since version 11 of the default 
   Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
   Scale is calculated as:
   ```
-   y_scale = (max(x) - min(x))/(qmax - qmin)
-   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
-   * data range is adjusted to include 0.
+  y_scale = (max(x) - min(x))/(qmax - qmin)
   ```
+
+  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * data range is adjusted to include 0.
+
   Zero point is calculated as:
   ```
   intermediate_zero_point = qmin - min(x)/y_scale
   y_zero_point = cast(round(saturate(itermediate_zero_point)))
+  ```
+
   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
   * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
   * rounding to nearest ties to even.
-  ```
+
   Data quantization formula is:
   ```
   y = saturate (round (x / y_scale) + y_zero_point)
+  ```
+
   * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
   * rounding to nearest ties to even.
-  ```
 
 #### Version
 
@@ -14140,9 +14141,11 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="Einsum-12"></a>**Einsum-12**</a>
 
-  An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
+  An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
-  ```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
+  ```
+  output[output-term] = reduce-sum( input1[term1] * input2[term] )
+  ```
 
   where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
   that do not occur in the output-term.
@@ -14441,11 +14444,7 @@ This version of the operator has been available since version 12 of the default 
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled
-
-   ```
-   * pad_shape[i] is sum of pads along axis i
-   ```
+   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
@@ -15033,7 +15032,7 @@ This version of the operator has been available since version 13 of the default 
   * Casting from fixed point to:
     * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
     * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
-  signed types). For example, 200 (int16) -> -56 (int8).
+      signed types). For example, 200 (int16) -> -56 (int8).
     * bool: zero to False; nonzero to True.
   * Casting from bool to:
     * floating point: `{1.0, 0.0}`.
@@ -15232,26 +15231,22 @@ This version of the operator has been available since version 13 of the default 
   In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: depth, column, and then row. The output y is computed from the input x as below:
 
+  ```
   b, c, h, w = x.shape
-
   tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-
   tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-
   y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-
+  ```
 
   In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: column, row, and the depth. The output y is computed from the input x as below:
 
+  ```
   b, c, h, w = x.shape
-
   tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-
   tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-
   y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-
+  ```
 
 #### Version
 
@@ -15290,9 +15285,9 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="DequantizeLinear-13"></a>**DequantizeLinear-13**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
-  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape, and can be either a scalar
+  The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
   for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-  'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
+  `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
   there's no zero point (zero point is supposed to be 0).
 
 #### Version
@@ -15628,56 +15623,49 @@ This version of the operator has been available since version 13 of the default 
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
 
-  axis = 0 :
-
-  Let
-  k = indices[i_{0}, ..., i_{q-1}]
-  Then
-  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
+  If `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
+  then `output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]`:
 
   ```
-    data = [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
-    indices = [
-        [0, 1],
-        [1, 2],
-    ]
-    output = [
-        [
-            [1.0, 1.2],
-            [2.3, 3.4],
-        ],
-        [
-            [2.3, 3.4],
-            [4.5, 5.7],
-        ],
-    ]
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+  indices = [
+      [0, 1],
+      [1, 2],
+  ]
+  output = [
+      [
+          [1.0, 1.2],
+          [2.3, 3.4],
+      ],
+      [
+          [2.3, 3.4],
+          [4.5, 5.7],
+      ],
+  ]
   ```
-  axis = 1 :
 
-  Let
-  k = indices[i_{0}, ..., i_{q-1}]
-  Then
-  output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
+  If `axis = 1`, let `k = indices[i_{0}, ..., i_{q-1}]`
+  then `output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]`:
 
   ```
-    data = [
-        [1.0, 1.2, 1.9],
-        [2.3, 3.4, 3.9],
-        [4.5, 5.7, 5.9],
-    ]
-    indices = [
-        [0, 2],
-    ]
-    axis = 1,
-    output = [
-            [[1.0, 1.9]],
-            [[2.3, 3.9]],
-            [[4.5, 5.9]],
-    ]
+  data = [
+      [1.0, 1.2, 1.9],
+      [2.3, 3.4, 3.9],
+      [4.5, 5.7, 5.9],
+  ]
+  indices = [
+      [0, 2],
+  ]
+  axis = 1,
+  output = [
+          [[1.0, 1.9]],
+          [[2.3, 3.9]],
+          [[4.5, 5.9]],
+  ]
   ```
 
 #### Version
@@ -15729,45 +15717,45 @@ This version of the operator has been available since version 13 of the default 
   For instance, in the 3-D case (r = 3), the output produced is determined
   by the following equations:
   ```
-    out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
-    out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
-    out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
+  out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
+  out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
+  out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
   ```
 
   This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
 
   Example 1:
   ```
-    data = [
-        [1, 2],
-        [3, 4],
-    ]
-    indices = [
-        [0, 0],
-        [1, 0],
-    ]
-    axis = 1
-    output = [
-        [1, 1],
-        [4, 3],
-    ]
+  data = [
+      [1, 2],
+      [3, 4],
+  ]
+  indices = [
+      [0, 0],
+      [1, 0],
+  ]
+  axis = 1
+  output = [
+      [1, 1],
+      [4, 3],
+  ]
   ```
   Example 2:
   ```
-    data = [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-    ]
-    indices = [
-        [1, 2, 0],
-        [2, 0, 0],
-    ]
-    axis = 0
-    output = [
-        [4, 8, 3],
-        [7, 2, 3],
-    ]
+  data = [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+  ]
+  indices = [
+      [1, 2, 0],
+      [2, 0, 0],
+  ]
+  axis = 0
+  output = [
+      [4, 8, 3],
+      [7, 2, 3],
+  ]
   ```
 
 #### Version
@@ -15939,9 +15927,8 @@ This version of the operator has been available since version 13 of the default 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
-  A' = transpose(A) if transA else A
-
-  B' = transpose(B) if transB else B
+  * A' = transpose(A) if transA else A
+  * B' = transpose(B) if transB else B
 
   Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
   input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
@@ -16178,14 +16165,14 @@ This version of the operator has been available since version 13 of the default 
 
   Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
   It normalizes over local input regions.
-  The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
-  of shape (N x C x D1 x D2, ..., Dk), its region is
-  {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
+  The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
+  of shape `(N x C x D1 x D2, ..., Dk)`, its region is
+  `{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}`.
 
-  square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
-  where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
+  `square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2)`,
+  where `max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))`.
 
-  Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
+  `Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta`
 
 #### Version
 
@@ -16610,7 +16597,7 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="MeanVarianceNormalization-13"></a>**MeanVarianceNormalization-13**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+        on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
 
 #### Version
 
@@ -16678,16 +16665,16 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Mod-13"></a>**Mod-13**</a>
 
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
-      The sign of the remainder is the same as that of the Divisor.
+    The sign of the remainder is the same as that of the Divisor.
 
-      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-      (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-      This attribute is set to 0 by default causing the behavior to be like integer mod.
-      Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
+    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+    This attribute is set to 0 by default causing the behavior to be like integer mod.
+    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
 
-      If the input type is floating point, then `fmod` attribute must be set to 1.
+    If the input type is floating point, then `fmod` attribute must be set to 1.
 
-      In case of dividend being zero, the results will be platform dependent.
+    In case of dividend being zero, the results will be platform dependent.
 
     This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
@@ -16798,85 +16785,100 @@ This version of the operator has been available since version 13 of the default 
   or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
   The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
 
-      loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+  ```
+  loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+  ```
 
   When an optional "weight" is provided, the sample loss is calculated as:
 
-      loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+  ```
+  loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+  ```
 
   loss is zero for the case when target-value equals ignore_index.
 
-      loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+  ```
+  loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+  ```
 
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
 
-      mean(loss), if "weight" is not provided,
+  ```
+  mean(loss), if "weight" is not provided,
+  ```
 
   or if weight is provided,
 
-      sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+  ```
+  sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+  ```
 
-  If "reduction" attribute is set to "sum", the output is a scalar:
-      sum(loss).
+  If "reduction" attribute is set to "sum", the output is a scalar: `sum(loss)`.
 
   See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
 
   Example 1:
 
-      // negative log likelihood loss, "none" reduction
-      N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-      target = [[2, 1], [0, 2]]
+  ```
+  // negative log likelihood loss, "none" reduction
+  N, C, d1 = 2, 3, 2
+  input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+  target = [[2, 1], [0, 2]]
 
-      loss = np.zeros((N, d1))
-      for n in range(N):
-          for d_1 in range(d1):
-              c = target[n][d_1]
-              loss[n][d_1] = -input[n][c][d_1]
+  loss = np.zeros((N, d1))
+  for n in range(N):
+      for d_1 in range(d1):
+          c = target[n][d_1]
+          loss[n][d_1] = -input[n][c][d_1]
 
-      // print(loss)
-      // [[-3. -2.]
-      //  [-0. -2.]]
+  // print(loss)
+  // [[-3. -2.]
+  //  [-0. -2.]]
+  ```
 
   Example 2:
 
-      // weighted negative log likelihood loss, sum reduction
-      N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-              [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-      target = [[2, 1], [0, 2]]
-      weight = [0.2, 0.3, 0.1]
-      loss = np.zeros((N, d1))
-      for n in range(N):
-          for d_1 in range(d1):
-              c = target[n][d_1]
-              loss[n][d_1] = -input[n][c][d_1] * weight[c]
+  ```
+  // weighted negative log likelihood loss, sum reduction
+  N, C, d1 = 2, 3, 2
+  input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+          [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+  target = [[2, 1], [0, 2]]
+  weight = [0.2, 0.3, 0.1]
+  loss = np.zeros((N, d1))
+  for n in range(N):
+      for d_1 in range(d1):
+          c = target[n][d_1]
+          loss[n][d_1] = -input[n][c][d_1] * weight[c]
 
-      loss = np.sum(loss)
-      // print(loss)
-      // -1.1
+  loss = np.sum(loss)
+  // print(loss)
+  // -1.1
+  ```
 
   Example 3:
 
-      // weighted negative log likelihood loss, mean reduction
-      N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-              [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-      target = [[2, 1], [0, 2]]
-      weight = [0.2, 0.3, 0.1]
-      loss = np.zeros((N, d1))
-      weight_total = 0
-      for n in range(N):
-          for d_1 in range(d1):
-              c = target[n][d_1]
-              loss[n][d_1] = -input[n][c][d_1] * weight[c]
-              weight_total = weight_total + weight[c]
+  ```
+  // weighted negative log likelihood loss, mean reduction
+  N, C, d1 = 2, 3, 2
+  input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+          [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+  target = [[2, 1], [0, 2]]
+  weight = [0.2, 0.3, 0.1]
+  loss = np.zeros((N, d1))
+  weight_total = 0
+  for n in range(N):
+      for d_1 in range(d1):
+          c = target[n][d_1]
+          loss[n][d_1] = -input[n][c][d_1] * weight[c]
+          weight_total = weight_total + weight[c]
 
-      loss = np.sum(loss) / weight_total
-      // print(loss)
-      // -1.57
+  loss = np.sum(loss) / weight_total
+  // print(loss)
+  // -1.57
+  ```
 
 #### Version
 
@@ -18854,73 +18856,47 @@ This version of the operator has been available since version 14 of the default 
 
   Notations:
 
-  `X` - input tensor
-
-  `z` - update gate
-
-  `r` - reset gate
-
-  `h` - hidden gate
-
-  `t` - time step (t-1 means previous time step)
-
-  `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-
-  `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-
-  `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-
-  `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-
-  `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-
-  `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-
-  `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-
-  `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-
-  `H` - Hidden state
-
-  `num_directions` - 2 if direction == bidirectional else 1
+  * `X` - input tensor
+  * `z` - update gate
+  * `r` - reset gate
+  * `h` - hidden gate
+  * `t` - time step (t-1 means previous time step)
+  * `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
+  * `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
+  * `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
+  * `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
+  * `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
+  * `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
+  * `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
+  * `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
+  * `H` - Hidden state
+  * `num_directions` - 2 if direction == bidirectional else 1
 
   Activation functions:
 
-    Relu(x)                - max(0, x)
+  * Relu(x)                - max(0, x)
+  * Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  * Sigmoid(x)             - 1/(1 + e^{-x})
 
-    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  NOTE:
+    Below are optional
 
-    Sigmoid(x)             - 1/(1 + e^{-x})
-
-    (NOTE: Below are optional)
-
-    Affine(x)              - alpha*x + beta
-
-    LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-    ThresholdedRelu(x)     - x if x >= alpha else 0
-
-    ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-    Softsign(x)            - x/(1 + |x|)
-
-    Softplus(x)            - log(1 + e^x)
+  * Affine(x)              - alpha * x + beta
+  * LeakyRelu(x)           - x if x >= 0 else alpha * x
+  * ThresholdedRelu(x)     - x if x >= alpha else 0
+  * ScaledTanh(x)          - alpha * Tanh(beta * x)
+  * HardSigmoid(x)         - min(max(alpha * x + beta, 0), 1)
+  * Elu(x)                 - x if x >= 0 else alpha * (e^x - 1)
+  * Softsign(x)            - x/(1 + |x|)
+  * Softplus(x)            - log(1 + e^x)
 
   Equations (Default: f=Sigmoid, g=Tanh):
 
-    - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
-
-    - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
-
-    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
-
-    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
-
-    - Ht = (1 - zt) (.) ht + zt (.) Ht-1
+  * zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
+  * rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
+  * ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
+  * ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
+  * Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -19050,81 +19026,50 @@ This version of the operator has been available since version 14 of the default 
 
   Notations:
 
-  `X` - input tensor
-
-  `i` - input gate
-
-  `o` - output gate
-
-  `f` - forget gate
-
-  `c` - cell gate
-
-  `t` - time step (t-1 means previous time step)
-
-  `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
-
-  `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
-
-  `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
-
-  `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-
-  `P[iof]`  - P peephole weight vector for input, output, and forget gates
-
-  `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
-
-  `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
-
-  `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
-
-  `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-
-  `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-
-  `H` - Hidden state
-
-  `num_directions` - 2 if direction == bidirectional else 1
+  * `X` - input tensor
+  * `i` - input gate
+  * `o` - output gate
+  * `f` - forget gate
+  * `c` - cell gate
+  * `t` - time step (t-1 means previous time step)
+  * `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
+  * `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
+  * `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
+  * `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
+  * `P[iof]`  - P peephole weight vector for input, output, and forget gates
+  * `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
+  * `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
+  * `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
+  * `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
+  * `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
+  * `H` - Hidden state
+  * `num_directions` - 2 if direction == bidirectional else 1
 
   Activation functions:
 
-    Relu(x)                - max(0, x)
+  * Relu(x)                - max(0, x)
+  * Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  * Sigmoid(x)             - 1/(1 + e^{-x})
 
-    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  NOTE: Below are optional
 
-    Sigmoid(x)             - 1/(1 + e^{-x})
-
-    (NOTE: Below are optional)
-
-    Affine(x)              - alpha*x + beta
-
-    LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-    ThresholdedRelu(x)     - x if x >= alpha else 0
-
-    ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-    Softsign(x)            - x/(1 + |x|)
-
-    Softplus(x)            - log(1 + e^x)
+  * Affine(x)              - alpha*x + beta
+  * LeakyRelu(x)           - x if x >= 0 else alpha * x
+  * ThresholdedRelu(x)     - x if x >= alpha else 0
+  * ScaledTanh(x)          - alpha*Tanh(beta*x)
+  * HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
+  * Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  * Softsign(x)            - x/(1 + |x|)
+  * Softplus(x)            - log(1 + e^x)
 
   Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
-    - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
-
-    - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
-
-    - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
-
-    - Ct = ft (.) Ct-1 + it (.) ct
-
-    - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
-
-    - Ht = ot (.) h(Ct)
+  * it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
+  * ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
+  * ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
+  * Ct = ft (.) Ct-1 + it (.) ct
+  * ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
+  * Ht = ot (.) h(Ct)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -19527,8 +19472,8 @@ This version of the operator has been available since version 14 of the default 
   and the running statistics in training mode (training_mode=True).
   There are multiple cases for the number of outputs, which we list below:
 
-  Output case #1: Y, running_mean, running_var (training_mode=True)
-  Output case #2: Y (training_mode=False)
+  * Output case #1: Y, running_mean, running_var (training_mode=True)
+  * Output case #2: Y (training_mode=False)
 
   When training_mode=False, extra outputs are invalid.
   The outputs are updated as follows when training_mode=True:
@@ -19537,15 +19482,15 @@ This version of the operator has been available since version 14 of the default 
   running_var = input_var * momentum + current_var * (1 - momentum)
 
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-
+  ````
   where:
-
+  ```
   current_mean = ReduceMean(X, axis=all_except_channel_index)
   current_var =  ReduceVar(X, axis=all_except_channel_index)
-
-  Notice that ReduceVar refers to the population variance, and it equals to
-  sum(sqrd(x_i - x_avg)) / N
-  where N is the population size (this formula does not use sample size N - 1).
+  ```
+  Notice that `ReduceVar` refers to the population variance, and it equals to
+  `sum(sqrd(x_i - x_avg)) / N`
+  where `N` is the population size (this formula does not use sample size `N - 1`).
 
   ```
 
@@ -20066,9 +20011,6 @@ This version of the operator has been available since version 16 of the default 
   output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
   `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
 
-  **History**
-  - Version 16 adds bfloat16 to the types allowed.
-
 #### Version
 
 This version of the operator has been available since version 16 of the default ONNX operator set.
@@ -20153,32 +20095,32 @@ This version of the operator has been available since version 16 of the default 
   This table summarizes the operating modes of this operator with equivalent
   C-style code:
 
-      Operator inputs defined as (max_trip_count, condition_var).
+  Operator inputs defined as (max_trip_count, condition_var).
 
-      input ("", ""):
+  * input ("", ""):
           for (int i=0; ; ++i) {
             cond = ... // Note this value is ignored, but is required in the body
           }
 
-      input ("", cond) // Note this is analogous to a while loop
+  * input ("", cond) // Note this is analogous to a while loop
           bool cond = ...;
           for (int i=0; cond; ++i) {
             cond = ...;
           }
 
-      input ("", 1) // Note this is analogous to a do-while loop
+  * input ("", 1) // Note this is analogous to a do-while loop
           bool cond = true
           for (int i=0; cond; ++i) {
             cond = ...;
           }
 
-      input (trip_count, "") // Note this is analogous to a for loop
+  * input (trip_count, "") // Note this is analogous to a for loop
           int trip_count = ...
           for (int i=0; i < trip_count; ++i) {
             cond = ...; // ignored
           }
 
-      input (trip_count, cond)
+  * input (trip_count, cond)
           int trip_count = ...;
           bool cond = ...;
           for (int i=0; i < trip_count && cond; ++i) {
@@ -20320,9 +20262,6 @@ This version of the operator has been available since version 16 of the default 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-
-  **History**
-  - Version 16 adds bfloat16 to the types allowed.
   This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -20796,9 +20735,6 @@ This version of the operator has been available since version 16 of the default 
   with three parameters.
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-
-  **History**
-  - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
 
 #### Version
 
@@ -21423,10 +21359,10 @@ This version of the operator has been available since version 18 of the default 
   but it only supports *batched* multi-dimensional image tensors.
   Another implementation in Python with N-dimension support can be found at https://github.com/f-dangel/unfoldNd/.
 
-  NOTE: Although specifying image_shape looks redundant because it could be calculated from
-        convolution formulas, it is required as input for more advanced scenarios as explained
-        at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
-
+  NOTE:
+    Although specifying image_shape looks redundant because it could be calculated from
+    convolution formulas, it is required as input for more advanced scenarios as explained
+    at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
 
 #### Version
 
@@ -21538,11 +21474,7 @@ This version of the operator has been available since version 18 of the default 
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled
-
-   ```
-   * pad_shape[i] is sum of pads along axis i
-   ```
+   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
