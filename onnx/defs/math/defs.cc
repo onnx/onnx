@@ -103,16 +103,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Mod_doc = R"DOC(
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
-    The sign of the remainder is the same as that of the Divisor.
+  The sign of the remainder is the same as that of the Divisor.
 
-    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-    This attribute is set to 0 by default causing the behavior to be like integer mod.
-    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
+  (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+  This attribute is set to 0 by default causing the behavior to be like integer mod.
+  Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
 
-    If the input type is floating point, then `fmod` attribute must be set to 1.
+  If the input type is floating point, then `fmod` attribute must be set to 1.
 
-    In case of dividend being zero, the results will be platform dependent.
+  In case of dividend being zero, the results will be platform dependent.
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 )DOC";
@@ -312,9 +312,6 @@ static const char* LeakyRelu_ver16_doc = R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
 output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
-
-**History**
-- Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -698,9 +695,6 @@ static const char* PRelu_ver16_doc = R"DOC(
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-
-**History**
-- Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1155,9 +1149,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Gemm_ver13_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
-A' = transpose(A) if transA else A
-
-B' = transpose(B) if transB else B
+* A' = transpose(A) if transA else A
+* B' = transpose(B) if transB else B
 
 Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
 input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
@@ -2204,85 +2197,100 @@ The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It e
 or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
 The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
 
-    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+```
+loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+```
 
 When an optional "weight" is provided, the sample loss is calculated as:
 
-    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+```
+loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+```
 
 loss is zero for the case when target-value equals ignore_index.
 
-    loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+```
+loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+```
 
 If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
 If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
 
-    mean(loss), if "weight" is not provided,
+```
+mean(loss), if "weight" is not provided,
+```
 
 or if weight is provided,
 
-    sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+```
+sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+```
 
-If "reduction" attribute is set to "sum", the output is a scalar:
-    sum(loss).
+If "reduction" attribute is set to "sum", the output is a scalar: `sum(loss)`.
 
 See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
 
 Example 1:
 
-    // negative log likelihood loss, "none" reduction
-    N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-             [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-    target = [[2, 1], [0, 2]]
+```
+// negative log likelihood loss, "none" reduction
+N, C, d1 = 2, 3, 2
+input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+          [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+target = [[2, 1], [0, 2]]
 
-    loss = np.zeros((N, d1))
-    for n in range(N):
-        for d_1 in range(d1):
-            c = target[n][d_1]
-            loss[n][d_1] = -input[n][c][d_1]
+loss = np.zeros((N, d1))
+for n in range(N):
+    for d_1 in range(d1):
+        c = target[n][d_1]
+        loss[n][d_1] = -input[n][c][d_1]
 
-    // print(loss)
-    // [[-3. -2.]
-    //  [-0. -2.]]
+// print(loss)
+// [[-3. -2.]
+//  [-0. -2.]]
+```
 
 Example 2:
 
-    // weighted negative log likelihood loss, sum reduction
-    N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-    target = [[2, 1], [0, 2]]
-    weight = [0.2, 0.3, 0.1]
-    loss = np.zeros((N, d1))
-    for n in range(N):
-        for d_1 in range(d1):
-            c = target[n][d_1]
-            loss[n][d_1] = -input[n][c][d_1] * weight[c]
+```
+// weighted negative log likelihood loss, sum reduction
+N, C, d1 = 2, 3, 2
+input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+        [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+target = [[2, 1], [0, 2]]
+weight = [0.2, 0.3, 0.1]
+loss = np.zeros((N, d1))
+for n in range(N):
+    for d_1 in range(d1):
+        c = target[n][d_1]
+        loss[n][d_1] = -input[n][c][d_1] * weight[c]
 
-    loss = np.sum(loss)
-    // print(loss)
-    // -1.1
+loss = np.sum(loss)
+// print(loss)
+// -1.1
+```
 
 Example 3:
 
-    // weighted negative log likelihood loss, mean reduction
-    N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-    target = [[2, 1], [0, 2]]
-    weight = [0.2, 0.3, 0.1]
-    loss = np.zeros((N, d1))
-    weight_total = 0
-    for n in range(N):
-        for d_1 in range(d1):
-            c = target[n][d_1]
-            loss[n][d_1] = -input[n][c][d_1] * weight[c]
-            weight_total = weight_total + weight[c]
+```
+// weighted negative log likelihood loss, mean reduction
+N, C, d1 = 2, 3, 2
+input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+        [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+target = [[2, 1], [0, 2]]
+weight = [0.2, 0.3, 0.1]
+loss = np.zeros((N, d1))
+weight_total = 0
+for n in range(N):
+    for d_1 in range(d1):
+        c = target[n][d_1]
+        loss[n][d_1] = -input[n][c][d_1] * weight[c]
+        weight_total = weight_total + weight[c]
 
-    loss = np.sum(loss) / weight_total
-    // print(loss)
-    // -1.57
+loss = np.sum(loss) / weight_total
+// print(loss)
+// -1.57
+```
 )DOC";
 
 bool BuildContextDependentFunctionBody(
@@ -2602,9 +2610,11 @@ void einsumRankInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equa
 }
 
 static const char* Einsum_ver12_doc = R"DOC(
-An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
+An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
-```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
+```
+output[output-term] = reduce-sum( input1[term1] * input2[term] )
+```
 
 where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
 that do not occur in the output-term.

@@ -43,7 +43,7 @@ In more detail, the conversion among numerical types should follow these rules:
 * Casting from fixed point to:
   * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
   * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
-signed types). For example, 200 (int16) -> -56 (int8).
+    signed types). For example, 200 (int16) -> -56 (int8).
   * bool: zero to False; nonzero to True.
 * Casting from bool to:
   * floating point: `{1.0, 0.0}`.
@@ -1500,56 +1500,49 @@ Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
 
-axis = 0 :
-
-Let
-k = indices[i_{0}, ..., i_{q-1}]
-Then
-output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
+If `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
+then `output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]`:
 
 ```
-  data = [
-      [1.0, 1.2],
-      [2.3, 3.4],
-      [4.5, 5.7],
-  ]
-  indices = [
-      [0, 1],
-      [1, 2],
-  ]
-  output = [
-      [
-          [1.0, 1.2],
-          [2.3, 3.4],
-      ],
-      [
-          [2.3, 3.4],
-          [4.5, 5.7],
-      ],
-  ]
+data = [
+    [1.0, 1.2],
+    [2.3, 3.4],
+    [4.5, 5.7],
+]
+indices = [
+    [0, 1],
+    [1, 2],
+]
+output = [
+    [
+        [1.0, 1.2],
+        [2.3, 3.4],
+    ],
+    [
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ],
+]
 ```
-axis = 1 :
 
-Let
-k = indices[i_{0}, ..., i_{q-1}]
-Then
-output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
+If `axis = 1`, let `k = indices[i_{0}, ..., i_{q-1}]`
+then `output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]`:
 
 ```
-  data = [
-      [1.0, 1.2, 1.9],
-      [2.3, 3.4, 3.9],
-      [4.5, 5.7, 5.9],
-  ]
-  indices = [
-      [0, 2],
-  ]
-  axis = 1,
-  output = [
-          [[1.0, 1.9]],
-          [[2.3, 3.9]],
-          [[4.5, 5.9]],
-  ]
+data = [
+    [1.0, 1.2, 1.9],
+    [2.3, 3.4, 3.9],
+    [4.5, 5.7, 5.9],
+]
+indices = [
+    [0, 2],
+]
+axis = 1,
+output = [
+        [[1.0, 1.9]],
+        [[2.3, 3.9]],
+        [[4.5, 5.9]],
+]
 ```
 )DOC";
 
@@ -1627,45 +1620,45 @@ Its output shape is the same as the shape of `indices` and consists of one value
 For instance, in the 3-D case (r = 3), the output produced is determined
 by the following equations:
 ```
-  out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
-  out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
-  out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
+out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
+out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
+out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
 ```
 
 This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
 
 Example 1:
 ```
-  data = [
-      [1, 2],
-      [3, 4],
-  ]
-  indices = [
-      [0, 0],
-      [1, 0],
-  ]
-  axis = 1
-  output = [
-      [1, 1],
-      [4, 3],
-  ]
+data = [
+    [1, 2],
+    [3, 4],
+]
+indices = [
+    [0, 0],
+    [1, 0],
+]
+axis = 1
+output = [
+    [1, 1],
+    [4, 3],
+]
 ```
 Example 2:
 ```
-  data = [
-      [1, 2, 3],
-      [4, 5, 6],
-      [7, 8, 9],
-  ]
-  indices = [
-      [1, 2, 0],
-      [2, 0, 0],
-  ]
-  axis = 0
-  output = [
-      [4, 8, 3],
-      [7, 2, 3],
-  ]
+data = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+]
+indices = [
+    [1, 2, 0],
+    [2, 0, 0],
+]
+axis = 0
+output = [
+    [4, 8, 3],
+    [7, 2, 3],
+]
 ```
 )DOC";
 
@@ -1987,26 +1980,22 @@ and width dimensions. By default, `mode` = `DCR`.
 In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
 following order: depth, column, and then row. The output y is computed from the input x as below:
 
+```
 b, c, h, w = x.shape
-
 tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-
 tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-
 y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-
+```
 
 In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
 following order: column, row, and the depth. The output y is computed from the input x as below:
 
+```
 b, c, h, w = x.shape
-
 tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-
 tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-
 y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2745,19 +2734,12 @@ with three parameters.
 
 )DOC";
 
-static const char* Where_ver16_history = R"DOC(
-
-**History**
-- Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
     16,
     OpSchema()
         .SetDoc(
-            GET_OP_DOC_STR(std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()) +
-            std::string(Where_ver16_history))
+            GET_OP_DOC_STR(std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()))
         .Input(
             0,
             "condition",
