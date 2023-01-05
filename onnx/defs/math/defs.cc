@@ -1332,18 +1332,19 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* TopK_ver11_doc = R"DOC(
 Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
 shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
-  -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
-    which contains the values of the top k elements along the specified axis
-  -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
-   contains the indices of the top k elements (original indices from the input
-   tensor).
 
-If "largest" is 1 (the default value) then the k largest elements are returned.
-If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
-If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+* Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+  which contains the values of the top k elements along the specified axis
+* Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+  contains the indices of the top k elements (original indices from the input
+  tensor).
+
+* If "largest" is 1 (the default value) then the k largest elements are returned.
+* If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+* If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
 
 Given two equivalent values, this operator uses the indices along the axis as
- a tiebreaker. That is, the element with the lower index will appear first.
+a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2675,29 +2676,38 @@ If the input is N-D tensor with shape (N, C, D1, D2, ..., Dk),
 the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
 After L is available, this operator can optionally do a reduction operator.
 
-shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
-        with K >= 1 in case of K-dimensional loss.
-shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
-        with K >= 1 in case of K-dimensional loss.
+* shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
+  with K >= 1 in case of K-dimensional loss.
+* shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
+  with K >= 1 in case of K-dimensional loss.
 
 The loss for one sample, l_i, can caculated as follows:
-    l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+```
+l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+```
 or
-    l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+```
+l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+```
 
 loss is zero for the case when label-value equals ignore_index.
-    l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
+```
+l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
+```
 
 where:
-    p = Softmax(scores)
-    y = Log(p)
-    c = labels[i][d1][d2]...[dk]
+```
+p = Softmax(scores)
+y = Log(p)
+c = labels[i][d1][d2]...[dk]
+```
 
 Finally, L is optionally reduced:
-If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
-If reduction = 'sum', the output is scalar: Sum(L).
-If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: ReduceSum(L) / ReduceSum(W),
-where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
+
+* If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
+* If reduction = 'sum', the output is scalar: Sum(L).
+* If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: `ReduceSum(L) / ReduceSum(W)`,
+  where tensor W is of shape `(N, D1, D2, ..., Dk)` and `W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]]`.
 )DOC";
 
 bool BuildContextDependentFunctionBodySCE(

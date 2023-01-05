@@ -182,61 +182,40 @@ via some custom implementation such as CuDNN.
 
 Notations:
 
-`X` - input tensor
-
-`i` - input gate
-
-`t` - time step (t-1 means previous time step)
-
-`Wi` - W parameter weight matrix for input gate
-
-`Ri` - R recurrence weight matrix for input gate
-
-`Wbi` - W parameter bias vector for input gate
-
-`Rbi` - R parameter bias vector for input gate
-
-`WBi` - W parameter weight matrix for backward input gate
-
-`RBi` - R recurrence weight matrix for backward input gate
-
-`WBbi` - WR bias vectors for backward input gate
-
-`RBbi` - RR bias vectors for backward input gate
-
-`H` - Hidden state
-
-`num_directions` - 2 if direction == bidirectional else 1
+* `X` - input tensor
+* `i` - input gate
+* `t` - time step (t-1 means previous time step)
+* `Wi` - W parameter weight matrix for input gate
+* `Ri` - R recurrence weight matrix for input gate
+* `Wbi` - W parameter bias vector for input gate
+* `Rbi` - R parameter bias vector for input gate
+* `WBi` - W parameter weight matrix for backward input gate
+* `RBi` - R recurrence weight matrix for backward input gate
+* `WBbi` - WR bias vectors for backward input gate
+* `RBbi` - RR bias vectors for backward input gate
+* `H` - Hidden state
+* `num_directions` - 2 if direction == bidirectional else 1
 
 Activation functions:
 
-  Relu(x)                - max(0, x)
+* Relu(x)                - max(0, x)
+* Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+* Sigmoid(x)             - 1/(1 + e^{-x})
 
-  Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+NOTE: Below are optional
 
-  Sigmoid(x)             - 1/(1 + e^{-x})
-
-  (NOTE: Below are optional)
-
-  Affine(x)              - alpha*x + beta
-
-  LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-  ThresholdedRelu(x)     - x if x >= alpha else 0
-
-  ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-  HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-  Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-  Softsign(x)            - x/(1 + |x|)
-
-  Softplus(x)            - log(1 + e^x)
+* Affine(x)              - alpha*x + beta
+* LeakyRelu(x)           - x if x >= 0 else alpha * x
+* ThresholdedRelu(x)     - x if x >= alpha else 0
+* ScaledTanh(x)          - alpha*Tanh(beta*x)
+* HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
+* Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+* Softsign(x)            - x/(1 + |x|)
+* Softplus(x)            - log(1 + e^x)
 
 Equations (Default: f=Tanh):
 
-  - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
+* Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

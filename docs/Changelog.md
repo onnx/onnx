@@ -12169,28 +12169,33 @@ This version of the operator has been available since version 11 of the default 
   Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
   up to `limit` (exclusive).
 
-  The number of elements in the output of range is computed as below-
+  The number of elements in the output of range is computed as below:
 
-  `number_of_elements = max( ceil( (limit - start) / delta ) , 0 )`
+  ```
+  number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
+  ```
 
-  The pseudocode determining the contents of the output is shown below-
+  The pseudocode determining the contents of the output is shown below:
 
-  `for(int i=0; i<number_of_elements; ++i)`
+  ```
+  for(int i=0; i<number_of_elements; ++i) {
+    output[i] =  start + (i * delta);
+  }
+  ```
 
-  `{`
+  Example 1
 
-  `    output[i] =  start + (i * delta);  `
-
-  `}`
-
-  `Example 1`
+  ```
   Inputs: start = 3, limit = 9, delta = 3
   Output: [3, 6]
+  ```
 
-  `Example 2`
+  Example 2
+
+  ```
   Inputs: start = 10, limit = 4, delta = -2
   Output: [10, 8, 6]
-
+  ```
 
 #### Version
 
@@ -13645,18 +13650,19 @@ This version of the operator has been available since version 11 of the default 
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
   shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
-    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
-      which contains the values of the top k elements along the specified axis
-    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
-     contains the indices of the top k elements (original indices from the input
-     tensor).
 
-  If "largest" is 1 (the default value) then the k largest elements are returned.
-  If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
-  If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+  * Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+    which contains the values of the top k elements along the specified axis
+  * Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+    contains the indices of the top k elements (original indices from the input
+    tensor).
+
+  * If "largest" is 1 (the default value) then the k largest elements are returned.
+  * If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+  * If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
 
   Given two equivalent values, this operator uses the indices along the axis as
-   a tiebreaker. That is, the element with the lower index will appear first.
+  a tiebreaker. That is, the element with the lower index will appear first.
 
 #### Version
 
@@ -13716,67 +13722,89 @@ This version of the operator has been available since version 11 of the default 
   https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
 
   Example 1:
-    input_X = [2, 1, 1, 3, 4, 3]
-    attribute_sorted = 0
-    attribute_axis = None
-    output_Y = [2, 1, 3, 4]
-    output_indices = [0, 1, 3, 4]
-    output_inverse_indices = [0, 1, 1, 2, 3, 2]
-    output_counts = [1, 2, 2, 1]
+  ```
+  input_X = [2, 1, 1, 3, 4, 3]
+  attribute_sorted = 0
+  attribute_axis = None
+  output_Y = [2, 1, 3, 4]
+  output_indices = [0, 1, 3, 4]
+  output_inverse_indices = [0, 1, 1, 2, 3, 2]
+  output_counts = [1, 2, 2, 1]
+  ```
 
   Example 2:
-    input_X = [[1, 3], [2, 3]]
-    attribute_sorted = 1
-    attribute_axis = None
-    output_Y = [1, 2, 3]
-    output_indices = [0, 2, 1]
-    output_inverse_indices = [0, 2, 1, 2]
-    output_counts = [1, 1, 2]
+  ```
+  input_X = [[1, 3], [2, 3]]
+  attribute_sorted = 1
+  attribute_axis = None
+  output_Y = [1, 2, 3]
+  output_indices = [0, 2, 1]
+  output_inverse_indices = [0, 2, 1, 2]
+  output_counts = [1, 1, 2]
+  ```
 
   Example 3:
-    input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
-    attribute_sorted = 1
-    attribute_axis = 0
-    output_Y = [[1, 0, 0], [2, 3, 4]]
-    output_indices = [0, 2]
-    output_inverse_indices = [0, 0, 1]
-    output_counts = [2, 1]
+  ```
+  input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
+  attribute_sorted = 1
+  attribute_axis = 0
+  output_Y = [[1, 0, 0], [2, 3, 4]]
+  output_indices = [0, 2]
+  output_inverse_indices = [0, 0, 1]
+  output_counts = [2, 1]
+  ```
 
   Example 4:
-    input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
-               [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
-    attribute_sorted = 1
-    attribute_axis = 1
+  ```
+  input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+              [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+  attribute_sorted = 1
+  attribute_axis = 1
+  ```
 
-    intermediate data are presented below for better understanding:
+  intermediate data are presented below for better understanding:
+  there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+  ```
+  A: [[1, 1], [1, 1]],
+     [[0, 1], [0, 1]],
+     [[2, 1], [2, 1]],
+     [[0, 1], [0, 1]].
+  ```
 
-    there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
-    A: [[1, 1], [1, 1]],
-       [[0, 1], [0, 1]],
-       [[2, 1], [2, 1]],
-       [[0, 1], [0, 1]].
+  there are 3 unique subtensors:
+  ```
+  [[1, 1], [1, 1]],
+  [[0, 1], [0, 1]],
+  [[2, 1], [2, 1]].
+  ```
 
-    there are 3 unique subtensors:
-    [[1, 1], [1, 1]],
-    [[0, 1], [0, 1]],
-    [[2, 1], [2, 1]].
+  sorted unique subtensors:
+  ```
+  B: [[0, 1], [0, 1]],
+     [[1, 1], [1, 1]],
+     [[2, 1], [2, 1]].
+  ```
 
-    sorted unique subtensors:
-    B: [[0, 1], [0, 1]],
-       [[1, 1], [1, 1]],
-       [[2, 1], [2, 1]].
+  output_Y is constructed from B:
+  ```
+  [[[0. 1.], [1. 1.], [2. 1.]],
+   [[0. 1.], [1. 1.], [2. 1.]]]
+  ```
 
-    output_Y is constructed from B:
-    [[[0. 1.], [1. 1.], [2. 1.]],
-     [[0. 1.], [1. 1.], [2. 1.]]]
+  output_indices is to map from B to A:
+  ```
+  [1, 0, 2]
+  ```
 
-    output_indices is to map from B to A:
-    [1, 0, 2]
+  output_inverse_indices is to map from A to B:
+  ```
+  [1, 0, 2, 0]
+  ```
 
-    output_inverse_indices is to map from A to B:
-    [1, 0, 2, 0]
-
-    output_counts = [2 1 1]
+  output_counts:
+  ```
+  [2, 1, 1]
+  ```
 
 #### Version
 
@@ -18095,27 +18123,34 @@ This version of the operator has been available since version 13 of the default 
   in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
 
   Example 1:
-    data = [
-        [1, 2, 3, 4],
-        [5, 6, 7, 8],
-    ]
-    axes = [0, 1]
-    starts = [1, 0]
-    ends = [2, 3]
-    steps = [1, 2]
-    result = [
-        [5, 7],
-    ]
+
+  ```
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  axes = [0, 1]
+  starts = [1, 0]
+  ends = [2, 3]
+  steps = [1, 2]
+  result = [
+      [5, 7],
+  ]
+  ```
+
   Example 2:
-    data = [
-        [1, 2, 3, 4],
-        [5, 6, 7, 8],
-    ]
-    starts = [0, 1]
-    ends = [-1, 1000]
-    result = [
-        [2, 3, 4],
-    ]
+
+  ```
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  starts = [0, 1]
+  ends = [-1, 1000]
+  result = [
+      [2, 3, 4],
+  ]
+  ```
 
 #### Version
 
@@ -18208,29 +18243,38 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
   the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
   After L is available, this operator can optionally do a reduction operator.
 
-  shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
-          with K >= 1 in case of K-dimensional loss.
-  shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
-          with K >= 1 in case of K-dimensional loss.
+  * shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
+    with K >= 1 in case of K-dimensional loss.
+  * shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
+    with K >= 1 in case of K-dimensional loss.
 
   The loss for one sample, l_i, can caculated as follows:
-      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+  ```
+  l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+  ```
   or
-      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+  ```
+  l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+  ```
 
   loss is zero for the case when label-value equals ignore_index.
-      l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
+  ```
+  l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
+  ```
 
   where:
-      p = Softmax(scores)
-      y = Log(p)
-      c = labels[i][d1][d2]...[dk]
+  ```
+  p = Softmax(scores)
+  y = Log(p)
+  c = labels[i][d1][d2]...[dk]
+  ```
 
   Finally, L is optionally reduced:
-  If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
-  If reduction = 'sum', the output is scalar: Sum(L).
-  If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: ReduceSum(L) / ReduceSum(W),
-  where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
+
+  * If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
+  * If reduction = 'sum', the output is scalar: Sum(L).
+  * If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: `ReduceSum(L) / ReduceSum(W)`,
+    where tensor W is of shape `(N, D1, D2, ..., Dk)` and `W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]]`.
 
 #### Version
 
@@ -18588,15 +18632,13 @@ This version of the operator has been available since version 13 of the default 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
 
-  For example:
-    Given an input tensor (`data`) of shape [3, 4, 5], then
-    Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+  For example, given an input tensor (`data`) of shape [3, 4, 5], then
+  Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
 
   The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
   Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
   The order of values in `axes` does not matter and can come in any order.
-
 
 #### Version
 
@@ -19180,61 +19222,40 @@ This version of the operator has been available since version 14 of the default 
 
   Notations:
 
-  `X` - input tensor
-
-  `i` - input gate
-
-  `t` - time step (t-1 means previous time step)
-
-  `Wi` - W parameter weight matrix for input gate
-
-  `Ri` - R recurrence weight matrix for input gate
-
-  `Wbi` - W parameter bias vector for input gate
-
-  `Rbi` - R parameter bias vector for input gate
-
-  `WBi` - W parameter weight matrix for backward input gate
-
-  `RBi` - R recurrence weight matrix for backward input gate
-
-  `WBbi` - WR bias vectors for backward input gate
-
-  `RBbi` - RR bias vectors for backward input gate
-
-  `H` - Hidden state
-
-  `num_directions` - 2 if direction == bidirectional else 1
+  * `X` - input tensor
+  * `i` - input gate
+  * `t` - time step (t-1 means previous time step)
+  * `Wi` - W parameter weight matrix for input gate
+  * `Ri` - R recurrence weight matrix for input gate
+  * `Wbi` - W parameter bias vector for input gate
+  * `Rbi` - R parameter bias vector for input gate
+  * `WBi` - W parameter weight matrix for backward input gate
+  * `RBi` - R recurrence weight matrix for backward input gate
+  * `WBbi` - WR bias vectors for backward input gate
+  * `RBbi` - RR bias vectors for backward input gate
+  * `H` - Hidden state
+  * `num_directions` - 2 if direction == bidirectional else 1
 
   Activation functions:
 
-    Relu(x)                - max(0, x)
+  * Relu(x)                - max(0, x)
+  * Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  * Sigmoid(x)             - 1/(1 + e^{-x})
 
-    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  NOTE: Below are optional
 
-    Sigmoid(x)             - 1/(1 + e^{-x})
-
-    (NOTE: Below are optional)
-
-    Affine(x)              - alpha*x + beta
-
-    LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-    ThresholdedRelu(x)     - x if x >= alpha else 0
-
-    ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-    Softsign(x)            - x/(1 + |x|)
-
-    Softplus(x)            - log(1 + e^x)
+  * Affine(x)              - alpha*x + beta
+  * LeakyRelu(x)           - x if x >= 0 else alpha * x
+  * ThresholdedRelu(x)     - x if x >= alpha else 0
+  * ScaledTanh(x)          - alpha*Tanh(beta*x)
+  * HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
+  * Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  * Softsign(x)            - x/(1 + |x|)
+  * Softplus(x)            - log(1 + e^x)
 
   Equations (Default: f=Tanh):
 
-    - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
+  * Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -19789,23 +19810,32 @@ This version of the operator has been available since version 15 of the default 
   value of r, and specifying any start value < -r is equivalent to specifying a start
   value of 0.
 
-  For example:
+  Examples:
+
+  ```
   Input tensor with shape: [2, 3, 4]
   No attributes specified.
   Output: [2, 3, 4]
+  ```
 
+  ```
   Input tensor with shape: [2, 3, 4]
   start: -1
   Output: [4]
+  ```
 
+  ```
   Input tensor with shape: [2, 3, 4]
   end: -1
   Output: [2, 3]
+  ```
 
+  ```
   Input tensor with shape: [2, 3, 4]
   start: 1
   end: 2
   Output: [3]
+  ```
 
 #### Version
 
@@ -21646,68 +21676,68 @@ This version of the operator has been available since version 18 of the default 
 
 
   Example 1 (`constant` mode):
-    Insert 0 pads to the beginning of the second dimension.
 
-    data =
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
+  Insert 0 pads to the beginning of the second dimension.
 
-    pads = [0, 2, 0, 0]
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
 
-    mode = 'constant'
+  pads = [0, 2, 0, 0]
 
-    constant_value = 0.0
+  mode = 'constant'
 
-    output =
-    [
-        [0.0, 0.0, 1.0, 1.2],
-        [0.0, 0.0, 2.3, 3.4],
-        [0.0, 0.0, 4.5, 5.7],
-    ]
+  constant_value = 0.0
 
+  output = [
+      [0.0, 0.0, 1.0, 1.2],
+      [0.0, 0.0, 2.3, 3.4],
+      [0.0, 0.0, 4.5, 5.7],
+  ]
+  ```
 
   Example 2 (`reflect` mode):
-    data =
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
 
-    pads = [0, 2, 0, 0]
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
 
-    mode = 'reflect'
+  pads = [0, 2, 0, 0]
 
-    output =
-    [
-        [1.0, 1.2, 1.0, 1.2],
-        [2.3, 3.4, 2.3, 3.4],
-        [4.5, 5.7, 4.5, 5.7],
-    ]
+  mode = 'reflect'
 
+  output = [
+      [1.0, 1.2, 1.0, 1.2],
+      [2.3, 3.4, 2.3, 3.4],
+      [4.5, 5.7, 4.5, 5.7],
+  ]
+  ```
 
   Example 3 (`edge` mode):
-    data =
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
 
-    pads = [0, 2, 0, 0]
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
 
-    mode = 'edge'
+  pads = [0, 2, 0, 0]
 
-    output =
-    [
-        [1.0, 1.0, 1.0, 1.2],
-        [2.3, 2.3, 2.3, 3.4],
-        [4.5, 4.5, 4.5, 5.7],
-    ]
+  mode = 'edge'
 
+  output = [
+      [1.0, 1.0, 1.0, 1.2],
+      [2.3, 2.3, 2.3, 3.4],
+      [4.5, 4.5, 4.5, 5.7],
+  ]
+  ```
 
 #### Version
 
@@ -22277,16 +22307,15 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
   then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
   corresponding to the [i][j] entry is performed as below:
   ```
-    output[indices[i][j]][j] = updates[i][j] if axis = 0,
-    output[i][indices[i][j]] = updates[i][j] if axis = 1,
+  output[indices[i][j]][j] = updates[i][j] if axis = 0,
+  output[i][indices[i][j]] = updates[i][j] if axis = 1,
   ```
   When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
   ```
-    output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-    output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
+  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
   ```
-  where the `f` is +/*/max/min as specified.
-
+  where the `f` is `+`, `*`, `max` or `min` as specified.
 
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
 
@@ -22294,32 +22323,32 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 
   Example 1:
   ```
-    data = [
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0],
-    ]
-    indices = [
-        [1, 0, 2],
-        [0, 2, 1],
-    ]
-    updates = [
-        [1.0, 1.1, 1.2],
-        [2.0, 2.1, 2.2],
-    ]
-    output = [
-        [2.0, 1.1, 0.0]
-        [1.0, 0.0, 2.2]
-        [0.0, 2.1, 1.2]
-    ]
+  data = [
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+  ]
+  indices = [
+      [1, 0, 2],
+      [0, 2, 1],
+  ]
+  updates = [
+      [1.0, 1.1, 1.2],
+      [2.0, 2.1, 2.2],
+  ]
+  output = [
+      [2.0, 1.1, 0.0]
+      [1.0, 0.0, 2.2]
+      [0.0, 2.1, 1.2]
+  ]
   ```
   Example 2:
   ```
-    data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
-    indices = [[1, 3]]
-    updates = [[1.1, 2.1]]
-    axis = 1
-    output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+  indices = [[1, 3]]
+  updates = [[1.1, 2.1]]
+  axis = 1
+  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
   ```
 
 #### Version
@@ -22371,7 +22400,7 @@ This version of the operator has been available since version 18 of the default 
   is the same as the shape of `data`.
 
   `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
-   `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
+  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
   update to a slice of the tensor. Index values are allowed to be negative, as per the usual
@@ -22387,10 +22416,12 @@ This version of the operator has been available since version 18 of the default 
 
   The `output` is calculated via the following equation:
 
-      output = np.copy(data)
-      update_indices = indices.shape[:-1]
-      for idx in np.ndindex(update_indices):
-          output[indices[idx]] = updates[idx]
+  ```
+  output = np.copy(data)
+  update_indices = indices.shape[:-1]
+  for idx in np.ndindex(update_indices):
+      output[indices[idx]] = updates[idx]
+  ```
 
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
@@ -22402,12 +22433,14 @@ This version of the operator has been available since version 18 of the default 
   then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
   When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
 
-      output = np.copy(data)
-      update_indices = indices.shape[:-1]
-      for idx in np.ndindex(update_indices):
-          output[indices[idx]] = f(output[indices[idx]], updates[idx])
+  ```
+  output = np.copy(data)
+  update_indices = indices.shape[:-1]
+  for idx in np.ndindex(update_indices):
+      output[indices[idx]] = f(output[indices[idx]], updates[idx])
+  ```
 
-  where the `f` is +/*/max/min as specified.
+  where the `f` is `+`, `*`, `max` or `min` as specified.
 
   This operator is the inverse of GatherND.
 
@@ -22415,25 +22448,25 @@ This version of the operator has been available since version 18 of the default 
 
   Example 1:
   ```
-    data    = [1, 2, 3, 4, 5, 6, 7, 8]
-    indices = [[4], [3], [1], [7]]
-    updates = [9, 10, 11, 12]
-    output  = [1, 11, 3, 10, 9, 6, 7, 12]
+  data    = [1, 2, 3, 4, 5, 6, 7, 8]
+  indices = [[4], [3], [1], [7]]
+  updates = [9, 10, 11, 12]
+  output  = [1, 11, 3, 10, 9, 6, 7, 12]
   ```
 
   Example 2:
   ```
-    data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-               [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
-               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
-    indices = [[0], [2]]
-    updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-               [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
-    output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-               [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-               [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
-               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  indices = [[0], [2]]
+  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
+  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
   ```
 
 #### Version
