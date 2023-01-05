@@ -283,7 +283,7 @@ def download_test_data(
     silent: bool = False,
 ) -> Optional[str]:
     """
-    Downloads a model along with test data by name from the onnx model hub
+    Downloads a model along with test data by name from the onnx model hub and return the directory to which the files have been extracted.
 
     :param model: The name of the onnx model in the manifest. This field is case-sensitive
     :param repo: The location of the model repo in format "user/repo[:branch]".
@@ -291,7 +291,7 @@ def download_test_data(
     :param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
     :param force_reload: Whether to force the model to re-download even if its already found in the cache
     :param silent: Whether to suppress the warning message if the repo is not trusted.
-    :return: ModelProto or None
+    :return: str or None
     """
     selected_model = get_model_info(model, repo, opset)
 
