@@ -1691,7 +1691,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
-y = bernoulli_reference_implementation(x, float)
+y = bernoulli_reference_implementation(x, np.float32)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli_seed")
 ```
 
@@ -1706,7 +1706,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
+x = np.random.uniform(0.0, 1.0, 10).astype(float)
 y = bernoulli_reference_implementation(x, float)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
 ```
