@@ -1991,7 +1991,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     def test_split_2(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
-        split = make_tensor_value_info("split", TensorProto.INT64, [None])
         Y1 = make_tensor_value_info("Y1", TensorProto.FLOAT, [None])
         Y2 = make_tensor_value_info("Y2", TensorProto.FLOAT, [None])
         Y3 = make_tensor_value_info("Y3", TensorProto.FLOAT, [None])
