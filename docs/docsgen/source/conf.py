@@ -77,7 +77,7 @@ html_theme_options = {
     "logo": {
         "text": project,
         "image_light": html_favicon,
-        "image_dark": onnx-horizontal-white.png,
+        "image_dark": "onnx-horizontal-white.png",
         "alt_text": project,
     },
 }
