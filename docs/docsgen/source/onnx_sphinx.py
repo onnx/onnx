@@ -481,13 +481,13 @@ def get_rst_doc(  # type: ignore
         ):
             if attr.type in _attribute_conversion_functions:
                 sval = _attribute_conversion_functions[attr.type](default_value)
-                return f"(default  is ``{sval}``)"
+                return f"(default is ``{sval!r}``)"
 
         if isinstance(default_value, list):
             sval = [format_default_value(val) for val in default_value]
         else:
             sval = format_default_value(default_value)
-        return f"(default  is ``{sval}``)"
+        return f"(default is ``{sval!r}``)"
 
     def text_wrap(text, indent):
         s = " " * indent
