@@ -31,6 +31,9 @@ to deploy a machine learning model in production. An ONNX interpreter
 in the environment where it is deployed. With ONNX, it is possible
 to build a unique process to deploy a model in production and independent
 from the learning framework used to build the model.
+*onnx* implements a python runtime (see :ref:`l-reference-implementation`)
+to help evaluating ONNX models
+useful to help debugging converting libraries.
 
 .. contents::
     :local:
