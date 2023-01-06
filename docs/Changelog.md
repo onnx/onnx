@@ -19503,7 +19503,7 @@ This version of the operator has been available since version 14 of the default 
   running_var = input_var * momentum + current_var * (1 - momentum)
 
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-  ````
+  ```
   where:
   ```
   current_mean = ReduceMean(X, axis=all_except_channel_index)

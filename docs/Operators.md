@@ -2087,7 +2087,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_3d_default")
   running_var = input_var * momentum + current_var * (1 - momentum)
 
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-  ````
+  ```
   where:
   ```
   current_mean = ReduceMean(X, axis=all_except_channel_index)
