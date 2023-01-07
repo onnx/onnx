@@ -95,6 +95,10 @@ class TestModelHub(unittest.TestCase):
             AssertionError, lambda: hub.get_model_info("mnist", self.repo, opset=-1)
         )
 
+    def test_download_model_with_test_data(self) -> None:
+        dir = hub.download_model_with_test_data('mnist')
+        self.assertIsInstance(dir, str)
+        
 
 if __name__ == "__main__":
     unittest.main()
