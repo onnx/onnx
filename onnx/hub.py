@@ -275,7 +275,7 @@ def load(
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
 
 
-def download_test_data(
+def download_model_with_test_data(
     model: str,
     repo: str = "onnx/models:main",
     opset: Optional[int] = None,
@@ -283,7 +283,7 @@ def download_test_data(
     silent: bool = False,
 ) -> Optional[str]:
     """
-    Downloads a model along with test data by name from the onnx model hub and return the directory to which the files have been extracted.
+    Downloads a model along with test data by name from the onnx model hub and returns the directory to which the files have been extracted.
 
     :param model: The name of the onnx model in the manifest. This field is case-sensitive
     :param repo: The location of the model repo in format "user/repo[:branch]".
