@@ -1,6 +1,6 @@
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
-<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/ONNX_logo_main.png" /></p>
+<p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/onnx-horizontal-color.png" /></p>
 
 
 [![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Windows-CI?branchName=main)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)
@@ -15,14 +15,16 @@ data types. Currently we focus on the capabilities needed for inferencing (scori
 ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in many frameworks, tools, and hardware. Enabling interoperability between different frameworks and streamlining the path from research to production helps increase the speed of innovation in the AI community. We invite the community to join us and further evolve ONNX.
 
 # Use ONNX
-* [Tutorials for creating ONNX models](https://github.com/onnx/tutorials).
+* [Documentation of ONNX Python Package](https://onnx.ai/onnx/)
+* [Tutorials for creating ONNX models](https://github.com/onnx/tutorials)
 * [Pre-trained ONNX models](https://github.com/onnx/models)
 
 # Learn about the ONNX spec
 * [Overview](docs/Overview.md)
 * [ONNX intermediate representation spec](docs/IR.md)
 * [Versioning principles of the spec](docs/Versioning.md)
-* [Operators documentation](docs/Operators.md)
+* [Operators documentation](docs/Operators.md) (development version)
+* [Operators documentation](https://onnx.ai/onnx/operators/index.html) (latest release)
 * [Python API Overview](docs/PythonAPIOverview.md)
 
 # Programming utilities for working with ONNX Graphs
@@ -45,10 +47,6 @@ We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [
 Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
 
 
-
-
-
-
 # Installation
 
 ## Official Python packages
@@ -59,6 +57,15 @@ pip install onnx
 
 [Weekly packages](https://test.pypi.org/project/onnx-weekly/) are published in test pypi to enable experimentation and early testing.
 
+## vcpkg packages
+onnx is in the maintenance list of [vcpkg](https://github.com/microsoft/vcpkg), you can easily use vcpkg to build and install it.
+```
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.bat # For powershell
+./bootstrap-vcpkg.sh # For bash
+./vcpkg install onnx
+```
 
 ## Conda packages
 A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
@@ -66,11 +73,11 @@ A binary build of ONNX is available from [Conda](https://conda.io), in [conda-fo
 conda install -c conda-forge onnx
 ```
 
-You can also use the [onnx-dev docker image](https://hub.docker.com/r/onnx/onnx-dev) for a Linux-based installation without having to worry about dependency versioning.
-
 
 ## Build ONNX from Source
 Before building from source uninstall any existing versions of onnx `pip uninstall onnx`.
+
+c++17 or higher C++ compiler version is required to build ONNX from source on Windows. For other platforms, please use C++11 or higher versions.
 
 Generally speaking, you need to install [protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) before proceeding forward. Then depending on how you installed protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF".  For example, you may need to run the following command:
 
@@ -87,7 +94,7 @@ The ON/OFF depends on what kind of protobuf library you have. Shared libraries a
 
 
 ### Windows
-If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.16.0.
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.20.2.
 
 The instructions in this README assume you are using Visual Studio.  It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
 
@@ -95,7 +102,7 @@ You can get protobuf by running the following commands:
 ```bat
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v3.16.0
+git checkout v3.20.2
 cd cmake
 cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=Release
@@ -126,72 +133,69 @@ pip install -e .
 
 ### Linux
 
-First, you need to install protobuf.
+First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.0.0. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
-Ubuntu users: the quickest way to install protobuf is to run
-
+Ubuntu 18.04 (and newer) users may choose to install protobuf via
 ```bash
 apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler
 ```
+In this case, it is required to add `-DONNX_USE_PROTOBUF_SHARED_LIBS=ON` to CMAKE_ARGS in the ONNX build step.
 
-Then you can build ONNX as:
-```
-export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-git clone --recursive https://github.com/onnx/onnx.git
-cd onnx
-# prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
-```
+A more general way is to build and install it from source. See the instructions below for more details.
 
-Otherwise, you may need to install it from source. You can use the following commands to do it:
+<details>
+  <summary> Installing Protobuf from source </summary>
 
-Debian/Ubuntu:
-```
-git clone https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git checkout v3.16.0
-git submodule update --init --recursive
-mkdir build_source && cd build_source
-cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-make install
-```
+  Debian/Ubuntu:
+  ```bash
+    git clone https://github.com/protocolbuffers/protobuf.git
+    cd protobuf
+    git checkout v3.20.2
+    git submodule update --init --recursive
+    mkdir build_source && cd build_source
+    cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
+    make install
+  ```
 
-CentOS/RHEL/Fedora:
-```
-git clone https://github.com/protocolbuffers/protobuf.git
-cd protobuf
-git checkout v3.16.0
-git submodule update --init --recursive
-mkdir build_source && cd build_source
-cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-make install
-```
+  CentOS/RHEL/Fedora:
+  ```bash
+    git clone https://github.com/protocolbuffers/protobuf.git
+    cd protobuf
+    git checkout v3.20.2
+    git submodule update --init --recursive
+    mkdir build_source && cd build_source
+    cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+    make -j$(nproc)
+    make install
+  ```
 
-Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
+  Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
 
-Once build is successful, update PATH to include protobuf paths.
+  Once build is successful, update PATH to include protobuf paths.
+
+</details>
+
 
 Then you can build ONNX as:
 ```
 git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
-# prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+# Optional: prefer lite proto
+export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
 
-* **Mac**
+### Mac
+
 ```
 export NUM_CORES=`sysctl -n hw.ncpu`
 brew update
 brew install autoconf && brew install automake
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.16.0/protobuf-cpp-3.16.0.tar.gz
-tar -xvf protobuf-cpp-3.16.0.tar.gz
-cd protobuf-3.16.0
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.2/protobuf-cpp-3.20.2.tar.gz
+tar -xvf protobuf-cpp-3.20.2.tar.gz
+cd protobuf-3.20.2
 mkdir build_source && cd build_source
 cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j${NUM_CORES}
@@ -204,7 +208,7 @@ Then you can build ONNX as:
 ```
 git clone --recursive https://github.com/onnx/onnx.git
 cd onnx
-# prefer lite proto
+# Optional: prefer lite proto
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e .
 ```
@@ -245,8 +249,6 @@ For full list refer to CMakeLists.txt
 
 ## Common Errors
 * Note: the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
-
-* Building ONNX on Ubuntu works well, but on CentOS/RHEL and other ManyLinux systems, you might need to open the [CMakeLists file][CMakeLists] and replace all instances of `/lib` with `/lib64`.
 
 * If you run into any issues while building Protobuf as a static library, please ensure that shared Protobuf libraries, like libprotobuf, are not installed on your device or in the conda environment. If these shared libraries exist, either remove them to build Protobuf from source as a static library, or skip the Protobuf build from source to use the shared version directly.
 

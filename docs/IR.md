@@ -327,8 +327,11 @@ ints|int64[]|A list of 64-bit integer values.
 strings|byte[][]|A list of UTF-8 strings.
 tensors|Tensor[]|A list of tensor values.
 graphs|Graph[]|A list of graphs.
+ref_attr_name|string|The name of a parent function's attribute.
 
 The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
+
+In case ‘ref_attr_name’ is set, this attribute does not contain data, and instead it's a reference to the parent function's attribute of the given name. Can only be used within the function body.
 
 
 #### Variadic Inputs and Outputs
@@ -391,7 +394,7 @@ It is common to represent a tensor as a nested list. This generally works fine, 
 |---|---|---|
 Floating Point Types|float16, float32, float64|Values adhering to the IEEE 754-2008 standard representation of floating-point data.
 Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for 8-64 bit widths.
-Unsigned Integer Types|uint8, uint16|Unsigned integers of 8 or 16 bits are supported.
+Unsigned Integer Types|uint8, uint16, uint32, uint64|Unsigned integers are supported for 8-64 bit widths.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
 Other|string|Strings represent textual data. All strings are encoded using UTF-8.
 Other|bool|Boolean values represent data with only two values, typically true and false.

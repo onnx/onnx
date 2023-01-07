@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # This file is for testing ONNX with ONNXRuntime during ONNX Release
 # Create a general scenario to use ONNXRuntime with ONNX
+# pylint: disable=C0415
+
 
 def example_test_with_ort() -> None:
+    import numpy
+    import numpy.random
+    import onnxruntime as rt
+    from onnxruntime.datasets import get_example
+
     import onnx
-    import numpy  # type: ignore
-    import onnxruntime as rt  # type: ignore
-    from onnxruntime.datasets import get_example  # type: ignore
-    import numpy.random  # type: ignore
 
     # get certain example model from ORT
     example1 = get_example("sigmoid.onnx")

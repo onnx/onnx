@@ -94,6 +94,10 @@ class LexicalScopeContext final {
   // instance with the default constructor and populate output_names with the
   // values from the parent scope so the values are copied instead.
   LexicalScopeContext(const LexicalScopeContext& parent_context) : parent_context_{&parent_context} {}
+  LexicalScopeContext& operator=(const LexicalScopeContext& parent_context) {
+    parent_context_ = &parent_context;
+    return *this;
+  }
 
   void add(const std::string& name) {
     output_names.insert(name);
@@ -142,10 +146,10 @@ void check_model_local_functions(
     const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex);
 
-void check_model(const ModelProto& model);
-void check_model(const std::string& model_path);
+void check_model(const ModelProto& model, bool full_check = false);
+void check_model(const std::string& model_path, bool full_check = false);
 
-bool check_is_experimental_op(std::string node_op_type);
+bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE

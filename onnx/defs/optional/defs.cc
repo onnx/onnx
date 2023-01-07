@@ -9,7 +9,7 @@
 #include <numeric>
 
 namespace ONNX_NAMESPACE {
-  static std::vector<std::string> optional_and_tensor_types() {
+static std::vector<std::string> optional_and_tensor_types() {
   auto optional_types = OpSchema::all_optional_types();
   auto tensor_types = OpSchema::all_tensor_types();
   auto sequence_types = OpSchema::all_tensor_sequence_types();
@@ -70,16 +70,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* OptionalHasElement_ver17_doc = R"DOC(
-Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
+static const char* OptionalHasElement_ver18_doc = R"DOC(
+Returns true if (1) the input is an optional-type and contains an element,
+or, (2) the input is a tensor or sequence type.
+If the input is not provided or is an empty optional-type, this op returns false.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalHasElement,
-    17,
+    18,
     OpSchema()
-        .SetDoc(OptionalHasElement_ver17_doc)
-        .Input(0, "input", "The optional input.", "O")
+        .SetDoc(OptionalHasElement_ver18_doc)
+        .Input(0, "input", "The optional input.", "O", OpSchema::Optional)
         .Output(
             0,
             "output",
@@ -92,8 +94,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
-          if (numInputs != 1) {
-            fail_type_inference("OptionalHasElement is expected to have 1 input.");
+          if (numInputs != 0 && numInputs != 1) {
+            fail_type_inference("OptionalHasElement is expected to have 0 or 1 input.");
           }
           const size_t numOutputs = ctx.getNumOutputs();
           if (numOutputs != 1) {
@@ -104,16 +106,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_tensor_type->mutable_shape()->Clear();
         }));
 
-static const char* OptionalGetElement_ver17_doc = R"DOC(
-Outputs the element in the optional-type input. It is an error if the input value does not have an element
-and the behavior is undefined in this case.
+static const char* OptionalGetElement_ver18_doc = R"DOC(
+If the input is a tensor or sequence type, it returns the input.
+If the input is an optional type, it outputs the element in the input.
+It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalGetElement,
-    17,
+    18,
     OpSchema()
-        .SetDoc(OptionalGetElement_ver17_doc)
+        .SetDoc(OptionalGetElement_ver18_doc)
         .Input(0, "input", "The optional input.", "O")
         .Output(0, "output", "Output element in the optional input.", "V")
         .TypeConstraint(
@@ -138,8 +141,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (input_type == nullptr) {
             fail_type_inference("Input type is null. Input must have Type information.");
           }
-          if (!input_type->has_optional_type() || !input_type->optional_type().has_elem_type()) {
-            fail_type_inference("Input must be an optional-type value containing an element with type information.");
+          if (input_type->has_optional_type() && !input_type->optional_type().has_elem_type()) {
+            fail_type_inference("Optional-type input must contain an element with type information.");
           }
           ctx.getOutputType(0)->CopyFrom(input_type->optional_type().elem_type());
         }));

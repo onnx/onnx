@@ -55,6 +55,7 @@ onnx/*_pb.pyi
 
 # Visual Studio Code files
 .vscode
+!/.vscode/settings.json
 
 # OSX dir files
 .DS_Store
@@ -102,3 +103,9 @@ venv
 # direnv, posh-direnv
 .envrc
 .psenvrc
+
+# documentation
+docs/docsgen/source/onnx-api/modules/
+docs/docsgen/source/operators/
+docs/docsgen/**/*.onnx
+docs/docsgen/**/*.pb

@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
+
 from ..base import Base
 from . import expect
 
@@ -39,14 +40,18 @@ class BatchNormalization(Base):
         y = _batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
 
         node = onnx.helper.make_node(
-            'BatchNormalization',
-            inputs=['x', 's', 'bias', 'mean', 'var'],
-            outputs=['y'],
+            "BatchNormalization",
+            inputs=["x", "s", "bias", "mean", "var"],
+            outputs=["y"],
         )
 
         # output size: (2, 3, 4, 5)
-        expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-               name='test_batchnorm_example')
+        expect(
+            node,
+            inputs=[x, s, bias, mean, var],
+            outputs=[y],
+            name="test_batchnorm_example",
+        )
 
         # input size: (2, 3, 4, 5)
         x = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -58,15 +63,19 @@ class BatchNormalization(Base):
         y = _batchnorm_test_mode(x, s, bias, mean, var, epsilon).astype(np.float32)
 
         node = onnx.helper.make_node(
-            'BatchNormalization',
-            inputs=['x', 's', 'bias', 'mean', 'var'],
-            outputs=['y'],
+            "BatchNormalization",
+            inputs=["x", "s", "bias", "mean", "var"],
+            outputs=["y"],
             epsilon=epsilon,
         )
 
         # output size: (2, 3, 4, 5)
-        expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
-               name='test_batchnorm_epsilon')
+        expect(
+            node,
+            inputs=[x, s, bias, mean, var],
+            outputs=[y],
+            name="test_batchnorm_epsilon",
+        )
 
     @staticmethod
     def export_train() -> None:
@@ -82,16 +91,19 @@ class BatchNormalization(Base):
         y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var)
 
         node = onnx.helper.make_node(
-            'BatchNormalization',
-            inputs=['x', 's', 'bias', 'mean', 'var'],
-            outputs=['y', 'output_mean', 'output_var'],
-            training_mode=training_mode
+            "BatchNormalization",
+            inputs=["x", "s", "bias", "mean", "var"],
+            outputs=["y", "output_mean", "output_var"],
+            training_mode=training_mode,
         )
 
         # output size: (2, 3, 4, 5)
-        expect(node, inputs=[x, s, bias, mean, var],
-               outputs=[y, output_mean, output_var],
-               name='test_batchnorm_example_training_mode')
+        expect(
+            node,
+            inputs=[x, s, bias, mean, var],
+            outputs=[y, output_mean, output_var],
+            name="test_batchnorm_example_training_mode",
+        )
 
         # input size: (2, 3, 4, 5)
         x = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -102,18 +114,22 @@ class BatchNormalization(Base):
         training_mode = 1
         momentum = 0.9
         epsilon = 1e-2
-        y, output_mean, output_var = _batchnorm_training_mode(x, s, bias, mean, var, momentum,
-                                                              epsilon)
+        y, output_mean, output_var = _batchnorm_training_mode(
+            x, s, bias, mean, var, momentum, epsilon
+        )
 
         node = onnx.helper.make_node(
-            'BatchNormalization',
-            inputs=['x', 's', 'bias', 'mean', 'var'],
-            outputs=['y', 'output_mean', 'output_var'],
+            "BatchNormalization",
+            inputs=["x", "s", "bias", "mean", "var"],
+            outputs=["y", "output_mean", "output_var"],
             epsilon=epsilon,
-            training_mode=training_mode
+            training_mode=training_mode,
         )
 
         # output size: (2, 3, 4, 5)
-        expect(node, inputs=[x, s, bias, mean, var],
-               outputs=[y, output_mean, output_var],
-               name='test_batchnorm_epsilon_training_mode')
+        expect(
+            node,
+            inputs=[x, s, bias, mean, var],
+            outputs=[y, output_mean, output_var],
+            name="test_batchnorm_epsilon_training_mode",
+        )

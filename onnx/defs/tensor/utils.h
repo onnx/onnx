@@ -23,13 +23,28 @@ void resizeShapeInferenceHelper(
     const std::vector<int64_t>& sizes_data,
     TensorShapeProto* output_shape);
 
-// The below is called by ops between opset 7 and opset 10, inclusively.
+// Belows are called by ops between opset versions in the name inclusively.
 void resizeShapeInference_opset7_to_10(InferenceContext& ctx);
+void resizeShapeInference_opset11_to_12(InferenceContext& ctx);
+void resizeShapeInference_opset13_to_18(InferenceContext& ctx);
 
 void resizeShapeInferenceHelper_opset7_to_10(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
     TensorShapeProto* output_shape);
 
+enum class KeepAspectRatioPolicy {
+  STRETCH,
+  NOT_LARGER,
+  NOT_SMALLER,
+};
+
+void KeepAspectRatioHelper(
+    KeepAspectRatioPolicy policy,
+    const TensorShapeProto& input_shape,
+    const std::vector<int64_t>& axes,
+    std::vector<int64_t>& sizes_data);
+
 extern const char* NonZero_ver9_doc;
+
 } // namespace ONNX_NAMESPACE

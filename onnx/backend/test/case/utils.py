@@ -3,15 +3,22 @@
 import importlib
 import pkgutil
 from types import ModuleType
-from typing import Optional, List
+from typing import List, Optional
 
-import numpy as np  # type: ignore
-
+import numpy as np
 
 all_numeric_dtypes = [
-    np.int8, np.int16, np.int32, np.int64,
-    np.uint8, np.uint16, np.uint32, np.uint64,
-    np.float16, np.float32, np.float64,
+    np.int8,
+    np.int16,
+    np.int32,
+    np.int64,
+    np.uint8,
+    np.uint16,
+    np.uint32,
+    np.uint64,
+    np.float16,
+    np.float32,
+    np.float64,
 ]
 
 

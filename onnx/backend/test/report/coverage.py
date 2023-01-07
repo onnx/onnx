@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from collections import defaultdict, OrderedDict
-import os
 import csv
 import datetime
+import os
+from collections import OrderedDict, defaultdict
+from typing import IO, Any, Dict, List, Optional, Set
 
-from tabulate import tabulate  # type: ignore
+from tabulate import tabulate
 
 import onnx
-from onnx import defs, helper, GraphProto
-from typing import Optional, Set, Dict, IO, List, Any
+from onnx import GraphProto, defs, helper
 
 _all_schemas = defs.get_all_schemas()
 
@@ -69,12 +69,12 @@ class ModelCoverage:
 class Coverage:
     def __init__(self) -> None:
         self.buckets: Dict[str, Dict[str, NodeCoverage]] = {
-            'loaded': defaultdict(NodeCoverage),
-            'passed': defaultdict(NodeCoverage),
+            "loaded": defaultdict(NodeCoverage),
+            "passed": defaultdict(NodeCoverage),
         }
         self.models: Dict[str, Dict[str, ModelCoverage]] = {
-            'loaded': defaultdict(ModelCoverage),
-            'passed': defaultdict(ModelCoverage),
+            "loaded": defaultdict(ModelCoverage),
+            "passed": defaultdict(ModelCoverage),
         }
 
     def add_node(self, node: onnx.NodeProto, bucket: str) -> None:
@@ -95,23 +95,27 @@ class Coverage:
         self.add_model(proto, bucket, is_model)
 
     def report_text(self, writer: IO[str]) -> None:
-        writer.write('---------- onnx coverage: ----------\n')
-        writer.write('Operators (passed/loaded/total): {}/{}/{}\n'.format(
-            len(self.buckets['passed']),
-            len(self.buckets['loaded']),
-            len(_all_schemas)))
-        writer.write('------------------------------------\n')
+        writer.write("---------- onnx coverage: ----------\n")
+        writer.write(
+            "Operators (passed/loaded/total): {}/{}/{}\n".format(
+                len(self.buckets["passed"]),
+                len(self.buckets["loaded"]),
+                len(_all_schemas),
+            )
+        )
+        writer.write("------------------------------------\n")
 
         rows = []
         passed = []
         all_ops: List[str] = []
         experimental: List[str] = []
-        for op_cov in self.buckets['passed'].values():
+        for op_cov in self.buckets["passed"].values():
             covered_attrs = [
-                f'{attr_cov.name}: {len(attr_cov.values)}'
-                for attr_cov in op_cov.attr_coverages.values()]
+                f"{attr_cov.name}: {len(attr_cov.values)}"
+                for attr_cov in op_cov.attr_coverages.values()
+            ]
             uncovered_attrs = [
-                f'{attr}: 0'
+                f"{attr}: 0"
                 for attr in op_cov.schema.attributes
                 if attr not in op_cov.attr_coverages
             ]
@@ -119,14 +123,18 @@ class Coverage:
             if attrs:
                 attrs_column = os.linesep.join(attrs)
             else:
-                attrs_column = 'No attributes'
+                attrs_column = "No attributes"
             rows.append([op_cov.op_type, attrs_column])
             passed.append(op_cov.op_type)
-        writer.write(tabulate(
-            rows,
-            headers=['Operator', 'Attributes\n(name: #values)'],
-            tablefmt='plain'))
-        if os.environ.get('CSVDIR') is not None:
+        writer.write(
+            tabulate(
+                rows,
+                headers=["Operator", "Attributes\n(name: #values)"],
+                tablefmt="plain",
+            )
+        )
+        writer.write("\n")
+        if os.environ.get("CSVDIR") is not None:
             self.report_csv(all_ops, passed, experimental)
 
     # This function writes the coverage report to a set of CSV files for
@@ -137,17 +145,21 @@ class Coverage:
     # files is a column naming each op or model and columns for each
     # backend with indications of whether the tests passed or failed for
     # each row.
-    def report_csv(self, all_ops: List[str], passed: List[Optional[str]], experimental: List[str]) -> None:
+    def report_csv(
+        self, all_ops: List[str], passed: List[Optional[str]], experimental: List[str]
+    ) -> None:
         for schema in _all_schemas:
-            if schema.domain == '' or schema.domain == 'ai.onnx':
+            if schema.domain == "" or schema.domain == "ai.onnx":
                 all_ops.append(schema.name)
                 if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
                     experimental.append(schema.name)
         all_ops.sort()
-        nodes_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
-                'nodes.csv')  # type: ignore
-        models_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
-                'models.csv')  # type: ignore
+        nodes_path = os.path.join(
+            str(os.environ.get("CSVDIR")), "nodes.csv"  # type: ignore
+        )  # type: ignore
+        models_path = os.path.join(
+            str(os.environ.get("CSVDIR")), "models.csv"  # type: ignore
+        )  # type: ignore
         existing_nodes: OrderedDict[str, Dict[str, str]] = OrderedDict()
         existing_models: OrderedDict[str, Dict[str, str]] = OrderedDict()
         frameworks: List[str] = []
@@ -157,21 +169,21 @@ class Coverage:
                 assert reader.fieldnames
                 frameworks = list(reader.fieldnames)
                 for row in reader:
-                    op = row['Op']
-                    del row['Op']
+                    op = row["Op"]
+                    del row["Op"]
                     existing_nodes[str(op)] = row
         if os.path.isfile(models_path):
             with open(models_path) as models_file:
                 reader = csv.DictReader(models_file)
                 for row in reader:
-                    model = row['Model']
-                    del row['Model']
+                    model = row["Model"]
+                    del row["Model"]
                     existing_models[str(model)] = row
-        backend = os.environ.get('BACKEND')
+        backend = os.environ.get("BACKEND")
         other_frameworks = frameworks[1:]
-        with open(nodes_path, 'w') as nodes_file:
-            if 'Op' not in frameworks:
-                frameworks.append('Op')
+        with open(nodes_path, "w") as nodes_file:
+            if "Op" not in frameworks:
+                frameworks.append("Op")
             if backend not in frameworks:
                 frameworks.append(str(backend))
             else:
@@ -181,7 +193,7 @@ class Coverage:
             for node in all_ops:
                 node_name = node
                 if node in experimental:
-                    node_name = node + ' (Experimental)'
+                    node_name = node + " (Experimental)"
                 if node_name not in existing_nodes:
                     # Also add Skipped for other nodes
                     existing_nodes[node_name] = OrderedDict()
@@ -195,14 +207,13 @@ class Coverage:
             if "Summary" in existing_nodes:
                 summaries = existing_nodes["Summary"]
                 del existing_nodes["Summary"]
-            summaries[str(backend)] = \
-                f"{len(passed)}/{len(all_ops)} node tests passed"
-            summaries['Op'] = 'Summary'
+            summaries[str(backend)] = f"{len(passed)}/{len(all_ops)} node tests passed"
+            summaries["Op"] = "Summary"
             for node in existing_nodes:
-                existing_nodes[node]['Op'] = str(node)
+                existing_nodes[node]["Op"] = str(node)
                 node_writer.writerow(existing_nodes[node])
             node_writer.writerow(summaries)
-        with open(models_path, 'w') as models_file:
+        with open(models_path, "w") as models_file:
             frameworks[0] = "Model"
             model_writer = csv.DictWriter(models_file, fieldnames=frameworks)
             model_writer.writeheader()
@@ -218,8 +229,8 @@ class Coverage:
                     # TODO: Identify if there are models that are being
                     # skipped/not loaded, but that are in other frameworks
                     msg = "Passed!"
-                    if bucket == 'loaded':
-                        if model in self.models['passed']:
+                    if bucket == "loaded":
+                        if model in self.models["passed"]:
                             continue
                         msg = "Failed!"
                     num_models += 1
@@ -228,23 +239,32 @@ class Coverage:
                         existing_models[model] = OrderedDict()
                         for other_framework in other_frameworks:
                             existing_models[model][other_framework] = "Skipped!"
-                    existing_models[model][str(backend)] = str("{}/{} nodes covered: {}"
-                        .format(num_covered, len(self.models[bucket][model]
-                            .node_coverages), msg))
+                    existing_models[model][str(backend)] = str(
+                        "{}/{} nodes covered: {}".format(
+                            num_covered,
+                            len(self.models[bucket][model].node_coverages),
+                            msg,
+                        )
+                    )
             summaries.clear()
             if "Summary" in existing_models:
                 summaries = existing_models["Summary"]
                 del existing_models["Summary"]
             if str(backend) in summaries:
                 del summaries[str(backend)]
-            summaries[str(backend)] = "{}/{} model tests passed" \
-                .format(len(self.models['passed']), num_models)
-            summaries['Model'] = 'Summary'
+            summaries[str(backend)] = "{}/{} model tests passed".format(
+                len(self.models["passed"]), num_models
+            )
+            summaries["Model"] = "Summary"
             for model in existing_models:  # type: ignore
-                existing_models[model]['Model'] = model
+                existing_models[model]["Model"] = model
                 model_writer.writerow(existing_models[model])
             model_writer.writerow(summaries)
-        with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
-                'metadata.csv'), 'w') as metadata_file:  # type: ignore
+        with open(
+            os.path.join(str(os.environ.get("CSVDIR")), "metadata.csv"),  # type: ignore
+            "w",
+        ) as metadata_file:  # type: ignore
             metadata_writer = csv.writer(metadata_file)
-            metadata_writer.writerow(["Latest Update", datetime.datetime.now().isoformat().replace('T', ' ')])
+            metadata_writer.writerow(
+                ["Latest Update", datetime.datetime.now().isoformat().replace("T", " ")]
+            )

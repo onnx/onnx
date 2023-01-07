@@ -180,7 +180,9 @@ namespace ONNX_NAMESPACE {
   _(k)                              \
   _(Flatten)                        \
   _(ScatterElements)                \
-  _(Resize)
+  _(Resize)                         \
+  _(ceil_mode)                      \
+  _(num_outputs)
 
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,

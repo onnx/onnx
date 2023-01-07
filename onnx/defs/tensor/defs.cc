@@ -33,6 +33,22 @@ Conversion from a numerical type to any numerical type is always allowed.
 User must be aware of precision loss and value change caused by range difference between two types.
 For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
 an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
+
+In more detail, the conversion among numerical types should follow these rules:
+
+* Casting from floating point to:
+  * floating point: +/- infinity if OOR (out of range).
+  * fixed point: undefined if OOR.
+  * bool: +/- 0.0 to False; all else to True.
+* Casting from fixed point to:
+  * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
+  * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
+signed types). For example, 200 (int16) -> -56 (int8).
+  * bool: zero to False; nonzero to True.
+* Casting from bool to:
+  * floating point: `{1.0, 0.0}`.
+  * fixed point: `{1, 0}`.
+  * bool: no change.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -193,7 +209,12 @@ could also be 0, in which case the actual dimension value is unchanged (i.e. tak
 from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
 dimension will be set explicitly to zero (i.e. not taken from input tensor).
 Shape (second input) could be an empty shape, which means converting to a scalar.
-The input tensor's shape and the output tensor's shape are required to have the same number of elements.)DOC";
+The input tensor's shape and the output tensor's shape are required to have the same number of elements.
+
+If the attribute 'allowzero' is set, it is invalid for the specified shape to
+contain both a zero value and -1, as the value of the dimension corresponding
+to -1 cannot be determined uniquely.
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -371,22 +392,22 @@ value of r, and specifying any start value < -r is equivalent to specifying a st
 value of 0.
 
 For example:
-Input tensor with shape: [2, 3, 4] 
+Input tensor with shape: [2, 3, 4]
 No attributes specified.
-Output: [2, 3, 4] 
+Output: [2, 3, 4]
 
-Input tensor with shape: [2, 3, 4] 
+Input tensor with shape: [2, 3, 4]
 start: -1
-Output: [4] 
+Output: [4]
 
-Input tensor with shape: [2, 3, 4] 
+Input tensor with shape: [2, 3, 4]
 end: -1
 Output: [2, 3]
 
-Input tensor with shape: [2, 3, 4] 
+Input tensor with shape: [2, 3, 4]
 start: 1
 end: 2
-Output: [3] 
+Output: [3]
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -587,15 +608,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Split_ver13_doc =
-    R"DOC(Split a tensor into a list of tensors, along the specified
-'axis'. Lengths of the parts can be specified using input 'split'.
-Otherwise, the tensor is split to equal sized parts.
+static const char* Split_ver18_doc =
+    R"DOC(Split a tensor into a list of tensors, along the specified 'axis'.
+Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
+If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
+If the tensor is not evenly splittable into `num_outputs`, the last chunk will be smaller.
+If the input 'split' is specified, it indicates the sizes of each output in the split.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Split,
-    13,
+    18,
     OpSchema()
         .Input(0, "input", "The tensor to split", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
@@ -628,7 +651,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where r = rank(input).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(Split_ver13_doc)
+        .Attr(
+            "num_outputs",
+            "Number of outputs to split parts of the tensor into. "
+            "If the tensor is not evenly splittable the last chunk will be smaller.",
+            AttributeProto::INT,
+            false)
+        .SetDoc(Split_ver18_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
@@ -636,7 +665,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-
           const auto& shape = ctx.getInputType(0)->tensor_type().shape();
           int rank = shape.dim_size();
           int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
@@ -657,8 +685,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           int split_dim_value = static_cast<int>(split_dim.dim_value());
 
           std::vector<int64_t> split;
-          size_t num_inputs = ctx.getNumInputs();
-          if ((num_inputs == 2) && ctx.getInputType(1)) { //'split' is input
+          const auto num_outputs_attr = ctx.getAttribute("num_outputs");
+          if (ctx.hasInput(1) && num_outputs_attr) {
+            fail_shape_inference("Both 'split' input and 'num_outputs' attribute were given");
+          }
+          if (ctx.hasInput(1)) { //'split' is input
             auto split_proto = ctx.getInputData(1);
             if (split_proto == nullptr) {
               // skip if split is not an initializer
@@ -682,14 +713,22 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ")");
             }
           } else { // no value available for 'split'
-            int num_outputs = static_cast<int>(ctx.getNumOutputs());
-            if (split_dim_value % num_outputs != 0) {
-              fail_shape_inference("The input is not evenly splittable");
-            }
-            int chunk_size = split_dim_value / num_outputs;
-            split.reserve(ctx.getNumOutputs());
-            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
-              split.push_back(chunk_size);
+            if (num_outputs_attr) {
+              const auto num_outputs = num_outputs_attr->i();
+              if (num_outputs < 1) {
+                fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
+              }
+              if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
+                int chunk_size = split_dim_value / num_outputs;
+                split.resize(num_outputs, chunk_size);
+              } else { // tensor needs to be split unevenly
+                int chunk_size = (split_dim_value / num_outputs) + 1;
+                int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
+                split.resize(num_outputs - 1, chunk_size);
+                split.push_back(last_chunk_size);
+              }
+            } else {
+              fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");
             }
           }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
@@ -1208,19 +1247,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ScatterND_ver16_doc = R"DOC(
+static const char* ScatterND_ver18_doc = R"DOC(
 ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
 and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
 is produced by creating a copy of the input `data`, and then updating its value to values
 specified by `updates` at specific index positions specified by `indices`. Its output shape
-is the same as the shape of `data`. Note that `indices` should not have duplicate entries.
-That is, two or more `updates` for the same index-location is not supported.
+is the same as the shape of `data`.
 
 `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
 Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
 update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-update to a slice of the tensor.
+update to a slice of the tensor. Index values are allowed to be negative, as per the usual
+convention for counting backwards from the end, but are expected in the valid range.
 
 `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
 first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
@@ -1243,23 +1282,20 @@ This ensures that the output value does not depend on the iteration order.
 
 `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
 tensor into `output` at the specified `indices`.
-In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2, 
+In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
 then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
-When `reduction` is set to "add", `output` is calculated as follows:
+When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
 
     output = np.copy(data)
     update_indices = indices.shape[:-1]
     for idx in np.ndindex(update_indices):
-        output[indices[idx]] += updates[idx]
+        output[indices[idx]] = f(output[indices[idx]], updates[idx])
 
-When `reduction` is set to "mul", `output` is calculated as follows:
-
-    output = np.copy(data)
-    update_indices = indices.shape[:-1]
-    for idx in np.ndindex(update_indices):
-        output[indices[idx]] *= updates[idx]
+where the `f` is +/*/max/min as specified.
 
 This operator is the inverse of GatherND.
+
+(Opset 18 change): Adds max/min to the set of allowed reduction ops.
 
 Example 1:
 ```
@@ -1287,15 +1323,17 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterND,
-    16,
+    18,
     OpSchema()
-        .SetDoc(ScatterND_ver16_doc)
+        .SetDoc(ScatterND_ver18_doc)
         .Attr(
             "reduction",
-            "Type of reduction to apply: none (default), add, mul. "
+            "Type of reduction to apply: none (default), add, mul, max, min. "
             "'none': no reduction applied. "
             "'add':  reduction using the addition operation. "
-            "'mul': reduction using the multiplication operation.",
+            "'mul':  reduction using the addition operation. "
+            "'max': reduction using the maximum operation."
+            "'min': reduction using the minimum operation.",
             AttributeProto::STRING,
             std::string("none"))
         .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -1329,7 +1367,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ScatterElements_ver16_doc = R"DOC(
+static const char* ScatterElements_ver18_doc = R"DOC(
 ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
 rank r >= 1 and an optional attribute axis that identifies an axis of `data`
 (by default, the outer-most axis, that is axis 0). The output of the operation
@@ -1345,25 +1383,24 @@ index of the entry itself.
 
 `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
 tensor into `output` at the specified `indices`.
-In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2, 
-then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update 
+In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
+then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
 corresponding to the [i][j] entry is performed as below:
 ```
   output[indices[i][j]][j] = updates[i][j] if axis = 0,
   output[i][indices[i][j]] = updates[i][j] if axis = 1,
 ```
-When `reduction` is set to "add", the update corresponding to the [i][j] entry is performed as below:
+When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
 ```
-  output[indices[i][j]][j] += updates[i][j] if axis = 0,
-  output[i][indices[i][j]] += updates[i][j] if axis = 1,
+  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
 ```
-When `reduction` is set to "mul", the update corresponding to the [i][j] entry is performed as below:
-```
-  output[indices[i][j]][j] *= updates[i][j] if axis = 0,
-  output[i][indices[i][j]] *= updates[i][j] if axis = 1,
-```
+where the `f` is +/*/max/min as specified.
+
 
 This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+
+(Opset 18 change): Adds max/min to the set of allowed reduction ops.
 
 Example 1:
 ```
@@ -1398,9 +1435,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterElements,
-    16,
+    18,
     OpSchema()
-        .SetDoc(ScatterElements_ver16_doc)
+        .SetDoc(ScatterElements_ver18_doc)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -1409,10 +1446,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "reduction",
-            "Type of reduction to apply: none (default), add, mul. "
+            "Type of reduction to apply: none (default), add, mul, max, min. "
             "'none': no reduction applied. "
             "'add':  reduction using the addition operation. "
-            "'mul': reduction using the multiplication operation.",
+            "'mul': reduction using the multiplication operation."
+            "'max': reduction using the maximum operation."
+            "'min': reduction using the minimum operation.",
             AttributeProto::STRING,
             std::string("none"))
         .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -2145,40 +2184,63 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
-static const char* Resize_ver13_doc = R"DOC(
+static const char* Resize_ver18_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
-Each dimension value of the output tensor is:
-  output_dimension = floor(input_dimension * (roi_end - roi_start) * scale) if input \"sizes\" is not specified.
+Each dimension value of the output tensor is: <br/>
+  `output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)` <br/>
+if input \"sizes\" is not specified.
 )DOC";
 
 static const char* Resize_attr_coordinate_transformation_mode_doc = R"DOC(
 This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
 
 The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example.
-Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, length_original as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", scale = length_resized / length_original, <br/>
+Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, `length_original` as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", `scale = length_resized / length_original`, <br/>
 
-if coordinate_transformation_mode is "half_pixel", <br/>
-x_original = (x_resized + 0.5) / scale - 0.5, <br/>
+if coordinate_transformation_mode is `"half_pixel"`, <br/>
+`x_original = (x_resized + 0.5) / scale - 0.5` <br/>
 
-if coordinate_transformation_mode is "pytorch_half_pixel", <br/>
-x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0, <br/>
+if coordinate_transformation_mode is `"pytorch_half_pixel"`, <br/>
+`x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0` <br/>
 
-if coordinate_transformation_mode is "align_corners", <br/>
-x_original = x_resized * (length_original - 1) / (length_resized - 1), <br/>
+if coordinate_transformation_mode is `"align_corners"`, <br/>
+`x_original = x_resized * (length_original - 1) / (length_resized - 1)` <br/>
 
-if coordinate_transformation_mode is "asymmetric", <br/>
-x_original = x_resized / scale, <br/>
+if coordinate_transformation_mode is `"asymmetric"`, <br/>
+`x_original = x_resized / scale` <br/>
 
-if coordinate_transformation_mode is "tf_crop_and_resize", <br/>
-x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1).)DOC";
+if coordinate_transformation_mode is `"tf_crop_and_resize"`, <br/>
+`x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1)`
+.)DOC";
+
+static const char* Resize_attr_keep_aspect_ratio_policy_doc = R"DOC(
+This attribute describes how to interpret the `sizes` input with regard to keeping the original aspect ratio of the input, and it is not applicable when
+the `scales` input is used. <br/>
+
+Given a set of `sizes`, associated with a subset of `axes` (explicitly provided or default), and assuming `d = axes[i]`, with `i` being the index of the provided `sizes`. <br/>
+
+If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disregarded, and the input is resized to the specified size: <br/>
+`out_size[d] = sizes[i]` <br/>
+
+If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio: <br/>
+`scale = Min(sizes[i] / in_size[d])` <br/>
+`out_size[d] = round_int(scale * in_size[i])` <br/>
+
+If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio: <br/>
+`scale = Max(sizes[i] / in_size[d])` <br/>
+`out_size[d] = round_int(scale * in_size[i])` <br/>
+
+For non-resizable axes (those not specified in `axes`), the output size will be equal to the input size.
+
+Note: `round_int` stands for computing the nearest integer value, rounding halfway cases up.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Resize,
-    13,
+    18,
     OpSchema()
         .Attr(
             "mode",
-            "Three interpolation modes: nearest (default), linear and cubic. "
+            "Three interpolation modes: \"nearest\" (default), \"linear\" and \"cubic\". "
             "The \"linear\" mode includes linear interpolation for 1D tensor and N-linear interpolation for N-D tensor (for example, bilinear interpolation for 2D tensor). "
             "The \"cubic\" mode includes cubic interpolation for 1D tensor and N-cubic interpolation for N-D tensor (for example, bicubic interpolation for 2D tensor).",
             AttributeProto::STRING,
@@ -2187,7 +2249,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "cubic_coeff_a",
             "The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in some cases of TensorFlow) and -0.75"
             " (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details. "
-            "This attribute is valid only if \"mode\" is \"cubic\".",
+            "This attribute is valid only if mode is \"cubic\".",
             AttributeProto::FLOAT,
             static_cast<float>(-0.75))
         .Attr(
@@ -2203,7 +2265,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("half_pixel"))
         .Attr(
             "nearest_mode",
-            "Four modes: round_prefer_floor (default, as known as round half down), round_prefer_ceil (as known as round half up), floor, ceil. Only used by nearest interpolation. It indicates how to get \"nearest\" pixel in input tensor from x_original, so this attribute is valid only if \"mode\" is \"nearest\".",
+            "Four modes: \"round_prefer_floor\" (default, as known as round half down), \"round_prefer_ceil\" (as known as round half up), \"floor\", \"ceil\". Only used by nearest interpolation. It indicates how to get \"nearest\" pixel in input tensor from x_original, so this attribute is valid only if \"mode\" is \"nearest\".",
             AttributeProto::STRING,
             std::string("round_prefer_floor"))
         .Attr(
@@ -2211,11 +2273,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             "When coordinate_transformation_mode is \"tf_crop_and_resize\" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.",
             AttributeProto::FLOAT,
             static_cast<float>(0))
+        .Attr(
+            "antialias",
+            "If set to 1, \"linear\" and \"cubic\" interpolation modes will use an antialiasing filter when downscaling. "
+            "Antialiasing is achieved by stretching the resampling filter by a factor max(1, 1 / scale), which means that when downsampling, more input pixels contribute to an output pixel.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "axes",
+            "If provided, it specifies a subset of axes that 'roi', 'scales' and 'sizes' refer to. "
+            "If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). "
+            "Non-specified dimensions are interpreted as non-resizable. "
+            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). "
+            "Behavior is undefined if an axis is repeated.",
+            AttributeProto::INTS,
+            false)
+        .Attr(
+            "keep_aspect_ratio_policy",
+            Resize_attr_keep_aspect_ratio_policy_doc,
+            AttributeProto::STRING,
+            std::string("stretch"))
         .Input(0, "X", "N-D tensor", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "roi",
-            "1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is \"tf_crop_and_resize\"",
+            "1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X or the length of axes, if provided. "
+            "The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is \"tf_crop_and_resize\"",
             "T2",
             OpSchema::Optional,
             true,
@@ -2226,7 +2309,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scales",
             "The scale array along each dimension. It takes value greater than 0. If it's less than 1,"
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
-            " be the same as the rank of input 'X'. One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
+            " be the same as the rank of input 'X' or the length of 'axes', if provided. "
+            "One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
             "tensor(float)",
             OpSchema::Optional,
             true,
@@ -2235,8 +2319,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "sizes",
-            "The size of the output tensor. The number of elements of 'sizes' should be the same as the"
-            " rank of input 'X'. Only one of 'scales' and 'sizes' can be specified.",
+            "Target size of the output tensor. Its interpretation depends on the 'keep_aspect_ratio_policy' value."
+            "The number of elements of 'sizes' should be the same as the"
+            " rank of input 'X', or the length of 'axes', if provided. Only one of 'scales' and 'sizes' can be specified. ",
             "tensor(int64)",
             OpSchema::Optional,
             true,
@@ -2251,15 +2336,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
-        .SetDoc(Resize_ver13_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference(ctx); }));
+        .SetDoc(Resize_ver18_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset13_to_18(ctx); }));
 
 static const char* GridSample_ver16_doc = R"DOC(
-Given an `input` and a flow-field `grid`, computes the `output` using `input` values and pixel locations from `grid`.
-Currently, only spatial (4-D) inputs are supported. For `input` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
-the `output` will have shape (N, C, H_out, W_out).
-For each output location `output[N, C, H_out, W_out]`, the size-2 vector `grid[N, H_out, W_out]` specifies `input` pixel locations `x` and `y`,
-which are used to interpolate the output value `output[N, C, H_out, W_out]`.
+Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from `grid`.
+Currently, only spatial (4-D) inputs are supported. For input `X` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
+the output `Y` will have shape (N, C, H_out, W_out).
+
+The tensor `X` contains values at centers of square pixels in a H by W 2-dimensional image.
+The tensor `grid` describes normalized positions where the output `Y` is to be computed
+using a specified interpolation method (the mode) and a padding mode (for grid positions falling outside the 2-dimensional image).
+
+Elements in `grid[N, H_out, W_out]` are size-2 vectors specifying positions in the 2-dimensional space of `X`.
+They are used to interpolate output values of `Y[N, C, H_out, W_out]`.
 
 The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
 See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
@@ -2310,7 +2400,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Grid specifies the sampling pixel locations normalized by the input spatial dimensions. "
             "Therefore, it should have most values in the range of [-1, 1]. "
             "If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.",
-            "T1",
+            "T2",
             OpSchema::Single,
             true,
             1,
@@ -2318,17 +2408,21 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "Y",
-            "4-D tensor of shape (N, C, H_out, W_out).",
-            "T2",
+            "4-D tensor of shape (N, C, H_out, W_out) of sampled values. "
+            "For integer input types, intermediate values are computed as floating point and cast to integer at the end.",
+            "T1",
             OpSchema::Single,
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("T1", OpSchema::all_tensor_types(), "Constrain input types to all tensor types.")
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_tensor_types(),
+            "Constrain input `X` and output `Y` types to all tensor types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+            "Constrain grid types to float tensors.")
         .SetDoc(GridSample_ver16_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -3202,7 +3296,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Pad_ver13_doc = R"DOC(
+static const char* Pad_ver18_doc = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
@@ -3282,24 +3376,25 @@ Example 3 (`edge` mode):
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
-    13,
+    18,
     OpSchema()
         .Attr(
             "mode",
             "Supported modes: `constant`(default), `reflect`, `edge`",
             AttributeProto::STRING,
             std::string("constant"))
-        .SetDoc(Pad_ver13_doc)
+        .SetDoc(Pad_ver18_doc)
         .Input(0, "data", "Input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "pads",
             "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
             "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
-            "`pads` should be a 1D tensor of shape [2 * input_rank]. "
-            "`pads` format should be: [x1_begin, x2_begin,...,x1_end, x2_end,...], "
-            "where xi_begin is the number of pad values added at the beginning of axis `i` and "
-            "xi_end, the number of pad values added at the end of axis `i`.",
+            "`pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number "
+            "of elements in the `axes` input or the input rank if `axes` are not provided explicitly. "
+            "`pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], "
+            "where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and "
+            "xi_end, the number of pad values added at the end of axis `axes[i]`.",
             "tensor(int64)",
             OpSchema::Single,
             true,
@@ -3315,11 +3410,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
+        .Input(
+            3,
+            "axes",
+            "1-D tensor of axes that `pads` apply to. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an "
+            "axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).",
+            "Tind",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+
         .Output(0, "output", "Tensor after padding.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_with_bfloat(),
             "Constrain input and output types to all tensor types.")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -3330,36 +3438,78 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_rank = input_shape.dim_size();
 
-          // Infer output shape if 'pads' tensor is available
-          const auto* pads_initializer = ctx.getInputData(1);
-          if (nullptr != pads_initializer) {
+          std::vector<int64_t> axes;
+          if (hasInputShape(ctx, 3)) { //'axes' input
+            auto axes_initializer = ctx.getInputData(3);
+            if (axes_initializer == nullptr)
+              return; // can't do shape inference then
+
+            axes = ParseData<int64_t>(axes_initializer);
+
+            std::vector<bool> tmp(input_rank, false);
+            for (auto axis : axes) {
+              if (tmp[axis]) {
+                fail_shape_inference("Repeated axis: ", axis);
+              }
+              tmp[axis] = true;
+            }
+          } else {
+            axes.resize(input_rank);
+            std::iota(axes.begin(), axes.end(), 0);
+          }
+
+          int num_axes = axes.size();
+          if (num_axes > input_rank) {
+            fail_shape_inference("Too many axes provided");
+          }
+
+          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+          // Populating default dims
+          std::vector<TensorShapeProto_Dimension*> out_dims(input_rank);
+          for (int i = 0; i < input_rank; ++i) {
+            out_dims[i] = output_shape->add_dim();
+          }
+
+          // Shape Inference if
+          //     1. 'pads' are available.
+          // and 2. 'axes' are available, or default.
+          const TensorProto* pads_initializer = ctx.getInputData(1);
+          if (nullptr != pads_initializer && !axes.empty()) {
             if (pads_initializer->dims_size() != 1 || pads_initializer->data_type() != TensorProto::INT64) {
-              fail_shape_inference("'pads' input must be a 1D (shape: [2 * input_rank]) tensor of type int64");
+              fail_shape_inference("'pads' input must be a 1D (shape: [2 * num_axes]) tensor of type int64");
             }
 
             const auto& pads_data = ParseData<int64_t>(pads_initializer);
-            if (pads_data.size() != static_cast<size_t>(2 * input_rank)) {
-              fail_shape_inference("Pads has incorrect number of values");
+            if (pads_data.size() != static_cast<size_t>(2 * num_axes)) {
+              fail_shape_inference(
+                  "Pads has incorrect number of values. Expected 2 * ",
+                  num_axes,
+                  " values. Got ",
+                  pads_data.size(),
+                  " values.");
             }
 
-            auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
-              const auto& input_dim = input_shape.dim((int)i);
-              auto* output_dim = output_shape->add_dim();
+            // Set default dim values
+            for (int i = 0; i < input_rank; ++i) {
+              const auto& input_dim = input_shape.dim(i);
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
-              } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
-                *output_dim = input_dim;
+                out_dims[i]->set_dim_value(input_dim.dim_value());
               }
             }
-          } else {
-            // Infer output shapes' rank in any case
-            auto* output_shape_0 = getOutputShape(ctx, 0);
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
-              output_shape_0->add_dim();
+
+            for (int i = 0; i < num_axes; ++i) {
+              auto axis = axes[i];
+              const auto& input_dim = input_shape.dim(axis);
+              auto& out_dim = *out_dims[axis];
+              auto total_pad = pads_data[i] + pads_data[num_axes + i];
+              if (input_dim.has_dim_value()) {
+                out_dim.set_dim_value(input_dim.dim_value() + total_pad);
+              } else if (total_pad == 0) {
+                out_dim = input_dim;
+              }
             }
           }
-          return;
         }));
 
 static const char* Trilu_ver14_doc = R"DOC(
@@ -3431,6 +3581,175 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
+        }));
+
+static const char* CenterCropPad_ver18_doc = R"DOC(
+Center crop or pad an input to given dimensions.
+
+The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
+cropped or padded.
+
+If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
+If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
+so that the input is centered in the output.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    CenterCropPad,
+    18,
+    OpSchema()
+        .SetDoc(CenterCropPad_ver18_doc)
+        .Input(
+            0,
+            "input_data",
+            "Input to extract the centered crop from.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "shape",
+            "1-D tensor representing the cropping window dimensions.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(0, "output_data", "Output data.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Attr(
+            "axes",
+            "If provided, it specifies a subset of axes that 'shape' refer to. "
+            "If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). "
+            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). "
+            "Behavior is undefined if an axis is repeated.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_with_bfloat(),
+            "Constrain input and output types to all tensor types.")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (ctx.getNumInputs() != 2) {
+            fail_type_inference("CenterCropPad op must have 2 inputs.");
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          // Shape Inference if shape is initializer
+          const TensorProto* cropShapeInitializer = ctx.getInputData(1);
+          if (!cropShapeInitializer) {
+            return;
+          }
+
+          // don't know data_type - can't proceed
+          if (!cropShapeInitializer->has_data_type())
+            return;
+
+          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const int64_t input_rank = input_shape.dim_size();
+
+          std::vector<int64_t> shape;
+          if (cropShapeInitializer->data_type() == TensorProto::INT64) {
+            const auto& data = ParseData<int64_t>(cropShapeInitializer);
+            shape.insert(shape.end(), data.begin(), data.end());
+          } else if (cropShapeInitializer->data_type() == TensorProto::INT32) {
+            const auto& data = ParseData<int32_t>(cropShapeInitializer);
+            shape.insert(shape.end(), data.begin(), data.end());
+          } else {
+            // unaccepted data type
+            fail_shape_inference("`shape` only supports `int32_t` or `int64_t` inputs");
+          }
+
+          auto axes_attr = ctx.getAttribute("axes");
+          std::vector<int64_t> axes;
+          if (axes_attr) {
+            axes = RetrieveValues<int64_t>(*axes_attr);
+
+            std::vector<bool> tmp(input_rank, false);
+            for (auto axis : axes) {
+              if (tmp[axis]) {
+                fail_shape_inference("Repeated axis: ", axis);
+              }
+              tmp[axis] = true;
+            }
+          } else {
+            axes.resize(input_rank);
+            std::iota(axes.begin(), axes.end(), 0);
+          }
+
+          if (shape.size() != axes.size()) {
+            fail_shape_inference(
+                "Number of elements of input 'shape' (",
+                shape.size(),
+                ") does not match the number of axes (",
+                axes.size(),
+                ").");
+          }
+
+          // Populating default dims
+          std::vector<TensorShapeProto_Dimension*> out_dims(input_rank);
+          auto* output_shape = getOutputShape(ctx, 0);
+          for (int i = 0; i < input_rank; ++i) {
+            out_dims[i] = output_shape->add_dim();
+            const auto& input_dim = input_shape.dim(i);
+            if (input_dim.has_dim_value()) {
+              out_dims[i]->set_dim_value(input_dim.dim_value());
+            } else if (input_dim.has_dim_param()) {
+              out_dims[i]->set_dim_param(input_dim.dim_param());
+            }
+          }
+          int j = 0;
+          for (int axis : axes) {
+            out_dims[axis]->set_dim_value(shape[j++]);
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          FunctionBuilder builder(functionProto);
+          builder.Const("k2", std::vector<int64_t>{2});
+
+          auto axes_attr = ctx.getAttribute("axes");
+          if (axes_attr) { // axes provided, need to work on a subset of dimensions
+            builder.Add("axes_input = Constant <value_ints : ints = @axes>()");
+            builder.Add("x_shape_alldims = Shape (input_data)").Add("x_shape = Gather (x_shape_alldims, axes_input)");
+          } else { // axes not provided, assuming all dims
+            builder.Add("x_shape = Shape (input_data)");
+          }
+
+          // First: Pad step
+          builder.Add("padded_sh = Max(x_shape, shape)")
+              .Add("pad_amount = Sub(padded_sh, x_shape)")
+              .Add("pad_amount_left = Div(pad_amount, k2)")
+              .Add("pad_amount_right = Sub(pad_amount, pad_amount_left)")
+              .Add("pads = Concat <axis = 0> (pad_amount_left, pad_amount_right)");
+          if (axes_attr)
+            builder.Add("padded_input = Pad (input_data, pads, , axes_input)");
+          else
+            builder.Add("padded_input = Pad (input_data, pads)");
+
+          // Second: Slice step
+          if (axes_attr) {
+            builder.Add("x_shape_alldims2 = Shape (padded_input)")
+                .Add("x_shape2 = Gather (x_shape_alldims2, axes_input)");
+          } else {
+            builder.Add("x_shape2 = Shape (padded_input)");
+          }
+
+          builder.Add("sh_diff = Sub (x_shape2, shape)")
+              .Add("start_dims = Div (sh_diff, k2)")
+              .Add("end_dims = Add (start_dims, shape)");
+          if (axes_attr)
+            builder.Add("output_data = Slice (padded_input, start_dims, end_dims, axes_input)");
+          else
+            builder.Add("output_data = Slice (padded_input, start_dims, end_dims)");
+
+          schema.BuildFunction(functionProto);
+          return true;
         }));
 
 } // namespace ONNX_NAMESPACE

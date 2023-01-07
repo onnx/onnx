@@ -13,21 +13,22 @@
 #   $ dot -Tsvg my_output.dot -o my_output.svg
 
 import argparse
-from collections import defaultdict
 import json
-from onnx import ModelProto, GraphProto, NodeProto
-import pydot  # type: ignore
-from typing import Any, Callable, Optional, Dict
+from collections import defaultdict
+from typing import Any, Callable, Dict, Optional
 
+import pydot
+
+from onnx import GraphProto, ModelProto, NodeProto
 
 OP_STYLE = {
-    'shape': 'box',
-    'color': '#0F9D58',
-    'style': 'filled',
-    'fontcolor': '#FFFFFF'
+    "shape": "box",
+    "color": "#0F9D58",
+    "style": "filled",
+    "fontcolor": "#FFFFFF",
 }
 
-BLOB_STYLE = {'shape': 'octagon'}
+BLOB_STYLE = {"shape": "octagon"}
 
 _NodeProducer = Callable[[NodeProto, int], pydot.Node]
 
@@ -38,34 +39,35 @@ def _escape_label(name: str) -> str:
 
 
 def _form_and_sanitize_docstring(s: str) -> str:
-    url = 'javascript:alert('
-    url += _escape_label(s).replace('"', '\'').replace('<', '').replace('>', '')
-    url += ')'
+    url = "javascript:alert("
+    url += _escape_label(s).replace('"', "'").replace("<", "").replace(">", "")
+    url += ")"
     return url
 
 
 def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProducer:
     def ReallyGetOpNode(op: NodeProto, op_id: int) -> pydot.Node:
         if op.name:
-            node_name = '%s/%s (op#%d)' % (op.name, op.op_type, op_id)
+            node_name = "%s/%s (op#%d)" % (op.name, op.op_type, op_id)
         else:
-            node_name = '%s (op#%d)' % (op.op_type, op_id)
+            node_name = "%s (op#%d)" % (op.op_type, op_id)
         for i, input in enumerate(op.input):
-            node_name += '\n input' + str(i) + ' ' + input
+            node_name += "\n input" + str(i) + " " + input
         for i, output in enumerate(op.output):
-            node_name += '\n output' + str(i) + ' ' + output
+            node_name += "\n output" + str(i) + " " + output
         node = pydot.Node(node_name, **kwargs)
         if embed_docstring:
             url = _form_and_sanitize_docstring(op.doc_string)
             node.set_URL(url)
         return node
+
     return ReallyGetOpNode
 
 
 def GetPydotGraph(
     graph: GraphProto,
     name: Optional[str] = None,
-    rankdir: str = 'LR',
+    rankdir: str = "LR",
     node_producer: Optional[_NodeProducer] = None,
     embed_docstring: bool = False,
 ) -> pydot.Dot:
@@ -80,10 +82,9 @@ def GetPydotGraph(
         for input_name in op.input:
             if input_name not in pydot_nodes:
                 input_node = pydot.Node(
-                    _escape_label(
-                        input_name + str(pydot_node_counts[input_name])),
+                    _escape_label(input_name + str(pydot_node_counts[input_name])),
                     label=_escape_label(input_name),
-                    **BLOB_STYLE
+                    **BLOB_STYLE,
                 )
                 pydot_nodes[input_name] = input_node
             else:
@@ -94,10 +95,9 @@ def GetPydotGraph(
             if output_name in pydot_nodes:
                 pydot_node_counts[output_name] += 1
             output_node = pydot.Node(
-                _escape_label(
-                    output_name + str(pydot_node_counts[output_name])),
+                _escape_label(output_name + str(pydot_node_counts[output_name])),
                 label=_escape_label(output_name),
-                **BLOB_STYLE
+                **BLOB_STYLE,
             )
             pydot_nodes[output_name] = output_node
             pydot_graph.add_node(output_node)
@@ -109,25 +109,30 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="ONNX net drawer")
     parser.add_argument(
         "--input",
-        type=str, required=True,
+        type=str,
+        required=True,
         help="The input protobuf file.",
     )
     parser.add_argument(
         "--output",
-        type=str, required=True,
+        type=str,
+        required=True,
         help="The output protobuf file.",
     )
     parser.add_argument(
-        "--rankdir", type=str, default='LR',
+        "--rankdir",
+        type=str,
+        default="LR",
         help="The rank direction of the pydot graph.",
     )
     parser.add_argument(
-        "--embed_docstring", action="store_true",
+        "--embed_docstring",
+        action="store_true",
         help="Embed docstring as javascript alert. Useful for SVG format.",
     )
     args = parser.parse_args()
     model = ModelProto()
-    with open(args.input, 'rb') as fid:
+    with open(args.input, "rb") as fid:
         content = fid.read()
         model.ParseFromString(content)
     pydot_graph = GetPydotGraph(
@@ -135,12 +140,11 @@ def main() -> None:
         name=model.graph.name,
         rankdir=args.rankdir,
         node_producer=GetOpNodeProducer(
-            embed_docstring=args.embed_docstring,
-            **OP_STYLE
+            embed_docstring=args.embed_docstring, **OP_STYLE
         ),
     )
     pydot_graph.write_dot(args.output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

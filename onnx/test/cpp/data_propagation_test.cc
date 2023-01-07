@@ -103,7 +103,7 @@ TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 1
 
   // Assuming the graph being tested only has 1 output.
   // If this ever changes then fixes are required here.
-  const auto inputShapeDataIter = generatedShapeDataByName.find(graph.output()[0].name());
+  const auto inputShapeDataIter = generatedShapeDataByName.find(graph.output(0).name());
   EXPECT_TRUE(inputShapeDataIter != generatedShapeDataByName.cend());
 
   inferredShape.CopyFrom(inputShapeDataIter->second);

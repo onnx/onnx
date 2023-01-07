@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
+
 from ..base import Base
 from . import expect
 
@@ -19,7 +20,6 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
 
 
 class TopK(Base):
-
     @staticmethod
     def export_top_k() -> None:
         axis = 1
@@ -27,30 +27,31 @@ class TopK(Base):
 
         k = 3
         node = onnx.helper.make_node(
-            'TopK',
-            inputs=['x', 'k'],
-            outputs=['values', 'indices'],
-            axis=axis
+            "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
         )
-        X = np.array([
-            [0, 1, 2, 3],
-            [4, 5, 6, 7],
-            [8, 9, 10, 11],
-        ], dtype=np.float32)
+        X = np.array(
+            [
+                [0, 1, 2, 3],
+                [4, 5, 6, 7],
+                [8, 9, 10, 11],
+            ],
+            dtype=np.float32,
+        )
         K = np.array([k], dtype=np.int64)
         values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 
-        #print(values_ref)
-        #[[ 3.  2.  1.]
+        # print(values_ref)
+        # [[ 3.  2.  1.]
         # [ 7.  6.  5.]
         # [11. 10.  9.]]
-        #print(indices_ref)
-        #[[3 2 1]
+        # print(indices_ref)
+        # [[3 2 1]
         # [3 2 1]
         # [3 2 1]]
 
-        expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
-               name='test_top_k')
+        expect(
+            node, inputs=[X, K], outputs=[values_ref, indices_ref], name="test_top_k"
+        )
 
     @staticmethod
     def export_top_k_smallest() -> None:
@@ -60,33 +61,40 @@ class TopK(Base):
         k = 3
 
         node = onnx.helper.make_node(
-            'TopK',
-            inputs=['x', 'k'],
-            outputs=['values', 'indices'],
+            "TopK",
+            inputs=["x", "k"],
+            outputs=["values", "indices"],
             axis=axis,
             largest=largest,
-            sorted=sorted
+            sorted=sorted,
         )
 
-        X = np.array([
-            [0, 1, 2, 3],
-            [4, 5, 6, 7],
-            [11, 10, 9, 8],
-        ], dtype=np.float32)
+        X = np.array(
+            [
+                [0, 1, 2, 3],
+                [4, 5, 6, 7],
+                [11, 10, 9, 8],
+            ],
+            dtype=np.float32,
+        )
         K = np.array([k], dtype=np.int64)
         values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 
-        #print(values_ref)
-        #[[ 0.  1.  2.]
+        # print(values_ref)
+        # [[ 0.  1.  2.]
         # [ 4.  5.  6.]
         # [ 8.  9. 10.]]
-        #print(indices_ref)
-        #[[0 1 2]
+        # print(indices_ref)
+        # [[0 1 2]
         # [0 1 2]
         # [3 2 1]]
 
-        expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
-               name='test_top_k_smallest')
+        expect(
+            node,
+            inputs=[X, K],
+            outputs=[values_ref, indices_ref],
+            name="test_top_k_smallest",
+        )
 
     @staticmethod
     def export_top_k_negative_axis() -> None:
@@ -95,27 +103,31 @@ class TopK(Base):
 
         k = 3
         node = onnx.helper.make_node(
-            'TopK',
-            inputs=['x', 'k'],
-            outputs=['values', 'indices'],
-            axis=axis
+            "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
         )
-        X = np.array([
-            [0, 1, 2, 3],
-            [4, 5, 6, 7],
-            [8, 9, 10, 11],
-        ], dtype=np.float32)
+        X = np.array(
+            [
+                [0, 1, 2, 3],
+                [4, 5, 6, 7],
+                [8, 9, 10, 11],
+            ],
+            dtype=np.float32,
+        )
         K = np.array([k], dtype=np.int64)
         values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 
         # print(values_ref)
-        #[[ 3.  2.  1.]
+        # [[ 3.  2.  1.]
         # [ 7.  6.  5.]
         # [11. 10.  9.]]
         # print(indices_ref)
-        #[[3 2 1]
+        # [[3 2 1]
         # [3 2 1]
         # [3 2 1]]
 
-        expect(node, inputs=[X, K], outputs=[values_ref, indices_ref],
-               name='test_top_k_negative_axis')
+        expect(
+            node,
+            inputs=[X, K],
+            outputs=[values_ref, indices_ref],
+            name="test_top_k_negative_axis",
+        )

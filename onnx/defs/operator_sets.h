@@ -983,9 +983,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, HammingWindow);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, BlackmanWindow);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, MelWeightMatrix);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, STFT);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, OptionalHasElement);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, OptionalGetElement);
-
 
 // Iterate over schema from ai.onnx version 17
 class OpSet_Onnx_ver17 {
@@ -999,9 +996,76 @@ class OpSet_Onnx_ver17 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, BlackmanWindow)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, MelWeightMatrix)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, STFT)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, OptionalHasElement)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, OptionalGetElement)>());
+  }
+};
 
+// Forward declarations for ai.onnx version 18
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Pad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, CenterCropPad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Resize);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Mish);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalGetElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalHasElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Split);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterElements);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceSumSquare);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSumExp);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL1);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL2);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMax);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMin);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMean);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceProd);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseAnd);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, GroupNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LpPool);
+
+// Iterate over schema from ai.onnx version 18
+class OpSet_Onnx_ver18 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Pad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, CenterCropPad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Resize)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Mish)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalGetElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Split)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, OptionalHasElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Col2Im)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterND)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ScatterElements)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceSumSquare)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceLogSumExp)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL1)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceL2)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMax)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMin)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceMean)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, ReduceProd)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseAnd)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseOr)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseXor)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, BitwiseNot)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, GroupNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LpPool)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 19
+
+// Iterate over schema from ai.onnx version 19
+class OpSet_Onnx_ver19 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    // TODO: Remove after introducing the first schema to opset 19
+    (void)fn;
   }
 };
 
@@ -1023,6 +1087,8 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver15>();
   RegisterOpSetSchema<OpSet_Onnx_ver16>();
   RegisterOpSetSchema<OpSet_Onnx_ver17>();
+  RegisterOpSetSchema<OpSet_Onnx_ver18>();
+  RegisterOpSetSchema<OpSet_Onnx_ver19>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
@@ -1030,6 +1096,8 @@ inline void RegisterOnnxOperatorSetSchema() {
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
   // Update here if opset_version bumps
   // These calls for schema registration here are required to be in descending order for this to work correctly
+  RegisterOpSetSchema<OpSet_Onnx_ver19>(target_version);
+  RegisterOpSetSchema<OpSet_Onnx_ver18>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver17>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver16>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver15>(target_version);

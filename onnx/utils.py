@@ -6,8 +6,7 @@ from typing import List, Tuple
 import onnx.checker
 import onnx.helper
 import onnx.shape_inference
-
-from onnx import ModelProto, NodeProto, TensorProto, ValueInfoProto, FunctionProto
+from onnx import FunctionProto, ModelProto, NodeProto, TensorProto, ValueInfoProto
 
 
 class Extractor:
@@ -46,26 +45,29 @@ class Extractor:
         return self._collect_new_io_core(self.graph.output, names)  # type: ignore
 
     def _dfs_search_reachable_nodes(
-            self,
-            node_output_name: str,
-            graph_input_names: List[str],
-            reachable_nodes: List[NodeProto],
+        self,
+        node_output_name: str,
+        graph_input_names: List[str],
+        reachable_nodes: List[NodeProto],
     ) -> None:
         if node_output_name in graph_input_names:
             return
         for node in self.graph.node:
-            if node in reachable_nodes:
-                continue
+            # check output_name first to reduce run time
             if node_output_name not in node.output:
+                continue
+            if node in reachable_nodes:
                 continue
             reachable_nodes.append(node)
             for name in node.input:
-                self._dfs_search_reachable_nodes(name, graph_input_names, reachable_nodes)
+                self._dfs_search_reachable_nodes(
+                    name, graph_input_names, reachable_nodes
+                )
 
     def _collect_reachable_nodes(
-            self,
-            input_names: List[str],
-            output_names: List[str],
+        self,
+        input_names: List[str],
+        output_names: List[str],
     ) -> List[NodeProto]:
         reachable_nodes = list()  # type: ignore
         for name in output_names:
@@ -75,8 +77,8 @@ class Extractor:
         return nodes
 
     def _collect_referred_local_functions(
-            self,
-            nodes,  # type: List[NodeProto]
+        self,
+        nodes,  # type: List[NodeProto]
     ):  # type: (...) -> List[FunctionProto]
         # a node in a model graph may refer a function.
         # a function contains nodes, some of which may in turn refer a function.
@@ -86,10 +88,14 @@ class Extractor:
             new_nodes = []  # type: List[NodeProto]
             for node in nodes:
                 # check if the node is a function op
-                match_function = next((
-                    f for f in self.model.functions
-                    if f.name == node.op_type and f.domain == node.domain),
-                    None)
+                match_function = next(
+                    (
+                        f
+                        for f in self.model.functions
+                        if f.name == node.op_type and f.domain == node.domain
+                    ),
+                    None,
+                )
                 if match_function and match_function not in referred_local_functions:
                     referred_local_functions.append(match_function)
                     new_nodes.extend(match_function.node)
@@ -104,8 +110,8 @@ class Extractor:
         return referred_local_functions
 
     def _collect_reachable_tensors(
-            self,
-            nodes: List[NodeProto],
+        self,
+        nodes: List[NodeProto],
     ) -> Tuple[List[TensorProto], List[ValueInfoProto]]:
         all_tensors_name = set()
         for node in nodes:
@@ -116,52 +122,55 @@ class Extractor:
 
         initializer = [self.wmap[t] for t in self.wmap.keys() if t in all_tensors_name]
         value_info = [self.vimap[t] for t in self.vimap.keys() if t in all_tensors_name]
-        assert(len(self.graph.sparse_initializer) == 0)
-        assert(len(self.graph.quantization_annotation) == 0)
-        return (initializer, value_info)
+        assert len(self.graph.sparse_initializer) == 0
+        assert len(self.graph.quantization_annotation) == 0
+        return initializer, value_info
 
     def _make_model(
-            self,
-            nodes: List[NodeProto],
-            inputs: List[ValueInfoProto],
-            outputs: List[ValueInfoProto],
-            initializer: List[TensorProto],
-            value_info: List[ValueInfoProto],
-            local_functions: List[FunctionProto],
+        self,
+        nodes: List[NodeProto],
+        inputs: List[ValueInfoProto],
+        outputs: List[ValueInfoProto],
+        initializer: List[TensorProto],
+        value_info: List[ValueInfoProto],
+        local_functions: List[FunctionProto],
     ) -> ModelProto:
-        name = 'Extracted from {' + self.graph.name + '}'
-        graph = onnx.helper.make_graph(nodes, name, inputs, outputs, initializer=initializer,
-                                      value_info=value_info)
+        name = "Extracted from {" + self.graph.name + "}"
+        graph = onnx.helper.make_graph(
+            nodes, name, inputs, outputs, initializer=initializer, value_info=value_info
+        )
 
         meta = {
-            'ir_version': self.model.ir_version,
-            'opset_imports': self.model.opset_import,
-            'producer_name': 'onnx.utils.extract_model',
-            'functions': local_functions,
+            "ir_version": self.model.ir_version,
+            "opset_imports": self.model.opset_import,
+            "producer_name": "onnx.utils.extract_model",
+            "functions": local_functions,
         }
         return onnx.helper.make_model(graph, **meta)
 
     def extract_model(
-            self,
-            input_names: List[str],
-            output_names: List[str],
+        self,
+        input_names: List[str],
+        output_names: List[str],
     ) -> ModelProto:
         inputs = self._collect_new_inputs(input_names)
         outputs = self._collect_new_outputs(output_names)
         nodes = self._collect_reachable_nodes(input_names, output_names)
         initializer, value_info = self._collect_reachable_tensors(nodes)
         local_functions = self._collect_referred_local_functions(nodes)
-        model = self._make_model(nodes, inputs, outputs, initializer, value_info, local_functions)
+        model = self._make_model(
+            nodes, inputs, outputs, initializer, value_info, local_functions
+        )
 
         return model
 
 
 def extract_model(
-        input_path: str,
-        output_path: str,
-        input_names: List[str],
-        output_names: List[str],
-        check_model: bool = True,
+    input_path: str,
+    output_path: str,
+    input_names: List[str],
+    output_names: List[str],
+    check_model: bool = True,
 ) -> None:
     """Extracts sub-model from an ONNX model.
 

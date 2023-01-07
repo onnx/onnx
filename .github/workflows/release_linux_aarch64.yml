@@ -25,14 +25,14 @@ jobs:
     strategy:
       matrix:
         # the different python versions for building wheels
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310]
+        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
       img: quay.io/pypa/manylinux2014_aarch64
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Checkout submodules
       shell: bash
       run: |
@@ -55,7 +55,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '${{ env.py }} -m pip install -q virtualenv && ${{ env.py }} -m venv .env && \
           source .env/bin/activate && \
-          ${{ env.py }} -m pip install -U numpy protobuf==3.16.0 && \
+          ${{ env.py }} -m pip install -q -r requirements-release.txt && \
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 
@@ -82,19 +82,6 @@ jobs:
           python -m pip install -q -r requirements-release.txt && \
           pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
-          deactivate'
-
-    - name: Test backend test data
-      run: |
-        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '\
-          source .env/bin/activate && \
-          # onnx.checker all existing backend data
-          python workflow_scripts/test_generated_backend.py && \
-          # onnx.checker all generated backend data && \
-          python onnx/backend/test/cmd_tools.py generate-data && \
-          python workflow_scripts/test_generated_backend.py && \
           deactivate'
 
     - uses: actions/upload-artifact@v1
@@ -127,13 +114,13 @@ jobs:
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip uninstall -y onnx && python -m pip install protobuf==3.12.2 && \
+          python -m pip uninstall -y onnx && python -m pip install protobuf==3.20.2 && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != 'cp310-cp310' # TODO update once onnxruntime has supported Python 3.10
+      if: matrix.python-version != 'cp311-cp311'
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
