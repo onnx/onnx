@@ -735,7 +735,7 @@ def is_last_schema(sch: OpSchema) -> bool:
     return last.since_version == sch.since_version
 
 
-def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=None):  # type: ignore
+def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=None, max_opsets=None):  # type: ignore
     """
     Creates documentation in a folder for all known
     ONNX operators or a subset.
@@ -743,6 +743,7 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
     :param ops: None for all operators or a subset of them
     :param title: index title
     :param flog: logging function
+    :param max_opsets: included operator definition up to this opsets
     :return: list of creates files
     """
 
@@ -804,7 +805,22 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
             res = "\n".join(table_dom)
             return res
 
-    all_schemas = _get_all_schemas_with_history()
+    all_schemas_available = _get_all_schemas_with_history()
+
+    # filter out operator under development
+    all_schemas = {}
+    for domain, ops in all_schemas_available.items():
+        max_version = None if max_opsets is None else max_opsets.get(domain, None)
+        d = {}
+        for op, schemas in ops.items():
+            vers = {}
+            for version, schema in schemas.items():
+                if max_version is not None and version > max_version:
+                    continue
+                vers[version] = schema
+            d[op] = vers
+        all_schemas[domain] = d
+
     if not os.path.exists(folder):
         os.makedirs(folder)
 
@@ -889,7 +905,8 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
 def _generate_op_doc(app):
     logger = logging.getLogger(__name__)
     folder = app.config.onnx_doc_folder
-    onnx_documentation_folder(folder, flog=logger.info)
+    max_opsets = app.config.max_opsets
+    onnx_documentation_folder(folder, flog=logger.info, max_opsets=max_opsets)
 
 
 def setup(app):
@@ -900,6 +917,7 @@ def setup(app):
     import sphinx
 
     app.add_config_value("onnx_doc_folder", "operators", "env")
+    app.add_config_value("max_opsets", {}, "env")
     app.connect("builder-inited", _generate_op_doc)
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
 
