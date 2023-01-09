@@ -112,9 +112,6 @@ class TestBasicFunctions(unittest.TestCase):
 
         model = onnx.parser.parse_model(input)
         checker.check_model(model)
-        self.assertRaises(
-            onnx.parser.ParseError, lambda: onnx.parser.parse_model(input)
-        )
 
 
 if __name__ == "__main__":
