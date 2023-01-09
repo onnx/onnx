@@ -51,7 +51,7 @@ jobs:
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 
-      # using created virtual environment in new container and executing the script 
+      # using created virtual environment in new container and executing the script
     - name: Build manylinux2014_aarch64
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
