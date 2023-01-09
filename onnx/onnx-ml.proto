@@ -478,6 +478,23 @@ message GraphProto {
   reserved "ir_version", "producer_version", "producer_tag", "domain";
 }
 
+message LibProto {
+  // TODO: add comments
+  optional int64 ir_version = 1;
+
+  optional string producer_name = 2;
+
+  optional string producer_version = 3;
+
+  optional string domain = 4;
+
+  optional int64 lib_version = 5;
+
+  optional string doc_string = 6;
+
+  repeated FunctionProto functions = 7;
+}
+
 // Tensors
 //
 // A serialized tensor value.
