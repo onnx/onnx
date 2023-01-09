@@ -26,6 +26,7 @@ from onnx import (
     AttributeProto,
     FunctionProto,
     GraphProto,
+    LibProto,
     MapProto,
     ModelProto,
     NodeProto,
