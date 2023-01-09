@@ -1183,13 +1183,13 @@ the following nodes expect specific shape.
 Evaluation and Runtime
 ======================
 
-An ONNX model can be used to move a model from one library to another
-or it can be directly evaluated with an ONNX runtime.
-:epkg:`onnxruntime` is one efficient option. It is available in many platforms.
+The ONNX standard allows frameworks to export trained models in ONNX format,
+and enables inference using any backend that supports the ONNX format.
+*onnxruntime* is one efficient option. It is available in many platforms.
 It is optimized for fast inference. Its coverage can be tracked on
-`ONNX Backend Dashboard <http://onnx.ai/backend-scoreboard/>`_.
-*onnx* implements a python runtime
-useful to help understand a model.
+`ONNX Backend Dashboard <https://onnx.ai/backend-scoreboard/>`_.
+*onnx* implements a python runtime useful to help understand a model.
+It is not intended to be used for production and performance is not a goal.
 
 Evaluation of a linear regression
 +++++++++++++++++++++++++++++++++
