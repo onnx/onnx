@@ -836,7 +836,7 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
         dom_pages = []
 
         sub = all_schemas[dom]
-        do = []
+        do = []  # type: ignore
         if ops is None:
             do.extend(sub)
         else:

@@ -16,7 +16,7 @@ copyright = "2022"
 project = "ONNX"
 release = onnx.__version__
 version = onnx.__version__
-max_opsets = {'': 18, 'ai.onnx.ml': 3}
+max_opsets = {"": 18, "ai.onnx.ml": 3}
 
 # -- General configuration ---------------------------------------------------
 
