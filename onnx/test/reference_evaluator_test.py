@@ -2016,7 +2016,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         for i in range(4):
             assert_allclose(expected[i], got1[i])
 
-    def test_split_num_outputs(self):
+    def test_split_num_outputs_4(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y1 = make_tensor_value_info("Y1", TensorProto.FLOAT, [None])
         Y2 = make_tensor_value_info("Y2", TensorProto.FLOAT, [None])
@@ -2026,13 +2026,28 @@ class TestReferenceEvaluator(unittest.TestCase):
         node = make_node("Split", ["X"], ["Y1", "Y2", "Y3", "Y4"], num_outputs=4)
         graph = make_graph([node], "g", [X], [Y1, Y2, Y3, Y4])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
-        feeds = {"X": np.arange(10).astype(np.float32)}
 
+        # case 1
+        feeds = {"X": np.arange(10).astype(np.float32)}
         expected = [
             np.array([0, 1, 2], dtype=np.float32),
             np.array([3, 4, 5], dtype=np.float32),
             np.array([6, 7, 8], dtype=np.float32),
             np.array([9], dtype=np.float32),
+        ]
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        for i in range(4):
+            assert_allclose(expected[i], got1[i])
+
+        # case 2
+        feeds = {"X": np.arange(9).astype(np.float32)}
+        expected = [
+            np.array([0, 1, 2], dtype=np.float32),
+            np.array([3, 4, 5], dtype=np.float32),
+            np.array([6, 7, 8], dtype=np.float32),
+            np.array([], dtype=np.float32),
         ]
 
         ref1 = ReferenceEvaluator(onnx_model)
