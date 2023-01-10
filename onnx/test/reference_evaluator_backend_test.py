@@ -66,6 +66,14 @@ SKIP_TESTS = {
     # not implemented
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
+    "test_lppool_1d_default",   # TODO: implement in these pr
+    "test_lppool_2d_default",
+    "test_lppool_2d_dilations",
+    "test_lppool_2d_pads",
+    "test_lppool_2d_same_lower",
+    "test_lppool_2d_same_upper",
+    "test_lppool_2d_strides",
+    "test_lppool_3d_default",
 }
 
 if version(npver) < version("1.21.5"):
