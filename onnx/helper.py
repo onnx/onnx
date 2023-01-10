@@ -359,8 +359,8 @@ def make_tensor(
     tensor.data_type = data_type
     tensor.name = name
 
-    if data_type == TensorProto.STRING:
-        assert not raw, "Can not use raw_data to store string type"
+    if data_type == TensorProto.STRING and raw:
+        raise ValueError("Can not use raw_data to store string type.")
 
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
@@ -563,7 +563,10 @@ def make_attribute(
         attr.type = AttributeProto.INT
     # string
     elif bytes_or_false is not False:
-        assert isinstance(bytes_or_false, bytes)
+        if not isinstance(bytes_or_false, bytes):
+            raise ValueError(
+                "{} must be an instance of {}.".format(bytes_or_false, bytes)
+            )
         attr.s = bytes_or_false
         attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
@@ -945,7 +948,8 @@ def printable_attribute(
 
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
     which = dim.WhichOneof("value")
-    assert which is not None
+    if which is None:
+        raise ValueError("{} cannot be {}.".format(which, None))
     return str(getattr(dim, which))
 
 
@@ -995,12 +999,18 @@ def printable_node(
     for attr in node.attribute:
         if subgraphs:
             printed_attr_subgraphs = printable_attribute(attr, subgraphs)
-            assert isinstance(printed_attr_subgraphs[1], list)
+            if not isinstance(printed_attr_subgraphs[1], list):
+                raise ValueError(
+                    "{} must be an instance of {}.".format(
+                        printed_attr_subgraphs[1], list
+                    )
+                )
             graphs.extend(printed_attr_subgraphs[1])
             printed_attrs.append(printed_attr_subgraphs[0])
         else:
             printed = printable_attribute(attr)
-            assert isinstance(printed, str)
+            if not isinstance(printed, str):
+                raise ValueError("{} must be an instance of {}.".format(printed, str))
             printed_attrs.append(printed)
     printed_attributes = ", ".join(sorted(printed_attrs))
     printed_inputs = ", ".join([f"%{name}" for name in node.input])
@@ -1078,7 +1088,10 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     # body
     for node in graph.node:
         contents_subgraphs = printable_node(node, indent, subgraphs=True)
-        assert isinstance(contents_subgraphs[1], list)
+        if not isinstance(contents_subgraphs[1], list):
+            raise ValueError(
+                "{} must be an instance of {}.".format(contents_subgraphs[1], list)
+            )
         content.append(contents_subgraphs[0])
         graphs.extend(contents_subgraphs[1])
     # tail
@@ -1097,7 +1110,12 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
     """
     Empties `doc_string` field on any nested protobuf messages
     """
-    assert isinstance(proto, google.protobuf.message.Message)
+    if not isinstance(proto, google.protobuf.message.Message):
+        raise ValueError(
+            "{} must be an instance of {}.".format(
+                proto, google.protobuf.message.Message
+            )
+        )
     for descriptor in proto.DESCRIPTOR.fields:
         if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)

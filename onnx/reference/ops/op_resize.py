@@ -189,7 +189,8 @@ def _interpolate_1d_with_x(
     elif coordinate_transformation_mode == "asymmetric":
         x_ori = x / scale_factor
     elif coordinate_transformation_mode == "tf_crop_and_resize":
-        assert roi is not None
+        if roi is None:
+            raise ValueError("{} cannot be None.".format(roi))
         if output_width == 1:
             x_ori = (roi[1] - roi[0]) * (input_width - 1) / 2
         else:
@@ -295,7 +296,8 @@ def _interpolate_nd(
     **kwargs: Any,
 ) -> np.ndarray:
 
-    assert output_size is not None or scale_factors is not None
+    if output_size is None and scale_factors is None:
+        raise ValueError("output_size is None and scale_factors is None.")
 
     r = len(data.shape)
     if axes is not None:
@@ -346,7 +348,8 @@ def _interpolate_nd(
     else:
         output_size = (scale_factors * np.array(data.shape)).astype(int)  # type: ignore[union-attr]
 
-    assert scale_factors is not None
+    if scale_factors is None:
+        raise ValueError("scale_factors is None.")
 
     ret = np.zeros(output_size)
     for x in _get_all_coords(ret):
