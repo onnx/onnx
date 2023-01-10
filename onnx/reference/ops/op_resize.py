@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0123,C3001,R0912,R0913,R0914,R1730,W0221,W0613
 
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, Tuple
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 
 
-def _cartesian(arrays: List[np.ndarray], out: np.ndarray = None) -> np.ndarray:
+def _cartesian(
+    arrays: List[np.ndarray], out: Optional[np.ndarray] = None
+) -> np.ndarray:
     """
     From https://stackoverflow.com/a/1235363
     Generate a cartesian product of input arrays.
@@ -116,7 +118,7 @@ def _linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
     footprint = 2 - 2 * start
     args = (np.arange(start, start + footprint) - ratio) * scale
     coeffs = np.clip(1 - np.abs(args), 0, 1)
-    return np.array(coeffs) / sum(coeffs)
+    return np.array(coeffs) / sum(coeffs)  # type: ignore[no-any-return]
 
 
 def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
@@ -145,7 +147,7 @@ def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
     return np.array(idxes)
 
 
-def _get_neighbor(x: float, n: int, data: np.ndarray) -> np.ndarray:
+def _get_neighbor(x: float, n: int, data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     Pad `data` in 'edge' mode, and get n nearest elements in the padded array
     and their indexes in the original array.
@@ -171,7 +173,7 @@ def _interpolate_1d_with_x(
     scale_factor: float,
     x: float,
     get_coeffs: Callable[[float, float], np.ndarray],
-    roi: np.ndarray = None,
+    roi: Optional[np.ndarray] = None,
     extrapolation_value: float = 0.0,
     coordinate_transformation_mode: str = "half_pixel",
     exclude_outside: bool = False,
@@ -187,6 +189,7 @@ def _interpolate_1d_with_x(
     elif coordinate_transformation_mode == "asymmetric":
         x_ori = x / scale_factor
     elif coordinate_transformation_mode == "tf_crop_and_resize":
+        assert roi is not None
         if output_width == 1:
             x_ori = (roi[1] - roi[0]) * (input_width - 1) / 2
         else:
@@ -194,7 +197,7 @@ def _interpolate_1d_with_x(
         x_ori += roi[0] * (input_width - 1)
         # Return extrapolation_value directly as what TF CropAndResize does
         if x_ori < 0 or x_ori > input_width - 1:
-            return extrapolation_value
+            return np.array(extrapolation_value)
     elif coordinate_transformation_mode == "pytorch_half_pixel":
         if output_width == 1:
             x_ori = -0.5
@@ -225,7 +228,7 @@ def _interpolate_1d_with_x(
                 coeffs[i] = 0
         coeffs /= sum(coeffs)
 
-    return np.dot(coeffs, points).item()
+    return np.dot(coeffs, points).item()  # type: ignore[no-any-return]
 
 
 def _interpolate_nd_with_x(
@@ -234,7 +237,7 @@ def _interpolate_nd_with_x(
     scale_factors: List[float],
     x: List[float],
     get_coeffs: Callable[[float, float], np.ndarray],
-    roi: np.ndarray = None,
+    roi: Optional[np.ndarray] = None,
     exclude_outside: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -263,18 +266,21 @@ def _interpolate_nd_with_x(
         res1d.append(r)
 
     return _interpolate_1d_with_x(
-        res1d,
+        res1d,  # type: ignore[arg-type]  # FIXME
         scale_factors[0],
         x[0],
         get_coeffs,
-        roi=None if roi is None else [roi[0], roi[n]],
+        roi=None if roi is None else [roi[0], roi[n]],  # type: ignore[arg-type]  # FIXME
         exclude_outside=exclude_outside,
         **kwargs,
     )
 
 
 def _get_all_coords(data: np.ndarray) -> np.ndarray:
-    return _cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
+    # FIXME: Fix input type
+    return _cartesian(
+        [list(range(data.shape[i])) for i in range(len(data.shape))]  # type: ignore[arg-type,misc]
+    )
 
 
 def _interpolate_nd(
@@ -283,7 +289,7 @@ def _interpolate_nd(
     output_size: Optional[List[int]] = None,
     scale_factors: Optional[List[float]] = None,
     axes: Optional[List[int]] = None,
-    roi: np.ndarray = None,
+    roi: Optional[np.ndarray] = None,
     keep_aspect_ratio_policy: Optional[str] = "stretch",
     exclude_outside: bool = False,
     **kwargs: Any,
@@ -311,7 +317,7 @@ def _interpolate_nd(
             for i, d in enumerate(axes):
                 new_roi[d] = roi[i]
                 new_roi[r + d] = roi[naxes + i]
-            roi = new_roi
+            roi = new_roi  # type: ignore[assignment]  # FIXME
     else:
         axes = list(range(r))
 
@@ -338,7 +344,7 @@ def _interpolate_nd(
             ]
 
     else:
-        output_size = (scale_factors * np.array(data.shape)).astype(int)
+        output_size = (scale_factors * np.array(data.shape)).astype(int)  # type: ignore[union-attr]
 
     assert scale_factors is not None
 
