@@ -96,9 +96,9 @@ class TestModelHub(unittest.TestCase):
         )
 
     def test_download_model_with_test_data(self) -> None:
-        dir = hub.download_model_with_test_data('mnist')
+        dir = hub.download_model_with_test_data("mnist")
         self.assertIsInstance(dir, str)
-        
+
 
 if __name__ == "__main__":
     unittest.main()
