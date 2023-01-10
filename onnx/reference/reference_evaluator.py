@@ -153,7 +153,7 @@ class ReferenceEvaluator:
                 raise ValueError("opsets must be None if proto is ModelProto.")
             if functions is not None:
                 raise ValueError("functions must be None if proto is ModelProto.")
-            functions = proto.functions
+            functions = proto.functions  # type: ignore[assignment]
         elif isinstance(proto, GraphProto):
             self.onnx_graph_ = proto
             if not isinstance(opsets, dict):
@@ -191,7 +191,7 @@ class ReferenceEvaluator:
             self.output_names_ = list(proto.output)
             self.inits_ = []
             if isinstance(proto, NodeProto):
-                self.nodes_ = [proto]
+                self.nodes_ = [proto]  # type: ignore[assignment]
             else:
                 self.nodes_ = proto.node
         if functions is not None:
@@ -292,7 +292,7 @@ class ReferenceEvaluator:
         self.rt_inits_ = {}
         self.rt_nodes_ = []
         for init in self.inits_:
-            self.rt_inits_[init.name] = numpy_helper.to_array(init)
+            self.rt_inits_[init.name] = numpy_helper.to_array(init)  # type: ignore[union-attr,arg-type]
         run_params = {
             "log": lambda pattern, *args: self._log(10, pattern, *args),
             "opsets": self.opsets,
@@ -357,7 +357,7 @@ class ReferenceEvaluator:
                     node.op_type,
                     version,
                     node=node,
-                    input_types=input_types,
+                    input_types=input_types,  # type: ignore[arg-type]
                 )
 
         if node.domain == "ai.onnx.preview.training":
@@ -398,12 +398,12 @@ class ReferenceEvaluator:
 
         # step 1: inputs and initializers
         results = {"": None}  # optional input
-        results.update(self.rt_inits_)
+        results.update(self.rt_inits_)  # type: ignore[arg-type]
         results.update(feed_inputs)
         for k, v in self.rt_inits_.items():
-            self._log(2, " +C %s: %s", k, v)
+            self._log(2, " +C %s: %s", k, v)  # type: ignore[arg-type]
         for k, v in feed_inputs.items():
-            self._log(2, " +I %s: %s", k, v)
+            self._log(2, " +I %s: %s", k, v)  # type: ignore[arg-type]
 
         # step 2: execute nodes
         for node in self.rt_nodes_:
@@ -421,7 +421,7 @@ class ReferenceEvaluator:
                     raise TypeError(
                         f"Unexected type {type(value)} for output {name!r}."
                     )
-                self._log(2, " + %s: %s", name, value)
+                self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
 
         # return the results

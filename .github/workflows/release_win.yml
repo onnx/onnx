@@ -20,7 +20,7 @@ jobs:
         # related issue: https://github.com/actions/setup-python/issues/481
         python-version: ['3.7', '3.8', '3.9', '3.10.5', '3.11']
         architecture: ['x64', 'x86']
-    steps:        
+    steps:
     - name: Checkout ONNX
       uses: actions/checkout@v3
       with:
@@ -37,7 +37,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        architecture: ${{ matrix.architecture }}    
+        architecture: ${{ matrix.architecture }}
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.1
@@ -70,8 +70,8 @@ jobs:
         } else {
           python setup.py bdist_wheel
         }
-        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname} 
-  
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+
     - name: Test the installed wheel
       run: |
         cd onnx
@@ -81,7 +81,7 @@ jobs:
       with:
         name: wheels
         path: ./onnx/dist
-  
+
     - name: Upload wheel to TestPyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |

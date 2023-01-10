@@ -736,7 +736,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FunctionBody(R"ONNX(
         {
           Zero = Constant <value = float {0.0}>()
-          ZeroCast = CastLike(Zero, X)    
+          ZeroCast = CastLike(Zero, X)
           XLessThanZero = Less (X, ZeroCast)
           SlopeMulX = Mul (slope, X)
           Y = Where(XLessThanZero, SlopeMulX, X)
