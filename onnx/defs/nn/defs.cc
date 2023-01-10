@@ -2676,20 +2676,20 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* GroupNormalization_ver18_doc = R"DOC(
-A GroupNormalization function. Carries out group normalization as described in 
-the paper https://arxiv.org/abs/1803.08494 
+A GroupNormalization function. Carries out group normalization as described in
+the paper https://arxiv.org/abs/1803.08494
 
 This operator transforms input according to
 ```
 y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
 ```
-where the mean and variance are computed per instance per group of channels, and 
-`scale` and `bias` should be specified for each group of channels. The number of 
-groups `num_groups` should be divisible by the number of channels so that there are 
+where the mean and variance are computed per instance per group of channels, and
+`scale` and `bias` should be specified for each group of channels. The number of
+groups `num_groups` should be divisible by the number of channels so that there are
 an equal number of channels per group.
 
-When the number of groups is the same as the number of channels, this operator is 
-equivalent to InstanceNormalization. When there is only one group, this operator 
+When the number of groups is the same as the number of channels, this operator is
+equivalent to InstanceNormalization. When there is only one group, this operator
 is equivalent to LayerNormalization.
 )DOC";
 

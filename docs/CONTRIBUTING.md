@@ -51,14 +51,27 @@ Before proposing a new operator, please read [the tutorial](AddNewOp.md).
 # Code style
 
 We use flake8, mypy, and clang-format for checking code format.
-*Note: You'll find the versions of these tools in `setup.py`.*
-You can run these checks by:
 
-```
-pip install -e .[lint]
+To run the checks locally, install `lintrunner` and the linters with
 
-./tools/style.sh
+```sh
+pip install lintrunner lintrunner-adapters
+lintrunner init
 ```
+
+Then lint with
+
+```sh
+lintrunner
+```
+
+format with
+
+```sh
+lintrunner -a
+```
+
+Run `lintrunner --help` and see the `.lintrunner.toml` file for more usage examples, as well as how to create new linters.
 
 # Testing
 

@@ -204,7 +204,7 @@ class Runner:
                     )
             else:
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
-                if ref_outputs[i].dtype == np.object:
+                if ref_outputs[i].dtype == np.object:  # type: ignore[attr-defined]
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
                     np.testing.assert_allclose(
@@ -382,7 +382,7 @@ class Runner:
             elif model_type_proto.HasField("optional_type"):
                 optional = onnx.OptionalProto()
                 optional.ParseFromString(protobuf_content)
-                target_list.append(numpy_helper.to_optional(optional))
+                target_list.append(numpy_helper.to_optional(optional))  # type: ignore[arg-type]
             else:
                 print(
                     "Loading proto of that specific type (Map/Sparse Tensor) is currently not supported"

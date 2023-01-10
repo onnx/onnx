@@ -46,7 +46,7 @@ jobs:
         export CXX=clang++
         export ONNX_ML=1
         python setup.py --quiet install
-  
+
     - name: Test all models with onnx.checker and onnx.shape_inference
       run: |
         cd ..

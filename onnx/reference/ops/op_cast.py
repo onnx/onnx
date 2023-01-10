@@ -26,7 +26,7 @@ def cast_to(x, to):
         xf = x.astype(np.float32).ravel()
         y = np.empty(xf.shape, dtype=bfloat16).ravel()
         for i in range(y.shape[0]):
-            el = float32_to_bfloat16(xf[i], truncate=True)
+            el = float32_to_bfloat16(xf[i], truncate=True)  # type: ignore[assignment]
             y[i] = el
         return y.reshape(x.shape)
 

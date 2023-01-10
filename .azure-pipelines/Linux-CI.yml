@@ -67,10 +67,7 @@ jobs:
   - script: |
       source venv/bin/activate
 
-      # check line endings to be UNIX
-      find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
-      git status
-      git diff --exit-code
+      python -m pip install -q -r requirements-dev.txt
 
       # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py

@@ -118,7 +118,7 @@ def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
     """
     Hosts a sparse tensor.
     """
-    shape = tuple(d for d in att.dims)
+    shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
     return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
 
 
