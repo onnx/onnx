@@ -9,9 +9,43 @@ from onnx.external_data_helper import (
     write_external_data_tensors,
     convert_model_to_external_data,
 )
-from .onnx_pb import *  # noqa
-from .onnx_operators_pb import *  # noqa
-from .onnx_data_pb import *  # noqa
+from .onnx_pb import (
+    AttributeProto,
+    EXPERIMENTAL,
+    FunctionProto,
+    GraphProto,
+    IR_VERSION,
+    IR_VERSION_2017_10_10,
+    IR_VERSION_2017_10_30,
+    IR_VERSION_2017_11_3,
+    IR_VERSION_2019_1_22,
+    IR_VERSION_2019_3_18,
+    IR_VERSION_2019_9_19,
+    IR_VERSION_2020_5_8,
+    ModelProto,
+    NodeProto,
+    OperatorSetIdProto,
+    OperatorStatus,
+    STABLE,
+    SparseTensorProto,
+    StringStringEntryProto,
+    TensorAnnotation,
+    TensorProto,
+    TensorShapeProto,
+    TrainingInfoProto,
+    TypeProto,
+    ValueInfoProto,
+    Version,
+)
+from .onnx_operators_pb import (
+    OperatorProto,
+    OperatorSetProto,
+)
+from .onnx_data_pb import (
+    MapProto,
+    OptionalProto,
+    SequenceProto,
+)
 from .version import version as __version__  # noqa
 
 # Import common subpackages so they're available when you 'import onnx'
