@@ -608,7 +608,8 @@ in a matrix based on the sign, returns 1 or -1.
         f.write(onnx_model.SerializeToString())
 
     # Let's see the output.
-    sess = InferenceSession(onnx_model.SerializeToString())
+    sess = InferenceSession(onnx_model.SerializeToString(),
+                            providers=["CPUExecutionProvider"])
 
     x = numpy.ones((3, 2), dtype=numpy.float32)
     res = sess.run(None, {'X': x})
@@ -1179,6 +1180,279 @@ a Reshape operator. Shape inference only works if the shape is constant.
 If not constant, the shape cannot be easily inferred unless
 the following nodes expect specific shape.
 
+Evaluation and Runtime
+======================
+
+The ONNX standard allows frameworks to export trained models in ONNX format,
+and enables inference using any backend that supports the ONNX format.
+*onnxruntime* is one efficient option. It is available in many platforms.
+It is optimized for fast inference. Its coverage can be tracked on
+`ONNX Backend Dashboard <https://onnx.ai/backend-scoreboard/>`_.
+*onnx* implements a python runtime useful to help understand a model.
+It is not intended to be used for production and performance is not a goal.
+
+Evaluation of a linear regression
++++++++++++++++++++++++++++++++++
+
+Full API is described at :ref:`l-reference-implementation`.
+It takes a model (a *ModelProto*, a filename, ...).
+Method `run` returns the outputs for a given set of inputs
+specified in a dictionary.
+
+.. exec_code::
+
+    import numpy
+    from onnx import numpy_helper, TensorProto
+    from onnx.helper import (
+        make_model, make_node, set_model_props, make_tensor,
+        make_graph, make_tensor_value_info)
+    from onnx.checker import check_model
+    from onnx.reference import ReferenceEvaluator
+
+    X = make_tensor_value_info('X', TensorProto.FLOAT, [None, None])
+    A = make_tensor_value_info('A', TensorProto.FLOAT, [None, None])
+    B = make_tensor_value_info('B', TensorProto.FLOAT, [None, None])
+    Y = make_tensor_value_info('Y', TensorProto.FLOAT, [None])
+    node1 = make_node('MatMul', ['X', 'A'], ['XA'])
+    node2 = make_node('Add', ['XA', 'B'], ['Y'])
+    graph = make_graph([node1, node2], 'lr', [X, A, B], [Y])
+    onnx_model = make_model(graph)
+    check_model(onnx_model)
+
+    sess = ReferenceEvaluator(onnx_model)
+
+    x = numpy.random.randn(4, 2).astype(numpy.float32)
+    a = numpy.random.randn(2, 1).astype(numpy.float32)
+    b = numpy.random.randn(1, 1).astype(numpy.float32)
+    feeds = {'X': x, 'A': a, 'B': b}
+
+    print(sess.run(None, feeds))
+
+Evaluation of a node
+++++++++++++++++++++
+
+The evaluator can also evaluate a simple node to check how an operator
+behaves on a specific input.
+
+.. exec_code::
+
+    import numpy
+    from onnx import numpy_helper, TensorProto
+    from onnx.helper import make_node
+
+    from onnx.reference import ReferenceEvaluator
+
+    node = make_node('EyeLike', ['X'], ['Y'])
+
+    sess = ReferenceEvaluator(node)
+
+    x = numpy.random.randn(4, 2).astype(numpy.float32)
+    feeds = {'X': x}
+
+    print(sess.run(None, feeds))
+
+Similar code would also work on *GraphProto* or *FunctionProto*.
+
+Evaluation Step by Step
++++++++++++++++++++++++
+
+A converting library takes an existing model trained with a machine
+learning framework (*pytorch*, *scikit-learn*, ...) and
+converts the model into an ONNX graph. Complex models usually do not work
+on the first try and seeing intermediate results may help to find the
+part incorrectly converted. Parameter `verbose` displays information
+about intermediate results.
+
+.. exec_code::
+
+    import numpy
+    from onnx import numpy_helper, TensorProto
+    from onnx.helper import (
+        make_model, make_node, set_model_props, make_tensor,
+        make_graph, make_tensor_value_info)
+    from onnx.checker import check_model
+    from onnx.reference import ReferenceEvaluator
+
+    X = make_tensor_value_info('X', TensorProto.FLOAT, [None, None])
+    A = make_tensor_value_info('A', TensorProto.FLOAT, [None, None])
+    B = make_tensor_value_info('B', TensorProto.FLOAT, [None, None])
+    Y = make_tensor_value_info('Y', TensorProto.FLOAT, [None])
+    node1 = make_node('MatMul', ['X', 'A'], ['XA'])
+    node2 = make_node('Add', ['XA', 'B'], ['Y'])
+    graph = make_graph([node1, node2], 'lr', [X, A, B], [Y])
+    onnx_model = make_model(graph)
+    check_model(onnx_model)
+
+    for verbose in [1, 2, 3, 4]:
+        print()
+        print(f"------ verbose={verbose}")
+        print()
+        sess = ReferenceEvaluator(onnx_model, verbose=verbose)
+
+        x = numpy.random.randn(4, 2).astype(numpy.float32)
+        a = numpy.random.randn(2, 1).astype(numpy.float32)
+        b = numpy.random.randn(1, 1).astype(numpy.float32)
+        feeds = {'X': x, 'A': a, 'B': b}
+
+        print(sess.run(None, feeds))
+
+Evaluate a custom node
+++++++++++++++++++++++
+
+The following example still implements a linear regression
+but adds the identity matrix to *A*: :math:`Y = X(A + I) + B`.
+
+.. exec_code::
+
+    import numpy
+    from onnx import numpy_helper, TensorProto
+    from onnx.helper import (
+        make_model, make_node, set_model_props, make_tensor,
+        make_graph, make_tensor_value_info)
+    from onnx.checker import check_model
+    from onnx.reference import ReferenceEvaluator
+
+    X = make_tensor_value_info('X', TensorProto.FLOAT, [None, None])
+    A = make_tensor_value_info('A', TensorProto.FLOAT, [None, None])
+    B = make_tensor_value_info('B', TensorProto.FLOAT, [None, None])
+    Y = make_tensor_value_info('Y', TensorProto.FLOAT, [None])
+    node0 = make_node('EyeLike', ['A'], ['Eye'])
+    node1 = make_node('Add', ['A', 'Eye'], ['A1'])
+    node2 = make_node('MatMul', ['X', 'A1'], ['XA1'])
+    node3 = make_node('Add', ['XA1', 'B'], ['Y'])
+    graph = make_graph([node0, node1, node2, node3], 'lr', [X, A, B], [Y])
+    onnx_model = make_model(graph)
+    check_model(onnx_model)
+    with open("linear_regression.onnx", "wb") as f:
+        f.write(onnx_model.SerializeToString())
+
+    sess = ReferenceEvaluator(onnx_model, verbose=2)
+
+    x = numpy.random.randn(4, 2).astype(numpy.float32)
+    a = numpy.random.randn(2, 2).astype(numpy.float32) / 10
+    b = numpy.random.randn(1, 2).astype(numpy.float32)
+    feeds = {'X': x, 'A': a, 'B': b}
+
+    print(sess.run(None, feeds))
+
+What if we combine operators *EyeLike* and *Add* into *AddEyeLike* to
+make it more efficient. Next example replaces these two operators
+by a single one from domain `'optimized'`.
+
+.. exec_code::
+
+    import numpy
+    from onnx import numpy_helper, TensorProto
+    from onnx.helper import (
+        make_model, make_node, set_model_props, make_tensor,
+        make_graph, make_tensor_value_info, make_opsetid)
+    from onnx.checker import check_model
+
+    X = make_tensor_value_info('X', TensorProto.FLOAT, [None, None])
+    A = make_tensor_value_info('A', TensorProto.FLOAT, [None, None])
+    B = make_tensor_value_info('B', TensorProto.FLOAT, [None, None])
+    Y = make_tensor_value_info('Y', TensorProto.FLOAT, [None])
+
+    node01 = make_node('AddEyeLike', ['A'], ['A1'], domain='optimized')
+
+    node2 = make_node('MatMul', ['X', 'A1'], ['XA1'])
+    node3 = make_node('Add', ['XA1', 'B'], ['Y'])
+    graph = make_graph([node01, node2, node3], 'lr', [X, A, B], [Y])
+
+    onnx_model = make_model(graph, opset_imports=[
+        make_opsetid('', 18), make_opsetid('optimized', 1)
+    ])
+
+    check_model(onnx_model)
+    with open("linear_regression_improved.onnx", "wb") as f:
+        f.write(onnx_model.SerializeToString())
+
+We need to evaluate this model is equivalent to the first one.
+This requires an implementation for this particular node.
+
+.. exec_code::
+
+    import numpy
+    from onnx.reference import ReferenceEvaluator
+    from onnx.reference.op_run import OpRun
+
+    class AddEyeLike(OpRun):
+
+        op_domain = "optimized"
+
+        def _run(self, X, alpha=1.):
+            assert len(X.shape) == 2
+            assert X.shape[0] == X.shape[1]
+            X = X.copy()
+            ind = numpy.diag_indices(X.shape[0])
+            X[ind] += alpha
+            return (X,)
+
+    sess = ReferenceEvaluator("linear_regression_improved.onnx", verbose=2, new_ops=[AddEyeLike])
+
+    x = numpy.random.randn(4, 2).astype(numpy.float32)
+    a = numpy.random.randn(2, 2).astype(numpy.float32) / 10
+    b = numpy.random.randn(1, 2).astype(numpy.float32)
+    feeds = {'X': x, 'A': a, 'B': b}
+
+    print(sess.run(None, feeds))
+
+    # Let's check with the previous model.
+
+    sess0 = ReferenceEvaluator("linear_regression.onnx",)
+    sess1 = ReferenceEvaluator("linear_regression_improved.onnx", new_ops=[AddEyeLike])
+
+    y0 = sess0.run(None, feeds)[0]
+    y1 = sess1.run(None, feeds)[0]
+    print(y0)
+    print(y1)
+    print(f"difference: {numpy.abs(y0 - y1).max()}")
+
+Predictions are the same. Let's compare the performance
+on a matrix big enough to see a significant difference.
+
+.. exec_code::
+
+    import timeit
+    import numpy
+    from onnx.reference import ReferenceEvaluator
+    from onnx.reference.op_run import OpRun
+
+    class AddEyeLike(OpRun):
+
+        op_domain = "optimized"
+
+        def _run(self, X, alpha=1.):
+            assert len(X.shape) == 2
+            assert X.shape[0] == X.shape[1]
+            X = X.copy()
+            ind = numpy.diag_indices(X.shape[0])
+            X[ind] += alpha
+            return (X,)
+
+    sess = ReferenceEvaluator("linear_regression_improved.onnx", verbose=2, new_ops=[AddEyeLike])
+
+    x = numpy.random.randn(4, 100).astype(numpy.float32)
+    a = numpy.random.randn(100, 100).astype(numpy.float32) / 10
+    b = numpy.random.randn(1, 100).astype(numpy.float32)
+    feeds = {'X': x, 'A': a, 'B': b}
+
+    sess0 = ReferenceEvaluator("linear_regression.onnx")
+    sess1 = ReferenceEvaluator("linear_regression_improved.onnx", new_ops=[AddEyeLike])
+
+    y0 = sess0.run(None, feeds)[0]
+    y1 = sess1.run(None, feeds)[0]
+    print(f"difference: {numpy.abs(y0 - y1).max()}")
+    print(f"time with EyeLike+Add: {timeit.timeit(lambda: sess0.run(None, feeds), number=1000)}")
+    print(f"time with AddEyeLike: {timeit.timeit(lambda: sess1.run(None, feeds), number=1000)}")
+
+It seems worth adding an optimized node in this case.
+This kind of optimization is usually called *fusion*.
+Two consecutive operators are fused into an optimized version of both.
+Production usually relies on *onnxruntime* but since
+the optimization uses basic matrix operation, it should bring
+the same performance gain on any other runtime.
+
 Implementation details
 ======================
 
@@ -1246,7 +1520,8 @@ This case is still puzzling.
     print("----------- case 1: 2D x 2D -> 2D")
     onnx_model = create_model({'X': [None, None], 'A': [None, None], 'Y': [None, None]})
     check_model(onnx_model)
-    sess = InferenceSession(onnx_model.SerializeToString())
+    sess = InferenceSession(onnx_model.SerializeToString(),
+                            providers=["CPUExecutionProvider"])
     res = sess.run(None, {
         'X': numpy.random.randn(2, 2).astype(numpy.float32),
         'A': numpy.random.randn(2, 2).astype(numpy.float32)})
@@ -1255,7 +1530,8 @@ This case is still puzzling.
     print("----------- case 2: 2D x 1D -> 1D")
     onnx_model = create_model({'X': [None, None], 'A': [None], 'Y': [None]})
     check_model(onnx_model)
-    sess = InferenceSession(onnx_model.SerializeToString())
+    sess = InferenceSession(onnx_model.SerializeToString(),
+                            providers=["CPUExecutionProvider"])
     res = sess.run(None, {
         'X': numpy.random.randn(2, 2).astype(numpy.float32),
         'A': numpy.random.randn(2).astype(numpy.float32)})
@@ -1265,7 +1541,8 @@ This case is still puzzling.
     onnx_model = create_model({'X': [None, None], 'A': [], 'Y': []})
     check_model(onnx_model)
     try:
-        InferenceSession(onnx_model.SerializeToString())
+        InferenceSession(onnx_model.SerializeToString(),
+                         providers=["CPUExecutionProvider"])
     except Exception as e:
         print(e)
 
@@ -1275,7 +1552,8 @@ This case is still puzzling.
         check_model(onnx_model)
     except Exception as e:
         print(type(e), e)
-    sess = InferenceSession(onnx_model.SerializeToString())
+    sess = InferenceSession(onnx_model.SerializeToString(),
+                            providers=["CPUExecutionProvider"])
     res = sess.run(None, {
         'X': numpy.random.randn(2, 2).astype(numpy.float32),
         'A': numpy.random.randn(2).astype(numpy.float32)})

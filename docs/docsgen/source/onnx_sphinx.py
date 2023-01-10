@@ -360,7 +360,7 @@ def get_rst_doc(  # type: ignore
     :param diff: highlights differences between two versions
     :param example: add example to the documentation
     :return: string
-    The function relies on module :epkg:`jinja2` or replaces it
+    The function relies on module `jinja2` or replaces it
     with a simple rendering if not present.
     """
     schemas = get_operator_schemas(op_name, domain=domain, version=version)
@@ -540,7 +540,7 @@ def get_rst_doc(  # type: ignore
 def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None, domain=None):  # type: ignore
     """
     Splits a using `split`, insert HTML differences between pieces.
-    The function relies on package :epkg:`pyquickhelper`.
+    The function relies on package `pyquickhelper`.
     """
     spl = docs.split(split)
     if len(spl) <= 1:
