@@ -71,4 +71,9 @@ disable = [
     "no-member",
     "no-name-in-module",
     "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-public-methods",
+    "too-many-return-statements",
 ]

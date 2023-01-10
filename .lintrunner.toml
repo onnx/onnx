@@ -84,6 +84,7 @@ command = [
     'run',
     'mypy_linter',
     '--config=pyproject.toml',
+    '--show-disable',
     '--',
     '@{{PATHSFILE}}'
 ]
@@ -198,6 +199,7 @@ command = [
     'run',
     'pylint_linter',
     '--rcfile=pyproject.toml',
+    '--show-disable',
     '--',
     '@{{PATHSFILE}}'
 ]
