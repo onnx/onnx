@@ -343,12 +343,8 @@ tests_require.append("nbval")
 tests_require.append("tabulate")
 
 extras_require["lint"] = [
-    "clang-format==13.0.0",
-    "flake8>=5.0.2",
-    "mypy>=0.971",
-    "types-protobuf==3.18.4",
-    "black>=22.3",
-    "isort[colors]>=5.10",
+    "lintrunner>=0.10.0",
+    "lintrunner-adapters>=0.3",
 ]
 
 ################################################################################

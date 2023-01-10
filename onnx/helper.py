@@ -310,7 +310,7 @@ def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
 
 def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
     return [
-        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
+        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)  # type: ignore[misc]
         for i in range(len(ca) * 2)
     ]
 
@@ -447,13 +447,13 @@ def make_sequence(
     if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values
+        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values
+        attribute = sequence.sequence_values  # type: ignore[assignment]
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values
+        attribute = sequence.map_values  # type: ignore[assignment]
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values
+        attribute = sequence.optional_values  # type: ignore[assignment]
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
@@ -510,17 +510,17 @@ def make_optional(
     if elem_type == OptionalProto.TENSOR:
         attribute = optional.tensor_value
     elif elem_type == OptionalProto.SPARSE_TENSOR:
-        attribute = optional.sparse_tensor_value
+        attribute = optional.sparse_tensor_value  # type: ignore[assignment]
     elif elem_type == OptionalProto.SEQUENCE:
-        attribute = optional.sequence_value
+        attribute = optional.sequence_value  # type: ignore[assignment]
     elif elem_type == OptionalProto.MAP:
-        attribute = optional.map_value
+        attribute = optional.map_value  # type: ignore[assignment]
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = optional.optional_value
+        attribute = optional.optional_value  # type: ignore[assignment]
     else:
         raise TypeError("The element type in the input optional is not supported.")
 
-    attribute.CopyFrom(value)
+    attribute.CopyFrom(value)  # type: ignore[arg-type]
     return optional
 
 

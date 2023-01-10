@@ -33,7 +33,7 @@ jobs:
         uses: actions/configure-pages@v2
       - name: Install Dependencies
         run: |
-          python -m pip install --quiet --upgrade pip setuptools wheel 
+          python -m pip install --quiet --upgrade pip setuptools wheel
           python -m pip install -r docs/docsgen/source/requirements.txt
       - name: Uninstall onnx
         run: python -m pip uninstall -y onnx
