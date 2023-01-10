@@ -259,7 +259,7 @@ If
 ~~
 
 Operator :ref:`l-onnx-doc-If` executes
-one of the two graphs depending one the condition evaluation.
+one of the two graphs depending on the condition evaluation.
 
 ::
 
