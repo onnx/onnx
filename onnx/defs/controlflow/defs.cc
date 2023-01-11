@@ -426,32 +426,32 @@ Generic Looping construct. This loop has multiple termination conditions:
 This table summarizes the operating modes of this operator with equivalent
 C-style code:
 
-    Operator inputs defined as (max_trip_count, condition_var).
+Operator inputs defined as (max_trip_count, condition_var).
 
-    input ("", ""):
+* input ("", ""):
         for (int i=0; ; ++i) {
           cond = ... // Note this value is ignored, but is required in the body
         }
 
-    input ("", cond) // Note this is analogous to a while loop
+* input ("", cond) // Note this is analogous to a while loop
         bool cond = ...;
         for (int i=0; cond; ++i) {
           cond = ...;
         }
 
-    input ("", 1) // Note this is analogous to a do-while loop
+* input ("", 1) // Note this is analogous to a do-while loop
         bool cond = true
         for (int i=0; cond; ++i) {
           cond = ...;
         }
 
-    input (trip_count, "") // Note this is analogous to a for loop
+* input (trip_count, "") // Note this is analogous to a for loop
         int trip_count = ...
         for (int i=0; i < trip_count; ++i) {
           cond = ...; // ignored
         }
 
-    input (trip_count, cond)
+* input (trip_count, cond)
         int trip_count = ...;
         bool cond = ...;
         for (int i=0; i < trip_count && cond; ++i) {
