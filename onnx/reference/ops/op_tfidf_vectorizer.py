@@ -359,14 +359,14 @@ class TfIdfVectorizer(OpRun):
             # TfidfVectorizer returns a zero tensor of shape
             # {b_dim, output_size} when b_dim is the number of received observations
             # and output_size the is the maximum value in ngram_indexes attribute plus 1.
-            return self.output_result(B, frequencies)
+            return self.output_result(B, frequencies)  # type: ignore[arg-type]
 
         def fn(row_num):
             self.compute_impl(
                 X,
                 row_num,
                 C,
-                frequencies,
+                frequencies,  # type: ignore[arg-type]
                 max_gram_length=max_gram_length,
                 max_skip_count=max_skip_count,
                 min_gram_length=min_gram_length,
@@ -382,4 +382,4 @@ class TfIdfVectorizer(OpRun):
         for i in range(num_rows):
             fn(i)
 
-        return (self.output_result(B, frequencies),)
+        return (self.output_result(B, frequencies),)  # type: ignore[arg-type]
