@@ -133,7 +133,7 @@ class OpRun(ABC):
     """
     Ancestor to all operators in this subfolder.
 
-    :param onnx_node: :epkg:`onnx` node
+    :param onnx_node: `onnx` node
     :param run_params: additional parameters such as `verbose`, `opsets`
         (it can be more than one if the operator has a subgraph),
         `log` for a logging function
