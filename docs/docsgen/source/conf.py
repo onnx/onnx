@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # -- Project information -----------------------------------------------------
 
 author = "ONNX"
-copyright = "2022"
+copyright = "2023"
 project = "ONNX"
 release = onnx.__version__
 version = onnx.__version__
@@ -67,24 +67,26 @@ html_theme_options = {
         {"name": "github", "url": "https://github.com/onnx/onnx"},
     ],
     "github_url": "https://github.com/onnx/onnx",
-    "logo": {"image_dark": "onnx-horizontal-white.png"},
     "navbar_center": [],
     "navigation_depth": 5,
     "page_sidebar_items": [],  # default setting is: ["page-toc", "edit-this-page", "sourcelink"],
     "show_nav_level": 0,
     "show_prev_next": True,
     "show_toc_level": 0,
+    # needed for sphinx 6.0
+    "logo": {
+        "text": project,
+        "image_light": html_favicon,
+        "image_dark": "onnx-horizontal-white.png",
+        "alt_text": project,
+    },
 }
 
 intersphinx_mapping = {
-    "https://docs.python.org/": None,
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "python": (f"https://docs.python.org/{sys.version_info.major}/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "torch": ("https://pytorch.org/docs/stable/", None),
-    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
-    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-    "python": (f"https://docs.python.org/{sys.version_info.major}", None),
-    "scikit-learn": ("https://scikit-learn.org/stable/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
-    "sklearn": ("https://scikit-learn.org/stable/", None),
 }
 
 sphinx_gallery_conf = {

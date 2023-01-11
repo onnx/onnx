@@ -62,7 +62,8 @@ based on `onnxruntime <https://onnxruntime.ai/>`_.
         model = onnx.helper.make_model_gen_version(graph, **kwargs)
 
         # Checking the produces are the expected ones.
-        sess = onnxruntime.InferenceSession(model.SerializeToString())
+        sess = onnxruntime.InferenceSession(model.SerializeToString(),
+                                            providers=["CPUExecutionProvider"])
         feeds = {name: value for name, value in zip(node.input, inputs)}
         results = sess.run(None, feeds)
         for expected, output in zip(outputs, results):

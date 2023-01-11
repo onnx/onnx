@@ -787,7 +787,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
     def setUpClass(cls, all_tests=False):
         # test not supported yet
         # not supported yet
-        # see http://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
+        # see https://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
         # to compare with onnxruntime
 
         cls.rtol = {
