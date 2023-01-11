@@ -16,7 +16,18 @@ copyright = "2023"
 project = "ONNX"
 release = onnx.__version__
 version = onnx.__version__
-max_opsets = {"": 18, "ai.onnx.ml": 3}
+
+# define the latest opset to document,
+# this is meant to avoid documenting opset not released yet
+max_opset = 18
+
+# define the latest opset to document for every opset
+_opsets = [t for t in onnx.helper.VERSION_TABLE if t[2] == max_opset][-1]
+max_opsets = {
+    '': max_opset,
+    'ai.onnx.ml': _opsets[3],
+    'ai.onnx.training': _opsets[4],
+}
 
 # -- General configuration ---------------------------------------------------
 
