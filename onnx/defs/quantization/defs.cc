@@ -61,9 +61,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* DequantizeLinear_ver13_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
-The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape, and can be either a scalar
+The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
 for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
+`x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
 there's no zero point (zero point is supposed to be 0).
 )DOC";
 
@@ -113,24 +113,29 @@ A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion o
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
 Scale is calculated as:
 ```
- y_scale = (max(x) - min(x))/(qmax - qmin)
- * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
- * data range is adjusted to include 0.
+y_scale = (max(x) - min(x))/(qmax - qmin)
 ```
+
+* where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+* data range is adjusted to include 0.
+
 Zero point is calculated as:
 ```
 intermediate_zero_point = qmin - min(x)/y_scale
 y_zero_point = cast(round(saturate(itermediate_zero_point)))
+```
+
 * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
 * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
 * rounding to nearest ties to even.
-```
+
 Data quantization formula is:
 ```
 y = saturate (round (x / y_scale) + y_zero_point)
+```
+
 * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
 * rounding to nearest ties to even.
-```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
