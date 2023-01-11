@@ -131,11 +131,11 @@ def _get_ops_template():  # type: ignore
 
         **Attributes**
 
-        {% for _, attr in sorted(sch.attributes.items()) %}* **{{attr.name}}**{%
-          if attr.required %} (required){% endif %}:
-        {{text_wrap(attr.description, 2)}} {%
-          if attr.default_value %}{{clean_default_value(attr.default_value)}}{%
-          endif %}
+        {% for _, attr in sorted(sch.attributes.items())
+        %}* **{{attr.name}} - {{str(attr.type).split('.')[-1]}}**{%
+          if attr.required %} (required){% endif %} {%
+          if attr.default_value %}{{clean_default_value(attr)}}{%
+          endif %}: {{text_wrap(attr.description, 2)}}
         {% endfor %}
         {% endif %}
         {% if sch.inputs %}
@@ -360,7 +360,7 @@ def get_rst_doc(  # type: ignore
     :param diff: highlights differences between two versions
     :param example: add example to the documentation
     :return: string
-    The function relies on module :epkg:`jinja2` or replaces it
+    The function relies on module `jinja2` or replaces it
     with a simple rendering if not present.
     """
     schemas = get_operator_schemas(op_name, domain=domain, version=version)
@@ -461,13 +461,33 @@ def get_rst_doc(  # type: ignore
             doc_url += sch.domain + "."
         return doc_url
 
-    def clean_default_value(value):
-        if isinstance(value, onnx.AttributeProto) and hasattr(value, "default_value"):
-            att = value.default_value
-            if att.type in _attribute_conversion_functions:
-                sval = _attribute_conversion_functions[att.type](att)
-                return f"Default value is ``{sval}``."
-        return ""
+    def format_default_value(value):
+        if isinstance(value, float):
+            formatted = str(np.round(value, 5))
+            # use default formatting, unless too long.
+            if len(formatted) > 10:
+                formatted = f"({value:e})"
+            return formatted
+        if isinstance(value, (bytes, bytearray)):
+            return value.decode("utf-8")
+        return str(value)
+
+    def clean_default_value(attr):
+        if not attr.default_value.name:
+            return ""
+        default_value = onnx.helper.get_attribute_value(attr.default_value)
+        if isinstance(default_value, onnx.AttributeProto) and hasattr(
+            default_value, "default_value"
+        ):
+            if attr.type in _attribute_conversion_functions:
+                sval = _attribute_conversion_functions[attr.type](default_value)
+                return f"(default is ``{sval!r}``)"
+
+        if isinstance(default_value, list):
+            sval = [format_default_value(val) for val in default_value]
+        else:
+            sval = format_default_value(default_value)
+        return f"(default is ``{sval!r}``)"
 
     def text_wrap(text, indent):
         s = " " * indent
@@ -540,7 +560,7 @@ def get_rst_doc(  # type: ignore
 def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None, domain=None):  # type: ignore
     """
     Splits a using `split`, insert HTML differences between pieces.
-    The function relies on package :epkg:`pyquickhelper`.
+    The function relies on package `pyquickhelper`.
     """
     spl = docs.split(split)
     if len(spl) <= 1:
