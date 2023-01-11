@@ -34,12 +34,12 @@ class LabelEncoder(OpRunAiOnnxMl):
             dtype = np.float32
         elif id(values) == id(values_int64s):
             defval = default_int64
-            dtype = np.int64
+            dtype = np.int64  # type: ignore
         else:
             defval = default_string
             if not isinstance(defval, str):
                 defval = ""
-            dtype = np.str_
+            dtype = np.str_  # type: ignore
         shape = x.shape
         if len(x.shape) > 1:
             x = x.flatten()

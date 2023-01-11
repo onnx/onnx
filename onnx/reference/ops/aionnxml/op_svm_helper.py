@@ -5,8 +5,6 @@ from typing import Any
 
 import numpy as np
 
-from onnx import AttributeProto, numpy_helper  # noqa
-
 
 class SVMAttributes:
     def __init__(self):
@@ -56,17 +54,17 @@ class SVMCommon:
         if k == "poly":
             s = np.dot(pA, pB)
             s = s * self.gamma_ + self.coef0_
-            return s**self.degree_
+            return s**self.degree_  # type: ignore
         if k == "sigmoid":
             s = np.dot(pA, pB)
             s = s * self.gamma_ + self.coef0_
-            return np.tanh(s)
+            return np.tanh(s)  # type: ignore
         if k == "rbf":
             diff = pA - pB
             s = (diff * diff).sum()
-            return np.exp(-self.gamma_ * s)
+            return np.exp(-self.gamma_ * s)  # type: ignore
         if k == "linear":
-            return np.dot(pA, pB)
+            return np.dot(pA, pB)  # type: ignore
         raise ValueError(f"Unexpected kernel={kernel!r}.")
 
     def run_reg(self, X: np.ndarray) -> np.ndarray:

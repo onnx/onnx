@@ -22,17 +22,17 @@ class DictVectorizer(OpRunAiOnnxMl):
                     "int64_vocabulary and string_vocabulary cannot be both empty."
                 )
 
-            values = []
-            rows = []
-            cols = []
+            values_list = []
+            rows_list = []
+            cols_list = []
             for i, row in enumerate(x):
                 for k, v in row.items():
-                    values.append(v)
-                    rows.append(i)
-                    cols.append(dict_labels[k])
-            values = np.array(values)
-            rows = np.array(rows)
-            cols = np.array(cols)
+                    values_list.append(v)
+                    rows_list.append(i)
+                    cols_list.append(dict_labels[k])
+            values = np.array(values_list)
+            rows = np.array(rows_list)
+            cols = np.array(cols_list)
 
             res = np.zeros((len(x), len(dict_labels)), dtype=values.dtype)  # type: ignore
             for r, c, v in zip(rows, cols, values):
@@ -47,9 +47,9 @@ class DictVectorizer(OpRunAiOnnxMl):
 
         if isinstance(x, dict):
             keys = int64_vocabulary or string_vocabulary
-            res = []
+            result = []
             for k in keys:
-                res.append(x.get(k, 0))
-            return (np.array(res),)
+                result.append(x.get(k, 0))
+            return (np.array(result),)
 
         raise TypeError(f"x must be iterable not {type(x)}.")

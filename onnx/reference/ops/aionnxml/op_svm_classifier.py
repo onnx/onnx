@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0913,R0914,W0221
+# pylint: disable=R0911,R0912,R0913,R0914,W0221
 
 import numpy as np
 
@@ -77,11 +77,9 @@ def write_scores(n_classes, scores, post_transform, add_second_class):
     if n_classes == 1:
         if post_transform == "PROBIT":
             return np.array([compute_probit(scores[0])], dtype=scores.dtype)
-        if add_second_class == 0:
-            res = np.array([1 - scores[0], scores[0]], dtype=scores.dtype)
-        elif add_second_class == 1:
-            res = np.array([1 - scores[0], scores[0]], dtype=scores.dtype)
-        elif add_second_class in (2, 3):
+        if add_second_class in (0, 1):
+            return np.array([1 - scores[0], scores[0]], dtype=scores.dtype)
+        if add_second_class in (2, 3):
             if post_transform == "LOGISTIC":
                 return np.array(
                     [logistic(-scores[0]), logistic(scores[0])], dtype=scores.dtype
@@ -104,8 +102,6 @@ def write_scores(n_classes, scores, post_transform, add_second_class):
 def set_score_svm(
     max_weight,
     maxclass,
-    n,
-    post_transform,
     has_proba,
     weights_are_all_positive_,
     classlabels,
@@ -140,10 +136,10 @@ class SVMClassifier(OpRunAiOnnxMl):
     ):
         evals = 0
 
-        kernels = []
+        kernels_list = []
         for j in range(vector_count_):
-            kernels.append(self._svm.kernel_dot(X, sv[j], kernel_type_))
-        kernels = np.array(kernels)
+            kernels_list.append(self._svm.kernel_dot(X, sv[j], kernel_type_))
+        kernels = np.array(kernels_list)
 
         votes = np.zeros((class_count_,), dtype=X.dtype)
         scores = []
@@ -208,8 +204,6 @@ class SVMClassifier(OpRunAiOnnxMl):
             label, write_additional_scores = set_score_svm(
                 max_weight,
                 max_class,
-                0,
-                self._svm.atts.post_transform,  # type: ignore
                 has_proba,
                 weights_are_all_positive_,
                 classlabels_ints,

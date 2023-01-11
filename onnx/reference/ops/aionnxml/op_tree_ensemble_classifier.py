@@ -98,7 +98,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
                 res[:, 0] = 1 - res[:, 1]
             else:
                 res[:, 0] = -res[:, 1]
-        new_scores = post_function[post_transform](res)
+        new_scores = post_function[post_transform](res)  # type: ignore
         labels = np.argmax(new_scores, axis=1)
 
         # labels
