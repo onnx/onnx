@@ -51,7 +51,11 @@ class LinearClassifier(OpRunAiOnnxMl):
         elif post_transform == "LOGISTIC":
             scores = expit(scores)
         elif post_transform == "SOFTMAX":
-            np.subtract(scores, scores.max(axis=1, keepdims=1), out=scores)  # pylint: disable=E1123
+            np.subtract(
+                scores,
+                scores.max(axis=1, keepdims=1),  # pylint: disable=E1123
+                out=scores,
+            )
             scores = np.exp(scores)
             scores = np.divide(scores, scores.sum(axis=1, keepdims=1))
         elif post_transform == "SOFTMAX_ZERO":
