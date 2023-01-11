@@ -139,16 +139,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* BitShift_ver11_doc = R"DOC(
 Bitwise shift operator performs element-wise operation. For each input element, if the
- attribute "direction" is "RIGHT", this operator moves its binary representation toward
- the right side so that the input value is effectively decreased. If the attribute "direction"
- is "LEFT", bits of binary representation moves toward the left side, which results the
- increase of its actual value. The input X is the tensor to be shifted and another input
- Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
- and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
- X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+attribute "direction" is "RIGHT", this operator moves its binary representation toward
+the right side so that the input value is effectively decreased. If the attribute "direction"
+is "LEFT", bits of binary representation moves toward the left side, which results the
+increase of its actual value. The input X is the tensor to be shifted and another input
+Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
 
- Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
- not necessarily identical.
+Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+not necessarily identical.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
