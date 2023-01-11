@@ -22,7 +22,7 @@ class SequenceMap(OpRun):
         res = None
         for obj in input_sequence:
             feeds[body.input_names[0]] = obj
-            r = body.run(None, feeds)
+            r = body.run(None, feeds, attributes=attributes)
             if res is None:
                 res = [[i] for i in r]
             else:
