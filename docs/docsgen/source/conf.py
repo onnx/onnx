@@ -19,7 +19,7 @@ version = onnx.__version__
 
 # define the latest opset to document,
 # this is meant to avoid documenting opset not released yet
-max_opset = 18
+max_opset = onnx.helper.VERSION_TABLE[-1][2]
 
 # define the latest opset to document for every opset
 _opsets = [t for t in onnx.helper.VERSION_TABLE if t[2] == max_opset][-1]
