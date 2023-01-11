@@ -45,11 +45,10 @@ intermediate results. This is how it looks like.
 
     # imports
 
-    import numpy
-    from onnx import numpy_helper, TensorProto
+    from onnx import TensorProto
     from onnx.helper import (
-        make_model, make_node, set_model_props, make_tensor,
-        make_graph, make_tensor_value_info)
+        make_model, make_node, make_graph,
+        make_tensor_value_info)
     from onnx.checker import check_model
 
     # inputs
@@ -101,11 +100,10 @@ of each object of the graph.
 
 .. exec_code::
 
-    import numpy
-    from onnx import numpy_helper, TensorProto
+    from onnx import TensorProto
     from onnx.helper import (
-        make_model, make_node, set_model_props, make_tensor,
-        make_graph, make_tensor_value_info)
+        make_model, make_node, make_graph,
+        make_tensor_value_info)
     from onnx.checker import check_model
 
     def shape2tuple(shape):
@@ -183,11 +181,10 @@ the case for the whole model.
 
 .. exec_code::
 
-    import numpy
-    from onnx import numpy_helper, TensorProto
+    from onnx import TensorProto
     from onnx.helper import (
-        make_model, make_node, set_model_props, make_tensor,
-        make_graph, make_tensor_value_info)
+        make_model, make_node, make_graph,
+        make_tensor_value_info)
     from onnx.checker import check_model
 
     def shape2tuple(shape):
@@ -235,7 +232,6 @@ The serialization of tensor usually happens like the following:
 .. exec_code::
 
     import numpy
-    from onnx import TensorProto
     from onnx.numpy_helper import from_array
 
     numpy_tensor = numpy.array([0, 1, 4, 5, 3], dtype=numpy.float32)
@@ -254,7 +250,6 @@ And the deserialization like:
 
 .. exec_code::
 
-    import numpy
     from onnx import TensorProto
     from onnx.numpy_helper import to_array
 
@@ -311,7 +306,7 @@ convert from numpy into onnx and the other way around
     import numpy
     from onnx import numpy_helper, TensorProto
     from onnx.helper import (
-        make_model, make_node, set_model_props, make_tensor, make_graph,
+        make_model, make_node, make_graph,
         make_tensor_value_info)
     from onnx.checker import check_model
 
@@ -343,7 +338,7 @@ how the initializers look like.
     import numpy
     from onnx import numpy_helper, TensorProto
     from onnx.helper import (
-        make_model, make_node, set_model_props, make_tensor, make_graph,
+        make_model, make_node, make_graph,
         make_tensor_value_info)
     from onnx.checker import check_model
 
@@ -385,11 +380,10 @@ as a named attribute in function `make_node`.
 
 .. exec_code::
 
-    import numpy
-    from onnx import numpy_helper, TensorProto
+    from onnx import TensorProto
     from onnx.helper import (
-        make_model, make_node, set_model_props, make_tensor,
-        make_graph, make_tensor_value_info)
+        make_model, make_node, make_graph,
+        make_tensor_value_info)
     from onnx.checker import check_model
 
     # unchanged
@@ -493,7 +487,7 @@ number.
 
 .. exec_code::
 
-    from onnx import load, helper, TrainingInfoProto
+    from onnx import load, helper
 
     with open("linear_regression.onnx", "rb") as f:
         onnx_model = load(f)
