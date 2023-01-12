@@ -59,9 +59,7 @@ class ModelInfo:
         self.raw_model_info: Dict[str, Any] = raw_model_info
 
     def __str__(self) -> str:
-        return "ModelInfo(model={}, opset={}, path={}, metadata={})".format(
-            self.model, self.opset, self.model_path, self.metadata
-        )
+        return f"ModelInfo(model={self.model}, opset={self.opset}, path={self.model_path}, metadata={self.metadata})"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -242,10 +240,7 @@ def load(
 
     if force_reload or not os.path.exists(local_model_path):
         if not _verify_repo_ref(repo) and not silent:
-            msg = (
-                'The model repo specification "{}" is not trusted and may'
-                " contain security vulnerabilities. Only continue if you trust this repo."
-            ).format(repo)
+            msg = f'The model repo specification "{repo}" is not trusted and may contain security vulnerabilities. Only continue if you trust this repo.'
 
             print(msg, file=sys.stderr)
             print("Continue?[y/n]")
@@ -267,9 +262,9 @@ def load(
         if not downloaded_sha == selected_model.model_sha:
             raise AssertionError(
                 (
-                    "The cached model {} has SHA256 {} while checksum should be {}. "
+                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {selected_model.model_sha}."
                     + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
-                ).format(selected_model.model, downloaded_sha, selected_model.model_sha)
+                )
             )
 
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
@@ -308,10 +303,7 @@ def download_model_with_test_data(
 
     if force_reload or not os.path.exists(local_model_with_data_path):
         if not _verify_repo_ref(repo) and not silent:
-            msg = (
-                'The model repo specification "{}" is not trusted and may'
-                " contain security vulnerabilities. Only continue if you trust this repo."
-            ).format(repo)
+            msg = f'The model repo specification "{repo}" is not trusted and may contain security vulnerabilities. Only continue if you trust this repo.'
 
             print(msg, file=sys.stderr)
             print("Continue?[y/n]")
@@ -331,17 +323,14 @@ def download_model_with_test_data(
     with open(local_model_with_data_path, "rb") as f:
         model_with_data_bytes = f.read()
 
-    if selected_model.metadata["model_with_data_sha"] is not None:
+    model_with_data_sha = selected_model.metadata["model_with_data_sha"]
+    if model_with_data_sha is not None:
         downloaded_sha = hashlib.sha256(model_with_data_bytes).hexdigest()
-        if not downloaded_sha == selected_model.metadata["model_with_data_sha"]:
+        if not downloaded_sha == model_with_data_sha:
             raise AssertionError(
                 (
-                    "The cached model {} has SHA256 {} while checksum should be {}. "
+                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {model_with_data_sha}."
                     + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
-                ).format(
-                    selected_model.model,
-                    downloaded_sha,
-                    selected_model.metadata["model_with_data_sha"],
                 )
             )
 
