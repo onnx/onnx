@@ -87,8 +87,8 @@ class DeprecatedWarningDict(dict):  # type: ignore
         if not self._future_function:
             warnings.warn(
                 str(
-                    f"`mapping.{self._origin_function}` is now deprecated and will be removed in the next release or so."
-                    + "To silence this warning, please simply use if-else statement to get the corresponding value."
+                    f"`mapping.{self._origin_function}` is now deprecated and will be removed in a future release."
+                    "To silence this warning, please simply use if-else statement to get the corresponding value."
                 ),
                 DeprecationWarning,
                 stacklevel=2,
@@ -96,8 +96,8 @@ class DeprecatedWarningDict(dict):  # type: ignore
         else:
             warnings.warn(
                 str(
-                    f"`mapping.{self._origin_function}` is now deprecated and will be removed in the next release or so."
-                    + "To silence this warning, please use `helper.{self._future_function}` instead."
+                    f"`mapping.{self._origin_function}` is now deprecated and will be removed in a future release."
+                    f"To silence this warning, please use `helper.{self._future_function}` instead."
                 ),
                 DeprecationWarning,
                 stacklevel=2,
