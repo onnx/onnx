@@ -11,6 +11,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceSum_1(OpRunReduceNumpy):
     def _run(self, x, axes=None, keepdims=None):  # type: ignore # pylint: disable=W0221
+        axes = tuple(axes) if axes is not None else None
         return (np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype),)
 
 
