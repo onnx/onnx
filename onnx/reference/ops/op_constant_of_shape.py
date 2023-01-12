@@ -16,6 +16,8 @@ class ConstantOfShape(OpRun):
             self.cst = np.int64(self.cst)
         elif isinstance(self.cst, float):
             self.cst = np.float64(self.cst)
+        elif self.cst is None:
+            self.cst = np.float32(0)
         if not isinstance(
             self.cst,
             (
