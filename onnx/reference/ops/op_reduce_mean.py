@@ -10,8 +10,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceMean_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
-        if axes is not None:
-            axes = tuple(axes)
+        axes = tuple(axes) if axes is not None else None
         return (np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype),)
 
 
