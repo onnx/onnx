@@ -1,25 +1,26 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0902,R0911,R0912,R0913,R0914,W0221
 
-from typing import Tuple
+import dataclasses
+from typing import Optional, Tuple
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 
 
+@dataclasses.dataclass
 class PrepareContext:
-    def __init__(self) -> None:
-        self.boxes_data_ = None
-        self.boxes_size_ = 0
-        self.scores_data_ = None
-        self.scores_size_ = 0
-        self.max_output_boxes_per_class_ = None
-        self.score_threshold_ = None
-        self.iou_threshold_ = None
-        self.num_batches_ = 0
-        self.num_classes_ = 0
-        self.num_boxes_ = 0
+    boxes_data_: Optional[np.ndarray] = None
+    boxes_size_: int = 0
+    scores_data_: Optional[np.ndarray] = None
+    scores_size_: int = 0
+    max_output_boxes_per_class_: Optional[np.ndarray] = None
+    score_threshold_: Optional[np.ndarray] = None
+    iou_threshold_: Optional[np.ndarray] = None
+    num_batches_: int = 0
+    num_classes_: int = 0
+    num_boxes_: int = 0
 
 
 class SelectedIndex:
@@ -176,10 +177,10 @@ class NonMaxSuppression(OpRun):
         self,
         boxes,
         scores,
-        max_output_boxes_per_class=None,
-        iou_threshold=None,
-        score_threshold=None,
-        center_point_box=None,
+        max_output_boxes_per_class,
+        iou_threshold,
+        score_threshold,
+        center_point_box,
     ):
         center_point_box = center_point_box or self.center_point_box  # type: ignore
 

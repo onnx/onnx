@@ -220,11 +220,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  ```
  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
  ```
- if ceil_mode is enabled
-
- ```
- * pad_shape[i] is sum of pads along axis i
- ```
+ if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```
@@ -557,11 +553,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
  ```
  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
  ```
- if ceil_mode is enabled
-
- ```
- * pad_shape[i] is sum of pads along axis i
- ```
+ if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```
@@ -1507,8 +1499,8 @@ statistics in inference mode (training_mode=False, default),
 and the running statistics in training mode (training_mode=True).
 There are multiple cases for the number of outputs, which we list below:
 
-Output case #1: Y, running_mean, running_var (training_mode=True)
-Output case #2: Y (training_mode=False)
+* Output case #1: Y, running_mean, running_var (training_mode=True)
+* Output case #2: Y (training_mode=False)
 
 When training_mode=False, extra outputs are invalid.
 The outputs are updated as follows when training_mode=True:
@@ -1517,15 +1509,15 @@ running_mean = input_mean * momentum + current_mean * (1 - momentum)
 running_var = input_var * momentum + current_var * (1 - momentum)
 
 Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-
+```
 where:
-
+```
 current_mean = ReduceMean(X, axis=all_except_channel_index)
 current_var =  ReduceVar(X, axis=all_except_channel_index)
-
-Notice that ReduceVar refers to the population variance, and it equals to
-sum(sqrd(x_i - x_avg)) / N
-where N is the population size (this formula does not use sample size N - 1).
+```
+Notice that `ReduceVar` refers to the population variance, and it equals to
+`sum(sqrd(x_i - x_avg)) / N`
+where `N` is the population size (this formula does not use sample size `N - 1`).
 
 ```
 
@@ -1953,14 +1945,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* LRN_ver13_doc = R"DOC(
 Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
 It normalizes over local input regions.
-The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
-of shape (N x C x D1 x D2, ..., Dk), its region is
-{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
+The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
+of shape `(N x C x D1 x D2, ..., Dk)`, its region is
+`{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}`.
 
-square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
-where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
+`square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2)`,
+where `max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))`.
 
-Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
+`Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta`
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2204,7 +2196,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* mvn_ver13_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
-      on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+      on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
 )DOC";
 
 static const std::vector<int64_t> mvn_default_axes = {0, 2, 3};
@@ -2361,10 +2353,10 @@ Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/gener
 but it only supports *batched* multi-dimensional image tensors.
 Another implementation in Python with N-dimension support can be found at https://github.com/f-dangel/unfoldNd/.
 
-NOTE: Although specifying image_shape looks redundant because it could be calculated from
-      convolution formulas, it is required as input for more advanced scenarios as explained
-      at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
-
+NOTE:
+  Although specifying image_shape looks redundant because it could be calculated from
+  convolution formulas, it is required as input for more advanced scenarios as explained
+  at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2676,20 +2668,20 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* GroupNormalization_ver18_doc = R"DOC(
-A GroupNormalization function. Carries out group normalization as described in 
-the paper https://arxiv.org/abs/1803.08494 
+A GroupNormalization function. Carries out group normalization as described in
+the paper https://arxiv.org/abs/1803.08494
 
 This operator transforms input according to
 ```
 y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
 ```
-where the mean and variance are computed per instance per group of channels, and 
-`scale` and `bias` should be specified for each group of channels. The number of 
-groups `num_groups` should be divisible by the number of channels so that there are 
+where the mean and variance are computed per instance per group of channels, and
+`scale` and `bias` should be specified for each group of channels. The number of
+groups `num_groups` should be divisible by the number of channels so that there are
 an equal number of channels per group.
 
-When the number of groups is the same as the number of channels, this operator is 
-equivalent to InstanceNormalization. When there is only one group, this operator 
+When the number of groups is the same as the number of channels, this operator is
+equivalent to InstanceNormalization. When there is only one group, this operator
 is equivalent to LayerNormalization.
 )DOC";
 
