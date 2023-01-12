@@ -285,7 +285,7 @@ def _conv_implementation(  # type: ignore
         oh = -1 * (kh % 2)
         bh = -h0
         eh = h_out * sth
-        res = np.zeros((X.shape[0], W.shape[0]) + (h_out,))
+        res = np.zeros((X.shape[0], W.shape[0]) + (h_out,))  # type: ignore[assignment]
         if B is not None:
             res[:, :, :] += B.reshape((1, -1, 1))  # type: ignore
 
@@ -328,7 +328,7 @@ def _conv_implementation(  # type: ignore
         oh, ow = -1 * (kh % 2), -1 * (kw % 2)
         bh, bw = -h0, -w0
         eh, ew = h_out * sth, w_out * stw
-        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out))
+        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out))  # type: ignore[assignment]
         if B is not None:
             res[:, :, :, :] = B.reshape((1, -1, 1, 1))  # type: ignore
 
@@ -379,7 +379,7 @@ def _conv_implementation(  # type: ignore
         oh, ow, oz = -1 * (kh % 2), -1 * (kw % 2), -1 * (kz % 2)
         bh, bw, bz = -h0, -w0, -z0
         eh, ew, ez = h_out * sth, w_out * stw, z_out * stz
-        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out, z_out))
+        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out, z_out))  # type: ignore[assignment]
         if B is not None:
             res[:, :, :, :, :] = B.reshape((1, -1, 1, 1, 1))  # type: ignore
 

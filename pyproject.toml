@@ -1,4 +1,5 @@
 [tool.mypy]
+follow_imports = "slient"
 strict_optional = true
 warn_return_any = true
 warn_no_return = true
@@ -7,7 +8,8 @@ warn_redundant_casts = true
 warn_incomplete_stub = true
 # TODO disallow_untyped_calls = true
 check_untyped_defs = true
-disallow_any_generics = true
+# Allow bare generics like np.ndarray
+disallow_any_generics = false
 no_implicit_optional = true
 # TODO disallow_incomplete_defs = true
 # TODO disallow_subclassing_any = true
@@ -31,6 +33,19 @@ exclude = [
 module = ['setup']
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = [
+    'onnx.onnx_data_pb',
+    'onnx.onnx_data_pb2',
+    'onnx.onnx_pb',
+    'onnx.onnx_pb2',
+    'onnx.onnx_ml_pb2',
+    'onnx.onnx_ml_pb2',
+    'onnx.onnx_operators_pb',
+    'onnx.onnx_operators_ml_pb2',
+]
+ignore_errors = true
+
 [tool.black]
 # extend-exclude needs to be a regular expression
 extend-exclude = "third_party/|venv/"
@@ -45,14 +60,15 @@ extend_skip_glob = [
     "venv",
 ]
 
-[tool.pylint.'MESSAGES CONTROL']
+[tool.pylint.message_control]
 disable = [
-    "missing-docstring",
-    "import-error",
-    "no-member",
-    "line-too-long",
+    "cyclic-import",
     "fixme",
-    "too-few-public-methods",
-    "no-name-in-module",
+    "import-error",
     "invalid-name",           # TODO: Add naming guidance and enable this check.
+    "line-too-long",
+    "missing-docstring",
+    "no-member",
+    "no-name-in-module",
+    "too-few-public-methods",
 ]

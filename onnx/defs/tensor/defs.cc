@@ -43,7 +43,7 @@ In more detail, the conversion among numerical types should follow these rules:
 * Casting from fixed point to:
   * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
   * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
-signed types). For example, 200 (int16) -> -56 (int8).
+    signed types). For example, 200 (int16) -> -56 (int8).
   * bool: zero to False; nonzero to True.
 * Casting from bool to:
   * floating point: `{1.0, 0.0}`.
@@ -391,23 +391,32 @@ negative axis). Thus, specifying any end value > r is equivalent to specifying a
 value of r, and specifying any start value < -r is equivalent to specifying a start
 value of 0.
 
-For example:
+Examples:
+
+```
 Input tensor with shape: [2, 3, 4]
 No attributes specified.
 Output: [2, 3, 4]
+```
 
+```
 Input tensor with shape: [2, 3, 4]
 start: -1
 Output: [4]
+```
 
+```
 Input tensor with shape: [2, 3, 4]
 end: -1
 Output: [2, 3]
+```
 
+```
 Input tensor with shape: [2, 3, 4]
 start: 1
 end: 2
 Output: [3]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -772,27 +781,34 @@ For slicing to the end of a dimension with unknown size, it is recommended to pa
 in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
 
 Example 1:
-  data = [
-      [1, 2, 3, 4],
-      [5, 6, 7, 8],
-  ]
-  axes = [0, 1]
-  starts = [1, 0]
-  ends = [2, 3]
-  steps = [1, 2]
-  result = [
-      [5, 7],
-  ]
+
+```
+data = [
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]
+axes = [0, 1]
+starts = [1, 0]
+ends = [2, 3]
+steps = [1, 2]
+result = [
+    [5, 7],
+]
+```
+
 Example 2:
-  data = [
-      [1, 2, 3, 4],
-      [5, 6, 7, 8],
-  ]
-  starts = [0, 1]
-  ends = [-1, 1000]
-  result = [
-      [2, 3, 4],
-  ]
+
+```
+data = [
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+]
+starts = [0, 1]
+ends = [-1, 1000]
+result = [
+    [2, 3, 4],
+]
+```
 )DOC";
 
 inline void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t& step) {
@@ -1255,7 +1271,7 @@ specified by `updates` at specific index positions specified by `indices`. Its o
 is the same as the shape of `data`.
 
 `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
- `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
+`indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
 Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
 update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
 update to a slice of the tensor. Index values are allowed to be negative, as per the usual
@@ -1271,10 +1287,12 @@ of shapes.
 
 The `output` is calculated via the following equation:
 
-    output = np.copy(data)
-    update_indices = indices.shape[:-1]
-    for idx in np.ndindex(update_indices):
-        output[indices[idx]] = updates[idx]
+```
+output = np.copy(data)
+update_indices = indices.shape[:-1]
+for idx in np.ndindex(update_indices):
+    output[indices[idx]] = updates[idx]
+```
 
 The order of iteration in the above loop is not specified.
 In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
@@ -1286,12 +1304,14 @@ In cases where `reduction` is set to "none", indices should not have duplicate e
 then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
 When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
 
-    output = np.copy(data)
-    update_indices = indices.shape[:-1]
-    for idx in np.ndindex(update_indices):
-        output[indices[idx]] = f(output[indices[idx]], updates[idx])
+```
+output = np.copy(data)
+update_indices = indices.shape[:-1]
+for idx in np.ndindex(update_indices):
+    output[indices[idx]] = f(output[indices[idx]], updates[idx])
+```
 
-where the `f` is +/*/max/min as specified.
+where the `f` is `+`, `*`, `max` or `min` as specified.
 
 This operator is the inverse of GatherND.
 
@@ -1299,25 +1319,25 @@ This operator is the inverse of GatherND.
 
 Example 1:
 ```
-  data    = [1, 2, 3, 4, 5, 6, 7, 8]
-  indices = [[4], [3], [1], [7]]
-  updates = [9, 10, 11, 12]
-  output  = [1, 11, 3, 10, 9, 6, 7, 12]
+data    = [1, 2, 3, 4, 5, 6, 7, 8]
+indices = [[4], [3], [1], [7]]
+updates = [9, 10, 11, 12]
+output  = [1, 11, 3, 10, 9, 6, 7, 12]
 ```
 
 Example 2:
 ```
-  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
-             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
-  indices = [[0], [2]]
-  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
-  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-             [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-             [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
-             [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+            [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+            [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+            [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+indices = [[0], [2]]
+updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+            [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
+output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+            [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+            [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+            [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
 ```
 )DOC";
 
@@ -1387,16 +1407,15 @@ In cases where `reduction` is set to "none", indices should not have duplicate e
 then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
 corresponding to the [i][j] entry is performed as below:
 ```
-  output[indices[i][j]][j] = updates[i][j] if axis = 0,
-  output[i][indices[i][j]] = updates[i][j] if axis = 1,
+output[indices[i][j]][j] = updates[i][j] if axis = 0,
+output[i][indices[i][j]] = updates[i][j] if axis = 1,
 ```
 When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
 ```
-  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
+output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
 ```
-where the `f` is +/*/max/min as specified.
-
+where the `f` is `+`, `*`, `max` or `min` as specified.
 
 This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
 
@@ -1404,32 +1423,32 @@ This operator is the inverse of GatherElements. It is similar to Torch's Scatter
 
 Example 1:
 ```
-  data = [
-      [0.0, 0.0, 0.0],
-      [0.0, 0.0, 0.0],
-      [0.0, 0.0, 0.0],
-  ]
-  indices = [
-      [1, 0, 2],
-      [0, 2, 1],
-  ]
-  updates = [
-      [1.0, 1.1, 1.2],
-      [2.0, 2.1, 2.2],
-  ]
-  output = [
-      [2.0, 1.1, 0.0]
-      [1.0, 0.0, 2.2]
-      [0.0, 2.1, 1.2]
-  ]
+data = [
+    [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0],
+]
+indices = [
+    [1, 0, 2],
+    [0, 2, 1],
+]
+updates = [
+    [1.0, 1.1, 1.2],
+    [2.0, 2.1, 2.2],
+]
+output = [
+    [2.0, 1.1, 0.0]
+    [1.0, 0.0, 2.2]
+    [0.0, 2.1, 1.2]
+]
 ```
 Example 2:
 ```
-  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
-  indices = [[1, 3]]
-  updates = [[1.1, 2.1]]
-  axis = 1
-  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+indices = [[1, 3]]
+updates = [[1.1, 2.1]]
+axis = 1
+output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
 ```
 )DOC";
 
@@ -1500,56 +1519,49 @@ Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
 
-axis = 0 :
-
-Let
-k = indices[i_{0}, ..., i_{q-1}]
-Then
-output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
+If `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
+then `output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]`:
 
 ```
-  data = [
-      [1.0, 1.2],
-      [2.3, 3.4],
-      [4.5, 5.7],
-  ]
-  indices = [
-      [0, 1],
-      [1, 2],
-  ]
-  output = [
-      [
-          [1.0, 1.2],
-          [2.3, 3.4],
-      ],
-      [
-          [2.3, 3.4],
-          [4.5, 5.7],
-      ],
-  ]
+data = [
+    [1.0, 1.2],
+    [2.3, 3.4],
+    [4.5, 5.7],
+]
+indices = [
+    [0, 1],
+    [1, 2],
+]
+output = [
+    [
+        [1.0, 1.2],
+        [2.3, 3.4],
+    ],
+    [
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ],
+]
 ```
-axis = 1 :
 
-Let
-k = indices[i_{0}, ..., i_{q-1}]
-Then
-output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
+If `axis = 1`, let `k = indices[i_{0}, ..., i_{q-1}]`
+then `output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]`:
 
 ```
-  data = [
-      [1.0, 1.2, 1.9],
-      [2.3, 3.4, 3.9],
-      [4.5, 5.7, 5.9],
-  ]
-  indices = [
-      [0, 2],
-  ]
-  axis = 1,
-  output = [
-          [[1.0, 1.9]],
-          [[2.3, 3.9]],
-          [[4.5, 5.9]],
-  ]
+data = [
+    [1.0, 1.2, 1.9],
+    [2.3, 3.4, 3.9],
+    [4.5, 5.7, 5.9],
+]
+indices = [
+    [0, 2],
+]
+axis = 1,
+output = [
+        [[1.0, 1.9]],
+        [[2.3, 3.9]],
+        [[4.5, 5.9]],
+]
 ```
 )DOC";
 
@@ -1627,45 +1639,45 @@ Its output shape is the same as the shape of `indices` and consists of one value
 For instance, in the 3-D case (r = 3), the output produced is determined
 by the following equations:
 ```
-  out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
-  out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
-  out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
+out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
+out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
+out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
 ```
 
 This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
 
 Example 1:
 ```
-  data = [
-      [1, 2],
-      [3, 4],
-  ]
-  indices = [
-      [0, 0],
-      [1, 0],
-  ]
-  axis = 1
-  output = [
-      [1, 1],
-      [4, 3],
-  ]
+data = [
+    [1, 2],
+    [3, 4],
+]
+indices = [
+    [0, 0],
+    [1, 0],
+]
+axis = 1
+output = [
+    [1, 1],
+    [4, 3],
+]
 ```
 Example 2:
 ```
-  data = [
-      [1, 2, 3],
-      [4, 5, 6],
-      [7, 8, 9],
-  ]
-  indices = [
-      [1, 2, 0],
-      [2, 0, 0],
-  ]
-  axis = 0
-  output = [
-      [4, 8, 3],
-      [7, 2, 3],
-  ]
+data = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+]
+indices = [
+    [1, 2, 0],
+    [2, 0, 0],
+]
+axis = 0
+output = [
+    [4, 8, 3],
+    [7, 2, 3],
+]
 ```
 )DOC";
 
@@ -1821,15 +1833,13 @@ static const char* Unsqueeze_ver13_doc = R"DOC(
 Insert single-dimensional entries to the shape of an input tensor (`data`).
 Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
 
-For example:
-  Given an input tensor (`data`) of shape [3, 4, 5], then
-  Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+For example, given an input tensor (`data`) of shape [3, 4, 5], then
+Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
 
 The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
 The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
 Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
 The order of values in `axes` does not matter and can come in any order.
-
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1987,26 +1997,22 @@ and width dimensions. By default, `mode` = `DCR`.
 In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
 following order: depth, column, and then row. The output y is computed from the input x as below:
 
+```
 b, c, h, w = x.shape
-
 tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-
 tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-
 y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-
+```
 
 In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
 following order: column, row, and the depth. The output y is computed from the input x as below:
 
+```
 b, c, h, w = x.shape
-
 tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-
 tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-
 y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2745,19 +2751,11 @@ with three parameters.
 
 )DOC";
 
-static const char* Where_ver16_history = R"DOC(
-
-**History**
-- Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
     16,
     OpSchema()
-        .SetDoc(
-            GET_OP_DOC_STR(std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()) +
-            std::string(Where_ver16_history))
+        .SetDoc(GET_OP_DOC_STR(std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()))
         .Input(
             0,
             "condition",
@@ -2924,67 +2922,89 @@ Outputs are either sorted in ascending order or optionally in the order of the f
 https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
 
 Example 1:
-  input_X = [2, 1, 1, 3, 4, 3]
-  attribute_sorted = 0
-  attribute_axis = None
-  output_Y = [2, 1, 3, 4]
-  output_indices = [0, 1, 3, 4]
-  output_inverse_indices = [0, 1, 1, 2, 3, 2]
-  output_counts = [1, 2, 2, 1]
+```
+input_X = [2, 1, 1, 3, 4, 3]
+attribute_sorted = 0
+attribute_axis = None
+output_Y = [2, 1, 3, 4]
+output_indices = [0, 1, 3, 4]
+output_inverse_indices = [0, 1, 1, 2, 3, 2]
+output_counts = [1, 2, 2, 1]
+```
 
 Example 2:
-  input_X = [[1, 3], [2, 3]]
-  attribute_sorted = 1
-  attribute_axis = None
-  output_Y = [1, 2, 3]
-  output_indices = [0, 2, 1]
-  output_inverse_indices = [0, 2, 1, 2]
-  output_counts = [1, 1, 2]
+```
+input_X = [[1, 3], [2, 3]]
+attribute_sorted = 1
+attribute_axis = None
+output_Y = [1, 2, 3]
+output_indices = [0, 2, 1]
+output_inverse_indices = [0, 2, 1, 2]
+output_counts = [1, 1, 2]
+```
 
 Example 3:
-  input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
-  attribute_sorted = 1
-  attribute_axis = 0
-  output_Y = [[1, 0, 0], [2, 3, 4]]
-  output_indices = [0, 2]
-  output_inverse_indices = [0, 0, 1]
-  output_counts = [2, 1]
+```
+input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
+attribute_sorted = 1
+attribute_axis = 0
+output_Y = [[1, 0, 0], [2, 3, 4]]
+output_indices = [0, 2]
+output_inverse_indices = [0, 0, 1]
+output_counts = [2, 1]
+```
 
 Example 4:
-  input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
-             [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
-  attribute_sorted = 1
-  attribute_axis = 1
+```
+input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+            [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+attribute_sorted = 1
+attribute_axis = 1
+```
 
-  intermediate data are presented below for better understanding:
+intermediate data are presented below for better understanding:
+there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+```
+A: [[1, 1], [1, 1]],
+   [[0, 1], [0, 1]],
+   [[2, 1], [2, 1]],
+   [[0, 1], [0, 1]].
+```
 
-  there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
-  A: [[1, 1], [1, 1]],
-     [[0, 1], [0, 1]],
-     [[2, 1], [2, 1]],
-     [[0, 1], [0, 1]].
+there are 3 unique subtensors:
+```
+[[1, 1], [1, 1]],
+[[0, 1], [0, 1]],
+[[2, 1], [2, 1]].
+```
 
-  there are 3 unique subtensors:
-  [[1, 1], [1, 1]],
-  [[0, 1], [0, 1]],
-  [[2, 1], [2, 1]].
+sorted unique subtensors:
+```
+B: [[0, 1], [0, 1]],
+   [[1, 1], [1, 1]],
+   [[2, 1], [2, 1]].
+```
 
-  sorted unique subtensors:
-  B: [[0, 1], [0, 1]],
-     [[1, 1], [1, 1]],
-     [[2, 1], [2, 1]].
+output_Y is constructed from B:
+```
+[[[0. 1.], [1. 1.], [2. 1.]],
+ [[0. 1.], [1. 1.], [2. 1.]]]
+```
 
-  output_Y is constructed from B:
-  [[[0. 1.], [1. 1.], [2. 1.]],
-   [[0. 1.], [1. 1.], [2. 1.]]]
+output_indices is to map from B to A:
+```
+[1, 0, 2]
+```
 
-  output_indices is to map from B to A:
-  [1, 0, 2]
+output_inverse_indices is to map from A to B:
+```
+[1, 0, 2, 0]
+```
 
-  output_inverse_indices is to map from A to B:
-  [1, 0, 2, 0]
-
-  output_counts = [2 1 1]
+output_counts:
+```
+[2, 1, 1]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -3310,68 +3330,68 @@ The three supported `modes` are (similar to corresponding modes supported by `nu
 
 
 Example 1 (`constant` mode):
-  Insert 0 pads to the beginning of the second dimension.
 
-  data =
-  [
-      [1.0, 1.2],
-      [2.3, 3.4],
-      [4.5, 5.7],
-  ]
+Insert 0 pads to the beginning of the second dimension.
 
-  pads = [0, 2, 0, 0]
+```
+data = [
+    [1.0, 1.2],
+    [2.3, 3.4],
+    [4.5, 5.7],
+]
 
-  mode = 'constant'
+pads = [0, 2, 0, 0]
 
-  constant_value = 0.0
+mode = 'constant'
 
-  output =
-  [
-      [0.0, 0.0, 1.0, 1.2],
-      [0.0, 0.0, 2.3, 3.4],
-      [0.0, 0.0, 4.5, 5.7],
-  ]
+constant_value = 0.0
 
+output = [
+    [0.0, 0.0, 1.0, 1.2],
+    [0.0, 0.0, 2.3, 3.4],
+    [0.0, 0.0, 4.5, 5.7],
+]
+```
 
 Example 2 (`reflect` mode):
-  data =
-  [
-      [1.0, 1.2],
-      [2.3, 3.4],
-      [4.5, 5.7],
-  ]
 
-  pads = [0, 2, 0, 0]
+```
+data = [
+    [1.0, 1.2],
+    [2.3, 3.4],
+    [4.5, 5.7],
+]
 
-  mode = 'reflect'
+pads = [0, 2, 0, 0]
 
-  output =
-  [
-      [1.0, 1.2, 1.0, 1.2],
-      [2.3, 3.4, 2.3, 3.4],
-      [4.5, 5.7, 4.5, 5.7],
-  ]
+mode = 'reflect'
 
+output = [
+    [1.0, 1.2, 1.0, 1.2],
+    [2.3, 3.4, 2.3, 3.4],
+    [4.5, 5.7, 4.5, 5.7],
+]
+```
 
 Example 3 (`edge` mode):
-  data =
-  [
-      [1.0, 1.2],
-      [2.3, 3.4],
-      [4.5, 5.7],
-  ]
 
-  pads = [0, 2, 0, 0]
+```
+data = [
+    [1.0, 1.2],
+    [2.3, 3.4],
+    [4.5, 5.7],
+]
 
-  mode = 'edge'
+pads = [0, 2, 0, 0]
 
-  output =
-  [
-      [1.0, 1.0, 1.0, 1.2],
-      [2.3, 2.3, 2.3, 3.4],
-      [4.5, 4.5, 4.5, 5.7],
-  ]
+mode = 'edge'
 
+output = [
+    [1.0, 1.0, 1.0, 1.2],
+    [2.3, 2.3, 2.3, 3.4],
+    [4.5, 4.5, 4.5, 5.7],
+]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

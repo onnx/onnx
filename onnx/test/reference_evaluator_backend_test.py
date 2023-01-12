@@ -317,6 +317,15 @@ class OnnxBackendTest:
                             f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
                             f"\n{output}\n-----\n{diff}\n------INPUTS----\n{pprint.pformat(inputs)}."
                         ) from ex
+                if desired.shape != output.shape and not (
+                    len(desired.shape) == 0 and output.shape == (1,)
+                ):
+                    raise AssertionError(
+                        f"Output {i_output} of test {index} in folder {self.folder!r} failed "
+                        f"(expected shape={desired.shape} but shape={output.shape}), "
+                        f"comment={comment}\n---\n{desired}\n----"
+                        f"\n{output}\n------INPUTS----\n{pprint.pformat(inputs)}."
+                    )
             elif hasattr(output, "is_compatible"):
                 # A shape
                 if desired.dtype != output.dtype:
@@ -778,7 +787,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
     def setUpClass(cls, all_tests=False):
         # test not supported yet
         # not supported yet
-        # see http://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
+        # see https://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
         # to compare with onnxruntime
 
         cls.rtol = {
