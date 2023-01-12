@@ -10,7 +10,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceMax_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
-        axes = tuple(axes) if axes else None
+        axes = tuple(axes) if axes is not None else None
         return (np.maximum.reduce(data, axis=axes, keepdims=keepdims == 1),)
 
 

@@ -10,6 +10,7 @@ from ._op import OpRunReduceNumpy
 
 class ReduceSumSquare_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
+        axes = tuple(axes) if axes is not None else None
         return (np.sum(np.square(data), axis=axes, keepdims=keepdims),)
 
 
