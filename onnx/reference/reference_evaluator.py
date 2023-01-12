@@ -405,6 +405,11 @@ class ReferenceEvaluator:
 
             return load_op_exp(node.domain, node.op_type, version)
 
+        if node.domain == "ai.onnx.ml":
+            from .ops.aionnxml import load_op as load_op_ml
+
+            return load_op_ml(node.domain, node.op_type, version)
+
         # It has to be a function.
         if key in self.functions_:
             from .ops import load_op
