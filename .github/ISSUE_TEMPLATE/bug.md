@@ -15,9 +15,9 @@ assignees: ''
 <!-- Please describe the bug clearly and concisely -->
 
 ### System information
-<!-- 
-- OS Platform and Distribution (*e.g. Linux Ubuntu 16.04*): 
-- ONNX version (*e.g. 1.7*):  
+<!--
+- OS Platform and Distribution (*e.g. Linux Ubuntu 16.04*):
+- ONNX version (*e.g. 1.7*):
 - Python version:
 - GCC/Compiler version (if compiling from source):
 - CMake version:

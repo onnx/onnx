@@ -59,7 +59,7 @@ class _CommonTopK(OpRun):
 
         .. warning::
             ONNX specifications may be imprecise in case of negative value
-            for axis. The implementation follows what :epkg:`onnxruntime`
+            for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
@@ -79,7 +79,7 @@ class TopK_1(_CommonTopK):
 
         .. warning::
             ONNX specifications may be imprecise in case of negative value
-            for axis. The implementation follows what :epkg:`onnxruntime`
+            for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
@@ -96,7 +96,7 @@ class TopK_10(_CommonTopK):
 
         .. warning::
             ONNX specifications may be imprecise in case of negative value
-            for axis. The implementation follows what :epkg:`onnxruntime`
+            for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
@@ -113,7 +113,7 @@ class TopK_11(_CommonTopK):
 
         .. warning::
             ONNX specifications may be imprecise in case of negative value
-            for axis. The implementation follows what :epkg:`onnxruntime`
+            for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
