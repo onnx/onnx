@@ -860,11 +860,9 @@ def onnx_documentation_folder(folder, title="ONNX Operators", flog=None, max_ops
         sdom = "ai.onnx" if dom == "" else dom
         dom_pages = []
 
-        sub = all_schemas[dom]
-        if len(sub) == 0:
+        do = all_schemas[dom]
+        if len(do) == 0:
             raise RuntimeError(f"No operator for domain={dom!r}.")
-        do = []  # type: ignore
-        do.extend(sub)
 
         # loop on operators
         for op in sorted(do):
