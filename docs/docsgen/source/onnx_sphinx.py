@@ -826,13 +826,17 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
             return res
 
     all_schemas_available = _get_all_schemas_with_history()
+    if len(all_schemas_available) < 3:
+        raise RuntimeError(
+            f"At least three domains are expected, found {list(all_schemas_available)}."
+        )
 
     # filter out operator under development
     all_schemas = {}
-    for domain, ops in all_schemas_available.items():
+    for domain, opset in all_schemas_available.items():
         max_version = None if max_opsets is None else max_opsets.get(domain, None)
         d = {}
-        for op, schemas in ops.items():
+        for op, schemas in opset.items():
             vers = {}
             for version, schema in schemas.items():
                 if max_version is not None and version > max_version:
@@ -840,6 +844,11 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
                 vers[version] = schema
             d[op] = vers
         all_schemas[domain] = d
+
+    if len(all_schemas) < 3:
+        raise RuntimeError(
+            f"At leat three domains are expected, found {list(all_schemas)} in all_schemas."
+        )
 
     if not os.path.exists(folder):
         os.makedirs(folder)
@@ -856,16 +865,18 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
         dom_pages = []
 
         sub = all_schemas[dom]
+        if len(sub) == 0:
+            raise RuntimeError(f"No operator for domain={dom!r}.")
         do = []  # type: ignore
         if ops is None:
             do.extend(sub)
         else:
             inter = set(sub).intersection(ops)
             if len(inter) == 0:
-                continue
+                raise RuntimeError(f"No operator for domain={dom!r}\nsub={set(sub)},\nops={ops}.")
             do.extend(sorted(inter))
         if len(do) == 0:
-            continue
+            raise RuntimeError(f"No operator for domain={dom!r}, ops={ops}.")
 
         # loop on operators
         for op in sorted(do):
@@ -912,6 +923,8 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
         tables.append(_Table(dom_pages, dom, sdom))
 
     # final
+    if len(tables) < 3:
+        raise RuntimeError(f"At least three domain are expected not {len(tables)}.")
     tmpl = _template_main
     index = tmpl.render(pages=pages, tabs=tables, os=os, len=len, title=title)
     index = _clean_unicode(index)
