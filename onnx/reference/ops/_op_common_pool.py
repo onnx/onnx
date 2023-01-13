@@ -136,7 +136,7 @@ def _pool(
         if p is None:
             raise RuntimeError("p must be specified for pooling_type='LP'.")
         inv_p = 1 / p
-        fpool = lambda x: (x**p).sum() ** inv_p
+        fpool = lambda x: (x**p).sum() ** inv_p  # type: ignore
     elif pooling_type == "MAX":
         fpool = np.max
     else:
@@ -225,7 +225,7 @@ class CommonPool(OpRun):
         kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
         pads = pads or self.pads  # type: ignore
         strides = strides or self.strides  # type: ignore
-        p = p or self.p  # type: ignore
+        p = p or getattr(self, "p", None)  # type: ignore
 
         if pooling_type == "MAX" and dilations is None:
             dilations = [1 for s in kernel_shape]

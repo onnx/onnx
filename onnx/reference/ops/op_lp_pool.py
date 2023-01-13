@@ -16,7 +16,6 @@ class LpPool(CommonPool):
         kernel_shape=None,
         p=None,
         pads=None,
-        storage_order=None,
         strides=None,
     ):
         if (
@@ -33,7 +32,6 @@ class LpPool(CommonPool):
                 kernel_shape=kernel_shape,
                 p=p,
                 pads=pads,
-                storage_order=storage_order,
                 strides=strides,
             )
 
@@ -48,7 +46,6 @@ class LpPool(CommonPool):
             kernel_shape=kernel_shape,
             p=p,
             pads=pads,
-            storage_order=storage_order,
             strides=strides,
         )
 
@@ -61,7 +58,6 @@ class LpPool(CommonPool):
         kernel_shape,
         p,
         pads,
-        storage_order,
         strides,
     ):
         if pads is None:
@@ -144,7 +140,6 @@ class LpPool(CommonPool):
                 kernel_shape,
                 p,
                 new_pads,
-                storage_order,
                 strides,
                 output_spatial_shape,
             )
@@ -158,7 +153,6 @@ class LpPool(CommonPool):
                 kernel_shape,
                 p,
                 new_pads,
-                storage_order,
                 strides,
                 output_spatial_shape,
             )
@@ -172,7 +166,6 @@ class LpPool(CommonPool):
                 kernel_shape,
                 p,
                 new_pads,
-                storage_order,
                 strides,
                 output_spatial_shape,
             )
@@ -188,7 +181,6 @@ class LpPool(CommonPool):
         kernel_shape,
         p,
         new_pads,
-        storage_order,  # pylint: disable=W0613
         strides,
         output_spatial_shape,
     ):
@@ -214,7 +206,6 @@ class LpPool(CommonPool):
         def iteration(c):
             x_d = c * x_step
             y_d = c * y_step
-            i_d = c * y_step
             for ph in range(pooled_height):
                 hstart = ph * stride_h - new_pads[0, 0]
                 hend = hstart + kernel_shape[0] * dilation_h
@@ -239,7 +230,6 @@ class LpPool(CommonPool):
         kernel_shape,
         p,
         new_pads,
-        storage_order,
         strides,
         output_spatial_shape,
     ):
@@ -303,7 +293,6 @@ class LpPool(CommonPool):
         kernel_shape,
         p,
         new_pads,
-        storage_order,
         strides,
         output_spatial_shape,
     ):
@@ -337,7 +326,6 @@ class LpPool(CommonPool):
         def iteration(c):
             x_d = c * x_step
             y_d = c * y_step
-            i_d = c * y_step
 
             for ph in range(pooled_height):
                 hstart = ph * stride_h - new_pads[0, 0]
