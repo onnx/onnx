@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 import glob
-import hashlib
 import os
 import unittest
 from os.path import join
