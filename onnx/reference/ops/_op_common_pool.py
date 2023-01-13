@@ -128,7 +128,7 @@ def _pool(
     ceil_mode: Optional[int] = 0,
     indices: bool = False,
     pads: Optional[np.ndarray] = None,
-    p: float = None,
+    p: Optional[float] = None,
 ) -> np.ndarray:
     if pooling_type == "AVG":
         fpool = np.average
@@ -136,7 +136,11 @@ def _pool(
         if p is None:
             raise RuntimeError("p must be specified for pooling_type='LP'.")
         inv_p = 1 / p
-        fpool = lambda x: (x**p).sum() ** inv_p  # type: ignore
+
+        def fpool_lp(x):
+            return (x**p).sum() ** inv_p
+
+        fpool = fpool_lp
     elif pooling_type == "MAX":
         fpool = np.max
     else:
