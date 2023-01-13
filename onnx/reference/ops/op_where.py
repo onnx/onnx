@@ -10,7 +10,7 @@ class Where(OpRun):
     def _run(self, condition, x, y):  # type: ignore
         if (
             x.dtype != y.dtype
-            and x.dtype not in (np.object_,)
+            and x.dtype not in (object,)
             and not (x.dtype.type is np.str_ and y.dtype.type is np.str_)
         ):
             raise RuntimeError(
