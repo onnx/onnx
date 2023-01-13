@@ -240,7 +240,7 @@ def load(
 
     if force_reload or not os.path.exists(local_model_path):
         if not _verify_repo_ref(repo) and not silent:
-            msg = f'The model repo specification "{repo}" is not trusted and may contain security vulnerabilities. Only continue if you trust this repo.'
+            msg = f"The model repo specification {repo} is not trusted and may contain security vulnerabilities. Only continue if you trust this repo."
 
             print(msg, file=sys.stderr)
             print("Continue?[y/n]")
@@ -293,17 +293,20 @@ def download_model_with_test_data(
     local_model_with_data_path_arr = selected_model.metadata[
         "model_with_data_path"
     ].split("/")
-    if selected_model.metadata["model_with_data_sha"] is not None:
+
+    model_with_data_sha = selected_model.metadata["model_with_data_sha"]
+
+    if model_with_data_sha is not None:
         local_model_with_data_path_arr[
             -1
-        ] = f"{selected_model.metadata['model_with_data_sha']}_{local_model_with_data_path_arr[-1]}"
+        ] = f"{model_with_data_sha}_{local_model_with_data_path_arr[-1]}"
     local_model_with_data_path = join(
         _ONNX_HUB_DIR, os.sep.join(local_model_with_data_path_arr)
     )
 
     if force_reload or not os.path.exists(local_model_with_data_path):
         if not _verify_repo_ref(repo) and not silent:
-            msg = f'The model repo specification "{repo}" is not trusted and may contain security vulnerabilities. Only continue if you trust this repo.'
+            msg = f"The model repo specification {repo} is not trusted and may contain security vulnerabilities. Only continue if you trust this repo."
 
             print(msg, file=sys.stderr)
             print("Continue?[y/n]")
@@ -323,7 +326,6 @@ def download_model_with_test_data(
     with open(local_model_with_data_path, "rb") as f:
         model_with_data_bytes = f.read()
 
-    model_with_data_sha = selected_model.metadata["model_with_data_sha"]
     if model_with_data_sha is not None:
         downloaded_sha = hashlib.sha256(model_with_data_bytes).hexdigest()
         if not downloaded_sha == model_with_data_sha:
