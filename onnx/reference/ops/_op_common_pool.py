@@ -214,6 +214,7 @@ class CommonPool(OpRun):
         ceil_mode=None,
         dilations=None,
         kernel_shape=None,
+        p=None,
         pads=None,
         storage_order=None,  # pylint: disable=W0613
         strides=None,
@@ -224,6 +225,7 @@ class CommonPool(OpRun):
         kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
         pads = pads or self.pads  # type: ignore
         strides = strides or self.strides  # type: ignore
+        p = p or self.p  # type: ignore
 
         if pooling_type == "MAX" and dilations is None:
             dilations = [1 for s in kernel_shape]
@@ -298,6 +300,7 @@ class CommonPool(OpRun):
             ceil_mode=ceil_mode,
             indices=len(self.output) > 1,  # type: ignore
             pads=new_pads,
+            p=p,
         )
         if isinstance(res, tuple):
             return res

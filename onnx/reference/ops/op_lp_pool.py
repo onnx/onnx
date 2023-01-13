@@ -292,9 +292,7 @@ class LpPool(CommonPool):
         for c in range(total_channels):
             iteration(c)
 
-        if len(self.output) == 1:  # type: ignore
-            return (Y_data.reshape(y_dims),)
-        return (Y_data.reshape(y_dims), I_data.reshape(y_dims))
+        return (Y_data.reshape(y_dims),)
 
     def _lp_pool_3d(  # type: ignore
         self,
@@ -363,6 +361,7 @@ class LpPool(CommonPool):
                                 for d in range(dstart, dend, dilation_d):
                                     if d < 0 or d >= depth:
                                         continue
+                                    input_index = h * width * depth + w * depth + d
                                     Yh += X_data[x_d + input_index] ** p
 
                         Y_data[y_d + pool_index] = Yh**inv_p
@@ -370,6 +369,4 @@ class LpPool(CommonPool):
         for c in range(total_channels):
             iteration(c)
 
-        if len(self.output) == 1:  # type: ignore
-            return (Y_data.reshape(y_dims),)
-        return (Y_data.reshape(y_dims), I_data.reshape(y_dims))
+        return (Y_data.reshape(y_dims),)
