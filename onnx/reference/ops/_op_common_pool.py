@@ -128,14 +128,20 @@ def _pool(
     ceil_mode: Optional[int] = 0,
     indices: bool = False,
     pads: Optional[np.ndarray] = None,
+    p: float = None,
 ) -> np.ndarray:
     if pooling_type == "AVG":
         fpool = np.average
+    elif pooling_type == "LP":
+        if p is None:
+            raise RuntimeError("p must be specified for pooling_type='LP'.")
+        inv_p = 1 / p
+        fpool = lambda x: (x**p).sum() ** inv_p
     elif pooling_type == "MAX":
         fpool = np.max
     else:
         raise NotImplementedError(
-            f"Pooling type {pooling_type!r} does not support. Should be AVG, MAX."
+            f"Pooling type {pooling_type!r} does not support. Should be AVG, MAX, LP."
         )
     spatial_size = len(x_shape) - 2
     y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))  # type: ignore
@@ -175,7 +181,7 @@ def _pool(
                 continue
         window_vals = np.array(values)
 
-        if count_include_pad == 1 and pooling_type == "AVG":
+        if count_include_pad == 1 and pooling_type in ("AVG", "LP"):
             y[shape] = fpool(window_vals)
         else:
             no_nan = window_vals[np.where(~np.isnan(window_vals))]

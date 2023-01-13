@@ -2611,6 +2611,41 @@ class TestReferenceEvaluator(unittest.TestCase):
                 self.assertEqual(expected.shape, got.shape)
                 assert_allclose(expected, got)
 
+    def test_lp_pool_2d_1(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+
+        node = make_node(
+            "LpPool",
+            ["X"],
+            ["Y"],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+            p=10,
+        )
+        graph = make_graph([node], "g", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+
+        feeds = {"X": np.arange(49)[::-1].reshape((1, 1, 7, 7)).astype(np.float32)}
+        expected = np.array(
+            [
+                [
+                    [
+                        [51.88657, 52.329308, 49.997242, 46.283245],
+                        [44.104687, 44.234394, 41.906857, 38.51069],
+                        [28.580238, 28.143694, 25.88597, 23.14466],
+                        [13.49179, 12.562122, 10.382881, 8.189038],
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        assert_allclose(expected, got1[0])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
