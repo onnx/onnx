@@ -126,6 +126,25 @@ class ReferenceEvaluator:
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Celu.eval(x, alpha=0.5)
         print(y)
+
+    It is possible to overwrite an existing operator.
+    The class name must be the same. The domain does not have
+    to be specified for the default domain. However, by default,
+    class `OpRun` will load the most recent for this operator.
+    It can be explicirely specified by adding static attribute
+    `op_schema` of type :class:`OpSchema
+    <onnx.onnx_cpp2py_export.defs.OpSchema>`.
+
+    ::
+
+        from onnx.reference.op_run.op_conv import Conv as _Conv
+
+        class Conv(_Conv):
+
+            op_schema = instance_of_OpSchema()
+
+            def _run(self, ...):
+                ...
     """
 
     def __init__(  # type: ignore
@@ -211,12 +230,10 @@ class ReferenceEvaluator:
         if new_ops is not None:
             for cl in new_ops:
                 if not issubclass(cl, OpRun):  # type: ignore
-                    raise TypeError(
-                        f"Class {type(cl)} must inherit from OpRun (in new_ops)."
-                    )
+                    raise TypeError(f"Class {cl} must inherit from OpRun (in new_ops).")
                 if not hasattr(cl, "op_domain"):
                     raise AttributeError(
-                        f"Class {type(cl)} must define attribute 'op_domain'."
+                        f"Class {cl} must define attribute 'op_domain'."
                     )
                 key = cl.op_domain, cl.__name__  # type: ignore
                 if key in self.new_ops_:
@@ -271,6 +288,17 @@ class ReferenceEvaluator:
         "Returns the opsets."
         return self.opsets_
 
+    @property
+    def has_linked_attribute(self):
+        """
+        Checks if the graph has a linked attribute (= an attribute whose value is defined
+        by a function attribute.
+        """
+        for node in self.rt_nodes_:
+            if node.has_linked_attribute:
+                return True
+        return False
+
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(self.input_names)}) -> {', '.join(self.output_names)}"
 
@@ -297,6 +325,7 @@ class ReferenceEvaluator:
             "log": lambda pattern, *args: self._log(10, pattern, *args),
             "opsets": self.opsets,
             "verbose": self.verbose,
+            "new_ops": self.new_ops_,
         }
         if self.input_types_:
             all_types = {i.name: i.type for i in self.onnx_graph_.input}
@@ -322,7 +351,13 @@ class ReferenceEvaluator:
                         f"If this node has a context dependent implementation, you should run function infer_shapes "
                         f"before calling ReferenceEvaluator."
                     ) from e
-            inst = cl(node, run_params)
+            try:
+                inst = cl(node, run_params)
+            except TypeError as e:
+                raise TypeError(
+                    f"Unable to instantiate class {cl!r} with "
+                    f"run_params={run_params} and node={node}."
+                ) from e
             self.rt_nodes_.append(inst)
 
     def _load_impl(
@@ -369,6 +404,11 @@ class ReferenceEvaluator:
             from .ops.experimental import load_op as load_op_exp
 
             return load_op_exp(node.domain, node.op_type, version)
+
+        if node.domain == "ai.onnx.ml":
+            from .ops.aionnxml import load_op as load_op_ml
+
+            return load_op_ml(node.domain, node.op_type, version)
 
         # It has to be a function.
         if key in self.functions_:
