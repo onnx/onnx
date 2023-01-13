@@ -588,8 +588,8 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             raise ValueError(f"Unable to find version {version!r} in\n{spl1}")
         if len(vers2) == 0:
             raise ValueError(f"Unable to find version {version!r} in\n{spl2}")
-        v1 = vers1[0][1]
         v2 = vers2[0][1]
+        v1 = vers1[0][1]
 
         if len(mds) == 0:
             mds.append(
@@ -608,7 +608,7 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             v1, s1 = mds[di]
             v2, s2 = mds[dj]
             d = Differ()
-            result = list(d.compare(s1, s2))
+            result = list(d.compare(s2, s1))
             raw = "".join(result)
 
             tmpl = _template_diff
