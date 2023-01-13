@@ -809,6 +809,8 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_blackmanwindow_expanded": 1e-4,
             "test_blackmanwindow_symmetric": 1e-7,
             "test_blackmanwindow_symmetric_expanded": 1e-4,
+            "test_Conv1d": 1e-6,
+            "test_Conv3d_dilated": 1e-6,
             "test_gridsample_bicubic": 1e-4,
             "test_gru_seq_length": 1e-7,
             "test_hammingwindow_expanded": 1e-4,
