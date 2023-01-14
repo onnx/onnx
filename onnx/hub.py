@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import sys
+import tarfile
 from io import BytesIO
 from os.path import join
 from typing import IO, Any, Dict, List, Optional, Set, Tuple, cast
@@ -58,9 +59,7 @@ class ModelInfo:
         self.raw_model_info: Dict[str, Any] = raw_model_info
 
     def __str__(self) -> str:
-        return "ModelInfo(model={}, opset={}, path={}, metadata={})".format(
-            self.model, self.opset, self.model_path, self.metadata
-        )
+        return f"ModelInfo(model={self.model}, opset={self.opset}, path={self.model_path}, metadata={self.metadata})"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -241,10 +240,7 @@ def load(
 
     if force_reload or not os.path.exists(local_model_path):
         if not _verify_repo_ref(repo) and not silent:
-            msg = (
-                'The model repo specification "{}" is not trusted and may'
-                " contain security vulnerabilities. Only continue if you trust this repo."
-            ).format(repo)
+            msg = f"The model repo specification {repo} is not trusted and may contain security vulnerabilities. Only continue if you trust this repo."
 
             print(msg, file=sys.stderr)
             print("Continue?[y/n]")
@@ -266,9 +262,89 @@ def load(
         if not downloaded_sha == selected_model.model_sha:
             raise AssertionError(
                 (
-                    "The cached model {} has SHA256 {} while checksum should be {}. "
+                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {selected_model.model_sha}."
                     + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
-                ).format(selected_model.model, downloaded_sha, selected_model.model_sha)
+                )
             )
 
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
+
+
+def download_model_with_test_data(
+    model: str,
+    repo: str = "onnx/models:main",
+    opset: Optional[int] = None,
+    force_reload: bool = False,
+    silent: bool = False,
+) -> Optional[str]:
+    """
+    Downloads a model along with test data by name from the onnx model hub and returns the directory to which the files have been extracted.
+
+    :param model: The name of the onnx model in the manifest. This field is case-sensitive
+    :param repo: The location of the model repo in format "user/repo[:branch]".
+        If no branch is found will default to "main"
+    :param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
+    :param force_reload: Whether to force the model to re-download even if its already found in the cache
+    :param silent: Whether to suppress the warning message if the repo is not trusted.
+    :return: str or None
+    """
+    selected_model = get_model_info(model, repo, opset)
+
+    local_model_with_data_path_arr = selected_model.metadata[
+        "model_with_data_path"
+    ].split("/")
+
+    model_with_data_sha = selected_model.metadata["model_with_data_sha"]
+
+    if model_with_data_sha is not None:
+        local_model_with_data_path_arr[
+            -1
+        ] = f"{model_with_data_sha}_{local_model_with_data_path_arr[-1]}"
+    local_model_with_data_path = join(
+        _ONNX_HUB_DIR, os.sep.join(local_model_with_data_path_arr)
+    )
+
+    if force_reload or not os.path.exists(local_model_with_data_path):
+        if not _verify_repo_ref(repo) and not silent:
+            msg = f"The model repo specification {repo} is not trusted and may contain security vulnerabilities. Only continue if you trust this repo."
+
+            print(msg, file=sys.stderr)
+            print("Continue?[y/n]")
+            if input().lower() != "y":
+                return None
+
+        os.makedirs(os.path.dirname(local_model_with_data_path), exist_ok=True)
+        lfs_url = _get_base_url(repo, True)
+        print(f"Downloading {model} to local path {local_model_with_data_path}")
+        _download_file(
+            lfs_url + selected_model.metadata["model_with_data_path"],
+            local_model_with_data_path,
+        )
+    else:
+        print(f"Using cached {model} model from {local_model_with_data_path}")
+
+    with open(local_model_with_data_path, "rb") as f:
+        model_with_data_bytes = f.read()
+
+    if model_with_data_sha is not None:
+        downloaded_sha = hashlib.sha256(model_with_data_bytes).hexdigest()
+        if not downloaded_sha == model_with_data_sha:
+            raise AssertionError(
+                (
+                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {model_with_data_sha}."
+                    + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
+                )
+            )
+
+    model_with_data_zipped = tarfile.open(local_model_with_data_path)
+    local_model_with_data_dir_path = local_model_with_data_path[
+        0 : len(local_model_with_data_path) - 7
+    ]
+    model_with_data_zipped.extractall(local_model_with_data_dir_path)
+    model_with_data_path = (
+        local_model_with_data_dir_path
+        + "/"
+        + os.listdir(local_model_with_data_dir_path)[0]
+    )
+
+    return model_with_data_path
