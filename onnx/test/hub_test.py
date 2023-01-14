@@ -95,6 +95,15 @@ class TestModelHub(unittest.TestCase):
             AssertionError, lambda: hub.get_model_info("mnist", self.repo, opset=-1)
         )
 
+    def test_download_model_with_test_data(self) -> None:
+        dir = hub.download_model_with_test_data("mnist")
+        files = os.listdir(dir)
+        self.assertIsInstance(dir, str)
+        self.assertIn(member="model.onnx", container=files, msg="Onnx model not found")
+        self.assertIn(
+            member="test_data_set_0", container=files, msg="Test data not found"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
