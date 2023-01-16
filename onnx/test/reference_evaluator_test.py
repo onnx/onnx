@@ -2611,6 +2611,32 @@ class TestReferenceEvaluator(unittest.TestCase):
                 self.assertEqual(expected.shape, got.shape)
                 assert_allclose(expected, got)
 
+    def test_lp_pool_1d_1(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+
+        node = make_node(
+            "LpPool",
+            ["X"],
+            ["Y"],
+            kernel_shape=[3],
+            pads=[1, 1],
+            strides=[2],
+            p=10,
+        )
+        graph = make_graph([node], "g", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+
+        feeds = {"X": np.arange(7)[::-1].reshape((1, 1, 7)).astype(np.float32)}
+        expected = np.array(
+            [[[6.090506, 5.054008, 3.005167, 1.0]]],
+            dtype=np.float32,
+        )
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        assert_allclose(expected, got1[0])
+
     def test_lp_pool_2d_1(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
@@ -2636,6 +2662,43 @@ class TestReferenceEvaluator(unittest.TestCase):
                         [44.104687, 44.234394, 41.906857, 38.51069],
                         [28.580238, 28.143694, 25.88597, 23.14466],
                         [13.49179, 12.562122, 10.382881, 8.189038],
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        assert_allclose(expected, got1[0])
+
+    def test_lp_pool_3d_1(self):
+        X = make_tensor_value_info(
+            "X", TensorProto.FLOAT, [None, None, None, None, None]
+        )
+        Y = make_tensor_value_info(
+            "Y", TensorProto.FLOAT, [None, None, None, None, None]
+        )
+
+        node = make_node(
+            "LpPool",
+            ["X"],
+            ["Y"],
+            kernel_shape=[3, 3, 3],
+            pads=[1, 1, 1, 1, 1, 1],
+            strides=[2, 2, 2],
+            p=10,
+        )
+        graph = make_graph([node], "g", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+
+        feeds = {"X": np.arange(64)[::-1].reshape((1, 1, 4, 4, 4)).astype(np.float32)}
+        expected = np.array(
+            [
+                [
+                    [
+                        [[70.18394, 71.3056], [66.45819, 67.3812]],
+                        [[51.663544, 52.06119], [47.49086, 47.687004]],
                     ]
                 ]
             ],
