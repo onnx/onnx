@@ -35,7 +35,7 @@ class ArgMax_11(_ArgMax):
 class ArgMax_12(_ArgMax):
     def _run(self, data, axis=None, keepdims=None, select_last_index=None):  # type: ignore
         if select_last_index == 0:  # type: ignore
-            return _ArgMax._run(self, data)
+            return _ArgMax._run(self, data, axis=axis, keepdims=keepdims)
         return (
             _argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims),
         )
