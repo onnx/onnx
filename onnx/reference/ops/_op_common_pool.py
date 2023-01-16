@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221,R0913,R0914
+# pylint: disable=R0912,W0221,R0913,R0914
 
 import itertools
 from typing import Optional, Tuple
@@ -140,7 +140,7 @@ def _pool(
         def fpool_lp(x):
             return (x**p).sum() ** inv_p
 
-        fpool = fpool_lp
+        fpool = fpool_lp  # type: ignore
     elif pooling_type == "MAX":
         fpool = np.max
     else:
