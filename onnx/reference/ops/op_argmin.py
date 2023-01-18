@@ -35,7 +35,7 @@ class ArgMin_11(_ArgMin):
 class ArgMin_12(_ArgMin):
     def _run(self, data, axis=None, keepdims=None, select_last_index=None):  # type: ignore
         if select_last_index == 0:  # type: ignore
-            return _ArgMin._run(self, data)
+            return _ArgMin._run(self, data, axis=axis, keepdims=keepdims)
         return (
             _argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims),
         )

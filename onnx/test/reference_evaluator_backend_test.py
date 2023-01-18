@@ -317,6 +317,15 @@ class OnnxBackendTest:
                             f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
                             f"\n{output}\n-----\n{diff}\n------INPUTS----\n{pprint.pformat(inputs)}."
                         ) from ex
+                if desired.shape != output.shape and not (
+                    len(desired.shape) == 0 and output.shape == (1,)
+                ):
+                    raise AssertionError(
+                        f"Output {i_output} of test {index} in folder {self.folder!r} failed "
+                        f"(expected shape={desired.shape} but shape={output.shape}), "
+                        f"comment={comment}\n---\n{desired}\n----"
+                        f"\n{output}\n------INPUTS----\n{pprint.pformat(inputs)}."
+                    )
             elif hasattr(output, "is_compatible"):
                 # A shape
                 if desired.dtype != output.dtype:
@@ -778,7 +787,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
     def setUpClass(cls, all_tests=False):
         # test not supported yet
         # not supported yet
-        # see http://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
+        # see https://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
         # to compare with onnxruntime
 
         cls.rtol = {
@@ -800,6 +809,8 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_blackmanwindow_expanded": 1e-4,
             "test_blackmanwindow_symmetric": 1e-7,
             "test_blackmanwindow_symmetric_expanded": 1e-4,
+            "test_Conv1d": 1e-6,
+            "test_Conv3d_dilated": 1e-6,
             "test_gridsample_bicubic": 1e-4,
             "test_gru_seq_length": 1e-7,
             "test_hammingwindow_expanded": 1e-4,

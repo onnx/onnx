@@ -68,4 +68,3 @@ Distribution
 
 The distribution of files follows the basic procedures described in
 [Creating Releases](https://help.github.com/articles/creating-releases/).
-
