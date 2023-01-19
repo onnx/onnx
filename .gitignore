@@ -89,6 +89,7 @@ tools/protoc-gen-mypy.sh
 onnx/examples/.coverage.nbval
 .pytest_cache
 test_report
+test-output.xml
 
 # autocomplete
 .ycm_extra_conf.py

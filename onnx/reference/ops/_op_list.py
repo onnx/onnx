@@ -195,7 +195,7 @@ from .op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss
 from .op_softplus import Softplus
 from .op_softsign import Softsign
 from .op_space_to_depth import SpaceToDepth
-from .op_split import Split, Split_2, Split_11, Split_13
+from .op_split import Split, Split_2, Split_11, Split_13, Split_18
 from .op_split_to_sequence import SplitToSequence
 from .op_sqrt import Sqrt
 from .op_squeeze import Squeeze, Squeeze_1, Squeeze_11, Squeeze_13
