@@ -614,6 +614,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0)));
 
 ONNX_OPERATOR_SET_SCHEMA(
+    AveragePool,
+    11,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator_10(
+            "AveragePool",
+            "average",
+            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
+            true,
+            false))
+        .Attr(
+            "count_include_pad",
+            "Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0)));
+
+ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
     1,
     OpSchema().FillUsing(PoolOpSchemaGenerator_9(
