@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221,R0913,R0914
 
-from ._op_common_pool import CommonPool
 from onnx.defs import onnx_opset_version
+from ._op_common_pool import CommonPool
 
 
 class AveragePool_1(CommonPool):
@@ -29,6 +29,7 @@ class AveragePool_1(CommonPool):
             strides=strides,
         )
 
+
 class AveragePool_7(CommonPool):
     def _run(  # type: ignore
         self,
@@ -52,6 +53,7 @@ class AveragePool_7(CommonPool):
             pads=pads,
             strides=strides,
         )
+
 
 class AveragePool_11(CommonPool):
     def _run(  # type: ignore
@@ -107,8 +109,8 @@ class AveragePool_19(CommonPool):
 if onnx_opset_version() > 11:
     AveragePool = AveragePool_19
 elif onnx_opset_version() > 7:
-    AveragePool = AveragePool_11
+    AveragePool = AveragePool_11  # type: ignore
 elif onnx_opset_version() > 1:
-    AveragePool = AveragePool_7
+    AveragePool = AveragePool_7  # type: ignore
 else:
-    AveragePool = AveragePool_1
+    AveragePool = AveragePool_1  # type: ignore
