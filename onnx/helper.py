@@ -564,7 +564,7 @@ def make_attribute(
     # string
     elif bytes_or_false is not False:
         if not isinstance(bytes_or_false, bytes):
-            raise ValueError("value must be an instance of {}.".format(bytes))
+            raise ValueError("bytes_or_false must be an instance of {}.".format(bytes))
         attr.s = bytes_or_false
         attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
@@ -998,13 +998,15 @@ def printable_node(
         if subgraphs:
             printed_attr_subgraphs = printable_attribute(attr, subgraphs)
             if not isinstance(printed_attr_subgraphs[1], list):
-                raise ValueError("value must be an instance of {}.".format(list))
+                raise ValueError(
+                    "printed_attr_subgraphs[1] must be an instance of {}.".format(list)
+                )
             graphs.extend(printed_attr_subgraphs[1])
             printed_attrs.append(printed_attr_subgraphs[0])
         else:
             printed = printable_attribute(attr)
             if not isinstance(printed, str):
-                raise ValueError("value must be an instance of {}.".format(str))
+                raise ValueError("printed must be an instance of {}.".format(str))
             printed_attrs.append(printed)
     printed_attributes = ", ".join(sorted(printed_attrs))
     printed_inputs = ", ".join([f"%{name}" for name in node.input])
@@ -1083,7 +1085,9 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     for node in graph.node:
         contents_subgraphs = printable_node(node, indent, subgraphs=True)
         if not isinstance(contents_subgraphs[1], list):
-            raise ValueError("value must be an instance of {}.".format(list))
+            raise ValueError(
+                "contents_subgraphs[1] must be an instance of {}.".format(list)
+            )
         content.append(contents_subgraphs[0])
         graphs.extend(contents_subgraphs[1])
     # tail
@@ -1104,7 +1108,7 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
     """
     if not isinstance(proto, google.protobuf.message.Message):
         raise ValueError(
-            "value must be an instance of {}.".format(google.protobuf.message.Message)
+            "proto must be an instance of {}.".format(google.protobuf.message.Message)
         )
     for descriptor in proto.DESCRIPTOR.fields:
         if descriptor.name == "doc_string":

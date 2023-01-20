@@ -190,7 +190,7 @@ def _interpolate_1d_with_x(
         x_ori = x / scale_factor
     elif coordinate_transformation_mode == "tf_crop_and_resize":
         if roi is None:
-            raise ValueError("value cannot be None.")
+            raise ValueError("roi cannot be None.")
         if output_width == 1:
             x_ori = (roi[1] - roi[0]) * (input_width - 1) / 2
         else:
