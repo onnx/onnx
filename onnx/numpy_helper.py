@@ -366,9 +366,9 @@ def from_optional(
 
     if dtype:
         # dtype must be a valid OptionalProto.DataType
-        valid_dtypes = [v for v in OptionalProto.DataType.values()]
+        valid_dtypes = list(OptionalProto.DataType.values())
         if dtype not in valid_dtypes:
-            raise TypeError("{} must be a valid OptionalProto.DataType.".format(dtype))
+            raise TypeError(f"{dtype} must be a valid OptionalProto.DataType.")
         elem_type = dtype
     elif isinstance(opt, dict):
         elem_type = OptionalProto.MAP
