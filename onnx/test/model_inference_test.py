@@ -8,10 +8,10 @@ import onnx.shape_inference
 
 class TestModelInference(unittest.TestCase):
     def _check(self, model_text: str, *expected: int):
-        '''Check that the model inference infers the expected types for outputs.
+        """Check that the model inference infers the expected types for outputs.
         Restricted to the simple case of tensor types, so expected types specify
         only the element type (ints corresponding to onnx.TensorProto.DataType).
-        '''
+        """
         model = onnx.parser.parse_model(model_text)
         inferred = onnx.shape_inference.infer_shapes(model)
         outputs = inferred.graph.output
@@ -24,8 +24,8 @@ class TestModelInference(unittest.TestCase):
             self.assertEqual(elem_type, expected_elem_type)
 
     def test_mi_basic(self):
-        '''Test that model inference infers model output type.'''
-        model = '''
+        """Test that model inference infers model output type."""
+        model = """
             <
                 ir_version: 7,
                 opset_import: [ "" : 17]
@@ -34,12 +34,12 @@ class TestModelInference(unittest.TestCase):
             {
                 y = Cast<to=6> (x)
             }
-        '''
+        """
         self._check(model, onnx.TensorProto.INT32)
 
     def test_mi_function(self):
-        '''Test use of functions.'''
-        model = '''
+        """Test use of functions."""
+        model = """
             <
                 ir_version: 7,
                 opset_import: [ "" : 17, "local" : 1]
@@ -56,12 +56,12 @@ class TestModelInference(unittest.TestCase):
             {
                 y = Cast<to=6> (x)
             }
-        '''
+        """
         self._check(model, onnx.TensorProto.INT32)
 
     def test_mi_function_attr(self):
-        '''Test use of functions with attribute parameters.'''
-        model = '''
+        """Test use of functions with attribute parameters."""
+        model = """
             <
                 ir_version: 7,
                 opset_import: [ "" : 17, "local" : 1]
@@ -78,12 +78,12 @@ class TestModelInference(unittest.TestCase):
             {
                 y = Cast<to:int = @target> (x)
             }
-        '''
+        """
         self._check(model, onnx.TensorProto.INT32)
 
     def test_mi_function_subgraph_attr(self):
-        '''Test use of function attributes within subgraphs.'''
-        model = '''
+        """Test use of function attributes within subgraphs."""
+        model = """
             <
                 ir_version: 7,
                 opset_import: [ "" : 17, "local" : 1]
@@ -103,12 +103,12 @@ class TestModelInference(unittest.TestCase):
                     else_branch = g2 () => (z_else) { z_else = Cast<to:int = @target> (x) }
                     >
             }
-        '''
+        """
         self._check(model, onnx.TensorProto.INT32)
 
     def test_mi_function_multiple_calls(self):
-        '''Test use of multiple invocation of functions.'''
-        model = '''
+        """Test use of multiple invocation of functions."""
+        model = """
             <
                 ir_version: 7,
                 opset_import: [ "" : 17, "local" : 1]
@@ -129,8 +129,9 @@ class TestModelInference(unittest.TestCase):
                     else_branch = g2 () => (z_else) { z_else = Cast<to:int = @target> (x) }
                     >
             }
-        '''
+        """
         self._check(model, onnx.TensorProto.INT32, onnx.TensorProto.INT64)
+
 
 if __name__ == "__main__":
     unittest.main()
