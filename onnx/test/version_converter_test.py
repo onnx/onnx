@@ -1853,7 +1853,7 @@ class TestVersionConverter(unittest.TestCase):
 
     def test_pad_with_value_10_11(self) -> None:
         pads = (0, 1, 2, 0, 2, 1)
-        nodes = [helper.make_node("Pad", ["X"], ["Y"], pads=pads, value=1.)]
+        nodes = [helper.make_node("Pad", ["X"], ["Y"], pads=pads, value=1.0)]
         graph = helper.make_graph(
             nodes,
             "test",
