@@ -360,7 +360,7 @@ def make_tensor(
     tensor.name = name
 
     if data_type == TensorProto.STRING and raw:
-        raise ValueError("Can not use raw_data to store string type.")
+        raise TypeError("Can not use raw_data to store string type.")
 
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
@@ -564,7 +564,7 @@ def make_attribute(
     # string
     elif bytes_or_false is not False:
         if not isinstance(bytes_or_false, bytes):
-            raise ValueError(f"bytes_or_false must be an instance of {bytes}.")
+            raise TypeError(f"bytes_or_false must be an instance of {bytes}.")
         attr.s = bytes_or_false
         attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
@@ -947,7 +947,7 @@ def printable_attribute(
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
     which = dim.WhichOneof("value")
     if which is None:
-        raise ValueError(f"which cannot be {None}.")
+        raise TypeError(f"which cannot be {None}.")
     return str(getattr(dim, which))
 
 
@@ -998,7 +998,7 @@ def printable_node(
         if subgraphs:
             printed_attr_subgraphs = printable_attribute(attr, subgraphs)
             if not isinstance(printed_attr_subgraphs[1], list):
-                raise ValueError(
+                raise TypeError(
                     f"printed_attr_subgraphs[1] must be an instance of {list}."
                 )
             graphs.extend(printed_attr_subgraphs[1])
@@ -1006,7 +1006,7 @@ def printable_node(
         else:
             printed = printable_attribute(attr)
             if not isinstance(printed, str):
-                raise ValueError(f"printed must be an instance of {str}.")
+                raise TypeError(f"printed must be an instance of {str}.")
             printed_attrs.append(printed)
     printed_attributes = ", ".join(sorted(printed_attrs))
     printed_inputs = ", ".join([f"%{name}" for name in node.input])
@@ -1085,7 +1085,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     for node in graph.node:
         contents_subgraphs = printable_node(node, indent, subgraphs=True)
         if not isinstance(contents_subgraphs[1], list):
-            raise ValueError(f"contents_subgraphs[1] must be an instance of {list}.")
+            raise TypeError(f"contents_subgraphs[1] must be an instance of {list}.")
         content.append(contents_subgraphs[0])
         graphs.extend(contents_subgraphs[1])
     # tail
@@ -1105,7 +1105,7 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
     Empties `doc_string` field on any nested protobuf messages
     """
     if not isinstance(proto, google.protobuf.message.Message):
-        raise ValueError(
+        raise TypeError(
             f"proto must be an instance of {google.protobuf.message.Message}."
         )
     for descriptor in proto.DESCRIPTOR.fields:
