@@ -486,7 +486,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void replaceAttrParams(NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+  void replaceAttrRefs(NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
     auto& attributes = *n.mutable_attribute();
     for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
       auto& attr = *attr_iter;
@@ -506,23 +506,24 @@ class ShapeInferenceImplBase {
       }
       // Subgraphs must be recursively processed.
       if (attr.has_g()) {
-        replaceAttrParams(*attr.mutable_g(), attr_map);
+        replaceAttrRefs(*attr.mutable_g(), attr_map);
       }
-      for (auto& graph : *attr.mutable_graphs())
-        replaceAttrParams(graph, attr_map);
+      for (auto& graph : *attr.mutable_graphs()) {
+        replaceAttrRefs(graph, attr_map);
+      }
       ++attr_iter;
     }
   }
 
-  void replaceAttrParams(GraphProto& graph, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+  void replaceAttrRefs(GraphProto& graph, std::unordered_map<std::string, const AttributeProto*> attr_map) {
     for (auto& n : *graph.mutable_node()) {
-      replaceAttrParams(n, attr_map);
+      replaceAttrRefs(n, attr_map);
     }
   }
 
   void process(const NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
     NodeProto copy_n(n);
-    replaceAttrParams(copy_n, attr_map);
+    replaceAttrRefs(copy_n, attr_map);
     process(copy_n);
   }
 
