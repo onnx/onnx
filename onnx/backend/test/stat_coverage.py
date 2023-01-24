@@ -91,13 +91,9 @@ def gen_node_test_coverage(
     f.write("## Summary\n")
     if num_common:
         f.write(
-            "Node tests have covered {}/{} ({:.2f}%, {} generators excluded) "
-            "common operators.\n\n".format(
-                len(common_covered),
-                num_common,
-                (len(common_covered) / float(num_common) * 100),
-                len(common_generator),
-            )
+            f"Node tests have covered {len(common_covered)}/{num_common} "
+            f"({len(common_covered) / float(num_common) * 100:.2f}%, {len(common_generator)} "
+            f"generators excluded) common operators.\n\n"
         )
     else:
         f.write("Node tests have covered 0/0 (N/A) common operators. \n\n")
@@ -134,9 +130,7 @@ def gen_node_test_coverage(
             f.write(f"### {s}")
             if s in node_tests:
                 f.write(
-                    "\nThere are {} test cases, listed as following:\n".format(
-                        len(node_tests[s])
-                    )
+                    f"\nThere are {len(node_tests[s])} test cases, listed as following:\n"
                 )
                 for summary, code in sorted(node_tests[s]):
                     f.write("<details>\n")
@@ -224,12 +218,9 @@ def gen_model_test_coverage(
                         if attr.graphs not in attrs[node.op_type][attr.name]:
                             attrs[node.op_type][attr.name].append(attr.graphs)
         f.write(
-            "\n{} has {} nodes. Of these, {} are covered by node tests ({}%)\n\n\n".format(
-                model.graph.name,
-                num_covered,
-                len(model.graph.node),
-                100.0 * float(num_covered) / float(len(model.graph.node)),
-            )
+            f"\n{model.graph.name} has {num_covered} nodes. "
+            f"Of these, {len(model.graph.node)} are covered by node tests "
+            f"({100.0 * float(num_covered) / float(len(model.graph.node))}%)\n\n\n"
         )
         # Iterate through attrs, print
         f.write("<details>\n")
@@ -238,9 +229,7 @@ def gen_model_test_coverage(
             f.write("<details>\n")
             # Get total number of attributes for node schema
             f.write(
-                "<summary>{}: {} out of {} attributes covered</summary>\n\n".format(
-                    op, len(attrs[op].keys()), len(schema_dict[op].attributes)
-                )
+                f"<summary>{op}: {len(attrs[op])} out of {len(schema_dict[op].attributes)} attributes covered</summary>\n\n"
             )
             for attribute in sorted(schema_dict[op].attributes):
                 if attribute in attrs[op]:

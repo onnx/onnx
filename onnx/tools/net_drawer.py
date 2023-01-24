@@ -48,11 +48,11 @@ def _form_and_sanitize_docstring(s: str) -> str:
 def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProducer:
     def ReallyGetOpNode(op: NodeProto, op_id: int) -> pydot.Node:
         if op.name:
-            node_name = "%s/%s (op#%d)" % (op.name, op.op_type, op_id)
+            node_name = f"{op.name}/{op.op_type} (op#{op_id})"
         else:
-            node_name = "%s (op#%d)" % (op.op_type, op_id)
-        for i, input in enumerate(op.input):
-            node_name += "\n input" + str(i) + " " + input
+            node_name = f"{op.op_type} (op#{op_id})"
+        for i, input_ in enumerate(op.input):
+            node_name += "\n input" + str(i) + " " + input_
         for i, output in enumerate(op.output):
             node_name += "\n output" + str(i) + " " + output
         node = pydot.Node(node_name, **kwargs)

@@ -44,7 +44,7 @@ exclude_patterns = [
     'docs/**',
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -53,7 +53,7 @@ command = [
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -78,17 +78,18 @@ exclude_patterns = [
     'onnx/reference/reference_evaluator.py',
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
     'mypy_linter',
     '--config=pyproject.toml',
+    '--show-disable',
     '--',
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -110,7 +111,7 @@ exclude_patterns = [
     'docs/**',
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -119,7 +120,7 @@ command = [
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -135,7 +136,7 @@ code = 'NAMESPACE'
 include_patterns = ['**/*.cc', '**/*.h']
 exclude_patterns = ['third_party/**']
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -161,7 +162,7 @@ include_patterns = [
 exclude_patterns = [
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -172,7 +173,7 @@ command = [
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -185,24 +186,31 @@ is_formatter = true
 [[linter]]
 code = 'PYLINT'
 include_patterns = [
-    # TODO: Opt in to pylint by adding paths here
-    'onnx/reference/**/*.py',
+    'onnx/**/*.py',
+    'tools/**/*.py',
 ]
 exclude_patterns = [
-    'onnx/reference/reference_evaluator.py',
+    'onnx/backend/test/**',
+    'onnx/backend/sample/ops/abs.py', # redefined-builtin
+    'onnx/checker.py',
+    'tools/protoc-gen-mypy.py',
+    'onnx/test/basic_test.py',
+    'onnx/test/parser_test.py',
+    'onnx/test/version_converter_test.py',
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
     'pylint_linter',
-    '--rcfile=pyproject.toml',
+    '--rcfile=pyproject_pylint.toml',
+    '--show-disable',
     '--',
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',

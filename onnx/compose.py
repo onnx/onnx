@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# pylint: disable=unidiomatic-typecheck
+
 from typing import Dict, List, MutableMapping, Optional, Set, Tuple
 
 from onnx import GraphProto, ModelProto
@@ -76,7 +78,7 @@ def check_overlapping_names(
     return result
 
 
-def merge_graphs(
+def merge_graphs(  # pylint: disable=too-many-branches,too-many-statements
     g1: GraphProto,
     g2: GraphProto,
     io_map: List[Tuple[str, str]],
@@ -208,9 +210,9 @@ def merge_graphs(
     # Connecting outputs of the first graph with the inputs of the second
     for node_idx in range(g2_nodes_begin, g2_nodes_end):
         node = g.node[node_idx]
-        for index, name in enumerate(node.input):
-            if name in reversed_io_map:
-                node.input[index] = reversed_io_map[name]
+        for index, name_ in enumerate(node.input):
+            if name_ in reversed_io_map:
+                node.input[index] = reversed_io_map[name_]
 
     if inputs:
         input_set = set(inputs)
@@ -263,7 +265,7 @@ def merge_graphs(
     return g
 
 
-def merge_models(
+def merge_models(  # pylint: disable=too-many-branches
     m1: ModelProto,
     m2: ModelProto,
     io_map: List[Tuple[str, str]],
@@ -325,9 +327,7 @@ def merge_models(
     ir_version = m1.ir_version
 
     opset_import_map: MutableMapping[str, int] = {}
-    opset_imports = [entry for entry in m1.opset_import] + [
-        entry for entry in m2.opset_import
-    ]
+    opset_imports = list(m1.opset_import) + list(m2.opset_import)
 
     for entry in opset_imports:
         if entry.domain in opset_import_map:
@@ -411,7 +411,7 @@ def merge_models(
     return model
 
 
-def add_prefix_graph(
+def add_prefix_graph(  # pylint: disable=too-many-branches
     graph: GraphProto,
     prefix: str,
     rename_nodes: Optional[bool] = True,
@@ -498,12 +498,12 @@ def add_prefix_graph(
             name_map[entry.name] = _prefixed(prefix, entry.name)
 
     for n in g.node:
-        for i in range(len(n.output)):
+        for i, output in enumerate(n.output):
             if n.output[i] in name_map:
-                n.output[i] = name_map[n.output[i]]
-        for i in range(len(n.input)):
+                n.output[i] = name_map[output]
+        for i, input_ in enumerate(n.input):
             if n.input[i] in name_map:
-                n.input[i] = name_map[n.input[i]]
+                n.input[i] = name_map[input_]
 
     for in_desc in g.input:
         if in_desc.name in name_map:
@@ -634,12 +634,12 @@ def expand_out_dim_graph(
     orig_out_names = [output.name for output in g.output]
 
     for n in g.node:
-        for i in range(len(n.output)):
-            if n.output[i] in orig_out_names:
-                n.output[i] = n.output[i] + f"_collapsed_dim_{dim_idx}"
-        for i in range(len(n.input)):
-            if n.input[i] in orig_out_names:
-                n.input[i] = n.input[i] + f"_collapsed_dim_{dim_idx}"
+        for i, out in enumerate(n.output):
+            if out in orig_out_names:
+                n.output[i] = out + f"_collapsed_dim_{dim_idx}"
+        for i, inp in enumerate(n.input):
+            if inp in orig_out_names:
+                n.input[i] = inp + f"_collapsed_dim_{dim_idx}"
 
     expand_dim_k = g.name + "_expand_out_dim_idx"
     g.node.append(

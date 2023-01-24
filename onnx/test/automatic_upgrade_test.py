@@ -37,7 +37,6 @@ class TestAutomaticUpgrade(unittest.TestCase):
         if attrs is None:
             attrs = {}
 
-        global tested_ops
         tested_ops.append(op)
 
         n_inputs = len(input_shapes)
@@ -1707,7 +1706,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
         )
 
     def test_CenterCropPad(self) -> None:
-        input = helper.make_tensor(
+        input_ = helper.make_tensor(
             "input",
             TensorProto.FLOAT,
             dims=[2, 4],
@@ -1722,7 +1721,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[], []],
             [[3, 3]],
             [TensorProto.FLOAT, TensorProto.INT64],
-            initializer=[input, shape],
+            initializer=[input_, shape],
         )
 
     def test_BitwiseNot(self) -> None:

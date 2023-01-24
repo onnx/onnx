@@ -51,14 +51,6 @@ jobs:
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
-      - name: pylint
-        uses: dciborow/action-pylint@0.0.7
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-check
-          level: warning
-          filter_mode: diff_context
-          glob_pattern: "**/*.py"
 
   enforce-style:
     name: Enforce style
