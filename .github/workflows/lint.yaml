@@ -88,7 +88,7 @@ jobs:
           set +e
           if ! lintrunner --force-color --all-files --tee-json=lint.json; then
               echo ""
-              echo -e "\e[1m\e[36mYou can reproduce these results locally by using \`lintrunner\`.\e[0m"
+              echo -e "\e[1m\e[36mYou can reproduce these results locally by using \`lintrunner -m main\`.\e[0m"
               exit 1
           fi
       - name: Produce SARIF
@@ -96,7 +96,8 @@ jobs:
         run: |
           python -m lintrunner_adapters to-sarif lint.json lintrunner.sarif
       - name: Upload SARIF file
-        if: always()
+        # Do not display on drafts to make reviewing easier
+        if: github.event.pull_request.draft == false
         continue-on-error: true
         uses: github/codeql-action/upload-sarif@v2
         with:
