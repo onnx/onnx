@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-from onnx.reference.op_run import  OpRun, _split_class_name
+from onnx.reference.op_run import OpRun, _split_class_name
 
 
 def _build_registered_operators_any_domain(clo, load_op):  # type: ignore
