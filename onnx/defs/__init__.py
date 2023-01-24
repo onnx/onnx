@@ -27,7 +27,7 @@ def onnx_opset_version() -> int:
 @property  # type: ignore
 def _Function_proto(self):  # type: ignore
     func_proto = FunctionProto()
-    func_proto.ParseFromString(self._function_body)
+    func_proto.ParseFromString(self._function_body)  # pylint: disable=protected-access
     return func_proto
 
 
@@ -38,7 +38,7 @@ C.OpSchema.function_body = _Function_proto  # type: ignore
 @property  # type: ignore
 def _Attribute_default_value(self):  # type: ignore
     attr = AttributeProto()
-    attr.ParseFromString(self._default_value)
+    attr.ParseFromString(self._default_value)  # pylint: disable=protected-access
     return attr
 
 

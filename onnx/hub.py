@@ -71,7 +71,7 @@ def set_dir(new_dir: str) -> None:
 
     :param new_dir: location of new model hub cache
     """
-    global _ONNX_HUB_DIR
+    global _ONNX_HUB_DIR  # pylint: disable=global-statement
     _ONNX_HUB_DIR = new_dir
 
 
@@ -119,8 +119,7 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
 
     if lfs:
         return f"https://media.githubusercontent.com/media/{repo_owner}/{repo_name}/{repo_ref}/"
-    else:
-        return f"https://raw.githubusercontent.com/{repo_owner}/{repo_name}/{repo_ref}/"
+    return f"https://raw.githubusercontent.com/{repo_owner}/{repo_name}/{repo_ref}/"
 
 
 def _download_file(url: str, file_name: str) -> None:
@@ -174,14 +173,14 @@ def list_models(
     # Filter by tags
     if tags is None:
         return matching_models
-    else:
-        canonical_tags = {t.lower() for t in tags}
-        matching_info_list: List[ModelInfo] = []
-        for m in matching_models:
-            model_tags = {t.lower() for t in m.tags}
-            if len(canonical_tags.intersection(model_tags)) > 0:
-                matching_info_list.append(m)
-        return matching_info_list
+
+    canonical_tags = {t.lower() for t in tags}
+    matching_info_list: List[ModelInfo] = []
+    for m in matching_models:
+        model_tags = {t.lower() for t in m.tags}
+        if len(canonical_tags.intersection(model_tags)) > 0:
+            matching_info_list.append(m)
+    return matching_info_list
 
 
 def get_model_info(
@@ -336,11 +335,12 @@ def download_model_with_test_data(
                 )
             )
 
-    model_with_data_zipped = tarfile.open(local_model_with_data_path)
-    local_model_with_data_dir_path = local_model_with_data_path[
-        0 : len(local_model_with_data_path) - 7
-    ]
-    model_with_data_zipped.extractall(local_model_with_data_dir_path)
+    with tarfile.open(local_model_with_data_path) as model_with_data_zipped:
+        # FIXME: Avoid index manipulation with magic numbers
+        local_model_with_data_dir_path = local_model_with_data_path[
+            0 : len(local_model_with_data_path) - 7
+        ]
+        model_with_data_zipped.extractall(local_model_with_data_dir_path)
     model_with_data_path = (
         local_model_with_data_dir_path
         + "/"

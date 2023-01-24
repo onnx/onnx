@@ -103,8 +103,8 @@ class TestShapeInferenceHelper(unittest.TestCase):
         vis = list(sorted(vis, key=lambda x: x.name))
         inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))  # type: ignore
         assert len(vis) == len(inferred_vis)
-        for i in range(len(vis)):
-            self._compare_value_infos(vis[i].type, inferred_vis[i].type)
+        for v, inferred_v in zip(vis, inferred_vis):
+            self._compare_value_infos(v.type, inferred_v.type)
 
     def _compare_value_infos(
         self, vi_type: TypeProto, inferred_vi_type: TypeProto
@@ -123,8 +123,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
                 assert len(vi_type.tensor_type.shape.dim) == len(
                     inferred_vi_type.tensor_type.shape.dim
                 )
-                for dim_i in range(len(vi_type.tensor_type.shape.dim)):
-                    dim = vi_type.tensor_type.shape.dim[dim_i]
+                for dim_i, dim in enumerate(vi_type.tensor_type.shape.dim):
                     inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
                     # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
                     if dim.dim_param:

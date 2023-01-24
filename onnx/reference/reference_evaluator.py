@@ -8,7 +8,6 @@ import numpy as np
 from onnx import load, numpy_helper
 from onnx.defs import onnx_opset_version
 from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
-from onnx.shape_inference import infer_shapes
 
 from .op_run import OpRun, RuntimeContextError
 
