@@ -39,7 +39,7 @@ def build_registered_operators_any_domain(
     if not reg_ops:
         raise RuntimeError(
             f"No registered operator. This error happens when no implementation "
-            f"of type OpRun was detected. It is suggested to reinstall the package."
+            f"of type 'OpRun' was detected. It may be due to an error during installation. Please try reinstalling onnx."
         )
     # Set default implementation to the latest one.
     for impl in reg_ops.values():
