@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 

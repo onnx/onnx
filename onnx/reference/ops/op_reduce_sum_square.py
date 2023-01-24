@@ -3,8 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
-
 from ._op import OpRunReduceNumpy
 
 
