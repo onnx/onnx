@@ -13,7 +13,7 @@ from .op_adam import Adam
 from .op_momentum import Momentum
 
 
-def _build_registered_operators() -> Dict[Union[str, None], Dict[int, OpRunTraining]]:
+def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRunTraining]]:
     return build_registered_operators_any_domain(globals().copy())
 
 
@@ -75,5 +75,5 @@ def load_op(
 
 
 _registered_operators: TOptional[
-    Dict[Union[str, None], Dict[int, OpRunTraining]]
+    Dict[str, Dict[Union[int, None], OpRunTraining]]
 ] = None

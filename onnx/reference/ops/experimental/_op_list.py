@@ -12,7 +12,7 @@ from .op_im2col import Im2Col
 
 
 def _build_registered_operators() -> Dict[
-    Union[str, None], Dict[int, OpRunExperimental]
+    str, Dict[Union[int, None], OpRunExperimental]
 ]:
     return build_registered_operators_any_domain(globals().copy())
 
@@ -75,5 +75,5 @@ def load_op(
 
 
 _registered_operators: TOptional[
-    Dict[Union[str, None], Dict[int, OpRunExperimental]]
+    Dict[str, Dict[Union[int, None], OpRunExperimental]]
 ] = None

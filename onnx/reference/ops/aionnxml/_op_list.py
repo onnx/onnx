@@ -28,7 +28,7 @@ from .op_tree_ensemble_classifier import TreeEnsembleClassifier
 from .op_tree_ensemble_regressor import TreeEnsembleRegressor
 
 
-def _build_registered_operators() -> Dict[Union[str, None], Dict[int, OpRunAiOnnxMl]]:
+def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]:
     return build_registered_operators_any_domain(globals().copy())
 
 
@@ -90,5 +90,5 @@ def load_op(
 
 
 _registered_operators: TOptional[
-    Dict[Union[str, None], Dict[int, OpRunAiOnnxMl]]
+    Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]
 ] = None

@@ -208,7 +208,7 @@ from .op_where import Where
 from .op_xor import Xor
 
 
-def _build_registered_operators() -> Dict[Union[str, None], Dict[int, OpRun]]:
+def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRun]]:
     return build_registered_operators_any_domain(globals().copy())
 
 
@@ -322,4 +322,4 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[Dict[Union[str, None], Dict[int, OpRun]]] = None
+_registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRun]]] = None
