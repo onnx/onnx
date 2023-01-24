@@ -5,7 +5,7 @@
 # probabilites not consumed by any operator.
 
 import textwrap
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional as TOptional, Union
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
@@ -89,4 +89,6 @@ def load_op(
     return cl
 
 
-_registered_operators = None
+_registered_operators: TOptional[
+    Dict[Union[str, None], Dict[int, OpRunAiOnnxMl]]
+] = None

@@ -10,7 +10,7 @@ The operator may have been updated to support more types but that
 did not change the implementation.
 """
 import textwrap
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional as TOptional, Union
 
 from onnx import FunctionProto, NodeProto, TypeProto
 from onnx.defs import get_schema, onnx_opset_version
@@ -322,4 +322,4 @@ def load_op(
     return cl
 
 
-_registered_operators = None
+_registered_operators: TOptional[Dict[Union[str, None], Dict[int, OpRun]]] = None

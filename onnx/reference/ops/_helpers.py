@@ -14,6 +14,7 @@ def build_registered_operators_any_domain(
             "Any",
             "Dict",
             "List",
+            "TOptional",
             "Union",
             "cl",
             "class_name",
