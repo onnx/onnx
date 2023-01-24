@@ -46,6 +46,6 @@ def build_registered_operators_any_domain(
         if None in impl:
             # default already exists
             continue
-        max_version = max(impl)
+        max_version = max(impl)  # type: ignore[type-var]
         impl[None] = impl[max_version]
     return reg_ops
