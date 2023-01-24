@@ -149,7 +149,7 @@ def _deserialize(s: bytes, proto: _Proto) -> _Proto:
 
 def load_model(
     f: Union[IO[bytes], str],
-    format: Optional[Any] = None,
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
     load_external_data: bool = True,
 ) -> ModelProto:
     """
@@ -176,7 +176,10 @@ def load_model(
     return model
 
 
-def load_tensor(f: Union[IO[bytes], str], format: Optional[Any] = None) -> TensorProto:
+def load_tensor(
+    f: Union[IO[bytes], str],
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
+) -> TensorProto:
     """
     Loads a serialized TensorProto into memory
 
@@ -191,7 +194,10 @@ def load_tensor(f: Union[IO[bytes], str], format: Optional[Any] = None) -> Tenso
     return load_tensor_from_string(s, format=format)
 
 
-def load_model_from_string(s: bytes, format: Optional[Any] = None) -> ModelProto:
+def load_model_from_string(
+    s: bytes,
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
+) -> ModelProto:
     """
     Loads a binary string (bytes) that contains serialized ModelProto
 
@@ -202,10 +208,14 @@ def load_model_from_string(s: bytes, format: Optional[Any] = None) -> ModelProto
     Returns:
         Loaded in-memory ModelProto
     """
+    del format  # Unused
     return _deserialize(s, ModelProto())
 
 
-def load_tensor_from_string(s: bytes, format: Optional[Any] = None) -> TensorProto:
+def load_tensor_from_string(
+    s: bytes,
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
+) -> TensorProto:
     """
     Loads a binary string (bytes) that contains serialized TensorProto
 
@@ -216,13 +226,14 @@ def load_tensor_from_string(s: bytes, format: Optional[Any] = None) -> TensorPro
     Returns:
         Loaded in-memory TensorProto
     """
+    del format  # Unused
     return _deserialize(s, TensorProto())
 
 
 def save_model(
     proto: Union[ModelProto, bytes],
     f: Union[IO[bytes], str],
-    format: Optional[Any] = None,
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
     save_as_external_data: bool = False,
     all_tensors_to_one_file: bool = True,
     location: Optional[str] = None,
@@ -249,6 +260,8 @@ def save_model(
             If true, convert all tensors to external data
             If false, convert only non-attribute tensors to external data
     """
+    del format  # Unused
+
     if isinstance(proto, bytes):
         proto = _deserialize(proto, ModelProto())
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C3001
+# pylint: disable=C3001,isinstance-second-argument-not-valid-type
 
 import sys
 from typing import Any, Dict, List, Optional, Sequence, Union
@@ -76,28 +76,25 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
             return bfloat16_to_float32(data, dims)
 
         return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
-    else:
-        # float16 is stored as int32 (uint16 type); Need view to get the original value
-        if tensor_dtype == TensorProto.FLOAT16:
-            return (
-                np.asarray(tensor.int32_data, dtype=np.uint16)
-                .reshape(dims)
-                .view(np.float16)
-            )
 
-        # bfloat16 is stored as int32 (uint16 type); no numpy support for bf16
-        if tensor_dtype == TensorProto.BFLOAT16:
-            data = np.asarray(tensor.int32_data, dtype=np.int32)
-            return bfloat16_to_float32(data, dims)
+    # float16 is stored as int32 (uint16 type); Need view to get the original value
+    if tensor_dtype == TensorProto.FLOAT16:
+        return (
+            np.asarray(tensor.int32_data, dtype=np.uint16)
+            .reshape(dims)
+            .view(np.float16)
+        )
 
-        data = getattr(tensor, storage_field)
-        if (
-            tensor_dtype == TensorProto.COMPLEX64
-            or tensor_dtype == TensorProto.COMPLEX128
-        ):
-            data = combine_pairs_to_complex(data)
+    # bfloat16 is stored as int32 (uint16 type); no numpy support for bf16
+    if tensor_dtype == TensorProto.BFLOAT16:
+        data = np.asarray(tensor.int32_data, dtype=np.int32)
+        return bfloat16_to_float32(data, dims)
 
-        return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
+    data = getattr(tensor, storage_field)
+    if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
+        data = combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
+
+    return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
 def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
@@ -183,9 +180,9 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     raise TypeError("The element type in the input sequence is not supported.")
 
 
-def from_list(
+def from_list(  # pylint: disable=too-many-branches
     lst: List[Any], name: Optional[str] = None, dtype: Optional[int] = None
-) -> SequenceProto:
+) -> SequenceProto:  # pylint: disable=too-many-branches
     """Converts a list into a sequence def.
 
     Args:
@@ -230,8 +227,8 @@ def from_list(
         for seq in lst:
             sequence.sequence_values.extend([from_list(seq)])
     elif elem_type == SequenceProto.MAP:
-        for map in lst:
-            sequence.map_values.extend([from_dict(map)])
+        for mapping in lst:
+            sequence.map_values.extend([from_dict(mapping)])
     else:
         raise TypeError(
             "The element type in the input list is not a tensor, "
@@ -240,7 +237,7 @@ def from_list(
     return sequence
 
 
-def to_dict(map: MapProto) -> Dict[Any, Any]:
+def to_dict(map_proto: MapProto) -> Dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
     Args:
@@ -250,23 +247,23 @@ def to_dict(map: MapProto) -> Dict[Any, Any]:
         dict: the converted dictionary.
     """
     key_list: List[Any] = []
-    if map.key_type == TensorProto.STRING:
-        key_list = list(map.string_keys)
+    if map_proto.key_type == TensorProto.STRING:
+        key_list = list(map_proto.string_keys)
     else:
-        key_list = list(map.keys)
+        key_list = list(map_proto.keys)
 
-    value_list = to_list(map.values)
+    value_list = to_list(map_proto.values)
     if len(key_list) != len(value_list):
         raise IndexError(
             "Length of keys and values for MapProto (map name: ",
-            map.name,
+            map_proto.name,
             ") are not the same.",
         )
     dictionary = dict(zip(key_list, value_list))
     return dictionary
 
 
-def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
+def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
     """Converts a Python dictionary into a map def.
 
     Args:
@@ -276,10 +273,10 @@ def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
     Returns:
         MapProto: the converted map def.
     """
-    map = MapProto()
+    map_proto = MapProto()
     if name:
-        map.name = name
-    keys = list(dict.keys())
+        map_proto.name = name
+    keys = list(dict_)
     raw_key_type = np.array(keys[0]).dtype
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
 
@@ -294,13 +291,19 @@ def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
         TensorProto.UINT64,
     ]
 
-    if not all(isinstance(key, raw_key_type) for key in keys):
+    if not all(
+        isinstance(
+            key,
+            raw_key_type,  # type: ignore[arg-type]
+        )
+        for key in keys
+    ):
         raise TypeError(
             "The key type in the input dictionary is not the same "
             "for all keys and therefore is not valid as a map."
         )
 
-    values = list(dict.values())
+    values = list(dict_.values())
     raw_value_type = type(values[0])
     if not all(isinstance(val, raw_value_type) for val in values):
         raise TypeError(
@@ -310,13 +313,13 @@ def from_dict(dict: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
 
     value_seq = from_list(values)
 
-    map.key_type = key_type
+    map_proto.key_type = key_type
     if key_type == TensorProto.STRING:
-        map.string_keys.extend(keys)
+        map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
-        map.keys.extend(keys)
-    map.values.CopyFrom(value_seq)
-    return map
+        map_proto.keys.extend(keys)
+    map_proto.values.CopyFrom(value_seq)
+    return map_proto
 
 
 def to_optional(optional: OptionalProto) -> Optional[Any]:

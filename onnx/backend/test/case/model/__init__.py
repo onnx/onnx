@@ -36,8 +36,8 @@ def expect(
 
 
 base_model_opset_version = 10
-BASE_URL = "https://s3.amazonaws.com/download.onnx/models/opset_{}".format(
-    base_model_opset_version
+BASE_URL = (
+    f"https://s3.amazonaws.com/download.onnx/models/opset_{base_model_opset_version}"
 )
 
 

@@ -75,9 +75,10 @@ VersionMapType = Dict[Tuple[str, int], int]
 
 def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """create a map from (opset-domain, opset-version) to ir-version from above table"""
-    result: VersionMapType = dict()
+    result: VersionMapType = {}
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
+        del release_version  # Unused
         for pair in zip(["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args):
             if pair not in result:
                 result[pair] = ir_version
@@ -100,8 +101,7 @@ def find_min_ir_version_for(opsetidlist: List[OperatorSetIdProto]) -> int:
         key = (domain if domain else "ai.onnx", version)
         if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
-        else:
-            raise ValueError("Unsupported opset-version.")
+        raise ValueError("Unsupported opset-version.")
 
     if opsetidlist:
         return max(find_min(x.domain, x.version) for x in opsetidlist)
@@ -330,8 +330,8 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
         return 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
     # drop bottom 16-bits
     # round remaining bits using round-to-nearest-even
-    round = ((ival >> 16) & 1) + 0x7FFF
-    return (ival + round) >> 16
+    rounded = ((ival >> 16) & 1) + 0x7FFF
+    return (ival + rounded) >> 16
 
 
 def make_tensor(
@@ -374,22 +374,23 @@ def make_tensor(
         else:
             expected_size = np_dtype.itemsize
 
-    if type(vals) is np.ndarray and len(vals.shape) > 1:
+    if (
+        type(vals) is np.ndarray  # pylint: disable=unidiomatic-typecheck
+        and len(vals.shape) > 1
+    ):
         vals = vals.flatten()
     for d in dims:
         expected_size *= d
 
     if len(vals) != expected_size:
         raise ValueError(
-            "Number of values does not match tensor's size. Expected {}, but it is {}. ".format(
-                expected_size, len(vals)
-            )
+            f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
         )
 
     if raw:
         tensor.raw_data = vals
     else:
-        if data_type == TensorProto.COMPLEX64 or data_type == TensorProto.COMPLEX128:
+        if data_type in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
             vals = split_complex_to_pairs(vals)
         elif data_type == TensorProto.FLOAT16:
             vals = (
@@ -472,7 +473,7 @@ def make_map(
     - Every key in keys must be of the same type
     - Every value in values must be of the same type
     """
-    map = MapProto()
+    map_proto = MapProto()
     valid_key_int_types = [
         TensorProto.INT8,
         TensorProto.INT16,
@@ -483,14 +484,14 @@ def make_map(
         TensorProto.UINT32,
         TensorProto.UINT64,
     ]
-    map.name = name
-    map.key_type = key_type
+    map_proto.name = name
+    map_proto.key_type = key_type
     if key_type == TensorProto.STRING:
-        map.string_keys.extend(keys)
+        map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
-        map.keys.extend(keys)
-    map.values.CopyFrom(values)
-    return map
+        map_proto.keys.extend(keys)
+    map_proto.values.CopyFrom(values)
+    return map_proto
 
 
 def make_optional(
@@ -541,9 +542,9 @@ def _to_bytes_or_false(val: Union[str, bytes]) -> Union[bytes, bool]:
         return False
 
 
-def make_attribute(
+def make_attribute(  # pylint: disable=too-many-statements
     key: str, value: Any, doc_string: Optional[str] = None
-) -> AttributeProto:
+) -> AttributeProto:  # pylint: disable=too-many-statements
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
     attr.name = key
@@ -693,7 +694,7 @@ def make_tensor_type_proto(
         if shape_denotation:
             if len(shape_denotation) != len(shape):
                 raise ValueError(
-                    "Invalid shape_denotation. " "Must be of the same length as shape."
+                    "Invalid shape_denotation. Must be of the same length as shape."
                 )
 
         for i, d in enumerate(shape):
@@ -758,7 +759,7 @@ def make_sparse_tensor_type_proto(
         if shape_denotation:
             if len(shape_denotation) != len(shape):
                 raise ValueError(
-                    "Invalid shape_denotation. " "Must be of the same length as shape."
+                    "Invalid shape_denotation. Must be of the same length as shape."
                 )
 
         for i, d in enumerate(shape):
@@ -844,7 +845,7 @@ def _sanitize_str(s: Union[str, bytes]) -> str:
         sanitized = str(s)
     if len(sanitized) < 64:
         return sanitized
-    return sanitized[:64] + "...<+len=%d>" % (len(sanitized) - 64)
+    return sanitized[:64] + f"...<+len={(len(sanitized) - 64)}>"
 
 
 def make_tensor_sequence_value_info(
@@ -940,8 +941,7 @@ def printable_attribute(
         content.append("<Unknown>")
     if subgraphs:
         return " ".join(content), graphs
-    else:
-        return " ".join(content)
+    return " ".join(content)
 
 
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
@@ -1016,8 +1016,7 @@ def printable_node(
         content.append(f"{node.op_type}({printed_inputs})")
     if subgraphs:
         return prefix + " ".join(content), graphs
-    else:
-        return prefix + " ".join(content)
+    return prefix + " ".join(content)
 
 
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
@@ -1181,7 +1180,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     :param tensor_dtype: TensorProto's data_type
     :return: field name
     """
-    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
+    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[  # pylint: disable=protected-access
         mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
     ]
 
@@ -1193,7 +1192,10 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     :param np_dtype: numpy's data_type
     :return: TensorsProto's data_type
     """
-    return cast(int, mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype])
+    return cast(
+        int,
+        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],  # pylint: disable=protected-access
+    )
 
 
 def get_all_tensor_dtypes() -> KeysView[int]:

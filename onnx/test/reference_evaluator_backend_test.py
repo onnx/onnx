@@ -26,7 +26,9 @@ import warnings
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import StrictVersion as version
+    from distutils.version import (  # pylint: disable=deprecated-module
+        StrictVersion as version,
+    )
 
 import numpy as np
 from numpy import __version__ as npver
