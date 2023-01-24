@@ -157,12 +157,14 @@ def load_model(
     load_external_data: bool = True,
 ) -> ModelProto:
     """Loads a serialized ModelProto into memory.
-    load_external_data is true if the external data under the same directory of the model and load the external data
-    If not, users need to call load_external_data_for_model with directory to load
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
         format: for future use
+        load_external_data: Whether to load the external data.
+            Set to True if the data is under the same directory of the model.
+            If not, users need to call :func:`load_external_data_for_model`
+            with directory to load external data from.
 
     Returns:
         Loaded in-memory ModelProto.
