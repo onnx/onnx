@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
-from typing import Any, Callable, Dict
-
+from typing import Any, Dict, Union
 
 from onnx.reference.op_run import OpRun, _split_class_name
 
 
 def build_registered_operators_any_domain(
     module_context: Dict[str, Any]
-) -> Dict[str, Dict[int, OpRun]]:
+) -> Dict[Union[str, None], Dict[int, OpRun]]:
 
-    reg_ops: Dict[str, Dict[int, OpRun]] = {}  # type: ignore
+    reg_ops: Dict[Union[str, None], Dict[int, OpRun]] = {}
     for class_name, class_type in module_context.items():
         if class_name.startswith("_") or class_name in {
             "Any",
@@ -39,7 +38,7 @@ def build_registered_operators_any_domain(
     if not reg_ops:
         raise RuntimeError(
             f"No registered operator. This error happens when no implementation "
-            f"of type {type(impl_type)} was detected. It is suggested to reinstall the package."
+            f"of type OpRun was detected. It is suggested to reinstall the package."
         )
     # Set default implementation to the latest one.
     for impl in reg_ops.values():

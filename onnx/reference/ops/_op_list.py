@@ -208,7 +208,7 @@ from .op_where import Where
 from .op_xor import Xor
 
 
-def _build_registered_operators() -> Dict[str, Dict[int, OpRun]]:
+def _build_registered_operators() -> Dict[Union[str, None], Dict[int, OpRun]]:
     return build_registered_operators_any_domain(globals().copy())
 
 

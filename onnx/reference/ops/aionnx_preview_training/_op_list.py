@@ -13,7 +13,7 @@ from .op_adam import Adam
 from .op_momentum import Momentum
 
 
-def _build_registered_operators() -> Dict[str, Dict[int, OpRunTraining]]:  # type: ignore
+def _build_registered_operators() -> Dict[Union[str, None], Dict[int, OpRunTraining]]:
     return build_registered_operators_any_domain(globals().copy())
 
 

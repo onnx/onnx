@@ -5,7 +5,7 @@
 # probabilites not consumed by any operator.
 
 import textwrap
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
@@ -28,7 +28,7 @@ from .op_tree_ensemble_classifier import TreeEnsembleClassifier
 from .op_tree_ensemble_regressor import TreeEnsembleRegressor
 
 
-def _build_registered_operators():  # type: ignore
+def _build_registered_operators() -> Dict[Union[str, None], Dict[int, OpRunAiOnnxMl]]:
     return build_registered_operators_any_domain(globals().copy())
 
 

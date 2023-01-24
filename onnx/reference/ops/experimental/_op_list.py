@@ -11,7 +11,9 @@ from ._op_run_experimental import OpRunExperimental
 from .op_im2col import Im2Col
 
 
-def _build_registered_operators() -> Dict[str, Dict[int, OpRunExperimental]]:  # type: ignore
+def _build_registered_operators() -> Dict[
+    Union[str, None], Dict[int, OpRunExperimental]
+]:
     return build_registered_operators_any_domain(globals().copy())
 
 
