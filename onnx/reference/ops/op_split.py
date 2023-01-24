@@ -48,13 +48,3 @@ class Split_13(CommonSplit):
 class Split_18(CommonSplit):
     def _run(self, mat, split=None, axis=None, num_outputs=None):  # type: ignore
         return self.common_run(mat, split, axis=axis, num_outputs=num_outputs)
-
-
-if onnx_opset_version() >= 18:
-    Split = Split_18
-elif onnx_opset_version() >= 13:
-    Split = Split_13  # type: ignore
-elif onnx_opset_version() >= 11:
-    Split = Split_11  # type: ignore
-else:
-    Split = Split_2  # type: ignore

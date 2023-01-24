@@ -37,9 +37,3 @@ class Reshape_14(CommonReshape):
         else:
             allowzero = allowzero == 1
         return (reshape_reference_implementation(data, shape, allowzero),)
-
-
-if onnx_opset_version() >= 14:
-    Reshape = Reshape_14
-else:
-    Reshape = Reshape_5  # type: ignore

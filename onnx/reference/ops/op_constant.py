@@ -132,13 +132,3 @@ class Constant_12(ConstantCommon):
                 return (value,)
             return (self.cst_convert(value),)
         return (self._check(self.cst),)
-
-
-if onnx_opset_version() >= 12:
-    Constant = Constant_12
-elif onnx_opset_version() >= 11:
-    Constant = Constant_11  # type: ignore
-elif onnx_opset_version() >= 9:
-    Constant = Constant_9  # type: ignore
-else:
-    Constant = Constant_1  # type: ignore

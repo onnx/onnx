@@ -26,9 +26,3 @@ class ReduceMin_18(OpRunReduceNumpy):
         axes = self.handle_axes(axes)
         keepdims = keepdims != 0  # type: ignore
         return (np.minimum.reduce(data, axis=axes, keepdims=keepdims),)
-
-
-if onnx_opset_version() >= 18:
-    ReduceMin = ReduceMin_18
-else:
-    ReduceMin = ReduceMin_1  # type: ignore

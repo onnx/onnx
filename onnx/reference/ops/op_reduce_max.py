@@ -22,9 +22,3 @@ class ReduceMax_18(OpRunReduceNumpy):
         axes = self.handle_axes(axes)
         keepdims = keepdims != 0  # type: ignore
         return (np.maximum.reduce(data, axis=axes, keepdims=keepdims),)
-
-
-if onnx_opset_version() >= 18:
-    ReduceMax = ReduceMax_18
-else:
-    ReduceMax = ReduceMax_1  # type: ignore

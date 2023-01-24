@@ -29,9 +29,3 @@ class ReduceMean_18(OpRunReduceNumpy):
             raise TypeError(
                 f"Unable to reduce shape {data.shape!r} with axes={axes!r} and keepdims={keepdims}."
             ) from e
-
-
-if onnx_opset_version() >= 18:
-    ReduceMean = ReduceMean_18
-else:
-    ReduceMean = ReduceMean_1  # type: ignore

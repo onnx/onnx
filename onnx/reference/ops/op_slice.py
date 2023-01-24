@@ -73,9 +73,3 @@ class Slice_1(SliceCommon):
 
     def _run(self, data, axes=None, ends=None, starts=None):  # type: ignore
         return SliceCommon._run(self, data, starts, ends, axes)
-
-
-if onnx_opset_version() >= 10:
-    Slice = Slice_10
-else:
-    Slice = Slice_1  # type: ignore

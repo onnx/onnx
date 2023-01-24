@@ -51,11 +51,3 @@ class Unsqueeze_13(OpRun):
                 "axes cannot be None for operator Unsqueeze (Unsqueeze_13)."
             )
         return (sq,)
-
-
-if onnx_opset_version() >= 13:
-    Unsqueeze = Unsqueeze_13
-elif onnx_opset_version() >= 11:
-    Unsqueeze = Unsqueeze_11  # type: ignore
-else:
-    Unsqueeze = Unsqueeze_1  # type: ignore

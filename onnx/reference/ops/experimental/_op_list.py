@@ -38,6 +38,13 @@ def _build_registered_operators():  # type: ignore
             reg_ops[op_type][op_version] = class_type
     if len(reg_ops) == 0:
         raise RuntimeError("No registered operators. The installation went wrong.")
+    # Set default implementation to the latest one.
+    for op_type, impl in reg_ops.items():
+        if None in impl:
+            # default already exists
+            continue
+        max_version = max(impl)
+        impl[None] = impl[max_version]
     return reg_ops
 
 

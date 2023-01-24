@@ -26,9 +26,3 @@ class Clip_11(OpRun):
             return (data,)
         res = np.clip(data, amin, amax)
         return (res,) if res.dtype == data.dtype else (res.astype(data.dtype),)
-
-
-if onnx_opset_version() >= 11:
-    Clip = Clip_11
-else:
-    Clip = Clip_6  # type: ignore

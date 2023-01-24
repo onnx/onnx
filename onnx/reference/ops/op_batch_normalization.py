@@ -77,11 +77,3 @@ class BatchNormalization_14(OpRun):
             x, scale, bias, mean, var, momentum, epsilon
         )
         return res, output_mean, output_var
-
-
-if onnx_opset_version() >= 14:
-    BatchNormalization = BatchNormalization_14
-elif onnx_opset_version() >= 9:
-    BatchNormalization = BatchNormalization_9  # type: ignore
-else:
-    BatchNormalization = BatchNormalization_6  # type: ignore
