@@ -1,9 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from onnx.reference.op_run import (
-    OpFunction,
     OpRun,
-    RuntimeContextError,
-    RuntimeImplementationError,
     _split_class_name,
 )
 
