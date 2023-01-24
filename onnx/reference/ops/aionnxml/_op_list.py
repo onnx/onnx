@@ -7,7 +7,8 @@
 import textwrap
 from typing import Any, Union
 
-from onnx.reference.op_run import OpFunction, _split_class_name
+from onnx.reference.op_run import OpFunction
+from onnx.reference.ops._helpers import _build_registered_operators_any_domain
 
 from ._op_run_aionnxml import OpRunAiOnnxMl
 from .op_array_feature_extractor import ArrayFeatureExtractor
@@ -25,44 +26,6 @@ from .op_svm_classifier import SVMClassifier
 from .op_svm_regressor import SVMRegressor
 from .op_tree_ensemble_classifier import TreeEnsembleClassifier
 from .op_tree_ensemble_regressor import TreeEnsembleRegressor
-
-
-def _build_registered_operators():  # type: ignore
-    clo = globals().copy()
-    reg_ops = {}  # type: ignore
-    for class_name, class_type in clo.items():
-        if class_name[0] == "_" or class_name in {
-            "Any",
-            "cl",
-            "clo",
-            "class_name",
-            "textwrap",
-            "Union",
-        }:
-            continue  # pragma: no cover
-        if isinstance(class_type, type(load_op)):
-            continue
-        try:
-            issub = issubclass(class_type, OpRunAiOnnxMl)
-        except TypeError as e:
-            raise TypeError(
-                f"Unexpected variable type {class_type!r} and class_name={class_name!r}."
-            ) from e
-        if issub:
-            op_type, op_version = _split_class_name(class_name)
-            if op_type not in reg_ops:
-                reg_ops[op_type] = {}
-            reg_ops[op_type][op_version] = class_type
-    if len(reg_ops) == 0:
-        raise RuntimeError("No registered operators. The installation went wrong.")
-    # Set default implementation to the latest one.
-    for op_type, impl in reg_ops.items():
-        if None in impl:
-            # default already exists
-            continue
-        max_version = max(impl)
-        impl[None] = impl[max_version]
-    return reg_ops
 
 
 def load_op(
@@ -120,6 +83,10 @@ def load_op(
             f"domain {domain!r}, and {version!r} in\n{available}"
         )
     return cl
+
+
+def _build_registered_operators():  # type: ignore
+    return _build_registered_operators_any_domain(globals().copy(), load_op)
 
 
 _registered_operators = None
