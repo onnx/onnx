@@ -1,22 +1,29 @@
 # SPDX-License-Identifier: Apache-2.0
+from typing import Any, Callable, Dict
+
+
 from onnx.reference.op_run import OpRun, _split_class_name
 
 
-def _build_registered_operators_any_domain(clo, load_op):  # type: ignore
-    reg_ops = {}  # type: ignore
-    for class_name, class_type in clo.items():
-        if class_name[0] == "_" or class_name in {
+def build_registered_operators_any_domain(
+    module_context: Dict[str, Any]
+) -> Dict[str, Dict[int, OpRun]]:
+
+    reg_ops: Dict[str, Dict[int, OpRun]] = {}  # type: ignore
+    for class_name, class_type in module_context.items():
+        if class_name.startswith("_") or class_name in {
             "Any",
+            "Dict",
+            "List",
+            "Union",
             "cl",
-            "clo",
             "class_name",
             "get_schema",
-            "List",
+            "module_context",
             "textwrap",
-            "Union",
         }:
-            continue  # pragma: no cover
-        if isinstance(class_type, type(load_op)):
+            continue
+        if isinstance(class_type, type(build_registered_operators_any_domain)):
             continue
         try:
             issub = issubclass(class_type, OpRun)
@@ -29,10 +36,13 @@ def _build_registered_operators_any_domain(clo, load_op):  # type: ignore
             if op_type not in reg_ops:
                 reg_ops[op_type] = {}
             reg_ops[op_type][op_version] = class_type
-    if len(reg_ops) == 0:
-        raise RuntimeError("No registered operators. The installation went wrong.")
+    if not reg_ops:
+        raise RuntimeError(
+            f"No registered operator. This error happens when no implementation "
+            f"of type {type(impl_type)} was detected. It is suggested to reinstall the package."
+        )
     # Set default implementation to the latest one.
-    for _, impl in reg_ops.items():
+    for impl in reg_ops.values():
         if None in impl:
             # default already exists
             continue

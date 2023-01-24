@@ -8,7 +8,7 @@ import textwrap
 from typing import Any, Union
 
 from onnx.reference.op_run import OpFunction
-from onnx.reference.ops._helpers import _build_registered_operators_any_domain
+from onnx.reference.ops._helpers import build_registered_operators_any_domain
 
 from ._op_run_aionnxml import OpRunAiOnnxMl
 from .op_array_feature_extractor import ArrayFeatureExtractor
@@ -26,6 +26,10 @@ from .op_svm_classifier import SVMClassifier
 from .op_svm_regressor import SVMRegressor
 from .op_tree_ensemble_classifier import TreeEnsembleClassifier
 from .op_tree_ensemble_regressor import TreeEnsembleRegressor
+
+
+def _build_registered_operators():  # type: ignore
+    return build_registered_operators_any_domain(globals().copy())
 
 
 def load_op(
@@ -83,10 +87,6 @@ def load_op(
             f"domain {domain!r}, and {version!r} in\n{available}"
         )
     return cl
-
-
-def _build_registered_operators():  # type: ignore
-    return _build_registered_operators_any_domain(globals().copy(), load_op)
 
 
 _registered_operators = None

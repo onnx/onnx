@@ -10,7 +10,7 @@ The operator may have been updated to support more types but that
 did not change the implementation.
 """
 import textwrap
-from typing import Any, List, Union
+from typing import Any, Dict, List, Union
 
 from onnx import FunctionProto, NodeProto, TypeProto
 from onnx.defs import get_schema, onnx_opset_version
@@ -23,7 +23,7 @@ from onnx.reference.op_run import (
     _split_class_name,
 )
 
-from ._helpers import _build_registered_operators_any_domain
+from ._helpers import build_registered_operators_any_domain
 from .op_abs import Abs
 from .op_acos import Acos
 from .op_acosh import Acosh
@@ -208,6 +208,10 @@ from .op_where import Where
 from .op_xor import Xor
 
 
+def _build_registered_operators() -> Dict[str, Dict[int, OpRun]]:
+    return build_registered_operators_any_domain(globals().copy())
+
+
 def load_op(
     domain: str,
     op_type: str,
@@ -316,10 +320,6 @@ def load_op(
             f"domain {domain!r}, and {version!r} in\n{available}"
         )
     return cl
-
-
-def _build_registered_operators():  # type: ignore
-    return _build_registered_operators_any_domain(globals().copy(), load_op)
 
 
 _registered_operators = None

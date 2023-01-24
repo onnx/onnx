@@ -2,15 +2,19 @@
 # pylint: disable=C0415,R0912,W0611,W0603
 
 import textwrap
-from typing import Any, Union
+from typing import Any, Dict, Union
 
 from onnx.reference.op_run import OpFunction
-from onnx.reference.ops._helpers import _build_registered_operators_any_domain
+from onnx.reference.ops._helpers import build_registered_operators_any_domain
 
 from ._op_run_training import OpRunTraining
 from .op_adagrad import Adagrad
 from .op_adam import Adam
 from .op_momentum import Momentum
+
+
+def _build_registered_operators() -> Dict[str, Dict[int, OpRunTraining]]:  # type: ignore
+    return build_registered_operators_any_domain(globals().copy())
 
 
 def load_op(
@@ -68,10 +72,6 @@ def load_op(
             f"domain {domain!r}, and {version!r} in\n{available}"
         )
     return cl
-
-
-def _build_registered_operators():  # type: ignore
-    return _build_registered_operators_any_domain(globals().copy(), load_op)
 
 
 _registered_operators = None
