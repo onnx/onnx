@@ -19512,7 +19512,6 @@ This version of the operator has been available since version 14 of the default 
   Notice that `ReduceVar` refers to the population variance, and it equals to
   `sum(sqrd(x_i - x_avg)) / N`
   where `N` is the population size (this formula does not use sample size `N - 1`).
-  ```
 
   The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
 
