@@ -35,7 +35,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
-|<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
+|<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
 |<a href="#ConstantOfShape">ConstantOfShape</a>|<a href="Changelog.md#ConstantOfShape-9">9</a>|
 |<a href="#Conv">Conv</a>|<a href="Changelog.md#Conv-11">11</a>, <a href="Changelog.md#Conv-1">1</a>|
 |<a href="#ConvInteger">ConvInteger</a>|<a href="Changelog.md#ConvInteger-10">10</a>|
@@ -4602,9 +4602,9 @@ This version of the operator has been available since version 11 of the default 
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 19 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Constant-1">1</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-12">12</a>
+Other versions of this operator: <a href="Changelog.md#Constant-1">1</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-13">13</a>
 
 #### Attributes
 
@@ -4640,7 +4640,7 @@ Other versions of this operator: <a href="Changelog.md#Constant-1">1</a>, <a hre
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(floate4m3), tensor(floate5m2)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -6315,7 +6315,7 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(floate4m3), tensor(floate5m2)</dt>
+<dt><tt>T</tt> : tensor(int8), tensor(floate4m3), tensor(floate5m2), tensor(uint8), tensor(int32)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
 </dl>
 

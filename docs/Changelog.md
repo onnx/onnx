@@ -22655,6 +22655,53 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
+### <a name="Constant-19"></a>**Constant-19**</a>
+
+  This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
+  or value_* must be specified.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>sparse_value</tt> : sparse_tensor</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>value</tt> : tensor</dt>
+<dd>The value for the elements of the output tensor.</dd>
+<dt><tt>value_float</tt> : float</dt>
+<dd>The value for the sole element for the scalar, float32, output tensor.</dd>
+<dt><tt>value_floats</tt> : list of floats</dt>
+<dd>The values for the elements for the 1D, float32, output tensor.</dd>
+<dt><tt>value_int</tt> : int</dt>
+<dd>The value for the sole element for the scalar, int64, output tensor.</dd>
+<dt><tt>value_ints</tt> : list of ints</dt>
+<dd>The values for the elements for the 1D, int64, output tensor.</dd>
+<dt><tt>value_string</tt> : string</dt>
+<dd>The value for the sole element for the scalar, UTF-8 string, output tensor.</dd>
+<dt><tt>value_strings</tt> : list of strings</dt>
+<dd>The values for the elements for the 1D, UTF-8 string, output tensor.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor containing the same value of the provided tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(floate4m3), tensor(floate5m2)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
 ### <a name="DequantizeLinear-19"></a>**DequantizeLinear-19**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
@@ -22697,7 +22744,7 @@ This version of the operator has been available since version 19 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(floate4m3), tensor(floate5m2)</dt>
+<dt><tt>T</tt> : tensor(int8), tensor(floate4m3), tensor(floate5m2), tensor(uint8), tensor(int32)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
 </dl>
 
