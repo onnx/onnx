@@ -33,7 +33,7 @@ def load_op(
     """
     global _registered_operators
     if _registered_operators is None:
-        _registered_operators = _build_registered_operators()
+        _registered_operators = _build_registered_operators()  # type: ignore[assignment]
     if custom is not None:
         return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
     if domain != "ai.onnx.preview.training":
