@@ -342,6 +342,9 @@ def float32_to_floate4m3(fval: float, scale: float = 1.0) -> int:
     :param scale: scale
     :return: converted float
     """
+    if np.isnan(fval) or np.isinf(fval):
+        return 255
+
     raise NotImplementedError("not yet implemented")
 
 

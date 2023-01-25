@@ -42,7 +42,7 @@ def floate4m3_to_float32(
     :param dims: if specified, the function reshapes the results
     :return: a numpy array of float32 with the same dimension if dims is None,
         or reshaped to dims if specified"""
-    raise NotImplementedError("noy yet implemented")
+    raise NotImplementedError("not yet implemented")
 
 
 def floate5m2_to_float32(
@@ -55,7 +55,7 @@ def floate5m2_to_float32(
     :param dims: if specified, the function reshapes the results
     :return: a numpy array of float32 with the same dimension if dims is None,
         or reshaped to dims if specified"""
-    raise NotImplementedError("noy yet implemented")
+    raise NotImplementedError("not yet implemented")
 
 
 def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
@@ -101,6 +101,14 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
             data = np.frombuffer(tensor.raw_data, dtype=np.int16)
             return bfloat16_to_float32(data, dims)
 
+        if tensor_dtype == TensorProto.FLOATE4M3:
+            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            return floate4m3_to_float32(data, dims)
+
+        if tensor_dtype == TensorProto.FLOATE5M2:
+            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            return floate5m2_to_float32(data, dims)
+
         return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
 
     # float16 is stored as int32 (uint16 type); Need view to get the original value
@@ -115,6 +123,14 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     if tensor_dtype == TensorProto.BFLOAT16:
         data = np.asarray(tensor.int32_data, dtype=np.int32)
         return bfloat16_to_float32(data, dims)
+
+    if tensor_dtype == TensorProto.FLOATE4M3:
+        data = np.asarray(tensor.int32_data, dtype=np.int32)
+        return floate4m3_to_float32(data, dims)
+
+    if tensor_dtype == TensorProto.FLOATE5M2:
+        data = np.asarray(tensor.int32_data, dtype=np.int32)
+        return floate5m2_to_float32(data, dims)
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):

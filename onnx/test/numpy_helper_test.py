@@ -16,10 +16,42 @@ def bfloat16_to_float32(ival: int) -> Any:
     prec = ival - (expo << 7)
     sign = expo & 256
     powe = expo & 255
-    fval = float(prec * 2.0 ** (-7) + 1) * 2.0 ** (powe - 127)
+    fval = float(prec * 2 ** (-7) + 1) * 2.0 ** (powe - 127)
     if sign:
         fval = -fval
     return np.float32(fval)
+
+
+def floate4m3_to_float32(ival: int) -> Any:
+    if ival == 255:
+        return np.float32(np.inf)
+    if ival == 127:
+        return np.float32(-np.inf)
+    if ival == 0:
+        return np.float32(0)
+
+    expo = ival >> 3
+    mant = ival - (expo << 3)
+    sign = expo & 16
+    powe = expo & 15
+    if expo == 0:
+        powe -= 6
+        fraction = 0
+    else:
+        powe -= 7
+        fraction = 1
+    fval = float(mant * 2 ** (-3) + fraction) * 2.0**powe
+    if sign:
+        fval = -fval
+    return np.float32(fval)
+
+
+def floate5m2_to_float32(ival: int) -> Any:
+    if ival == int("0111100", 2):
+        return np.float32(np.inf)
+    if ival == int("1111100", 2):
+        return np.float32(-np.inf)
+    raise NotImplementedError("not yet implemented")
 
 
 class TestNumpyHelper(unittest.TestCase):
@@ -99,8 +131,41 @@ class TestNumpyHelper(unittest.TestCase):
                     self.assertEqual(f32, f32_2)
 
     def test_floate4m3_to_float32(self):
-        # placeholder
-        pass
+        self.assertEqual(floate4m3_to_float32(int("1111110", 2)), 448)
+        self.assertEqual(floate4m3_to_float32(int("1000", 2)), 2 ** (-6))
+        self.assertEqual(floate4m3_to_float32(int("1", 2)), 2 ** (-9))
+        self.assertEqual(floate4m3_to_float32(int("111", 2)), 0.875 * 2 ** (-6))
+        for f in [
+            0,
+            1,
+            -1,
+            0.5,
+            -0.5,
+            0.1,
+            -0.1,
+            2,
+            3,
+            -2,
+            -3,
+            448,
+            2 ** (-6),
+            2 ** (-9),
+            0.875 * 2 ** (-6),
+            np.nan,
+        ]:
+            with self.subTest(f=f):
+                f32 = np.float32(f)
+                f8 = helper.float32_to_floate4m3(f32)
+                assert isinstance(f8, int)
+                f32_1 = numpy_helper.floate4m3_to_float32(np.array([f8]))[0]
+                f32_2 = floate4m3_to_float32(f8)
+                # print(f"# f32={f32} f8={bin(f8)} f32_1={f32_1} f32_2={f32_2} *")
+                if np.isnan(f32):
+                    assert np.isnan(f32_1)
+                    assert np.isnan(f32_2)
+                else:
+                    self.assertEqual(f32, f32_1)
+                    self.assertEqual(f32, f32_2)
 
     def test_floate5m2_to_float32(self):
         # placeholder
