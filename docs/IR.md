@@ -392,7 +392,7 @@ It is common to represent a tensor as a nested list. This generally works fine, 
 
 |Group|Types|Description|
 |---|---|---|
-Floating Point Types|float16, float32, float64|Values adhering to the IEEE 754-2008 standard representation of floating-point data.
+Floating Point Types|float16, float32, float64, bfloat16, floate4m3, floate5m2|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in paper [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433)
 Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for 8-64 bit widths.
 Unsigned Integer Types|uint8, uint16, uint32, uint64|Unsigned integers are supported for 8-64 bit widths.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
