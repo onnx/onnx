@@ -99,10 +99,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {
               "tensor(int8)",
-              "tensor(uint8)",
-              "tensor(int32)",
               "tensor(floate4m3)",
               "tensor(floate5m2)",
+              "tensor(uint8)",
+              "tensor(int32)",
             },
             "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
         .SetDoc(DequantizeLinear_ver19_doc)

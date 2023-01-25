@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
+# pylint: disable=R0912,W0221
 
 import numpy as np
 
@@ -9,7 +9,11 @@ from onnx.helper import (
     float32_to_floate5m2,
     tensor_dtype_to_np_dtype,
 )
-from onnx.numpy_helper import bfloat16_to_float32
+from onnx.numpy_helper import (
+    bfloat16_to_float32,
+    floate4m3_to_float32,
+    floate5m2_to_float32,
+)
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
 
