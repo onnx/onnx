@@ -9,9 +9,43 @@ from onnx.external_data_helper import (
     write_external_data_tensors,
     convert_model_to_external_data,
 )
-from .onnx_pb import *  # noqa
-from .onnx_operators_pb import *  # noqa
-from .onnx_data_pb import *  # noqa
+from .onnx_pb import (
+    AttributeProto,
+    EXPERIMENTAL,
+    FunctionProto,
+    GraphProto,
+    IR_VERSION,
+    IR_VERSION_2017_10_10,
+    IR_VERSION_2017_10_30,
+    IR_VERSION_2017_11_3,
+    IR_VERSION_2019_1_22,
+    IR_VERSION_2019_3_18,
+    IR_VERSION_2019_9_19,
+    IR_VERSION_2020_5_8,
+    ModelProto,
+    NodeProto,
+    OperatorSetIdProto,
+    OperatorStatus,
+    STABLE,
+    SparseTensorProto,
+    StringStringEntryProto,
+    TensorAnnotation,
+    TensorProto,
+    TensorShapeProto,
+    TrainingInfoProto,
+    TypeProto,
+    ValueInfoProto,
+    Version,
+)
+from .onnx_operators_pb import (
+    OperatorProto,
+    OperatorSetProto,
+)
+from .onnx_data_pb import (
+    MapProto,
+    OptionalProto,
+    SequenceProto,
+)
 from .version import version as __version__  # noqa
 
 # Import common subpackages so they're available when you 'import onnx'
@@ -115,7 +149,7 @@ def _deserialize(s: bytes, proto: _Proto) -> _Proto:
 
 def load_model(
     f: Union[IO[bytes], str],
-    format: Optional[Any] = None,
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
     load_external_data: bool = True,
 ) -> ModelProto:
     """
@@ -142,7 +176,10 @@ def load_model(
     return model
 
 
-def load_tensor(f: Union[IO[bytes], str], format: Optional[Any] = None) -> TensorProto:
+def load_tensor(
+    f: Union[IO[bytes], str],
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
+) -> TensorProto:
     """
     Loads a serialized TensorProto into memory
 
@@ -157,7 +194,10 @@ def load_tensor(f: Union[IO[bytes], str], format: Optional[Any] = None) -> Tenso
     return load_tensor_from_string(s, format=format)
 
 
-def load_model_from_string(s: bytes, format: Optional[Any] = None) -> ModelProto:
+def load_model_from_string(
+    s: bytes,
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
+) -> ModelProto:
     """
     Loads a binary string (bytes) that contains serialized ModelProto
 
@@ -168,10 +208,14 @@ def load_model_from_string(s: bytes, format: Optional[Any] = None) -> ModelProto
     Returns:
         Loaded in-memory ModelProto
     """
+    del format  # Unused
     return _deserialize(s, ModelProto())
 
 
-def load_tensor_from_string(s: bytes, format: Optional[Any] = None) -> TensorProto:
+def load_tensor_from_string(
+    s: bytes,
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
+) -> TensorProto:
     """
     Loads a binary string (bytes) that contains serialized TensorProto
 
@@ -182,13 +226,14 @@ def load_tensor_from_string(s: bytes, format: Optional[Any] = None) -> TensorPro
     Returns:
         Loaded in-memory TensorProto
     """
+    del format  # Unused
     return _deserialize(s, TensorProto())
 
 
 def save_model(
     proto: Union[ModelProto, bytes],
     f: Union[IO[bytes], str],
-    format: Optional[Any] = None,
+    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
     save_as_external_data: bool = False,
     all_tensors_to_one_file: bool = True,
     location: Optional[str] = None,
@@ -215,6 +260,8 @@ def save_model(
             If true, convert all tensors to external data
             If false, convert only non-attribute tensors to external data
     """
+    del format  # Unused
+
     if isinstance(proto, bytes):
         proto = _deserialize(proto, ModelProto())
 

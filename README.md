@@ -16,7 +16,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 
 # Use ONNX
 * [Documentation of ONNX Python Package](https://onnx.ai/onnx/)
-* [Tutorials for creating ONNX models](https://github.com/onnx/tutorials).
+* [Tutorials for creating ONNX models](https://github.com/onnx/tutorials)
 * [Pre-trained ONNX models](https://github.com/onnx/models)
 
 # Learn about the ONNX spec

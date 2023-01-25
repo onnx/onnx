@@ -1673,7 +1673,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
-y = bernoulli_reference_implementation(x, np.float64)
+y = bernoulli_reference_implementation(x, float)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli_double")
 ```
 
@@ -1682,7 +1682,7 @@ expect(node, inputs=[x], outputs=[y], name="test_bernoulli_double")
 <summary>bernoulli_with_seed</summary>
 
 ```python
-seed = np.float(0)
+seed = float(0)
 node = onnx.helper.make_node(
     "Bernoulli",
     inputs=["x"],
@@ -1706,8 +1706,8 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
-y = bernoulli_reference_implementation(x, np.float)
+x = np.random.uniform(0.0, 1.0, 10).astype(float)
+y = bernoulli_reference_implementation(x, float)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
 ```
 
@@ -2286,14 +2286,14 @@ for from_type, to_type in test_cases:
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
         if "STRING" == to_type:
-            # Converting input to str, then give it np.object dtype for generating script
+            # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
                 s = str(i).encode("utf-8")
                 su = s.decode("utf-8")
                 ss.append(su)
 
-            output = np.array(ss).astype(np.object).reshape([3, 4])
+            output = np.array(ss).astype(object).reshape([3, 4])
         else:
             output = input.astype(
                 helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
@@ -2314,7 +2314,7 @@ for from_type, to_type in test_cases:
                 "+INF",
                 "-INF",
             ],
-            dtype=np.dtype(np.object),
+            dtype=np.dtype(object),
         ).reshape([3, 4])
         output = input.astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
@@ -2951,7 +2951,7 @@ output = np.array(
     [
         [
             [
-                [8.0, 21.0, 24.0, 27.0, 14.0],  # (1, 1, 5, 5)
+                [8.0, 21.0, 24.0, 27.0, 24.0],  # (1, 1, 5, 5)
                 [38.0, 66.0, 69.0, 72.0, 54.0],
                 [68.0, 111.0, 114.0, 117.0, 84.0],
                 [98.0, 156.0, 159.0, 162.0, 114.0],
@@ -19647,19 +19647,19 @@ shape = (2, 3, 4)
 data = np.random.random_sample(shape).astype(np.float32)
 permutations = list(itertools.permutations(np.arange(len(shape))))
 
-for i in range(len(permutations)):
+for i, permutation in enumerate(permutations):
     node = onnx.helper.make_node(
         "Transpose",
         inputs=["data"],
         outputs=["transposed"],
-        perm=permutations[i],
+        perm=permutation,
     )
-    transposed = np.transpose(data, permutations[i])
+    transposed = np.transpose(data, permutation)
     expect(
         node,
         inputs=[data],
         outputs=[transposed],
-        name="test_transpose_all_permutations_" + str(i),
+        name=f"test_transpose_all_permutations_{i}",
     )
 ```
 

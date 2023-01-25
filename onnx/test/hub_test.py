@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
+
+# pylint: disable=protected-access
 import glob
 import os
 import unittest
@@ -6,8 +8,7 @@ from os.path import join
 
 import pytest
 
-import onnx.hub as hub
-from onnx import ModelProto
+from onnx import ModelProto, hub
 
 
 @pytest.mark.skipif(
@@ -93,6 +94,15 @@ class TestModelHub(unittest.TestCase):
         hub.get_model_info("mnist", self.repo)
         self.assertRaises(
             AssertionError, lambda: hub.get_model_info("mnist", self.repo, opset=-1)
+        )
+
+    def test_download_model_with_test_data(self) -> None:
+        directory = hub.download_model_with_test_data("mnist")
+        files = os.listdir(directory)
+        self.assertIsInstance(directory, str)
+        self.assertIn(member="model.onnx", container=files, msg="Onnx model not found")
+        self.assertIn(
+            member="test_data_set_0", container=files, msg="Test data not found"
         )
 
 

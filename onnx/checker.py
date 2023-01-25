@@ -51,9 +51,7 @@ def _create_checker(proto_type: Type[Message]) -> Callable[[FuncType], FuncType]
         def checker(proto: Message, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> Any:
             if not isinstance(proto, proto_type):
                 raise RuntimeError(
-                    "You cannot pass an object that is not of type {}".format(
-                        proto_type.__name__
-                    )
+                    f"You cannot pass an object that is not of type {proto_type.__name__}"
                 )
             return getattr(C, py_func.__name__)(proto.SerializeToString(), ctx)
 

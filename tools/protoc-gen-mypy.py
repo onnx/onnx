@@ -32,7 +32,10 @@ except ImportError as e:
 d: Any = d_typed
 
 GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is generated
-HEADER = f"# {GENERATED} by generate_proto_mypy_stubs.py.  Do not edit!\n"
+HEADER = (
+    f"# {GENERATED} by protoc-gen-mypy.py.  Do not edit!\n"
+    + "# mypy: disable-error-code=override\n"
+)
 
 
 class Descriptors:
