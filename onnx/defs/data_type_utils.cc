@@ -436,6 +436,8 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["complex128"] = TensorProto_DataType_COMPLEX128;
   type_str_to_tensor_data_type_["string"] = TensorProto_DataType_STRING;
   type_str_to_tensor_data_type_["bool"] = TensorProto_DataType_BOOL;
+  type_str_to_tensor_data_type_["floate4m3"] = TensorProto_DataType_FLOATE4M3;
+  type_str_to_tensor_data_type_["floate5m2"] = TensorProto_DataType_FLOATE5M2;
 
   for (auto& str_type_pair : type_str_to_tensor_data_type_) {
     tensor_data_type_to_type_str_[str_type_pair.second] = str_type_pair.first;

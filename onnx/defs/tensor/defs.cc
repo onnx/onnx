@@ -13,7 +13,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Cast_ver13_doc = R"DOC(
+static const char* Cast_ver19_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
@@ -53,9 +53,9 @@ In more detail, the conversion among numerical types should follow these rules:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
-    13,
+    19,
     OpSchema()
-        .SetDoc(Cast_ver13_doc)
+        .SetDoc(Cast_ver19_doc)
         .Attr(
             "to",
             "The data type to which the elements of the input tensor are cast. "
@@ -87,7 +87,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint64)",
              "tensor(bool)",
              "tensor(string)",
-             "tensor(bfloat16)"},
+             "tensor(bfloat16),",
+             "tensor(floate4m3)",
+             "tensor(floate5m2)"},
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
@@ -104,7 +106,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint64)",
              "tensor(bool)",
              "tensor(string)",
-             "tensor(bfloat16)"},
+             "tensor(bfloat16)",
+             "tensor(floate4m3)",
+             "tensor(floate5m2)"},
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
@@ -116,7 +120,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* CastLike_ver15_doc = R"DOC(
+static const char* CastLike_ver19_doc = R"DOC(
 The operator casts the elements of a given input tensor (the first input) to
 the same data type as the elements of the second input tensor.
 See documentation of the Cast operator for further details.
@@ -124,9 +128,9 @@ See documentation of the Cast operator for further details.
 
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
-    15,
+    19,
     OpSchema()
-        .SetDoc(CastLike_ver15_doc)
+        .SetDoc(CastLike_ver19_doc)
         .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -161,7 +165,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint64)",
              "tensor(bool)",
              "tensor(string)",
-             "tensor(bfloat16)"},
+             "tensor(bfloat16)",
+             "tensor(floate4m3)",
+             "tensor(floate5m2)"},
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
@@ -178,7 +184,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint64)",
              "tensor(bool)",
              "tensor(string)",
-             "tensor(bfloat16)"},
+             "tensor(bfloat16)",
+             "tensor(floate4m3)",
+             "tensor(floate5m2)"},
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 1, 0);

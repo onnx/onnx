@@ -98,6 +98,14 @@ class TestNumpyHelper(unittest.TestCase):
                     self.assertEqual(f32, f32_1)
                     self.assertEqual(f32, f32_2)
 
+    def test_floate4m3_to_float32(self):
+        # placeholder
+        pass
+
+    def test_floate5m2_to_float32(self):
+        # placeholder
+        pass
+
 
 if __name__ == "__main__":
     unittest.main()

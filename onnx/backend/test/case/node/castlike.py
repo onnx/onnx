@@ -27,6 +27,11 @@ class CastLike(Base):
             ("STRING", "FLOAT"),
             ("FLOAT", "BFLOAT16"),
             ("BFLOAT16", "FLOAT"),
+            # TODO: enable those tests
+            # ("FLOAT", "FLOATE4M3"),
+            # ("FLOATE4M3", "FLOAT"),
+            # ("FLOAT", "FLOATE5M2"),
+            # ("FLOATE5M2", "FLOAT"),
         ]
 
         for from_type, to_type in test_cases:

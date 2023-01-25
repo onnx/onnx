@@ -6,9 +6,197 @@
 #include <cmath>
 #include <numeric>
 #include "onnx/defs/data_propagators.h"
+#include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
 
 namespace ONNX_NAMESPACE {
+
+static const char* Cast_ver13_doc = R"DOC(
+The operator casts the elements of a given input tensor to a data type
+specified by the 'to' argument and returns an output tensor of the same size in
+the converted type. The 'to' argument must be one of the data types specified
+in the 'DataType' enum field in the TensorProto message.
+
+Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+(e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+result 100. There are some string literals reserved for special floating-point values;
+"+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+to string tensors, plain floating-point representation (such as "314.15926") would be used.
+Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
+of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+
+Conversion from a numerical type to any numerical type is always allowed.
+User must be aware of precision loss and value change caused by range difference between two types.
+For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
+
+In more detail, the conversion among numerical types should follow these rules:
+
+* Casting from floating point to:
+  * floating point: +/- infinity if OOR (out of range).
+  * fixed point: undefined if OOR.
+  * bool: +/- 0.0 to False; all else to True.
+* Casting from fixed point to:
+  * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
+  * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
+    signed types). For example, 200 (int16) -> -56 (int8).
+  * bool: zero to False; nonzero to True.
+* Casting from bool to:
+  * floating point: `{1.0, 0.0}`.
+  * fixed point: `{1, 0}`.
+  * bool: no change.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Cast,
+    13,
+    OpSchema()
+        .SetDoc(Cast_ver13_doc)
+        .Attr(
+            "to",
+            "The data type to which the elements of the input tensor are cast. "
+            "Strictly must be one of the types from DataType enum in TensorProto",
+            AttributeProto::INT)
+        .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor with the same shape as input with type "
+            "specified by the 'to' argument",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)",
+             "tensor(string)",
+             "tensor(bfloat16)"},
+            "Constrain input types. Casting from complex is not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)",
+             "tensor(string)",
+             "tensor(bfloat16)"},
+            "Constrain output types. Casting to complex is not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
+        }));
+
+static const char* CastLike_ver15_doc = R"DOC(
+The operator casts the elements of a given input tensor (the first input) to
+the same data type as the elements of the second input tensor.
+See documentation of the Cast operator for further details.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    CastLike,
+    15,
+    OpSchema()
+        .SetDoc(CastLike_ver15_doc)
+        .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "target_type",
+            "The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor produced by casting the first input tensor to have the same type as the second input tensor.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)",
+             "tensor(string)",
+             "tensor(bfloat16)"},
+            "Constrain input types. Casting from complex is not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)",
+             "tensor(string)",
+             "tensor(bfloat16)"},
+            "Constrain output types. Casting to complex is not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 1, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
+              auto target_type = ctx.getInputType(1);
+              if ((target_type == nullptr) || (!target_type->has_tensor_type())) {
+                // we cannot create a correct function body without knowing the target element type
+                return false;
+              }
+              auto target_elt_type = target_type->tensor_type().elem_type();
+              FunctionBuilder builder(functionProto);
+              builder.Add("output = Cast (input)", "to", (int64_t)(target_elt_type));
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 
 static const char* Cast_ver9_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type

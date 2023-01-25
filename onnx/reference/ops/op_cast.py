@@ -3,12 +3,14 @@
 
 import numpy as np
 
-from onnx.helper import float32_to_bfloat16, tensor_dtype_to_np_dtype
+from onnx.helper import float32_to_bfloat16, float32_to_floate4m3, float32_to_floate5m2, tensor_dtype_to_np_dtype
 from onnx.numpy_helper import bfloat16_to_float32
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
 
 bfloat16 = np.dtype((np.uint16, {"ui": (np.uint16, 0)}))
+floate4m3 = np.dtype((np.uint8, {"e4m3": (np.uint8, 0)}))
+floate5m2 = np.dtype((np.uint8, {"e5m2": (np.uint8, 0)}))
 
 
 def cast_to(x, to):
@@ -22,6 +24,10 @@ def cast_to(x, to):
             xf[i] = el
         dtype = tensor_dtype_to_np_dtype(to)
         return xf.astype(dtype).reshape(x.shape)
+    if x.dtype == floate4m3:
+        raise NotImplementedError("not yet implemented")
+    if x.dtype == floate5m2:
+        raise NotImplementedError("not yet implemented")
     if to == TensorProto.BFLOAT16:
         xf = x.astype(np.float32).ravel()
         y = np.empty(xf.shape, dtype=bfloat16).ravel()
@@ -29,6 +35,10 @@ def cast_to(x, to):
             el = float32_to_bfloat16(xf[i], truncate=True)  # type: ignore[assignment]
             y[i] = el
         return y.reshape(x.shape)
+    if to == TensorProto.FLOATE4M3:
+        raise NotImplementedError("not yet implemented")
+    if to == TensorProto.FLOATE5M2:
+        raise NotImplementedError("not yet implemented")
 
     dtype = tensor_dtype_to_np_dtype(to)
     return x.astype(dtype)

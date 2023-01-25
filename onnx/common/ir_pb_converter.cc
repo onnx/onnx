@@ -38,7 +38,9 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
     case ONNX_NAMESPACE::TensorProto_DataType_INT16:
     case ONNX_NAMESPACE::TensorProto_DataType_INT32:
     case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT16: 
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOATE4M3:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOATE5M2: {
       ret.int32s().reserve(tp.int32_data_size());
       for (int i = 0; i < tp.int32_data_size(); i++) {
         ret.int32s().push_back(tp.int32_data(i));

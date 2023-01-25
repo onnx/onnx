@@ -7,17 +7,19 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* QuantizeLinear_ver13_doc = R"DOC(
+static const char* QuantizeLinear_ver19_doc = R"DOC(
 The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
 The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
 The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
 For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
 For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
+`y_zero_point` is not used for quantization to floate4m3 or floate5m2, only the scale but
+the type of the attribute determines the quantization type.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
-    13,
+    19,
     OpSchema()
         .Input(0, "x", "N-D full precision Input tensor to be quantized.", "T1")
         .Input(
@@ -42,9 +44,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", {"tensor(float)", "tensor(int32)"}, "Constrain 'x' to float or int32 tensor.")
         .TypeConstraint(
             "T2",
-            {"tensor(int8)", "tensor(uint8)"},
+            {"tensor(int8)", "tensor(uint8)", "tensor(floate4m3)", "tensor(floate5m2)"},
             "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
-        .SetDoc(QuantizeLinear_ver13_doc)
+        .SetDoc(QuantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.hasInput(2)) {
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
@@ -59,17 +61,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver13_doc = R"DOC(
+static const char* DequantizeLinear_ver19_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
 The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
 for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
 `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
 there's no zero point (zero point is supposed to be 0).
+`y_zero_point` is not used for quantization to floate4m3 or floate5m2, only the scale but
+the type of the attribute determines the quantization type.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
-    13,
+    19,
     OpSchema()
         .Input(0, "x", "N-D quantized input tensor to be de-quantized.", "T")
         .Input(
@@ -93,9 +97,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .TypeConstraint(
             "T",
-            {"tensor(int8)", "tensor(uint8)", "tensor(int32)"},
+            {"tensor(int8)", "tensor(uint8)", "tensor(int32)", "tensor(floate4m3)", "tensor(floate5m2)", },
             "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
-        .SetDoc(DequantizeLinear_ver13_doc)
+        .SetDoc(DequantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto y_type = ctx.getOutputType(0);
           // only float is supported

@@ -334,6 +334,28 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + rounded) >> 16
 
 
+def float32_to_floate4m3(fval: float, scale: float = 1.) -> int:
+    """
+    Convert a float32 value to a floate4m3 (as int).
+
+    :param fval: float to convert
+    :param scale: scale
+    :return: converted float
+    """
+    raise NotImplementedError("not yet implemented")
+
+
+def float32_to_floate5m2(fval: float, scale: float = 1.) -> int:
+    """
+    Convert a float32 value to a floate5m2 (as int).
+
+    :param fval: float to convert
+    :param scale: scale
+    :return: converted float
+    """
+    raise NotImplementedError("not yet implemented")
+
+
 def make_tensor(
     name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
@@ -371,6 +393,8 @@ def make_tensor(
         # which has the wrong itemsize.
         if data_type == TensorProto.BFLOAT16:
             expected_size = 2
+        elif data_type in (TensorProto.FLOATE4M3, TensorProto.FLOATE5M2):
+            expected_size = 1
         else:
             expected_size = np_dtype.itemsize
 
@@ -396,10 +420,15 @@ def make_tensor(
             vals = (
                 np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
             )
-        elif data_type == TensorProto.BFLOAT16:
+        elif data_type in (TensorProto.BFLOAT16, TensorProto.FLOATE4M3,TensorProto.FLOATE5M2):
+            fcast = {
+                TensorProto.BFLOAT16: float32_to_bfloat16,
+                TensorProto.FLOATE4M3: float32_to_floate4m3,
+                TensorProto.FLOATE5M2: float32_to_floate5m2,
+            }
             vals = list(
                 map(
-                    float32_to_bfloat16,
+                    fcast,
                     np.array(vals).astype(np_dtype).flatten().tolist(),
                 )
             )

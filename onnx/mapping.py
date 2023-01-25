@@ -61,6 +61,13 @@ TENSOR_TYPE_MAP = {
     int(TensorProto.STRING): TensorDtypeMap(
         np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"
     ),
+    # Native numpy does not support floate4m3 or floate5m2 so now use float32 for these types.
+    int(TensorProto.FLOATE4M3): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOATE4M3"
+    ),
+    int(TensorProto.FLOATE5M2): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOATE5M2"
+    ),
 }
 
 
@@ -126,7 +133,8 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = DeprecatedWarningDict(
 # NP_TYPE_TO_TENSOR_TYPE will be eventually removed in the future
 # and _NP_TYPE_TO_TENSOR_TYPE will only be used internally
 _NP_TYPE_TO_TENSOR_TYPE = {
-    v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16
+    v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k not in (
+        TensorProto.BFLOAT16, TensorProto.FLOATE4M2, TensorProto.FLOATE5M2)
 }
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now

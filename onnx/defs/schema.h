@@ -613,6 +613,25 @@ class OpSchema final {
     return all_numeric_types_with_bfloat;
   }
 
+  static const std::vector<std::string>& all_numeric_types_with_bfloat_float8() {
+    static const std::vector<std::string> all_numeric_types_with_bfloat_float8 = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(bfloat16)",
+        "tensor(floate4m3)",
+        "tensor(floate5m2)"};
+    return all_numeric_types_with_bfloat_float8;
+  }
+
   static const std::vector<std::string>& all_numeric_types() {
     static const std::vector<std::string> all_numeric_types = {
         "tensor(uint8)",
@@ -684,6 +703,29 @@ class OpSchema final {
         "tensor(complex64)",
         "tensor(complex128)"};
     return all_tensor_types_with_bfloat;
+  }
+
+  static const std::vector<std::string>& all_tensor_types_with_bfloat_float8() {
+    static const std::vector<std::string> all_tensor_types_with_bfloat_float8 = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(bfloat16)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(string)",
+        "tensor(bool)",
+        "tensor(complex64)",
+        "tensor(complex128)",
+        "tensor(floate4m3)",
+        "tensor(floate5m2)"};
+    return all_tensor_types_with_bfloat_float8;
   }
 
   static const std::vector<std::string>& all_tensor_sequence_types() {
