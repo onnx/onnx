@@ -9,7 +9,7 @@
 syntax = "proto2";
 
 package onnx;
-import "onnx/onnx.proto";
+import "onnx/onnx-ml.proto";
 
 // This file contains the proto definitions for MapProto and
 // SequenceProto. These protos are used to represent the data structures
@@ -149,3 +149,6 @@ message OptionalProto {
   optional OptionalProto optional_value = 7;
 
 }
+
+// For using protobuf-lite
+option optimize_for = LITE_RUNTIME;
