@@ -95,12 +95,16 @@ enum Version {
   // - Implicitly add inference graph into each TrainingInfoProto's algorithm.
   IR_VERSION_2020_5_8 = 0x0000000000000007;
 
-  // IR VERSION 8 published on <TBD>
+  // IR VERSION 8 published on Jul 31, 2021
   // Introduce TypeProto.SparseTensor
   // Introduce TypeProto.Optional
   // Added a list of FunctionProtos local to the model
   // Deprecated since_version and operator status from FunctionProto
-  IR_VERSION = 0x0000000000000008;
+  IR_VERSION_2021_7_31 = 0x0000000000000008;
+
+  // IR VERSION 9 published on <TBD>
+  // Introduce FLOATE4M3, FLOATE5M2
+  IR_VERSION = 0x0000000000000009;
 
 }
 
@@ -504,6 +508,12 @@ message TensorProto {
     // This format has 1 sign bit, 8 exponent bits, and 7 mantissa bits.
     BFLOAT16 = 16;
 
+    // Non-IEEE floating-point format based on the paper
+    // FP8 Formats for Deep Learning
+    // https://arxiv.org/abs/2209.05433.
+    FLOATE4M3 = 17;  // float 8, mostly used for coefficients, does not allow nan
+    FLOATE5M2 = 18;  // follows IEEE 754, allows nan, mostly used for gradients
+
     // Future extensions go here.
   }
 
@@ -541,7 +551,7 @@ message TensorProto {
   // float16 values must be bit-wise converted to an uint16_t prior
   // to writing to the buffer.
   // When this field is present, the data_type field MUST be
-  // INT32, INT16, INT8, UINT16, UINT8, BOOL, FLOAT16 or BFLOAT16
+  // INT32, INT16, INT8, UINT16, UINT8, BOOL, FLOAT16, BFLOAT16, FLOATE4M3 or FLOATE5M2
   repeated int32 int32_data = 5 [packed = true];
 
   // For strings.
