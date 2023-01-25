@@ -31,6 +31,7 @@ def bfloat16_to_float32(
         return shift(data.astype(np.int32)).view(np.float32)  # type: ignore[no-any-return]
     return shift(data.astype(np.int32)).reshape(dims).view(np.float32)  # type: ignore[no-any-return]
 
+
 def floate4m3_to_float32(
     data: Union[np.int16, np.int32, np.ndarray],
     dims: Optional[Union[int, Sequence[int]]] = None,
@@ -43,6 +44,7 @@ def floate4m3_to_float32(
         or reshaped to dims if specified"""
     raise NotImplementedError("noy yet implemented")
 
+
 def floate5m2_to_float32(
     data: Union[np.int16, np.int32, np.ndarray],
     dims: Optional[Union[int, Sequence[int]]] = None,
@@ -54,6 +56,7 @@ def floate5m2_to_float32(
     :return: a numpy array of float32 with the same dimension if dims is None,
         or reshaped to dims if specified"""
     raise NotImplementedError("noy yet implemented")
+
 
 def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     """Converts a tensor def object to a numpy array.

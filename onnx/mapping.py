@@ -133,8 +133,9 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = DeprecatedWarningDict(
 # NP_TYPE_TO_TENSOR_TYPE will be eventually removed in the future
 # and _NP_TYPE_TO_TENSOR_TYPE will only be used internally
 _NP_TYPE_TO_TENSOR_TYPE = {
-    v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k not in (
-        TensorProto.BFLOAT16, TensorProto.FLOATE4M2, TensorProto.FLOATE5M2)
+    v: k
+    for k, v in TENSOR_TYPE_TO_NP_TYPE.items()
+    if k not in (TensorProto.BFLOAT16, TensorProto.FLOATE4M3, TensorProto.FLOATE5M2)
 }
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now

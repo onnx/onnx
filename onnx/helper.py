@@ -334,7 +334,7 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + rounded) >> 16
 
 
-def float32_to_floate4m3(fval: float, scale: float = 1.) -> int:
+def float32_to_floate4m3(fval: float, scale: float = 1.0) -> int:
     """
     Convert a float32 value to a floate4m3 (as int).
 
@@ -345,7 +345,7 @@ def float32_to_floate4m3(fval: float, scale: float = 1.) -> int:
     raise NotImplementedError("not yet implemented")
 
 
-def float32_to_floate5m2(fval: float, scale: float = 1.) -> int:
+def float32_to_floate5m2(fval: float, scale: float = 1.0) -> int:
     """
     Convert a float32 value to a floate5m2 (as int).
 
@@ -420,12 +420,16 @@ def make_tensor(
             vals = (
                 np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
             )
-        elif data_type in (TensorProto.BFLOAT16, TensorProto.FLOATE4M3,TensorProto.FLOATE5M2):
+        elif data_type in (
+            TensorProto.BFLOAT16,
+            TensorProto.FLOATE4M3,
+            TensorProto.FLOATE5M2,
+        ):
             fcast = {
                 TensorProto.BFLOAT16: float32_to_bfloat16,
                 TensorProto.FLOATE4M3: float32_to_floate4m3,
                 TensorProto.FLOATE5M2: float32_to_floate5m2,
-            }
+            }[data_type]
             vals = list(
                 map(
                     fcast,
