@@ -167,7 +167,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               "TypeAndShapeInferenceFunction implementation incomplete: "
               "this line should never be reached.");
         }));
-        
+
 static const char* Constant_ver12_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.

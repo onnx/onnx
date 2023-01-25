@@ -97,7 +97,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .TypeConstraint(
             "T",
-            {"tensor(int8)", "tensor(uint8)", "tensor(int32)", "tensor(floate4m3)", "tensor(floate5m2)", },
+            {
+              "tensor(int8)",
+              "tensor(uint8)",
+              "tensor(int32)",
+              "tensor(floate4m3)",
+              "tensor(floate5m2)",
+            },
             "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
         .SetDoc(DequantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
