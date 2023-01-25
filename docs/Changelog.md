@@ -22547,6 +22547,208 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
+## Version 19 of the default ONNX operator set
+### <a name="Cast-19"></a>**Cast-19**</a>
+
+  The operator casts the elements of a given input tensor to a data type
+  specified by the 'to' argument and returns an output tensor of the same size in
+  the converted type. The 'to' argument must be one of the data types specified
+  in the 'DataType' enum field in the TensorProto message.
+
+  Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+  (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+  result 100. There are some string literals reserved for special floating-point values;
+  "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+  Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+  this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+  to string tensors, plain floating-point representation (such as "314.15926") would be used.
+  Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
+  of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+
+  Conversion from a numerical type to any numerical type is always allowed.
+  User must be aware of precision loss and value change caused by range difference between two types.
+  For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+  an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
+
+  In more detail, the conversion among numerical types should follow these rules:
+
+  * Casting from floating point to:
+    * floating point: +/- infinity if OOR (out of range).
+    * fixed point: undefined if OOR.
+    * bool: +/- 0.0 to False; all else to True.
+  * Casting from fixed point to:
+    * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
+    * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
+      signed types). For example, 200 (int16) -> -56 (int8).
+    * bool: zero to False; nonzero to True.
+  * Casting from bool to:
+    * floating point: `{1.0, 0.0}`.
+    * fixed point: `{1, 0}`.
+    * bool: no change.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int (required)</dt>
+<dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T1</dt>
+<dd>Input tensor to be cast.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T2</dt>
+<dd>Output tensor with the same shape as input with type specified by the 'to' argument</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(floate4m3), tensor(floate5m2)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(floate4m3), tensor(floate5m2)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
+</dl>
+
+### <a name="CastLike-19"></a>**CastLike-19**</a>
+
+  The operator casts the elements of a given input tensor (the first input) to
+  the same data type as the elements of the second input tensor.
+  See documentation of the Cast operator for further details.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T1</dt>
+<dd>Input tensor to be cast.</dd>
+<dt><tt>target_type</tt> (non-differentiable) : T2</dt>
+<dd>The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T2</dt>
+<dd>Output tensor produced by casting the first input tensor to have the same type as the second input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(floate4m3), tensor(floate5m2)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(floate4m3), tensor(floate5m2)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
+</dl>
+
+### <a name="DequantizeLinear-19"></a>**DequantizeLinear-19**</a>
+
+  The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
+  The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
+  for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
+  `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
+  there's no zero point (zero point is supposed to be 0).
+  `y_zero_point` is not used for quantization to floate4m3 or floate5m2, only the scale but
+  the type of the attribute determines the quantization type.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x</tt> : T</dt>
+<dd>N-D quantized input tensor to be de-quantized.</dd>
+<dt><tt>x_scale</tt> : tensor(float)</dt>
+<dd>Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization.</dd>
+<dt><tt>x_zero_point</tt> (optional) : T</dt>
+<dd>Zero point for input 'x'. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : tensor(float)</dt>
+<dd>N-D full precision output tensor. It has same shape as input 'x'.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(floate4m3), tensor(floate5m2)</dt>
+<dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
+</dl>
+
+### <a name="QuantizeLinear-19"></a>**QuantizeLinear-19**</a>
+
+  The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
+  The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
+  The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
+  For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
+  For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
+  `y_zero_point` is not used for quantization to floate4m3 or floate5m2, only the scale but
+  the type of the attribute determines the quantization type.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>(Optional) The axis of the quantization dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>N-D full precision Input tensor to be quantized.</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, or a 1-D Tensor for per-axis quantization.</dd>
+<dt><tt>y_zero_point</tt> (optional) : T2</dt>
+<dd>Zero point for doing quantization to get 'y'. Shape must match y_scale. Default is uint8 with zero point of 0 if it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T2</dt>
+<dd>N-D quantized output tensor. It has same shape as input 'x'.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(int32)</dt>
+<dd>Constrain 'x' to float or int32 tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(floate4m3), tensor(floate5m2)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>

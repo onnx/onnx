@@ -87,7 +87,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint64)",
              "tensor(bool)",
              "tensor(string)",
-             "tensor(bfloat16),",
+             "tensor(bfloat16)",
              "tensor(floate4m3)",
              "tensor(floate5m2)"},
             "Constrain input types. Casting from complex is not supported.")
