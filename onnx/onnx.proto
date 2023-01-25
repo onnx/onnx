@@ -816,3 +816,8 @@ message FunctionProto {
   // the FunctionProto.
   optional string domain = 10;
 }
+
+
+// For using protobuf-lite
+option optimize_for = LITE_RUNTIME;
+
