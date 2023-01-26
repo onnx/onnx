@@ -8637,7 +8637,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_opsetid(ONNX_ML_DOMAIN, 1),
                 make_opsetid(ONNX_DOMAIN, 18),
             ],
-        )  # type: ignore
+        )
 
 
 if __name__ == "__main__":
