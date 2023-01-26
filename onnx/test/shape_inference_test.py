@@ -8616,6 +8616,29 @@ class TestShapeInference(TestShapeInferenceHelper):
                     ],
                 )
 
+    def test_one_hot_encoder(self) -> None:
+        graph = self._make_graph(
+            [("input", TensorProto.INT64, (2, "N", 3))],
+            [
+                make_node(
+                    "OneHotEncoder",
+                    ["input"],
+                    ["output"],
+                    cats_int64s=[1, 2, 3, 4],
+                    domain="ai.onnx.ml",
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, (2, "N", 3, 4))],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 1),
+                make_opsetid(ONNX_DOMAIN, 18),
+            ],
+        )  # type: ignore
+
 
 if __name__ == "__main__":
     unittest.main()
