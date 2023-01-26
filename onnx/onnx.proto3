@@ -511,9 +511,9 @@ message TensorProto {
 
     // Non-IEEE floating-point format based on the paper
     // FP8 Formats for Deep Learning, https://arxiv.org/abs/2209.05433.
-    // Supported operators are Cast, CastLike, QuantizeLinear, DequantizeLinear.
-    // The scenario is to use them in block quantize / dequantize.
-    // The computation usually happens inside that block and is fused by the runtime.
+    // Operators supported FP8 are Cast, CastLike, QuantizeLinear, DequantizeLinear.
+    // The computation usually happens inside a block quantize / dequantize
+    // fused by the runtime.
     FLOATE4M3 = 17;  // float 8, mostly used for coefficients, supports nan, not inf 
     FLOATE5M2 = 18;  // follows IEEE 754, supports nan, inf, mostly used for gradients
 
