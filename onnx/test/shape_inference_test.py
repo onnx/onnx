@@ -8617,6 +8617,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 )
 
     def test_one_hot_encoder(self) -> None:
+        if not ONNX_ML:
+            return
         graph = self._make_graph(
             [("input", TensorProto.INT64, (2, "N", 3))],
             [
