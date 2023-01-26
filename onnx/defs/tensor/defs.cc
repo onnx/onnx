@@ -2519,13 +2519,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto axisAttr = ctx.getAttribute("axis");
           if (hasInputShape(ctx, 0)) {
             const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
             int r = indices_shape.dim_size();
             if (r < 1) {
               fail_shape_inference("Indices tensor must have rank >= 1");
             }
-            auto axisAttr = ctx.getAttribute("axis");
             if (axisAttr) {
               int axis = static_cast<int>(axisAttr->i());
               if (axis < -r || axis >= r) {
@@ -2534,7 +2534,17 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (axis < 0) {
                 axis += r;
               }
+              TensorShapeProto* shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+              for (int i = 0; i < indices_shape.dim_size(); i++) {
+                auto* dim = shape->add_dim();
+                if (i != axis) {
+                  *dim = indices_shape.dim(i);
+                }
+              }
             }
+          }
+          if (!axisAttr) {
+            updateOutputShape(ctx, 0, {Dim()});
           }
         }));
 
