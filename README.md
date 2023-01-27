@@ -40,18 +40,18 @@ Check out our [contribution guide](docs/CONTRIBUTING.md) to get started.
 If you think some operator should be added to ONNX specification, please read
 [this document](docs/AddNewOp.md).
 
-# Community meeting
+# Community meetings
 
-The schedules of the regular meetings of the Steering Committee, the working groups and the SIGS can be found at https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=18481196
+The schedules of the regular meetings of the Steering Committee, the working groups and the SIGs can be found [here](https://onnx.ai/calender)
 
 
-A large Community Day is held at least 1 time per year. Up to now the following community day took place:
+Community Meetups are held at least once time per year. Content from previous community meetups are at:
 
-2020.04.09 https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-ONNX+Community+Virtual+Meetup+-+Silicon+Valley+-+April+9
-2020.10.14 https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-+ONNX+Community+Workshop+-+October+14
-2021.03.24 https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=35160391
-2021.10.21 https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=46989689
-2022.06.24 https://wiki.lfaidata.foundation/display/DL/ONNX+Community+Day+-+June+24
+* 2020.04.09 https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-ONNX+Community+Virtual+Meetup+-+Silicon+Valley+-+April+9
+* 2020.10.14 https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-+ONNX+Community+Workshop+-+October+14
+* 2021.03.24 https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=35160391
+* 2021.10.21 https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=46989689
+* 2022.06.24 https://wiki.lfaidata.foundation/display/DL/ONNX+Community+Day+-+June+24
 
 
 # Discuss
