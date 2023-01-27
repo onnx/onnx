@@ -11,9 +11,8 @@ class OptionalHasElement(OpRun):
         if x is None:
             return ([],)
         if isinstance(x, list):
-            if len(x) > 0:
-                return (np.array([e is not None for e in x]),)
+            (e,) = x
+            return (np.array(e is not None),)
         elif isinstance(x, np.ndarray):
-            if len(x.shape) > 0 and x.shape[0] > 0:
-                return (np.array([e is not None for e in x]),)
+            return (np.array(True),)
         return ([],)
