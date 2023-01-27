@@ -8640,6 +8640,28 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_compress_without_axis(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.INT64, (2, "N", 3, 4)),
+                ("condition", TensorProto.BOOL, (None,)),
+            ],
+            [make_node("Compress", ["input", "condition"], ["output"])],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("output", TensorProto.INT64, (None,))])  # type: ignore
+
+    def test_compress_with_axis(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.INT64, (2, "N", 3, 4)),
+                ("condition", TensorProto.BOOL, (None,)),
+            ],
+            [make_node("Compress", ["input", "condition"], ["output"], axis=-1)],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("output", TensorProto.INT64, (2, "N", 3, None))])  # type: ignore
+
 
 if __name__ == "__main__":
     unittest.main()
