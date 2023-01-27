@@ -8,7 +8,7 @@ onnx.checker
 CheckerContext
 ++++++++++++++
 
-.. autoclass:: C.CheckerContext
+.. autoclass:: onnx.checker.DEFAULT_CONTEXT
     :members:
 
 check_value_info
