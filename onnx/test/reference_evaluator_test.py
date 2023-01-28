@@ -2716,7 +2716,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             (18,),
         ]
     )
-    def test_mvn(self, opset: int):
+    def test_mvn(self, opset: int, ref_opset: int = 13):
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
@@ -2728,9 +2728,14 @@ class TestReferenceEvaluator(unittest.TestCase):
 
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         ref = ReferenceEvaluator(onnx_model)
-        _ = ref.run(None, {"X": x})[0]
+        got = ref.run(None, {"X": x})[0]
 
-        # FIXME: Assert expected value.
+        ref_onnx_model = make_model(graph, opset_imports=[make_opsetid("", ref_opset)])
+        ref_expected = ReferenceEvaluator(ref_onnx_model)
+        expected = ref_expected.run(None, {"X": x})[0]
+
+        self.assertEqual(expected.shape, got.shape)
+        assert_allclose(expected, got)
 
     def test_cast_float_to_string(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
