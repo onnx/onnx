@@ -2728,7 +2728,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         ref = ReferenceEvaluator(onnx_model)
-        got = ref.run(None, {"X": x})[0]
+        _ = ref.run(None, {"X": x})[0]
 
         # FIXME: Assert expected value.
 
