@@ -45,7 +45,7 @@ If you think some operator should be added to ONNX specification, please read
 The schedules of the regular meetings of the Steering Committee, the working groups and the SIGs can be found [here](https://onnx.ai/calender)
 
 
-Community Meetups are held at least once time per year. Content from previous community meetups are at:
+Community Meetups are held at least once a year. Content from previous community meetups are at:
 
 * 2020.04.09 https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-ONNX+Community+Virtual+Meetup+-+Silicon+Valley+-+April+9
 * 2020.10.14 https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-+ONNX+Community+Workshop+-+October+14
