@@ -40,12 +40,29 @@ Check out our [contribution guide](docs/CONTRIBUTING.md) to get started.
 If you think some operator should be added to ONNX specification, please read
 [this document](docs/AddNewOp.md).
 
+# Community meetings
+
+The schedules of the regular meetings of the Steering Committee, the working groups and the SIGs can be found [here](https://onnx.ai/calender)
+
+
+Community Meetups are held at least once a year. Content from previous community meetups are at:
+
+* 2020.04.09 https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-ONNX+Community+Virtual+Meetup+-+Silicon+Valley+-+April+9
+* 2020.10.14 https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-+ONNX+Community+Workshop+-+October+14
+* 2021.03.24 https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=35160391
+* 2021.10.21 https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=46989689
+* 2022.06.24 https://wiki.lfaidata.foundation/display/DL/ONNX+Community+Day+-+June+24
+
+
 # Discuss
 We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-o65errpw-gMTbwNr7FnNbVXNVFkmyNA) to join the group) for more real-time discussion.
 
 # Follow Us
 Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
 
+# Roadmap
+
+A roadmap process takes place every year. More details can be found [here](https://github.com/onnx/steering-committee/tree/main/roadmap)
 
 # Installation
 
