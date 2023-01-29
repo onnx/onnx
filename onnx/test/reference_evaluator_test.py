@@ -2702,6 +2702,45 @@ class TestReferenceEvaluator(unittest.TestCase):
                 self.assertEqual(expected.shape, got.shape)
                 assert_allclose(expected, got)
 
+    def test_cast_float_to_string(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.STRING, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Y"], to=TensorProto.STRING),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([1.152512, -0.152612, 0.0, np.nan])
+        got = ref.run(None, {"X": data})[0]
+        self.assertTrue(
+            (got == np.array([1.152512, -0.152612, 0.0, np.nan]).astype(np.str_)).all()
+        )
+
+    def test_cast_float_to_string_and_back(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Z"], to=TensorProto.STRING),
+                    make_node("Cast", ["Z"], ["Y"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([1.152512, -0.152612, 0.0, np.nan])
+        got = ref.run(None, {"X": data})[0]
+        assert_allclose(got, np.array([1.152512, -0.152612, 0.0, np.nan]))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

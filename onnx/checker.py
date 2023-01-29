@@ -17,6 +17,7 @@ import onnx.shape_inference
 from onnx import (
     IR_VERSION,
     AttributeProto,
+    FunctionProto,
     GraphProto,
     ModelProto,
     NodeProto,
@@ -80,6 +81,13 @@ def check_attribute(
 
 @_create_checker(NodeProto)
 def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
+    pass
+
+
+@_create_checker(FunctionProto)
+def check_function(
+    graph: FunctionProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+) -> None:
     pass
 
 
