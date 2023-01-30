@@ -58,6 +58,9 @@ jobs:
       fi
       export ONNX_BUILD_TESTS=1
       export CMAKE_ARGS="-DONNX_WERROR=ON"
+      # enable UndefinedBehaviorSanitizer
+      export CMAKE_C_FLAGS="$CMAKE_C_FLAGS: -fsanitize=undefined -fno-sanitize-recover=undefined "
+      export CMAKE_CXX_FLAGS="$CMAKE_CXX_FLAGS: -fsanitize=undefined -fno-sanitize-recover=undefined "
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
