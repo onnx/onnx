@@ -50,7 +50,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
 |<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-12">12</a>|
-|<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
+|<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-19">19</a>, <a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
 |<a href="#Expand">Expand</a>|<a href="Changelog.md#Expand-13">13</a>, <a href="Changelog.md#Expand-8">8</a>|
@@ -7221,9 +7221,9 @@ expect(node, inputs=[x], outputs=[y], name="test_elu_default")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 19 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-13">13</a>
 
 #### Inputs
 
@@ -7244,8 +7244,8 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input types to all numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(string)</dt>
+<dd>Constrain input types to all (non-complex) tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrain output to boolean tensor.</dd>
 </dl>

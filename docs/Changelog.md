@@ -22547,6 +22547,43 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
+## Version 19 of the default ONNX operator set
+### <a name="Equal-19"></a>**Equal-19**</a>
+
+  Returns the tensor resulted from performing the `equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(string)</dt>
+<dd>Constrain input types to all (non-complex) tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output to boolean tensor.</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
