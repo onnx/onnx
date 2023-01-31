@@ -603,7 +603,23 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "zeros",
             "If true and category is not present, will return all zeros; if false and a category if not found, the operator will fail.",
             AttributeProto::INT,
-            static_cast<int64_t>(1)));
+            static_cast<int64_t>(1))
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          std::vector<int64_t> cats_int64s;
+          bool has_int64s = getRepeatedAttribute(ctx, "cats_int64s", cats_int64s);
+          std::vector<std::string> cats_strings;
+          bool has_strings = getRepeatedAttribute(ctx, "cats_strings", cats_strings);
+          if (has_int64s == has_strings) {
+            fail_shape_inference("Exactly one of 'cats_*' attributes must be provided.");
+          }
+          const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          TensorShapeProto* shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          for (int i = 0; i < input_shape.dim_size(); i++) {
+            *shape->add_dim() = input_shape.dim(i);
+          }
+          shape->add_dim()->set_dim_value(std::max(cats_int64s.size(), cats_strings.size()));
+          updateOutputElemType(ctx, 0, TensorProto::FLOAT);
+        }));
 
 static const char* Scaler_ver1_doc = R"DOC(
     Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
