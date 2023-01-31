@@ -2750,14 +2750,16 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
         indices = np.array(2, dtype=np.int64)
-        got = ref.run(None, {"X": data, "Y": indices})[0]
+        got = ref.run(None, {"X": data, "Y": indices})
         expected = [
-            np.array([[[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]]], dtype=np.float32),
-            np.array([[[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]]], dtype=np.float32),
-            np.array([[[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]]], dtype=np.float32),
+            [
+                np.array([[[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]]], dtype=np.float32),
+                np.array([[[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]]], dtype=np.float32),
+                np.array([[[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]]], dtype=np.float32),
+            ]
         ]
-        self.assertEqual(len(expected), len(got))
-        for a, b in zip(expected, got):
+        self.assertEqual(len(expected[0]), len(got[0]))
+        for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
 
     def test_split_to_sequence_1d(self):
@@ -2769,14 +2771,16 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
         indices = np.array([2, 2, 2], dtype=np.int64)
-        got = ref.run(None, {"X": data, "Y": indices})[0]
+        got = ref.run(None, {"X": data, "Y": indices})
         expected = [
-            np.array([[[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]]], dtype=np.float32),
-            np.array([[[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]]], dtype=np.float32),
-            np.array([[[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]]], dtype=np.float32),
+            [
+                np.array([[[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]]], dtype=np.float32),
+                np.array([[[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]]], dtype=np.float32),
+                np.array([[[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]]], dtype=np.float32),
+            ]
         ]
-        self.assertEqual(len(expected), len(got))
-        for a, b in zip(expected, got):
+        self.assertEqual(len(expected[0]), len(got[0]))
+        for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
 
     def test_split_to_sequence_nokeepdims(self):
@@ -2786,10 +2790,10 @@ class TestReferenceEvaluator(unittest.TestCase):
         model = make_model(make_graph(nodes, "g", [X], [Z]))
         ref = ReferenceEvaluator(model)
         data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
-        got = ref.run(None, {"X": data})[0]
-        expected = list(data[:, :, i] for i in range(data.shape[2]))
-        self.assertEqual(len(expected), len(got))
-        for a, b in zip(expected, got):
+        got = ref.run(None, {"X": data})
+        expected = [list(data[:, :, i] for i in range(data.shape[2]))]
+        self.assertEqual(len(expected[0]), len(got[0]))
+        for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
 
 
