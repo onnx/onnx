@@ -53,6 +53,9 @@ jobs:
       set ONNX_BUILD_TESTS=1
       set ONNX_ML=$(onnx_ml)
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
+      # enable UndefinedBehaviorSanitizer
+      set CMAKE_ARGS=%CMAKE_ARGS%;-DCMAKE_CXX_FLAGS="-fsanitize=undefined,address -fno-sanitize-recover=undefined,memory"
+
 
       python setup.py -q install
       pytest

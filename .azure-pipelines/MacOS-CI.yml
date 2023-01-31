@@ -58,9 +58,6 @@ jobs:
       fi
       export ONNX_BUILD_TESTS=1
       export CMAKE_ARGS="-DONNX_WERROR=ON"
-      # enable UndefinedBehaviorSanitizer
-      export DYLD_INSERT_LIBRARIES=/Applications/Xcode_13.2.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.asan_osx_dynamic.dylib
-      export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined,address -fno-sanitize-recover=undefined,memory '"
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
