@@ -2779,6 +2779,19 @@ class TestReferenceEvaluator(unittest.TestCase):
         for a, b in zip(expected, got):
             assert_allclose(a, b)
 
+    def test_split_to_sequence_nokeepdims(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [make_node("SplitToSequence", ["X"], ["Z"], axis=2, keepdims=0)]
+        model = make_model(make_graph(nodes, "g", [X], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
+        got = ref.run(None, {"X": data})[0]
+        expected = list(data[:, :, i] for i in range(data.shape[2]))
+        self.assertEqual(len(expected), len(got))
+        for a, b in zip(expected, got):
+            assert_allclose(a, b)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
