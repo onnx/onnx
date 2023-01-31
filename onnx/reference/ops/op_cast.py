@@ -29,6 +29,8 @@ def cast_to(x, to):
             el = float32_to_bfloat16(xf[i], truncate=True)  # type: ignore[assignment]
             y[i] = el
         return y.reshape(x.shape)
+    if to == TensorProto.STRING:
+        return x.astype(np.str_)
 
     dtype = tensor_dtype_to_np_dtype(to)
     return x.astype(dtype)
