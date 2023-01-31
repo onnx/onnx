@@ -284,6 +284,12 @@ class ShapeInferenceImplBase {
     }
   }
 
+  template <typename T>
+  void addTemporaryConstant(const std::string& name, const T& vector) {
+    input_data_by_name_holder[name] = ToTensor(vector);
+    input_data_by_name[name] = &input_data_by_name_holder[name];  
+  }
+
   void preprocess(const NodeProto& n) {
     if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
@@ -295,10 +301,31 @@ class ShapeInferenceImplBase {
           } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
             input_sparse_data_by_name[n.output(0)] = &attr.sparse_tensor();
           }
-        } else if (attr.type() == AttributeProto::INTS && attr.name() == "value_ints") {
-          std::vector<int64_t> ints{attr.ints().begin(), attr.ints().end()};
-          input_data_by_name_holder[n.output(0)] = ToTensor(ints);
-          input_data_by_name[n.output(0)] = &input_data_by_name_holder[n.output(0)];
+        } else {
+          switch (attr.type()) {
+            case AttributeProto::INTS: {
+              std::vector<int64_t> ints{attr.ints().begin(), attr.ints().end()};
+              addTemporaryConstant(n.output(0), ints);
+              break;
+            }
+            case AttributeProto::INT: {
+              std::vector<int64_t> ints({attr.i()});
+              addTemporaryConstant(n.output(0), ints);
+              break;
+            }
+            case AttributeProto::FLOATS: {
+              std::vector<float> floats{attr.floats().begin(), attr.floats().end()};
+              addTemporaryConstant(n.output(0), floats);
+              break;
+            }
+            case AttributeProto::FLOAT: {
+              std::vector<float> floats({attr.f()});
+              addTemporaryConstant(n.output(0), floats);
+              break;
+            }
+            default:
+              break;
+          }
         }
       }
     }
