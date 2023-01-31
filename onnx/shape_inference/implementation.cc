@@ -287,7 +287,7 @@ class ShapeInferenceImplBase {
   template <typename T>
   void addTemporaryConstant(const std::string& name, const T& vector) {
     input_data_by_name_holder[name] = ToTensor(vector);
-    input_data_by_name[name] = &input_data_by_name_holder[name];  
+    input_data_by_name[name] = &input_data_by_name_holder[name];
   }
 
   void preprocess(const NodeProto& n) {
