@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 class OptionalGetElement(OpRun):
     def _run(self, x):  # type: ignore
         if x is None:
-            return (None,)
+            raise ValueError("The requested optional input has no value.")
         if isinstance(x, (np.ndarray, list)):
             return (x,)
         raise RuntimeError("Input is empty in operator OptionalGetElement.")

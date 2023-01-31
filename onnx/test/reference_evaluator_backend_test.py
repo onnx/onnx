@@ -21,7 +21,6 @@ adding an item in method `setUpClass` and attributes
 import os
 import pprint
 import unittest
-import warnings
 
 try:
     from packaging.version import parse as version
@@ -36,17 +35,13 @@ from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
 from onnx import (
-    ModelProto,
     OptionalProto,
     SequenceProto,
     TensorProto,
-    TypeProto,
     load,
-    load_model_from_string,
-    load_tensor_from_string,
 )
 from onnx.backend.test import __file__ as backend_folder
-from onnx.helper import __file__ as onnx_file, tensor_dtype_to_np_dtype
+from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
@@ -151,7 +146,6 @@ class OnnxBackendTest:
             (OptionalProto, to_optional),
         ]
         exc = None
-        read_obj = None
         for pt, cvt in proto_types:
             obj = pt()
             try:
@@ -170,13 +164,6 @@ class OnnxBackendTest:
 
     @staticmethod
     def _load(folder, names):
-        OPTIONAL_ELEMENT_TYPE_TO_FIELD = {
-            int(OptionalProto.TENSOR): "tensor_value",
-            int(OptionalProto.SPARSE_TENSOR): "sparse_tensor_value",
-            int(OptionalProto.SEQUENCE): "sequence_value",
-            int(OptionalProto.MAP): "map_value",
-            int(OptionalProto.OPTIONAL): "optional_value",
-        }
         res = []
         for name in names:
             full = os.path.join(folder, name)
