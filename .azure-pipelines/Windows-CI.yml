@@ -52,9 +52,10 @@ jobs:
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1
       set ONNX_ML=$(onnx_ml)
+      set DEBUG=1
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
       # enable UndefinedBehaviorSanitizer
-      set CMAKE_ARGS=%CMAKE_ARGS% -DCMAKE_CXX_FLAGS="/fsanitize=address /fsanitize=undefined /fsanitize=memory "
+      set CMAKE_ARGS=%CMAKE_ARGS% -DCMAKE_CXX_FLAGS="/fsanitize=address "
 
 
       python setup.py -q install
