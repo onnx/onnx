@@ -21,6 +21,16 @@ class CommonSplit(OpRun):
                 split = [div] * n_outputs
                 split[-1] += mat.shape[axis] - sum(split)  # type: ignore
 
+        if len(split.shape) == 0:
+            # A scaler
+            dim = mat.shape[axis]
+            length = int(split)
+            n = dim // int(length)
+            split = [length] * n
+            left = dim - length * n
+            if left > 0:
+                split.append(left)
+
         sli = [slice(0, s) for s in mat.shape]
         res = []
         pos = 0
