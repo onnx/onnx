@@ -88,7 +88,7 @@ The starting composition will be individuals from Microsoft, Facebook, Amazon, a
 
 After the initial term of each Steering Committee representative is completed, their seat will be open for any contributor in the community to be elected into the seat via a community vote. Only contributors may vote, but would be restricted to one vote per Member Company. Therefore, if a Member Company had three contributors in good standing, the three contributors would have to select who would vote on their behalf.
 
-If a member of the Steering Committee changes companies, by default they retain and may continue on with the role. However, should their company/organization ask this person to resign from the role, new elections will be held. If the employment change results in a single Member Company having more than one representative, then one of them must resign, and new elections are held.
+If a member of the Steering Committee changes companies, by default they retain and may continue on with the role. If the employment change results in a single Member Company having more than one representative, then one of them must resign. When there is a vacancy on the Steering Committee, the remaining members can appoint a new representative for the remainder of the term until the next election.
 
 The Steering Committee will decide on and publish an election process within 3 months of formalizing this organizational structure. This will cover voting eligibility, eligibility for candidacy, election process and schedule. During this time period, the Steering Committee will also establish SIGs and Working Groups.
 
