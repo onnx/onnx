@@ -3,7 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -120,11 +119,3 @@ class TopK_11(_CommonTopK):
         if sorted not in (True, 1):
             raise RuntimeError("TopK does not implement anything for sorted=0.")
         return _CommonTopK._common_run(self, data, ink, axis=axis, largest=largest)
-
-
-if onnx_opset_version() >= 11:
-    TopK = TopK_11
-elif onnx_opset_version() >= 10:
-    TopK = TopK_10  # type: ignore
-else:
-    TopK = TopK_1  # type: ignore
