@@ -9,6 +9,7 @@ You can run a specific test by using the following syntax.
     python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
 """
 
+import itertools
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
@@ -17,6 +18,7 @@ from textwrap import dedent
 from typing import Any, List
 
 import numpy as np  # type: ignore
+import parameterized
 from numpy.testing import assert_allclose  # type: ignore
 
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
@@ -2577,111 +2579,144 @@ class TestReferenceEvaluator(unittest.TestCase):
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         return onnx_model
 
-    def test_op_reduce(self):
-        ops = [
-            "ReduceMin",
-            "ReduceL1",
-            "ReduceL2",
-            "ReduceLogSum",
-            "ReduceLogSumExp",
-            "ReduceMax",
-            "ReduceMean",
-            "ReduceSumSquare",
-            "ReduceProd",
-        ]
-        expected_results = {
-            "ReduceL1": [
-                np.array(
-                    [[2.2367053, 2.3516612], [4.076292, 4.2970634]], dtype=np.float32
+    @parameterized.parameterized.expand(
+        itertools.product(
+            [
+                (
+                    "ReduceMin",
+                    [
+                        np.array(
+                            [[np.nan, np.nan], [14.422706, 18.80527]], dtype=np.float32
+                        ),
+                        np.array([[2, 15], [10, 4]], dtype=np.int64),
+                    ],
                 ),
-                np.array([[18, 6], [13, 6]], dtype=np.int64),
-            ],
-            "ReduceL2": [
-                np.array(
-                    [[1.80155, 1.8169948], [2.9928076, 3.1205883]], dtype=np.float32
+                (
+                    "ReduceL1",
+                    [
+                        np.array(
+                            [[2.2367053, 2.3516612], [4.076292, 4.2970634]],
+                            dtype=np.float32,
+                        ),
+                        np.array([[18, 6], [13, 6]], dtype=np.int64),
+                    ],
                 ),
-                np.array([[11, 18], [13, 6]], dtype=np.int64),
-            ],
-            "ReduceLogSum": [
-                np.array(
-                    [[0.9497848, 1.1872643], [1.6764175, 1.70759]], dtype=np.float32
+                (
+                    "ReduceL2",
+                    [
+                        np.array(
+                            [[1.80155, 1.8169948], [2.9928076, 3.1205883]],
+                            dtype=np.float32,
+                        ),
+                        np.array([[11, 18], [13, 6]], dtype=np.int64),
+                    ],
                 ),
-                np.array([[6, 18], [13, 6]], dtype=np.int64),
-            ],
-            "ReduceLogSumExp": [
-                np.array(
-                    [[1.6005973, 1.7445935], [2.5616229, 2.6539795]], dtype=np.float32
+                (
+                    "ReduceLogSum",
+                    [
+                        np.array(
+                            [[0.9497848, 1.1872643], [1.6764175, 1.70759]],
+                            dtype=np.float32,
+                        ),
+                        np.array([[6, 18], [13, 6]], dtype=np.int64),
+                    ],
                 ),
-                np.array([[13, 6], [13, 6]], dtype=np.int64),
-            ],
-            "ReduceMax": [
-                np.array(
-                    [[1.4217108, 1.5069536], [2.453826, 2.5041783]], dtype=np.float32
+                (
+                    "ReduceLogSumExp",
+                    [
+                        np.array(
+                            [[1.6005973, 1.7445935], [2.5616229, 2.6539795]],
+                            dtype=np.float32,
+                        ),
+                        np.array([[13, 6], [13, 6]], dtype=np.int64),
+                    ],
                 ),
-                np.array([[13, 11], [13, 11]], dtype=np.int64),
-            ],
-            "ReduceMean": [
-                np.array(
-                    [[0.39247903, 0.78497636], [2.038146, 2.1485317]], dtype=np.float32
+                (
+                    "ReduceMax",
+                    [
+                        np.array(
+                            [[1.4217108, 1.5069536], [2.453826, 2.5041783]],
+                            dtype=np.float32,
+                        ),
+                        np.array([[13, 11], [13, 11]], dtype=np.int64),
+                    ],
                 ),
-                np.array([[13, 6], [13, 6]], dtype=np.int64),
-            ],
-            "ReduceSumSquare": [
-                np.array(
-                    [[3.2455828, 3.3014696], [8.956896, 9.7380705]], dtype=np.float32
+                (
+                    "ReduceMean",
+                    [
+                        np.array(
+                            [[0.39247903, 0.78497636], [2.038146, 2.1485317]],
+                            dtype=np.float32,
+                        ),
+                        np.array([[13, 6], [13, 6]], dtype=np.int64),
+                    ],
                 ),
-                np.array([[11, 18], [13, 6]], dtype=np.int64),
+                (
+                    "ReduceSumSquare",
+                    [
+                        np.array(
+                            [[3.2455828, 3.3014696], [8.956896, 9.7380705]],
+                            dtype=np.float32,
+                        ),
+                        np.array([[11, 18], [13, 6]], dtype=np.int64),
+                    ],
+                ),
+                (
+                    "ReduceProd",
+                    [
+                        np.array(
+                            [[np.nan, np.nan], [14.422706, 18.80527]], dtype=np.float32
+                        ),
+                        np.array([[2, 15], [13, 6]], dtype=np.int64),
+                    ],
+                ),
             ],
-            "ReduceProd": [
-                np.array([[np.nan, np.nan], [14.422706, 18.80527]], dtype=np.float32),
-                np.array([[2, 15], [13, 6]], dtype=np.int64),
-            ],
-            "ReduceMin": [
-                np.array([[np.nan, np.nan], [14.422706, 18.80527]], dtype=np.float32),
-                np.array([[2, 15], [10, 4]], dtype=np.int64),
-            ],
-        }
-
+            [17, 18],
+        )
+    )
+    def test_op_reduce(self, reduce_op_expected, opset: int):
+        reduce_op, expected = reduce_op_expected
         X = np.arange(8).reshape((-1, 4)).astype(np.float32)
-        for reduce_op in ops:
-            with self.subTest(reduce_op=reduce_op):
-                results = {}
-                for opset in [17, 18]:
-                    model = self._cdist_model(opset, reduce_op)
-                    sess = ReferenceEvaluator(model)
-                    got = sess.run(None, {"input": X})
-                    results["ref", opset] = got
 
-                    cl = [
-                        n
-                        for n in sess.rt_nodes_[0].body.rt_nodes_
-                        if n.__class__.__name__.startswith(reduce_op)
-                    ]
-                    schema = cl[0]._schema  # pylint: disable=protected-access
-                    new_cl = type(reduce_op, (cl[0].__class__,), {"op_schema": schema})
-                    sess = ReferenceEvaluator(model, new_ops=[new_cl])
-                    got = sess.run(None, {"input": X})
-                    results["ref_cl", opset] = got
+        results = {}
 
-                expected = expected_results[reduce_op]
-                baseline = "constant"
-                for k, v in results.items():
-                    if expected is None:
-                        expected = v
-                        baseline = k
-                        continue
-                    for a, b in zip(reversed(expected), reversed(v)):
-                        if a.shape != b.shape:
-                            raise AssertionError(
-                                f"Shape mismatch for {reduce_op!r}, {baseline}:{a.shape} != {k}:{b.shape}."
-                            )
-                        diff = np.abs(a - b).max()
-                        if diff > 1e-6:
-                            raise AssertionError(
-                                f"Discrepancies (max={diff}) for {reduce_op!r}, {baseline} != {k}\n{a}\n!=\n{b}"
-                            )
+        model = self._cdist_model(opset, reduce_op)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"input": X})
+        results["ref", opset] = got
 
-    def test_mvn(self):
+        cl = [
+            n
+            for n in sess.rt_nodes_[0].body.rt_nodes_
+            if n.__class__.__name__.startswith(reduce_op)
+        ]
+        schema = cl[0]._schema  # pylint: disable=protected-access
+        new_cl = type(reduce_op, (cl[0].__class__,), {"op_schema": schema})
+        sess = ReferenceEvaluator(model, new_ops=[new_cl])
+        got = sess.run(None, {"input": X})
+        results["ref_cl", opset] = got
+
+        baseline = "constant"
+        for k, v in results.items():
+            for a, b in zip(reversed(expected), reversed(v)):
+                if a.shape != b.shape:
+                    raise AssertionError(
+                        f"Shape mismatch for {reduce_op!r}, {baseline}:{a.shape} != {k}:{b.shape}."
+                    )
+                diff = np.abs(a - b).max()
+                if diff > 1e-6:
+                    raise AssertionError(
+                        f"Discrepancies (max={diff}) for {reduce_op!r}, {baseline} != {k}\n{a}\n!=\n{b}"
+                    )
+
+    @parameterized.parameterized.expand(
+        [
+            (13,),
+            (17,),
+            (18,),
+        ]
+    )
+    def test_mvn(self, opset: int, ref_opset: int = 13):
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
@@ -2690,17 +2725,17 @@ class TestReferenceEvaluator(unittest.TestCase):
         ]
         graph = make_graph(nodes, "g", [X], [Y])
         x = np.random.rand(3, 3, 3, 1).astype(np.float32)
-        expected = None
-        for opset in [13, 17, 18]:
-            with self.subTest(opset=opset):
-                onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
-                ref = ReferenceEvaluator(onnx_model)
-                got = ref.run(None, {"X": x})[0]
-                if expected is None:
-                    expected = got
-                    continue
-                self.assertEqual(expected.shape, got.shape)
-                assert_allclose(expected, got)
+
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
+        ref = ReferenceEvaluator(onnx_model)
+        got = ref.run(None, {"X": x})[0]
+
+        ref_onnx_model = make_model(graph, opset_imports=[make_opsetid("", ref_opset)])
+        ref_expected = ReferenceEvaluator(ref_onnx_model)
+        expected = ref_expected.run(None, {"X": x})[0]
+
+        self.assertEqual(expected.shape, got.shape)
+        assert_allclose(expected, got)
 
     def test_cast_float_to_string(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
