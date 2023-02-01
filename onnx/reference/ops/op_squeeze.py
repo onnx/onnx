@@ -3,13 +3,10 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
-from ._op import OpRunUnaryNum
 
-
-class Squeeze_1(OpRunUnaryNum):
+class Squeeze_1(OpRun):
     def _run(self, data, axes=None):  # type: ignore
         if isinstance(axes, np.ndarray):
             axes = tuple(axes)
@@ -44,11 +41,3 @@ class Squeeze_13(OpRun):
         else:
             sq = np.squeeze(data)
         return (sq,)
-
-
-if onnx_opset_version() >= 13:
-    Squeeze = Squeeze_13
-elif onnx_opset_version() >= 11:
-    Squeeze = Squeeze_11  # type: ignore
-else:
-    Squeeze = Squeeze_1  # type: ignore

@@ -26,7 +26,9 @@ import warnings
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import StrictVersion as version
+    from distutils.version import (  # pylint: disable=deprecated-module
+        StrictVersion as version,
+    )
 
 import numpy as np
 from numpy import __version__ as npver
@@ -51,14 +53,13 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1230
+MIN_PASSING_TESTS = 1232
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
     # mismatches
     # shapes (10, 9, 3), (10, 8, 3) shape mismatch unexpected as the operator is inlined
     "test_center_crop_pad_crop_axes_hwc_expanded",
-    "test_col2im_pads",  # mismatch by one value, the onnx backend test is probably wrong
     # deprecated
     "test_scan_sum",  # deprecated, opset 8 -> not implemented
     "test_scatter_with_axis",  # deprecated, scatter is removed
@@ -325,6 +326,15 @@ class OnnxBackendTest:
                             f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
                             f"\n{output}\n-----\n{diff}\n------INPUTS----\n{pprint.pformat(inputs)}."
                         ) from ex
+                if desired.shape != output.shape and not (
+                    len(desired.shape) == 0 and output.shape == (1,)
+                ):
+                    raise AssertionError(
+                        f"Output {i_output} of test {index} in folder {self.folder!r} failed "
+                        f"(expected shape={desired.shape} but shape={output.shape}), "
+                        f"comment={comment}\n---\n{desired}\n----"
+                        f"\n{output}\n------INPUTS----\n{pprint.pformat(inputs)}."
+                    )
             elif hasattr(output, "is_compatible"):
                 # A shape
                 if desired.dtype != output.dtype:
@@ -786,7 +796,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
     def setUpClass(cls, all_tests=False):
         # test not supported yet
         # not supported yet
-        # see http://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
+        # see https://onnx.ai/backend-scoreboard/onnxruntime_details_stable.html
         # to compare with onnxruntime
 
         cls.rtol = {
@@ -808,6 +818,8 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_blackmanwindow_expanded": 1e-4,
             "test_blackmanwindow_symmetric": 1e-7,
             "test_blackmanwindow_symmetric_expanded": 1e-4,
+            "test_Conv1d": 1e-6,
+            "test_Conv3d_dilated": 1e-6,
             "test_gridsample_bicubic": 1e-4,
             "test_gru_seq_length": 1e-7,
             "test_hammingwindow_expanded": 1e-4,

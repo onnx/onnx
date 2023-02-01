@@ -94,7 +94,8 @@ class Scan(OpRun):
         scan_input_axes=None,
         scan_input_directions=None,
         scan_output_axes=None,
-        scan_output_directions,
+        scan_output_directions=None,
+        attributes=None,
     ):
         # TODO: support overridden attributes.
         (
