@@ -148,12 +148,12 @@ class TestModelInference(unittest.TestCase):
             self.assertTrue(tensor_type.HasField("shape"))
             inferred_shape = tensor_type.shape
             self.assertEqual(len(inferred_shape.dim), len(expected_shape))
-            for (inferred_dim, expected_dim) in zip (inferred_shape.dim, expected_shape):
+            for (inferred_dim, expected_dim) in zip(inferred_shape.dim, expected_shape):
                 self.assertTrue(inferred_dim.HasField("dim_value"))
                 self.assertEqual(inferred_dim.dim_value, expected_dim)
 
     def test_mi_constant(self):
-        model = '''
+        model = """
             <
                 ir_version: 7,
                 opset_import: [ "" : 17]
@@ -162,11 +162,11 @@ class TestModelInference(unittest.TestCase):
                 shape = Constant<value_ints=[8,4,16]>()
                 y = Reshape(x, shape)
             }
-            '''
+            """
         self._check_shape(model, [8, 4, 16])
 
     def test_mi_constant_2(self):
-        model = '''
+        model = """
             <
                 ir_version: 7,
                 opset_import: [ "" : 17]
@@ -177,7 +177,7 @@ class TestModelInference(unittest.TestCase):
                 shape2 = Mul(shape, two)
                 y = Reshape(x, shape2)
             }
-            '''
+            """
         self._check_shape(model, [8, 4, 16])
 
 
