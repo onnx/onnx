@@ -3,9 +3,9 @@
 <p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/onnx-horizontal-color.png" /></p>
 
 
-[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Windows-CI?branchName=main)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)
-[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Linux-CI?branchName=main)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=main)
-[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/MacOS-CI?branchName=main)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=main)
+[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Windows-CI?branchName=main&label=Windows)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)
+[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Linux-CI?branchName=main&label=Linux)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=main)
+[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/MacOS-CI?branchName=main&label=MacOS)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=main)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
