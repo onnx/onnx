@@ -3,7 +3,7 @@
 import numpy as np  # type: ignore
 
 import onnx
-from onnx.numpy_helper import create_random_int_input_for_cast
+from onnx.numpy_helper import create_random_int
 
 from ..base import Base
 from . import expect
@@ -19,16 +19,16 @@ class BitwiseNot(Base):
         )
 
         # 2d
-        x = np.random.randint(-10, 10, size=(3, 4)).astype(np.int32)
+        x = np.random.randn(3, 4).astype(np.int32)
         y = np.bitwise_not(x)
         expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_2d")
 
         # 3d
-        x = create_random_int_input_for_cast((3, 4, 5, 6), np.uint16)
+        x = create_random_int((3, 4, 5, 6), np.uint16)
         y = np.bitwise_not(x)
         expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
 
         # 4d
-        x = create_random_int_input_for_cast((3, 4, 5, 6), np.uint8)
+        x = create_random_int((3, 4, 5, 6), np.uint8)
         y = np.bitwise_not(x)
         expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_4d")

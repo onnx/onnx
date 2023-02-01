@@ -2,7 +2,7 @@
 # pylint: disable=C3001,isinstance-second-argument-not-valid-type
 
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -413,13 +413,9 @@ def convert_endian(tensor: TensorProto) -> None:
     )
 
 
-def create_random_int_input_for_cast(
-    input_shape: Optional[Sequence[Union[str, int, None]]], cast_type: np.dtype
-) -> np.ndarray:
+def create_random_int(input_shape: Tuple[int], cast_type: np.dtype) -> np.ndarray:
     if cast_type not in (np.uint8, np.uint16, np.uint32, np.uint64):
-        raise TypeError(
-            f"{cast_type} is not supported by create_random_int_input_for_cast."
-        )
+        raise TypeError(f"{cast_type} is not supported by create_random_int.")
     # the range of np.random.randint is int32; set a fixed boundary if overflow
     end = min(np.iinfo(cast_type).max, np.iinfo(np.int32).max)
     start = max(-(end + 1), np.iinfo(np.int32).min)
