@@ -411,3 +411,16 @@ def convert_endian(tensor: TensorProto) -> None:
     tensor.raw_data = (
         np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
     )
+
+
+def create_random_int_input_for_cast(
+    input_shape: Optional[Sequence[Union[str, int, None]]], cast_type: np.dtype
+) -> np.ndarray:
+    if cast_type not in (np.uint8, np.uint16, np.uint32, np.uint64):
+        raise TypeError(
+            f"{cast_type} is not supported by create_random_int_input_for_cast."
+        )
+    # the range of np.random.randint is int32; set a fixed boundary if overflow
+    end = min(np.iinfo(cast_type).max, np.iinfo(np.int32).max)
+    start = max(-(end + 1), np.iinfo(np.int32).min)
+    return np.random.randint(start, end, size=input_shape).astype(cast_type)

@@ -1851,14 +1851,14 @@ node = onnx.helper.make_node(
 )
 
 # 2d
-x = np.random.randint(-10, 10, size=(3, 4)).astype(np.int32)
-y = np.random.randint(-10, 10, size=(3, 4)).astype(np.int32)
+x = np.random.randn(3, 4).astype(np.int32)
+y = np.random.randn(3, 4).astype(np.int32)
 z = np.bitwise_and(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i32_2d")
 
 # 3d
-x = np.random.randint(-10, 10, size=(3, 4, 5)).astype(np.int16)
-y = np.random.randint(-10, 10, size=(3, 4, 5)).astype(np.int16)
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
 z = np.bitwise_and(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i16_3d")
 ```
@@ -1875,16 +1875,16 @@ node = onnx.helper.make_node(
 )
 
 # 3d vs 1d
-x = np.random.randint(-10, 10, size=(3, 4, 5)).astype(np.uint64)
-y = np.random.randint(-10, 10, size=(5)).astype(np.uint64)
+x = create_random_int_input_for_cast((3, 4, 5), np.uint64)
+y = create_random_int_input_for_cast((5), np.uint64)
 z = np.bitwise_and(x, y)
 expect(
     node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui64_bcast_3v1d"
 )
 
 # 4d vs 3d
-x = np.random.randint(-10, 10, size=(3, 4, 5, 6)).astype(np.uint8)
-y = np.random.randint(-10, 10, size=(4, 5, 6)).astype(np.uint8)
+x = create_random_int_input_for_cast((3, 4, 5, 6), np.uint8)
+y = create_random_int_input_for_cast((4, 5, 6), np.uint8)
 z = np.bitwise_and(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui8_bcast_4v3d")
 ```
@@ -1910,12 +1910,12 @@ y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_2d")
 
 # 3d
-x = np.random.randint(-10, 10, size=(3, 4, 5)).astype(np.uint16)
+x = create_random_int_input_for_cast((3, 4, 5, 6), np.uint16)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
 
 # 4d
-x = np.random.randint(-10, 10, size=(3, 4, 5, 6)).astype(np.uint8)
+x = create_random_int_input_for_cast((3, 4, 5, 6), np.uint8)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_4d")
 ```
@@ -1959,14 +1959,14 @@ node = onnx.helper.make_node(
 )
 
 # 3d vs 1d
-x = np.random.randint(-10, 10, size=(3, 4, 5)).astype(np.uint64)
-y = np.random.randint(-10, 10, size=(5)).astype(np.uint64)
+x = create_random_int_input_for_cast((3, 4, 5), np.uint64)
+y = create_random_int_input_for_cast((5), np.uint64)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui64_bcast_3v1d")
 
 # 4d vs 3d
-x = np.random.randint(-10, 10, size=(3, 4, 5, 6)).astype(np.uint8)
-y = np.random.randint(-10, 10, size=(4, 5, 6)).astype(np.uint8)
+x = create_random_int_input_for_cast((3, 4, 5, 6), np.uint8)
+y = create_random_int_input_for_cast((4, 5, 6), np.uint8)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui8_bcast_4v3d")
 ```
@@ -1987,16 +1987,16 @@ node = onnx.helper.make_node(
 )
 
 # 3d vs 1d
-x = np.random.randint(-10, 10, size=(3, 4, 5)).astype(np.uint64)
-y = np.random.randint(-10, 10, size=(5)).astype(np.uint64)
+x = create_random_int_input_for_cast((3, 4, 5), np.uint64)
+y = create_random_int_input_for_cast((5), np.uint64)
 z = np.bitwise_xor(x, y)
 expect(
     node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui64_bcast_3v1d"
 )
 
 # 4d vs 3d
-x = np.random.randint(-10, 10, size=(3, 4, 5, 6)).astype(np.uint8)
-y = np.random.randint(-10, 10, size=(4, 5, 6)).astype(np.uint8)
+x = create_random_int_input_for_cast((3, 4, 5, 6), np.uint8)
+y = create_random_int_input_for_cast((4, 5, 6), np.uint8)
 z = np.bitwise_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui8_bcast_4v3d")
 ```

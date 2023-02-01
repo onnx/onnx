@@ -3,6 +3,7 @@
 import numpy as np  # type: ignore
 
 import onnx
+from onnx.numpy_helper import create_random_int_input_for_cast
 
 from ..base import Base
 from . import expect
@@ -37,13 +38,13 @@ class BitwiseOr(Base):
         )
 
         # 3d vs 1d
-        x = np.random.randint(-10, 10, size=(3, 4, 5)).astype(np.uint64)
-        y = np.random.randint(-10, 10, size=(5)).astype(np.uint64)
+        x = create_random_int_input_for_cast((3, 4, 5), np.uint64)
+        y = create_random_int_input_for_cast((5), np.uint64)
         z = np.bitwise_or(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui64_bcast_3v1d")
 
         # 4d vs 3d
-        x = np.random.randint(-10, 10, size=(3, 4, 5, 6)).astype(np.uint8)
-        y = np.random.randint(-10, 10, size=(4, 5, 6)).astype(np.uint8)
+        x = create_random_int_input_for_cast((3, 4, 5, 6), np.uint8)
+        y = create_random_int_input_for_cast((4, 5, 6), np.uint8)
         z = np.bitwise_or(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui8_bcast_4v3d")
