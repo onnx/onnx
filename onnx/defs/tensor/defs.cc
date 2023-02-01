@@ -1619,9 +1619,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < out_rank; ++i) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = (i < axis) ? data_shape.dim(i)
                                                                                                   : // i < axis < r
-                (i >= axis && i < axis + q) ? indices_shape.dim(i - axis)
-                                            : // i - axis < q
-                data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
+                (i >= axis && i < axis + q) ? indices_shape.dim(i - axis) : // i - axis < q
+                    data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { GatherOp13DataPropagator(ctx); }));
@@ -3326,7 +3325,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Pad_ver18_doc = R"DOC(
+static const char* Pad_ver19_doc = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
@@ -3337,6 +3336,8 @@ The three supported `modes` are (similar to corresponding modes supported by `nu
 2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
 
 3) `edge` - pads with the edge values of array
+
+4) `wrap` - wrap-around padding as if the data tensor forms a torus
 
 
 Example 1 (`constant` mode):
@@ -3402,18 +3403,41 @@ output = [
     [4.5, 4.5, 4.5, 5.7],
 ]
 ```
+
+Example 4 (`wrap` mode):
+
+```
+data = [
+    [1.0, 1.2],
+    [2.3, 3.4],
+    [4.5, 5.7],
+]
+
+pads = [2, 1, 1, 1]
+
+mode = 'wrap'
+
+output = [
+    [3.4, 2.3, 3.4, 2.3],
+    [5.7, 4.5, 5.7, 4.5],
+    [1.2, 1.0, 1.2, 1.0],
+    [3.4, 2.3, 3.4, 2.3],
+    [5.7, 4.5, 5.7, 4.5],
+    [1.2, 1.0, 1.2, 1.0],
+]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
-    18,
+    19,
     OpSchema()
         .Attr(
             "mode",
-            "Supported modes: `constant`(default), `reflect`, `edge`",
+            "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`",
             AttributeProto::STRING,
             std::string("constant"))
-        .SetDoc(Pad_ver18_doc)
+        .SetDoc(Pad_ver19_doc)
         .Input(0, "data", "Input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,

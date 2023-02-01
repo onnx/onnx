@@ -60,8 +60,8 @@ class Pad(Base):
         expect(node, inputs=[x, pads, value], outputs=[y], name="test_constant_pad")
 
     @staticmethod
-    def export_reflection_and_edge_pad() -> None:
-        for mode in ["edge", "reflect"]:
+    def export_reflection_edge_and_wrap_pad() -> None:
+        for mode in ["edge", "reflect", "wrap"]:
             node = onnx.helper.make_node(
                 "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
             )
