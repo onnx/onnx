@@ -3,14 +3,12 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
-
 from ._op import OpRunReduceNumpy
 
 
 class ReduceLogSum_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=True):  # type: ignore
-        tax = tuple(axes) if axes else None
+        tax = tuple(axes) if axes is not None else None
         res = np.sum(data, axis=tax, keepdims=keepdims)  # type: ignore[arg-type]
         if len(res.shape) > 0:
             return (np.log(res, out=res),)
@@ -29,9 +27,3 @@ class ReduceLogSum_18(OpRunReduceNumpy):
         if len(res.shape) > 0:
             return (np.log(res, out=res),)
         return (np.log(res),)
-
-
-if onnx_opset_version() >= 18:
-    ReduceLogSum = ReduceLogSum_18
-else:
-    ReduceLogSum = ReduceLogSum_1  # type: ignore

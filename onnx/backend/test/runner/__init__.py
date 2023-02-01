@@ -204,7 +204,7 @@ class Runner:
                     )
             else:
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
-                if ref_outputs[i].dtype == np.object:  # type: ignore[attr-defined]
+                if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
                     np.testing.assert_allclose(
@@ -223,20 +223,14 @@ class Runner:
             download_file.close()
             assert model_test.url
             print(
-                "Start downloading model {} from {}".format(
-                    model_test.model_name, model_test.url
-                )
+                f"Start downloading model {model_test.model_name} from {model_test.url}"
             )
             urlretrieve(model_test.url, download_file.name)
             print("Done")
             with tarfile.open(download_file.name) as t:
                 t.extractall(models_dir)
         except Exception as e:
-            print(
-                "Failed to prepare data for model {}: {}".format(
-                    model_test.model_name, e
-                )
-            )
+            print(f"Failed to prepare data for model {model_test.model_name}: {e}")
             raise
         finally:
             os.remove(download_file.name)
@@ -281,9 +275,7 @@ class Runner:
             device_test_name = f"{test_name}_{device.lower()}"
             if device_test_name in self._test_items[category]:
                 raise ValueError(
-                    'Duplicated test name "{}" in category "{}"'.format(
-                        device_test_name, category
-                    )
+                    f'Duplicated test name "{device_test_name}" in category "{category}"'
                 )
 
             @unittest.skipIf(  # type: ignore
@@ -297,11 +289,7 @@ class Runner:
                 except BackendIsNotSupposedToImplementIt as e:
                     # hacky verbose reporting
                     if "-v" in sys.argv or "--verbose" in sys.argv:
-                        print(
-                            "Test {} is effectively skipped: {}".format(
-                                device_test_name, e
-                            )
-                        )
+                        print(f"Test {device_test_name} is effectively skipped: {e}")
 
             self._test_items[category][device_test_name] = TestItem(
                 device_test_func, report_item
