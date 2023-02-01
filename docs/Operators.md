@@ -23100,6 +23100,7 @@ node = onnx.helper.make_node(
     spatial_scale=1.0,
     output_height=5,
     output_width=5,
+    sampling_ratio=2,
     coordinate_transformation_mode="output_half_pixel",
 )
 

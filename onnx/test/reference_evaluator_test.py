@@ -2259,7 +2259,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
         )
         expected = sess.run(None, feeds)
-
         ref = ReferenceEvaluator(onnx_model)
         got = ref.run(None, feeds)
         assert_allclose(expected[0], got[0], atol=1e-5)
