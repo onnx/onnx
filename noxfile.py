@@ -4,14 +4,24 @@ Documentation:
     https://nox.thea.codes/
 """
 
+import os
+
 import nox
+
+DEFAULT_ENV_VARS = {
+    "ONNX_BUILD_TESTS": "1",
+    "CMAKE_ARGS": "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON",
+    "ONNX_NAMESPACE": "ONNX_NAMESPACE_FOO_BAR_FOR_CI",
+    "DEBUG": os.environ.get("DEBUG", "0"),
+    "ONNX_ML": os.environ.get("ONNX_ML", "0"),
+}
 
 
 @nox.session()
 def test_onnx(session: nox.Session):
     """Build and test ONNX."""
     session.install("-r", "requirements-release.txt")
-    session.install(".")
+    session.install(".", env=DEFAULT_ENV_VARS)
     session.run("pytest", *session.posargs)
 
 
@@ -19,7 +29,7 @@ def test_onnx(session: nox.Session):
 def test_cpp(session: nox.Session):
     """ONNX C++ API tests."""
     session.install("-r", "requirements-release.txt")
-    session.run("python", "setup.py", "install")
+    session.run("python", "setup.py", "install", env=DEFAULT_ENV_VARS)
     session.run(
         "bash",
         "./.setuptools-cmake-build/onnx_gtests",
@@ -32,18 +42,6 @@ def test_cpp(session: nox.Session):
 def test_backend_test_generation(session: nox.Session):
     """Test backend test data."""
     session.install("-r", "requirements-release.txt")
-    session.install(".")
+    session.install(".", env=DEFAULT_ENV_VARS)
     session.run("python", "onnx/backend/test/cmd_tools.py", "generate-data", "--clean")
     session.run("bash", "tools/check_generated_backend_test_data.sh", external=True)
-
-
-@nox.session()
-def check_generated_files(session: nox.Session):
-    """Check auto-gen files up-to-date."""
-    session.install("-r", "requirements-release.txt")
-    session.install(".")
-    session.run("python", "onnx/defs/gen_doc.py")
-    session.run("python", "onnx/gen_proto.py", "-l")
-    session.run("python", "onnx/gen_proto.py", "-l", "--ml")
-    session.run("python", "onnx/backend/test/stat_coverage.py")
-    session.run("bash", "tools/check_generated_diff.sh", external=True)

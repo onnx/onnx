@@ -4,35 +4,45 @@ trigger:
 jobs:
 - job: 'Test'
   pool:
-    vmImage: 'Ubuntu-18.04'
+    vmImage: ubuntu-latest
   strategy:
     matrix:
+      py311-ml:
+        python.version: '3.11'
+        onnx_ml: true
+        onnx_debug: false
+        documentation: false
+      py310-ml:
+        python.version: '3.10'
+        onnx_ml: true
+        onnx_debug: false
+        documentation: false
       py39-ml-debug:
         python.version: '3.9'
-        onnx_ml: 1
-        onnx_debug: 1
-        documentation: 0
+        onnx_ml: true
+        onnx_debug: true
+        documentation: false
       py38:
         python.version: '3.8'
-        onnx_ml: 0
-        onnx_debug: 0
-        documentation: 0
+        onnx_ml: false
+        onnx_debug: false
+        documentation: false
       py38-ml:
         python.version: '3.8'
-        onnx_ml: 1
-        onnx_debug: 0
-        documentation: 1
+        onnx_ml: true
+        onnx_debug: false
+        documentation: true
       py37:
         python.version: '3.7'
-        onnx_ml: 0
-        onnx_debug: 0
-        documentation: 0
+        onnx_ml: false
+        onnx_debug: false
+        documentation: false
       py37-ml:
         python.version: '3.7'
-        onnx_ml: 1
-        onnx_debug: 0
-        documentation: 0
-    maxParallel: 6
+        onnx_ml: true
+        onnx_debug: false
+        documentation: false
+    maxParallel: 7
 
   steps:
   - task: UsePythonVersion@0
@@ -42,32 +52,28 @@ jobs:
 
   - script: |
       sudo apt-get install libprotobuf-dev protobuf-compiler
-
       git submodule update --init --recursive
-      export ONNX_BUILD_TESTS=1
-      if [ '$(onnx_debug)' == '1' ]; then
-        export DEBUG=1
-      fi
-      if [ '$(onnx_ml)' == '1' ]; then
-        export ONNX_ML=1
-      fi
-      export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
     displayName: 'Set up the ONNX environment and build flags'
-
+  - script: |
+      export DEBUG=1
+    condition: eq(variables['onnx_debug'], true)
+    displayName: 'Set DEBUG'
+  - script: |
+      export ONNX_ML=1
+    condition: eq(variables['onnx_ml'], true)
+    displayName: 'Set ONNX_ML'
   - script: |
       pip install nox
     displayName: 'Install nox'
 
   - script: |
-      nox --forcecolor -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch -n=auto
+      nox --forcecolor --no-venv -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch -n=auto
     displayName: 'Run ONNX tests'
 
-  - script: |
-      if [ '$(documentation)' == '1' ]; then
-        source venv/bin/activate
-        pip install -r docs/docsgen/source/requirements.txt
-        cd docs/docsgen && make text -j auto
-      fi
-    displayName: Test documentation
-    continueOnError: true  # the documentation generates errors due to operators documentation
+  # TODO(justinchuby): Move this to nox
+  # - script: |
+  #     pip install -r docs/docsgen/source/requirements.txt
+  #     cd docs/docsgen && make text -j auto
+  #   condition: eq(variables['documentation'], true)
+  #   displayName: Test documentation
+  #   continueOnError: true  # the documentation generates errors due to operators documentation
