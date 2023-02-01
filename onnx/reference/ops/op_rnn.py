@@ -3,7 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -143,9 +142,3 @@ class RNN_7(CommonRNN):
 class RNN_14(CommonRNN):
 
     pass
-
-
-if onnx_opset_version() >= 14:
-    RNN = RNN_14
-else:
-    RNN = RNN_7  # type: ignore
