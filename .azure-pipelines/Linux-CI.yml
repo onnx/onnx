@@ -90,7 +90,7 @@ jobs:
       ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
-      pytest
+      pytest -sv
       if [ $? -ne 0 ]; then
         echo "pytest failed"
         exit 1
