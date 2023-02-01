@@ -41,15 +41,7 @@ jobs:
       addToPath: true
 
   - script: |
-      python -m pip -q install virtualenv
-      python -m virtualenv venv
-      source venv/bin/activate
-
       sudo apt-get install libprotobuf-dev protobuf-compiler
-      python -m pip install -q --upgrade pip
-      python -m pip install -q -r requirements-release.txt
-
-      sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
 
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
@@ -61,67 +53,15 @@ jobs:
       fi
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py --quiet install
-    displayName: 'Install ONNX and dependencies'
+    displayName: 'Set up the ONNX environment and build flags'
 
   - script: |
-      source venv/bin/activate
+      pip install nox
+    displayName: 'Install nox'
 
-      python -m pip install -q -r requirements-dev.txt
-
-      # check auto-gen files up-to-date
-      python onnx/defs/gen_doc.py
-      python onnx/gen_proto.py -l
-      python onnx/gen_proto.py -l --ml
-      python onnx/backend/test/stat_coverage.py
-
-      git status
-      git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
-      if [ $? -ne 0 ]; then
-        echo "git diff returned failures"
-        exit 1
-      fi
-
-      # Do not hardcode onnx's namespace in the c++ source code, so that
-      # other libraries who statically link with onnx can hide onnx symbols
-      # in a private namespace.
-      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
-      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
-
-      pytest
-      if [ $? -ne 0 ]; then
-        echo "pytest failed"
-        exit 1
-      fi
-
-      # onnx c++ API tests
-      export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
-      ./.setuptools-cmake-build/onnx_gtests
-      if [ $? -ne 0 ]; then
-        echo "onnx_gtests failed"
-        exit 1
-      fi
-
+  - script: |
+      nox --forcecolor -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch -n=auto
     displayName: 'Run ONNX tests'
-
-  - script: |
-      source venv/bin/activate
-      python onnx/backend/test/cmd_tools.py generate-data --clean
-      git status
-      # Skip *output_*.pb because NumPy functions might behave differently on different platforms
-      # Skip test_log's input.pb because it uses np.random, which might behave differently on different platforms
-      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-      if [ $? -ne 0 ]; then
-        echo "git diff for test generation returned failures. Please check updated node test files"
-        exit 1
-      fi
-      git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
-      if [ $? -ne 0 ]; then
-        echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
-        exit 1
-      fi
-
-    displayName: Test backend test data
 
   - script: |
       if [ '$(documentation)' == '1' ]; then
