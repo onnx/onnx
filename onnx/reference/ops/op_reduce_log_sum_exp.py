@@ -3,8 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
-
 from ._op import OpRunReduceNumpy
 
 
@@ -37,9 +35,3 @@ class ReduceLogSumExp_18(OpRunReduceNumpy):
         keepdims = keepdims != 0  # type: ignore
 
         return compute_log_sum_exp(data, axes, keepdims)
-
-
-if onnx_opset_version() >= 18:
-    ReduceLogSumExp = ReduceLogSumExp_18
-else:
-    ReduceLogSumExp = ReduceLogSumExp_1  # type: ignore
