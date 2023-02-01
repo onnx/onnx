@@ -1622,7 +1622,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 (i >= axis && i < axis + q) ? indices_shape.dim(i - axis)
                                             : // i - axis < q
                 data_shape.dim(i - q + 1); // i < out_rank < q + r - 1
-	  }
+          }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { GatherOp13DataPropagator(ctx); }));
 
