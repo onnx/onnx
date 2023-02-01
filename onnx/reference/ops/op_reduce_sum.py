@@ -3,7 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import RuntimeTypeError
 
 from ._op import OpRunReduceNumpy
@@ -50,9 +49,3 @@ class ReduceSum_13(OpRunReduceNumpy):
             raise TypeError(
                 f"Unable to reduce shape {x.shape!r} with axes={axes!r} and keepdims={keepdims}."
             ) from e
-
-
-if onnx_opset_version() >= 13:
-    ReduceSum = ReduceSum_13
-else:
-    ReduceSum = ReduceSum_1  # type: ignore

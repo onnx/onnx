@@ -3,7 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -28,7 +27,7 @@ class _ArgMax(OpRun):
         return (_argmax(data, axis=axis, keepdims=keepdims),)
 
 
-class ArgMax_11(_ArgMax):
+class ArgMax_1(_ArgMax):
     pass
 
 
@@ -39,9 +38,3 @@ class ArgMax_12(_ArgMax):
         return (
             _argmax_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims),
         )
-
-
-if onnx_opset_version() >= 12:
-    ArgMax = ArgMax_12
-else:
-    ArgMax = ArgMax_11  # type: ignore

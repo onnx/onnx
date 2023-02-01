@@ -3,7 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -64,9 +63,3 @@ class Gemm_7(OpRun):
         else:
             _meth = _gemm01 if transB else _gemm00
         return (_meth(a, b, c, alpha, beta),)
-
-
-if onnx_opset_version() >= 7:
-    Gemm = Gemm_7
-else:
-    Gemm = Gemm_6  # type: ignore
