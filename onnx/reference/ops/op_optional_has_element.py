@@ -8,8 +8,4 @@ from onnx.reference.op_run import OpRun
 
 class OptionalHasElement(OpRun):
     def _run(self, x=None):  # type: ignore
-        if x is None:
-            return (np.array(False),)
-        if isinstance(x, (np.ndarray, list)):
-            return (np.array(True),)
-        return (np.array(False),)
+        return (np.array(x is not None),)

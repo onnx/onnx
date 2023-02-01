@@ -10,6 +10,4 @@ class OptionalGetElement(OpRun):
     def _run(self, x):  # type: ignore
         if x is None:
             raise ValueError("The requested optional input has no value.")
-        if isinstance(x, (np.ndarray, list)):
-            return (x,)
-        raise RuntimeError("Input is empty in operator OptionalGetElement.")
+        return (x,)
