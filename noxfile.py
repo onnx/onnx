@@ -17,19 +17,19 @@ DEFAULT_ENV_VARS = {
 }
 
 
-@nox.session(reuse_venv=True)
+@nox.session()
 def test_onnx(session: nox.Session):
     """Build and run ONNX python tests."""
-    session.install("-r", "requirements-release.txt")
-    session.install(".", env=DEFAULT_ENV_VARS)
+    session.run("pip", "install", "-r", "requirements-release.txt")
+    session.run("pip", "install", ".", env=DEFAULT_ENV_VARS)
     session.run("pytest", *session.posargs)
 
 
-@nox.session(reuse_venv=True)
+@nox.session()
 def test_cpp(session: nox.Session):
     """ONNX C++ API tests."""
-    session.install("-r", "requirements-release.txt")
-    session.run("python", "setup.py", "install", env=DEFAULT_ENV_VARS)
+    session.run("pip", "install", "-r", "requirements-release.txt")
+    session.run("python", "setup.py", "install", env=DEFAULT_ENV_VARS, silent=True)
     session.run(
         "./.setuptools-cmake-build/onnx_gtests",
         env={"LD_LIBRARY_PATH": "./.setuptools-cmake-build/:$LD_LIBRARY_PATH"},
@@ -37,10 +37,10 @@ def test_cpp(session: nox.Session):
     )
 
 
-@nox.session(reuse_venv=True)
+@nox.session()
 def test_backend_test_generation(session: nox.Session):
     """Test backend test data."""
-    session.install("-r", "requirements-release.txt")
-    session.install(".", env=DEFAULT_ENV_VARS)
+    session.run("pip", "install", "-r", "requirements-release.txt")
+    session.run("pip", "install", ".", env=DEFAULT_ENV_VARS)
     session.run("python", "onnx/backend/test/cmd_tools.py", "generate-data", "--clean")
     session.run("bash", "tools/check_generated_backend_test_data.sh", external=True)

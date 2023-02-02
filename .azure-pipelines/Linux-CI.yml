@@ -67,13 +67,12 @@ jobs:
     displayName: 'Install nox'
 
   - script: |
-      nox --forcecolor -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch
+      nox --forcecolor --no-venv -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch
     displayName: 'Run ONNX tests'
 
-  # TODO(justinchuby): Move this to nox
-  # - script: |
-  #     pip install -r docs/docsgen/source/requirements.txt
-  #     cd docs/docsgen && make text -j auto
-  #   condition: eq(variables['documentation'], true)
-  #   displayName: Test documentation
-  #   continueOnError: true  # the documentation generates errors due to operators documentation
+  - script: |
+      pip install -r docs/docsgen/source/requirements.txt
+      cd docs/docsgen && make text -j auto
+    condition: eq(variables['documentation'], true)
+    displayName: Test documentation
+    continueOnError: true  # the documentation generates errors due to operators documentation
