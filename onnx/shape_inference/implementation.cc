@@ -486,21 +486,44 @@ class ShapeInferenceImplBase {
     }
   }
 
+  void replaceAttrRefs(NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+    auto& attributes = *n.mutable_attribute();
+    for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
+      auto& attr = *attr_iter;
+      if (!attr.ref_attr_name().empty()) {
+        // Attribute-references must be replaced by the corresponding attribute-value in the call-node
+        // if the call-node contains the attribute. Otherwise, this attribute must be removed.
+        auto entry = attr_map.find(attr.ref_attr_name());
+        if (entry != attr_map.cend()) {
+          // Copy value of attribute, but retain original name:
+          std::string name = attr.name();
+          attr = *(entry->second);
+          attr.set_name(name);
+        } else {
+          attr_iter = attributes.erase(attr_iter);
+          continue;
+        }
+      }
+      // Subgraphs must be recursively processed.
+      if (attr.has_g()) {
+        replaceAttrRefs(*attr.mutable_g(), attr_map);
+      }
+      for (auto& graph : *attr.mutable_graphs()) {
+        replaceAttrRefs(graph, attr_map);
+      }
+      ++attr_iter;
+    }
+  }
+
+  void replaceAttrRefs(GraphProto& graph, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+    for (auto& n : *graph.mutable_node()) {
+      replaceAttrRefs(n, attr_map);
+    }
+  }
+
   void process(const NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
     NodeProto copy_n(n);
-    // Add attribute information into the temporary node
-    copy_n.clear_attribute();
-    for (const auto& attr : n.attribute()) {
-      if (attr.has_ref_attr_name()) {
-        if (attr_map.count(attr.ref_attr_name())) {
-          auto copy_attr = *attr_map[attr.ref_attr_name()];
-          copy_attr.set_name(attr.name());
-          copy_n.add_attribute()->CopyFrom(copy_attr);
-        }
-      } else {
-        copy_n.add_attribute()->CopyFrom(attr);
-      }
-    }
+    replaceAttrRefs(copy_n, attr_map);
     process(copy_n);
   }
 

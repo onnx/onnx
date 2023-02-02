@@ -27,7 +27,7 @@ class RNN_Helper:
         self.num_directions = params[str(W)].shape[0]
 
         if self.num_directions == 1:
-            for k in params.keys():
+            for k in params:
                 if k != X:
                     params[k] = np.squeeze(params[k], axis=0)
 

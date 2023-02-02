@@ -168,7 +168,7 @@ supports any custom domains and operators
 Supported Types
 +++++++++++++++
 
-ONNX specifications are optimized for numerical competition with
+ONNX specifications are optimized for numerical computation with
 tensors. A *tensor* is a multidimensional array. It is defined
 by:
 

@@ -3,7 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -64,13 +63,3 @@ class Pad_18(OpRun):
         return (
             _pad_impl(data, pads, mode=mode, constant_values=constant_value, axes=axes),
         )
-
-
-if onnx_opset_version() >= 18:
-    Pad = Pad_18
-elif onnx_opset_version() >= 11:
-    Pad = Pad_11  # type: ignore
-elif onnx_opset_version() >= 2:
-    Pad = Pad_2  # type: ignore
-else:
-    Pad = Pad_1  # type: ignore

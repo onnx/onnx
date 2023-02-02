@@ -26,7 +26,9 @@ import warnings
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import StrictVersion as version
+    from distutils.version import (  # pylint: disable=deprecated-module
+        StrictVersion as version,
+    )
 
 import numpy as np
 from numpy import __version__ as npver
@@ -51,14 +53,13 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1230
+MIN_PASSING_TESTS = 1232
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
     # mismatches
     # shapes (10, 9, 3), (10, 8, 3) shape mismatch unexpected as the operator is inlined
     "test_center_crop_pad_crop_axes_hwc_expanded",
-    "test_col2im_pads",  # mismatch by one value, the onnx backend test is probably wrong
     # deprecated
     "test_scan_sum",  # deprecated, opset 8 -> not implemented
     "test_scatter_with_axis",  # deprecated, scatter is removed
