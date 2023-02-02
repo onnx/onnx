@@ -435,9 +435,7 @@ TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& 
     for (const int64_t& e : shape_data) {
       shape_input.add_dim()->set_dim_value(e);
     }
-    if (shape_data.size() != 0) {
-      found = true;
-    }
+    found = true;
     return shape_input;
   }
 
