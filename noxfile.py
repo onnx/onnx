@@ -29,7 +29,7 @@ def test_onnx(session: nox.Session):
 def test_cpp(session: nox.Session):
     """ONNX C++ API tests."""
     session.install("-r", "requirements-release.txt")
-    session.run("python", "setup.py", "install", env=DEFAULT_ENV_VARS)
+    session.run("python", "setup.py", "install", env=DEFAULT_ENV_VARS, silent=True)
     session.run("chmod", "+x", "./.setuptools-cmake-build/onnx_gtests", external=True)
     session.run(
         "bash",
