@@ -22,6 +22,7 @@ import parameterized
 from numpy.testing import assert_allclose  # type: ignore
 
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
+from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
@@ -69,6 +70,18 @@ def skip_if_no_torch(fn):
             import torch  # pylint: disable=W0611
         except ImportError:
             raise unittest.SkipTest("torch not installed")  # noqa
+        fn(*args, **kwargs)
+
+    return wrapper
+
+
+def skip_if_no_torchvision(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            import torchvision  # pylint: disable=W0611
+        except ImportError:
+            raise unittest.SkipTest("torchvision not installed")  # noqa
         fn(*args, **kwargs)
 
     return wrapper
@@ -2216,6 +2229,70 @@ class TestReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
 
+    def get_roi_align_model(self, mode):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        rois = make_tensor_value_info("rois", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        IS = make_tensor_value_info("I", TensorProto.INT64, [None])
+        node = make_node(
+            "RoiAlign",
+            ["X", "rois", "I"],
+            ["Y"],
+            output_height=5,
+            output_width=5,
+            sampling_ratio=2,
+            spatial_scale=1.0,
+            coordinate_transformation_mode="output_half_pixel",
+            mode=mode,
+        )
+        graph = make_graph([node], "g", [X, rois, IS], [Y])
+        return make_model(graph, opset_imports=[make_opsetid("", 17)])
+
+    def common_test_roi_align(self, mode):
+        import onnxruntime as ort
+
+        onnx_model = self.get_roi_align_model(mode)
+        X, batch_indices, rois = get_roi_align_input_values()
+        feeds = {"X": X, "rois": rois, "I": batch_indices}
+
+        sess = ort.InferenceSession(
+            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
+        )
+        expected = sess.run(None, feeds)
+        ref = ReferenceEvaluator(onnx_model)
+        got = ref.run(None, feeds)
+        assert_allclose(expected[0], got[0], atol=1e-5)
+
+    @skip_if_no_onnxruntime
+    def test_roi_align(self):
+        with self.subTest(mode="avg"):
+            self.common_test_roi_align("avg")
+        # max does not have example in the backend
+        with self.subTest(mode="max"):
+            self.common_test_roi_align("max")
+
+    def common_test_roi_align_torch(self, mode):
+        import torch
+        from torchvision.ops import RoIAlign
+
+        onnx_model = self.get_roi_align_model(mode)
+        sess = ReferenceEvaluator(onnx_model)
+        X, batch_indices, rois = get_roi_align_input_values()
+        got = sess.run(None, {"X": X, "rois": rois, "I": batch_indices})
+
+        a = RoIAlign((5, 5), spatial_scale=1.0, sampling_ratio=2)
+        expected = a(torch.from_numpy(X), [torch.from_numpy(rois)])
+        assert_allclose(expected, got[0], atol=1e-5)
+
+    @skip_if_no_torch
+    @skip_if_no_torchvision
+    def test_roi_align_torch(self):
+        with self.subTest(mode="avg"):
+            self.common_test_roi_align_torch("avg")
+        # not implemented in torch
+        # with self.subTest(mode="max"):
+        #     self.common_test_roi_align_torch("max")
+
     def test_split(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y1 = make_tensor_value_info("Y1", TensorProto.FLOAT, [None])
@@ -2736,6 +2813,67 @@ class TestReferenceEvaluator(unittest.TestCase):
 
         self.assertEqual(expected.shape, got.shape)
         assert_allclose(expected, got)
+
+    def test_concat_in_a_function(self):
+        def create_model():
+            nodes = []
+            inputs = []
+            outputs = []
+            functions = []
+
+            opsets = {"": onnx_opset_version(), "custom_domain": 1}
+            nodes_fct = []
+            node = make_node("Concat", ["x:0", "x:1"], ["r__0"], axis=0, domain="")
+            nodes_fct.append(node)
+
+            opset_imports_fct = [
+                make_opsetid(domain, 1 if version is None else version)
+                for domain, version in opsets.items()
+            ]
+            fct = make_function(
+                "custom_domain",
+                "concat_2",
+                ["x:0", "x:1"],
+                ["r__0"],
+                nodes_fct,
+                opset_imports_fct,
+            )
+            functions.append(fct)
+
+            inputs.append(make_tensor_value_info("I__0", TensorProto.DOUBLE, []))
+            inputs.append(make_tensor_value_info("I__1", TensorProto.DOUBLE, []))
+            inputs.append(make_tensor_value_info("I__2", TensorProto.DOUBLE, []))
+            outputs.append(make_tensor_value_info("r__4", TensorProto.DOUBLE, []))
+
+            node = make_node(
+                "concat_2", ["I__0", "I__1"], ["r__3"], axis=0, domain="custom_domain"
+            )
+            nodes.append(node)
+            node = make_node(
+                "concat_2", ["I__2", "r__3"], ["r__4"], axis=0, domain="custom_domain"
+            )
+            nodes.append(node)
+            opset_imports = [
+                make_opsetid(domain, 1 if version is None else version)
+                for domain, version in opsets.items()
+            ]
+
+            graph = make_graph(nodes, "numpyx", inputs, outputs)
+
+            onnx_model = make_model(
+                graph, opset_imports=opset_imports, functions=functions
+            )
+            return onnx_model
+
+        onnx_model = create_model()
+        x1 = np.array([[-5, 6], [15, 3]], dtype=np.float64)
+        x2 = np.array([[1, 2]], dtype=np.float64)
+        x3 = np.array([[-1, -2]], dtype=np.float64)
+        z = np.vstack([x1, x2, x3])
+        ref = ReferenceEvaluator(onnx_model)
+        feeds = {"I__2": x1, "I__0": x2, "I__1": x3}
+        got = ref.run(None, feeds)
+        assert_allclose(z, got[0])
 
     def test_cast_float_to_string(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
