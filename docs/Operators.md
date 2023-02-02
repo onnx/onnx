@@ -28103,16 +28103,18 @@ expect(
 
 ### <a name="SplitToSequence"></a><a name="splittosequence">**SplitToSequence**</a>
 
-  Split a tensor into a sequence of tensors, along the specified
-  'axis'. Lengths of the parts can be specified using argument 'split'.
+  Split a tensor into a sequence of tensors, along the specified 'axis'.
+  Lengths of the parts can be specified using the optional argument 'split'.
+  If the argument `split' is not specified, a default scalar value of 1
+  is used as the value of `split'.
   'split' must contain only positive numbers.
   'split' is either a scalar (tensor of empty shape), or a 1-D tensor.
-  If 'split' is a scalar, then 'input' will be split into equally sized chunks(if possible).
-  Last chunk will be smaller if the 'input' size along the given axis 'axis' is not divisible
-  by 'split'.
-  Otherwise, the tensor is split into 'size(split)' chunks, with lengths of the parts on 'axis'
-  specified in 'split'. In this scenario, the sum of entries in 'split' must be equal to the
-  dimension size of input tensor on 'axis'.
+  If 'split' is a scalar, then 'input' will be split into chunks all of size 'split'
+  if possible. The last chunk alone may be smaller than 'split' if the 'input' size
+  along the given axis 'axis' is not divisible by 'split'.
+  If 'split' is a 1-dimensional tensor, the input tensor is split into 'size(split)' chunks,
+  with lengths of the parts on 'axis' specified in 'split'. In this scenario, the sum of entries
+  in 'split' must be equal to the dimension size of input tensor on 'axis'.
 
 #### Version
 
