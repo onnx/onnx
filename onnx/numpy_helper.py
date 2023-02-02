@@ -418,5 +418,5 @@ def create_random_int(input_shape: Tuple[int], cast_type: np.dtype) -> np.ndarra
         raise TypeError(f"{cast_type} is not supported by create_random_int.")
     # the range of np.random.randint is int32; set a fixed boundary if overflow
     end = min(np.iinfo(cast_type).max, np.iinfo(np.int32).max)
-    start = max(-(end + 1), np.iinfo(np.int32).min)
+    start = max(np.iinfo(cast_type).min, np.iinfo(np.int32).min)
     return np.random.randint(start, end, size=input_shape).astype(cast_type)
