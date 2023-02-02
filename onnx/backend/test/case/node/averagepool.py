@@ -468,7 +468,7 @@ class AveragePool(Base):
             outputs=["y"],
             kernel_shape=[3, 3],
             strides=[1, 1],
-            dilations=2,
+            dilations=[2, 2],
             ceil_mode=True,
         )
         x = np.array(
