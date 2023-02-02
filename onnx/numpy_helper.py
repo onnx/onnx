@@ -413,10 +413,34 @@ def convert_endian(tensor: TensorProto) -> None:
     )
 
 
-def create_random_int(input_shape: Tuple[int], cast_type: np.dtype) -> np.ndarray:
-    if cast_type not in (np.uint8, np.uint16, np.uint32, np.uint64):
-        raise TypeError(f"{cast_type} is not supported by create_random_int.")
-    # the range of np.random.randint is int32; set a fixed boundary if overflow
-    end = min(np.iinfo(cast_type).max, np.iinfo(np.int32).max)
-    start = max(np.iinfo(cast_type).min, np.iinfo(np.int32).min)
-    return np.random.randint(start, end, size=input_shape).astype(cast_type)
+def create_random_int(
+    input_shape: Tuple[int], dtype: np.dtype, seed: int = 1
+) -> np.ndarray:
+    """
+    Create random integer array for backend/test/case/node.
+
+    Args:
+        input_shape: specify the shape for the returned integer array.
+        dtype: specify the NumPy data type for the returned integer array.
+        seed: (optional) the seed for np.random.
+
+    Returns:
+        np.ndarray: the created random integer array.
+    """
+    np.random.seed(seed)
+    if dtype in (
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+    ):
+        # the range of np.random.randint is int32; set a fixed boundary if overflow
+        end = min(np.iinfo(dtype).max, np.iinfo(np.int32).max)
+        start = max(np.iinfo(dtype).min, np.iinfo(np.int32).min)
+        return np.random.randint(start, end, size=input_shape).astype(dtype)
+    else:
+        raise TypeError(f"{dtype} is not supported by create_random_int.")

@@ -19,14 +19,14 @@ class BitwiseXor(Base):
         )
 
         # 2d
-        x = np.random.randn(3, 4).astype(np.int32)
-        y = np.random.randn(3, 4).astype(np.int32)
+        x = create_random_int((3, 4), np.int32)
+        y = create_random_int((3, 4), np.int32)
         z = np.bitwise_xor(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i32_2d")
 
         # 3d
-        x = np.random.randn(3, 4, 5).astype(np.int16)
-        y = np.random.randn(3, 4, 5).astype(np.int16)
+        x = create_random_int((3, 4, 5), np.int16)
+        y = create_random_int((3, 4, 5), np.int16)
         z = np.bitwise_xor(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i16_3d")
 
