@@ -8,4 +8,4 @@ from ._op import OpRunUnaryNum
 
 class Log(OpRunUnaryNum):
     def _run(self, x):  # type: ignore
-        return (np.log(x),)
+        return (np.log(x).astype(x.dtype),)

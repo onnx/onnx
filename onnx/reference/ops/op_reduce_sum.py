@@ -18,8 +18,8 @@ class ReduceSum_13(OpRunReduceNumpy):
     def run(self, x, axes=None, keepdims=None):  # type: ignore
         keepdims = keepdims or self.keepdims  # type: ignore
         res = self._run(x, axes=axes, keepdims=keepdims)
-        if not keepdims and not isinstance(res[0], np.ndarray):
-            res = (np.array([res[0]], dtype=res[0].dtype),)
+        # if not keepdims and not isinstance(res[0], np.ndarray):
+        #     res = (np.array([res[0]], dtype=res[0].dtype),)
         if res[0].dtype != x.dtype:
             raise RuntimeTypeError(
                 f"Output type mismatch: input {x.dtype} != output {res[0].dtype} "
@@ -42,9 +42,8 @@ class ReduceSum_13(OpRunReduceNumpy):
         if isinstance(axes, np.ndarray) and (len(axes.shape) == 0 or 0 in axes.shape):
             axes = None
         try:
-            return (
-                np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype),  # type: ignore
-            )
+            res = np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype)
+            return (res,)  # type: ignore
         except TypeError as e:
             raise TypeError(
                 f"Unable to reduce shape {x.shape!r} with axes={axes!r} and keepdims={keepdims}."
