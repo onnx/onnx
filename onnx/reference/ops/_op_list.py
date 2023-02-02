@@ -39,7 +39,6 @@ from .op_atan import Atan
 from .op_atanh import Atanh
 from .op_attribute_has_value import AttributeHasValue
 from .op_average_pool import (
-    AveragePool,
     AveragePool_1,
     AveragePool_7,
     AveragePool_11,
