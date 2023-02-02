@@ -1665,7 +1665,6 @@ x = np.array(
         ]
     ]
 ).astype(np.float32)
-y = np.array([[[[6, 7.5], [12, 13.5]]]]).astype(np.float32)
 y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
