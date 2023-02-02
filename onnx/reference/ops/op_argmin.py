@@ -3,7 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -28,7 +27,7 @@ class _ArgMin(OpRun):
         return (_argmin(data, axis=axis, keepdims=keepdims),)
 
 
-class ArgMin_11(_ArgMin):
+class ArgMin_1(_ArgMin):
     pass
 
 
@@ -39,9 +38,3 @@ class ArgMin_12(_ArgMin):
         return (
             _argmin_use_numpy_select_last_index(data, axis=axis, keepdims=keepdims),
         )
-
-
-if onnx_opset_version() >= 12:
-    ArgMin = ArgMin_12
-else:
-    ArgMin = ArgMin_11  # type: ignore
