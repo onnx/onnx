@@ -4,7 +4,7 @@
 git status
 # Skip *output_*.pb because NumPy functions might behave differently on different platforms
 # Skip test_log's input.pb because it uses np.random, which might behave differently on different platforms
-if git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'; then
+if ! git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'; then
 echo "git diff for test generation returned failures. Please check updated node test files"
 exit 1
 fi
