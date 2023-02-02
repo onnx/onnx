@@ -113,9 +113,11 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   }
 
   // If scales is an empty constant, assume it's not provided
-  if (scales && ParseData<float>(scales).empty()) {
-    hasScalesInput = false;
-    scales = nullptr;
+  if (nullptr != scales) {
+    if (ParseData<float>(scales).empty()) {
+      hasScalesInput = false;
+      scales = nullptr;
+    }
   }
 
   if (opset_version >= 13) {
