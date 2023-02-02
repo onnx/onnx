@@ -367,7 +367,8 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       TensorShapeProto tsp;
 
       if (input_data->data_type() == TensorProto_DataType_INT64) {
-        vectorToTensorShapeProto(ParseData<int64_t>(input_data), tsp);
+        return nullptr;
+        //vectorToTensorShapeProto(ParseData<int64_t>(input_data), tsp);
       } else if (input_data->data_type() == TensorProto_DataType_INT32) {
         vectorToTensorShapeProto(ParseData<int32_t>(input_data), tsp);
       } else {
