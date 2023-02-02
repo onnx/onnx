@@ -2915,8 +2915,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(got, np.array([1.152512, -0.152612, 0.0, np.nan]))
 
     def test_split_to_sequence(self):
-        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
-        Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
         Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
         nodes = [make_node("SplitToSequence", ["X", "Y"], ["Z"], axis=2)]
         model = make_model(make_graph(nodes, "g", [X, Y], [Z]))
@@ -2936,8 +2936,8 @@ class TestReferenceEvaluator(unittest.TestCase):
             assert_allclose(a, b)
 
     def test_split_to_sequence_1d(self):
-        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
-        Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
         Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
         nodes = [make_node("SplitToSequence", ["X", "Y"], ["Z"], axis=2)]
         model = make_model(make_graph(nodes, "g", [X, Y], [Z]))
@@ -2957,7 +2957,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             assert_allclose(a, b)
 
     def test_split_to_sequence_nokeepdims(self):
-        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
         Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
         nodes = [make_node("SplitToSequence", ["X"], ["Z"], axis=2, keepdims=0)]
         model = make_model(make_graph(nodes, "g", [X], [Z]))
