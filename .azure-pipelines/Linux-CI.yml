@@ -67,7 +67,7 @@ jobs:
     displayName: 'Install nox'
 
   - script: |
-      nox --forcecolor -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch -n=auto
+      nox --forcecolor -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch
     displayName: 'Run ONNX tests'
 
   # TODO(justinchuby): Move this to nox
