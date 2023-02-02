@@ -2814,6 +2814,67 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(expected.shape, got.shape)
         assert_allclose(expected, got)
 
+    def test_concat_in_a_function(self):
+        def create_model():
+            nodes = []
+            inputs = []
+            outputs = []
+            functions = []
+
+            opsets = {"": onnx_opset_version(), "custom_domain": 1}
+            nodes_fct = []
+            node = make_node("Concat", ["x:0", "x:1"], ["r__0"], axis=0, domain="")
+            nodes_fct.append(node)
+
+            opset_imports_fct = [
+                make_opsetid(domain, 1 if version is None else version)
+                for domain, version in opsets.items()
+            ]
+            fct = make_function(
+                "custom_domain",
+                "concat_2",
+                ["x:0", "x:1"],
+                ["r__0"],
+                nodes_fct,
+                opset_imports_fct,
+            )
+            functions.append(fct)
+
+            inputs.append(make_tensor_value_info("I__0", TensorProto.DOUBLE, []))
+            inputs.append(make_tensor_value_info("I__1", TensorProto.DOUBLE, []))
+            inputs.append(make_tensor_value_info("I__2", TensorProto.DOUBLE, []))
+            outputs.append(make_tensor_value_info("r__4", TensorProto.DOUBLE, []))
+
+            node = make_node(
+                "concat_2", ["I__0", "I__1"], ["r__3"], axis=0, domain="custom_domain"
+            )
+            nodes.append(node)
+            node = make_node(
+                "concat_2", ["I__2", "r__3"], ["r__4"], axis=0, domain="custom_domain"
+            )
+            nodes.append(node)
+            opset_imports = [
+                make_opsetid(domain, 1 if version is None else version)
+                for domain, version in opsets.items()
+            ]
+
+            graph = make_graph(nodes, "numpyx", inputs, outputs)
+
+            onnx_model = make_model(
+                graph, opset_imports=opset_imports, functions=functions
+            )
+            return onnx_model
+
+        onnx_model = create_model()
+        x1 = np.array([[-5, 6], [15, 3]], dtype=np.float64)
+        x2 = np.array([[1, 2]], dtype=np.float64)
+        x3 = np.array([[-1, -2]], dtype=np.float64)
+        z = np.vstack([x1, x2, x3])
+        ref = ReferenceEvaluator(onnx_model)
+        feeds = {"I__2": x1, "I__0": x2, "I__1": x3}
+        got = ref.run(None, feeds)
+        assert_allclose(z, got[0])
+
     def test_cast_float_to_string(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.STRING, [None])
