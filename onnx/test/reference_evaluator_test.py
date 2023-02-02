@@ -22,6 +22,7 @@ import parameterized
 from numpy.testing import assert_allclose  # type: ignore
 
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
+from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
@@ -69,6 +70,18 @@ def skip_if_no_torch(fn):
             import torch  # pylint: disable=W0611
         except ImportError:
             raise unittest.SkipTest("torch not installed")  # noqa
+        fn(*args, **kwargs)
+
+    return wrapper
+
+
+def skip_if_no_torchvision(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            import torchvision  # pylint: disable=W0611
+        except ImportError:
+            raise unittest.SkipTest("torchvision not installed")  # noqa
         fn(*args, **kwargs)
 
     return wrapper
@@ -2215,6 +2228,70 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
+
+    def get_roi_align_model(self, mode):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        rois = make_tensor_value_info("rois", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        IS = make_tensor_value_info("I", TensorProto.INT64, [None])
+        node = make_node(
+            "RoiAlign",
+            ["X", "rois", "I"],
+            ["Y"],
+            output_height=5,
+            output_width=5,
+            sampling_ratio=2,
+            spatial_scale=1.0,
+            coordinate_transformation_mode="output_half_pixel",
+            mode=mode,
+        )
+        graph = make_graph([node], "g", [X, rois, IS], [Y])
+        return make_model(graph, opset_imports=[make_opsetid("", 17)])
+
+    def common_test_roi_align(self, mode):
+        import onnxruntime as ort
+
+        onnx_model = self.get_roi_align_model(mode)
+        X, batch_indices, rois = get_roi_align_input_values()
+        feeds = {"X": X, "rois": rois, "I": batch_indices}
+
+        sess = ort.InferenceSession(
+            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
+        )
+        expected = sess.run(None, feeds)
+        ref = ReferenceEvaluator(onnx_model)
+        got = ref.run(None, feeds)
+        assert_allclose(expected[0], got[0], atol=1e-5)
+
+    @skip_if_no_onnxruntime
+    def test_roi_align(self):
+        with self.subTest(mode="avg"):
+            self.common_test_roi_align("avg")
+        # max does not have example in the backend
+        with self.subTest(mode="max"):
+            self.common_test_roi_align("max")
+
+    def common_test_roi_align_torch(self, mode):
+        import torch
+        from torchvision.ops import RoIAlign
+
+        onnx_model = self.get_roi_align_model(mode)
+        sess = ReferenceEvaluator(onnx_model)
+        X, batch_indices, rois = get_roi_align_input_values()
+        got = sess.run(None, {"X": X, "rois": rois, "I": batch_indices})
+
+        a = RoIAlign((5, 5), spatial_scale=1.0, sampling_ratio=2)
+        expected = a(torch.from_numpy(X), [torch.from_numpy(rois)])
+        assert_allclose(expected, got[0], atol=1e-5)
+
+    @skip_if_no_torch
+    @skip_if_no_torchvision
+    def test_roi_align_torch(self):
+        with self.subTest(mode="avg"):
+            self.common_test_roi_align_torch("avg")
+        # not implemented in torch
+        # with self.subTest(mode="max"):
+        #     self.common_test_roi_align_torch("max")
 
     def test_split(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
