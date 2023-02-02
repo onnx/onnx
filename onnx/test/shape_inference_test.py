@@ -1647,8 +1647,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [
                 make_node(
                     "AveragePool", ["X"], ["Y"], kernel_shape=[2, 2], dilations=[2, 2]
-                    )
-                ],
+                )
+            ],
             [],
         )
         self._assert_inferred(
