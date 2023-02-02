@@ -16,4 +16,4 @@ def _global_average_pool(x: np.ndarray) -> np.ndarray:
 
 class GlobalAveragePool(OpRun):
     def _run(self, x):  # type: ignore
-        return (_global_average_pool(x),)
+        return (_global_average_pool(x).astype(x.dtype),)

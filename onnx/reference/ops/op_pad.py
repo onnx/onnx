@@ -30,7 +30,7 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
         return np.pad(
             data, pad_width=pad_width, mode=mode, constant_values=constant_values
         )
-    return np.pad(data, pad_width=pad_width, mode=mode)
+    return np.pad(data, pad_width=pad_width, mode=mode).astype(data.dtype)
 
 
 class Pad_1(OpRun):

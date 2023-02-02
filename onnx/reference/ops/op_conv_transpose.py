@@ -107,4 +107,4 @@ class ConvTranspose(OpRun):
                 f"Implementation for group={group} > 1 is not available yet."
             )
 
-        return (final,)
+        return (final.astype(X.dtype),)
