@@ -2714,7 +2714,7 @@ y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_2d")
 
 # 3d
-x = create_random_int((3, 4, 5, 6), np.uint16)
+x = create_random_int((3, 4, 5), np.uint16)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
 
