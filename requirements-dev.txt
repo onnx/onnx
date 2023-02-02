@@ -3,6 +3,7 @@ protobuf
 typing-extensions
 pytest
 pytest-cov
+pytest-xdist
 parameterized
 nbval
 wheel

@@ -105,6 +105,9 @@ jobs:
           sarif_file: lintrunner.sarif
           category: lintrunner
           checkout_path: ${{ github.workspace }}
+      - name: Clean up lint files
+        run: |
+          rm lint.json lintrunner.sarif
       - name: Check auto-gen files are up-to-date
         run: |
           echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
