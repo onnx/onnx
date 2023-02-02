@@ -1644,7 +1644,11 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_average_pool_with_dilations(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
-            [make_node("AveragePool", ["X"], ["Y"], kernel_shape=[2, 2], dilations=[2, 2])],
+            [
+                make_node(
+                    "AveragePool", ["X"], ["Y"], kernel_shape=[2, 2], dilations=[2, 2]
+                    )
+                ],
             [],
         )
         self._assert_inferred(
