@@ -9,7 +9,7 @@ echo "git diff for test generation returned failures. Please check updated node 
 exit 1
 fi
 
-if git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'; then
+if ! git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'; then
 echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
 exit 1
 fi
