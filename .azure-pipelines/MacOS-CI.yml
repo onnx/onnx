@@ -9,28 +9,28 @@ jobs:
     matrix:
       py39:
         python.version: '3.9'
-        onnx_ml: false
-        onnx_debug: false
+        onnx_ml: "0"
+        onnx_debug: "0"
         onnx_lite: false
       py38:
         python.version: '3.8'
-        onnx_ml: false
-        onnx_debug: false
+        onnx_ml: "0"
+        onnx_debug: "0"
         onnx_lite: true
       py38-ml:
         python.version: '3.8'
-        onnx_ml: true
-        onnx_debug: false
+        onnx_ml: "1"
+        onnx_debug: "0"
         onnx_lite: true
       py38-ml-debug:
         python.version: '3.8'
-        onnx_ml: true
-        onnx_debug: true
+        onnx_ml: "1"
+        onnx_debug: "1"
         onnx_lite: false
       py37-ml-debug:
         python.version: '3.7'
-        onnx_ml: true
-        onnx_debug: true
+        onnx_ml: "1"
+        onnx_debug: "1"
         onnx_lite: false
     maxParallel: 6
 
@@ -52,27 +52,18 @@ jobs:
     displayName: 'Load all submodules'
 
   - script: |
-      export DEBUG=1
-    condition: eq(variables['onnx_debug'], true)
-    displayName: 'Set DEBUG'
-  - script: |
-      export ONNX_ML=1
-    condition: eq(variables['onnx_ml'], true)
-    displayName: 'Set ONNX_ML'
-  - script: |
-      export CMAKE_ARGS="-DONNX_WERROR=ON"
-    displayName: 'Set CMAKE_ARGS'
-  - script: |
-      export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
-    condition: eq(variables['onnx_lite'], true)
-    displayName: 'Add ONNX_USE_LITE_PROTO to CMAKE_ARGS'
-
-  - script: |
       pip install nox
     displayName: 'Install nox'
 
   - script: |
       nox --forcecolor --no-venv -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch
+    env:
+      DEBUG: $(onnx_debug)
+      ONNX_ML: $(onnx_ml)
+      ${{ if eq(variables['onnx_lite'], true) }}:
+        CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_LITE_PROTO=ON"
+      ${{ else }}:
+        CMAKE_ARGS: "-DONNX_WERROR=ON"
     displayName: 'Run ONNX tests'
 
   - script: |
