@@ -17,7 +17,7 @@ jobs:
         onnx_ml: "1"
         onnx_debug: "0"
         documentation: false
-      py39:
+      py39-debug:
         python.version: '3.9'
         onnx_ml: "0"
         onnx_debug: "1"
