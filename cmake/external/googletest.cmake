@@ -5,7 +5,8 @@ include (ExternalProject)
 set(googletest_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/include)
 set(googletest_URL https://github.com/google/googletest.git)
 set(googletest_BUILD ${CMAKE_CURRENT_BINARY_DIR}/googletest/)
-set(googletest_TAG 2f2e72bae991138cedd0e3d06a115022736cd568)
+set(googletest_TAG 58d77fa8070e8cec2dc1ed015d66b454c8d78850)
+# 1.12.1
 
 if(WIN32 AND CMAKE_BUILD_TYPE MATCHES Debug)
   set(googletest_STATIC_LIBRARIES
