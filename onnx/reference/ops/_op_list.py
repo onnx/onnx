@@ -112,6 +112,7 @@ from .op_log import Log
 from .op_log_softmax import LogSoftmax
 from .op_loop import Loop
 from .op_lp_normalization import LpNormalization
+from .op_lp_pool import LpPool
 from .op_lrn import LRN
 from .op_lstm import LSTM
 from .op_matmul import MatMul
