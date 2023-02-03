@@ -21,7 +21,7 @@ DEFAULT_ENV_VARS = {
 @nox.session()
 def test_onnx(session: nox.Session):
     """Build and run ONNX python tests."""
-    session.run("pip", "install", "-r", "requirements-release.txt")
+    session.run("pip", "install", "-r", "requirements-release.txt", silent=True)
     session.run("pip", "install", ".", env=DEFAULT_ENV_VARS)
     session.run("pytest", *session.posargs)
 
@@ -29,7 +29,7 @@ def test_onnx(session: nox.Session):
 @nox.session()
 def test_cpp(session: nox.Session):
     """ONNX C++ API tests."""
-    session.run("pip", "install", "-r", "requirements-release.txt")
+    session.run("pip", "install", "-r", "requirements-release.txt", silent=True)
     session.run(
         "python",
         "setup.py",
@@ -47,7 +47,7 @@ def test_cpp(session: nox.Session):
 @nox.session()
 def test_backend_test_generation(session: nox.Session):
     """Test backend test data."""
-    session.run("pip", "install", "-r", "requirements-release.txt")
+    session.run("pip", "install", "-r", "requirements-release.txt", silent=True)
     session.run("pip", "install", ".", env=DEFAULT_ENV_VARS)
     session.run("python", "onnx/backend/test/cmd_tools.py", "generate-data", "--clean")
     session.run("bash", "tools/check_generated_backend_test_data.sh", external=True)
