@@ -60,7 +60,10 @@ jobs:
     condition: eq(variables['onnx_ml'], true)
     displayName: 'Set ONNX_ML'
   - script: |
-      export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_LITE_PROTO=ON"
+      export CMAKE_ARGS="-DONNX_WERROR=ON"
+    displayName: 'Set CMAKE_ARGS'
+  - script: |
+      export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
     condition: eq(variables['onnx_lite'], true)
     displayName: 'Add ONNX_USE_LITE_PROTO to CMAKE_ARGS'
 
