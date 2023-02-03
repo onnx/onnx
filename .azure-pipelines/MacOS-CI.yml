@@ -77,3 +77,4 @@ jobs:
       chmod +x codecov
       ./codecov -t ${CODECOV_TOKEN}
     displayName: 'Upload coverage to codecov'
+    continueOnError: true
