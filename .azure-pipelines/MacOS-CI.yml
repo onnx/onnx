@@ -59,7 +59,7 @@ jobs:
       export ONNX_ML=1
     condition: eq(variables['onnx_ml'], true)
   - script: |
-      export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
+      export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_LITE_PROTO=ON"
     condition: eq(variables['onnx_lite'], true)
     displayName: 'Add ONNX_USE_LITE_PROTO to CMAKE_ARGS'
 
@@ -70,3 +70,10 @@ jobs:
   - script: |
       nox --forcecolor --no-venv -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch
     displayName: 'Run ONNX tests'
+
+  - script: |
+      curl -Os https://uploader.codecov.io/latest/macos/codecov
+
+      chmod +x codecov
+      ./codecov -t ${CODECOV_TOKEN}
+    displayName: 'Upload coverage to codecov'
