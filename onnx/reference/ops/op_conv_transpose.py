@@ -107,4 +107,4 @@ class ConvTranspose(OpRun):
                 f"Implementation for group={group} > 1 is not available yet."
             )
 
-        return (final.astype(X.dtype),)
+        return (final.astype(X.dtype),)  # type: ignore[union-attr]
