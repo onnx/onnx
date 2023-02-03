@@ -25,7 +25,7 @@ class SplitToSequence(OpRun):
             sli[axis] = slice(pos, pos + spl)  # type: ignore
             pos += spl
             res.append(mat[tuple(sli)])
-        return tuple(res)
+        return res
 
     def _run(self, mat, split=None, axis=None, keepdims=None):  # type: ignore
         if split is None:
@@ -35,7 +35,7 @@ class SplitToSequence(OpRun):
                 length = split
             else:
                 length = split.shape[0]
-        res = list(self.common_run(mat, split, axis=axis, length=length))
+        res = self.common_run(mat, split, axis=axis, length=length)
         if keepdims == 0 and axis is not None:
             for i in range(len(res)):
                 shape = list(res[i].shape)
