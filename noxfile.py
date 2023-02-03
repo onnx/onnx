@@ -10,7 +10,9 @@ import nox
 
 DEFAULT_ENV_VARS = {
     "ONNX_BUILD_TESTS": "1",
-    "CMAKE_ARGS": "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON",
+    "CMAKE_ARGS": os.environ.get(
+        "CMAKE_ARGS", "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+    ),
     "ONNX_NAMESPACE": "ONNX_NAMESPACE_FOO_BAR_FOR_CI",
     "DEBUG": os.environ.get("DEBUG", "0"),
     "ONNX_ML": os.environ.get("ONNX_ML", "0"),

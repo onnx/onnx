@@ -4,34 +4,34 @@ trigger:
 jobs:
 - job: 'Test'
   pool:
-    vmImage: 'macOS-11'
+    vmImage: macOS-latest
   strategy:
     matrix:
       py39:
         python.version: '3.9'
-        onnx_ml: 0
-        onnx_debug: 0
-        onnx_lite: 0
+        onnx_ml: false
+        onnx_debug: false
+        onnx_lite: false
       py38:
         python.version: '3.8'
-        onnx_ml: 0
-        onnx_debug: 0
-        onnx_lite: 1
+        onnx_ml: false
+        onnx_debug: false
+        onnx_lite: true
       py38-ml:
         python.version: '3.8'
-        onnx_ml: 1
-        onnx_debug: 0
-        onnx_lite: 1
+        onnx_ml: true
+        onnx_debug: false
+        onnx_lite: true
       py38-ml-debug:
         python.version: '3.8'
-        onnx_ml: 1
-        onnx_debug: 1
-        onnx_lite: 0
+        onnx_ml: true
+        onnx_debug: true
+        onnx_lite: false
       py37-ml-debug:
         python.version: '3.7'
-        onnx_ml: 1
-        onnx_debug: 1
-        onnx_lite: 0
+        onnx_ml: true
+        onnx_debug: true
+        onnx_lite: false
     maxParallel: 6
 
   steps:
@@ -40,76 +40,33 @@ jobs:
       versionSpec: '$(python.version)'
 
   - script: |
-      # Install Protobuf from source
       export NUM_CORES=`sysctl -n hw.logicalcpu`
       if [ '$(onnx_debug)' == '1' ]; then
-        export DEBUG=1
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install Debug
       else
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
       fi
-
+    displayName: 'Install Protobuf from source'
+  - script: |
       git submodule update --init --recursive
-      python -m pip install -q --upgrade pip
-      python -m pip install -q -r requirements-release.txt
-
-      if [ '$(onnx_ml)' == '1' ]; then
-        export ONNX_ML=1
-      fi
-      export ONNX_BUILD_TESTS=1
-      export CMAKE_ARGS="-DONNX_WERROR=ON"
-      if [ '$(onnx_lite)' == '1' ]; then
-        export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
-      fi
-      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py -q install
-    displayName: 'Install dependencies and ONNX'
+    displayName: 'Load all submodules'
 
   - script: |
-      # check auto-gen files up-to-date
-      python onnx/defs/gen_doc.py
-      python onnx/gen_proto.py -l
-      python onnx/gen_proto.py -l --ml
-      python onnx/backend/test/stat_coverage.py
+      export DEBUG=1
+    condition: eq(variables['onnx_debug'], true)
+    displayName: 'Set DEBUG'
+  - script: |
+      export ONNX_ML=1
+    condition: eq(variables['onnx_ml'], true)
+  - script: |
+      export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
+    condition: eq(variables['onnx_lite'], true)
+    displayName: 'Add ONNX_USE_LITE_PROTO to CMAKE_ARGS'
 
-      git status
-      git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
-      if [ $? -ne 0 ]; then
-        echo "git diff returned failures"
-        exit 1
-      fi
+  - script: |
+      pip install nox
+    displayName: 'Install nox'
 
-      # Do not hardcode onnx's namespace in the c++ source code, so that
-      # other libraries who statically link with onnx can hide onnx symbols
-      # in a private namespace.
-      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
-      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
-
-      pytest
-      if [ $? -ne 0 ]; then
-        echo "pytest failed"
-        exit 1
-      fi
-
-      # onnx c++ API tests
-      export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
-      ./.setuptools-cmake-build/onnx_gtests
-      if [ $? -ne 0 ]; then
-        echo "onnx_gtests failed"
-        exit 1
-      fi
-
-      python onnx/backend/test/cmd_tools.py generate-data --clean
-      git status
-      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-      if [ $? -ne 0 ]; then
-        echo "git diff for test generation returned failures. Please check updated node test files"
-        exit 1
-      fi
-      git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
-      if [ $? -ne 0 ]; then
-        echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
-        exit 1
-      fi
-
-    displayName: 'Run ONNX Tests'
+  - script: |
+      nox --forcecolor --no-venv -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch
+    displayName: 'Run ONNX tests'
