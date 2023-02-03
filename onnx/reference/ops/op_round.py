@@ -8,4 +8,4 @@ from ._op import OpRunUnaryNum
 
 class Round(OpRunUnaryNum):
     def _run(self, x):  # type: ignore
-        return (np.round(x),)
+        return (np.round(x).astype(x.dtype),)
