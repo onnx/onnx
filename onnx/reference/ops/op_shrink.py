@@ -13,5 +13,5 @@ class Shrink(OpRun):
                 x < -lambd,
                 x + bias,
                 np.where(x > lambd, x - bias, 0),
-            ),
+            ).astype(x.dtype),
         )
