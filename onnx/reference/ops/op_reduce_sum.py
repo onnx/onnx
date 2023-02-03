@@ -9,13 +9,13 @@ from ._op import OpRunReduceNumpy
 
 
 class ReduceSum_1(OpRunReduceNumpy):
-    def _run(self, x, axes=None, keepdims=None):  # type: ignore # pylint: disable=W0221
+    def _run(self, x, axes=None, keepdims=True):  # type: ignore # pylint: disable=W0221
         axes = tuple(axes) if axes is not None else None
         return (np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype),)
 
 
 class ReduceSum_13(OpRunReduceNumpy):
-    def run(self, x, axes=None, keepdims=None, **_):  # type: ignore
+    def run(self, x, axes=None, keepdims=True, **_):  # type: ignore
         keepdims = keepdims if keepdims is not None else self.keepdims  # type: ignore
         res = self._run(x, axes=axes, keepdims=keepdims)
         if res[0].dtype != x.dtype:
@@ -25,7 +25,7 @@ class ReduceSum_13(OpRunReduceNumpy):
             )
         return res
 
-    def _run(self, x, axes=None, keepdims=None):  # type: ignore
+    def _run(self, x, axes=None, keepdims=True):  # type: ignore
         if (
             axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
         ) and self.noop_with_empty_axes:  # type: ignore
