@@ -475,5 +475,5 @@ class Conv(OpRun):
         return (
             _conv_implementation(
                 X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
-            ),
+            ).astype(X.dtype),
         )

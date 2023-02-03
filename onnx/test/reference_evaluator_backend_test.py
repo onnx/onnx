@@ -273,9 +273,7 @@ class OnnxBackendTest:
                             f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
                             f"\n{output}\n-----\n{diff}\n------INPUTS----\n{pprint.pformat(inputs)}."
                         ) from ex
-                if desired.shape != output.shape and not (
-                    len(desired.shape) == 0 and output.shape == (1,)
-                ):
+                if desired.shape != output.shape:
                     raise AssertionError(
                         f"Output {i_output} of test {index} in folder {self.folder!r} failed "
                         f"(expected shape={desired.shape} but shape={output.shape}), "
