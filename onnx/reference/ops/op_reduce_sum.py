@@ -16,7 +16,7 @@ class ReduceSum_1(OpRunReduceNumpy):
 
 class ReduceSum_13(OpRunReduceNumpy):
     def run(self, x, axes=None, keepdims=None, **_):  # type: ignore
-        keepdims = keepdims or self.keepdims  # type: ignore
+        keepdims = keepdims if keepdims is not None else self.keepdims  # type: ignore
         res = self._run(x, axes=axes, keepdims=keepdims)
         if res[0].dtype != x.dtype:
             raise RuntimeTypeError(

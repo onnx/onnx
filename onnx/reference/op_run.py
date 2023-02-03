@@ -60,7 +60,6 @@ class RefAttrName:
         self.name = name
 
     def __repr__(self) -> str:
-        "usual"
         return f"{self.__class__.__name__}({self.name!r})"
 
 
@@ -228,7 +227,7 @@ class OpRun(ABC):
         return value.run(None, context or {}, attributes=attributes)
 
     def _load_attributes(self) -> None:
-        "Checks and loads attributes."
+        """Checks and loads attributes."""
         self.has_linked_attribute = False
         added_attributes = []
         for att in self.onnx_node.attribute:
@@ -355,7 +354,7 @@ class OpRun(ABC):
         displays a longer error message.
 
         :param args: inputs
-        :param linked_attributes: used if this has an attriute linked
+        :param linked_attributes: used if this has an attribute linked
             to the attribute of the function it belongs to
         :param context: if this node is part of the subgraph, `context`
             is a dictionary with the values this node may use
