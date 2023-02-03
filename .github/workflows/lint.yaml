@@ -110,4 +110,4 @@ jobs:
           python onnx/gen_proto.py -l --ml
           python onnx/backend/test/stat_coverage.py
 
-          tools/check_generated_diff.sh
+          bash tools/check_generated_diff.sh
