@@ -9,7 +9,6 @@ import os
 import nox
 
 DEFAULT_ENV_VARS = {
-    "ONNX_BUILD_TESTS": "1",
     "CMAKE_ARGS": os.environ.get(
         "CMAKE_ARGS", "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
     ),
@@ -31,7 +30,13 @@ def test_onnx(session: nox.Session):
 def test_cpp(session: nox.Session):
     """ONNX C++ API tests."""
     session.run("pip", "install", "-r", "requirements-release.txt")
-    session.run("python", "setup.py", "install", env=DEFAULT_ENV_VARS, silent=True)
+    session.run(
+        "python",
+        "setup.py",
+        "install",
+        env={**DEFAULT_ENV_VARS, "ONNX_BUILD_TESTS": "1"},
+        silent=True,
+    )
     session.run(
         "./.setuptools-cmake-build/onnx_gtests",
         env={"LD_LIBRARY_PATH": "./.setuptools-cmake-build/:$LD_LIBRARY_PATH"},
