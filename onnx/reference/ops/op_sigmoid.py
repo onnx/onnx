@@ -18,4 +18,8 @@ class Sigmoid(OpRunUnaryNum):
         self.vf = np.vectorize(sigmoid)
 
     def _run(self, X):  # type: ignore
+        if len(X.shape) == 0:
+            return (sigmoid(X).astype(X.dtype),)
+        if X.size == 0:
+            return (X,)
         return (self.vf(X).astype(X.dtype),)

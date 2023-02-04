@@ -299,4 +299,4 @@ class RoiAlign(OpRun):
             coordinate_transformation_mode.lower() == "half_pixel",
             batch_indices.flatten(),
         )
-        return (Y.reshape((y_dims)),)
+        return (Y.reshape((y_dims)).astype(X.dtype),)

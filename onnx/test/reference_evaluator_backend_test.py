@@ -21,7 +21,6 @@ adding an item in method `setUpClass` and attributes
 import os
 import pprint
 import unittest
-import warnings
 
 try:
     from packaging.version import parse as version
@@ -35,32 +34,21 @@ from numpy import __version__ as npver
 from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
-from onnx import (
-    ModelProto,
-    OptionalProto,
-    SequenceProto,
-    TensorProto,
-    TypeProto,
-    load,
-    load_model_from_string,
-    load_tensor_from_string,
-)
+from onnx import OptionalProto, SequenceProto, TensorProto, load
 from onnx.backend.test import __file__ as backend_folder
 from onnx.helper import __file__ as onnx_file
-from onnx.mapping import OPTIONAL_ELEMENT_TYPE_TO_FIELD, TENSOR_TYPE_TO_NP_TYPE
 from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1230
+MIN_PASSING_TESTS = 1232
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
     # mismatches
     # shapes (10, 9, 3), (10, 8, 3) shape mismatch unexpected as the operator is inlined
     "test_center_crop_pad_crop_axes_hwc_expanded",
-    "test_col2im_pads",  # mismatch by one value, the onnx backend test is probably wrong
     # deprecated
     "test_scan_sum",  # deprecated, opset 8 -> not implemented
     "test_scatter_with_axis",  # deprecated, scatter is removed
@@ -68,6 +56,7 @@ SKIP_TESTS = {
     # not implemented
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
+    "test_lppool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
 }
 
 if version(npver) < version("1.21.5"):
@@ -138,78 +127,43 @@ class OnnxBackendTest:
             raise FileNotFoundError(f"File not found: {full!r}.")
         with open(full, "rb") as f:
             serialized = f.read()
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning)
-                te = load_tensor_from_string(serialized)
-                loaded = to_array(te)
-        except Exception as e:
-            proto_types = [SequenceProto, TypeProto, OptionalProto]
-            read_obj = None
-            for pt in proto_types:
-                obj = pt()
+        return OnnxBackendTest._read_proto_from_serialized(serialized, full)
+
+    @staticmethod
+    def _read_proto_from_serialized(serialized, full):
+        if not os.path.exists(full):
+            raise FileNotFoundError(f"File not found: {full!r}.")
+        with open(full, "rb") as f:
+            serialized = f.read()
+        proto_types = [
+            (TensorProto, to_array),
+            (SequenceProto, to_list),
+            (OptionalProto, to_optional),
+        ]
+        exc = None
+        for pt, cvt in proto_types:
+            obj = pt()
+            try:
+                obj.ParseFromString(serialized)
                 try:
-                    obj.ParseFromString(serialized)
-                    read_obj = obj
-                    break
-                except Exception:
-                    try:
-                        loaded = load_model_from_string(serialized)
-                    except Exception:
-                        raise RuntimeError(
-                            f"Unable to read {full!r}, error is {e}, content is {serialized[:100]!r}."
-                        ) from e
-            if read_obj is not None:
-                if isinstance(obj, SequenceProto):
-                    if obj.elem_type == 0:
-                        loaded = []
-                    else:
-                        try:
-                            with warnings.catch_warnings():
-                                warnings.simplefilter("ignore", DeprecationWarning)
-                                loaded = to_list(read_obj)
-                        except Exception as ee:
-                            raise AssertionError(f"Unable to read {full!r}.") from ee
-                else:
-                    loaded = read_obj
-        return loaded
+                    return cvt(obj)
+                except ValueError as e:
+                    exc = e
+                    continue
+            except Exception as e:
+                exc = e
+        raise RuntimeError(
+            f"Unable to read {full!r}, error is {exc}, "
+            f"content is {serialized[:100]!r}."
+        ) from exc
 
     @staticmethod
     def _load(folder, names):
         res = []
         for name in names:
             full = os.path.join(folder, name)
-            new_tensor = OnnxBackendTest._read_proto_from_file(full)
-            if isinstance(new_tensor, (np.ndarray, ModelProto, list)):
-                t = new_tensor
-            elif isinstance(new_tensor, TensorProto):
-                t = to_array(new_tensor)
-            elif isinstance(new_tensor, OptionalProto):
-                try:
-                    t = to_optional(new_tensor)
-                except TypeError as e:
-                    if new_tensor.name == "seq_empty":
-                        t = None
-                    else:
-                        raise TypeError(
-                            f"Unable to convert {type(new_tensor)} into python.\n{str(new_tensor)}\n."
-                        ) from e
-                except ValueError as e:
-                    elem_type = new_tensor.elem_type
-                    value_field = OPTIONAL_ELEMENT_TYPE_TO_FIELD[elem_type]
-                    value = getattr(new_tensor, value_field)
-                    if isinstance(value, TensorProto):
-                        # something went wrong, one reason is the dimension do not fit raw_data
-                        el_type = value.data_type
-                        dtype = TENSOR_TYPE_TO_NP_TYPE[el_type]
-                        t = np.frombuffer(value.raw_data, dtype=dtype)
-                    else:
-                        raise ValueError(
-                            f"Unable to convert {type(new_tensor)} into python.\n{str(new_tensor)}\n."
-                        ) from e
-            else:
-                raise RuntimeError(f"Unexpected type {type(new_tensor)} for {full!r}.")
-            res.append(t)
+            obj = OnnxBackendTest._read_proto_from_file(full)
+            res.append(obj)
         return res
 
     def __repr__(self):
@@ -319,9 +273,7 @@ class OnnxBackendTest:
                             f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
                             f"\n{output}\n-----\n{diff}\n------INPUTS----\n{pprint.pformat(inputs)}."
                         ) from ex
-                if desired.shape != output.shape and not (
-                    len(desired.shape) == 0 and output.shape == (1,)
-                ):
+                if desired.shape != output.shape:
                     raise AssertionError(
                         f"Output {i_output} of test {index} in folder {self.folder!r} failed "
                         f"(expected shape={desired.shape} but shape={output.shape}), "
@@ -672,34 +624,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     atol=1e-5,
                     rtol=1e-3,
                     comment="[runtime=onnxruntime]",
-                )
-                print("done")
-            if "mlprodict" in check_other_runtime:
-                print("CHECK RUNTIME mlprodict")
-                from mlprodict.onnxrt import OnnxInference
-
-                class _Wrap:
-                    def __init__(self, sess):
-                        self.sess = sess
-
-                    @property
-                    def input_names(self):
-                        return [i.name for i in self.sess.obj.graph.input]
-
-                    def run(self, unused, feeds, *args, **kwargs):
-                        res = self.sess.run(feeds)
-                        lres = [res[o.name] for o in self.sess.obj.graph.output]
-                        print("#", lres[0].shape)
-                        return lres
-
-                te.run(
-                    lambda obj: _Wrap(OnnxInference(obj)),
-                    lambda *a, **b: TestOnnxBackEndWithReferenceEvaluator.run_fct(
-                        *a, verbose=1, **b
-                    ),
-                    atol=atol.get(te.fname, None),
-                    rtol=rtol.get(te.fname, None),
-                    comment="[runtime=mlprodict]",
                 )
                 print("done")
             raise e

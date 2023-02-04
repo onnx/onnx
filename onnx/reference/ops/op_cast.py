@@ -64,6 +64,8 @@ def cast_to(x, to):
             el = float32_to_bfloat16(xf[i], truncate=True)  # type: ignore[assignment]
             y[i] = el
         return y.reshape(x.shape)
+    if to == TensorProto.STRING:
+        return x.astype(np.str_)
 
     if to == TensorProto.FLOATE4M3:
         raise NotImplementedError("not yet implemented")

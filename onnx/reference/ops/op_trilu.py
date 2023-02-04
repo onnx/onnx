@@ -11,4 +11,4 @@ class Trilu(OpRun):
         k = 0 if k is None else int(k)
         if upper:  # type: ignore
             return (np.triu(x, k),)
-        return (np.tril(x, k),)
+        return (np.tril(x, k).astype(x.dtype),)
