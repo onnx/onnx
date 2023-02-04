@@ -32,6 +32,47 @@ def bfloat16_to_float32(
     return shift(data.astype(np.int32)).reshape(dims).view(np.float32)  # type: ignore[no-any-return]
 
 
+def _floate4m3_to_float32_scalar(ival: int) -> float:
+    if ival < 0 or ival > 255:
+        raise ValueError(f"{ival} is not a float8.")
+    if ival == 255:
+        return np.float32(-np.nan)
+    if ival == 127:
+        return np.float32(np.nan)
+
+    expo = (ival & 0x78) >> 3
+    mant = ival & 0x07
+    sign = ival & 0x80
+    res = sign << 24
+    if expo == 0:
+        if mant > 0:
+            expo = 0x7F - 7
+            if mant & 0x4 == 0:
+                mant &= 0x3
+                mant <<= 1
+                expo -= 1
+            if mant & 0x4 == 0:
+                mant &= 0x3
+                mant <<= 1
+                expo -= 1
+            if mant & 0x4 == 0:
+                mant &= 0x3
+                mant <<= 1
+                expo -= 1
+            res |= (mant & 0x3) << 21
+            res |= expo << 23
+    else:
+        res |= mant << 20
+        expo -= 0x7
+        expo += 0x7F
+        res |= expo << 23
+    f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
+    return f
+
+
+_floate4m3_to_float32 = np.vectorize(_floate4m3_to_float32_scalar)
+
+
 def floate4m3_to_float32(
     data: Union[np.int16, np.int32, np.ndarray],
     dims: Optional[Union[int, Sequence[int]]] = None,
@@ -42,7 +83,49 @@ def floate4m3_to_float32(
     :param dims: if specified, the function reshapes the results
     :return: a numpy array of float32 with the same dimension if dims is None,
         or reshaped to dims if specified"""
-    raise NotImplementedError("not yet implemented")
+    res = _floate4m3_to_float32(data)
+    if dims is None:
+        return res
+    return res.reshape(dims)
+
+
+def _floate5m2_to_float32_scalar(ival: int) -> float:
+    if ival < 0 or ival > 255:
+        raise ValueError(f"{ival} is not a float8.")
+    if ival in {253, 254, 255, 125, 126, 127}:
+        return np.nan
+    if ival == 252:
+        return np.float32(-np.inf)
+    if ival == 124:
+        return np.float32(np.inf)
+
+    expo = (ival & 0x7C) >> 2
+    mant = ival & 0x03
+    sign = ival & 0x80
+    res = sign << 24
+    if expo == 0:
+        if mant > 0:
+            expo = 0x7F - 15
+            if mant & 0x2 == 0:
+                mant &= 0x1
+                mant <<= 1
+                expo -= 1
+            if mant & 0x2 == 0:
+                mant &= 0x1
+                mant <<= 1
+                expo -= 1
+            res |= (mant & 0x1) << 22
+            res |= expo << 23
+    else:
+        res |= mant << 21
+        expo -= 15
+        expo += 0x7F
+        res |= expo << 23
+    f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
+    return f
+
+
+_floate5m2_to_float32 = np.vectorize(_floate5m2_to_float32_scalar)
 
 
 def floate5m2_to_float32(
@@ -55,7 +138,10 @@ def floate5m2_to_float32(
     :param dims: if specified, the function reshapes the results
     :return: a numpy array of float32 with the same dimension if dims is None,
         or reshaped to dims if specified"""
-    raise NotImplementedError("not yet implemented")
+    res = _floate5m2_to_float32(data)
+    if dims is None:
+        return res
+    return res.reshape(dims)
 
 
 def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:

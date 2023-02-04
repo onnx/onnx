@@ -342,10 +342,43 @@ def float32_to_floate4m3(fval: float, scale: float = 1.0) -> int:
     :param scale: scale
     :return: converted float
     """
-    if np.isnan(fval) or np.isinf(fval):
-        return 255
+    x = fval / scale
+    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
+    ret = (b & 0x80000000) >> 24  # sign
+    if (b & 0x7FC00000) == 0x7FC00000:
+        return 0xFF | ret
+    e = (b & 0x7F800000) >> 23  # exponent
+    m = b & 0x007FFFFF  # mantissa
 
-    raise NotImplementedError("not yet implemented")
+    if e != 0:
+        if e < 117:
+            pass
+        elif e < 118:
+            ret |= 1
+            if (m >> 23) & 1:
+                # rounding
+                ret += 1
+        elif e < 121:  # 127 - 7 + 1
+            d = 120 - e
+            ret |= 1 << (2 - d)
+            ret |= m >> (21 + d)
+            if (m >> (20 + d)) & 1:
+                # rounding
+                ret += 1
+        elif e < 136:  # 127 + 8 + 1
+            ex = e - 120  # 127 - 7
+            if ex == 0:
+                ret |= 0x4
+                ret |= m >> 21
+            else:
+                ret |= ex << 3
+                ret |= m >> 20
+            if m & 0x80000:
+                # rounding
+                ret += 1
+        else:
+            ret |= 126  # 01111110
+    return int(ret)
 
 
 def float32_to_floate5m2(fval: float, scale: float = 1.0) -> int:
@@ -356,7 +389,42 @@ def float32_to_floate5m2(fval: float, scale: float = 1.0) -> int:
     :param scale: scale
     :return: converted float
     """
-    raise NotImplementedError("not yet implemented")
+    x = fval / scale
+    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
+    ret = (b & 0x80000000) >> 24  # sign
+    if (b & 0x7FC00000) == 0x7FC00000:
+        return 0xFF | ret
+    e = (b & 0x7F800000) >> 23  # exponent
+    m = b & 0x007FFFFF  # mantissa
+
+    if e != 0:
+        if e < 110:
+            pass
+        elif e < 111:
+            ret |= 1
+            if (m >> 23) & 1:
+                # rounding
+                # may be unused
+                ret += 1
+        elif e < 113:  # 127 - 15 + 1
+            d = 112 - e
+            ret |= 1 << (1 - d)
+            ret |= m >> (22 + d)
+            if (m >> (21 + d)) & 1:
+                # rounding
+                ret += 1
+        elif e < 144:  # 127 + 16 + 1
+            ex = e - 112  # 127 - 15
+            ret |= ex << 2
+            ret |= m >> 21
+            if m & 0x100000:
+                # rounding
+                ret += 1
+        elif e == 255 and m == 0:  # inf
+            ret |= 124
+        else:
+            ret |= 123
+    return int(ret)
 
 
 def make_tensor(
