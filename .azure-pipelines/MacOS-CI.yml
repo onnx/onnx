@@ -58,6 +58,7 @@ jobs:
   - script: |
       nox --forcecolor --no-venv -- -v --cov=onnx --cov-report=xml --cov-append --cov-branch
     env:
+      PROTOBUFF_INSTALL_DIR: protobuf/protobuf_install
       DEBUG: $(onnx_debug)
       ONNX_ML: $(onnx_ml)
       ${{ if eq(variables['onnx_lite'], true) }}:
