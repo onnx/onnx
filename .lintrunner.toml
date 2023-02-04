@@ -63,6 +63,7 @@ init_command = [
     'flake8-bugbear==22.10.27',
     'flake8-pyi==22.10.0',
     'dlint==0.13.0',
+    'pep8-naming==0.13.3',
 ]
 
 [[linter]]
