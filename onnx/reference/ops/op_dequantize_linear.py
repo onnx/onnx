@@ -1,37 +1,66 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
+from typing import Tuple
+
 import numpy as np
 
+from onnx import TensorProto
+from onnx.helper import (
+    np_dtype_to_tensor_dtype,
+)
+from onnx.numpy_helper import (
+    floate4m3_to_float32,
+    floate5m2_to_float32,
+)
 from onnx.reference.op_run import OpRun
 
 
 class DequantizeLinear(OpRun):
-    def _run(self, *args, axis=None):  # type: ignore
-        if len(args[1].shape) > 1:
+    def get_x_type(self, x: np.ndarray) -> int:
+        return np_dtype_to_tensor_dtype(x.dtype)
+
+    @staticmethod
+    def reshape_input(
+        value: np.ndarray, shape: Tuple[int, ...], axis: int
+    ) -> np.ndarray:
+        if len(shape) == 0:
+            return value
+        dims = [1] * len(shape)
+        dims[axis] = value.size
+        return value.reshape(tuple(dims))
+
+    def _run(
+        self,
+        x: np.ndarray = None,
+        x_scale: np.ndarray = None,
+        x_zero_point: np.ndarray = None,
+        axis: int = None,
+    ):  # type: ignore
+        if len(x_scale.shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
 
-        x_scale = args[2]
-        if len(x_scale.shape) > 0 and x_scale.size == 1:
-            x_scale = x_scale[0]
-        if len(args) > 2:
-            if x_scale.dtype != args[0].dtype:
+        x_type = self.get_x_type(x)
+        if x_zero_point is not None:
+            zero_type = self.get_x_type(x_zero_point)
+            if x_type != zero_type:
                 raise RuntimeError(
-                    f"Type mismatch {args[0].dtype} != {x_scale.dtype} in DequantizeLinear."
+                    f"Type mismatch {x_type} != {zero_type} in DequantizeLinear."
+                )
+            if x_type in (TensorProto.FLOATE4M3, TensorProto.FLOATE5M2):
+                raise RuntimeError(
+                    f"x_zero_point not supported for float 8 type {x_dtype}."
                 )
 
-            if len(x_scale.shape) > 0:
-                new_shape = [1 for s in args[0].shape]
-                new_shape[axis] = len(x_scale)
-                x = args[0].astype(np.float32) - x_scale.reshape(new_shape)
-                y = x * args[1].reshape(new_shape)
+            dx = x.astype(np.float32) - DequantizeLinear.reshape_input(
+                x_zero_point, x.shape, axis
+            )
+        elif len(x_scale.shape) > 0:
+            if x_type == TensorProto.FLOATE4M3:
+                dx = floate4m3_to_float32(x)
+            elif x_type == TensorProto.FLOATE5M2:
+                dx = floate5m2_to_float32(x)
             else:
-                x = args[0].astype(np.float32) - x_scale
-                y = x * args[1]
-        elif len(args[1].shape) > 0:
-            new_shape = [1 for s in args[0].shape]
-            new_shape[axis] = len(x_scale)
-            y = args[0].astype(np.float32) * x_scale.reshape(new_shape)
-        else:
-            y = args[0].astype(np.float32) * x_scale
+                dx = x.astype(np.float32)
+        y = dx * DequantizeLinear.reshape_input(x_scale, x.shape, axis)
         return (y.astype(np.float32),)

@@ -3,10 +3,20 @@
 
 import numpy as np
 
+from onnx import TensorProto
+from onnx.helper import (
+    float32_to_floate4m3,
+    float32_to_floate5m2,
+    np_dtype_to_tensor_dtype,
+    tensor_dtype_to_np_dtype,
+)
 from onnx.reference.op_run import OpRun
 
 
 class _CommonQuantizeLinear(OpRun):
+    def get_zero_point_type(self, zero_point: np.ndarray) -> int:
+        return np_dtype_to_tensor_dtype(zero_point.dtype)
+
     def common_run(self, x, y_scale, zero_point=None, axis=1):  # type: ignore
         if len(y_scale.shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
@@ -20,20 +30,27 @@ class _CommonQuantizeLinear(OpRun):
             x = x / y_scale
             new_shape = x.shape  # unused
         if zero_point is not None:
-            dtype = zero_point.dtype
+            tensor_type = self.get_zero_point_type(zero_point)
+
             if len(y_scale.shape) > 0:
                 x += zero_point.reshape(new_shape)
             else:
                 x += zero_point
             # np.around(x, 0, out=x)
             np.floor(x + 0.5, out=x)
-            if dtype == np.uint8:
+            if tensor_type == TensorProto.UINT8:
                 np.clip(x, 0, 255, out=x)
-            elif dtype == np.int8:
+                dtype = tensor_dtype_to_np_dtype(tensor_type)
+                return (np.ceil(x).astype(dtype),)
+            if tensor_type == TensorProto.INT8:
                 np.clip(x, -128, 127, out=x)
-            else:
-                raise RuntimeError(f"Unexpected dtype for input 2 {dtype}.")
-            return (np.ceil(x).astype(dtype),)
+                dtype = tensor_dtype_to_np_dtype(tensor_type)
+                return (np.ceil(x).astype(dtype),)
+            if tensor_type == TensorProto.FLOATE4M3:
+                return (float32_to_floate4m3(x).astype(np.uint8),)
+            if tensor_type == TensorProto.FLOATE5M2:
+                return (float32_to_floate5m2(x).astype(np.uint8),)
+            raise RuntimeError(f"Unexpected dtype for input 2 {dtype}.")
 
         dtype = np.uint8
         # np.around(x, 0, out=x)
