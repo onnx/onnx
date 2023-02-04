@@ -9,7 +9,7 @@ class SplitToSequence(OpRun):
         if split is None:
             split = [1 for _ in range(mat.shape[axis])]
         elif len(split.shape) == 0:
-            # A scaler
+            # A scalar
             dim = mat.shape[axis]
             length = int(split)
             n = dim // int(length)
