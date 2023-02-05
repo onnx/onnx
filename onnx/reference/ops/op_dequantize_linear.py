@@ -1,18 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
 from onnx import TensorProto
-from onnx.helper import (
-    np_dtype_to_tensor_dtype,
-)
-from onnx.numpy_helper import (
-    floate4m3_to_float32,
-    floate5m2_to_float32,
-)
+from onnx.helper import np_dtype_to_tensor_dtype
+from onnx.numpy_helper import floate4m3_to_float32, floate5m2_to_float32,
 from onnx.reference.op_run import OpRun
 
 
@@ -32,10 +27,10 @@ class DequantizeLinear(OpRun):
 
     def _run(
         self,
-        x: np.ndarray = None,
-        x_scale: np.ndarray = None,
-        x_zero_point: np.ndarray = None,
-        axis: int = None,
+        x: np.ndarray,
+        x_scale: Optional[np.ndarray] = None,
+        x_zero_point: Optional[np.ndarray] = None,
+        axis: Optional[int] = None,
     ):  # type: ignore
         if len(x_scale.shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
@@ -49,7 +44,7 @@ class DequantizeLinear(OpRun):
                 )
             if x_type in (TensorProto.FLOATE4M3, TensorProto.FLOATE5M2):
                 raise RuntimeError(
-                    f"x_zero_point not supported for float 8 type {x_dtype}."
+                    f"x_zero_point not supported for float 8 type {x_type}."
                 )
 
             dx = x.astype(np.float32) - DequantizeLinear.reshape_input(

@@ -47,12 +47,12 @@ class _CommonQuantizeLinear(OpRun):
                 dtype = tensor_dtype_to_np_dtype(tensor_type)
                 return (np.ceil(x).astype(dtype),)
             if tensor_type == TensorProto.FLOATE4M3:
-                return (float32_to_floate4m3(x).astype(np.uint8),)
+                return (float32_to_floate4m3(x).astype(np.uint8),)  # type: ignore[attr-defined]
             if tensor_type == TensorProto.FLOATE5M2:
-                return (float32_to_floate5m2(x).astype(np.uint8),)
+                return (float32_to_floate5m2(x).astype(np.uint8),)  # type: ignore[attr-defined]
             raise RuntimeError(f"Unexpected dtype for input 2 {dtype}.")
 
-        dtype = np.uint8
+        dtype = np.uint8  # type: ignore[assignment]
         # np.around(x, 0, out=x)
         np.floor(x + 0.5, out=x)
         np.clip(x, 0, 255, out=x)

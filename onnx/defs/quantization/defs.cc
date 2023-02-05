@@ -44,7 +44,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", {"tensor(float)", "tensor(int32)"}, "Constrain 'x' to float or int32 tensor.")
         .TypeConstraint(
             "T2",
-            {"tensor(int8)", "tensor(uint8)", "tensor(floate4m3)", "tensor(floate5m2)"},
+            {"tensor(int8)", "tensor(floate4m3)", "tensor(floate5m2)", "tensor(uint8)"},
             "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
         .SetDoc(QuantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
@@ -97,13 +97,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .TypeConstraint(
             "T",
-            {
-              "tensor(int8)",
-              "tensor(floate4m3)",
-              "tensor(floate5m2)",
-              "tensor(uint8)",
-              "tensor(int32)",
-            },
+            {"tensor(int8)", "tensor(floate4m3)", "tensor(floate5m2)", "tensor(uint8)", "tensor(int32)"},
             "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
         .SetDoc(DequantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
