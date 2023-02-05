@@ -7,7 +7,7 @@ import numpy as np
 
 from onnx import TensorProto
 from onnx.helper import np_dtype_to_tensor_dtype
-from onnx.numpy_helper import floate4m3_to_float32, floate5m2_to_float32,
+from onnx.numpy_helper import floate4m3_to_float32, floate5m2_to_float32
 from onnx.reference.op_run import OpRun
 
 

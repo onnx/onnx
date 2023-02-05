@@ -38,8 +38,7 @@ TENSOR_TYPE_MAP = {
     int(TensorProto.FLOAT16): TensorDtypeMap(
         np.dtype("float16"), int(TensorProto.UINT16), "TensorProto.FLOAT16"
     ),
-    # Native numpy does not support bfloat16 so now use float32 for bf16 values
-    # TODO ONNX should dirtectly use bfloat16 for bf16 values after numpy has supported bfloat16 type
+    # Native numpy does not support bfloat16 so now use float32.
     int(TensorProto.BFLOAT16): TensorDtypeMap(
         np.dtype("float32"), int(TensorProto.UINT16), "TensorProto.BFLOAT16"
     ),
@@ -152,6 +151,7 @@ _STORAGE_TENSOR_TYPE_TO_FIELD = {
     int(TensorProto.FLOAT): "float_data",
     int(TensorProto.INT32): "int32_data",
     int(TensorProto.INT64): "int64_data",
+    int(TensorProto.UINT8): "int32_data",
     int(TensorProto.UINT16): "int32_data",
     int(TensorProto.DOUBLE): "double_data",
     int(TensorProto.COMPLEX64): "float_data",

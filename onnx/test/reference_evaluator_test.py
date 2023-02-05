@@ -17,15 +17,18 @@ from io import StringIO
 from textwrap import dedent
 from typing import Any, List
 
-import numpy as np  # type: ignore
 import parameterized
-from numpy.testing import assert_allclose  # type: ignore
+import numpy as np
+from numpy.testing import assert_allclose
 
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
 from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
+    float32_to_bfloat16,
+    float32_to_floate4m3,
+    float32_to_floate5m2,
     make_function,
     make_graph,
     make_model,
@@ -37,7 +40,7 @@ from onnx.helper import (
     make_tensor_value_info,
     make_value_info,
 )
-from onnx.numpy_helper import from_array
+from onnx.numpy_helper import from_array, floate4m3_to_float32, floate5m2_to_float32
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops import load_op
@@ -2916,6 +2919,99 @@ class TestReferenceEvaluator(unittest.TestCase):
         data = np.array([1.152512, -0.152612, 0.0, np.nan])
         got = ref.run(None, {"X": data})[0]
         assert_allclose(got, np.array([1.152512, -0.152612, 0.0, np.nan]))
+
+    def test_cast_float8(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        F1 = make_tensor_value_info("F1", TensorProto.FLOAT, [None])
+        F2 = make_tensor_value_info("F2", TensorProto.FLOAT, [None])
+        F3 = make_tensor_value_info("F3", TensorProto.FLOAT, [None])
+        F4 = make_tensor_value_info("F4", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["f81"], to=TensorProto.FLOATE4M3),
+                    make_node("Cast", ["X"], ["f82"], to=TensorProto.FLOATE5M2),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["C1"],
+                        value=make_tensor(
+                            "C1", TensorProto.FLOATE4M3, [5], [0, 1, 2, 5e-2, 200]
+                        ),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["C2"],
+                        value=make_tensor(
+                            "C2", TensorProto.FLOATE5M2, [5], [0, 1, 2, 5e-2, 200]
+                        ),
+                    ),
+                    make_node("Cast", ["f81"], ["F1"], to=TensorProto.FLOAT),
+                    make_node("Cast", ["f82"], ["F2"], to=TensorProto.FLOAT),
+                    make_node("Cast", ["C1"], ["F3"], to=TensorProto.FLOAT),
+                    make_node("Cast", ["C2"], ["F4"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [F1, F2, F3, F4],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
+        expected1 = np.array(
+            [floate4m3_to_float32(float32_to_floate4m3(x)) for x in data]
+        )
+        expected2 = np.array(
+            [floate5m2_to_float32(float32_to_floate5m2(x)) for x in data]
+        )
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected1)
+        assert_allclose(got[1], expected2)
+        assert_allclose(got[2], expected1)
+        assert_allclose(got[3], expected2)
+
+    def test_cast_float8_output(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        F1 = make_tensor_value_info("F1", TensorProto.FLOATE4M3, [None])
+        F2 = make_tensor_value_info("F2", TensorProto.FLOATE5M2, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["F1"], to=TensorProto.FLOATE4M3),
+                    make_node("Cast", ["X"], ["F2"], to=TensorProto.FLOATE5M2),
+                ],
+                "g",
+                [X],
+                [F1, F2],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
+        expected1 = np.array([float32_to_floate4m3(x) for x in data])
+        expected2 = np.array([float32_to_floate5m2(x) for x in data])
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected1)
+        assert_allclose(got[1], expected2)
+
+    def test_cast_bfloat16_output(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.BFLOAT16, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Y"], to=TensorProto.BFLOAT16),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected1 = np.array([float32_to_bfloat16(x) for x in data])
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected1)
 
 
 if __name__ == "__main__":

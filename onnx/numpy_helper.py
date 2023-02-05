@@ -32,7 +32,7 @@ def bfloat16_to_float32(
     return shift(data.astype(np.int32)).reshape(dims).view(np.float32)  # type: ignore[no-any-return]
 
 
-def _floate4m3_to_float32_scalar(ival: int) -> np.floating[np._32Bit]:
+def _floate4m3_to_float32_scalar(ival: int) -> np.floating:
     if ival < 0 or ival > 255:
         raise ValueError(f"{ival} is not a float8.")
     if ival == 255:
@@ -89,7 +89,7 @@ def floate4m3_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
-def _floate5m2_to_float32_scalar(ival: int) -> np.floating[np._32Bit]:
+def _floate5m2_to_float32_scalar(ival: int) -> np.floating:
     if ival < 0 or ival > 255:
         raise ValueError(f"{ival} is not a float8.")
     if ival in {253, 254, 255, 125, 126, 127}:
@@ -144,7 +144,9 @@ def floate5m2_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
-def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # pylint: disable=too-many-branches
+def to_array(
+    tensor: TensorProto, base_dir: str = ""
+) -> np.ndarray:  # pylint: disable=too-many-branches
     """Converts a tensor def object to a numpy array.
 
     Args:
