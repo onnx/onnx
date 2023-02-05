@@ -42,7 +42,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1232
+MIN_PASSING_TESTS = 1239
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {

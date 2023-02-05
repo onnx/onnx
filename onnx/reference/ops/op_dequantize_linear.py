@@ -19,7 +19,7 @@ class DequantizeLinear(OpRun):
     def reshape_input(
         value: np.ndarray, shape: Tuple[int, ...], axis: int
     ) -> np.ndarray:
-        if len(shape) == 0:
+        if len(value.shape) == 0:
             return value
         dims = [1] * len(shape)
         dims[axis] = value.size
