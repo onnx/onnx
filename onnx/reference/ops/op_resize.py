@@ -72,7 +72,7 @@ def _nearest_coeffs(ratio: float, mode: str = "round_prefer_floor") -> np.ndarra
     raise ValueError(f"Unexpected value {mode!r}.")
 
 
-def _cubic_coeffs(ratio: float, scale: float, A: float = -0.75) -> np.ndarray:
+def _cubic_coeffs(ratio: float, scale: float = None, A: float = -0.75) -> np.ndarray:
     # scale is unused
     coeffs = [
         ((A * (ratio + 1) - 5 * A) * (ratio + 1) + 8 * A) * (ratio + 1) - 4 * A,
@@ -106,7 +106,7 @@ def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.
     return np.array(coeffs) / sum(coeffs)
 
 
-def _linear_coeffs(ratio: float, scale: float) -> np.ndarray:
+def _linear_coeffs(ratio: float, scale: float = None) -> np.ndarray:
     # scale is unused
     return np.array([1 - ratio, ratio])
 
@@ -171,6 +171,7 @@ def _get_neighbor(x: float, n: int, data: np.ndarray) -> Tuple[np.ndarray, np.nd
 def _interpolate_1d_with_x(
     data: np.ndarray,
     scale_factor: float,
+    output_width_int: int,
     x: float,
     get_coeffs: Callable[[float, float], np.ndarray],
     roi: Optional[np.ndarray] = None,
@@ -205,6 +206,14 @@ def _interpolate_1d_with_x(
             x_ori = (x + 0.5) / scale_factor - 0.5
     elif coordinate_transformation_mode == "half_pixel":
         x_ori = (x + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "half_pixel_symmetric":
+        # Maps the center of the implicit ROI to the center of the output canvas.
+        # The difference with `half_pixel` will be only relevant
+        # when output_width_int != output_width
+        adjustment = output_width_int / output_width
+        center = input_width / 2
+        offset = center * (1 - adjustment)
+        x_ori = offset + (x + 0.5) / scale_factor - 0.5
     else:
         raise ValueError(
             f"Invalid coordinate_transformation_mode: {coordinate_transformation_mode!r}."
@@ -235,6 +244,7 @@ def _interpolate_nd_with_x(
     data: np.ndarray,
     n: int,
     scale_factors: List[float],
+    output_size: List[int],
     x: List[float],
     get_coeffs: Callable[[float, float], np.ndarray],
     roi: Optional[np.ndarray] = None,
@@ -245,6 +255,7 @@ def _interpolate_nd_with_x(
         return _interpolate_1d_with_x(
             data,
             scale_factors[0],
+            output_size[0],
             x[0],
             get_coeffs,
             roi=roi,
@@ -257,6 +268,7 @@ def _interpolate_nd_with_x(
             data[i],
             n - 1,
             scale_factors[1:],
+            output_size[1:],
             x[1:],
             get_coeffs,
             roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
@@ -268,6 +280,7 @@ def _interpolate_nd_with_x(
     return _interpolate_1d_with_x(
         res1d,  # type: ignore[arg-type]  # FIXME
         scale_factors[0],
+        output_size[0],
         x[0],
         get_coeffs,
         roi=None if roi is None else [roi[0], roi[n]],  # type: ignore[arg-type]  # FIXME
@@ -348,6 +361,8 @@ def _interpolate_nd(
 
     if scale_factors is None:
         raise ValueError("scale_factors is None.")
+    if output_size is None:
+        raise ValueError("output_size is None.")
 
     ret = np.zeros(output_size)
     for x in _get_all_coords(ret):
@@ -355,6 +370,7 @@ def _interpolate_nd(
             data,
             len(data.shape),
             scale_factors,
+            output_size,
             x,
             get_coeffs,
             roi=roi,
