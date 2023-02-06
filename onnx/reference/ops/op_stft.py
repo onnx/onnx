@@ -62,7 +62,7 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
     shape_x = new_x.shape
     shape_x_short = shape_x[:-2]
     shape_x_short_one = tuple(1 for _ in shape_x_short)
-    window_shape = shape_x_short_one + (window_size, 1)
+    window_shape = (*shape_x_short_one, window_size, 1)
     weights = np.reshape(window, window_shape)
     weighted_new_x = new_x * weights
 
@@ -110,8 +110,8 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
         size = ytmp.shape[-1]
         n_right = expected_signal_len - (n_left + size)
 
-        left_shape = shape_begin + (n_left,)
-        right_shape = shape_begin + (n_right,)
+        left_shape = (*shape_begin, n_left)
+        right_shape = (*shape_begin, n_right)
         right = np.zeros(right_shape, dtype=x.dtype)
         left = np.zeros(left_shape, dtype=x.dtype)
 

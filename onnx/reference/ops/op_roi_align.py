@@ -114,7 +114,7 @@ class RoiAlign(OpRun):
                         pre_calc_index += 1
 
     @staticmethod
-    def RoiAlignForward(  # type: ignore
+    def roi_align_forward(  # type: ignore
         output_shape: Tuple[int, int, int, int],
         bottom_data,
         spatial_scale,
@@ -285,7 +285,7 @@ class RoiAlign(OpRun):
         y_dims = (num_rois, num_channels, output_height, output_width)
         Y = np.empty(y_dims, dtype=X.dtype).flatten()
 
-        self.RoiAlignForward(
+        self.roi_align_forward(
             y_dims,
             X.flatten(),
             spatial_scale,
