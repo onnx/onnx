@@ -27,5 +27,5 @@ class SpaceToDepth(OpRun):
             H // blocksize,
             W // blocksize,
         )
-        y = np.reshape(transposed, finalshape)
+        y = np.reshape(transposed, finalshape).astype(data.dtype)
         return (y,)

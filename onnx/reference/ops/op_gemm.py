@@ -43,7 +43,7 @@ class Gemm_6(OpRun):
                 _meth = _gemm01 if transB else _gemm00
             res = _meth(a, b, None, alpha, beta)
             if c is None:
-                return (res,)
+                return (res.astype(a.dtype),)
             if c.shape != res.shape:
                 raise ValueError(
                     f"Unable to add shape {c.shape} to shape {res.shape} without broadcast."
@@ -53,7 +53,7 @@ class Gemm_6(OpRun):
             _meth = _gemm11 if transB else _gemm10
         else:
             _meth = _gemm01 if transB else _gemm00
-        return (_meth(a, b, c, alpha, beta),)
+        return (_meth(a, b, c, alpha, beta).astype(a.dtype),)
 
 
 class Gemm_7(OpRun):
@@ -62,4 +62,4 @@ class Gemm_7(OpRun):
             _meth = _gemm11 if transB else _gemm10
         else:
             _meth = _gemm01 if transB else _gemm00
-        return (_meth(a, b, c, alpha, beta),)
+        return (_meth(a, b, c, alpha, beta).astype(a.dtype),)
