@@ -25,7 +25,7 @@ class PreCalc:
 
 class RoiAlign(OpRun):
     @staticmethod
-    def PreCalcForBilinearInterpolate(  # type: ignore
+    def pre_calc_for_bilinear_interpolate(  # type: ignore
         height: int,
         width: int,
         pooled_height: int,
@@ -181,7 +181,7 @@ class RoiAlign(OpRun):
                     roi_bin_grid_h * roi_bin_grid_w * pooled_width * pooled_height
                 )
             ]
-            RoiAlign.PreCalcForBilinearInterpolate(
+            RoiAlign.pre_calc_for_bilinear_interpolate(
                 height,
                 width,
                 pooled_height,

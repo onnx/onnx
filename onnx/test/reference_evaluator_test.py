@@ -15,7 +15,6 @@ from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
 from textwrap import dedent
-from typing import Any, List
 
 import numpy as np  # type: ignore
 import parameterized
@@ -55,7 +54,8 @@ def skip_if_no_onnxruntime(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import onnxruntime  # pylint: disable=W0611
+            import onnxruntime  # pylint: disable=W0611 # noqa: F401
+            del onnxruntime
         except ImportError:
             raise unittest.SkipTest("onnxruntime not installed")  # noqa
         fn(*args, **kwargs)
@@ -68,8 +68,9 @@ def skip_if_no_torch(fn):
     def wrapper(*args, **kwargs):
         try:
             import torch  # pylint: disable=W0611
+            del torch
         except ImportError:
-            raise unittest.SkipTest("torch not installed")  # noqa
+            raise unittest.SkipTest("torch not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -80,6 +81,7 @@ def skip_if_no_torchvision(fn):
     def wrapper(*args, **kwargs):
         try:
             import torchvision  # pylint: disable=W0611
+            del torchvision
         except ImportError:
             raise unittest.SkipTest("torchvision not installed")  # noqa
         fn(*args, **kwargs)

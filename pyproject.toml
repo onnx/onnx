@@ -93,8 +93,21 @@ ignore = [
     "N806",
 ]
 ignore-init-module-imports = true
+unfixable = [
+    "F401", # Unused imports
+]
 
 [tool.ruff.per-file-ignores]
 "**/*_test*" = ["N802"] # Function casing
 "onnx/backend/test/case/**" = ["N802"] # Function casing
 "onnx/reference/ops/**" = ["N801"] # Class casing
+"onnx/reference/ops/_op_list.py" = ["F401"]
+"onnx/__init__.py" = ["F401"]
+"onnx/reference/__init__.py" = ["F401"]
+"onnx/reference/ops/__init__.py" = ["F401"]
+"onnx/reference/ops/aionnxml/_op_list.py" = ["F401"]
+"onnx/reference/ops/aionnxml/__init__.py" = ["F401"]
+"onnx/reference/ops/aionnx_preview_training/__init__.py" = ["F401"]
+"onnx/reference/ops/aionnx_preview_training/_op_list.py" = ["F401"]
+"onnx/reference/ops/experimental/__init__.py" = ["F401"]
+"onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]

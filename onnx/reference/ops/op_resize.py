@@ -89,7 +89,7 @@ def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.
     if scale > 1.0:  # Antialias is applied when downsampling
         scale = 1.0
 
-    def W(x: float) -> float:
+    def compute_coeff(x: float) -> float:
         x = abs(x)
         x_2 = x * x
         x_3 = x * x_2
@@ -102,7 +102,7 @@ def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.
     i_start = int(np.floor(-2 / scale) + 1)
     i_end = 2 - i_start
     args = [scale * (i - ratio) for i in range(i_start, i_end)]
-    coeffs = [W(x) for x in args]
+    coeffs = [compute_coeff(x) for x in args]
     return np.array(coeffs) / sum(coeffs)
 
 
