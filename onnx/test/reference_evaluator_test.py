@@ -17,8 +17,8 @@ from io import StringIO
 from textwrap import dedent
 from typing import Any, List
 
-import parameterized
 import numpy as np
+import parameterized
 from numpy.testing import assert_allclose
 
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
@@ -40,7 +40,7 @@ from onnx.helper import (
     make_tensor_value_info,
     make_value_info,
 )
-from onnx.numpy_helper import from_array, floate4m3_to_float32, floate5m2_to_float32
+from onnx.numpy_helper import floate4m3_to_float32, floate5m2_to_float32, from_array
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops import load_op

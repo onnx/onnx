@@ -501,8 +501,8 @@ def make_tensor(
                 TensorProto.FLOATE4M3: float32_to_floate4m3,
                 TensorProto.FLOATE5M2: float32_to_floate5m2,
             }[
-                data_type
-            ]  # type: ignore[index]
+                data_type  # type: ignore[index]
+            ]
             vals = list(
                 map(
                     fcast,

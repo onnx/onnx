@@ -17,8 +17,10 @@ class DequantizeLinear(OpRun):
 
     @staticmethod
     def reshape_input(
-        value: np.ndarray, shape: Tuple[int, ...], axis: int
+        value: np.ndarray, shape: Tuple[int, ...], axis: Optional[int]
     ) -> np.ndarray:
+        if axis is None:
+            raise ValueError(f"axis cannot be None.")
         if len(value.shape) == 0:
             return value
         dims = [1] * len(shape)
@@ -28,7 +30,7 @@ class DequantizeLinear(OpRun):
     def _run(
         self,
         x: np.ndarray,
-        x_scale: Optional[np.ndarray] = None,
+        x_scale: np.ndarray = None,
         x_zero_point: Optional[np.ndarray] = None,
         axis: Optional[int] = None,
     ):  # type: ignore
