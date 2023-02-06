@@ -74,7 +74,6 @@ disable = [
 [tool.ruff]
 target-version = "py37"
 select = [
-    "C",
     "E", # pycodestyle
     "F", # Pyflakes
     "W", # pycodestyle
@@ -89,4 +88,13 @@ ignore = [
             # like demandimport (https://fburl.com/demandimport) that require statements
     "E501",
     "F405", # FIXME: is hard to silence since we indeed do star import
+    "N803", # Argument casing
+    "N812",
+    "N806",
 ]
+ignore-init-module-imports = true
+
+[tool.ruff.per-file-ignores]
+"**/*_test*" = ["N802"] # Function casing
+"onnx/backend/test/case/**" = ["N802"] # Function casing
+"onnx/reference/ops/**" = ["N801"] # Class casing

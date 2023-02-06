@@ -4,9 +4,7 @@
 
 from typing import Dict, List, MutableMapping, Optional, Set, Tuple
 
-from onnx import GraphProto, ModelProto
-from onnx import TensorProto as tp
-from onnx import checker, helper, utils
+from onnx import GraphProto, ModelProto, TensorProto, checker, helper, utils
 
 
 def check_overlapping_names(
@@ -650,7 +648,7 @@ def expand_out_dim_graph(
             name=f"{expand_dim_k}-constant",
             value=helper.make_tensor(
                 name=f"{expand_dim_k}-value",
-                data_type=tp.INT64,
+                data_type=TensorProto.INT64,
                 dims=[
                     1,
                 ],
