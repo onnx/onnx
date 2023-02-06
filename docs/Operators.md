@@ -17802,7 +17802,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(int32)</dt>
 <dd>Constrain 'x' to float or int32 tensor.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(floate4m3), tensor(floate5m2)</dt>
+<dt><tt>T2</tt> : tensor(int8), tensor(floate4m3), tensor(floate5m2), tensor(uint8)</dt>
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
 </dl>
 
