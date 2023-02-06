@@ -72,7 +72,9 @@ def get_pydot_graph(
     embed_docstring: bool = False,
 ) -> pydot.Dot:
     if node_producer is None:
-        node_producer = get_op_node_producer(embed_docstring=embed_docstring, **OP_STYLE)
+        node_producer = get_op_node_producer(
+            embed_docstring=embed_docstring, **OP_STYLE
+        )
     pydot_graph = pydot.Dot(name, rankdir=rankdir)
     pydot_nodes: Dict[str, pydot.Node] = {}
     pydot_node_counts: Dict[str, int] = defaultdict(int)

@@ -55,6 +55,7 @@ def skip_if_no_onnxruntime(fn):
     def wrapper(*args, **kwargs):
         try:
             import onnxruntime  # pylint: disable=W0611
+
             del onnxruntime
         except ImportError:
             raise unittest.SkipTest("onnxruntime not installed")
@@ -68,6 +69,7 @@ def skip_if_no_torch(fn):
     def wrapper(*args, **kwargs):
         try:
             import torch  # pylint: disable=W0611
+
             del torch
         except ImportError:
             raise unittest.SkipTest("torch not installed")
@@ -81,6 +83,7 @@ def skip_if_no_torchvision(fn):
     def wrapper(*args, **kwargs):
         try:
             import torchvision  # pylint: disable=W0611
+
             del torchvision
         except ImportError:
             raise unittest.SkipTest("torchvision not installed")

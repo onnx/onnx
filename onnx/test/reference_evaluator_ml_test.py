@@ -28,6 +28,7 @@ OPSETS = [make_opsetid("", TARGET_OPSET), make_opsetid("ai.onnx.ml", TARGET_OPSE
 def has_onnxruntime():
     try:
         import onnxruntime  # pylint: disable=W0611
+
         del onnxruntime
 
         return True
