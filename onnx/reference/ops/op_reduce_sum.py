@@ -15,20 +15,10 @@ class ReduceSum_1(OpRunReduceNumpy):
 
 
 class ReduceSum_13(OpRunReduceNumpy):
-    def run(self, x, axes=None, keepdims=None):  # type: ignore
-        keepdims = keepdims or self.keepdims  # type: ignore
-        res = self._run(x, axes=axes, keepdims=keepdims)
-        if res[0].dtype != x.dtype:
-            raise RuntimeTypeError(
-                f"Output type mismatch: input {x.dtype} != output {res[0].dtype} "
-                f"(operator {self.__class__.__name__!r})."
-            )
-        return res
-
-    def _run(self, x, axes=None, keepdims=None):  # type: ignore
+    def _run(self, x, axes=None, keepdims=None, noop_with_empty_axes=None):  # type: ignore
         if (
             axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
-        ) and self.noop_with_empty_axes:  # type: ignore
+        ) and noop_with_empty_axes:  # type: ignore
             return (x,)
         if (
             axes is not None and len(axes.shape) > 0 and axes.shape[0] > 0
