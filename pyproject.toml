@@ -70,3 +70,23 @@ disable = [
     "no-name-in-module",
     "useless-return",
 ]
+
+[tool.ruff]
+target-version = "py37"
+select = [
+    "C",
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "W", # pycodestyle
+    "B", # flake8-bugbear
+    "N", # pep8-naming
+    "YTT", # flake8-2020
+    "RUF", # Ruff-specific rules
+]
+ignore = [
+    "B9", # Opinionated bugbear rules
+    "E402", # warns on imports coming after statements. There are important use cases
+            # like demandimport (https://fburl.com/demandimport) that require statements
+    "E501",
+    "F405", # FIXME: is hard to silence since we indeed do star import
+]
