@@ -2991,8 +2991,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected1 = np.array([float32_to_floate4m3(x) for x in data])
         expected2 = np.array([float32_to_floate5m2(x) for x in data])
         got = ref.run(None, {"X": data})
-        assert_allclose(got[0], expected1)
-        assert_allclose(got[1], expected2)
+        assert_allclose(expected1, got[0])
+        assert_allclose(expected2, got[1])
 
     def test_cast_bfloat16_output(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -3011,7 +3011,71 @@ class TestReferenceEvaluator(unittest.TestCase):
         data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
         expected1 = np.array([float32_to_bfloat16(x) for x in data])
         got = ref.run(None, {"X": data})
-        assert_allclose(got[0], expected1)
+        assert_allclose(expected1, got[0])
+
+    def test_quantize_linear_e4m3(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "Constant",
+                        [],
+                        ["scale"],
+                        value=make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["zero"],
+                        value=make_tensor("zero", TensorProto.FLOATE4M3, [1], [0.0]),
+                    ),
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0.0, 2.0, 2.0, 896.0, 208], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_quantize_linear_e5m2(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "Constant",
+                        [],
+                        ["scale"],
+                        value=make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["zero"],
+                        value=make_tensor("zero", TensorProto.FLOATE5M2, [1], [0.0]),
+                    ),
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0, 2, 2, 98304, 192], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
 
 
 if __name__ == "__main__":

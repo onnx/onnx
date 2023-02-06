@@ -8,11 +8,16 @@ import numpy as np
 from onnx import TensorProto
 from onnx.helper import np_dtype_to_tensor_dtype
 from onnx.numpy_helper import floate4m3_to_float32, floate5m2_to_float32
+from onnx.reference.custom_element_types import floate4m3, floate5m2
 from onnx.reference.op_run import OpRun
 
 
 class DequantizeLinear(OpRun):
     def get_x_type(self, x: np.ndarray) -> int:
+        if x.dtype == floate4m3 and x.dtype.descr[0][0] == "e4m3":
+            return TensorProto.FLOATE4M3
+        if x.dtype == floate5m2 and x.dtype.descr[0][0] == "e5m2":
+            return TensorProto.FLOATE5M2
         return np_dtype_to_tensor_dtype(x.dtype)
 
     @staticmethod

@@ -10,11 +10,20 @@ from onnx.helper import (
     np_dtype_to_tensor_dtype,
     tensor_dtype_to_np_dtype,
 )
+from onnx.reference.custom_element_types import floate4m3, floate5m2
 from onnx.reference.op_run import OpRun
 
 
 class _CommonQuantizeLinear(OpRun):
+
+    float32_to_floate4m3 = np.vectorize(float32_to_floate4m3)
+    float32_to_floate5m2 = np.vectorize(float32_to_floate5m2)
+
     def get_zero_point_type(self, zero_point: np.ndarray) -> int:
+        if zero_point.dtype == floate4m3 and zero_point.dtype.descr[0][0] == "e4m3":
+            return TensorProto.FLOATE4M3
+        if zero_point.dtype == floate5m2 and zero_point.dtype.descr[0][0] == "e5m2":
+            return TensorProto.FLOATE5M2
         return np_dtype_to_tensor_dtype(zero_point.dtype)
 
     def common_run(self, x, y_scale, zero_point=None, axis=1):  # type: ignore
@@ -47,9 +56,11 @@ class _CommonQuantizeLinear(OpRun):
                 dtype = tensor_dtype_to_np_dtype(tensor_type)
                 return (np.ceil(x).astype(dtype),)
             if tensor_type == TensorProto.FLOATE4M3:
-                return (float32_to_floate4m3(x).astype(np.uint8),)  # type: ignore[attr-defined]
+                f8 = _CommonQuantizeLinear.float32_to_floate4m3(x)
+                return (f8.astype(floate4m3),)  # type: ignore[attr-defined]
             if tensor_type == TensorProto.FLOATE5M2:
-                return (float32_to_floate5m2(x).astype(np.uint8),)  # type: ignore[attr-defined]
+                f8 = _CommonQuantizeLinear.float32_to_floate5m2(x)
+                return (f8.astype(floate5m2),)  # type: ignore[attr-defined]
             raise RuntimeError(
                 f"Unexpected tensor_type for input 2: tensor_type={tensor_type}."
             )
