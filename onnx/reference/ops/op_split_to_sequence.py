@@ -1,11 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0200,W0221
 
+from typing import List
+
+import numpy as np
+
 from onnx.reference.op_run import OpRun
 
 
 class SplitToSequence(OpRun):
-    def common_run(self, mat, split, axis, length):  # type: ignore
+    def common_run(
+        self, mat: np.ndarray, split: np.ndarray, axis: int
+    ) -> List[np.ndarray]:
         if split is None:
             split = [1 for _ in range(mat.shape[axis])]
         elif len(split.shape) == 0:
@@ -28,14 +34,7 @@ class SplitToSequence(OpRun):
         return res
 
     def _run(self, mat, split=None, axis=None, keepdims=None):  # type: ignore
-        if split is None:
-            length = None
-        else:
-            if len(split.shape) == 0:
-                length = split
-            else:
-                length = split.shape[0]
-        res = self.common_run(mat, split, axis=axis, length=length)
+        res = self.common_run(mat, split, axis=axis)
         if keepdims == 0 and axis is not None:
             for i in range(len(res)):
                 shape = list(res[i].shape)
