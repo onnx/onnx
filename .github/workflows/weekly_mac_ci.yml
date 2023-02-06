@@ -45,3 +45,11 @@ jobs:
         export CXX=clang++
         export ONNX_ML=1
         pip install -e .
+
+    - name: Test all models with onnx.checker, onnx.shape_inference, onnx.version_converter
+      run: |
+        cd ..
+        git clone https://github.com/onnx/models.git
+        cd models
+        python ../onnx/workflow_scripts/test_model_zoo.py
+
