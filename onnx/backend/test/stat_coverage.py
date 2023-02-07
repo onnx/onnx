@@ -159,10 +159,10 @@ def gen_model_test_coverage(
     attrs: Dict[str, Dict[str, List[Any]]] = dict()
     model_paths: List[Any] = []
     for rt in load_model_tests(kind="real"):
-        if rt.url.startswith("onnx/data"):
+        if rt.url.startswith("onnx/backend/test/data/light/"):
             # testing local files
             model_name = os.path.normpath(
-                os.path.join(os.path.dirname(__file__), "..", "..", "..", rt.url[5:])
+                os.path.join(os.path.dirname(__file__), "..", "..", "..", rt.url)
             )
             if not os.path.exists(model_name):
                 raise FileNotFoundError(f"Unable to find model {model_name!r}.")
