@@ -3,32 +3,20 @@
 
 import numpy as np
 
-from onnx.reference.op_run import RuntimeTypeError
-
 from ._op import OpRunReduceNumpy
 
 
 class ReduceSum_1(OpRunReduceNumpy):
-    def _run(self, x, axes=None, keepdims=True):  # type: ignore # pylint: disable=W0221
+    def _run(self, x, axes=None, keepdims=None):  # type: ignore # pylint: disable=W0221
         axes = tuple(axes) if axes is not None else None
         return (np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype),)
 
 
 class ReduceSum_13(OpRunReduceNumpy):
-    def run(self, x, axes=None, keepdims=True, **_):  # type: ignore
-        keepdims = keepdims if keepdims is not None else self.keepdims  # type: ignore
-        res = self._run(x, axes=axes, keepdims=keepdims)
-        if res[0].dtype != x.dtype:
-            raise RuntimeTypeError(
-                f"Output type mismatch: input {x.dtype} != output {res[0].dtype} "
-                f"(operator {self.__class__.__name__!r})."
-            )
-        return res
-
-    def _run(self, x, axes=None, keepdims=True):  # type: ignore
+    def _run(self, x, axes=None, keepdims=None, noop_with_empty_axes=None):  # type: ignore
         if (
             axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
-        ) and self.noop_with_empty_axes:  # type: ignore
+        ) and noop_with_empty_axes:  # type: ignore
             return (x,)
         if (
             axes is not None and len(axes.shape) > 0 and axes.shape[0] > 0
