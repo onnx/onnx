@@ -46,16 +46,17 @@ def collect_testcases() -> List[TestCase]:
 
     real_model_testcases = []
 
+    # TODO (#4857): Re-enable these tests while transfering models to Azure.
     model_tests = [
-        ("test_bvlc_alexnet", "bvlc_alexnet", 1e-3, 1e-7),
-        ("test_densenet121", "densenet121", 2e-3, 1e-7),
-        ("test_inception_v1", "inception_v1", 1e-3, 1e-7),
-        ("test_inception_v2", "inception_v2", 1e-3, 1e-7),
-        ("test_resnet50", "resnet50", 1e-3, 1e-7),
-        ("test_shufflenet", "shufflenet", 1e-3, 1e-7),
-        ("test_squeezenet", "squeezenet", 1e-3, 1e-7),
-        ("test_vgg19", "vgg19", 1e-3, 1e-7),
-        ("test_zfnet512", "zfnet512", 1e-3, 1e-7),
+        # ("test_bvlc_alexnet", "bvlc_alexnet", 1e-3, 1e-7),
+        # ("test_densenet121", "densenet121", 2e-3, 1e-7),
+        # ("test_inception_v1", "inception_v1", 1e-3, 1e-7),
+        # ("test_inception_v2", "inception_v2", 1e-3, 1e-7),
+        # ("test_resnet50", "resnet50", 1e-3, 1e-7),
+        # ("test_shufflenet", "shufflenet", 1e-3, 1e-7),
+        # ("test_squeezenet", "squeezenet", 1e-3, 1e-7),
+        # ("test_vgg19", "vgg19", 1e-3, 1e-7),
+        # ("test_zfnet512", "zfnet512", 1e-3, 1e-7),
     ]
 
     for test_name, model_name, rtol, atol in model_tests:
