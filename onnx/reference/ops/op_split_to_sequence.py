@@ -37,7 +37,7 @@ class SplitToSequence(OpRun):
 
     def _run(self, mat, split=None, axis=None, keepdims=None):  # type: ignore
         res = self.common_run(mat, split, axis=axis)
-        if keepdims == 0 and axis is not None:
+        if keepdims == 0:
             for i in range(len(res)):
                 shape = list(res[i].shape)
                 del shape[axis]
