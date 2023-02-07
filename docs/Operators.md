@@ -6387,6 +6387,58 @@ expect(
 </details>
 
 
+<details>
+<summary>e4m3</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOATE4M3, [5], [0, 56, 56, 126, 109])
+x_scale = np.float32(2)
+y = np.array([0.0, 2.0, 2.0, 896.0, 208.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3",
+)
+```
+
+</details>
+
+
+<details>
+<summary>e5m2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOATE5M2, [5], [0, 60, 60, 122, 86])
+x_scale = np.float32(2)
+y = np.array([0.0, 2.0, 2.0, 98304.0, 192.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e5m2",
+)
+```
+
+</details>
+
+
 ### <a name="Det"></a><a name="det">**Det**</a>
 
   Det calculates determinant of a square matrix or batches of square matrices.
@@ -17840,6 +17892,58 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_axis",
+)
+```
+
+</details>
+
+
+<details>
+<summary>e4m3</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
+y_scale = np.float32(2)
+y_zero_point = make_tensor("zero_point", TensorProto.FLOATE4M3, [1], [0.0])
+y = make_tensor("zero_point", TensorProto.FLOATE5M2, [5], [0, 56, 56, 126, 109])
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_e4m3",
+)
+```
+
+</details>
+
+
+<details>
+<summary>e5m2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
+y_scale = np.float32(2)
+y_zero_point = make_tensor("zero_point", TensorProto.FLOATE5M2, [1], [0.0])
+y = make_tensor("zero_point", TensorProto.FLOATE5M2, [5], [0, 60, 60, 122, 86])
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_e5m2",
 )
 ```
 
