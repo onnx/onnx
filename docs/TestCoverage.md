@@ -21223,12 +21223,17 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 # Model Test Coverage
 ## bvlc_alexnet
 
-bvlc_alexnet has 24 nodes. Of these, 24 are covered by node tests (100.0%)
+bvlc_alexnet has 40 nodes. Of these, 40 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
+</details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
 
@@ -21276,7 +21281,7 @@ strides: 1
 
 ## densenet121
 
-densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
+densenet121 has 1746 nodes. Of these, 1746 are covered by node tests (100.0%)
 
 
 <details>
@@ -21303,6 +21308,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21355,7 +21365,7 @@ strides: 1
 
 ## inception_v1
 
-inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
+inception_v1 has 237 nodes. Of these, 237 are covered by node tests (100.0%)
 
 
 <details>
@@ -21382,6 +21392,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21434,7 +21449,7 @@ strides: 2
 
 ## inception_v2
 
-inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
+inception_v2 has 916 nodes. Of these, 916 are covered by node tests (100.0%)
 
 
 <details>
@@ -21461,6 +21476,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21513,7 +21533,7 @@ strides: 2
 
 ## resnet50
 
-resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
+resnet50 has 415 nodes. Of these, 415 are covered by node tests (100.0%)
 
 
 <details>
@@ -21540,6 +21560,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21592,7 +21617,7 @@ strides: 2
 
 ## shufflenet
 
-shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
+shufflenet has 446 nodes. Of these, 446 are covered by node tests (100.0%)
 
 
 <details>
@@ -21619,6 +21644,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21676,7 +21706,7 @@ perm: 1
 
 ## squeezenet_old
 
-squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
+squeezenet_old has 105 nodes. Of these, 105 are covered by node tests (100.0%)
 
 
 <details>
@@ -21703,6 +21733,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21760,7 +21795,7 @@ perm: 1
 
 ## vgg19
 
-vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
+vgg19 has 82 nodes. Of these, 82 are covered by node tests (100.0%)
 
 
 <details>
@@ -21787,6 +21822,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21844,7 +21884,7 @@ perm: 1
 
 ## zfnet512
 
-zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
+zfnet512 has 38 nodes. Of these, 38 are covered by node tests (100.0%)
 
 
 <details>
@@ -21871,6 +21911,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
