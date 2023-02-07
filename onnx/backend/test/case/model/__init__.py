@@ -35,9 +35,7 @@ def expect(
     )
 
 
-BASE_URL = (
-    f"https://download.onnxruntime.ai/onnx/models/"
-)
+BASE_URL = "https://download.onnxruntime.ai/onnx/models/"
 
 
 def collect_testcases() -> List[TestCase]:
