@@ -15,7 +15,7 @@ def load_model_tests(
     data_dir: str = DATA_DIR,
     kind: Optional[str] = None,
 ) -> List[TestCase]:
-    # TODO (#4857): Re-enable these tests while transfering models to Azure.
+    # TODO (#4857): Re-enable these tests while transferring models to Azure.
     if kind == "real":
         return []
     """Load model test cases from on-disk data files."""
