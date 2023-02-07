@@ -46,7 +46,7 @@ def collect_testcases() -> List[TestCase]:
 
     real_model_testcases = []
 
-    # TODO (#4857): Re-enable these tests while transfering models to Azure.
+    # TODO (#4857): Re-enable these tests while transferring models to Azure.
     model_tests = [
         # ("test_bvlc_alexnet", "bvlc_alexnet", 1e-3, 1e-7),
         # ("test_densenet121", "densenet121", 2e-3, 1e-7),
