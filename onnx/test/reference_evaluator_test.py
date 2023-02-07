@@ -3041,7 +3041,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
-        expected = np.array([0.0, 2.0, 2.0, 896.0, 208], dtype=np.float32)
+        expected = np.array([0, 1, 2, 896, 208], dtype=np.float32)
         got = ref.run(None, {"X": data})
         assert_allclose(expected, got[0])
 
@@ -3073,7 +3073,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
-        expected = np.array([0, 2, 2, 98304, 192], dtype=np.float32)
+        expected = np.array([0, 1, 2, 98304, 192], dtype=np.float32)
         got = ref.run(None, {"X": data})
         assert_allclose(expected, got[0])
 

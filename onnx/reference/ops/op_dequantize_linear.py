@@ -57,7 +57,7 @@ class DequantizeLinear(OpRun):
             dx = x.astype(np.float32) - DequantizeLinear.reshape_input(
                 x_zero_point, x.shape, axis
             )
-        elif len(x_scale.shape) > 0:
+        else:
             if x_type == TensorProto.FLOATE4M3:
                 dx = floate4m3_to_float32(x)
             elif x_type == TensorProto.FLOATE5M2:

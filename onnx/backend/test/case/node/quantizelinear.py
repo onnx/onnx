@@ -72,8 +72,8 @@ class QuantizeLinear(Base):
 
         x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
         y_scale = np.float32(2)
-        y_zero_point = make_tensor("zero_point", TensorProto.FLOATE4M3, [1], [0.0])
-        y = make_tensor("zero_point", TensorProto.FLOATE5M2, [5], [0, 56, 56, 126, 109])
+        y_zero_point = make_tensor("zero_point", TensorProto.FLOATE4M3, [1], [0])
+        y = make_tensor("zero_point", TensorProto.FLOATE4M3, [5], [0, 0.5, 1, 448, 104])
 
         expect(
             node,
@@ -93,7 +93,7 @@ class QuantizeLinear(Base):
         x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
         y_scale = np.float32(2)
         y_zero_point = make_tensor("zero_point", TensorProto.FLOATE5M2, [1], [0.0])
-        y = make_tensor("zero_point", TensorProto.FLOATE5M2, [5], [0, 60, 60, 122, 86])
+        y = make_tensor("zero_point", TensorProto.FLOATE5M2, [5], [0, 0.5, 1, 49152, 96])
 
         expect(
             node,

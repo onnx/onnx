@@ -41,28 +41,38 @@ class _CommonQuantizeLinear(OpRun):
         if zero_point is not None:
             tensor_type = self.get_zero_point_type(zero_point)
 
-            if len(y_scale.shape) > 0:
-                x += zero_point.reshape(new_shape)
-            else:
-                x += zero_point
-            # np.around(x, 0, out=x)
-            np.floor(x + 0.5, out=x)
             if tensor_type == TensorProto.UINT8:
+                if len(y_scale.shape) > 0:
+                    x += zero_point.reshape(new_shape)
+                else:
+                    x += zero_point
+                np.floor(x + 0.5, out=x)
                 np.clip(x, 0, 255, out=x)
                 dtype = tensor_dtype_to_np_dtype(tensor_type)
                 return (np.ceil(x).astype(dtype),)
+
             if tensor_type == TensorProto.INT8:
+                if len(y_scale.shape) > 0:
+                    x += zero_point.reshape(new_shape)
+                else:
+                    x += zero_point
+                np.floor(x + 0.5, out=x)
                 np.clip(x, -128, 127, out=x)
                 dtype = tensor_dtype_to_np_dtype(tensor_type)
                 return (np.ceil(x).astype(dtype),)
+
             if tensor_type == TensorProto.FLOATE4M3:
                 f8 = _CommonQuantizeLinear.float32_to_floate4m3(x)
+                print("+++", f8)
                 return (f8.astype(floate4m3),)  # type: ignore[attr-defined]
+
             if tensor_type == TensorProto.FLOATE5M2:
                 f8 = _CommonQuantizeLinear.float32_to_floate5m2(x)
                 return (f8.astype(floate5m2),)  # type: ignore[attr-defined]
+
             raise RuntimeError(
-                f"Unexpected tensor_type for input 2: tensor_type={tensor_type}."
+                f"Unexpected tensor_type for input 2: tensor_type={tensor_type}, "
+                f"zero_point.dtype={zero_point.dtype}."
             )
 
         dtype = np.uint8  # type: ignore[assignment]

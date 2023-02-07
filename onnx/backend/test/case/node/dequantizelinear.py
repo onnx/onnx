@@ -73,9 +73,9 @@ class DequantizeLinear(Base):
         )
 
         # scalar zero point and scale
-        x = make_tensor("x", TensorProto.FLOATE4M3, [5], [0, 56, 56, 126, 109])
+        x = make_tensor("x", TensorProto.FLOATE4M3, [5], [0, 0.5, 1, 448, 104])
         x_scale = np.float32(2)
-        y = np.array([0.0, 2.0, 2.0, 896.0, 208.0], dtype=np.float32)
+        y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
 
         expect(
             node,
@@ -93,9 +93,9 @@ class DequantizeLinear(Base):
         )
 
         # scalar zero point and scale
-        x = make_tensor("x", TensorProto.FLOATE5M2, [5], [0, 60, 60, 122, 86])
+        x = make_tensor("x", TensorProto.FLOATE5M2, [5], [0, 0.5, 1, 49152, 96])
         x_scale = np.float32(2)
-        y = np.array([0.0, 2.0, 2.0, 98304.0, 192.0], dtype=np.float32)
+        y = np.array([0.0, 1.0, 2.0, 98304.0, 192.0], dtype=np.float32)
 
         expect(
             node,

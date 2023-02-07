@@ -39,6 +39,7 @@ from onnx.backend.test import __file__ as backend_folder
 from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
+from onnx.reference.op_run import to_array_extended
 from onnx.reference.ops.op_cast import cast_to
 
 # Number of tests expected to pass without raising an exception.
@@ -136,7 +137,7 @@ class OnnxBackendTest:
         with open(full, "rb") as f:
             serialized = f.read()
         proto_types = [
-            (TensorProto, to_array),
+            (TensorProto, to_array_extended),
             (SequenceProto, to_list),
             (OptionalProto, to_optional),
         ]
