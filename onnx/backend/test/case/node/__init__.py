@@ -14,6 +14,7 @@ from onnx.onnx_pb import (
     ModelProto,
     NodeProto,
     OperatorSetIdProto,
+    TensorProto,
     TypeProto,
 )
 
@@ -182,6 +183,10 @@ def _extract_value_info(
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
             type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+        elif isinstance(input, TensorProto):
+            elem_type = input.data_type
+            shape = tuple(input.dims)
+            type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
         else:
             elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
             shape = input.shape

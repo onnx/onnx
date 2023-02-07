@@ -8,7 +8,7 @@ import warnings
 
 import onnx.backend.test.case.model as model_test
 import onnx.backend.test.case.node as node_test
-from onnx import numpy_helper
+from onnx import TensorProto, numpy_helper
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(TOP_DIR, "data")
@@ -85,11 +85,14 @@ def generate_data(args: argparse.Namespace) -> None:
                             assert case.model.graph.input[j].type.HasField(
                                 "tensor_type"
                             )
-                            f.write(
-                                numpy_helper.from_array(
-                                    input, case.model.graph.input[j].name
-                                ).SerializeToString()
-                            )
+                            if isinstance(input, TensorProto):
+                                f.write(input.SerializeToString())
+                            else:
+                                f.write(
+                                    numpy_helper.from_array(
+                                        input, case.model.graph.input[j].name
+                                    ).SerializeToString()
+                                )
                 for j, output in enumerate(outputs):
                     with open(os.path.join(data_set_dir, f"output_{j}.pb"), "wb") as f:
                         if case.model.graph.output[j].type.HasField("map_type"):
@@ -114,11 +117,14 @@ def generate_data(args: argparse.Namespace) -> None:
                             assert case.model.graph.output[j].type.HasField(
                                 "tensor_type"
                             )
-                            f.write(
-                                numpy_helper.from_array(
-                                    output, case.model.graph.output[j].name
-                                ).SerializeToString()
-                            )
+                            if isinstance(output, TensorProto):
+                                f.write(output.SerializeToString())
+                            else:
+                                f.write(
+                                    numpy_helper.from_array(
+                                        output, case.model.graph.output[j].name
+                                    ).SerializeToString()
+                                )
     if not args.clean and node_number != original_dir_number:
         warnings.warn(
             "There are some models under 'onnx/backend/test/data/node' which cannot not"
