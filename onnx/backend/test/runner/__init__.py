@@ -32,7 +32,7 @@ import numpy as np
 
 import onnx
 import onnx.reference
-from onnx import ModelProto, NodeProto, TypeProto, numpy_helper
+from onnx import ModelProto, NodeProto, TypeProto, ValueInfoProto, numpy_helper
 from onnx.backend.base import Backend
 
 from ..case.test_case import TestCase
@@ -366,6 +366,9 @@ class Runner:
             ):
                 raise unittest.SkipTest("Not compatible with backend")
 
+            prepared_model = self.backend.prepare(model, device)
+            assert prepared_model is not None
+
             if use_dummy:
                 # We generate dummy data and compute the expected output
                 # with the reference runtime.
@@ -378,10 +381,12 @@ class Runner:
                 feeds = {}
                 inits = set(i.name for i in onx.graph.initializer)
                 n_input = 0
+                inputs = []
                 for i in range(len(onx.graph.input)):
                     if onx.graph.input[i].name in inits:
                         continue
                     name = os.path.join(test_data_set, f"input_{n_input}.pb")
+                    inputs.append(name)
                     n_input += 1
                     x = onx.graph.input[i]
                     value = self.generate_random_data(
@@ -392,10 +397,18 @@ class Runner:
                         f.write(onnx.numpy_helper.from_array(value).SerializeToString())
                 # Reference implementation of operator Conv is too slow.
                 outputs = ref.run(None, feeds)
+                ref_outputs = []
                 for i, o in enumerate(outputs):
                     name = os.path.join(test_data_set, f"output_{i}.pb")
+                    ref_outputs.append(name)
                     with open(name, "wb") as f:
                         f.write(onnx.numpy_helper.from_array(o).SerializeToString())
+
+                outputs = list(prepared_model.run(inputs))
+                ref_outputs = test_data["outputs"]
+                self.assert_similar_outputs(
+                    ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
+                )
             else:
                 # TODO after converting all npz files to protobuf, we can delete this.
                 for test_data_npz in glob.glob(
@@ -408,9 +421,6 @@ class Runner:
                     self.assert_similar_outputs(
                         ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
                     )
-
-            prepared_model = self.backend.prepare(model, device)
-            assert prepared_model is not None
 
             for test_data_dir in glob.glob(os.path.join(model_dir, "test_data_set*")):
                 inputs = []
