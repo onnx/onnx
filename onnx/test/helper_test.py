@@ -464,12 +464,20 @@ class TestHelperTensorFunctions(unittest.TestCase):
         np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
     def test_make_floate4m3_tensor(self) -> None:
-        # placeholder
-        pass
+        y = helper.make_tensor(
+            "zero_point", TensorProto.FLOATE4M3, [5], [0, 0.5, 1, 50000, 10.1]
+        )
+        ynp = numpy_helper.to_array(y)
+        expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
+        np.testing.assert_equal(expected, ynp)
 
     def test_make_floate5m2_tensor(self) -> None:
-        # placeholder
-        pass
+        y = helper.make_tensor(
+            "zero_point", TensorProto.FLOATE5M2, [5], [0, 0.5, 1, 50000, 96]
+        )
+        ynp = numpy_helper.to_array(y)
+        expected = np.array([0, 0.5, 1, 49152, 96], dtype=np.float32)
+        np.testing.assert_equal(expected, ynp)
 
     def test_make_bfloat16_tensor_raw(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
@@ -525,12 +533,36 @@ class TestHelperTensorFunctions(unittest.TestCase):
         np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
     def test_make_floate4m3_tensor_raw(self) -> None:
-        # placeholder
-        pass
+        expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
+        f8 = np.array(
+            [helper.float32_to_floate4m3(x) for x in expected], dtype=np.uint8
+        )
+        packed_values = f8.tobytes()
+        y = helper.make_tensor(
+            name="test",
+            data_type=TensorProto.FLOATE4M3,
+            dims=list(expected.shape),
+            vals=packed_values,
+            raw=True,
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(expected, ynp)
 
     def test_make_floate5m2_tensor_raw(self) -> None:
-        # placeholder
-        pass
+        expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
+        f8 = np.array(
+            [helper.float32_to_floate5m2(x) for x in expected], dtype=np.uint8
+        )
+        packed_values = f8.tobytes()
+        y = helper.make_tensor(
+            name="test",
+            data_type=TensorProto.FLOATE5M2,
+            dims=list(expected.shape),
+            vals=packed_values,
+            raw=True,
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(expected, ynp)
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]

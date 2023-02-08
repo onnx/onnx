@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
+from typing import Optional, Tuple
+
 import numpy as np
 
 from onnx import TensorProto
@@ -26,7 +28,13 @@ class _CommonQuantizeLinear(OpRun):
             return TensorProto.FLOATE5M2
         return np_dtype_to_tensor_dtype(zero_point.dtype)
 
-    def common_run(self, x, y_scale, zero_point=None, axis=1):  # type: ignore
+    def common_run(  # pylint: disable=too-many-branches
+        self,
+        x: np.ndarray,
+        y_scale: np.ndarray,
+        zero_point: Optional[np.ndarray] = None,
+        axis: int = 1,
+    ) -> Tuple[np.ndarray]:
         if len(y_scale.shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
         if len(y_scale.shape) > 0 and y_scale.size == 1:
@@ -63,7 +71,6 @@ class _CommonQuantizeLinear(OpRun):
 
             if tensor_type == TensorProto.FLOATE4M3:
                 f8 = _CommonQuantizeLinear.float32_to_floate4m3(x)
-                print("+++", f8)
                 return (f8.astype(floate4m3),)  # type: ignore[attr-defined]
 
             if tensor_type == TensorProto.FLOATE5M2:
