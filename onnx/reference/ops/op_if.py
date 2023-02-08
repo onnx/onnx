@@ -22,7 +22,6 @@ class If(OpRun):
         return True
 
     def _run(self, cond, context=None, else_branch=None, then_branch=None):  # type: ignore
-
         if len(cond.shape) > 0:
             if all(cond):
                 self._log("  -- then> {%r}", context)

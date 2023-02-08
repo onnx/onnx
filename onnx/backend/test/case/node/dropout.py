@@ -26,7 +26,6 @@ def dropout(X, drop_probability=0.5, seed=0, training_mode=False, return_mask=Fa
 
 
 class Dropout(Base):
-
     # Inferencing tests.
     @staticmethod
     def export_default() -> None:

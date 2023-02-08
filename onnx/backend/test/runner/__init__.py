@@ -133,7 +133,7 @@ class Runner:
                 for exclude in self._exclude_patterns:
                     if exclude.search(name):
                         item.func = unittest.skip(
-                            f'matched exclude pattern "{exclude.pattern}"'
+                            f'matched exclude pattern "{exclude.pattern}"'  # noqa: B907
                         )(item.func)
                 for xfail in self._xfail_patterns:
                     if xfail.search(name):
@@ -204,7 +204,7 @@ class Runner:
                     )
             else:
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
-                if ref_outputs[i].dtype == np.object:
+                if ref_outputs[i].dtype == object:
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
                     np.testing.assert_allclose(

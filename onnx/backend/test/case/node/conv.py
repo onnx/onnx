@@ -11,7 +11,6 @@ from . import expect
 class Conv(Base):
     @staticmethod
     def export() -> None:
-
         x = np.array(
             [
                 [
@@ -95,7 +94,6 @@ class Conv(Base):
 
     @staticmethod
     def export_conv_with_strides() -> None:
-
         x = np.array(
             [
                 [
@@ -217,7 +215,6 @@ class Conv(Base):
 
     @staticmethod
     def export_conv_with_autopad_same() -> None:
-
         x = np.array(
             [
                 [

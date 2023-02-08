@@ -35,10 +35,7 @@ def expect(
     )
 
 
-base_model_opset_version = 10
-BASE_URL = "https://s3.amazonaws.com/download.onnx/models/opset_{}".format(
-    base_model_opset_version
-)
+BASE_URL = "https://download.onnxruntime.ai/onnx/models"
 
 
 def collect_testcases() -> List[TestCase]:

@@ -46,7 +46,6 @@ def SuppressByIOU(
     center_point_box: int,
     iou_threshold: float,
 ) -> bool:
-
     box1 = boxes_data[box_index1]
     box2 = boxes_data[box_index2]
     # center_point_box_ only support 0 or 1

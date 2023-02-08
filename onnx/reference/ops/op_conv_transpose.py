@@ -85,7 +85,6 @@ class ConvTranspose(OpRun):
         # N x C x H x W = X.shape
         # C x M/group x k1 x k2 = W.shape
         if group == 1:
-
             for image_id in range(X.shape[0]):
                 w_t = w_reshaped[0].T
                 gemm = np.matmul(w_t, X[image_id].reshape((k, n)))
