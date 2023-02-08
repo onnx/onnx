@@ -476,6 +476,57 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = sess.run(None, {"X": x, "A": a})[0]
         assert_allclose(expected, got)
 
+    def test_reduce_sum_attribute(self):
+        opset = onnx_opset_version()
+        new_domain = "custom"
+        opset_imports = [make_opsetid("", opset), make_opsetid(new_domain, 1)]
+
+        node = make_node("ReduceSum", ["X", "axis"], ["Y"])
+        att = AttributeProto()
+        att.name = "keepdims"
+        att.ref_attr_name = "keepdims"
+        att.type = AttributeProto.INT
+        node.attribute.append(att)
+
+        my_reduce_sum = make_function(
+            new_domain,
+            "MyReduceSum",
+            ["X", "axis"],
+            ["Y"],
+            [node],
+            opset_imports,
+            ["keepdims"],
+        )
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        axis = make_tensor_value_info("axis", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+
+        graph = make_graph(
+            [
+                make_node(
+                    "MyReduceSum",
+                    ["X", "axis"],
+                    ["Y"],
+                    domain=new_domain,
+                    keepdims=1,
+                ),
+            ],
+            "example",
+            [X, axis],
+            [Y],
+        )
+
+        onnx_model = make_model(
+            graph, opset_imports=opset_imports, functions=[my_reduce_sum]
+        )
+        sess = ReferenceEvaluator(onnx_model)
+        x = np.arange(6).reshape((3, 2)).astype(np.float32)
+        a = np.array([-1], dtype=np.int64)
+        result = sess.run(None, {"X": x, "axis": a})[0]
+        expected = x.sum(axis=-1, keepdims=1)
+        assert_allclose(expected, result)
+
     def test_reduce_sum_square_18(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         A = make_tensor_value_info("A", TensorProto.INT64, [None, None])
