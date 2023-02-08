@@ -103,4 +103,3 @@ class DequantizeLinear(Base):
             outputs=[y],
             name="test_dequantizelinear_e5m2",
         )
-
