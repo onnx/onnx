@@ -72,7 +72,9 @@ def _nearest_coeffs(ratio: float, mode: str = "round_prefer_floor") -> np.ndarra
     raise ValueError(f"Unexpected value {mode!r}.")
 
 
-def _cubic_coeffs(ratio: float, scale: float = None, A: float = -0.75) -> np.ndarray:
+def _cubic_coeffs(
+    ratio: float, scale: Optional[float] = None, A: float = -0.75
+) -> np.ndarray:
     # scale is unused
     coeffs = [
         ((A * (ratio + 1) - 5 * A) * (ratio + 1) + 8 * A) * (ratio + 1) - 4 * A,
@@ -106,7 +108,7 @@ def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.
     return np.array(coeffs) / sum(coeffs)
 
 
-def _linear_coeffs(ratio: float, scale: float = None) -> np.ndarray:
+def _linear_coeffs(ratio: float, scale: Optional[float] = None) -> np.ndarray:
     # scale is unused
     return np.array([1 - ratio, ratio])
 
