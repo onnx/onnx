@@ -761,7 +761,13 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
     [
         t
         for t in helper.get_all_tensor_dtypes()
-        if t not in {TensorProto.BFLOAT16, TensorProto.STRING}
+        if t
+        not in {
+            TensorProto.BFLOAT16,
+            TensorProto.STRING,
+            TensorProto.FLOATE4M3,
+            TensorProto.FLOATE5M2,
+        }
     ],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
