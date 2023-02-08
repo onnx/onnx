@@ -22,7 +22,6 @@ class GlobalAveragePool(Base):
 
     @staticmethod
     def export_globalaveragepool_precomputed() -> None:
-
         node = onnx.helper.make_node(
             "GlobalAveragePool",
             inputs=["x"],

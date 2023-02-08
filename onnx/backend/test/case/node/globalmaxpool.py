@@ -11,7 +11,6 @@ from . import expect
 class GlobalMaxPool(Base):
     @staticmethod
     def export() -> None:
-
         node = onnx.helper.make_node(
             "GlobalMaxPool",
             inputs=["x"],
@@ -23,7 +22,6 @@ class GlobalMaxPool(Base):
 
     @staticmethod
     def export_globalmaxpool_precomputed() -> None:
-
         node = onnx.helper.make_node(
             "GlobalMaxPool",
             inputs=["x"],

@@ -56,7 +56,7 @@ class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
             return res
         if not isinstance(res[0], list) and res[0].dtype != x.dtype:
             raise RuntimeTypeError(
-                f"Output type mismatch: input '{x.dtype}' != output '{res[0].dtype}' "
+                f"Output type mismatch: input '{x.dtype}' != output '{res[0].dtype}' "  # noqa: B907
                 f"(operator {self.__class__.__name__!r})."
             )
         return res

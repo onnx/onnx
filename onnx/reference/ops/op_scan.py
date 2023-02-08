@@ -126,7 +126,7 @@ class Scan(OpRun):
                 outputs_list = self._run_body(inputs)  # type: ignore
             except TypeError as e:
                 raise TypeError(
-                    f"Unable to call 'run' for type '{type(self.body)}'."  # type: ignore
+                    f"Unable to call 'run' for type '{type(self.body)}'."  # type: ignore # noqa: B907
                 ) from e
 
             outputs = dict(zip(self.output_names, outputs_list))

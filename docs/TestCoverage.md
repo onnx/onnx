@@ -1673,7 +1673,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
-y = bernoulli_reference_implementation(x, np.float64)
+y = bernoulli_reference_implementation(x, float)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli_double")
 ```
 
@@ -1682,7 +1682,7 @@ expect(node, inputs=[x], outputs=[y], name="test_bernoulli_double")
 <summary>bernoulli_with_seed</summary>
 
 ```python
-seed = np.float(0)
+seed = float(0)
 node = onnx.helper.make_node(
     "Bernoulli",
     inputs=["x"],
@@ -1706,8 +1706,8 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
-y = bernoulli_reference_implementation(x, np.float)
+x = np.random.uniform(0.0, 1.0, 10).astype(float)
+y = bernoulli_reference_implementation(x, float)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
 ```
 
@@ -2286,14 +2286,14 @@ for from_type, to_type in test_cases:
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
         if "STRING" == to_type:
-            # Converting input to str, then give it np.object dtype for generating script
+            # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
                 s = str(i).encode("utf-8")
                 su = s.decode("utf-8")
                 ss.append(su)
 
-            output = np.array(ss).astype(np.object).reshape([3, 4])
+            output = np.array(ss).astype(object).reshape([3, 4])
         else:
             output = input.astype(
                 helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
@@ -2314,7 +2314,7 @@ for from_type, to_type in test_cases:
                 "+INF",
                 "-INF",
             ],
-            dtype=np.dtype(np.object),
+            dtype=np.dtype(object),
         ).reshape([3, 4])
         output = input.astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
@@ -3282,7 +3282,6 @@ There are 3 test cases, listed as following:
 <summary>conv</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -3370,7 +3369,6 @@ expect(
 <summary>conv_with_autopad_same</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -3416,7 +3414,6 @@ expect(node, inputs=[x, W], outputs=[y], name="test_conv_with_autopad_same")
 <summary>conv_with_strides</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -3546,7 +3543,6 @@ There are 2 test cases, listed as following:
 <summary>with_padding</summary>
 
 ```python
-
 x = (
     np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
     .astype(np.uint8)
@@ -3582,7 +3578,6 @@ expect(
 <summary>without_padding</summary>
 
 ```python
-
 x = (
     np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
     .astype(np.uint8)
@@ -5820,7 +5815,6 @@ expect(node, inputs=[x], outputs=[y], name="test_globalaveragepool")
 <summary>globalaveragepool_precomputed</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalAveragePool",
     inputs=["x"],
@@ -5850,7 +5844,6 @@ There are 2 test cases, listed as following:
 <summary>globalmaxpool</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalMaxPool",
     inputs=["x"],
@@ -5866,7 +5859,6 @@ expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool")
 <summary>globalmaxpool_precomputed</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalMaxPool",
     inputs=["x"],

@@ -8,9 +8,7 @@ from ..base import Base
 from . import expect
 
 
-def argmin_use_numpy(
-    data: np.ndarray, axis: int = 0, keepdims: int = 1
-) -> (np.ndarray):
+def argmin_use_numpy(data: np.ndarray, axis: int = 0, keepdims: int = 1) -> np.ndarray:
     result = np.argmin(data, axis=axis)
     if keepdims == 1:
         result = np.expand_dims(result, axis)
@@ -19,7 +17,7 @@ def argmin_use_numpy(
 
 def argmin_use_numpy_select_last_index(
     data: np.ndarray, axis: int = 0, keepdims: int = True
-) -> (np.ndarray):
+) -> np.ndarray:
     data = np.flip(data, axis)
     result = np.argmin(data, axis=axis)
     result = data.shape[axis] - result - 1

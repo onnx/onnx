@@ -41,7 +41,6 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
     external_data_file_path = os.path.join(base_dir, file_location)
 
     with open(external_data_file_path, "rb") as data_file:
-
         if info.offset:
             data_file.seek(info.offset)
 
@@ -85,7 +84,7 @@ def set_external_data(
 
     del tensor.external_data[:]
     tensor.data_location = TensorProto.EXTERNAL
-    for (k, v) in {
+    for k, v in {
         "location": location,
         "offset": int(offset) if offset is not None else None,
         "length": int(length) if length is not None else None,
@@ -288,7 +287,7 @@ def remove_external_data_field(tensor: TensorProto, field_key: str) -> None:
         tensor (TensorProto): Tensor object from which value will be removed
         field_key (string): The key of the field to be removed
     """
-    for (i, field) in enumerate(tensor.external_data):
+    for i, field in enumerate(tensor.external_data):
         if field.key == field_key:
             del tensor.external_data[i]
 

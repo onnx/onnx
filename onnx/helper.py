@@ -68,6 +68,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.11.0", 8, 16, 3, 1),
     ("1.12.0", 8, 17, 3, 1),
     ("1.13.0", 8, 18, 3, 1),
+    ("1.13.1", 8, 18, 3, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -301,7 +302,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
 
 def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
     del model.metadata_props[:]
-    for (k, v) in dict_value.items():
+    for k, v in dict_value.items():
         entry = model.metadata_props.add()
         entry.key = k
         entry.value = v
@@ -611,7 +612,9 @@ def make_attribute(
                 "its applicable type."
             )
     else:
-        raise TypeError(f'value "{value}" is not valid attribute data type.')
+        raise TypeError(
+            f'value "{value}" is not valid attribute data type.'  # noqa: B907
+        )
     return attr
 
 
