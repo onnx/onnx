@@ -301,7 +301,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
 
 def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
     del model.metadata_props[:]
-    for (k, v) in dict_value.items():
+    for k, v in dict_value.items():
         entry = model.metadata_props.add()
         entry.key = k
         entry.value = v

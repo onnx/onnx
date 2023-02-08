@@ -212,7 +212,6 @@ class CommonPool(OpRun):
         storage_order=None,  # pylint: disable=W0613
         strides=None,
     ):
-
         auto_pad = auto_pad or self.auto_pad  # type: ignore
         ceil_mode = ceil_mode or self.ceil_mode  # type: ignore
         kernel_shape = kernel_shape or self.kernel_shape  # type: ignore

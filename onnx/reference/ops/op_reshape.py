@@ -26,7 +26,6 @@ class CommonReshape(OpRun):
 
 
 class Reshape_5(CommonReshape):
-
     pass
 
 

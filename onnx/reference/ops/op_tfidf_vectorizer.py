@@ -154,7 +154,6 @@ class TfIdfVectorizer(OpRun):
         # Load into dictionary only required gram sizes
         ngram_size = 1
         for i in range(len(self.ngram_counts_)):
-
             start_idx = self.ngram_counts_[i]
             end_idx = (
                 self.ngram_counts_[i + 1]
@@ -254,7 +253,6 @@ class TfIdfVectorizer(OpRun):
         pool_strings=None,
         weights=None,
     ) -> None:
-
         if len(X.shape) > 1:
             X_flat = X[row_num]
         else:

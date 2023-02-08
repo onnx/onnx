@@ -176,7 +176,6 @@ def _interpolate_1d_with_x(
     coordinate_transformation_mode: str = "half_pixel",
     exclude_outside: bool = False,
 ) -> np.ndarray:
-
     input_width = len(data)
     output_width = scale_factor * input_width
     if coordinate_transformation_mode == "align_corners":
@@ -288,7 +287,6 @@ def _interpolate_nd(
     exclude_outside: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
-
     assert output_size is not None or scale_factors is not None
 
     r = len(data.shape)
