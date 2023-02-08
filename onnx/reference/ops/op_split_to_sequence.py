@@ -43,7 +43,7 @@ class SplitToSequence(OpRun):
         keepdims: int = 1,
     ) -> Tuple[np.ndarray]:
         res = self.common_run(mat, split, axis=axis)
-        if split is None or not keepdims:
+        if split is None and not keepdims:
             for i in range(len(res)):
                 shape = list(res[i].shape)
                 del shape[axis]
