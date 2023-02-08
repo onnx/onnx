@@ -612,7 +612,9 @@ def make_attribute(
                 "its applicable type."
             )
     else:
-        raise TypeError(f'value "{value}" is not valid attribute data type.')
+        raise TypeError(
+            f'value "{value}" is not valid attribute data type.'
+        )  # noqa: B907
     return attr
 
 

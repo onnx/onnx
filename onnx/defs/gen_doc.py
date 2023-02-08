@@ -67,7 +67,7 @@ def display_attr_type(v: OpSchema.AttrType) -> str:
 
 def display_domain(domain: str) -> str:
     if domain:
-        return f"the '{domain}' operator set"
+        return f"the '{domain}' operator set"  # noqa: B907
     return "the default ONNX operator set"
 
 

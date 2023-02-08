@@ -133,7 +133,7 @@ class Runner:
                 for exclude in self._exclude_patterns:
                     if exclude.search(name):
                         item.func = unittest.skip(
-                            f'matched exclude pattern "{exclude.pattern}"'
+                            f'matched exclude pattern "{exclude.pattern}"'  # noqa: B907
                         )(item.func)
                 for xfail in self._xfail_patterns:
                     if xfail.search(name):
