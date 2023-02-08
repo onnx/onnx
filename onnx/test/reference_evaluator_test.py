@@ -2965,7 +2965,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
         got = ref.run(None, {"X": data})
-        expected = [list(data[:, :, i : i + 1] for i in range(data.shape[2]))]
+        expected = [list(data[:, :, i] for i in range(data.shape[2]))]
         self.assertEqual(len(expected[0]), len(got[0]))
         for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
