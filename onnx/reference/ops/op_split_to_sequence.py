@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0200,W0221
 
-from typing import List
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -10,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class SplitToSequence(OpRun):
     def common_run(
-        self, mat: np.ndarray, split: np.ndarray, axis: int
+        self, mat: np.ndarray, split: Optional[np.ndarray], axis: int
     ) -> List[np.ndarray]:
         if split is None:
             split_length = [1 for _ in range(mat.shape[axis])]
@@ -35,9 +35,15 @@ class SplitToSequence(OpRun):
             res.append(mat[tuple(sli)])
         return res
 
-    def _run(self, mat, split=None, axis=None, keepdims=None):  # type: ignore
+    def _run(
+        self,
+        mat: np.ndarray,
+        split: Optional[np.ndarray] = None,
+        axis: int = 0,
+        keepdims: int = 1,
+    ) -> Tuple[np.ndarray]:
         res = self.common_run(mat, split, axis=axis)
-        if keepdims == 0:
+        if split is not None and not keepdims:
             for i in range(len(res)):
                 shape = list(res[i].shape)
                 del shape[axis]
