@@ -737,6 +737,8 @@ class TestPrintableGraph(unittest.TestCase):
         if t
         not in {
             TensorProto.BFLOAT16,
+            TensorProto.FLOATE4M3,
+            TensorProto.FLOATE5M2,
             TensorProto.STRING,
             TensorProto.COMPLEX64,
             TensorProto.COMPLEX128,
