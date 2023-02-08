@@ -7,6 +7,8 @@ import numpy as np
 
 import onnx
 from onnx import TensorProto, helper
+from onnx.helper import float32_to_floate4m3, float32_to_floate5m2, make_tensor
+from onnx.numpy_helper import floate4m3_to_float32, floate5m2_to_float32
 
 from ..base import Base
 from . import expect
@@ -32,6 +34,9 @@ class CastLike(Base):
             ("FLOAT", "FLOATE5M2"),
             ("FLOATE5M2", "FLOAT"),
         ]
+
+        vect_float32_to_floate4m3 = np.vectorize(float32_to_floate4m3)
+        vect_float32_to_floate5m2 = np.vectorize(float32_to_floate5m2)
 
         for from_type, to_type in test_cases:
             input_type_proto = None
@@ -86,6 +91,53 @@ class CastLike(Base):
                     output_type_proto = onnx.helper.make_tensor_type_proto(
                         int(TensorProto.FLOAT), output.shape
                     )
+                like = output.flatten()[0:1]
+            elif from_type in ("FLOATE4M3", "FLOATE5M2") or to_type in (
+                "FLOATE4M3",
+                "FLOATE5M2",
+            ):
+                np_fp32 = np.array(
+                    [
+                        "0.47892547",
+                        "0.48033667",
+                        "0.49968487",
+                        "0.81910545",
+                        "0.47031248",
+                        "0.816468",
+                        "0.21087195",
+                        "0.7229038",
+                        "NaN",
+                        "INF",
+                        "+INF",
+                        "-INF",
+                    ],
+                    dtype=np.float32,
+                )
+                if to_type == "FLOATE4M3":
+                    expected = floate4m3_to_float32(vect_float32_to_floate4m3(np_fp32))
+                    expected_tensor = make_tensor(
+                        "x", TensorProto.FLOATE4M3, [3, 4], expected.tolist()
+                    )
+                    like_tensor = make_tensor(
+                        "x", TensorProto.FLOATE4M3, [1], expected[:1]
+                    )
+                else:
+                    expected = floate5m2_to_float32(vect_float32_to_floate5m2(np_fp32))
+                    expected_tensor = make_tensor(
+                        "x", TensorProto.FLOATE5M2, [3, 4], expected.tolist()
+                    )
+                    like_tensor = make_tensor(
+                        "x", TensorProto.FLOATE5M2, [1], expected[:1]
+                    )
+                if from_type == "FLOAT":
+                    input = np_fp32.reshape((3, 4))
+                    output = expected_tensor
+                    like = like_tensor
+                else:
+                    assert to_type == "FLOAT"
+                    input = expected_tensor
+                    output = expected.reshape((3, 4))
+                    like = output.flatten()[:1]
             elif "STRING" != from_type:
                 input = np.random.random_sample(shape).astype(
                     helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
@@ -103,6 +155,7 @@ class CastLike(Base):
                     output = input.astype(
                         helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
                     )
+                like = output.flatten()[0:1]
             else:
                 input = np.array(
                     [
@@ -124,7 +177,7 @@ class CastLike(Base):
                 output = input.astype(
                     helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
                 )
-            like = output.flatten()[0:1]
+                like = output.flatten()[0:1]
             node = onnx.helper.make_node(
                 "CastLike",
                 inputs=["input", "like"],

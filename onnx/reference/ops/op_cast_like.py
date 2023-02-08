@@ -12,9 +12,9 @@ class CastLike(OpRun):
     def _run(self, x, y):  # type: ignore
         if y.dtype == bfloat16:
             to = TensorProto.BFLOAT16
-        elif y.dtype == floate4m3:
+        elif y.dtype == floate4m3 and y.dtype.descr[0][0] == "e4m3":
             to = TensorProto.FLOATE4M3
-        elif y.dtype == floate5m2:
+        elif y.dtype == floate5m2 and y.dtype.descr[0][0] == "e5m2":
             to = TensorProto.FLOATE5M2
         else:
             to = np_dtype_to_tensor_dtype(y.dtype)  # type: ignore
