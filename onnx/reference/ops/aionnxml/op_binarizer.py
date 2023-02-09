@@ -3,14 +3,10 @@
 
 import numpy as np
 
+from ....backend.test.case.node.ai_onnx_ml_binarizer import compute_binarizer
 from ._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class Binarizer(OpRunAiOnnxMl):
     def _run(self, x, threshold=None):  # type: ignore
-        X = x.copy()
-        cond = X > threshold
-        not_cond = np.logical_not(cond)
-        X[cond] = 1
-        X[not_cond] = 0
-        return (X,)
+        return compute_binarizer(x, threshold)
