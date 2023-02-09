@@ -2965,6 +2965,62 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"X": data})[0]
         assert_allclose(got, np.array([1.152512, -0.152612, 0.0, np.nan]))
 
+    def test_split_to_sequence(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [make_node("SplitToSequence", ["X", "Y"], ["Z"], axis=2)]
+        model = make_model(make_graph(nodes, "g", [X, Y], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
+        indices = np.array(2, dtype=np.int64)
+        got = ref.run(None, {"X": data, "Y": indices})
+        expected = [
+            [
+                np.array([[[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]]], dtype=np.float32),
+                np.array([[[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]]], dtype=np.float32),
+                np.array([[[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]]], dtype=np.float32),
+            ]
+        ]
+        self.assertEqual(len(expected[0]), len(got[0]))
+        for a, b in zip(expected[0], got[0]):
+            assert_allclose(a, b)
+
+    def test_split_to_sequence_1d(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [make_node("SplitToSequence", ["X", "Y"], ["Z"], axis=2)]
+        model = make_model(make_graph(nodes, "g", [X, Y], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
+        indices = np.array([2, 2, 2], dtype=np.int64)
+        got = ref.run(None, {"X": data, "Y": indices})
+        expected = [
+            [
+                np.array([[[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]]], dtype=np.float32),
+                np.array([[[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]]], dtype=np.float32),
+                np.array([[[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]]], dtype=np.float32),
+            ]
+        ]
+        self.assertEqual(len(expected[0]), len(got[0]))
+        for a, b in zip(expected[0], got[0]):
+            assert_allclose(a, b)
+
+    def test_split_to_sequence_nokeepdims_noinput(self):
+        # keepdims is ignored in that case
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [make_node("SplitToSequence", ["X"], ["Z"], axis=2, keepdims=0)]
+        model = make_model(make_graph(nodes, "g", [X], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
+        got = ref.run(None, {"X": data})
+        expected = [list(data[:, :, i] for i in range(data.shape[2]))]
+        self.assertEqual(len(expected[0]), len(got[0]))
+        for a, b in zip(expected[0], got[0]):
+            assert_allclose(a, b)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
