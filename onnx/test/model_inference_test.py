@@ -202,5 +202,6 @@ class TestModelInference(unittest.TestCase):
             """
         self._check_shape(model, [4, 4], [8, 8, 8])
 
+
 if __name__ == "__main__":
     unittest.main()
