@@ -14,7 +14,8 @@ def compute_binarizer(x, threshold=None):
     not_cond = np.logical_not(cond)
     y[cond] = 1
     y[not_cond] = 0
-    return (y, )
+    return (y,)
+
 
 class Binarizer(Base):
     @staticmethod
