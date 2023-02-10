@@ -298,7 +298,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const std::string& op_type, const int max_inclusive_version, const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
             if (!schema) {
-              fail_schema("No schema registered for '" + op_type + "' and version '" + std::string(max_inclusive_version) + "'!");
+              fail_schema("No schema registered for '" + op_type + "' and version '" + std::to_string(max_inclusive_version) + "'!");
             }
             return *schema;
           },
