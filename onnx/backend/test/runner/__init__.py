@@ -31,7 +31,7 @@ from urllib.request import urlretrieve
 import numpy as np
 
 import onnx
-from onnx import ModelProto, NodeProto, TypeProto, numpy_helper
+from onnx import ONNX_ML, ModelProto, NodeProto, TypeProto, numpy_helper
 from onnx.backend.base import Backend
 
 from ..case.test_case import TestCase
@@ -308,6 +308,9 @@ class Runner:
                 model_dir = self.prepare_model_data(model_test)
             else:
                 model_dir = model_test.model_dir
+            if not ONNX_ML and "ai_onnx_ml" in model_dir:
+                return
+
             model_pb_path = os.path.join(model_dir, "model.onnx")
             model = onnx.load(model_pb_path)
             model_marker[0] = model
