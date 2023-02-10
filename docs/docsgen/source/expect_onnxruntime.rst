@@ -53,7 +53,7 @@ based on `onnxruntime <https://onnxruntime.ai/>`_.
             # To make sure the model will be produced with the same opset_version after opset changes
             # By default, it uses since_version as opset_version for produced models
             produce_opset_version = onnx.defs.get_schema(
-                node.op_type, node.domain
+                node.op_type, domain=node.domain
             ).since_version
             kwargs["opset_imports"] = [
                 onnx.helper.make_operatorsetid(node.domain, produce_opset_version)
