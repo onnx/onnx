@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # A library and utility for drawing ONNX nets. Most of this implementation has
 # been borrowed from the caffe2 implementation
-# https://github.com/caffe2/caffe2/blob/master/caffe2/python/net_drawer.py
+# https://github.com/pytorch/pytorch/blob/master/caffe2/python/net_drawer.py
 #
 # The script takes two required arguments:
 #   -input: a path to a serialized ModelProto .pb file.
