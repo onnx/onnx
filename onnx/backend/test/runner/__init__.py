@@ -405,9 +405,8 @@ class Runner:
                         f.write(onnx.numpy_helper.from_array(o).SerializeToString())
 
                 outputs = list(prepared_model.run(inputs))
-                ref_outputs = test_data["outputs"]
                 self.assert_similar_outputs(
-                    ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
+                    outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
                 )
             else:
                 # TODO after converting all npz files to protobuf, we can delete this.
