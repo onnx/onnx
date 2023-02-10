@@ -28682,6 +28682,94 @@ This version of the operator has been available since version 11 of the default 
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>nokeepdims</summary>
+
+```python
+data = np.arange(18).reshape((3, 6)).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SplitToSequence",
+    ["data"],
+    ["seq"],
+    axis=1,
+    keepdims=0,
+)
+
+expected_outputs = [list(data[:, i] for i in range(data.shape[1]))]
+
+expect(
+    node,
+    inputs=[data],
+    outputs=expected_outputs,
+    name="test_split_to_sequence_nokeepdims",
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_split_1</summary>
+
+```python
+data = np.arange(18).reshape((3, 6)).astype(np.float32)
+split = np.array(2, dtype=np.int64)
+
+node = onnx.helper.make_node(
+    "SplitToSequence", ["data", "split"], ["seq"], axis=1
+)
+
+expected_outputs = [
+    [
+        np.array([[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]], dtype=np.float32),
+        np.array([[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]], dtype=np.float32),
+        np.array([[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]], dtype=np.float32),
+    ]
+]
+
+expect(
+    node,
+    inputs=[data, split],
+    outputs=expected_outputs,
+    name="test_split_to_sequence_1",
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_split_2</summary>
+
+```python
+data = np.arange(18).reshape((3, 6)).astype(np.float32)
+split = np.array([1, 2], dtype=np.int64)
+
+node = onnx.helper.make_node(
+    "SplitToSequence", ["data", "split"], ["seq"], axis=0
+)
+
+expected_outputs = [
+    [
+        data[:1],
+        data[1:],
+    ]
+]
+
+expect(
+    node,
+    inputs=[data, split],
+    outputs=expected_outputs,
+    name="test_split_to_sequence_2",
+)
+```
+
+</details>
+
+
 ### <a name="Sqrt"></a><a name="sqrt">**Sqrt**</a>
 
   Square root takes one input data (Tensor<T>) and produces one output data
