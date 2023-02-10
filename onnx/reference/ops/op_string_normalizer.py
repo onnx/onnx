@@ -129,7 +129,7 @@ class StringNormalizer(OpRun):
         """
         Transforms accentuated unicode symbols into their simple counterpart.
         Source: `sklearn/feature_extraction/text.py
-        <https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/
+        <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/
         feature_extraction/text.py#L115>`_.
 
         :param s: string
