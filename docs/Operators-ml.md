@@ -119,7 +119,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = compute_binarizer(x, threshold)[0]
 
-expect(node, inputs=[x], outputs=[y], name="test_binarizer")
+expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
 ```
 
 </details>
