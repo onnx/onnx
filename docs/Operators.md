@@ -3083,13 +3083,18 @@ test_cases = [
     ("FLOAT", "BFLOAT16"),
     ("BFLOAT16", "FLOAT"),
     ("FLOAT", "FLOATE4M3"),
+    ("FLOAT16", "FLOATE4M3"),
     ("FLOATE4M3", "FLOAT"),
+    ("FLOATE4M3", "FLOAT16"),
     ("FLOAT", "FLOATE5M2"),
+    ("FLOAT16", "FLOATE5M2"),
     ("FLOATE5M2", "FLOAT"),
+    ("FLOATE5M2", "FLOAT16"),
 ]
 
 vect_float32_to_floate4m3 = np.vectorize(float32_to_floate4m3)
 vect_float32_to_floate5m2 = np.vectorize(float32_to_floate5m2)
+f8_types = ("FLOATE4M3", "FLOATE5M2")
 
 for from_type, to_type in test_cases:
     input_type_proto = None
@@ -3144,10 +3149,7 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif from_type in ("FLOATE4M3", "FLOATE5M2") or to_type in (
-        "FLOATE4M3",
-        "FLOATE5M2",
-    ):
+    elif from_type in f8_types or to_type in f8_types:
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -3165,6 +3167,8 @@ for from_type, to_type in test_cases:
             ],
             dtype=np.float32,
         )
+        if "FLOAT16" in (from_type, to_type):
+            np_fp32 = np_fp32.astype(np.float16).astype(np.float32)
         if to_type == "FLOATE4M3":
             expected = floate4m3_to_float32(vect_float32_to_floate4m3(np_fp32))
             expected_tensor = make_tensor(
@@ -3178,10 +3182,19 @@ for from_type, to_type in test_cases:
         if from_type == "FLOAT":
             input = np_fp32.reshape((3, 4))
             output = expected_tensor
-        else:
-            assert to_type == "FLOAT"
+        elif from_type == "FLOAT16":
+            input = np_fp32.astype(np.float16).reshape((3, 4))
+            output = expected_tensor
+        elif to_type == "FLOAT16":
+            input = expected_tensor
+            output = expected.astype(np.float16).reshape((3, 4))
+        elif to_type == "FLOAT":
             input = expected_tensor
             output = expected.reshape((3, 4))
+        else:
+            assert (
+                False
+            ), f"from_type={from_type!r} or to_type={to_type!r} is misspelled."
     elif "STRING" != from_type:
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))

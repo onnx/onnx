@@ -9,6 +9,7 @@ from onnx.helper import (
     float32_to_floate5m2,
     tensor_dtype_to_np_dtype,
 )
+from onnx.mapping import TENSOR_TYPE_MAP
 from onnx.numpy_helper import (
     bfloat16_to_float32,
     floate4m3_to_float32,
