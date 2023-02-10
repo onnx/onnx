@@ -131,7 +131,7 @@ def function_testcase_helper(
 ) -> Tuple[List[Tuple[List[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, node.domain)
+    schema = onnx.defs.get_schema(test_op, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
     # opset versions include the op's since_version and other opset versions
