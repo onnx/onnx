@@ -8,17 +8,10 @@ import warnings
 
 import onnx.backend.test.case.model as model_test
 import onnx.backend.test.case.node as node_test
-from onnx import ONNX_ML, numpy_helper
+from onnx import numpy_helper
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(TOP_DIR, "data")
-
-
-def test_case_model_contain_onnxml_op(test_case):
-    return test_case.model and any(
-        opset_import.domain == "ai.onnx.ml"
-        for opset_import in test_case.model.opset_import
-    )
 
 
 def generate_data(args: argparse.Namespace) -> None:
@@ -47,8 +40,6 @@ def generate_data(args: argparse.Namespace) -> None:
         output_dir = os.path.join(args.output, case.kind, case.name)
         prepare_dir(output_dir)
         if case.kind == "node":
-            if not ONNX_ML and test_case_model_contain_onnxml_op(case):
-                continue
             node_number += 1
         if case.kind == "real":
             with open(os.path.join(output_dir, "data.json"), "w") as fi:
