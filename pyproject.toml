@@ -87,10 +87,8 @@ ignore = [
     "E402", # warns on imports coming after statements. There are important use cases
             # like demandimport (https://fburl.com/demandimport) that require statements
     "E501",
-    "F405", # FIXME: is hard to silence since we indeed do star import
     "N803", # Argument casing
-    "N812",
-    "N806",
+    "N806", # Variable name in function should be lowercase
 ]
 ignore-init-module-imports = true
 unfixable = [
