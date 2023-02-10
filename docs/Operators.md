@@ -3192,9 +3192,9 @@ for from_type, to_type in test_cases:
             input = expected_tensor
             output = expected.reshape((3, 4))
         else:
-            assert (
-                False
-            ), f"from_type={from_type!r} or to_type={to_type!r} is misspelled."
+            raise ValueError(
+                f"Either from_type={from_type!r} or to_type={to_type!r} is misspelled."
+            )
     elif "STRING" != from_type:
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
