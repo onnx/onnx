@@ -7291,6 +7291,42 @@ expect(node, inputs=[x, y], outputs=[z], name="test_equal_bcast")
 </details>
 
 
+<details>
+<summary>equal_string</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Equal",
+    inputs=["x", "y"],
+    outputs=["z"],
+)
+x = np.array(["string1", "string2"], dtype=np.dtype(object))
+y = np.array(["string1", "string3"], dtype=np.dtype(object))
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_string")
+```
+
+</details>
+
+
+<details>
+<summary>equal_string_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Equal",
+    inputs=["x", "y"],
+    outputs=["z"],
+)
+x = np.array(["string1", "string2"], dtype=np.dtype(object))
+y = np.array(["string1"], dtype=np.dtype(object))
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_string_broadcast")
+```
+
+</details>
+
+
 ### <a name="Erf"></a><a name="erf">**Erf**</a>
 
   Computes the error function of the given input tensor element-wise.
