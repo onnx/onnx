@@ -124,7 +124,7 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'mypy==0.991',
+    'mypy==1.0.0',
     'types-protobuf==3.20.4',
 ]
 
