@@ -4,8 +4,8 @@ import numpy as np
 
 import onnx
 
-from ..base import Base
-from . import expect
+from ...base import Base
+from .. import expect
 
 
 def compute_binarizer(x, threshold=None):
@@ -31,4 +31,4 @@ class Binarizer(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = compute_binarizer(x, threshold)[0]
 
-        expect(node, inputs=[x], outputs=[y], name="test_binarizer")
+        expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
