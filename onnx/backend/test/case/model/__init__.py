@@ -38,6 +38,7 @@ def expect(
 # BASE_URL = "https://download.onnxruntime.ai/onnx/models"
 BASE_URL = "onnx/backend/test/data/light/light_%s.onnx"
 
+
 def collect_testcases() -> List[TestCase]:
     """Collect model test cases defined in python/numpy code."""
 
