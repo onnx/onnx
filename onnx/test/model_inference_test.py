@@ -180,6 +180,28 @@ class TestModelInference(unittest.TestCase):
             """
         self._check_shape(model, [8, 4, 16])
 
+    def test_mi_constant_in_function(self):
+        model = """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 17, "local" : 1]
+            >
+            main (float x) => (y, z) {
+                y, z = local.expand(x)
+            }
+            <
+                opset_import: [ "" : 17 ],
+                domain: "local"
+            >
+            expand (x) => (y, z) {
+                shape1 = Constant<value = int64[2] {4,4}>()
+                shape2 = Constant<value = int64[3] {8,8,8}>()
+                z = Expand (x, shape2)
+                y = Expand (x, shape1)
+            }
+            """
+        self._check_shape(model, [4, 4], [8, 8, 8])
+
 
 if __name__ == "__main__":
     unittest.main()
