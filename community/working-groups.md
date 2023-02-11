@@ -10,13 +10,12 @@ New Working Groups are created when there is sufficient interest in a topic area
 ## Joining a working group
 Working Groups have most of their discussions on Slack. If you are interested in participating, please join the discussion in the respective Slack channels. Details about any upcoming meetings will also be shared in the Slack channel. Working Group artifacts can be found in the [working-groups repository](https://github.com/onnx/working-groups).
 
-You can find the schedule of meetings on the [LF AI wiki](https://wiki.lfai.foundation/pages/viewpage.action?pageId=18481196)
+You can find the schedule of meetings on the [LF AI wiki](https://onnx.ai/calendar)
 
 ## Active working groups
 
 | Working Group      | Objectives    |
 | ------------------ | ------------- |
-
 | [Training](https://lfaifoundation.slack.com/archives/C018K560U14) | Expand ONNX to support training as well as inference |
 | [Preprocessing](https://lfaifoundation.slack.com/archives/C02AANGFBJB) | Make data preprocessing part of ONNX |
 
