@@ -8,6 +8,8 @@ from onnx.reference.op_run import OpRun
 
 class Squeeze_1(OpRun):
     def _run(self, data, axes=None):  # type: ignore
+        if axes is None:
+            axes = getattr(self, "axes", axes)
         if isinstance(axes, np.ndarray):
             axes = tuple(axes)
         elif axes in [[], tuple()]:
