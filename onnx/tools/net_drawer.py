@@ -45,7 +45,9 @@ def _form_and_sanitize_docstring(s: str) -> str:
     return url
 
 
-def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProducer:  # noqa: N802
+def GetOpNodeProducer(  # noqa: N802
+    embed_docstring: bool = False, **kwargs: Any
+) -> _NodeProducer:
     def really_get_op_node(op: NodeProto, op_id: int) -> pydot.Node:
         if op.name:
             node_name = f"{op.name}/{op.op_type} (op#{op_id})"
