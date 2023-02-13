@@ -103,6 +103,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != '3.11'
       run: |
         python -m pip install -q onnxruntime==1.13.1
         python onnx/test/test_with_ort.py
