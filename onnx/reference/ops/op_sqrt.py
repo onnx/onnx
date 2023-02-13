@@ -12,4 +12,4 @@ class Sqrt(OpRunUnaryNum):
     def _run(self, x):  # type: ignore
         with catch_warnings():
             simplefilter("ignore")
-            return (np.sqrt(x),)
+            return (np.sqrt(x).astype(x.dtype),)

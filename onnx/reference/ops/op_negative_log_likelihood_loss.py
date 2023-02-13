@@ -66,7 +66,7 @@ def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mea
         loss = np.mean(loss)
     elif reduction == "sum":
         loss = np.sum(loss)
-    return (loss,)
+    return (loss.astype(x.dtype),)
 
 
 class NegativeLogLikelihoodLoss(OpRun):
