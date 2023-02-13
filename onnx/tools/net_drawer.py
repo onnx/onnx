@@ -45,7 +45,7 @@ def _form_and_sanitize_docstring(s: str) -> str:
     return url
 
 
-def get_op_node_producer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProducer:
+def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProducer:  # noqa: N802
     def really_get_op_node(op: NodeProto, op_id: int) -> pydot.Node:
         if op.name:
             node_name = f"{op.name}/{op.op_type} (op#{op_id})"
@@ -64,7 +64,7 @@ def get_op_node_producer(embed_docstring: bool = False, **kwargs: Any) -> _NodeP
     return really_get_op_node
 
 
-def get_pydot_graph(
+def GetPydotGraph(  # noqa: N802
     graph: GraphProto,
     name: Optional[str] = None,
     rankdir: str = "LR",
@@ -72,9 +72,7 @@ def get_pydot_graph(
     embed_docstring: bool = False,
 ) -> pydot.Dot:
     if node_producer is None:
-        node_producer = get_op_node_producer(
-            embed_docstring=embed_docstring, **OP_STYLE
-        )
+        node_producer = GetOpNodeProducer(embed_docstring=embed_docstring, **OP_STYLE)
     pydot_graph = pydot.Dot(name, rankdir=rankdir)
     pydot_nodes: Dict[str, pydot.Node] = {}
     pydot_node_counts: Dict[str, int] = defaultdict(int)
@@ -137,11 +135,11 @@ def main() -> None:
     with open(args.input, "rb") as fid:
         content = fid.read()
         model.ParseFromString(content)
-    pydot_graph = get_pydot_graph(
+    pydot_graph = GetPydotGraph(
         model.graph,
         name=model.graph.name,
         rankdir=args.rankdir,
-        node_producer=get_op_node_producer(
+        node_producer=GetOpNodeProducer(
             embed_docstring=args.embed_docstring, **OP_STYLE
         ),
     )
