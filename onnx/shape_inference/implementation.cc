@@ -284,21 +284,56 @@ class ShapeInferenceImplBase {
     }
   }
 
+  template <typename T>
+  void addTemporaryConstant(const std::string& name, const T& vector) {
+    input_data_by_name_holder[name] = ToTensor(vector);
+    input_data_by_name[name] = &input_data_by_name_holder[name];
+  }
+
   void preprocess(const NodeProto& n) {
     if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
     } else if (n.op_type() == "Constant" && n.output().size() == 1) {
+      const std::string& output_name = n.output(0);
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {
           if (attr.type() == AttributeProto::TENSOR && attr.has_t()) {
-            input_data_by_name[n.output(0)] = &attr.t();
+            if (reuse_constant_tensors) {
+              input_data_by_name[output_name] = &attr.t();
+            } else {
+              input_data_by_name_holder[output_name] = attr.t();
+              input_data_by_name[output_name] = &input_data_by_name_holder[output_name];
+            }
           } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
-            input_sparse_data_by_name[n.output(0)] = &attr.sparse_tensor();
+            if (reuse_constant_tensors) {
+              input_sparse_data_by_name[output_name] = &attr.sparse_tensor();
+            }
           }
-        } else if (attr.type() == AttributeProto::INTS && attr.name() == "value_ints") {
-          std::vector<int64_t> ints{attr.ints().begin(), attr.ints().end()};
-          input_data_by_name_holder[n.output(0)] = ToTensor(ints);
-          input_data_by_name[n.output(0)] = &input_data_by_name_holder[n.output(0)];
+        } else {
+          switch (attr.type()) {
+            case AttributeProto::INTS: {
+              std::vector<int64_t> ints{attr.ints().begin(), attr.ints().end()};
+              addTemporaryConstant(output_name, ints);
+              break;
+            }
+            case AttributeProto::INT: {
+              std::vector<int64_t> ints({attr.i()});
+              addTemporaryConstant(output_name, ints);
+              break;
+            }
+            case AttributeProto::FLOATS: {
+              std::vector<float> floats{attr.floats().begin(), attr.floats().end()};
+              addTemporaryConstant(output_name, floats);
+              break;
+            }
+            case AttributeProto::FLOAT: {
+              std::vector<float> floats({attr.f()});
+              addTemporaryConstant(output_name, floats);
+              break;
+            }
+            default:
+              break;
+          }
         }
       }
     }
@@ -486,25 +521,52 @@ class ShapeInferenceImplBase {
     }
   }
 
+  void replaceAttrRefs(NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+    auto& attributes = *n.mutable_attribute();
+    for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
+      auto& attr = *attr_iter;
+      if (!attr.ref_attr_name().empty()) {
+        // Attribute-references must be replaced by the corresponding attribute-value in the call-node
+        // if the call-node contains the attribute. Otherwise, this attribute must be removed.
+        auto entry = attr_map.find(attr.ref_attr_name());
+        if (entry != attr_map.cend()) {
+          // Copy value of attribute, but retain original name:
+          std::string name = attr.name();
+          attr = *(entry->second);
+          attr.set_name(name);
+        } else {
+          attr_iter = attributes.erase(attr_iter);
+          continue;
+        }
+      }
+      // Subgraphs must be recursively processed.
+      if (attr.has_g()) {
+        replaceAttrRefs(*attr.mutable_g(), attr_map);
+      }
+      for (auto& graph : *attr.mutable_graphs()) {
+        replaceAttrRefs(graph, attr_map);
+      }
+      ++attr_iter;
+    }
+  }
+
+  void replaceAttrRefs(GraphProto& graph, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+    for (auto& n : *graph.mutable_node()) {
+      replaceAttrRefs(n, attr_map);
+    }
+  }
+
   void process(const NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
     NodeProto copy_n(n);
-    // Add attribute information into the temporary node
-    copy_n.clear_attribute();
-    for (const auto& attr : n.attribute()) {
-      if (attr.has_ref_attr_name()) {
-        if (attr_map.count(attr.ref_attr_name())) {
-          auto copy_attr = *attr_map[attr.ref_attr_name()];
-          copy_attr.set_name(attr.name());
-          copy_n.add_attribute()->CopyFrom(copy_attr);
-        }
-      } else {
-        copy_n.add_attribute()->CopyFrom(attr);
-      }
-    }
+    replaceAttrRefs(copy_n, attr_map);
     process(copy_n);
   }
 
   void process(const FunctionProto& func_proto, InferenceContext& ctx) {
+    // Ensure Constant node tensor-attributes are copied
+    bool old_reuse_constant_tensors = reuse_constant_tensors;
+    reuse_constant_tensors = false;
+
     // Get a temporary tensor-shape map
     const auto num_func_inputs = func_proto.input_size();
     std::vector<TypeProto> types_cache(num_func_inputs);
@@ -548,6 +610,8 @@ class ShapeInferenceImplBase {
         type_proto->CopyFrom(*(iter->second));
       }
     }
+
+    reuse_constant_tensors = old_reuse_constant_tensors;
   }
 
  public:
@@ -609,6 +673,10 @@ class ShapeInferenceImplBase {
   std::vector<std::string> inference_errors;
 
   std::list<TypeProto> initializer_type_list;
+
+  // reuse_constant_tensors: controls whether we need to copy tensors occurring as attributes
+  // in Constant nodes. We avoid it for inference for graphs, but must make a copy for functions.
+  bool reuse_constant_tensors = true;
 };
 
 static void InferShapesImpl(
