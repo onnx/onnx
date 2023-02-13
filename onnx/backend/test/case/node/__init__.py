@@ -6,10 +6,12 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
-if False:
+import onnx
+
+from onnx import ONNX_ML
+if ONNX_ML:
     from . import ai_onnx_ml
 
-import onnx
 from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
