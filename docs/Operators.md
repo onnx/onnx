@@ -25925,9 +25925,9 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
   The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
-  `dims` are the dimensions of `input` and `step[i] = `1.
+  `dims` are the dimensions of `input` and `step[i] = 1`.
 
-  All negative elements of `axes` are made non-negatve by adding `r` to them, where
+  All negative elements of `axes` are made non-negative by adding `r` to them, where
   `r =rank(input)`.
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
