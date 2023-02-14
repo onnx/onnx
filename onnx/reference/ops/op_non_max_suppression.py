@@ -40,7 +40,7 @@ def max_min(lhs: float, rhs: float) -> Tuple[float, float]:
     return lhs, rhs
 
 
-def SuppressByIOU(
+def suppress_by_iou(
     boxes_data: np.ndarray,
     box_index1: int,
     box_index2: int,
@@ -247,7 +247,7 @@ class NonMaxSuppression(OpRun):
                     # Check with existing selected boxes for this class,
                     # suppress if exceed the IOU (Intersection Over Union) threshold.
                     for selected_index in selected_boxes_inside_class:
-                        if SuppressByIOU(
+                        if suppress_by_iou(
                             batch_boxes,
                             next_top_score.idx_,
                             selected_index.idx_,
