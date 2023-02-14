@@ -6383,8 +6383,8 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
   for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
   `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
   there's no zero point (zero point is supposed to be 0).
-  `y_zero_point` is not used for quantization to floate4m3 or floate5m2, only the scale but
-  the type of the attribute determines the quantization type.
+  `y_zero_point` is not used for quantization to floate4m3 or floate5m2,
+  the dequantization formula is then `y = x * x_scale` and 'x_scale' determines the output type.
 
 #### Version
 
@@ -6402,26 +6402,28 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>x</tt> : T</dt>
+<dt><tt>x</tt> : T1</dt>
 <dd>N-D quantized input tensor to be de-quantized.</dd>
-<dt><tt>x_scale</tt> : tensor(float)</dt>
+<dt><tt>x_scale</tt> : T2</dt>
 <dd>Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization.</dd>
-<dt><tt>x_zero_point</tt> (optional) : T</dt>
+<dt><tt>x_zero_point</tt> (optional) : T1</dt>
 <dd>Zero point for input 'x'. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> : tensor(float)</dt>
+<dt><tt>y</tt> : T2</dt>
 <dd>N-D full precision output tensor. It has same shape as input 'x'.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(int8), tensor(floate4m3), tensor(floate5m2), tensor(uint8), tensor(int32)</dt>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(floate4m3), tensor(floate5m2)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>'y_scale' determines the output type.</dd>
 </dl>
 
 
@@ -17917,11 +17919,13 @@ expect(
 
   The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
   The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-  The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
+  The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
   For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
-  For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
-  `y_zero_point` is not used for quantization to floate4m3 or floate5m2, only the scale but
-  the type of the attribute determines the quantization type.
+  For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+  'y_zero_point' and 'y' must have same type.
+  'y_zero_point' is not used for quantization to floate4m3 or floate5m2,
+  the quantization formula is then `y = saturate (x / y_scale)`.
+  However, the type of the attribute 'y_zero_point' still determines the quantization type.
 
 #### Version
 
@@ -17941,7 +17945,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dl>
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D full precision Input tensor to be quantized.</dd>
-<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dt><tt>y_scale</tt> : T1</dt>
 <dd>Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, or a 1-D Tensor for per-axis quantization.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
 <dd>Zero point for doing quantization to get 'y'. Shape must match y_scale. Default is uint8 with zero point of 0 if it's not specified.</dd>
@@ -17957,9 +17961,9 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(int32)</dt>
+<dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
 <dd>Constrain 'x' to float or int32 tensor.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(floate4m3), tensor(floate5m2), tensor(uint8)</dt>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(floate4m3), tensor(floate5m2)</dt>
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
 </dl>
 
