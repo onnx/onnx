@@ -823,6 +823,65 @@ void InferShapeForFunctionNode(
       generated_shape_data_by_name);
 }
 
+struct FunctionInferenceContext : public InferenceContext {
+
+  FunctionInferenceContext (
+    const FunctionProto& func_proto,
+    const std::vector<TypeProto>& input_types,
+    const std::vector<AttributeProto>& attributes
+  ) : input_types_(input_types) {
+    for (const auto& attr : attributes) {
+      attributesByName_[attr.name()] = & attr;
+    }
+    auto num_outputs = func_proto.output_size();
+    for (size_t i = 0; i < num_outputs; i++) {
+      output_types_.push_back(TypeProto());
+    }
+  }
+
+  const AttributeProto* getAttribute(const std::string& name) const override {
+    auto iter = attributesByName_.find(name);
+    if (iter == attributesByName_.end()) {
+      return nullptr;
+    } else {
+      return iter->second;
+    }
+  }
+  size_t getNumInputs() const override { return input_types_.size(); }
+  const TypeProto* getInputType(size_t index) const override {
+    return (index < input_types_.size()) ? & input_types_[index] : nullptr;
+  }
+  const TensorProto* getInputData(size_t index) const override { return nullptr; }
+  size_t getNumOutputs() const override { return output_types_.size(); }
+  TypeProto* getOutputType(size_t index) override {
+    return (index < output_types_.size()) ? & output_types_[index] : nullptr;
+  }
+  GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override { return nullptr; }
+  const SparseTensorProto* getInputSparseData(size_t index) const override { return nullptr; }
+  const TensorShapeProto* getSymbolicInput(size_t index) const override { return nullptr; }
+private:
+  const std::vector<TypeProto>& input_types_;
+  std::vector<TypeProto> output_types_;
+  std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+};
+
+bool InferenceCheck(
+  const FunctionProto& function_proto,
+  const std::vector<TypeProto>& input_types,
+  const std::vector<AttributeProto>& attributes
+) {
+  FunctionInferenceContext ctx(function_proto, input_types, attributes);
+  InferShapeForFunctionNode(
+      function_proto,
+      /*schema_registry*/ OpSchemaRegistry::Instance(),
+      ctx,
+      /*options*/ {},
+      /*model_local_functions_map*/ {},
+      /*symbol_table*/ nullptr,
+      /*generated_shape_data_by_name*/ nullptr);
+  return true;
+}
+
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& input_types,
     const std::vector<const TensorProto*>& input_data) {

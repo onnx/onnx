@@ -378,6 +378,31 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     checker::check_function(proto, ctx, checker::LexicalScopeContext());
   });
 
+  checker.def("infer_check_function", [](
+    const py::bytes& function_proto_bytes,
+    const std::vector<py::bytes> input_types_bytes,
+    const std::vector<py::bytes> attributes_bytes) -> bool {
+    FunctionProto proto{};
+    ParseProtoFromPyBytes(&proto, function_proto_bytes);
+
+    std::vector<TypeProto> input_types;
+    for (const py::bytes& bytes: input_types_bytes) {
+      TypeProto type;
+      ParseProtoFromPyBytes(&type, bytes);
+      input_types.push_back(type);
+    }
+  
+    std::vector<AttributeProto> attributes;
+    for (const py::bytes& bytes: attributes_bytes) {
+      AttributeProto attr;
+      ParseProtoFromPyBytes(&attr, bytes);
+      attributes.push_back(attr);
+    }
+  
+    shape_inference::InferenceCheck(proto, input_types, attributes);
+    return true;
+  });
+
   checker.def("check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     GraphProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
