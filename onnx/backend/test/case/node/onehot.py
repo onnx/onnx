@@ -20,7 +20,7 @@ def one_hot(indices, depth, axis=-1, dtype=np.float32):  # type: ignore
     targets = np.reshape(
         depth_range, (1,) * len(ls) + depth_range.shape + (1,) * len(rs)
     )
-    values = np.reshape(np.mod(values, depth), ls + (1,) + rs)
+    values = np.reshape(np.mod(values, depth), (*ls, 1, *rs))
     return np.asarray(targets == values, dtype=dtype)
 
 
