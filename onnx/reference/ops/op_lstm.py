@@ -146,7 +146,7 @@ class CommonLSTM(OpRun):
         Y, Y_h = self._step(
             X, R, B, W, initial_h, initial_c, P, num_directions=num_directions
         )
-
+        Y = Y.astype(X.dtype)
         return (Y,) if self.n_outputs == 1 else (Y, Y_h)  # type: ignore
 
 
