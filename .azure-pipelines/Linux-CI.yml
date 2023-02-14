@@ -116,8 +116,10 @@ jobs:
         exit 1
       fi
       if [ '$(onnx_ml)' == '1' ]; then
-        git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
+        echo "check test data for '$(onnx_ml)' == '1'"
+        git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*test_ai_onnx_ml_*'
       else
+        echo "check test data for no ONNX_ML build"
         # exclude tests only generated with ONNX_ML build
         git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*test_ai_onnx_ml_*'
       fi
