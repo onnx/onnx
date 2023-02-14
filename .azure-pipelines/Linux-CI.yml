@@ -119,7 +119,7 @@ jobs:
         git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
       else
         # exclude tests only generated with ONNX_ML build
-        git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':(exclude)*test_ai_onnx_ml_*'
+        git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*test_ai_onnx_ml_*'
       fi
       if [ $? -ne 0 ]; then
         echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
