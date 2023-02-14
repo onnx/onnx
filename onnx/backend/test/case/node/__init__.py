@@ -9,6 +9,7 @@ import numpy as np
 import onnx
 
 from onnx import ONNX_ML
+
 if ONNX_ML:
     from . import ai_onnx_ml
 
