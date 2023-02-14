@@ -114,7 +114,13 @@ jobs:
           python onnx/backend/test/stat_coverage.py
 
           git status
-          git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
+          if [ '$(onnx_ml)' == '1' ]; then
+            export exclude_onn_ml_filter=''
+          else
+            export exclude_onn_ml_filter=':!*/data/node/test_ai_onnx_ml_*'
+          fi
+          
+          git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3' exclude_onn_ml_filter
           if [ $? -ne 0 ]; then
             echo "git diff returned failures"
             exit 1
