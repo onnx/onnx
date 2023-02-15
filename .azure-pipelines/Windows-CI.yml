@@ -66,11 +66,11 @@ jobs:
       @echo "done python onnx/gen_proto.py -l"
       python onnx/gen_proto.py -l --ml
       @echo "done python onnx/gen_proto.py -l --ml"
-      
+
       if [ '$(onnx_ml)' == '1' ]; then
-        set exclude_onn_ml_filter="."
+        set exclude_onn_ml_filter=.
       else
-        set exclude_onn_ml_filter=":(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*"
+        set exclude_onn_ml_filter=:(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*
       fi
 
       @echo "start git diff --exit-code --"
