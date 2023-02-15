@@ -72,7 +72,7 @@ jobs:
         set exclude_onn_ml_filter=.
       ) else (
         @echo "exclude_onn_ml_filter=:(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*"
-        set exclude_onn_ml_filter=:(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*
+        set exclude_onn_ml_filter=":(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*"
       )
 
       @echo "start git diff --exit-code --"
