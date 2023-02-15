@@ -13,7 +13,6 @@ from onnx.onnx_pb import (
     GraphProto,
     ModelProto,
     NodeProto,
-    OperatorSetIdProto,
     TensorProto,
     TypeProto,
 )

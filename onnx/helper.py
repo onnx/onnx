@@ -339,7 +339,7 @@ def float32_to_floate4m3(fval: float, scale: float = 1.0) -> int:
     Convert a float32 value to a floate4m3 (as int).
 
     :param fval: float to convert
-    :param scale: scale
+    :param scale: scale, divide *fval* by *scale* before casting it
     :return: converted float
 
     See :ref:`onnx-detail-float8` for technical details.
@@ -395,7 +395,7 @@ def float32_to_floate5m2(fval: float, scale: float = 1.0) -> int:
     Convert a float32 value to a floate5m2 (as int).
 
     :param fval: float to convert
-    :param scale: scale
+    :param scale: scale, divide *fval* by *scale* before casting it
     :return: converted float
     """
     x = fval / scale
