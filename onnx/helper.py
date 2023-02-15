@@ -341,6 +341,8 @@ def float32_to_floate4m3(fval: float, scale: float = 1.0) -> int:
     :param fval: float to convert
     :param scale: scale
     :return: converted float
+
+    See :ref:`onnx-detail-float8` for technical details.
     """
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")

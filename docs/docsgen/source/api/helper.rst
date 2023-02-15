@@ -14,6 +14,9 @@ onnx.helper
     find_min_ir_version_for
     get_all_tensor_dtypes
     get_attribute_value
+    float32_to_bfloat16
+    float32_to_floate4m3
+    float32_to_floate5m2
     make_attribute
     make_empty_tensor_value_info
     make_function
@@ -169,3 +172,12 @@ type mappings
 .. autofunction:: onnx.helper.tensor_dtype_to_storage_tensor_dtype
 
 .. autofunction:: onnx.helper.tensor_dtype_to_string
+
+cast
+++++
+
+.. autofunction:: onnx.helper.float32_to_bfloat16
+
+.. autofunction:: onnx.helper.float32_to_floate4m3
+
+.. autofunction:: onnx.helper.float32_to_floate5m2

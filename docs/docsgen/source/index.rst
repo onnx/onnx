@@ -10,3 +10,4 @@ ONNX documentation
     intro/index
     api/index
     operators/index
+    technical/index

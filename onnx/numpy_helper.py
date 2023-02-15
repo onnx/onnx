@@ -82,7 +82,10 @@ def floate4m3_to_float32(
     :param data: a numpy array, empty dimensions are allowed if dims is None
     :param dims: if specified, the function reshapes the results
     :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified"""
+        or reshaped to dims if specified.
+
+    See :ref:`onnx-detail-float8` for technical details.
+    """
     res = _floate4m3_to_float32(data)
     if dims is None:
         return res  # type: ignore[no-any-return]
