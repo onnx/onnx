@@ -15,7 +15,6 @@ from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
 from textwrap import dedent
-from typing import Any, List
 
 import numpy as np
 import parameterized
@@ -59,8 +58,10 @@ def skip_if_no_onnxruntime(fn):
     def wrapper(*args, **kwargs):
         try:
             import onnxruntime  # pylint: disable=W0611
+
+            del onnxruntime
         except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed")  # noqa
+            raise unittest.SkipTest("onnxruntime not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -71,8 +72,10 @@ def skip_if_no_torch(fn):
     def wrapper(*args, **kwargs):
         try:
             import torch  # pylint: disable=W0611
+
+            del torch
         except ImportError:
-            raise unittest.SkipTest("torch not installed")  # noqa
+            raise unittest.SkipTest("torch not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -83,8 +86,10 @@ def skip_if_no_torchvision(fn):
     def wrapper(*args, **kwargs):
         try:
             import torchvision  # pylint: disable=W0611
+
+            del torchvision
         except ImportError:
-            raise unittest.SkipTest("torchvision not installed")  # noqa
+            raise unittest.SkipTest("torchvision not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -1037,7 +1042,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             def _run(self, x):  # type: ignore
                 return (1 / (x + self.alpha),)
 
-        class InvAlpha_(OpRun):
+        class InvAlpha2(OpRun):
             def _run(self, x):  # type: ignore
                 return (1 / (x + self.alpha),)
 
@@ -1064,11 +1069,11 @@ class TestReferenceEvaluator(unittest.TestCase):
         with self.assertRaises(TypeError):
             ReferenceEvaluator(onnx_model, new_ops=[_InvAlpha])
 
-        node1 = make_node("InvAlpha_", ["X"], ["Y"], alpha=0.5, domain="custom")
+        node1 = make_node("InvAlpha2", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(NotImplementedError):
-            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha_])
+            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha2])
 
         node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
@@ -1528,11 +1533,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 X = np.zeros((1, 1, sH, sW), dtype=np.float32)
                 X[0, 0, i, j] = 1.0
                 W = np.zeros(
-                    (
-                        1,
-                        1,
-                    )
-                    + kernel_shape,
+                    (1, 1, *kernel_shape),
                     dtype=np.float32,
                 )
                 W[0, 0, :, :] = np.minimum(

@@ -25,7 +25,7 @@ import unittest
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import (  # pylint: disable=deprecated-module
+    from distutils.version import (  # noqa: N813 # pylint: disable=deprecated-module
         StrictVersion as version,
     )
 

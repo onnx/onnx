@@ -7,7 +7,7 @@ from typing import Union, IO, Optional, TypeVar, Any
 
 import google.protobuf.message
 
-from .onnx_cpp2py_export import ONNX_ML  # noqa
+from .onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import (
     load_external_data_for_model,
     write_external_data_tensors,
@@ -51,7 +51,7 @@ from .onnx_data_pb import (
     OptionalProto,
     SequenceProto,
 )
-from .version import version as __version__  # noqa
+from .version import version as __version__
 
 # Import common subpackages so they're available when you 'import onnx'
 from . import (
