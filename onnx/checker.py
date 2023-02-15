@@ -131,9 +131,14 @@ def infer_check_function(
     input_types: Sequence[TypeProto],
     attributes: Sequence[AttributeProto]
 ) -> bool :
-    return C.infer_check_function(function.SerializeToString(),
+    result = C.infer_check_function(function.SerializeToString(),
                                   [x.SerializeToString() for x in input_types],
                                   [x.SerializeToString() for x in attributes])
+    def to_type_proto(x) -> TypeProto:
+        type_proto = onnx.TypeProto()
+        type_proto.ParseFromString(x)
+        return type_proto
+    return [to_type_proto(x) for x in result]
     
 
 ValidationError = C.ValidationError

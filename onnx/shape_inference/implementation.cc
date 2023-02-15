@@ -649,6 +649,8 @@ class ShapeInferenceImplBase {
     }
   }
 
+  const std::vector<std::string>& Errors() const { return inference_errors; }
+
  private:
   GraphProto& g;
   std::unordered_map<std::string, TypeProto*> value_types_by_name;
@@ -859,27 +861,45 @@ struct FunctionInferenceContext : public InferenceContext {
   GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override { return nullptr; }
   const SparseTensorProto* getInputSparseData(size_t index) const override { return nullptr; }
   const TensorShapeProto* getSymbolicInput(size_t index) const override { return nullptr; }
+
+  std::vector<TypeProto> popOutputTypes() {
+    return std::move(output_types_);
+  }
+
 private:
   const std::vector<TypeProto>& input_types_;
   std::vector<TypeProto> output_types_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 
-bool InferenceCheck(
+std::vector<TypeProto> InferenceCheck(
   const FunctionProto& function_proto,
   const std::vector<TypeProto>& input_types,
   const std::vector<AttributeProto>& attributes
 ) {
   FunctionInferenceContext ctx(function_proto, input_types, attributes);
-  InferShapeForFunctionNode(
-      function_proto,
-      /*schema_registry*/ OpSchemaRegistry::Instance(),
-      ctx,
-      /*options*/ {},
-      /*model_local_functions_map*/ {},
+  auto opset_imports = GetOpsetImportsFromProto(function_proto);
+  GraphProto g;
+  ShapeInferenceOptions options{true, 1, false};
+  ShapeInferenceImplBase base(
+      &g,
+      {}, // outer_scope_value_types_by_name
+      opset_imports,
+      options,
       /*symbol_table*/ nullptr,
+      /*model_local_functions_map*/ {},
+      /*schema_registry*/ OpSchemaRegistry::Instance(),
       /*generated_shape_data_by_name*/ nullptr);
-  return true;
+  base.process(function_proto, ctx);
+  auto& errors = base.Errors();
+  if (!errors.empty()) {
+      std::string all_errors = "Inference error(s): ";
+      for (const std::string& error : errors) {
+        all_errors += error + "\n";
+      }
+      fail_shape_inference(all_errors);
+    }
+  return ctx.popOutputTypes();
 }
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(

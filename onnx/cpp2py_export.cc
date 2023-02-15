@@ -381,7 +381,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   checker.def("infer_check_function", [](
     const py::bytes& function_proto_bytes,
     const std::vector<py::bytes> input_types_bytes,
-    const std::vector<py::bytes> attributes_bytes) -> bool {
+    const std::vector<py::bytes> attributes_bytes) -> std::vector<py::bytes> {
     FunctionProto proto{};
     ParseProtoFromPyBytes(&proto, function_proto_bytes);
 
@@ -399,8 +399,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       attributes.push_back(attr);
     }
   
-    shape_inference::InferenceCheck(proto, input_types, attributes);
-    return true;
+    std::vector<TypeProto> output_types = shape_inference::InferenceCheck(proto, input_types, attributes);
+    std::vector<py::bytes> result;
+    for (auto& type_proto: output_types) {
+      std::string out;
+      type_proto.SerializeToString(&out);
+      result.push_back(py::bytes(out));
+    }
+    return result;
   });
 
   checker.def("check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {

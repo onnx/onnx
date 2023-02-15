@@ -475,7 +475,7 @@ void InferShapeForFunctionNode(
 ///
 /// Apply type-and-shape-inference based checks to a Function body.
 ///
-bool InferenceCheck(
+std::vector<TypeProto> InferenceCheck(
   const FunctionProto& func_proto,
   const std::vector<TypeProto>& input_types,
   const std::vector<AttributeProto>& attributes
