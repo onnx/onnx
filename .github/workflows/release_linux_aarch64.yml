@@ -24,7 +24,7 @@ jobs:
       img: quay.io/pypa/manylinux2014_aarch64
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
     - name: Checkout submodules
       shell: bash
       run: |
@@ -33,7 +33,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
       # setting up qemu for enabling aarch64 binary execution on x86 machine
-    - uses: docker/setup-qemu-action@v1
+    - uses: docker/setup-qemu-action@27d0a4f181a40b142cce983c5393082c365d1480 # v1.2.0
       with:
         # TODO: freeze version for now since the latest one cannot use jupyter
         image: tonistiigi/binfmt:qemu-v6.0.0-12
@@ -76,7 +76,7 @@ jobs:
           pytest && \
           deactivate'
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@3446296876d12d4e3a0f3145a3c87e67bf0a16b5 # v1.0.0
       with:
         name: wheels
         path: dist
