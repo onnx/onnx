@@ -884,7 +884,7 @@ def printable_attribute(
     def str_int(i: int) -> str:
         return str(i)
 
-    _T = TypeVar("_T")  # noqa
+    _T = TypeVar("_T")
 
     def str_list(str_elem: Callable[[_T], str], xs: Sequence[_T]) -> str:
         return "[" + ", ".join(map(str_elem, xs)) + "]"
