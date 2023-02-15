@@ -347,20 +347,26 @@ def float32_to_floate4m3(fval: float, scale: float = 1.0) -> int:
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
     ret = (b & 0x80000000) >> 24  # sign
+    # handle specific cases
     if (b & 0x7FC00000) == 0x7FC00000:
         return 0xFF | ret
     e = (b & 0x7F800000) >> 23  # exponent
     m = b & 0x007FFFFF  # mantissa
 
     if e != 0:
+        # exponent is not zero, when it is, closest float 8 is zero
         if e < 117:
+            # exponent is too small
             pass
         elif e < 118:
+            # float 8 exponent is zero
             ret |= 1
             if (m >> 23) & 1:
                 # rounding
                 ret += 1
         elif e < 121:  # 127 - 7 + 1
+            # float 8 exponent is zero except if the rounding
+            # moves the next float 8 and this one needs an exponent != 0
             d = 120 - e
             ret |= 1 << (2 - d)
             ret |= m >> (21 + d)
@@ -368,6 +374,7 @@ def float32_to_floate4m3(fval: float, scale: float = 1.0) -> int:
                 # rounding
                 ret += 1
         elif e < 136:  # 127 + 8 + 1
+            # float 8 exponent is not zero
             ex = e - 120  # 127 - 7
             if ex == 0:
                 ret |= 0x4
@@ -394,21 +401,27 @@ def float32_to_floate5m2(fval: float, scale: float = 1.0) -> int:
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
     ret = (b & 0x80000000) >> 24  # sign
+    # handle specific cases
     if (b & 0x7FC00000) == 0x7FC00000:
         return 0xFF | ret
     e = (b & 0x7F800000) >> 23  # exponent
     m = b & 0x007FFFFF  # mantissa
 
     if e != 0:
+        # exponent is not zero, when it is, closest float 8 is zero
         if e < 110:
+            # exponent is too small
             pass
         elif e < 111:
+            # float 8 exponent is zero
             ret |= 1
             if (m >> 23) & 1:
                 # rounding
                 # may be unused
                 ret += 1
         elif e < 113:  # 127 - 15 + 1
+            # float 8 exponent is zero except if the rounding
+            # moves the next float 8 and this one needs an exponent != 0
             d = 112 - e
             ret |= 1 << (1 - d)
             ret |= m >> (22 + d)
@@ -416,6 +429,7 @@ def float32_to_floate5m2(fval: float, scale: float = 1.0) -> int:
                 # rounding
                 ret += 1
         elif e < 144:  # 127 + 16 + 1
+            # float 8 exponent is not zero
             ex = e - 112  # 127 - 15
             ret |= ex << 2
             ret |= m >> 21
@@ -423,8 +437,10 @@ def float32_to_floate5m2(fval: float, scale: float = 1.0) -> int:
                 # rounding
                 ret += 1
         elif e == 255 and m == 0:  # inf
+            # infinity
             ret |= 124
         else:
+            # highest values
             ret |= 123
     return int(ret)
 

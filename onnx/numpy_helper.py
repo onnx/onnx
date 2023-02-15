@@ -33,6 +33,7 @@ def bfloat16_to_float32(
 
 
 def _floate4m3_to_float32_scalar(ival: int) -> np.float32:
+    # handling specials cases.
     if ival < 0 or ival > 255:
         raise ValueError(f"{ival} is not a float8.")
     if ival == 255:
@@ -45,26 +46,26 @@ def _floate4m3_to_float32_scalar(ival: int) -> np.float32:
     sign = ival & 0x80
     res = sign << 24
     if expo == 0:
+        # The mantissa has a different meaning in that case.
         if mant > 0:
+            # if not zero, new float32 exponent is float 32 bias - 7
             expo = 0x7F - 7
             if mant & 0x4 == 0:
+                # if the mantissa is .0??
                 mant &= 0x3
                 mant <<= 1
                 expo -= 1
             if mant & 0x4 == 0:
-                mant &= 0x3
-                mant <<= 1
-                expo -= 1
-            if mant & 0x4 == 0:
+                # if the mantissa is .00?
                 mant &= 0x3
                 mant <<= 1
                 expo -= 1
             res |= (mant & 0x3) << 21
             res |= expo << 23
     else:
+        # simple case
         res |= mant << 20
-        expo -= 0x7
-        expo += 0x7F
+        expo += 0x7F - 0x7
         res |= expo << 23
     f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
     return f
@@ -93,6 +94,7 @@ def floate4m3_to_float32(
 
 
 def _floate5m2_to_float32_scalar(ival: int) -> np.float32:
+    # handle specific cases
     if ival < 0 or ival > 255:
         raise ValueError(f"{ival} is not a float8.")
     if ival in {253, 254, 255, 125, 126, 127}:
@@ -107,22 +109,20 @@ def _floate5m2_to_float32_scalar(ival: int) -> np.float32:
     sign = ival & 0x80
     res = sign << 24
     if expo == 0:
+        # The mantissa has a different meaning in that case.
         if mant > 0:
             expo = 0x7F - 15
             if mant & 0x2 == 0:
-                mant &= 0x1
-                mant <<= 1
-                expo -= 1
-            if mant & 0x2 == 0:
+                # if the mantissa is .0?
                 mant &= 0x1
                 mant <<= 1
                 expo -= 1
             res |= (mant & 0x1) << 22
             res |= expo << 23
     else:
+        # simple case
         res |= mant << 21
-        expo -= 15
-        expo += 0x7F
+        expo += 0x7F - 15
         res |= expo << 23
     f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
     return f
