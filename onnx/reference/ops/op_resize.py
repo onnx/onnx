@@ -389,14 +389,18 @@ class Resize(OpRun):
                     f"antilias={antialias!r} is not supported for mode={mode!r}."
                 )
             if nearest_mode is not None:
-                fct = lambda x, scale_factor: _nearest_coeffs(  # noqa
-                    x, mode=nearest_mode
-                )
+
+                def fct(x, scale_factor):
+                    return _nearest_coeffs(x, mode=nearest_mode)
+
             else:
                 fct = _nearest_coeffs
         elif mode == "cubic":
             fct_ = _cubic_coeffs_antialias if antialias else _cubic_coeffs
-            fct = lambda x, scale: fct_(x, scale, A=cubic_coeff_a)  # noqa
+
+            def fct(x, scale):
+                return fct_(x, scale, A=cubic_coeff_a)
+
         elif mode == "linear":
             fct = _linear_coeffs_antialias if antialias else _linear_coeffs
         else:
