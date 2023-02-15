@@ -63,8 +63,10 @@ jobs:
 
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
+      @echo "done python onnx/gen_proto.py -l"
       python onnx/gen_proto.py -l --ml
-
+      @echo "done python onnx/gen_proto.py -l --ml"
+      
       if [ '$(onnx_ml)' == '1' ]; then
         set exclude_onn_ml_filter="."
       else

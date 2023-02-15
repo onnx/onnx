@@ -7,7 +7,6 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 
 import onnx
-from onnx import ONNX_ML
 from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
