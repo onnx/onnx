@@ -7,7 +7,7 @@ proto is legal.
 
 import functools
 import sys
-from typing import Any, Callable, Sequence, Type, TypeVar, Union, cast
+from typing import Any, Callable, List, Sequence, Type, TypeVar, Union, cast
 
 from google.protobuf.message import Message
 
@@ -129,16 +129,20 @@ def check_model(model: Union[ModelProto, str, bytes], full_check: bool = False) 
 def infer_check_function(
     function: FunctionProto,
     input_types: Sequence[TypeProto],
-    attributes: Sequence[AttributeProto]
-) -> bool :
-    result = C.infer_check_function(function.SerializeToString(),
-                                  [x.SerializeToString() for x in input_types],
-                                  [x.SerializeToString() for x in attributes])
+    attributes: Sequence[AttributeProto],
+) -> List[TypeProto]:
+    result = C.infer_check_function(
+        function.SerializeToString(),
+        [x.SerializeToString() for x in input_types],
+        [x.SerializeToString() for x in attributes],
+    )
+
     def to_type_proto(x) -> TypeProto:
         type_proto = onnx.TypeProto()
         type_proto.ParseFromString(x)
         return type_proto
+
     return [to_type_proto(x) for x in result]
-    
+
 
 ValidationError = C.ValidationError
