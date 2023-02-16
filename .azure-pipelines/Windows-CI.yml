@@ -63,35 +63,41 @@ jobs:
 
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
-      @echo "done python onnx/gen_proto.py -l"
       python onnx/gen_proto.py -l --ml
-      @echo "done python onnx/gen_proto.py -l --ml"
 
       IF %ONNX_ML% EQU 1 (
-        @echo "exclude_onn_ml_filter=."
-        set exclude_onn_ml_filter=.
-      ) else (
-        @echo "exclude_onn_ml_filter=:(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*"
-        set exclude_onn_ml_filter=":(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*"
+        git diff --exit-code -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3
       )
-
-      @echo "start git diff --exit-code --"
-      git diff --exit-code -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3 %exclude_onn_ml_filter%
+      ELSE (
+        git diff --exit-code -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3 :(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*
+      )
 
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "git diff returned failures"
         EXIT 1
       )
-      @echo "done git diff --exit-code --"
 
       python onnx/backend/test/cmd_tools.py generate-data --clean
       git status
-      git diff --exit-code -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 :!*output_*.pb :!*input_*.pb %exclude_onn_ml_filter%
+      IF %ONNX_ML% EQU 1 (
+        git diff --exit-code -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 :!*output_*.pb :!*input_*.pb
+      )
+      ELSE (
+        git diff --exit-code -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 :!*output_*.pb :!*input_*.pb :(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*
+      )
+
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "git diff for test generation returned failures. Please check updated node test files"
         EXIT 1
       )
-      git diff --exit-code --diff-filter=ADR -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 "exclude_onn_ml_filter"
+
+      IF %ONNX_ML% EQU 1 (
+        git diff --exit-code --diff-filter=ADR -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3
+      )
+      ELSE (
+        git diff --exit-code --diff-filter=ADR -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 :(exclude)onnx/backend/test/data/node/test_ai_onnx_ml_*
+      )
+
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)."
         EXIT 1
