@@ -20,6 +20,9 @@ on:
   schedule:
     - cron: '33 6 * * 5'
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 jobs:
   analyze:
     name: Analyze
