@@ -425,6 +425,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         os.path.abspath(os.path.dirname(__file__)), "onnx_backend_test_code"
     )
 
+    # TODO: move this out and parameterize the test
     @classmethod
     def add_test_methods(cls):
         for folder in ["node", "pytorch-converted", "pytorch-operator", "simple"]:
@@ -512,19 +513,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         feeds = {input_names[i]: inputs[i] for i in range(len(inputs))}
         got = obj.run(None, feeds)
         return got
-
-    # def test_onnx_test_run_test_abs(self):
-    #     done = 0
-    #     for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
-    #         self.assertIn(te.name, repr(te))
-    #         self.assertGreater(len(te), 0)
-    #         te.run(
-    #             TestOnnxBackEndWithReferenceEvaluator.load_fct,
-    #             TestOnnxBackEndWithReferenceEvaluator.run_fct,
-    #             comment="[runtime=ReferenceEvaluator]",
-    #         )
-    #         done += 1
-    #     self.assertEqual(done, 1)
 
     def common_test_onnx_test_run(
         self,
