@@ -213,12 +213,6 @@ class CommonPool(OpRun):
         strides=None,
     ):
 
-        auto_pad = auto_pad or self.auto_pad  # type: ignore
-        ceil_mode = ceil_mode or self.ceil_mode  # type: ignore
-        kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
-        pads = pads or self.pads  # type: ignore
-        strides = strides or self.strides  # type: ignore
-
         if pooling_type == "MAX" and dilations is None:
             dilations = [1 for s in kernel_shape]
         if pads is None:
