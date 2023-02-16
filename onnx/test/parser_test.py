@@ -2,7 +2,7 @@
 import unittest
 
 import onnx
-from onnx import GraphProto, checker, helper, parser
+from onnx import GraphProto, checker, parser
 
 
 class TestBasicFunctions(unittest.TestCase):
