@@ -89,7 +89,7 @@ def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.
     if scale > 1.0:  # Antialias is applied when downsampling
         scale = 1.0
 
-    def W(x: float) -> float:
+    def compute_coeff(x: float) -> float:
         x = abs(x)
         x_2 = x * x
         x_3 = x * x_2
@@ -102,7 +102,7 @@ def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.
     i_start = int(np.floor(-2 / scale) + 1)
     i_end = 2 - i_start
     args = [scale * (i - ratio) for i in range(i_start, i_end)]
-    coeffs = [W(x) for x in args]
+    coeffs = [compute_coeff(x) for x in args]
     return np.array(coeffs) / sum(coeffs)
 
 
@@ -389,14 +389,18 @@ class Resize(OpRun):
                     f"antilias={antialias!r} is not supported for mode={mode!r}."
                 )
             if nearest_mode is not None:
-                fct = lambda x, scale_factor: _nearest_coeffs(  # noqa
-                    x, mode=nearest_mode
-                )
+
+                def fct(x, scale_factor):
+                    return _nearest_coeffs(x, mode=nearest_mode)
+
             else:
                 fct = _nearest_coeffs
         elif mode == "cubic":
             fct_ = _cubic_coeffs_antialias if antialias else _cubic_coeffs
-            fct = lambda x, scale: fct_(x, scale, A=cubic_coeff_a)  # noqa
+
+            def fct(x, scale):
+                return fct_(x, scale, A=cubic_coeff_a)
+
         elif mode == "linear":
             fct = _linear_coeffs_antialias if antialias else _linear_coeffs
         else:
@@ -420,7 +424,7 @@ class Resize(OpRun):
         not_axes = [a for a in range(len(X.shape)) if a not in axes]
         perm = tuple(not_axes + axes)
         permuted = np.transpose(X, perm)
-        new_shape = (-1,) + tuple(X.shape[a] for a in axes)
+        new_shape = (-1, *tuple(X.shape[a] for a in axes))
         reshaped = permuted.reshape(new_shape)
         res = None
         for i in range(reshaped.shape[0]):
@@ -436,7 +440,7 @@ class Resize(OpRun):
                 extrapolation_value=extrapolation_value,  # type: ignore
             ).astype(X.dtype)
             if res is None:
-                res = np.empty((reshaped.shape[0],) + output.shape, dtype=output.dtype)
+                res = np.empty((reshaped.shape[0], *output.shape), dtype=output.dtype)
             res[i] = output
 
         res_reshaped = res.reshape((tuple(X.shape[a] for a in not_axes) + res[0].shape))  # type: ignore
