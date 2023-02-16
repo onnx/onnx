@@ -46,7 +46,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)", "tensor(int32)"},
-            "Constrain 'x' to float or int32 tensor.")
+            "Constrain 'x' to float, float16, bfloat16 or int32 tensor.")
         .TypeConstraint(
             "T2",
             {"tensor(int8)", "tensor(uint8)", "tensor(floate4m3)", "tensor(floate5m2)"},
