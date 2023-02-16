@@ -101,7 +101,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
-|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
+|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
@@ -17083,6 +17083,8 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
   3) `edge` - pads with the edge values of array
 
+  4) `wrap` - wrap-around padding as if the data tensor forms a torus
+
 
   Example 1 (`constant` mode):
 
@@ -17148,17 +17150,40 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
   ]
   ```
 
+  Example 4 (`wrap` mode):
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [2, 1, 1, 1]
+
+  mode = 'wrap'
+
+  output = [
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
+      [1.2, 1.0, 1.2, 1.0],
+  ]
+  ```
+
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 19 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-18">18</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>mode</tt> : string (default is constant)</dt>
-<dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
+<dd>Supported modes: `constant`(default), `reflect`, `edge`, `wrap`</dd>
 </dl>
 
 #### Inputs (2 - 4)
@@ -17246,10 +17271,10 @@ expect(
 
 
 <details>
-<summary>reflection_and_edge_pad</summary>
+<summary>reflection_edge_and_wrap_pad</summary>
 
 ```python
-for mode in ["edge", "reflect"]:
+for mode in ["edge", "reflect", "wrap"]:
     node = onnx.helper.make_node(
         "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
     )
