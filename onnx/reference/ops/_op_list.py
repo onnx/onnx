@@ -38,7 +38,12 @@ from .op_asinh import Asinh
 from .op_atan import Atan
 from .op_atanh import Atanh
 from .op_attribute_has_value import AttributeHasValue
-from .op_average_pool import AveragePool
+from .op_average_pool import (
+    AveragePool_1,
+    AveragePool_7,
+    AveragePool_11,
+    AveragePool_19,
+)
 from .op_batch_normalization import (
     BatchNormalization_6,
     BatchNormalization_9,
