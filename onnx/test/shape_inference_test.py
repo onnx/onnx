@@ -7001,10 +7001,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         tensor_type_proto = helper.make_tensor_type_proto(
             elem_type=TensorProto.DOUBLE, shape=[2, 1, 4]
         )
-        input_tensor_val_info = helper.make_value_info(
-            name="input", type_proto=tensor_type_proto
-        )
-        output_tensor_val_into = helper.make_value_info(
+        output_tensor_val_info = helper.make_value_info(
             name="output", type_proto=tensor_type_proto
         )
         graph = self._make_graph(
@@ -7014,7 +7011,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self._assert_inferred(graph, [output_tensor_val_into])  # type: ignore
+        self._assert_inferred(graph, [output_tensor_val_info])  # type: ignore
 
     def test_optional_tensor_get_element(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
