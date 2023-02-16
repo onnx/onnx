@@ -2,6 +2,7 @@
 
 # isort:skip_file
 import os
+from pathlib import Path
 import typing
 from typing import Union, IO, Optional, TypeVar, Any
 
@@ -87,7 +88,7 @@ def _save_bytes(content: bytes, f: Union[IO[bytes], str]) -> None:
 
 
 def _get_file_path(f: Union[IO[bytes], str]) -> Optional[str]:
-    if isinstance(f, str):
+    if isinstance(f, str) or isinstance(f, Path):
         return os.path.abspath(f)
     if hasattr(f, "name"):
         return os.path.abspath(f.name)
