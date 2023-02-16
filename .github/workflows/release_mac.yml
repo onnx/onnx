@@ -13,6 +13,10 @@ on:
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
 env:
   MACOSX_DEPLOYMENT_TARGET: 10.12
+  
+permissions:
+  contents: read
+
 
 jobs:
   build:
