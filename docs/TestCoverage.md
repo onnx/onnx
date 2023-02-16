@@ -1041,7 +1041,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### AveragePool
-There are 13 test cases, listed as following:
+There are 14 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
@@ -1125,6 +1125,30 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_default")
+```
+
+</details>
+<details>
+<summary>averagepool_2d_dilations</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[3, 3],
+    strides=[1, 1],
+    dilations=[2, 2],
+    ceil_mode=True,
+)
+x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
 ```
 
 </details>
@@ -21364,11 +21388,12 @@ densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 1
 pads: 1
 strides: 1
@@ -21443,11 +21468,12 @@ inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 2
 pads: 2
 strides: 2
@@ -21522,11 +21548,12 @@ inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21601,11 +21628,12 @@ resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21680,11 +21708,12 @@ shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21764,11 +21793,12 @@ squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21848,11 +21878,12 @@ vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21932,11 +21963,12 @@ zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
