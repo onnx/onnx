@@ -11429,10 +11429,10 @@ expect(
 
 </details>
 <details>
-<summary>reflection_and_edge_pad</summary>
+<summary>reflection_edge_and_wrap_pad</summary>
 
 ```python
-for mode in ["edge", "reflect"]:
+for mode in ["edge", "reflect", "wrap"]:
     node = onnx.helper.make_node(
         "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
     )
