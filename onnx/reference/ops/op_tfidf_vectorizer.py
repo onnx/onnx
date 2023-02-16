@@ -92,10 +92,10 @@ class NgramPart:
 
 
 class WeightingCriteria(IntEnum):
-    kNone = 0
-    kTF = 1
-    kIDF = 2
-    kTFIDF = 3
+    NONE = 0
+    TF = 1
+    IDF = 2
+    TFIDF = 3
 
 
 def populate_grams(
@@ -130,11 +130,11 @@ class TfIdfVectorizer(OpRun):
         mode = self.mode  # type: ignore
 
         if mode == "TF":
-            self.weighting_criteria_ = WeightingCriteria.kTF
+            self.weighting_criteria_ = WeightingCriteria.TF
         elif mode == "IDF":
-            self.weighting_criteria_ = WeightingCriteria.kIDF
+            self.weighting_criteria_ = WeightingCriteria.IDF
         elif mode == "TFIDF":
-            self.weighting_criteria_ = WeightingCriteria.kTFIDF
+            self.weighting_criteria_ = WeightingCriteria.TFIDF
 
         self.min_gram_length_ = self.min_gram_length  # type: ignore
         self.max_gram_length_ = self.max_gram_length  # type: ignore
@@ -205,12 +205,12 @@ class TfIdfVectorizer(OpRun):
         Y = np.empty((total_dims,), dtype=np.float32)
 
         w = self.weights_
-        if self.weighting_criteria_ == WeightingCriteria.kTF:
+        if self.weighting_criteria_ == WeightingCriteria.TF:
             i = 0
             for f in frequencies:
                 Y[i] = f
                 i += 1
-        elif self.weighting_criteria_ == WeightingCriteria.kIDF:
+        elif self.weighting_criteria_ == WeightingCriteria.IDF:
             if len(w) > 0:
                 p = 0
                 for _batch in range(B):
@@ -222,7 +222,7 @@ class TfIdfVectorizer(OpRun):
                 for f in frequencies:
                     Y[p] = 1 if f > 0 else 0
                     p += 1
-        elif self.weighting_criteria_ == WeightingCriteria.kTFIDF:
+        elif self.weighting_criteria_ == WeightingCriteria.TFIDF:
             if len(w) > 0:
                 p = 0
                 for _batch in range(B):

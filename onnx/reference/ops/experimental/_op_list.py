@@ -2,15 +2,13 @@
 # pylint: disable=C0415,R0912,W0611,W0603
 
 import textwrap
-from typing import Any, Dict
-from typing import Optional as TOptional
-from typing import Union
+from typing import Any, Dict, Union
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
 
 from ._op_run_experimental import OpRunExperimental
-from .op_im2col import Im2Col
+from .op_im2col import Im2Col  # noqa: F401
 
 
 def _build_registered_operators() -> Dict[

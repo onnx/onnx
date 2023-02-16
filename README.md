@@ -45,7 +45,7 @@ If you think some operator should be added to ONNX specification, please read
 
 # Community meetings
 
-The schedules of the regular meetings of the Steering Committee, the working groups and the SIGs can be found [here](https://onnx.ai/calender)
+The schedules of the regular meetings of the Steering Committee, the working groups and the SIGs can be found [here](https://onnx.ai/calendar)
 
 Community Meetups are held at least once a year. Content from previous community meetups are at:
 
