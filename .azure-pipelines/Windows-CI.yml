@@ -84,7 +84,7 @@ jobs:
         EXIT 1
       )
 
-      git diff --exit-code --diff-filter=ADR -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 "exclude_onn_ml_filter"
+      git diff --exit-code --diff-filter=ADR -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 %exclude_onn_ml_filter%
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)."
         EXIT 1
