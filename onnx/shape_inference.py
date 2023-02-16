@@ -4,11 +4,11 @@ complete.
 
 """
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C
-from onnx import ModelProto
+from onnx import AttributeProto, FunctionProto, ModelProto, TypeProto
 
 
 def infer_shapes(
@@ -129,6 +129,25 @@ def infer_node_outputs(
         ir_version,
     )  # type: ignore[call-arg]
     return {key: onnx.TypeProto.FromString(out) for key, out in outputs.items()}
+
+
+def infer_function_output_types(
+    function: FunctionProto,
+    input_types: Sequence[TypeProto],
+    attributes: Sequence[AttributeProto],
+) -> List[TypeProto]:
+    result = C.infer_function_output_types(
+        function.SerializeToString(),
+        [x.SerializeToString() for x in input_types],
+        [x.SerializeToString() for x in attributes],
+    )
+
+    def to_type_proto(x) -> TypeProto:
+        type_proto = onnx.TypeProto()
+        type_proto.ParseFromString(x)
+        return type_proto
+
+    return [to_type_proto(x) for x in result]
 
 
 InferenceError = C.InferenceError

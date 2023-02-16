@@ -3,7 +3,6 @@ import unittest
 from typing import Sequence
 
 import onnx
-import onnx.checker
 import onnx.helper
 import onnx.parser
 import onnx.shape_inference
@@ -20,7 +19,7 @@ class TestFunctionInference(TestShapeInferenceHelper):
         expected_output_types: Sequence[TypeProto],
     ):
         function = onnx.parser.parse_function(function_text)
-        result = onnx.checker.infer_check_function(function, input_types, attributes)
+        result = onnx.shape_inference.infer_function_output_types(function, input_types, attributes)
         self.assertEqual(len(expected_output_types), len(result))
         for expected, actual in zip(expected_output_types, result):
             self._compare_value_infos(expected, actual)
@@ -34,7 +33,7 @@ class TestFunctionInference(TestShapeInferenceHelper):
         function = onnx.parser.parse_function(function_text)
 
         def invoke_inference():
-            onnx.checker.infer_check_function(function, input_types, attributes)
+            onnx.shape_inference.infer_function_output_types(function, input_types, attributes)
 
         self.assertRaises(onnx.shape_inference.InferenceError, invoke_inference)
 

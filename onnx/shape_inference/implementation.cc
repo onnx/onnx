@@ -872,7 +872,7 @@ private:
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 
-std::vector<TypeProto> InferenceCheck(
+std::vector<TypeProto> InferFunctionOutputTypes(
   const FunctionProto& function_proto,
   const std::vector<TypeProto>& input_types,
   const std::vector<AttributeProto>& attributes
