@@ -13,7 +13,6 @@ from onnx.onnx_pb import (
     GraphProto,
     ModelProto,
     NodeProto,
-    OperatorSetIdProto,
     TypeProto,
 )
 
@@ -299,11 +298,12 @@ def expect(
     ) -> List[TypeProto]:
         if node_inputs:
             if node_inputs[0] != "":
-                return [present_value_info[0].type] + merge(
-                    node_inputs[1:], present_value_info[1:]
-                )
+                return [
+                    present_value_info[0].type,
+                    *merge(node_inputs[1:], present_value_info[1:]),
+                ]
             else:
-                return [TypeProto()] + merge(node_inputs[1:], present_value_info)
+                return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
         return []
 
     merged_types = merge(list(node.input), inputs_vi)

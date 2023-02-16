@@ -5255,7 +5255,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R, layout=layout)
+gru = GRUHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = gru.step()
 expect(
     node,
@@ -5288,7 +5288,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R)
+gru = GRUHelper(X=input, W=W, R=R)
 _, Y_h = gru.step()
 expect(
     node,
@@ -5334,7 +5334,7 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRUHelper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
 expect(
     node,
@@ -5379,7 +5379,7 @@ W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRUHelper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
 expect(
     node,
@@ -7198,7 +7198,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, layout=layout)
+lstm = LSTMHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = lstm.step()
 expect(
     node,
@@ -7231,7 +7231,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R)
+lstm = LSTMHelper(X=input, W=W, R=R)
 _, Y_h = lstm.step()
 expect(
     node,
@@ -7277,7 +7277,7 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
+lstm = LSTMHelper(X=input, W=W, R=R, B=B)
 _, Y_h = lstm.step()
 expect(
     node,
@@ -7324,7 +7324,7 @@ P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(
     np.float32
 )
 
-lstm = LSTM_Helper(
+lstm = LSTMHelper(
     X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h
 )
 _, Y_h = lstm.step()
@@ -11846,7 +11846,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R, layout=layout)
+rnn = RNNHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = rnn.step()
 expect(
     node,
@@ -11874,7 +11874,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R)
+rnn = RNNHelper(X=input, W=W, R=R)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -11913,7 +11913,7 @@ W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
 R_B = np.zeros((1, hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNNHelper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -11953,7 +11953,7 @@ W_B = np.random.randn(1, hidden_size).astype(np.float32)
 R_B = np.random.randn(1, hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNNHelper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
 expect(
     node,

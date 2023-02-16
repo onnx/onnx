@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-class GRU_Helper:
+class GRUHelper:
     def __init__(self, **params: Any) -> None:
         # GRU Input Names
         X = "X"
@@ -135,7 +135,7 @@ class GRU(Base):
             (1, number_of_gates * hidden_size, hidden_size)
         ).astype(np.float32)
 
-        gru = GRU_Helper(X=input, W=W, R=R)
+        gru = GRUHelper(X=input, W=W, R=R)
         _, Y_h = gru.step()
         expect(
             node,
@@ -177,7 +177,7 @@ class GRU(Base):
         R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
         B = np.concatenate((W_B, R_B), axis=1)
 
-        gru = GRU_Helper(X=input, W=W, R=R, B=B)
+        gru = GRUHelper(X=input, W=W, R=R, B=B)
         _, Y_h = gru.step()
         expect(
             node,
@@ -218,7 +218,7 @@ class GRU(Base):
         R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
         B = np.concatenate((W_B, R_B), axis=1)
 
-        gru = GRU_Helper(X=input, W=W, R=R, B=B)
+        gru = GRUHelper(X=input, W=W, R=R, B=B)
         _, Y_h = gru.step()
         expect(
             node,
@@ -252,7 +252,7 @@ class GRU(Base):
             (1, number_of_gates * hidden_size, hidden_size)
         ).astype(np.float32)
 
-        gru = GRU_Helper(X=input, W=W, R=R, layout=layout)
+        gru = GRUHelper(X=input, W=W, R=R, layout=layout)
         Y, Y_h = gru.step()
         expect(
             node,
