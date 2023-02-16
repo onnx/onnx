@@ -16,7 +16,7 @@ from functools import wraps
 from io import StringIO
 from textwrap import dedent
 
-import numpy as np  # type: ignore
+import numpy as np
 import parameterized
 from numpy.testing import assert_allclose  # type: ignore
 
@@ -1661,8 +1661,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
                 output = fold(torch.from_numpy(X)).numpy()
                 got = sess.run(None, {"X": X, "B": b_shape, "I": i_shape})
-                # print(output)
-                # print(got)
                 assert_allclose(output, got[0])
 
     @skip_if_no_torch
@@ -2080,12 +2078,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             "B": np.array([0, 0, 0, 0], dtype=np.float32),
         }
 
-        # import torch
-        # ex = torch.nn.functional.conv_transpose2d(
-        #     torch.Tensor(feeds["X"]), torch.Tensor(feeds["W"]),
-        #     bias=None, stride=1, padding=1, output_padding=0, groups=1, dilation=1)
-        # print(ex)
-
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         expected = np.array(
@@ -2137,7 +2129,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             ["Y"],
             auto_pad="SAME_UPPER",
             strides=[2, 2],
-            # output_shape=[6, 6],
         )
         graph = make_graph([node], "g", [X, W, B], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
@@ -2171,10 +2162,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             dtype=np.float32,
         )
 
-        # import onnxruntime
-        # ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString(), providers=["CPUExecutionProvider"])
-        # got0 = ref0.run(None, feeds)
-
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
@@ -2203,7 +2190,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         frame_step = int(feeds["frame_step"])
         onesided_length = (frame_length // 2) + 1
         nstfts = ((feeds["signal"].shape[1] - frame_length) // frame_step) + 1
-        # [batch_size][frames][frame_length][2]
         expected = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
         for i in range(nstfts):
             start = i * frame_step
@@ -2211,18 +2197,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             complex_out = np.fft.fft(signal[0, start:stop, 0])
             c_out = complex_out[0:onesided_length]
             expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
-
-        # import torch
-        # correspondance with torch
-        # hop_length = frame_step
-        # window = np.ones((frame_length,), dtype=np.float32)
-        # ex = torch.stft(
-        #      torch.Tensor(feeds["signal"][:, :, 0]),
-        #      n_fft=frame_length, window=torch.Tensor(window),
-        #      hop_length=hop_length, win_length=frame_length,
-        #      onesided=True, return_complex=True, center=False,
-        #      normalized=False)
-        # ex = np.transpose(ex.numpy(), [0, 2, 1])
 
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
@@ -2256,7 +2230,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         frame_step = int(feeds["frame_step"])
         onesided_length = (frame_length // 2) + 1
         nstfts = 1 + (signal.shape[1] - window.shape[0]) // 8
-        # [batch_size][frames][frame_length][2]
         expected = np.empty([1, nstfts, onesided_length, 2], dtype=np.float32)
         for i in range(nstfts):
             start = i * frame_step
@@ -2266,16 +2239,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             ]
             c_out = complex_out[0:onesided_length]
             expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
-
-        # import torch
-        # hop_length = frame_step
-        # ex = torch.stft(
-        #      torch.Tensor(feeds["signal"][:, :, 0]),
-        #      n_fft=frame_length, window=torch.Tensor(window),
-        #      hop_length=hop_length, win_length=frame_length,
-        #      onesided=True, return_complex=True, center=False,
-        #      normalized=False)
-        # ex = np.transpose(ex.numpy(), [0, 2, 1])
 
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)

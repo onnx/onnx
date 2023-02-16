@@ -6,12 +6,10 @@ import os
 import unittest
 from os.path import join
 
-import pytest
-
 from onnx import ModelProto, hub
 
 
-@pytest.mark.skipif(
+@unittest.skipIf(
     "TEST_HUB" not in os.environ or not os.environ["TEST_HUB"],
     reason="Conserving Git LFS quota",
 )

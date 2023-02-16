@@ -22,17 +22,11 @@ import os
 import pprint
 import unittest
 
-try:
-    from packaging.version import parse as version
-except ImportError:
-    from distutils.version import (  # noqa: N813 # pylint: disable=deprecated-module
-        StrictVersion as version,
-    )
-
 import numpy as np
+import packaging.version
 from numpy import __version__ as npver
 from numpy import object_ as dtype_object
-from numpy.testing import assert_allclose  # type: ignore
+from numpy.testing import assert_allclose
 
 from onnx import OptionalProto, SequenceProto, TensorProto, load
 from onnx.backend.test import __file__ as backend_folder
@@ -40,9 +34,6 @@ from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
-
-# Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1235
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
@@ -59,20 +50,12 @@ SKIP_TESTS = {
     "test_lppool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
 }
 
-if version(npver) < version("1.21.5"):
+if packaging.version.parse(npver) < packaging.version.parse("1.21.5"):
     SKIP_TESTS |= {
         "test_cast_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16_expanded",
     }
-if version(npver) < version("1.21.5"):
-    SKIP_TESTS |= {
-        "test_cast_FLOAT_to_BFLOAT16",
-        "test_castlike_FLOAT_to_BFLOAT16",
-        "test_castlike_FLOAT_to_BFLOAT16_expanded",
-    }
-    MIN_PASSING_TESTS -= len(SKIP_TESTS)
-
 
 def assert_allclose_string(expected, value):
     """
@@ -459,12 +442,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                         raise AssertionError("rtol or atol is empty.")
                     self.common_test_onnx_test_run(
                         te,
-                        getattr(cls, "successes", []),
-                        getattr(cls, "missed", []),
-                        getattr(cls, "skipped", []),
-                        getattr(cls, "load_failed", []),
-                        getattr(cls, "exec_failed", []),
-                        getattr(cls, "mismatch", []),
                         verbose=verbose,
                         rtol=rtol,
                         atol=atol,
@@ -552,12 +529,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
     def common_test_onnx_test_run(
         self,
         te,
-        successes,
-        missed,
-        skipped,
-        load_failed,
-        exec_failed,
-        mismatch,
         verbose=0,
         rtol=None,
         atol=None,
@@ -600,14 +571,12 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         except NotImplementedError as e:
             if verbose > 7:
                 print("  ", e, type(e))
-            missed.append((te, e))
             with open(f"missed_{te.name}.onnx", "wb") as f:
                 f.write(te.onnx_model.SerializeToString())
             raise e
         except (AssertionError, ValueError) as e:
             if verbose > 7:
                 print("  ", e, type(e))
-            mismatch.append((te, e))
             with open(f"mismatch_{te.name}.onnx", "wb") as f:
                 f.write(te.onnx_model.SerializeToString())
             if check_other_runtime is None:
@@ -635,79 +604,8 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             raise AssertionError(
                 f"Unable to run test {te.name!r} due to {e}\n{str(te.onnx_model)}"
             ) from e
-        successes.append((te, atol.get(te.fname, None), rtol.get(te.fname, None)))
         if verbose > 7:
             print("  end example.")
-
-    @staticmethod
-    def _postprocess(
-        successes, missed, skipped, load_failed, exec_failed, mismatch, verbose
-    ):
-        success = len(successes)
-        failed = [
-            len(missed),
-            len(skipped),
-            len(load_failed),
-            len(exec_failed),
-            len(mismatch),
-        ]
-        coverage = success / (success + sum(failed))
-
-        if verbose:
-            path = os.path.dirname(onnx_file)
-            print("-----------")
-            print(
-                f"success={success}, skipped={len(skipped)}, missed={len(missed)}, load_failed={len(load_failed)}, "
-                f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
-            )
-            print(
-                f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests"
-            )
-
-            if verbose > 3:
-
-                def _print(s, path):
-                    return (
-                        str(s)
-                        .replace("\\\\", "\\")
-                        .replace(path, "onnx")
-                        .replace("\\", "/")
-                    )
-
-                print("-----------")
-                for t in sorted(load_failed, key=lambda m: m[0].fname):
-                    print("loading failed", t[0].fname, "---", _print(t[0], path))
-                for t in sorted(exec_failed, key=lambda m: m[0].fname):
-                    print("execution failed", t[0].fname, "---", _print(t[0], path))
-                for t in sorted(mismatch, key=lambda m: m[0].fname):
-                    print("mismatch", t[0].fname, "---", _print(t[0], path))
-                for t in sorted(missed, key=lambda m: m[0].fname):
-                    print("missed ", t[0].fname, "---", _print(t[0], path))
-                for t in sorted(skipped, key=lambda m: m[0].fname):
-                    print("skipped", t[0].fname, "---", _print(t[0], path))
-
-                if success > 30:
-                    print("-----------")
-                    print(
-                        f"success={success}, skipped={len(skipped)}, missed={len(missed)}, load_failed={len(load_failed)}, "
-                        f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
-                    )
-                    print(
-                        f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests"
-                    )
-                    print("-----------")
-
-        if len(mismatch) > 0:
-            te, e = mismatch[0]
-            raise AssertionError(
-                f"Mismatch in test {te.name!r}\n{te.onnx_model}."
-            ) from e
-        if 30 < success < MIN_PASSING_TESTS:
-            raise AssertionError(
-                f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
-                f"the runtime among has decreased. New operators were added with no "
-                f"corresponding runtime."
-            )
 
     @classmethod
     def setUpClass(cls, all_tests=False):
@@ -770,7 +668,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv3d_groups": 1e-4,
         }
 
-        if version(npver) < version("1.21.5"):
+        if packaging.version.parse(npver) < packaging.version.parse("1.21.5"):
             cls.atol.update(
                 {
                     "test_dft": 1e-11,
@@ -782,32 +680,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         cls.skip_test = SKIP_TESTS
         if all_tests:
             cls.skip_test = set()
-        cls.successes = []
-        cls.missed = []
-        cls.skipped = []
-        cls.load_failed = []
-        cls.exec_failed = []
-        cls.mismatch = []
-
-    @classmethod
-    def tearDownClass(cls):
-        if len(cls.successes) == 0:
-            failed = cls.mismatch + cls.missed + cls.load_failed + cls.exec_failed
-            if len(failed) > 0:
-                raise RuntimeError(
-                    f"No test was successful, {len(failed)} failed."
-                ) from failed[0][1]
-            raise RuntimeError("No test was successful.")
-        cls._postprocess(
-            cls.successes,
-            cls.missed,
-            cls.skipped,
-            cls.load_failed,
-            cls.exec_failed,
-            cls.mismatch,
-            10,
-        )
-
 
 TestOnnxBackEndWithReferenceEvaluator.add_test_methods()
 

@@ -5,7 +5,7 @@
 import unittest
 from functools import wraps
 
-import numpy as np  # type: ignore
+import numpy as np
 from numpy.testing import assert_allclose  # type: ignore
 
 from onnx import ONNX_ML, TensorProto, TypeProto, ValueInfoProto
