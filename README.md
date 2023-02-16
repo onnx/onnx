@@ -45,7 +45,7 @@ If you think some operator should be added to ONNX specification, please read
 
 # Community meetings
 
-The schedules of the regular meetings of the Steering Committee, the working groups and the SIGs can be found [here](https://onnx.ai/calender)
+The schedules of the regular meetings of the Steering Committee, the working groups and the SIGs can be found [here](https://onnx.ai/calendar)
 
 Community Meetups are held at least once a year. Content from previous community meetups are at:
 
@@ -166,9 +166,9 @@ pip install -e .
 
 ### Linux
 
-First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.0.0. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
+First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.6.1. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
-Ubuntu 18.04 (and newer) users may choose to install protobuf via
+Ubuntu 20.04 (and newer) users may choose to install protobuf via
 
 ```sh
 apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler

@@ -55,3 +55,5 @@ tools
 .. autofunction:: onnx.numpy_helper.convert_endian
 
 .. autofunction:: onnx.numpy_helper.combine_pairs_to_complex
+
+.. autofunction:: onnx.numpy_helper.create_random_int
