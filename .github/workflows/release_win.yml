@@ -82,10 +82,12 @@ jobs:
         name: wheels
         path: ./onnx/dist
 
-    - name: Upload wheel to TestPyPI weekly
+    - name: Upload onnx-weekly wheel to TestPyPI/PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
+        # TODO: stop uploading to TestPyPI after future ONNX 1.14
+        twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
