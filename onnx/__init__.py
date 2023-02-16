@@ -181,11 +181,9 @@ def load_model(
     return model
 
 
-def load_tensor(
-    f: Union[IO[bytes], str],
-    format: Optional[Any] = None,  # pylint: disable=redefined-builtin
-) -> TensorProto:
-    """Loads a serialized TensorProto into memory.
+def load_tensor(f: Union[IO[bytes], str], format: Optional[Any] = None) -> TensorProto:
+    """
+    Loads a serialized TensorProto into memory
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
