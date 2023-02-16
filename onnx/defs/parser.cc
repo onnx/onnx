@@ -369,7 +369,17 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
 bool OnnxParser::NextIsType() {
   std::string id("");
   (void)PeekIdentifier(id);
-  return (PrimitiveTypeNameMap::IsTypeName(id));
+  if (PrimitiveTypeNameMap::IsTypeName(id))
+    return true;
+  switch (KeyWordMap::Lookup(id)) {
+    case KeyWordMap::KeyWord::SEQ_TYPE:
+    case KeyWordMap::KeyWord::MAP_TYPE:
+    case KeyWordMap::KeyWord::OPTIONAL_TYPE:
+    case KeyWordMap::KeyWord::SPARSE_TENSOR_TYPE:
+      return true;
+    default:
+      return false;
+  }
 }
 
 Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {

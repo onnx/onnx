@@ -419,7 +419,7 @@ def get_rst_doc(  # type: ignore
                 f"doc must be a string not {type(doc)!r} - {doc + 42!r}."
             )
         doc = textwrap.dedent(doc)
-        main_docs_url = "https://github.com/onnx/onnx/blob/master/"
+        main_docs_url = "https://github.com/onnx/onnx/blob/main/"
         rep = {
             "[the doc](IR.md)": "`ONNX <{0}docs/IR.md>`_",
             "[the doc](Broadcasting.md)": "`Broadcasting in ONNX <{0}docs/Broadcasting.md>`_",

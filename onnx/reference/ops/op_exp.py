@@ -8,4 +8,4 @@ from ._op import OpRunUnaryNum
 
 class Exp(OpRunUnaryNum):
     def _run(self, x):  # type: ignore
-        return (np.exp(x),)
+        return (np.exp(x).astype(x.dtype),)
