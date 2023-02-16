@@ -138,7 +138,7 @@ def _pool(
             f"Pooling type {pooling_type!r} does not support. Should be AVG, MAX."
         )
     spatial_size = len(x_shape) - 2
-    y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))  # type: ignore
+    y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)])  # type: ignore
     if indices:
         z = np.full(y.shape, fill_value=-1, dtype=np.int64)
     round_fct = np.ceil if ceil_mode else np.floor

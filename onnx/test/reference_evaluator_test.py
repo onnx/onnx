@@ -15,7 +15,6 @@ from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
 from textwrap import dedent
-from typing import Any, List
 
 import numpy as np  # type: ignore
 import parameterized
@@ -56,8 +55,10 @@ def skip_if_no_onnxruntime(fn):
     def wrapper(*args, **kwargs):
         try:
             import onnxruntime  # pylint: disable=W0611
+
+            del onnxruntime
         except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed")  # noqa
+            raise unittest.SkipTest("onnxruntime not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -68,8 +69,10 @@ def skip_if_no_torch(fn):
     def wrapper(*args, **kwargs):
         try:
             import torch  # pylint: disable=W0611
+
+            del torch
         except ImportError:
-            raise unittest.SkipTest("torch not installed")  # noqa
+            raise unittest.SkipTest("torch not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -80,8 +83,10 @@ def skip_if_no_torchvision(fn):
     def wrapper(*args, **kwargs):
         try:
             import torchvision  # pylint: disable=W0611
+
+            del torchvision
         except ImportError:
-            raise unittest.SkipTest("torchvision not installed")  # noqa
+            raise unittest.SkipTest("torchvision not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -475,6 +480,57 @@ class TestReferenceEvaluator(unittest.TestCase):
         sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x, "A": a})[0]
         assert_allclose(expected, got)
+
+    def test_reduce_sum_attribute(self):
+        opset = onnx_opset_version()
+        new_domain = "custom"
+        opset_imports = [make_opsetid("", opset), make_opsetid(new_domain, 1)]
+
+        node = make_node("ReduceSum", ["X", "axis"], ["Y"])
+        att = AttributeProto()
+        att.name = "keepdims"
+        att.ref_attr_name = "keepdims"
+        att.type = AttributeProto.INT
+        node.attribute.append(att)
+
+        my_reduce_sum = make_function(
+            new_domain,
+            "MyReduceSum",
+            ["X", "axis"],
+            ["Y"],
+            [node],
+            opset_imports,
+            ["keepdims"],
+        )
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        axis = make_tensor_value_info("axis", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+
+        graph = make_graph(
+            [
+                make_node(
+                    "MyReduceSum",
+                    ["X", "axis"],
+                    ["Y"],
+                    domain=new_domain,
+                    keepdims=1,
+                ),
+            ],
+            "example",
+            [X, axis],
+            [Y],
+        )
+
+        onnx_model = make_model(
+            graph, opset_imports=opset_imports, functions=[my_reduce_sum]
+        )
+        sess = ReferenceEvaluator(onnx_model)
+        x = np.arange(6).reshape((3, 2)).astype(np.float32)
+        a = np.array([-1], dtype=np.int64)
+        result = sess.run(None, {"X": x, "axis": a})[0]
+        expected = x.sum(axis=-1, keepdims=1)
+        assert_allclose(expected, result)
 
     def test_reduce_sum_square_18(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -983,7 +1039,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             def _run(self, x):  # type: ignore
                 return (1 / (x + self.alpha),)
 
-        class InvAlpha_(OpRun):
+        class InvAlpha2(OpRun):
             def _run(self, x):  # type: ignore
                 return (1 / (x + self.alpha),)
 
@@ -1010,11 +1066,11 @@ class TestReferenceEvaluator(unittest.TestCase):
         with self.assertRaises(TypeError):
             ReferenceEvaluator(onnx_model, new_ops=[_InvAlpha])
 
-        node1 = make_node("InvAlpha_", ["X"], ["Y"], alpha=0.5, domain="custom")
+        node1 = make_node("InvAlpha2", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(NotImplementedError):
-            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha_])
+            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha2])
 
         node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
@@ -1471,11 +1527,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 X = np.zeros((1, 1, sH, sW), dtype=np.float32)
                 X[0, 0, i, j] = 1.0
                 W = np.zeros(
-                    (
-                        1,
-                        1,
-                    )
-                    + kernel_shape,
+                    (1, 1, *kernel_shape),
                     dtype=np.float32,
                 )
                 W[0, 0, :, :] = np.minimum(
@@ -2913,6 +2965,62 @@ class TestReferenceEvaluator(unittest.TestCase):
         data = np.array([1.152512, -0.152612, 0.0, np.nan])
         got = ref.run(None, {"X": data})[0]
         assert_allclose(got, np.array([1.152512, -0.152612, 0.0, np.nan]))
+
+    def test_split_to_sequence(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [make_node("SplitToSequence", ["X", "Y"], ["Z"], axis=2)]
+        model = make_model(make_graph(nodes, "g", [X, Y], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
+        indices = np.array(2, dtype=np.int64)
+        got = ref.run(None, {"X": data, "Y": indices})
+        expected = [
+            [
+                np.array([[[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]]], dtype=np.float32),
+                np.array([[[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]]], dtype=np.float32),
+                np.array([[[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]]], dtype=np.float32),
+            ]
+        ]
+        self.assertEqual(len(expected[0]), len(got[0]))
+        for a, b in zip(expected[0], got[0]):
+            assert_allclose(a, b)
+
+    def test_split_to_sequence_1d(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [make_node("SplitToSequence", ["X", "Y"], ["Z"], axis=2)]
+        model = make_model(make_graph(nodes, "g", [X, Y], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
+        indices = np.array([2, 2, 2], dtype=np.int64)
+        got = ref.run(None, {"X": data, "Y": indices})
+        expected = [
+            [
+                np.array([[[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]]], dtype=np.float32),
+                np.array([[[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]]], dtype=np.float32),
+                np.array([[[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]]], dtype=np.float32),
+            ]
+        ]
+        self.assertEqual(len(expected[0]), len(got[0]))
+        for a, b in zip(expected[0], got[0]):
+            assert_allclose(a, b)
+
+    def test_split_to_sequence_nokeepdims_noinput(self):
+        # keepdims is ignored in that case
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [make_node("SplitToSequence", ["X"], ["Z"], axis=2, keepdims=0)]
+        model = make_model(make_graph(nodes, "g", [X], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
+        got = ref.run(None, {"X": data})
+        expected = [list(data[:, :, i] for i in range(data.shape[2]))]
+        self.assertEqual(len(expected[0]), len(got[0]))
+        for a, b in zip(expected[0], got[0]):
+            assert_allclose(a, b)
 
 
 if __name__ == "__main__":

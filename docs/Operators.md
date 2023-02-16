@@ -7965,7 +7965,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R, layout=layout)
+gru = GRUHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = gru.step()
 expect(
     node,
@@ -8000,7 +8000,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R)
+gru = GRUHelper(X=input, W=W, R=R)
 _, Y_h = gru.step()
 expect(
     node,
@@ -8048,7 +8048,7 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRUHelper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
 expect(
     node,
@@ -8095,7 +8095,7 @@ W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRUHelper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
 expect(
     node,
@@ -11122,7 +11122,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, layout=layout)
+lstm = LSTMHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = lstm.step()
 expect(
     node,
@@ -11157,7 +11157,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R)
+lstm = LSTMHelper(X=input, W=W, R=R)
 _, Y_h = lstm.step()
 expect(
     node,
@@ -11205,7 +11205,7 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
+lstm = LSTMHelper(X=input, W=W, R=R, B=B)
 _, Y_h = lstm.step()
 expect(
     node,
@@ -11254,7 +11254,7 @@ P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(
     np.float32
 )
 
-lstm = LSTM_Helper(
+lstm = LSTMHelper(
     X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h
 )
 _, Y_h = lstm.step()
@@ -12672,6 +12672,319 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">1</a>, <a href=
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>lppool_1d_default</summary>
+
+```python
+"""
+input_shape: [1, 3, 32]
+output_shape: [1, 3, 31]
+"""
+p = 3
+kernel_shape = [2]
+strides = [1]
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=kernel_shape,
+    strides=strides,
+    p=p,
+)
+x = np.random.randn(1, 3, 32).astype(np.float32)
+x_shape = np.shape(x)
+out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "LPPOOL", p=p)
+
+expect(node, inputs=[x], outputs=[y], name="test_lppool_1d_default")
+```
+
+</details>
+
+
+<details>
+<summary>lppool_2d_default</summary>
+
+```python
+"""
+input_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 31, 31]
+"""
+p = 4
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2],
+    p=p,
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
+)
+
+expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_default")
+```
+
+</details>
+
+
+<details>
+<summary>lppool_2d_dilations</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+p = 2
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2],
+    strides=[1, 1],
+    dilations=[2, 2],
+    p=p,
+)
+x = np.array(
+    [
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [13, 14, 15, 16],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+y = np.array(
+    [
+        [
+            [
+                [14.560219778561036, 16.24807680927192],
+                [21.633307652783937, 23.49468024894146],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_dilations")
+```
+
+</details>
+
+
+<details>
+<summary>lppool_2d_pads</summary>
+
+```python
+"""
+input_shape: [1, 3, 28, 28]
+output_shape: [1, 3, 30, 30]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+p = 3
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[3, 3],
+    pads=[2, 2, 2, 2],
+    p=p,
+)
+x = np.random.randn(1, 3, 28, 28).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (3, 3)
+strides = (1, 1)
+pad_bottom = pad_top = pad_right = pad_left = 2
+pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
+out_shape = get_output_shape(
+    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+)
+padded = np.pad(
+    x,
+    ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+    mode="constant",
+    constant_values=0,
+)
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
+)
+
+expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
+```
+
+</details>
+
+
+<details>
+<summary>lppool_2d_same_lower</summary>
+
+```python
+"""
+input_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 32, 32]
+pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
+"""
+p = 4
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2],
+    auto_pad="SAME_LOWER",
+    p=p,
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape("SAME_LOWER", x_shape[2:], kernel_shape, strides)
+pad_shape = get_pad_shape(
+    "SAME_LOWER", x_shape[2:], kernel_shape, strides, out_shape
+)
+pad_bottom = pad_shape[0] // 2
+pad_top = pad_shape[0] - pad_bottom
+pad_right = pad_shape[1] // 2
+pad_left = pad_shape[1] - pad_right
+padded = np.pad(
+    x,
+    ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+    mode="constant",
+    constant_values=0,
+)
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
+)
+
+expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
+```
+
+</details>
+
+
+<details>
+<summary>lppool_2d_same_upper</summary>
+
+```python
+"""
+input_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 32, 32]
+pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
+"""
+p = 2
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2],
+    auto_pad="SAME_UPPER",
+    p=p,
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape("SAME_UPPER", x_shape[2:], kernel_shape, strides)
+pad_shape = get_pad_shape(
+    "SAME_UPPER", x_shape[2:], kernel_shape, strides, out_shape
+)
+pad_top = pad_shape[0] // 2
+pad_bottom = pad_shape[0] - pad_top
+pad_left = pad_shape[1] // 2
+pad_right = pad_shape[1] - pad_left
+padded = np.pad(
+    x,
+    ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+    mode="constant",
+    constant_values=0,
+)
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
+)
+
+expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
+```
+
+</details>
+
+
+<details>
+<summary>lppool_2d_strides</summary>
+
+```python
+"""
+input_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 10, 10]
+"""
+p = 2
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[5, 5],
+    strides=[3, 3],
+    p=p,
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (5, 5)
+strides = (3, 3)
+out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
+)
+
+expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_strides")
+```
+
+</details>
+
+
+<details>
+<summary>lppool_3d_default</summary>
+
+```python
+"""
+input_shape: [1, 3, 32, 32, 32]
+output_shape: [1, 3, 31, 31, 31]
+"""
+p = 3
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2],
+    p=p,
+)
+x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = [2, 2, 2]
+strides = [1, 1, 1]
+out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "LPPOOL", p=p
+)
+
+expect(node, inputs=[x], outputs=[y], name="test_lppool_3d_default")
+```
+
+</details>
 
 
 ### <a name="MatMul"></a><a name="matmul">**MatMul**</a>
@@ -17701,7 +18014,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R, layout=layout)
+rnn = RNNHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = rnn.step()
 expect(
     node,
@@ -17731,7 +18044,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R)
+rnn = RNNHelper(X=input, W=W, R=R)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -17772,7 +18085,7 @@ W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
 R_B = np.zeros((1, hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNNHelper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -17814,7 +18127,7 @@ W_B = np.random.randn(1, hidden_size).astype(np.float32)
 R_B = np.random.randn(1, hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNNHelper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -28131,16 +28444,18 @@ expect(
 
 ### <a name="SplitToSequence"></a><a name="splittosequence">**SplitToSequence**</a>
 
-  Split a tensor into a sequence of tensors, along the specified
-  'axis'. Lengths of the parts can be specified using argument 'split'.
+  Split a tensor into a sequence of tensors, along the specified 'axis'.
+  Lengths of the parts can be specified using the optional argument 'split'.
+  If the argument `split' is not specified, a default scalar value of 1
+  is used as the value of `split'.
   'split' must contain only positive numbers.
   'split' is either a scalar (tensor of empty shape), or a 1-D tensor.
-  If 'split' is a scalar, then 'input' will be split into equally sized chunks(if possible).
-  Last chunk will be smaller if the 'input' size along the given axis 'axis' is not divisible
-  by 'split'.
-  Otherwise, the tensor is split into 'size(split)' chunks, with lengths of the parts on 'axis'
-  specified in 'split'. In this scenario, the sum of entries in 'split' must be equal to the
-  dimension size of input tensor on 'axis'.
+  If 'split' is a scalar, then 'input' will be split into chunks all of size 'split'
+  if possible. The last chunk alone may be smaller than 'split' if the 'input' size
+  along the given axis 'axis' is not divisible by 'split'.
+  If 'split' is a 1-dimensional tensor, the input tensor is split into 'size(split)' chunks,
+  with lengths of the parts on 'axis' specified in 'split'. In this scenario, the sum of entries
+  in 'split' must be equal to the dimension size of input tensor on 'axis'.
 
 #### Version
 
@@ -28181,6 +28496,94 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain output types to all tensor types.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>nokeepdims</summary>
+
+```python
+data = np.arange(18).reshape((3, 6)).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SplitToSequence",
+    ["data"],
+    ["seq"],
+    axis=1,
+    keepdims=0,
+)
+
+expected_outputs = [list(data[:, i] for i in range(data.shape[1]))]
+
+expect(
+    node,
+    inputs=[data],
+    outputs=expected_outputs,
+    name="test_split_to_sequence_nokeepdims",
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_split_1</summary>
+
+```python
+data = np.arange(18).reshape((3, 6)).astype(np.float32)
+split = np.array(2, dtype=np.int64)
+
+node = onnx.helper.make_node(
+    "SplitToSequence", ["data", "split"], ["seq"], axis=1
+)
+
+expected_outputs = [
+    [
+        np.array([[0.0, 1.0], [6.0, 7.0], [12.0, 13.0]], dtype=np.float32),
+        np.array([[2.0, 3.0], [8.0, 9.0], [14.0, 15.0]], dtype=np.float32),
+        np.array([[4.0, 5.0], [10.0, 11.0], [16.0, 17.0]], dtype=np.float32),
+    ]
+]
+
+expect(
+    node,
+    inputs=[data, split],
+    outputs=expected_outputs,
+    name="test_split_to_sequence_1",
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_split_2</summary>
+
+```python
+data = np.arange(18).reshape((3, 6)).astype(np.float32)
+split = np.array([1, 2], dtype=np.int64)
+
+node = onnx.helper.make_node(
+    "SplitToSequence", ["data", "split"], ["seq"], axis=0
+)
+
+expected_outputs = [
+    [
+        data[:1],
+        data[1:],
+    ]
+]
+
+expect(
+    node,
+    inputs=[data, split],
+    outputs=expected_outputs,
+    name="test_split_to_sequence_2",
+)
+```
+
+</details>
 
 
 ### <a name="Sqrt"></a><a name="sqrt">**Sqrt**</a>

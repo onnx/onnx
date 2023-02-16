@@ -7,7 +7,7 @@ complete.
 from typing import Dict, List, Optional, Union
 
 import onnx
-import onnx.onnx_cpp2py_export.shape_inference as C
+import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
 from onnx import ModelProto
 
 
