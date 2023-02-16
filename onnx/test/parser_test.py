@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
+
 import onnx
-from onnx import helper, parser, GraphProto
-from onnx import checker
+from onnx import GraphProto, checker, helper, parser
 
 
 class TestBasicFunctions(unittest.TestCase):
@@ -68,7 +68,9 @@ class TestBasicFunctions(unittest.TestCase):
               C = Softmax(S)
            }
            """
-        self.assertRaises(onnx.parser.ParseError, lambda: onnx.parser.parse_model(input))
+        self.assertRaises(
+            onnx.parser.ParseError, lambda: onnx.parser.parse_model(input)
+        )
 
     def test_parse_function_with_attributes(self) -> None:
         input = """
