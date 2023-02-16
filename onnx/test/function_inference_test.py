@@ -49,6 +49,7 @@ class TestFunctionInference(TestShapeInferenceHelper):
             }
         """
         self._check(code, [float_type_, float_type_], [], [float_type_])
+        self._check(code, [int32_type_, int32_type_], [], [int32_type_])
         self._check_fails(code, [float_type_, int32_type_], [])
 
     def test_fi_attribute(self):
