@@ -537,6 +537,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceSumSquare", OpSetID(17), OpSetID(18)));
 
     /******** 18 -> 19 ********/
+    registerAdapter(make_unique<CompatibleAdapter>("AveragePool", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Cast", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("CastLike", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Constant", OpSetID(18), OpSetID(19)));
