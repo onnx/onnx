@@ -1972,6 +1972,10 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._logical_binary_op("Equal", TensorProto.BOOL)
         self._logical_binary_op_with_broadcasting("Equal", TensorProto.BOOL)
 
+    def test_equal_string(self) -> None:
+        self._logical_binary_op("Equal", TensorProto.STRING)
+        self._logical_binary_op_with_broadcasting("Equal", TensorProto.STRING)
+
     def test_logical_not(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.BOOL, (30, 4, 5))], [make_node("Not", ["x"], "z")], []
