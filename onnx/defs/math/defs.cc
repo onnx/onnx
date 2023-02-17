@@ -3463,11 +3463,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             dft_size = get_scalar_value_from_tensor<int64_t>(frame_length);
           }
 
-          int64_t dft_unique_bins = dft_size;
           bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
-          if (is_onesided) {
-            dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
-          }
+          int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
 
           auto n_dfts = static_cast<int64_t>((signal_size - dft_size) / static_cast<float>(frame_step_value)) + 1;
 
