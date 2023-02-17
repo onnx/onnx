@@ -2,12 +2,13 @@
 import unittest
 from typing import Sequence
 
+from shape_inference_test import TestShapeInferenceHelper
+
 import onnx
 import onnx.helper
 import onnx.parser
 import onnx.shape_inference
 from onnx import AttributeProto, TypeProto
-from onnx.test.shape_inference_test import TestShapeInferenceHelper
 
 float_type_ = onnx.helper.make_tensor_type_proto(1, None)
 int32_type_ = onnx.helper.make_tensor_type_proto(6, None)
