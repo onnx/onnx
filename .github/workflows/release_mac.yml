@@ -25,7 +25,7 @@ jobs:
         target-architecture: ['x86_64', 'universal2']
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
     - name: Checkout submodules
       shell: bash
       run: |
@@ -33,7 +33,7 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.host-architecture }}
@@ -71,7 +71,7 @@ jobs:
       run: |
         pytest
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@3446296876d12d4e3a0f3145a3c87e67bf0a16b5 # v1.0.0
       with:
         name: wheels
         path: dist
