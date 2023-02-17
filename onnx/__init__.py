@@ -88,7 +88,7 @@ def _save_bytes(content: bytes, f: Union[IO[bytes], str]) -> None:
 
 
 def _get_file_path(f: Union[IO[bytes], str, Path]) -> Optional[str]:
-    if isinstance(f, str) or isinstance(f, Path):
+    if isinstance(f, (str, Path)):
         return os.path.abspath(f)
     if hasattr(f, "name"):
         return os.path.abspath(f.name)
