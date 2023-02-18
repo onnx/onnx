@@ -26,7 +26,7 @@ class TestVersionConverter(unittest.TestCase):
         orig_model = helper.make_model(
             graph, producer_name="onnx-test", opset_imports=[initial_version]
         )
-        # print(type(orig_model))
+        print(orig_model)
         converted_model = onnx.version_converter.convert_version(
             orig_model, target_version
         )
@@ -1960,6 +1960,12 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == 12
+
+    def test_local_function(self):
+        my_elu_model = onnx.load("C:/LiqunWA/onnx-ir-cc/onnx/examples/resources/MyElu.onnx")
+        converted_my_elu_model = onnx.version_converter.convert_version(
+            my_elu_model, 18)
+        checker.check_model(converted_my_elu_model)
 
 
 if __name__ == "__main__":

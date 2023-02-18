@@ -37,7 +37,10 @@ namespace ONNX_NAMESPACE {
 // It uses a simple ownership model where the graph owns all the nodes inside it.
 // All references inside the graph are raw pointers.
 // Destroying the Graph will invalidate any pointers to nodes in the graph.
-struct Graph;
+class Function;
+class GraphBase;
+
+class Graph;
 
 // Node is the base class of the IR graph. It represents one computation
 // and dependencies on a list of Values. The "prim-ops", so to speak.
@@ -286,7 +289,7 @@ using value_list = std::vector<Value*>;
 using use_list = std::vector<Use>;
 using NodeKind = Symbol;
 
-struct Value final {
+struct Value final {    // message ValueInfoProto
   ONNX_DISALLOW_COPY_AND_ASSIGN(Value);
   Value(Node* node_, size_t offset_);
   Value(Value&&) = default;
@@ -295,7 +298,7 @@ struct Value final {
 
  private:
   friend struct Node;
-  friend struct Graph;
+  friend class Graph;
   Node* node_;
   size_t offset_;
   size_t unique_ = 0; // unique id
@@ -359,8 +362,8 @@ struct Value final {
   const Node* node() const {
     return node_;
   }
-  Graph* owningGraph();
-  const Graph* owningGraph() const;
+  GraphBase* owningGraph();
+  const GraphBase* owningGraph() const;
   // TODO: make this more const correct
   const use_list uses() const;
 
@@ -387,7 +390,8 @@ struct Value final {
 
 struct Node : public Attributes<Node> {
   ONNX_DISALLOW_COPY_AND_ASSIGN(Node);
-  friend struct Graph;
+  friend class GraphBase;
+  friend class Graph;
   friend struct Value;
   friend graph_node_list;
   friend const_graph_node_list;
@@ -420,7 +424,10 @@ struct Node : public Attributes<Node> {
   const NodeKind kind_;
   std::vector<Value*> inputs_;
   std::vector<Value*> outputs_;
-  Graph* graph_;
+  GraphBase* graph_;
+  FunctionProto* function_body_;
+  Function* function_;
+
   size_t stage_;
   bool has_name_;
   std::string name_;
@@ -430,7 +437,7 @@ struct Node : public Attributes<Node> {
   std::string doc_string_;
 
  protected:
-  Node(Graph* graph_, NodeKind kind_); // defined after graph
+  Node(GraphBase* graph, NodeKind kind); // defined after graph
 
  public:
   bool has_name() const {
@@ -466,12 +473,21 @@ struct Node : public Attributes<Node> {
   NodeKind kind() const {
     return kind_;
   }
-  Graph* owningGraph() {
+  GraphBase* owningGraph() {
     return graph_;
   }
-  const Graph* owningGraph() const {
+  const GraphBase* owningGraph() const {
     return graph_;
   }
+
+  void set_function_body(FunctionProto* function_body) {
+    function_body_ = function_body;
+  }
+
+  FunctionProto* get_function_body() {
+    return function_body_;
+  }
+
   size_t stage() const {
     return stage_;
   }
@@ -786,7 +802,7 @@ struct Node : public Attributes<Node> {
   // of a node in another graph. It should allocate a new instance of the same
   // concrete type as 'this', but in graph 'g' which might be different
   // than graph_
-  virtual Node* allocNewInstance(Graph* g) {
+  virtual Node* allocNewInstance(GraphBase* g) {
     return new Node(g, kind());
   }
   // create a copy of all properties of Node s into this.
@@ -858,83 +874,18 @@ class OpSetID final {
   }
 };
 
-struct Graph final {
-  ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
+class GraphBase {
   friend struct Node;
   friend struct Value;
 
- private:
-  // only used to keep track of allocated nodes
-  // actual representation of Graph is done with
-  // inputs, outputs, nodes
-
-  std::unordered_set<const Node*> all_nodes;
-  std::unordered_set<const Value*> all_values;
-  size_t next_unique_;
-
-  size_t new_node_stage_;
-
-  // holds outputs in a way that can be reflected
-  // as a Use object
-  // also used as the beginning/end of the circular node list to avoid
-  // having corner cases where the list is empty.
-  Node* const output_;
-  Node* const input_;
-  // Create an independent node list for those initializers do not exist in input
-  Node* const initializer_node_;
-
-  std::vector<Tensor> initializers_;
-  std::vector<std::string> initializer_names_;
-
-  bool has_name_;
-  std::string name_;
-  bool has_doc_string_;
-  std::string doc_string_;
-
-  std::vector<OpSetID> opset_versions_;
-
-  bool isNameUnique(const std::string& name) const {
-    if (std::find(initializer_names_.cbegin(), initializer_names_.cend(), name) != initializer_names_.cend()) {
-      return false;
-    }
-    const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
-    for (const Node* node : all_nodes) {
-      for (const auto& attr : node->attributeNames()) {
-        if (node->kindOf(attr) == AttributeKind::g) {
-          const auto& subgraph = node->g(attr);
-          if (!subgraph->isNameUnique(name)) {
-            return false;
-          }
-        } else if (node->kindOf(attr) == AttributeKind::gs) {
-          for (const auto& subgraph : node->gs(attr)) {
-            if (!subgraph->isNameUnique(name)) {
-              return false;
-            }
-          }
-        }
-      }
-      const auto found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
-      if (found_in != node->inputs().end()) {
-        return false;
-      }
-      const auto found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
-      if (found_out != node->outputs().end()) {
-        return false;
-      }
-    }
-    return true;
-  }
-
  public:
-  Graph()
+  GraphBase()
       : next_unique_(0),
         new_node_stage_(0),
         output_(initOutput(create(kReturn, 0))),
         input_(create(kParam, 0)),
-        initializer_node_(create(kParam, 0)),
         has_name_(false),
         has_doc_string_(false) {}
-
   bool has_doc_string() const {
     return has_doc_string_;
   }
@@ -946,63 +897,22 @@ struct Graph final {
     doc_string_ = std::move(doc_string);
   }
 
-  void addInitializer(Tensor& initializer) {
-    if (initializer.name().empty()) {
-      initializer.setName(ONNX_NAMESPACE::to_string(getNextUnique()));
-    }
-    initializers_.push_back(initializer);
-    initializer_names_.push_back(initializer.name());
-  }
+  virtual void addInitializer(Tensor& initializer) = 0;
 
-  // For IR >= 4, initializer is not required to exist in input
-  // Add initializer into initializer node list and return its Value
-  Value* addInitializerAndCreateValue(Tensor& initializer) {
-    addInitializer(initializer);
-    auto* init_value = initializer_node_->addOutput();
-    std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(), initializer.sizes().cend()};
-    init_value->setUniqueName(initializer.name());
-    init_value->setSizes(dim_sizes);
-    init_value->setElemType(initializer.elem_type());
-    return init_value;
-  }
+  virtual Value* addInitializerAndCreateValue(Tensor& initializer) = 0;
 
-  void eraseInitializer(const std::string& name) {
-    initializers_.erase(
-        std::remove_if(
-            initializers_.begin(),
-            initializers_.end(),
-            [&name](Tensor& initializer) { return initializer.name() == name; }),
-        initializers_.end());
-    initializer_names_.erase(
-        std::remove(initializer_names_.begin(), initializer_names_.end(), name), initializer_names_.end());
-    for (size_t i = 0; i < initializer_node_->outputs().size(); i++) {
-      if (initializer_node_->outputs()[i]->uniqueName() == name) {
-        initializer_node_->eraseOutput(i);
-        break;
-      }
-    }
-  }
-  void clearInitializers() {
-    initializers_.clear();
-    initializer_names_.clear();
-  }
-  const std::vector<Tensor>& initializers() const {
-    return initializers_;
-  }
-  const std::vector<std::string>& initializer_names() const {
-    return initializer_names_;
-  }
-  std::vector<Tensor>::const_iterator getInitializer(const std::string& name) const {
-    for (auto it = initializers_.cbegin(); it != initializers_.cend(); ++it) {
-      if (name == it->name()) {
-        return it;
-      }
-    }
-    return initializers_.end();
-  }
-  bool is_constant_initializer(const Value* value) const {
-    return value->node() == initializer_node_;
-  }
+  virtual void eraseInitializer(const std::string& name) = 0;
+  
+  virtual void clearInitializers() = 0;
+  
+  virtual const std::vector<Tensor>& initializers() = 0;
+
+  virtual const std::vector<std::string>& initializer_names() = 0;
+  
+  virtual std::vector<Tensor>::const_iterator getInitializer(const std::string& name) const = 0;
+
+  virtual bool is_constant_initializer(const Value* value) const = 0;
+
   ArrayRef<Value*> inputs() {
     return input_->outputs();
   }
@@ -1125,6 +1035,177 @@ struct Graph final {
   // Adds to graph initializer list, initializer names list, and as a graph input
   // Also syncs the initializer name, tensor name, and value name
   // Create an initializer whose value is stored in input
+  virtual Value* addInitializerAndInput(const Tensor& initializer, const std::string& name) = 0;
+
+  virtual Value* addInitializerAndInput(const Tensor& initializer) = 0;
+
+  // Erases from graph initializer list, initializer names list, and as a graph input
+  // Must have no uses
+  virtual void eraseInitializerAndInput(Value* v) = 0;
+
+  ~GraphBase() {
+    for (const Node* n : all_nodes)
+      delete n;
+    for (const Value* v : all_values)
+      delete v;
+  }
+
+  std::string toString() const {
+    std::ostringstream oss;
+    oss << *this;
+    return oss.str();
+  }
+
+  bool has_name() const {
+    return has_name_;
+  }
+
+  const std::string& name() const {
+    return name_;
+  }
+
+  void setName(std::string name) {
+    has_name_ = true;
+    name_ = std::move(name);
+  }
+
+  friend std::ostream& operator<<(std::ostream& out, const GraphBase& g);
+
+  void forSelfAndEachSubGraph(const std::function<void(GraphBase*)>& fn);
+
+  void forSelfAndEachSubGraph(const std::function<void(const GraphBase*)>& fn) const;
+
+  void forEachNode(const std::function<void(Node*)>& fn);
+
+  void forEachNode(const std::function<void(const Node*)>& fn) const;
+
+ protected:
+  // only used to keep track of allocated nodes
+  // actual representation of Graph is done with
+  // inputs, outputs, nodes
+
+  std::unordered_set<const Node*> all_nodes;
+  std::unordered_set<const Value*> all_values;
+  size_t next_unique_;
+
+  size_t new_node_stage_;
+
+  // holds outputs in a way that can be reflected
+  // as a Use object
+  // also used as the beginning/end of the circular node list to avoid
+  // having corner cases where the list is empty.
+  Node* const output_;
+  Node* const input_;
+
+  bool has_name_;
+  std::string name_;
+  bool has_doc_string_;
+  std::string doc_string_;
+
+  std::vector<OpSetID> opset_versions_;
+
+  virtual bool isNameUnique(const std::string& name) const = 0;
+  
+  // should only be called in the constructor
+  Node* initOutput(Node* p) {
+    p->next() = p;
+    p->prev() = p;
+    p->setStage(std::numeric_limits<size_t>::max());
+    return p;
+  }
+
+  void freeNode(Node* n) {
+    auto it = all_nodes.find(n);
+    ONNX_ASSERT(it != all_nodes.end());
+    delete *it;
+    all_nodes.erase(it);
+  }
+  void freeValue(Value* v) {
+    auto it = all_values.find(v);
+    ONNX_ASSERT(it != all_values.end());
+    delete *it;
+    all_values.erase(it);
+  }
+};
+
+class Graph final : public GraphBase {
+  ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
+  friend struct Node;
+  friend struct Value;
+
+ private:
+  // Create an independent node list for those initializers do not exist in input
+  Node* const initializer_node_;
+
+  std::vector<Tensor> initializers_;
+  std::vector<std::string> initializer_names_;
+
+ public:
+  Graph() :
+      GraphBase(),
+      initializer_node_(create(kParam, 0)){}
+
+  void addInitializer(Tensor& initializer) {
+    if (initializer.name().empty()) {
+      initializer.setName(ONNX_NAMESPACE::to_string(getNextUnique()));
+    }
+    initializers_.push_back(initializer);
+    initializer_names_.push_back(initializer.name());
+  }
+
+  // For IR >= 4, initializer is not required to exist in input
+  // Add initializer into initializer node list and return its Value
+  Value* addInitializerAndCreateValue(Tensor& initializer) {
+    addInitializer(initializer);
+    auto* init_value = initializer_node_->addOutput();
+    std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(), initializer.sizes().cend()};
+    init_value->setUniqueName(initializer.name());
+    init_value->setSizes(dim_sizes);
+    init_value->setElemType(initializer.elem_type());
+    return init_value;
+  }
+
+  void eraseInitializer(const std::string& name) {
+    initializers_.erase(
+        std::remove_if(
+            initializers_.begin(),
+            initializers_.end(),
+            [&name](Tensor& initializer) { return initializer.name() == name; }),
+        initializers_.end());
+    initializer_names_.erase(
+        std::remove(initializer_names_.begin(), initializer_names_.end(), name), initializer_names_.end());
+    for (size_t i = 0; i < initializer_node_->outputs().size(); i++) {
+      if (initializer_node_->outputs()[i]->uniqueName() == name) {
+        initializer_node_->eraseOutput(i);
+        break;
+      }
+    }
+  }
+  void clearInitializers() {
+    initializers_.clear();
+    initializer_names_.clear();
+  }
+  virtual const std::vector<Tensor>& initializers() override {
+    return initializers_;
+  }
+  const std::vector<std::string>& initializer_names() override {
+    return initializer_names_;
+  }
+  std::vector<Tensor>::const_iterator getInitializer(const std::string& name) const {
+    for (auto it = initializers_.cbegin(); it != initializers_.cend(); ++it) {
+      if (name == it->name()) {
+        return it;
+      }
+    }
+    return initializers_.end();
+  }
+  bool is_constant_initializer(const Value* value) const {
+    return value->node() == initializer_node_;
+  }
+
+  // Adds to graph initializer list, initializer names list, and as a graph input
+  // Also syncs the initializer name, tensor name, and value name
+  // Create an initializer whose value is stored in input
   Value* addInitializerAndInput(const Tensor& initializer, const std::string& name) {
     Tensor initializerCopy = initializer;
     std::vector<Dimension> dim_sizes{initializerCopy.sizes().cbegin(), initializerCopy.sizes().cend()};
@@ -1151,10 +1232,10 @@ struct Graph final {
   }
 
   ~Graph() {
-    for (const Node* n : all_nodes)
-      delete n;
-    for (const Value* v : all_values)
-      delete v;
+    //for (const Node* n : all_nodes)
+    //  delete n;
+    //for (const Value* v : all_values)
+    //  delete v;
   }
 
   std::string toString() const {
@@ -1163,77 +1244,48 @@ struct Graph final {
     return oss.str();
   }
 
-  bool has_name() const {
-    return has_name_;
-  }
-
-  const std::string& name() const {
-    return name_;
-  }
-
-  void setName(std::string name) {
-    has_name_ = true;
-    name_ = std::move(name);
-  }
-
   friend std::ostream& operator<<(std::ostream& out, const Graph& g);
 
-  void forSelfAndEachSubGraph(const std::function<void(Graph*)>& fn) {
-    fn(this);
-
+  bool isNameUnique(const std::string& name) const {
+    if (std::find(initializer_names_.cbegin(), initializer_names_.cend(), name) != initializer_names_.cend()) {
+      return false;
+    }
+    const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
     for (const Node* node : all_nodes) {
       for (const auto& attr : node->attributeNames()) {
         if (node->kindOf(attr) == AttributeKind::g) {
-          std::shared_ptr<Graph> subgraph = node->g(attr);
-          subgraph->forSelfAndEachSubGraph(fn);
+          const auto& subgraph = node->g(attr);
+          if (!subgraph->isNameUnique(name)) {
+            return false;
+          }
         } else if (node->kindOf(attr) == AttributeKind::gs) {
           for (const auto& subgraph : node->gs(attr)) {
-            subgraph->forSelfAndEachSubGraph(fn);
+            if (!subgraph->isNameUnique(name)) {
+              return false;
+            }
           }
         }
       }
-    }
-  }
-
-  void forSelfAndEachSubGraph(const std::function<void(const Graph*)>& fn) const {
-    std::function<void(Graph*)> tmp_fn = [fn](Graph* graph) { fn(graph); };
-    const_cast<Graph*>(this)->forSelfAndEachSubGraph(tmp_fn);
-  }
-
-  void forEachNode(const std::function<void(Node*)>& fn) {
-    forSelfAndEachSubGraph([fn](Graph* graph) {
-      for (Node* node : graph->nodes()) {
-        fn(node);
+      const auto found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
+      if (found_in != node->inputs().end()) {
+        return false;
       }
-    });
+      const auto found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
+      if (found_out != node->outputs().end()) {
+        return false;
+      }
+    }
+    return true;
   }
+};
 
-  void forEachNode(const std::function<void(const Node*)>& fn) const {
-    std::function<void(Node*)> tmp_fn = [fn](Node* node) { fn(node); };
-    const_cast<Graph*>(this)->forEachNode(tmp_fn);
-  }
+class Function : public GraphBase {
+  ONNX_DISALLOW_COPY_AND_ASSIGN(Function);
+  friend struct Node;
+  friend struct Value;
 
- private:
-  // should only be called in the constructor
-  Node* initOutput(Node* p) {
-    p->next() = p;
-    p->prev() = p;
-    p->setStage(std::numeric_limits<size_t>::max());
-    return p;
-  }
-
-  void freeNode(Node* n) {
-    auto it = all_nodes.find(n);
-    ONNX_ASSERT(it != all_nodes.end());
-    delete *it;
-    all_nodes.erase(it);
-  }
-  void freeValue(Value* v) {
-    auto it = all_values.find(v);
-    ONNX_ASSERT(it != all_values.end());
-    delete *it;
-    all_values.erase(it);
-  }
+ public:
+  Function() : GraphBase() {}
 };
 
 inline Value::Value(Node* node_, size_t offset_)
@@ -1247,11 +1299,11 @@ inline Value::Value(Node* node_, size_t offset_)
   node_->graph_->all_values.emplace(this);
 }
 
-inline Graph* Value::owningGraph() {
+inline GraphBase* Value::owningGraph() {
   return node()->owningGraph();
 }
 
-inline const Graph* Value::owningGraph() const {
+inline const GraphBase* Value::owningGraph() const {
   return node()->owningGraph();
 }
 
@@ -1262,13 +1314,13 @@ inline const Graph* Value::owningGraph() const {
 // updated too.
 inline Value* Value::setUniqueName(const std::string& name, bool update_related_names) {
   if (has_unique_name() && update_related_names) {
-    auto* graph = owningGraph();
+    Graph* graph = dynamic_cast<Graph*>(owningGraph());
     auto old_name = unique_name_;
-    for (size_t i = 0; i < owningGraph()->initializer_names_.size(); i++) {
-      auto& initializer_name = owningGraph()->initializer_names_[i];
+    for (size_t i = 0; i < graph->initializer_names_.size(); i++) {
+      auto& initializer_name = graph->initializer_names_[i];
       if (initializer_name == old_name) {
         initializer_name = name;
-        owningGraph()->initializers_[i].setName(name);
+        graph->initializers_[i].setName(name);
       }
     }
     graph->forEachNode([this, &name, &old_name](Node* node) {
@@ -1328,9 +1380,9 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
   assert(this->uses().empty());
 }
 
-inline Node::Node(Graph* graph_, NodeKind kind_)
-    : kind_(kind_),
-      graph_(graph_),
+inline Node::Node(GraphBase* graph, NodeKind kind)
+    : kind_(kind),
+      graph_(graph),
       stage_(graph_->new_node_stage_),
       has_name_(false),
       has_domain_(false),

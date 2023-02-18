@@ -11,7 +11,10 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, const int ir_version = IR_VERSION);
+std::unique_ptr<Graph> graphProtoToGraph(
+    const GraphProto& gp,
+    bool nested,
+    std::vector<FunctionProto>& local_functions, const int ir_version = IR_VERSION);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   Tensor ret;
@@ -158,13 +161,13 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, const i
       break;
     }
     case ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPH:
-      n->g_(sym, graphProtoToGraph(ap.g(), true, ir_version));
+      n->g_(sym, graphProtoToGraph(ap.g(), true, std::vector<FunctionProto>(), ir_version));
       break;
     case ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPHS: {
       std::vector<std::shared_ptr<Graph>> graphs;
       graphs.reserve(ap.graphs_size());
       for (int i = 0; i < ap.graphs_size(); i++) {
-        graphs.push_back(graphProtoToGraph(ap.graphs(i), true, ir_version));
+        graphs.push_back(graphProtoToGraph(ap.graphs(i), true, std::vector<FunctionProto>(), ir_version));
       }
       n->gs_(sym, std::move(graphs));
       break;
@@ -212,7 +215,20 @@ void createDummyValue(
   value_by_name_of[name] = undef->outputs()[0];
 }
 
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int ir_version) {
+FunctionProto* find_local_function(std::vector<FunctionProto>& local_functions, const std::string& op_type) {
+  for (auto& func : local_functions) {
+    if (func.name() == op_type) {
+      return &func;
+    }
+  }
+  return nullptr;
+}
+
+std::unique_ptr<Graph> graphProtoToGraph(
+    const ONNX_NAMESPACE::GraphProto& gp,
+    bool nested,
+    std::vector<FunctionProto>& local_functions,
+    const int ir_version) {
   std::unique_ptr<Graph> g(new Graph());
 
   if (gp.has_name()) {
@@ -313,6 +329,10 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     if (np.has_domain()) {
       n->setDomain(np.domain());
     }
+
+    FunctionProto* local_function_proto = find_local_function(local_functions, np.op_type());
+    n->set_function_body(local_function_proto);
+
   }
 
   for (auto n : g->nodes()) {
@@ -379,11 +399,19 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
     return nullptr;
   }
 
-  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false, mp.ir_version()));
+  //std::vector<FunctionProto*> local_functions(mp.functions().size());
+  //std::copy(mp.functions().begin(), mp.functions().end(), std::back_inserter(local_functions));
+
+  std::vector<FunctionProto> local_functions(mp.functions().size());
+  std::transform(
+      mp.functions().begin(), mp.functions().end(), local_functions.begin(),
+      [](FunctionProto x) -> FunctionProto { return x;});
+
+  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false, local_functions, mp.ir_version()));
   for (int i = 0; i < mp.opset_import_size(); i++) {
     OpSetID new_opset_version(mp.opset_import(i).domain(), mp.opset_import(i).version());
     g->forSelfAndEachSubGraph(
-        [&new_opset_version](Graph* graph) { graph->opset_versions_mutable().emplace_back(new_opset_version); });
+        [&new_opset_version](GraphBase* graph) { graph->opset_versions_mutable().emplace_back(new_opset_version); });
   }
   return g;
 }
