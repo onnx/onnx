@@ -886,9 +886,6 @@ def onnx_documentation_folder(folder, title="ONNX Operators", flog=None, max_ops
                 main,
                 "=" * len(main),
                 "",
-                ".. contents::",
-                "    :local:",
-                "",
                 doc,
             ]
 

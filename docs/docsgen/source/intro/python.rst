@@ -7,10 +7,6 @@ Next sections highlight the main functions used to build
 an ONNX graph with the :ref:`Python API <l-python-onnx-api>`
 *onnx* offers.
 
-.. contents::
-    :local:
-    :depth: 1
-
 .. _l-onnx-linear-regression-onnx-api:
 
 A simple example: a linear regression
@@ -1101,7 +1097,7 @@ pipeline.
     opset_import {
     domain: ""
     version: 15
-    }    
+    }
 
 This way is used to create small models but it is rarely used
 in converting libraries.

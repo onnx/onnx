@@ -2,8 +2,6 @@
 onnx.numpy_helper
 =================
 
-.. contents::
-    :local:
 
 .. currentmodule:: onnx.numpy_helper
 
