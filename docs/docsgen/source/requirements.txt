@@ -11,4 +11,4 @@ sphinx-copybutton
 sphinx-exec-code
 sphinx-gallery
 sphinx-tabs
-sphinx>=6
+sphinx

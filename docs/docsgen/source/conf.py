@@ -65,22 +65,15 @@ language = "en"
 mathdef_link_only = True
 master_doc = "index"
 onnx_doc_folder = os.path.join(os.path.abspath(os.path.dirname(__file__)), "operators")
-pygments_style = "sphinx"
-source_suffix = [".rst"]
+pygments_style = "default"
+source_suffix = [".rst", ".md"]
 templates_path = ["_templates"]
 
 html_context = {
     "default_mode": "auto",  # auto: the documentation theme will follow the system default that you have set (light or dark)
 }
 
-html_theme_options = {
-    "light_logo": html_favicon,
-    "dark_logo": "onnx-horizontal-white.png",
-    "external_links": [
-        {"name": "ONNX", "url": "https://onnx.ai/"},
-        {"name": "github", "url": "https://github.com/onnx/onnx"},
-    ],
-}
+html_theme_options = {}
 
 intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
