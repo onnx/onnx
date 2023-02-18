@@ -12,7 +12,7 @@ from typing import Any, Callable, Type, TypeVar, Union, cast
 from google.protobuf.message import Message
 
 import onnx.defs
-import onnx.onnx_cpp2py_export.checker as C
+import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
 import onnx.shape_inference
 from onnx import (
     IR_VERSION,

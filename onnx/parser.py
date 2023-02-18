@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 import onnx
-import onnx.onnx_cpp2py_export.parser as C
+import onnx.onnx_cpp2py_export.parser as C  # noqa: N812
 
 
 class ParseError(Exception):
