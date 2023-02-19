@@ -81,6 +81,7 @@ select = [
     "N", # pep8-naming
     "YTT", # flake8-2020
     "RUF", # Ruff-specific rules
+    "TID252", # Relative imports
 ]
 ignore = [
     "B9", # Opinionated bugbear rules
@@ -94,6 +95,10 @@ ignore-init-module-imports = true
 unfixable = [
     "F401", # Unused imports
 ]
+
+[tool.ruff.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
 
 [tool.ruff.per-file-ignores]
 "**/*_test*" = ["N802"] # Function casing
