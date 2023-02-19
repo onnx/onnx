@@ -55,9 +55,6 @@ exclude_patterns = []
 graphviz_output_format = "svg"
 html_css_files = ["css/custom.css"]
 html_favicon = "onnx-favicon.png"
-html_logo = os.path.join(
-    os.path.abspath(os.path.dirname(__file__)), "../../onnx-horizontal-color.png"
-)
 html_sidebars = {}
 html_static_path = ["_static"]
 html_theme = "furo"
@@ -73,7 +70,10 @@ html_context = {
     "default_mode": "auto",  # auto: the documentation theme will follow the system default that you have set (light or dark)
 }
 
-html_theme_options = {}
+html_theme_options = {
+    "light_logo": "onnx-horizontal-color.png",
+    "dark_logo": "onnx-horizontal-white.png",
+}
 
 intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
