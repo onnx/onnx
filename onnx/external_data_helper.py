@@ -6,7 +6,7 @@ import uuid
 from itertools import chain
 from typing import Callable, Iterable, Optional
 
-from .onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
+from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
 
 
 class ExternalDataInfo:

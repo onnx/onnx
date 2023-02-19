@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op import OpRunBinary
+from onnx.reference.ops._op import OpRunBinary
 
 
 class BitwiseAnd(OpRunBinary):

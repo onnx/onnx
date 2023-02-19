@@ -8,7 +8,7 @@ import numpy as np
 
 from onnx.reference.op_run import OpRun
 
-from ._op_common_indices import _get_index, _get_indices
+from onnx.reference.ops._op_common_indices import _get_index, _get_indices
 
 
 def _get_pad_shape(

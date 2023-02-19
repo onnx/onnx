@@ -5,7 +5,7 @@ import numpy as np
 
 from onnx.reference.op_run import OpRun
 
-from ._op_common_indices import _get_indices, _is_out
+from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 
 
 def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strides):  # type: ignore

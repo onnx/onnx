@@ -16,8 +16,8 @@ from onnx.onnx_pb import (
     TypeProto,
 )
 
-from ..test_case import TestCase
-from ..utils import import_recursive
+from onnx.backend.test.case.test_case import TestCase
+from onnx.backend.test.case.utils import import_recursive
 
 _NodeTestCases = []
 _TargetOpType = None
