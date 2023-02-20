@@ -155,7 +155,7 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'black==22.10.0',
+    'black==23.1.0',
     'isort==5.10.1',
 ]
 is_formatter = true
