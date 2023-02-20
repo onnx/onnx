@@ -11,7 +11,6 @@ from typing import Union
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
-
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 from onnx.reference.ops.aionnxml.op_array_feature_extractor import ArrayFeatureExtractor
 from onnx.reference.ops.aionnxml.op_binarizer import Binarizer
@@ -26,7 +25,9 @@ from onnx.reference.ops.aionnxml.op_one_hot_encoder import OneHotEncoder
 from onnx.reference.ops.aionnxml.op_scaler import Scaler
 from onnx.reference.ops.aionnxml.op_svm_classifier import SVMClassifier
 from onnx.reference.ops.aionnxml.op_svm_regressor import SVMRegressor
-from onnx.reference.ops.aionnxml.op_tree_ensemble_classifier import TreeEnsembleClassifier
+from onnx.reference.ops.aionnxml.op_tree_ensemble_classifier import (
+    TreeEnsembleClassifier,
+)
 from onnx.reference.ops.aionnxml.op_tree_ensemble_regressor import TreeEnsembleRegressor
 
 

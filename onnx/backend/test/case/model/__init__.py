@@ -6,7 +6,6 @@ from typing import List, Optional, Sequence
 import numpy as np
 
 from onnx import ModelProto
-
 from onnx.backend.test.case.test_case import TestCase
 from onnx.backend.test.case.utils import import_recursive
 

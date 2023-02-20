@@ -24,7 +24,6 @@ from onnx.reference.op_run import (
     RuntimeImplementationError,
     _split_class_name,
 )
-
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
 from onnx.reference.ops.op_abs import Abs
 from onnx.reference.ops.op_acos import Acos
@@ -38,8 +37,17 @@ from onnx.reference.ops.op_asinh import Asinh
 from onnx.reference.ops.op_atan import Atan
 from onnx.reference.ops.op_atanh import Atanh
 from onnx.reference.ops.op_attribute_has_value import AttributeHasValue
-from onnx.reference.ops.op_average_pool import AveragePool_1, AveragePool_7, AveragePool_11, AveragePool_19
-from onnx.reference.ops.op_batch_normalization import BatchNormalization_6, BatchNormalization_9, BatchNormalization_14
+from onnx.reference.ops.op_average_pool import (
+    AveragePool_1,
+    AveragePool_7,
+    AveragePool_11,
+    AveragePool_19,
+)
+from onnx.reference.ops.op_batch_normalization import (
+    BatchNormalization_6,
+    BatchNormalization_9,
+    BatchNormalization_14,
+)
 from onnx.reference.ops.op_bernoulli import Bernoulli
 from onnx.reference.ops.op_bitshift import BitShift
 from onnx.reference.ops.op_bitwise_and import BitwiseAnd
@@ -53,11 +61,16 @@ from onnx.reference.ops.op_ceil import Ceil
 from onnx.reference.ops.op_celu import Celu
 from onnx.reference.ops.op_center_crop_pad import CenterCropPad
 from onnx.reference.ops.op_clip import Clip_6, Clip_11
-from .op_col2im import Col2Im
+from onnx.reference.ops.op_col2im import Col2Im
 from onnx.reference.ops.op_compress import Compress
 from onnx.reference.ops.op_concat import Concat
 from onnx.reference.ops.op_concat_from_sequence import ConcatFromSequence
-from onnx.reference.ops.op_constant import Constant_1, Constant_9, Constant_11, Constant_12
+from onnx.reference.ops.op_constant import (
+    Constant_1,
+    Constant_9,
+    Constant_11,
+    Constant_12,
+)
 from onnx.reference.ops.op_constant_of_shape import ConstantOfShape
 from onnx.reference.ops.op_conv import Conv
 from onnx.reference.ops.op_conv_integer import ConvInteger
@@ -143,16 +156,22 @@ from onnx.reference.ops.op_random_uniform import RandomUniform
 from onnx.reference.ops.op_random_uniform_like import RandomUniformLike
 from onnx.reference.ops.op_range import Range
 from onnx.reference.ops.op_reciprocal import Reciprocal
-from .op_reduce_l1 import ReduceL1_1, ReduceL1_18
-from .op_reduce_l2 import ReduceL2_1, ReduceL2_18
+from onnx.reference.ops.op_reduce_l1 import ReduceL1_1, ReduceL1_18
+from onnx.reference.ops.op_reduce_l2 import ReduceL2_1, ReduceL2_18
 from onnx.reference.ops.op_reduce_log_sum import ReduceLogSum_1, ReduceLogSum_18
-from onnx.reference.ops.op_reduce_log_sum_exp import ReduceLogSumExp_1, ReduceLogSumExp_18
+from onnx.reference.ops.op_reduce_log_sum_exp import (
+    ReduceLogSumExp_1,
+    ReduceLogSumExp_18,
+)
 from onnx.reference.ops.op_reduce_max import ReduceMax_1, ReduceMax_18
 from onnx.reference.ops.op_reduce_mean import ReduceMean_1, ReduceMean_18
 from onnx.reference.ops.op_reduce_min import ReduceMin_1, ReduceMin_18
 from onnx.reference.ops.op_reduce_prod import ReduceProd_1, ReduceProd_18
 from onnx.reference.ops.op_reduce_sum import ReduceSum_1, ReduceSum_13
-from onnx.reference.ops.op_reduce_sum_square import ReduceSumSquare_1, ReduceSumSquare_18
+from onnx.reference.ops.op_reduce_sum_square import (
+    ReduceSumSquare_1,
+    ReduceSumSquare_18,
+)
 from onnx.reference.ops.op_relu import Relu
 from onnx.reference.ops.op_reshape import Reshape_5, Reshape_14
 from onnx.reference.ops.op_resize import Resize

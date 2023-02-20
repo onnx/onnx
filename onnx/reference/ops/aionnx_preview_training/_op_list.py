@@ -6,7 +6,6 @@ from typing import Any, Dict, Union
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
-
 from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 from onnx.reference.ops.aionnx_preview_training.op_adagrad import Adagrad
 from onnx.reference.ops.aionnx_preview_training.op_adam import Adam

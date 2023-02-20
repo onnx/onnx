@@ -4,8 +4,7 @@
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-from .op_col2im import col2im_naive_implementation
+from onnx.reference.ops.op_col2im import col2im_naive_implementation
 
 
 class ConvTranspose(OpRun):

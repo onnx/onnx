@@ -3,7 +3,12 @@
 
 import numpy as np
 
-from onnx.reference.ops.aionnxml._common_classifier import logistic, probit, softmax, softmax_zero
+from onnx.reference.ops.aionnxml._common_classifier import (
+    logistic,
+    probit,
+    softmax,
+    softmax_zero,
+)
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 from onnx.reference.ops.aionnxml.op_tree_ensemble_helper import TreeEnsemble
 
