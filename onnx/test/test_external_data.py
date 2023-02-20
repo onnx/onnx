@@ -53,13 +53,13 @@ class TestLoadExternalDataBase(unittest.TestCase):
             inputs=[],
             outputs=["values"],
             value=self.create_external_data_tensor(
-                self.attribute_value, "attribute_value"
+                self.attribute_value, "attribute_value"  # type: ignore[arg-type]
             ),
         )
 
         initializers = [
             self.create_external_data_tensor(
-                self.initializer_value, "input_value", location
+                self.initializer_value, "input_value", location  # type: ignore[arg-type]
             )
         ]
         inputs = [
@@ -206,8 +206,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
     def create_test_model_proto(self) -> ModelProto:
         tensors = self.create_data_tensors(
             [
-                (self.attribute_value, "attribute_value"),
-                (self.initializer_value, "input_value"),
+                (self.attribute_value, "attribute_value"),  # type: ignore[list-item]
+                (self.initializer_value, "input_value"),  # type: ignore[list-item]
             ]
         )
 
