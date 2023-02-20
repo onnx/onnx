@@ -4,7 +4,7 @@ import numpy as np
 
 import onnx
 from onnx.backend.test.case.base import Base
-from onnx.backend.test.case.node.node import expect
+from onnx.backend.test.case.node import expect
 
 
 def softmaxcrossentropy(x, target, weight=None, reduction="mean", ignore_index=None, get_log_prob=None):  # type: ignore

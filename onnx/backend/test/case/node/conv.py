@@ -4,13 +4,12 @@ import numpy as np
 
 import onnx
 from onnx.backend.test.case.base import Base
-from onnx.backend.test.case.node.node import expect
+from onnx.backend.test.case.node import expect
 
 
 class Conv(Base):
     @staticmethod
     def export() -> None:
-
         x = np.array(
             [
                 [
@@ -94,7 +93,6 @@ class Conv(Base):
 
     @staticmethod
     def export_conv_with_strides() -> None:
-
         x = np.array(
             [
                 [
@@ -216,7 +214,6 @@ class Conv(Base):
 
     @staticmethod
     def export_conv_with_autopad_same() -> None:
-
         x = np.array(
             [
                 [

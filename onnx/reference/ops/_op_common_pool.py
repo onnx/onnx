@@ -211,7 +211,6 @@ class CommonPool(OpRun):
         storage_order=None,  # pylint: disable=W0613
         strides=None,
     ):
-
         if pooling_type == "MAX" and dilations is None:
             dilations = [1 for s in kernel_shape]
         if pads is None:

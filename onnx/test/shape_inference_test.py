@@ -3726,7 +3726,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if_ver1(self) -> None:
-
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.
         # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
@@ -3771,7 +3770,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if(self) -> None:
-
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.
         # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
@@ -3814,7 +3812,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if_with_different_shapes_in_then_else_branches(self) -> None:
-
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.
         # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
@@ -8648,7 +8645,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ["z"],
             domain=ONNX_ML_DOMAIN,
         )
-        for (axes_shape, expected) in [
+        for axes_shape, expected in [
             ((2,), 2),
             (tuple(), "unk__0"),
             (("N",), "N"),

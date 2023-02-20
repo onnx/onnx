@@ -190,7 +190,6 @@ class SVMClassifier(OpRunAiOnnxMl):
     def _compute_final_scores(
         self, votes, scores, weights_are_all_positive_, has_proba, classlabels_ints
     ):
-
         max_weight = 0
         if votes is not None and len(votes) > 0:
             max_class = np.argmax(votes)

@@ -10,7 +10,6 @@ from onnx.backend.test.case.model import expect
 class ShrinkTest(Base):
     @staticmethod
     def export() -> None:
-
         node = onnx.helper.make_node(
             "Shrink",
             ["x"],

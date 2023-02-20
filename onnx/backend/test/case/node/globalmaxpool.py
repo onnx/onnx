@@ -4,13 +4,12 @@ import numpy as np
 
 import onnx
 from onnx.backend.test.case.base import Base
-from onnx.backend.test.case.node.node import expect
+from onnx.backend.test.case.node import expect
 
 
 class GlobalMaxPool(Base):
     @staticmethod
     def export() -> None:
-
         node = onnx.helper.make_node(
             "GlobalMaxPool",
             inputs=["x"],
@@ -22,7 +21,6 @@ class GlobalMaxPool(Base):
 
     @staticmethod
     def export_globalmaxpool_precomputed() -> None:
-
         node = onnx.helper.make_node(
             "GlobalMaxPool",
             inputs=["x"],

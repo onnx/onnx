@@ -4,7 +4,7 @@ import numpy as np
 
 import onnx
 from onnx.backend.test.case.base import Base
-from onnx.backend.test.case.node.node import expect
+from onnx.backend.test.case.node import expect
 
 
 class GlobalAveragePool(Base):
@@ -21,7 +21,6 @@ class GlobalAveragePool(Base):
 
     @staticmethod
     def export_globalaveragepool_precomputed() -> None:
-
         node = onnx.helper.make_node(
             "GlobalAveragePool",
             inputs=["x"],

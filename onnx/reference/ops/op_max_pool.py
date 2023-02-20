@@ -184,7 +184,6 @@ class MaxPool(CommonPool):
         strides,
         output_spatial_shape,
     ):
-
         global_pooling = False
         y_dims = x.shape[:2] + tuple(output_spatial_shape)
         y = np.zeros(y_dims, dtype=x.dtype)
@@ -241,7 +240,6 @@ class MaxPool(CommonPool):
         strides,
         output_spatial_shape,
     ):
-
         global_pooling = False
         y_dims = x.shape[:2] + tuple(output_spatial_shape)
         y = np.zeros(y_dims, dtype=x.dtype)
@@ -319,7 +317,6 @@ class MaxPool(CommonPool):
         strides,
         output_spatial_shape,
     ):
-
         global_pooling = False
         y_dims = x.shape[:2] + tuple(output_spatial_shape)
         y = np.zeros(y_dims, dtype=x.dtype)

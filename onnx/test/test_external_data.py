@@ -135,7 +135,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         tensors = []
 
         with open(os.path.join(self.temp_dir, tensor_filename), "ab") as data_file:
-            for (value, tensor_name) in tensors_data:
+            for value, tensor_name in tensors_data:
                 tensor = from_array(np.array(value))
                 offset = data_file.tell()
                 if offset % 4096 != 0:
@@ -196,7 +196,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self, tensors_data: List[Tuple[List[Any], Any]]
     ) -> List[TensorProto]:
         tensors = []
-        for (value, tensor_name) in tensors_data:
+        for value, tensor_name in tensors_data:
             tensor = from_array(np.array(value))
             tensor.name = tensor_name
             tensors.append(tensor)

@@ -10,7 +10,6 @@ from onnx.backend.test.case.model import expect
 class SingleRelu(Base):
     @staticmethod
     def export() -> None:
-
         node = onnx.helper.make_node("Relu", ["x"], ["y"], name="test")
         graph = onnx.helper.make_graph(
             nodes=[node],
