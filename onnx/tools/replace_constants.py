@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=too-many-statements,too-many-branches
-from typing import Optional, Sequence, Tuple, Union
+from typing import List, Optional, Tuple, Union
+
 import numpy as np
 
 from onnx import (
@@ -17,7 +18,6 @@ from onnx.helper import (
     make_graph,
     make_model,
     make_node,
-    make_sparse_tensor,
     make_tensor_value_info,
     set_model_props,
     tensor_dtype_to_np_dtype,
@@ -25,7 +25,7 @@ from onnx.helper import (
 from onnx.numpy_helper import from_array
 
 
-def _replace_constant(node: NodeProto) -> Tuple[NodeProto, NodeProto]:
+def _replace_constant(node: NodeProto, threshold: int) -> Tuple[NodeProto, NodeProto]:
     """
     Replace a node *Constant* two nodes, one *Constant* for the shape,
     one *ConstantOfShape*.
@@ -42,6 +42,9 @@ def _replace_constant(node: NodeProto) -> Tuple[NodeProto, NodeProto]:
             value = att.t
             new_name = f"{value.name}__SHAPE"
             dims = value.dims
+            size = np.prod(dims)
+            if size <= threshold:
+                return None, node
             init = from_array(np.array(list(dims), dtype=np.int64), name=new_name)
             dtype = tensor_dtype_to_np_dtype(value.data_type)
             node_shape = make_node(
@@ -50,16 +53,17 @@ def _replace_constant(node: NodeProto) -> Tuple[NodeProto, NodeProto]:
                 [new_name],
                 value=init,
             )
-            node = make_node(
+            new_node = make_node(
                 "ConstantOfShape",
                 [new_name],
                 [value.name],
                 value=from_array(np.array([0.5], dtype=dtype)),
             )
-            return node_shape, node
+            return node_shape, new_node
         raise NotImplementedError(
             f"Replacement of constant with attribute {att.name!r}"
         )
+    return None, node
 
 
 def replace_initializer_by_constant_of_shape(
@@ -126,7 +130,7 @@ def replace_initializer_by_constant_of_shape(
     removed = set()
     additional_inputs = []
 
-    new_inits: Sequence[TensorProto] = []
+    new_inits: List[TensorProto] = []
     for init in onx.initializer:
         dims = tuple(init.dims)
         size = np.prod(dims)
@@ -151,22 +155,24 @@ def replace_initializer_by_constant_of_shape(
                 make_tensor_value_info(new_name, TensorProto.INT64, [len(dims)])
             )
 
-    new_sparse_inits: Sequence[SparseTensorProto] = []
-    for init in onx.sparse_initializer:
-        dims = tuple(init.dims)
+    new_sparse_inits: List[SparseTensorProto] = []
+    for sp_init in onx.sparse_initializer:
+        dims = tuple(sp_init.dims)
         size = np.prod(dims)
         if size <= threshold:
-            new_sparse_inits.append(init)
+            new_sparse_inits.append(sp_init)
             continue
         raise NotImplementedError(
             f"This feature is not yet implemented for a sparse initializer "
-            f"(name={init.name!r})."
+            f"(name={sp_init.name!r})."
         )
 
     for node in onx.node:
         if node.op_type == "Constant":
-            new_node_shape, new_node = _replace_constant(node)
-            new_nodes.extend([new_node_shape, new_node])
+            new_node_shape, new_node = _replace_constant(node, threshold)
+            if new_node_shape is not None:
+                new_nodes.append(new_node_shape)
+            new_nodes.append(new_node)
             continue
         modified = False
         atts = []
