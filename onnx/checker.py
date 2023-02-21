@@ -84,11 +84,15 @@ def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None
     pass
 
 
-@_create_checker(FunctionProto)
 def check_function(
-    graph: FunctionProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+    function: FunctionProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
 ) -> None:
-    pass
+    if ctx == DEFAULT_CONTEXT:
+        function_opset_dic = {}
+        for domain_version in function.opset_import:
+            function_opset_dic[domain_version.domain] = domain_version.version
+        ctx.opset_imports = function_opset_dic
+    C.check_function(function.SerializeToString(), ctx)
 
 
 @_create_checker(GraphProto)
