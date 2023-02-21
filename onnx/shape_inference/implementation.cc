@@ -649,7 +649,9 @@ class ShapeInferenceImplBase {
     }
   }
 
-  const std::vector<std::string>& Errors() const { return inference_errors; }
+  const std::vector<std::string>& Errors() const {
+    return inference_errors;
+  }
 
  private:
   GraphProto& g;
@@ -826,14 +828,13 @@ void InferShapeForFunctionNode(
 }
 
 struct FunctionInferenceContext : public InferenceContext {
-
-  FunctionInferenceContext (
-    const FunctionProto& func_proto,
-    const std::vector<TypeProto>& input_types,
-    const std::vector<AttributeProto>& attributes
-  ) : input_types_(input_types) {
+  FunctionInferenceContext(
+      const FunctionProto& func_proto,
+      const std::vector<TypeProto>& input_types,
+      const std::vector<AttributeProto>& attributes)
+      : input_types_(input_types) {
     for (const auto& attr : attributes) {
-      attributesByName_[attr.name()] = & attr;
+      attributesByName_[attr.name()] = &attr;
     }
     auto num_outputs = func_proto.output_size();
     for (int i = 0; i < num_outputs; i++) {
@@ -849,35 +850,39 @@ struct FunctionInferenceContext : public InferenceContext {
       return iter->second;
     }
   }
-  size_t getNumInputs() const override { return input_types_.size(); }
+  size_t getNumInputs() const override {
+    return input_types_.size();
+  }
 
-  size_t getNumOutputs() const override { return output_types_.size(); }
+  size_t getNumOutputs() const override {
+    return output_types_.size();
+  }
 
   const TypeProto* getInputType(size_t index) const override {
-    return (index < input_types_.size()) ? & input_types_[index] : nullptr;
+    return (index < input_types_.size()) ? &input_types_[index] : nullptr;
   }
 
   TypeProto* getOutputType(size_t index) override {
-    return (index < output_types_.size()) ? & output_types_[index] : nullptr;
+    return (index < output_types_.size()) ? &output_types_[index] : nullptr;
   }
 
   GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override {
-    (void) attribute_name; // This method is unused for function-type-inference.
+    (void)attribute_name; // This method is unused for function-type-inference.
     return nullptr;
   }
 
   const TensorProto* getInputData(size_t index) const override {
-    (void) index; // This inference doesn't take advantage of statically known input values.
+    (void)index; // This inference doesn't take advantage of statically known input values.
     return nullptr;
   }
 
   const SparseTensorProto* getInputSparseData(size_t index) const override {
-    (void) index; // This inference doesn't take advantage of statically known input values.
+    (void)index; // This inference doesn't take advantage of statically known input values.
     return nullptr;
   }
 
   const TensorShapeProto* getSymbolicInput(size_t index) const override {
-    (void) index; // This inference doesn't take advantage of data-propagation.
+    (void)index; // This inference doesn't take advantage of data-propagation.
     return nullptr;
   }
 
@@ -885,17 +890,16 @@ struct FunctionInferenceContext : public InferenceContext {
     return std::move(output_types_);
   }
 
-private:
+ private:
   const std::vector<TypeProto>& input_types_;
   std::vector<TypeProto> output_types_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 
 std::vector<TypeProto> InferFunctionOutputTypes(
-  const FunctionProto& function_proto,
-  const std::vector<TypeProto>& input_types,
-  const std::vector<AttributeProto>& attributes
-) {
+    const FunctionProto& function_proto,
+    const std::vector<TypeProto>& input_types,
+    const std::vector<AttributeProto>& attributes) {
   FunctionInferenceContext ctx(function_proto, input_types, attributes);
   auto opset_imports = GetOpsetImportsFromProto(function_proto);
   GraphProto g;
@@ -912,12 +916,12 @@ std::vector<TypeProto> InferFunctionOutputTypes(
   base.process(function_proto, ctx);
   auto& errors = base.Errors();
   if (!errors.empty()) {
-      std::string all_errors = "Inference error(s): ";
-      for (const std::string& error : errors) {
-        all_errors += error + "\n";
-      }
-      fail_shape_inference(all_errors);
+    std::string all_errors = "Inference error(s): ";
+    for (const std::string& error : errors) {
+      all_errors += error + "\n";
     }
+    fail_shape_inference(all_errors);
+  }
   return ctx.popOutputTypes();
 }
 
