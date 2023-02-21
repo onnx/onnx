@@ -1,8 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=too-many-statements,too-many-branches
 from typing import Optional, Union
 import numpy as np
-from onnx import FunctionProto, GraphProto, ModelProto
-from onnx.helper import make_graph, make_model, make_node, tensor_dtype_to_np_dtype
+from onnx import AttributeProto, FunctionProto, GraphProto, ModelProto, TensorProto
+from onnx.helper import (
+    make_attribute,
+    make_graph,
+    make_model,
+    make_node,
+    make_tensor_value_info,
+    set_model_props,
+    tensor_dtype_to_np_dtype,
+)
 from onnx.numpy_helper import from_array
 
 
@@ -70,7 +79,7 @@ def replace_initializer_by_constant_of_shape(
     removed = set()
     additional_inputs = []
 
-    new_inits = []
+    new_inits: Sequence[TensorProto] = []
     for init in onx.initializer:
         dims = tuple(init.dims)
         size = np.prod(dims)
@@ -95,7 +104,7 @@ def replace_initializer_by_constant_of_shape(
                 make_tensor_value_info(new_name, TensorProto.INT64, [len(dims)])
             )
 
-    new_sparse_inits = []
+    new_sparse_inits: Sequence[SparseTensorProto] = []
     for init in onx.sparse_initializer:
         dims = tuple(init.dims)
         size = np.prod(dims)
