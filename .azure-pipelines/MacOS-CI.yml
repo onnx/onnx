@@ -62,7 +62,7 @@ jobs:
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py -q install
+      python setup.py install
     displayName: 'Install dependencies and ONNX'
 
   - script: |

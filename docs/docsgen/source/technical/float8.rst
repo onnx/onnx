@@ -33,6 +33,12 @@ numbers. The paper experiments different split between
 exponent and mantissa and shows and E4M3 and E5M2 are
 the best ones.
 
+The reference implementation implements the NVIDIA standard
+in pure python. However, the implementation is usually hardware
+dependant and the behaviour of operators (Cast, CastLike,
+QuantizeLinear, DequantizeLinear) may be different depending
+on the machine they are executed.
+
 FP8 from IEEE
 =============
 
