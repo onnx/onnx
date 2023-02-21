@@ -836,7 +836,7 @@ struct FunctionInferenceContext : public InferenceContext {
       attributesByName_[attr.name()] = & attr;
     }
     auto num_outputs = func_proto.output_size();
-    for (size_t i = 0; i < num_outputs; i++) {
+    for (int i = 0; i < num_outputs; i++) {
       output_types_.push_back(TypeProto());
     }
   }
@@ -850,17 +850,36 @@ struct FunctionInferenceContext : public InferenceContext {
     }
   }
   size_t getNumInputs() const override { return input_types_.size(); }
+
+  size_t getNumOutputs() const override { return output_types_.size(); }
+
   const TypeProto* getInputType(size_t index) const override {
     return (index < input_types_.size()) ? & input_types_[index] : nullptr;
   }
-  const TensorProto* getInputData(size_t index) const override { return nullptr; }
-  size_t getNumOutputs() const override { return output_types_.size(); }
+
   TypeProto* getOutputType(size_t index) override {
     return (index < output_types_.size()) ? & output_types_[index] : nullptr;
   }
-  GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override { return nullptr; }
-  const SparseTensorProto* getInputSparseData(size_t index) const override { return nullptr; }
-  const TensorShapeProto* getSymbolicInput(size_t index) const override { return nullptr; }
+
+  GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override {
+    (void) attribute_name; // This method is unused for function-type-inference.
+    return nullptr;
+  }
+
+  const TensorProto* getInputData(size_t index) const override {
+    (void) index; // This inference doesn't take advantage of statically known input values.
+    return nullptr;
+  }
+
+  const SparseTensorProto* getInputSparseData(size_t index) const override {
+    (void) index; // This inference doesn't take advantage of statically known input values.
+    return nullptr;
+  }
+
+  const TensorShapeProto* getSymbolicInput(size_t index) const override {
+    (void) index; // This inference doesn't take advantage of data-propagation.
+    return nullptr;
+  }
 
   std::vector<TypeProto> popOutputTypes() {
     return std::move(output_types_);
