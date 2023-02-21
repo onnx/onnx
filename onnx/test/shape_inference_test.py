@@ -1641,6 +1641,40 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (30, 4, 4, 3, 4))]
         )
 
+    def test_average_pool_with_dilations(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "AveragePool", ["X"], ["Y"], kernel_shape=[2, 2], dilations=[2, 2]
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+        )
+
+    def test_average_pool_with_same_upper_padding_and_stride_and_dilation(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "AveragePool",
+                    ["X"],
+                    ["Y"],
+                    auto_pad="SAME_UPPER",
+                    kernel_shape=[2, 2],
+                    strides=[2, 2],
+                    dilations=[2, 3],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
+        )
+
     def test_relu(self) -> None:
         self._identity_prop("Relu")
 
@@ -1937,6 +1971,10 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_equal(self) -> None:
         self._logical_binary_op("Equal", TensorProto.BOOL)
         self._logical_binary_op_with_broadcasting("Equal", TensorProto.BOOL)
+
+    def test_equal_string(self) -> None:
+        self._logical_binary_op("Equal", TensorProto.STRING)
+        self._logical_binary_op_with_broadcasting("Equal", TensorProto.STRING)
 
     def test_logical_not(self) -> None:
         graph = self._make_graph(
@@ -6996,6 +7034,22 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("output", TensorProto.BOOL, ()),
             ],
         )  # type: ignore
+
+    def test_tensor_get_element(self) -> None:
+        tensor_type_proto = helper.make_tensor_type_proto(
+            elem_type=TensorProto.DOUBLE, shape=[2, 1, 4]
+        )
+        output_tensor_val_info = helper.make_value_info(
+            name="output", type_proto=tensor_type_proto
+        )
+        graph = self._make_graph(
+            [("input", TensorProto.DOUBLE, (2, 1, 4))],
+            [
+                make_node("OptionalGetElement", ["input"], ["output"]),
+            ],
+            [],
+        )
+        self._assert_inferred(graph, [output_tensor_val_info])  # type: ignore
 
     def test_optional_tensor_get_element(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
