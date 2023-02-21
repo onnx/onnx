@@ -1,18 +1,65 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=too-many-statements,too-many-branches
-from typing import Optional, Union
+from typing import Optional, Sequence, Tuple, Union
 import numpy as np
-from onnx import AttributeProto, FunctionProto, GraphProto, ModelProto, TensorProto
+
+from onnx import (
+    AttributeProto,
+    FunctionProto,
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    SparseTensorProto,
+    TensorProto,
+)
 from onnx.helper import (
     make_attribute,
     make_graph,
     make_model,
     make_node,
+    make_sparse_tensor,
     make_tensor_value_info,
     set_model_props,
     tensor_dtype_to_np_dtype,
 )
 from onnx.numpy_helper import from_array
+
+
+def _replace_constant(node: NodeProto) -> Tuple[NodeProto, NodeProto]:
+    """
+    Replace a node *Constant* two nodes, one *Constant* for the shape,
+    one *ConstantOfShape*.
+    """
+    if node.op_type != "Constant":
+        raise TypeError(f"Node type must be 'Constant' not {node.op_type!r}.")
+    for att in node.attribute:
+        if att.name == "sparse_value":
+            raise NotImplementedError(
+                f"This feature is not yet implemented for a sparse constant "
+                f"(node name={node.name!r})."
+            )
+        if att.name == "value":
+            value = att.t
+            new_name = f"{value.name}__SHAPE"
+            dims = value.dims
+            init = from_array(np.array(list(dims), dtype=np.int64), name=new_name)
+            dtype = tensor_dtype_to_np_dtype(value.data_type)
+            node_shape = make_node(
+                "Constant",
+                [],
+                [new_name],
+                value=init,
+            )
+            node = make_node(
+                "ConstantOfShape",
+                [new_name],
+                [value.name],
+                value=from_array(np.array([0.5], dtype=dtype)),
+            )
+            return node_shape, node
+        raise NotImplementedError(
+            f"Replacement of constant with attribute {att.name!r}"
+        )
 
 
 def replace_initializer_by_constant_of_shape(
@@ -73,7 +120,7 @@ def replace_initializer_by_constant_of_shape(
         return model
 
     if not isinstance(onx, GraphProto):
-        raise TypeError(f"onx should be a GraphProto as this stage not {type(onx)}.")
+        raise TypeError(f"onx should be a GraphProto at this stage not {type(onx)}.")
 
     new_nodes = []
     removed = set()
@@ -112,13 +159,15 @@ def replace_initializer_by_constant_of_shape(
             new_sparse_inits.append(init)
             continue
         raise NotImplementedError(
-            f"This feature is not yet implemented for sparse initializer"
+            f"This feature is not yet implemented for a sparse initializer "
             f"(name={init.name!r})."
         )
 
     for node in onx.node:
         if node.op_type == "Constant":
-            raise NotImplementedError(f"Node {node.op_type!r} is not handled yet.")
+            new_node_shape, new_node = _replace_constant(node)
+            new_nodes.extend([new_node_shape, new_node])
+            continue
         modified = False
         atts = []
         for att in node.attribute:

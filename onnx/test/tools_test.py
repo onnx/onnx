@@ -80,6 +80,33 @@ class TestToolsFunctions(unittest.TestCase):
         y2 = oinf2.run(None, {"X": x})[0]
         assert_allclose(y1, y2)
 
+    def test_replace_constant(self):
+        dtype = np.float32
+        value = np.random.randn(2, 100).astype(dtype)
+        A = numpy_helper.from_array(value, name="A")
+        value = np.array([1], dtype=dtype)
+        C = numpy_helper.from_array(value, name="C")
+
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node0 = helper.make_node("Constant", [], ["A"], value=A)
+        node1 = helper.make_node("MatMul", ["X", "A"], ["AX"])
+        node2 = helper.make_node("Sub", ["AX", "C"], ["Y"])
+        graph = helper.make_graph([node0, node1, node2], "lr", [X], [Y], [C])
+        model_def = helper.make_model(graph)
+
+        x = np.array([1, 2, 4, 5, 5, 4]).astype(np.float32).reshape((3, 2))
+        oinf1 = ReferenceEvaluator(model_def)
+        y1 = oinf1.run(None, {"X": x})[0]
+        repl = replace_initializer_by_constant_of_shape(model_def)
+        node_types = set(n.op_type for n in repl.graph.node)
+        self.assertIn("ConstantOfShape", node_types)
+        oinf2 = ReferenceEvaluator(repl)
+        y1[:, :] = 3.5
+        y1[0, :] = 0.5
+        y2 = oinf2.run(None, {"X": x})[0]
+        assert_allclose(y1, y2)
+
 
 if __name__ == "__main__":
     unittest.main()
