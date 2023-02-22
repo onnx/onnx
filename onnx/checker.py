@@ -7,7 +7,7 @@ proto is legal.
 
 import functools
 import sys
-from typing import Any, Callable, Type, TypeVar, Union, cast
+from typing import Any, Callable, Optional, Type, TypeVar, Union, cast
 
 from google.protobuf.message import Message
 
@@ -85,9 +85,11 @@ def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None
 
 
 def check_function(
-    function: FunctionProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+    function: FunctionProto, ctx: Optional[C.CheckerContext] = None
 ) -> None:
-    if ctx == DEFAULT_CONTEXT:
+    if ctx is None:
+        ctx = C.CheckerContext()
+        ctx.ir_version = IR_VERSION
         function_opset_dic = {}
         for domain_version in function.opset_import:
             function_opset_dic[domain_version.domain] = domain_version.version
