@@ -22,7 +22,7 @@ from NVIDIA introduces two types following
 First one is E4M3, 1 bit for the sign, 4 bits for the exponents and 3
 bits for the mantissa. Second one is E5M2, 1 bit for the sign,
 3 bits for the exponents and 2 for the mantissa. The first types
-is mostly used for the coefficients, the second one for the gradient.
+is mostly used for the weights, the second one for the gradient.
 
 Second paper `8-bit Numerical Formats For Deep Neural Networks
 <https://arxiv.org/pdf/2206.02915.pdf>`_ introduces
