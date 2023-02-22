@@ -24,6 +24,7 @@ from onnx import (
     SparseTensorProto,
     TensorProto,
     ValueInfoProto,
+    helper,
 )
 
 # Limitation of single protobuf file is 2GB
@@ -89,7 +90,7 @@ def check_function(
 ) -> None:
     if ctx is None:
         ctx = C.CheckerContext()
-        ctx.ir_version = IR_VERSION
+        ctx.ir_version = helper.find_min_ir_version_for(function.opset_import)
         function_opset_dic = {}
         for domain_version in function.opset_import:
             function_opset_dic[domain_version.domain] = domain_version.version
