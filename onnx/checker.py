@@ -90,7 +90,9 @@ def check_function(
 ) -> None:
     if ctx is None:
         ctx = C.CheckerContext()
-        ctx.ir_version = helper.find_min_ir_version_for(function.opset_import)
+        ctx.ir_version = helper.find_min_ir_version_for(
+            list(function.opset_import), True
+        )
         function_opset_dic = {}
         for domain_version in function.opset_import:
             function_opset_dic[domain_version.domain] = domain_version.version
