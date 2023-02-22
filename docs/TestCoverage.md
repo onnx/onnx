@@ -4251,7 +4251,7 @@ X = np.arange(9).astype(np.float32)
 X.shape = (1, 1, 3, 3)
 W = np.ones((1, 1, 2, 2), dtype=np.float32)
 
-# Convolution without padding
+# Convolution with padding
 offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
 offset_with_padding[
     0, 0, 0, 0
@@ -4286,7 +4286,7 @@ expect(
     name="test_basic_deform_conv_with_padding",
 )
 
-# Convolution with padding
+# Convolution without padding
 offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
 offset_without_padding[
     0, 0, 0, 0

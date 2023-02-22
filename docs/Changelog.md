@@ -22643,7 +22643,7 @@ This version of the operator has been available since version 19 of the default 
 
 ### <a name="DeformConv-19"></a>**DeformConv-19**</a>
 
-  Performs Deformable Convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
+  Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
 
 #### Version
 

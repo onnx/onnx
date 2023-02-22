@@ -1369,7 +1369,7 @@ output_shape can also be explicitly specified in which case pads values are auto
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 11, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
 static const char* DeformConv_ver19_doc = R"DOC(
-Performs Deformable Convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
+Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

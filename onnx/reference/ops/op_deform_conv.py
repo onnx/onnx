@@ -49,9 +49,8 @@ def _conv_implementation(  # type: ignore
         mask = np.ones((n, offset_group * np.prod(kernel_shape), *output_shape))
     mask = mask.reshape((n, offset_group, *kernel_shape, *output_shape))
 
-    from onnx.reference.ops._op_list import (
-        GridSample,  # Use GridSample for interpolation
-    )
+    # pylint: disable=import-outside-toplevel
+    from onnx.reference.ops._op_list import GridSample
 
     if len(X.shape) == 4:
         ih, iw = X.shape[2:]
@@ -65,7 +64,7 @@ def _conv_implementation(  # type: ignore
             ((iw - kw_new + pads[1] + pads[3]) / stw) + 1
         ):
             raise RuntimeError(
-                f"Padding, dilation, stride, and kernel shape incompatible with output shape."
+                "Padding, dilation, stride, and kernel shape incompatible with output shape."
             )
 
         bh, bw = -pads[0], -pads[1]
