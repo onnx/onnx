@@ -15,6 +15,7 @@ from onnx import (
 )
 from onnx.helper import (
     make_attribute,
+    make_function,
     make_graph,
     make_model,
     make_node,
@@ -85,9 +86,27 @@ def replace_initializer_by_constant_of_shape(
     :return: onx, modified ModelProto
     """
     if isinstance(onx, FunctionProto):
+        modified = False
+        new_nodes: List[NodeProto] = []
         for node in onx.node:
             if node.op_type == "Constant":
-                raise NotImplementedError(f"Node {node.op_type!r} is not handled yet.")
+                new_node_shape, new_node = _replace_constant(node, threshold)
+                if new_node_shape is not None:
+                    new_nodes.append(new_node_shape)
+                new_nodes.append(new_node)
+                modified = True
+                continue
+            new_nodes.append(node)
+        if modified:
+            new_onx = make_function(
+                onx.domain,
+                onx.name,
+                onx.input,
+                onx.output,
+                new_nodes,
+                opset_imports=onx.opset_import,
+            )
+            return new_onx
         return onx
     if isinstance(onx, ModelProto):
         new_graph = replace_initializer_by_constant_of_shape(
