@@ -136,10 +136,8 @@ class CommonRNN(OpRun):
 
 
 class RNN_7(CommonRNN):
-
     pass
 
 
 class RNN_14(CommonRNN):
-
     pass
