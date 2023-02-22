@@ -328,6 +328,14 @@ class TestAutomaticUpgrade(unittest.TestCase):
             "ConvTranspose", 1, [[1, 1, 5, 5], [1, 1, 3, 3]], [[1, 1, 7, 7]]
         )
 
+    def test_DeformConv(self) -> None:
+        self._test_op_upgrade(
+            "DeformConv",
+            19,
+            [[1, 1, 3, 3], [1, 1, 2, 2], [1, 8, 2, 2]],
+            [[1, 1, 2, 2]],
+        )
+
     def test_Cosh(self) -> None:
         self._test_op_upgrade("Cosh", 9)
 
