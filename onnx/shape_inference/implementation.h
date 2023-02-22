@@ -479,10 +479,9 @@ void InferShapeForFunctionNode(
 /// the attribute values supplied.
 ///
 std::vector<TypeProto> InferFunctionOutputTypes(
-  const FunctionProto& func_proto,
-  const std::vector<TypeProto>& input_types,
-  const std::vector<AttributeProto>& attributes
-);
+    const FunctionProto& func_proto,
+    const std::vector<TypeProto>& input_types,
+    const std::vector<AttributeProto>& attributes);
 
 std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err);
 

@@ -63,7 +63,7 @@ class TestFunctionInference(TestShapeInferenceHelper):
             <opset_import: [ "" : 18 ], domain: "local">
             CastTo <dtype> (x) => (y) {
                 y = Cast <to : int = @dtype> (x)
-            }           
+            }
         """
         dtype_6 = onnx.helper.make_attribute("dtype", 6)
         self._check(code, [float_type_], [dtype_6], [int32_type_])
