@@ -59,7 +59,7 @@ def _replace_constant(
             new_node = make_node(
                 "ConstantOfShape",
                 [new_name],
-                [value.name],
+                node.output,
                 value=from_array(np.array([0.5], dtype=dtype)),
             )
             return node_shape, new_node
@@ -108,6 +108,7 @@ def replace_initializer_by_constant_of_shape(
             )
             return new_onx
         return onx
+
     if isinstance(onx, ModelProto):
         new_graph = replace_initializer_by_constant_of_shape(
             onx.graph, ir_version=ir_version or onx.ir_version, threshold=threshold
@@ -147,6 +148,7 @@ def replace_initializer_by_constant_of_shape(
     if not isinstance(onx, GraphProto):
         raise TypeError(f"onx should be a GraphProto at this stage not {type(onx)}.")
 
+    n_modifications = 0
     new_nodes = []
     removed = set()
     additional_inputs = []
@@ -158,6 +160,7 @@ def replace_initializer_by_constant_of_shape(
         if size <= threshold:
             new_inits.append(init)
             continue
+        n_modifications += 1
         new_name = f"{init.name}__SHAPE"
         new_inits.append(
             from_array(np.array(list(dims), dtype=np.int64), name=new_name)
@@ -194,6 +197,7 @@ def replace_initializer_by_constant_of_shape(
             new_node_shape, new_node = _replace_constant(node, threshold)
             if new_node_shape is not None:
                 new_nodes.append(new_node_shape)
+                n_modifications += 1
             new_nodes.append(new_node)
             continue
         modified = False
@@ -204,25 +208,29 @@ def replace_initializer_by_constant_of_shape(
                 and hasattr(att, "g")
                 and att.g is not None
             ):
-                modified = True
                 g = replace_initializer_by_constant_of_shape(
                     att.g, threshold=threshold, ir_version=ir_version
                 )
-                att = make_attribute(att.name, g)
+                if id(g) != id(att.g):
+                    modified = True
+                    att = make_attribute(att.name, g)
             atts.append(att)
         if modified:
             new_node = make_node(node.op_type, node.input, node.output)
             new_node.attribute.extend(atts)
-            new_nodes.append(node)
+            new_nodes.append(new_node)
+            n_modifications += 1
         else:
             new_nodes.append(node)
 
-    graph = make_graph(
-        new_nodes,
-        onx.name,
-        [i for i in onx.input if i.name not in removed] + additional_inputs,
-        onx.output,
-        initializer=new_inits,
-        sparse_initializer=new_sparse_inits,
-    )
-    return graph
+    if n_modifications > 0:
+        graph = make_graph(
+            new_nodes,
+            onx.name,
+            [i for i in onx.input if i.name not in removed] + additional_inputs,
+            onx.output,
+            initializer=new_inits,
+            sparse_initializer=new_sparse_inits,
+        )
+        return graph
+    return onx
