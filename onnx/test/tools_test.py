@@ -4,6 +4,7 @@ import unittest
 
 import numpy as np
 from numpy.testing import assert_allclose
+
 import onnx
 from onnx import TensorProto, helper, numpy_helper
 from onnx.reference import ReferenceEvaluator

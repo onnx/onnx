@@ -25,7 +25,9 @@ from onnx.helper import (
 from onnx.numpy_helper import from_array
 
 
-def _replace_constant(node: NodeProto, threshold: int) -> Tuple[NodeProto, NodeProto]:
+def _replace_constant(
+    node: NodeProto, threshold: int
+) -> Tuple[Optional[NodeProto], NodeProto]:
     """
     Replace a node *Constant* two nodes, one *Constant* for the shape,
     one *ConstantOfShape*.
@@ -164,7 +166,8 @@ def replace_initializer_by_constant_of_shape(
             continue
         raise NotImplementedError(
             f"This feature is not yet implemented for a sparse initializer "
-            f"(name={sp_init.name!r})."
+            f"(indices.name={sp_init.indices.name!r}, "
+            f"values.name={sp_init.values.name!r})."
         )
 
     for node in onx.node:
