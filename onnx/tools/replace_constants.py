@@ -75,12 +75,12 @@ def replace_initializer_by_constant_of_shape(
     ir_version: Optional[int] = None,
 ):
     """
-    Replaces initializers by nodes *ConstantOfShape* to reduce
-    the size and still write a unit test.
+    Replace initializers or constant node by nodes *ConstantOfShape* to reduce
+    the size. This reduce the cost to write a unit test about
+    a specific graph structure.
 
     :param onx: ModelProto
-    :param threshold: every initializer under
-        this threshold is not impacted
+    :param threshold: every initializer under this threshold is not impacted
     :param ir_version: initializer must be specified as input for `ir_version <= 3`,
         this must be specified if onx is :class:`FunctionProto` or :class:`GraphProto`
     :return: onx, modified ModelProto
