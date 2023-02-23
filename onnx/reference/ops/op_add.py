@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op import OpRunBinaryNumpy
+from onnx.reference.ops._op import OpRunBinaryNumpy
 
 
 class Add(OpRunBinaryNumpy):

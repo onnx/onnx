@@ -275,7 +275,7 @@ import numpy as np
 
 
 def abs(input: np.ndarray) -> np.ndarray:
-    return np.abs(input)
+    return np.abs(input)  # type: ignore[no-any-return]
 
 ```
 
@@ -4859,7 +4859,6 @@ Other versions of this operator: <a href="Changelog.md#Conv-1">1</a>
 <summary>conv</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -4949,7 +4948,6 @@ expect(
 <summary>conv_with_autopad_same</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -4997,7 +4995,6 @@ expect(node, inputs=[x, W], outputs=[y], name="test_conv_with_autopad_same")
 <summary>conv_with_strides</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -5185,7 +5182,6 @@ This version of the operator has been available since version 10 of the default 
 <summary>with_padding</summary>
 
 ```python
-
 x = (
     np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
     .astype(np.uint8)
@@ -5223,7 +5219,6 @@ expect(
 <summary>without_padding</summary>
 
 ```python
-
 x = (
     np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
     .astype(np.uint8)
@@ -9046,7 +9041,6 @@ expect(node, inputs=[x], outputs=[y], name="test_globalaveragepool")
 <summary>globalaveragepool_precomputed</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalAveragePool",
     inputs=["x"],
@@ -9149,7 +9143,6 @@ This version of the operator has been available since version 1 of the default O
 <summary>globalmaxpool</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalMaxPool",
     inputs=["x"],
@@ -9167,7 +9160,6 @@ expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool")
 <summary>globalmaxpool_precomputed</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalMaxPool",
     inputs=["x"],

@@ -2,8 +2,6 @@
 onnx.hub
 ========
 
-.. contents::
-    :local:
 
 ModelInfo
 +++++++++

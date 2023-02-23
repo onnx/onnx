@@ -6,11 +6,9 @@ onnx.mapping
 
 This module defines the correspondence between onnx numerical types
 and numpy numerical types. This information can be accessed
-through attribute :ref:`l-onnx-types-mapping` or through the functions 
+through attribute :ref:`l-onnx-types-mapping` or through the functions
 defined in :ref:`l-mod-onnx-helper`.
 
-.. contents::
-    :local:
 
 TensorDtypeMap
 ++++++++++++++

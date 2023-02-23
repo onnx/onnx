@@ -2,8 +2,6 @@
 onnx.tools
 ==========
 
-.. contents::
-    :local:
 
 net_drawer
 ++++++++++

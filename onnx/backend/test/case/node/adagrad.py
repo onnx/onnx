@@ -3,10 +3,9 @@
 import numpy as np
 
 import onnx
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 from onnx.defs import AI_ONNX_PREVIEW_TRAINING_DOMAIN
-
-from ..base import Base
-from . import expect
 
 
 def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # type: ignore
