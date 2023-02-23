@@ -3,13 +3,12 @@
 
 import numpy as np
 
-from ._op_run_aionnxml import OpRunAiOnnxMl
+from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class DictVectorizer(OpRunAiOnnxMl):
     def _run(self, x, int64_vocabulary=None, string_vocabulary=None):  # type: ignore
         if isinstance(x, (np.ndarray, list)):
-
             dict_labels = {}
             if int64_vocabulary:
                 for i, v in enumerate(int64_vocabulary):

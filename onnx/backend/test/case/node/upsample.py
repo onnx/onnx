@@ -4,9 +4,8 @@ import numpy as np
 
 import onnx
 from onnx import helper
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class Upsample(Base):

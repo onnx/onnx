@@ -1059,6 +1059,7 @@ class OpSet_Onnx_ver18 {
 };
 
 // Forward declarations for ai.onnx version 19
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Equal);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, AveragePool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Pad);
 
@@ -1066,6 +1067,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Pad);
 class OpSet_Onnx_ver19 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Equal)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, AveragePool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Pad)>());
   }

@@ -2,4 +2,4 @@
 
 __all__ = ["BackendTest"]
 # for backward compatibility
-from .runner import Runner as BackendTest
+from onnx.backend.test.runner import Runner as BackendTest

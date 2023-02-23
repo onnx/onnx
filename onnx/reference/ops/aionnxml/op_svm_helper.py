@@ -68,7 +68,6 @@ class SVMCommon:
         raise ValueError(f"Unexpected kernel={kernel!r}.")
 
     def run_reg(self, X: np.ndarray) -> np.ndarray:
-
         if self.atts.n_supports > 0:  # type: ignore
             # length of each support vector
             mode_ = "SVM_SVC"
