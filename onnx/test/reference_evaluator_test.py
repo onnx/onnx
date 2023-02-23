@@ -48,20 +48,7 @@ from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
 )
-
-
-def skip_if_no_onnxruntime(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        try:
-            import onnxruntime  # pylint: disable=W0611
-
-            del onnxruntime
-        except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed")
-        fn(*args, **kwargs)
-
-    return wrapper
+from onnx.test.helper import skip_if_no_onnxruntime
 
 
 def skip_if_no_torch(fn):

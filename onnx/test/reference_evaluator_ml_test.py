@@ -19,31 +19,11 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.reference import ReferenceEvaluator
+from onnx.test.helper import has_onnxruntime, skip_if_no_onnxruntime
 
 TARGET_OPSET = onnx_opset_version() - 2
 TARGET_OPSET_ML = 3
 OPSETS = [make_opsetid("", TARGET_OPSET), make_opsetid("ai.onnx.ml", TARGET_OPSET_ML)]
-
-
-def has_onnxruntime():
-    try:
-        import onnxruntime  # pylint: disable=W0611
-
-        del onnxruntime
-
-        return True
-    except ImportError:
-        return False
-
-
-def skip_if_no_onnxruntime(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if not has_onnxruntime():
-            raise unittest.SkipTest("onnxruntime not installed")
-        fn(*args, **kwargs)
-
-    return wrapper
 
 
 class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
