@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Callable, List, Optional, Text
-
 import numpy as np
 
 import onnx
