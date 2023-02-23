@@ -43,7 +43,7 @@ class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
     pass
 
 
-def retry_excute(times: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     assert times >= 1
 
     def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -212,7 +212,7 @@ class Runner:
                     )
 
     @classmethod
-    @retry_excute(3)
+    @retry_execute(3)
     def download_model(
         cls, model_test: TestCase, model_dir: str, models_dir: str
     ) -> None:
