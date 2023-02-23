@@ -3,10 +3,9 @@
 import numpy as np  # type: ignore
 
 import onnx
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 from onnx.numpy_helper import create_random_int
-
-from ..base import Base
-from . import expect
 
 
 class BitwiseXor(Base):

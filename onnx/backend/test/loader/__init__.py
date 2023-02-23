@@ -4,7 +4,7 @@ import json
 import os
 from typing import List, Optional
 
-from ..case.test_case import TestCase
+from onnx.backend.test.case.test_case import TestCase
 
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.realpath(os.path.dirname(__file__))), "data"

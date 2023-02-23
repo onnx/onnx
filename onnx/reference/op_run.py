@@ -200,7 +200,9 @@ class OpRun(ABC):
         Converts an attribute value into a python value.
         """
         if att.type == AttributeProto.GRAPH:
-            from .reference_evaluator import ReferenceEvaluator  # type: ignore
+            from onnx.reference.reference_evaluator import (
+                ReferenceEvaluator,  # type: ignore
+            )
 
             new_ops = self.run_params.get("new_ops", None)
             return ReferenceEvaluator(

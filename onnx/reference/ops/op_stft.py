@@ -4,10 +4,9 @@
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-from .op_concat_from_sequence import _concat_from_sequence
-from .op_dft import _cfft as _dft
-from .op_slice import _slice
+from onnx.reference.ops.op_concat_from_sequence import _concat_from_sequence
+from onnx.reference.ops.op_dft import _cfft as _dft
+from onnx.reference.ops.op_slice import _slice
 
 
 def _concat(*args, axis=0):  # type: ignore

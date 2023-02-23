@@ -2,8 +2,6 @@
 onnx.compose
 ============
 
-.. contents::
-    :local:
 
 .. currentmodule:: onnx.compose
 
