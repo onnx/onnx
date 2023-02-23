@@ -84,7 +84,7 @@ class TestBasicFunctions(unittest.TestCase):
           >
          agraph (float[N] x) => (float[N] out)
          {
-            out = custom_domain.Selu<gamma=2.0, gamma=3.0>(x)
+            out = custom_domain.Selu<alpha=2.0, gamma=3.0>(x)
          }
 
          <
