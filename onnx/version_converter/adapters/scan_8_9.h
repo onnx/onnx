@@ -13,7 +13,7 @@ namespace version_conversion {
 struct Scan_8_9 final : public Adapter {
   explicit Scan_8_9() : Adapter("Scan", OpSetID(8), OpSetID(9)) {}
 
-  void adapt_scan_8_9(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_scan_8_9(std::shared_ptr<GraphBase>, Node* node) const {
     const std::vector<Value*> inputs(node->inputs().vec());
     const std::vector<Value*> outputs(node->outputs().vec());
 
@@ -50,7 +50,7 @@ struct Scan_8_9 final : public Adapter {
     }
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_scan_8_9(graph, node);
     return node;
   }

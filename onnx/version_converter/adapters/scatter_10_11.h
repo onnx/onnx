@@ -13,7 +13,7 @@ class Scatter_10_11 final : public Adapter {
  public:
   explicit Scatter_10_11() : Adapter("Scatter", OpSetID(10), OpSetID(11)) {}
 
-  Node* adapt_scatter_10_11(std::shared_ptr<Graph> graph, Node* node) const {
+  Node* adapt_scatter_10_11(std::shared_ptr<GraphBase> graph, Node* node) const {
     int axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 0;
 
     // Replace the node with an equivalent ScatterElements node
@@ -30,7 +30,7 @@ class Scatter_10_11 final : public Adapter {
     return scatter_elements;
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     return adapt_scatter_10_11(graph, node);
   }
 };

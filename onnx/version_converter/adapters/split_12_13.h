@@ -15,7 +15,7 @@ class Split_12_13 : public Adapter {
  public:
   explicit Split_12_13() : Adapter("Split", OpSetID(12), OpSetID(13)) {}
 
-  void attrToInput(std::shared_ptr<Graph> graph, Node* node, std::vector<int64_t> axes) const {
+  void attrToInput(std::shared_ptr<GraphBase> graph, Node* node, std::vector<int64_t> axes) const {
     Tensor t;
     t.elem_type() = TensorProto_DataType_INT64;
     t.sizes() = std::vector<int64_t>{static_cast<int64_t>(axes.size())};
@@ -29,7 +29,7 @@ class Split_12_13 : public Adapter {
     node->addInput(constant->output());
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     if (node->hasAttribute(ksplit)) {
       attrToInput(graph, node, node->is(ksplit));
       node->removeAttribute(ksplit);

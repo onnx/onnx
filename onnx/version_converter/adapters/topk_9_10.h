@@ -13,7 +13,7 @@ class TopK_9_10 final : public Adapter {
  public:
   explicit TopK_9_10() : Adapter("TopK", OpSetID(9), OpSetID(10)) {}
 
-  void adapt_topk_9_10(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_topk_9_10(std::shared_ptr<GraphBase> graph, Node* node) const {
     Tensor t;
     t.elem_type() = TensorProto_DataType_INT64;
     t.sizes() = std::vector<int64_t>{1};
@@ -28,7 +28,7 @@ class TopK_9_10 final : public Adapter {
     node->removeAttribute(kk);
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_topk_9_10(graph, node);
     return node;
   }

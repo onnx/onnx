@@ -30,7 +30,7 @@ class Adapter {
   // The only exception are adapters for deprecated operators: in this case the input
   // node must be destroyed and a new one must be created and returned. See e.g.
   // upsample_9_10.h
-  virtual Node* adapt(std::shared_ptr<Graph> /*graph*/, Node* node) const = 0;
+  virtual Node* adapt(std::shared_ptr<GraphBase> /*graph*/, Node* node) const = 0;
 
   const std::string& name() const {
     return name_;
@@ -45,14 +45,14 @@ class Adapter {
   }
 };
 
-using NodeTransformerFunction = std::function<Node*(std::shared_ptr<Graph>, Node* node)>;
+using NodeTransformerFunction = std::function<Node*(std::shared_ptr<GraphBase>, Node* node)>;
 
 class GenericAdapter final : public Adapter {
  public:
   GenericAdapter(const char* op, int64_t from, int64_t to, NodeTransformerFunction transformer)
       : Adapter(op, OpSetID(from), OpSetID(to)), transformer_(transformer) {}
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     return transformer_(graph, node);
   }
 

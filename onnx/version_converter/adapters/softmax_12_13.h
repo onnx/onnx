@@ -15,7 +15,7 @@ class Softmax_12_13 final : public Adapter {
  public:
   explicit Softmax_12_13(const std::string& op_name) : Adapter(op_name, OpSetID(12), OpSetID(13)) {}
 
-  void adapt_softmax_12_13(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_softmax_12_13(std::shared_ptr<GraphBase> graph, Node* node) const {
     int old_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 1;
     int input_rank = node->inputs()[0]->sizes().size();
 
@@ -82,7 +82,7 @@ class Softmax_12_13 final : public Adapter {
     }
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_softmax_12_13(graph, node);
     return node;
   }

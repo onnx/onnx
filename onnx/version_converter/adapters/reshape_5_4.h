@@ -15,7 +15,7 @@ class Reshape_5_4 final : public Adapter {
  public:
   explicit Reshape_5_4() : Adapter("Reshape", OpSetID(5), OpSetID(4)) {}
 
-  void adapt_reshape_5_4(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_reshape_5_4(std::shared_ptr<GraphBase> graph, Node* node) const {
     // Identify if shape is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
     // Get shape from initializer or constant operator, not actual shape
@@ -57,7 +57,7 @@ class Reshape_5_4 final : public Adapter {
     ONNX_ASSERTM(node->hasAttribute(kshape), "No initializer or constant input to Reshape node found");
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_reshape_5_4(graph, node);
     return node;
   }

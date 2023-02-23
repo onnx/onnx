@@ -35,11 +35,16 @@ class ConvertError final : public std::runtime_error {
 
 #define fail_convert(...) ONNX_THROW_EX(ConvertError(MakeString(__VA_ARGS__)));
 
-void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g);
+void ExportModelProto(
+    ModelProto* p_m,
+    const std::shared_ptr<GraphBase>& g,
+    std::vector<std::shared_ptr<FunctionIR>>& local_functions);
 
-std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp);
+std::unique_ptr<GraphBase> ImportModelProto(
+    const ModelProto& mp,
+    std::vector<std::shared_ptr<FunctionIR>>& local_functions);
 
 ModelProto PrepareOutput(const ModelProto& mp_in);
 
-void assertNonNull(const std::shared_ptr<Graph>& g);
+void assertNonNull(const std::shared_ptr<GraphBase>& g);
 } // namespace ONNX_NAMESPACE

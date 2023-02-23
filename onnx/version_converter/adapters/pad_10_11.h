@@ -13,7 +13,7 @@ class Pad_10_11 final : public Adapter {
  public:
   explicit Pad_10_11() : Adapter("Pad", OpSetID(10), OpSetID(11)) {}
 
-  void adapt_pad_10_11(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_pad_10_11(std::shared_ptr<GraphBase> graph, Node* node) const {
     // Turn pads attribute into input
     Tensor t_pads;
     t_pads.elem_type() = TensorProto_DataType_INT64;
@@ -41,7 +41,7 @@ class Pad_10_11 final : public Adapter {
     }
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_pad_10_11(graph, node);
     return node;
   }

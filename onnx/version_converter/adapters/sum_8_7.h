@@ -15,7 +15,7 @@ class Sum_8_7 final : public Adapter {
  public:
   explicit Sum_8_7() : Adapter("Sum", OpSetID(8), OpSetID(7)) {}
 
-  void adapt_sum_8_7(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_sum_8_7(std::shared_ptr<GraphBase>, Node* node) const {
     // Throw an exception if any broadcasting occurs
     const ArrayRef<Value*>& inputs = node->inputs();
     // Determine if inputs are of different sizes
@@ -26,7 +26,7 @@ class Sum_8_7 final : public Adapter {
     }
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_sum_8_7(graph, node);
     return node;
   }

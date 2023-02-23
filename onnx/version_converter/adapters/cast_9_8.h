@@ -15,12 +15,12 @@ class Cast_9_8 final : public Adapter {
  public:
   explicit Cast_9_8() : Adapter("Cast", OpSetID(9), OpSetID(8)) {}
 
-  void adapt_cast_9_8(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_cast_9_8(std::shared_ptr<GraphBase>, Node* node) const {
     if (node->inputs()[0]->elemType() == TensorProto_DataType_STRING || node->i(kto) == TensorProto_DataType_STRING)
       ONNX_ASSERT("Casting From/To STRING data type is not supported")
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_cast_9_8(graph, node);
     return node;
   }

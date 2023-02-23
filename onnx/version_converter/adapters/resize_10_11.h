@@ -13,7 +13,7 @@ class Resize_10_11 final : public Adapter {
  public:
   explicit Resize_10_11() : Adapter("Resize", OpSetID(10), OpSetID(11)) {}
 
-  void adapt_resize_10_11(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_resize_10_11(std::shared_ptr<GraphBase> graph, Node* node) const {
     int input_rank = node->inputs()[0]->sizes().size();
 
     Value* scales_input = node->inputs()[1];
@@ -35,7 +35,7 @@ class Resize_10_11 final : public Adapter {
     node->replaceInput(1, constant->output());
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_resize_10_11(graph, node);
     return node;
   }

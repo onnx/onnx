@@ -22,7 +22,7 @@ ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
 }
 
 void DefaultVersionConverter::convert_graph(
-    std::shared_ptr<Graph> g,
+    std::shared_ptr<GraphBase> g,
     const OpSetID& initial_version,
     const OpSetID& target_version) const {
   assertNonNull(g);
@@ -123,14 +123,18 @@ ModelProto DefaultVersionConverter::convert_version(
     }
   }
 
-  std::shared_ptr<Graph> g(ImportModelProto(mp_in));
+  std::vector<std::shared_ptr<FunctionIR>> local_functions;
+  std::shared_ptr<GraphBase> g(ImportModelProto(mp_in, local_functions));
 
   convert_graph(g, initial_version, target_version);
+  for (auto function : local_functions) {
+    convert_graph(function, initial_version, target_version);
+  }
 
   // Export g as ModelProto
   debug("Finished conversion; returning model");
   ModelProto mp_out = PrepareOutput(mp_in);
-  ExportModelProto(&mp_out, g);
+  ExportModelProto(&mp_out, g, local_functions);
   return mp_out;
 }
 

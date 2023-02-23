@@ -15,7 +15,7 @@ class Split_13_12 : public Adapter {
  public:
   explicit Split_13_12() : Adapter("Split", OpSetID(13), OpSetID(12)) {}
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     // Identify if 'split' is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
     // Get 'split' from initializer or constant operator

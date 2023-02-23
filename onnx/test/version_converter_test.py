@@ -1962,7 +1962,9 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 12
 
     def test_local_function(self):
-        my_elu_model = onnx.load("C:/LiqunWA/onnx-ir-cc/onnx/examples/resources/MyElu.onnx")
+        from onnxruntime.datasets import get_example
+        my_elu = get_example("MyElu")
+        my_elu_model = onnx.load(my_elu)
         converted_my_elu_model = onnx.version_converter.convert_version(
             my_elu_model, 18)
         checker.check_model(converted_my_elu_model)

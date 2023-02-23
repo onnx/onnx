@@ -16,7 +16,7 @@ namespace version_conversion {
 struct Upsample_9_8 final : public Adapter {
   explicit Upsample_9_8() : Adapter("Upsample", OpSetID(9), OpSetID(8)) {}
 
-  void adapt_upsample_9_8(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_upsample_9_8(std::shared_ptr<GraphBase> graph, Node* node) const {
     const ArrayRef<Value*>& inputs = node->inputs();
     const std::vector<Tensor>& initializers = graph->initializers();
 
@@ -63,7 +63,7 @@ struct Upsample_9_8 final : public Adapter {
     ONNX_ASSERTM(false, "Unsuppported conversion due to unavailable input: scale");
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_upsample_9_8(graph, node);
     return node;
   }

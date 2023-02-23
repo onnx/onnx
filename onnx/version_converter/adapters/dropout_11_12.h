@@ -13,7 +13,7 @@ class Dropout_11_12 final : public Adapter {
  public:
   explicit Dropout_11_12() : Adapter("Dropout", OpSetID(11), OpSetID(12)) {}
 
-  void adapt_dropout_11_12(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_dropout_11_12(std::shared_ptr<GraphBase> graph, Node* node) const {
     float ratio;
     if (node->hasAttribute(kratio)) {
       ratio = node->f(kratio);
@@ -32,7 +32,7 @@ class Dropout_11_12 final : public Adapter {
     node->addInput(constant->output());
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_dropout_11_12(graph, node);
     return node;
   }

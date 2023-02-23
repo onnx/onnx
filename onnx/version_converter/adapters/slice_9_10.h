@@ -13,7 +13,7 @@ class Slice_9_10 final : public Adapter {
  public:
   explicit Slice_9_10() : Adapter("Slice", OpSetID(9), OpSetID(10)) {}
 
-  void attrToInput(std::shared_ptr<Graph> graph, Node* node, const std::vector<int64_t>& attr) const {
+  void attrToInput(std::shared_ptr<GraphBase> graph, Node* node, const std::vector<int64_t>& attr) const {
     Tensor t;
     t.elem_type() = TensorProto_DataType_INT64;
     t.sizes() = std::vector<int64_t>{static_cast<int64_t>(attr.size())};
@@ -27,7 +27,7 @@ class Slice_9_10 final : public Adapter {
     node->addInput(constant->output());
   }
 
-  void adapt_slice_9_10(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_slice_9_10(std::shared_ptr<GraphBase> graph, Node* node) const {
     attrToInput(graph, node, node->is(kstarts));
     node->removeAttribute(kstarts);
     attrToInput(graph, node, node->is(kends));
@@ -39,7 +39,7 @@ class Slice_9_10 final : public Adapter {
     }
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_slice_9_10(graph, node);
     return node;
   }

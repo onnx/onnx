@@ -37,7 +37,7 @@ namespace ONNX_NAMESPACE {
 // It uses a simple ownership model where the graph owns all the nodes inside it.
 // All references inside the graph are raw pointers.
 // Destroying the Graph will invalidate any pointers to nodes in the graph.
-class Function;
+class FunctionIR;
 class GraphBase;
 
 class Graph;
@@ -298,7 +298,7 @@ struct Value final {    // message ValueInfoProto
 
  private:
   friend struct Node;
-  friend class Graph;
+  friend class GraphBase;
   Node* node_;
   size_t offset_;
   size_t unique_ = 0; // unique id
@@ -426,7 +426,7 @@ struct Node : public Attributes<Node> {
   std::vector<Value*> outputs_;
   GraphBase* graph_;
   FunctionProto* function_body_;
-  Function* function_;
+  FunctionIR* function_;
 
   size_t stage_;
   bool has_name_;
@@ -1279,13 +1279,89 @@ class Graph final : public GraphBase {
   }
 };
 
-class Function : public GraphBase {
-  ONNX_DISALLOW_COPY_AND_ASSIGN(Function);
+class FunctionIR : public GraphBase {
+  ONNX_DISALLOW_COPY_AND_ASSIGN(FunctionIR);
   friend struct Node;
   friend struct Value;
 
  public:
-  Function() : GraphBase() {}
+  FunctionIR() : GraphBase() {}
+
+  void addInitializer(Tensor& initializer) {}
+
+  Value* addInitializerAndCreateValue(Tensor& initializer) {
+    return nullptr;
+  }
+
+  void eraseInitializer(const std::string& name) { }
+
+  void clearInitializers() {}
+
+  const std::vector<Tensor>& initializers() {
+    return std::vector<Tensor>();
+  }
+
+  const std::vector<std::string>& initializer_names() {
+    return std::vector<std::string>();
+  }
+
+  std::vector<Tensor>::const_iterator getInitializer(const std::string& name) const {
+    return std::vector<Tensor>::const_iterator();
+  }
+
+  bool is_constant_initializer(const Value* value) const {
+    return false;
+  }
+
+  Value* addInitializerAndInput(const Tensor& initializer, const std::string& name) {
+    return nullptr;
+  }
+
+  Value* addInitializerAndInput(const Tensor& initializer) {
+    return nullptr;
+  }
+
+  virtual void eraseInitializerAndInput(Value* v) {}
+
+  bool isNameUnique(const std::string& name) const {
+    const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
+    for (const Node* node : all_nodes) {
+      for (const auto& attr : node->attributeNames()) {
+        if (node->kindOf(attr) == AttributeKind::g) {
+          const auto& subgraph = node->g(attr);
+          if (!subgraph->isNameUnique(name)) {
+            return false;
+          }
+        } else if (node->kindOf(attr) == AttributeKind::gs) {
+          for (const auto& subgraph : node->gs(attr)) {
+            if (!subgraph->isNameUnique(name)) {
+              return false;
+            }
+          }
+        }
+      }
+      const auto found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
+      if (found_in != node->inputs().end()) {
+        return false;
+      }
+      const auto found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
+      if (found_out != node->outputs().end()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void set_domain(const std::string domain) {
+    domain_ = domain;
+  }
+
+  std::string get_domain() const {
+    return domain_;
+  }
+
+ private:
+  std::string domain_;
 };
 
 inline Value::Value(Node* node_, size_t offset_)

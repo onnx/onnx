@@ -15,7 +15,7 @@ class Gemm_6_7 final : public Adapter {
  public:
   explicit Gemm_6_7() : Adapter("Gemm", OpSetID(6), OpSetID(7)) {}
 
-  void adapt_gemm_6_7(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_gemm_6_7(std::shared_ptr<GraphBase>, Node* node) const {
     const ArrayRef<Value*>& inputs = node->inputs();
     assertInputsAvailable(inputs, name().c_str(), 3);
     const auto& A_shape = inputs[0]->sizes();
@@ -42,7 +42,7 @@ class Gemm_6_7 final : public Adapter {
       node->removeAttribute(kbroadcast);
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  Node* adapt(std::shared_ptr<GraphBase> graph, Node* node) const override {
     adapt_gemm_6_7(graph, node);
     return node;
   }

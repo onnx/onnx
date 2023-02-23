@@ -206,7 +206,7 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
 }
 
 void createDummyValue(
-    std::unique_ptr<Graph>& g,
+    GraphBase* g,
     const std::string& name,
     std::unordered_map<std::string, Value*>& value_by_name_of) {
   auto* undef = g->create(kCaptured, 1);
@@ -222,6 +222,104 @@ FunctionProto* find_local_function(std::vector<FunctionProto>& local_functions, 
     }
   }
   return nullptr;
+}
+std::shared_ptr<FunctionIR> functionProtoToFunction(
+    const FunctionProto& fp,
+    std::vector<FunctionProto>& local_functions,
+    const int ir_version) {
+  std::shared_ptr<FunctionIR> f(new FunctionIR());
+
+  if (fp.has_name()) {
+    f->setName(fp.name());
+  }
+  if (fp.has_doc_string()) {
+    f->setDocString(fp.doc_string());
+  }
+
+  std::unordered_map<std::string, Value*> value_by_name_of;
+  std::unordered_map<Node*, std::vector<std::string>> inputs_by_node;
+
+  for (int i = 0; i < fp.input_size(); i++) {
+    const std::string& input_name = fp.input(i);
+    auto v = f->addInput();
+    // no type and shape data.
+    v->setUniqueName(input_name);
+    value_by_name_of[input_name] = v;
+  }
+
+  for (int i = 0; i < fp.node_size(); i++) {
+    auto np = fp.node(i);
+    auto* n = f->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
+    f->appendNode(n);
+    for (int j = 0; j < np.output_size(); j++) {
+      auto out = n->outputs()[j];
+      // we don't know the real type here, so that's done in a later pass
+      out->setElemType(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED);
+      out->setUniqueName(np.output(j));
+      value_by_name_of[np.output(j)] = out;
+    }
+    convertAttributes(np, n, ir_version);
+    std::vector<std::string> inputs;
+    inputs.reserve(np.input_size());
+    for (int j = 0; j < np.input_size(); j++) {
+      inputs.push_back(np.input(j));
+    }
+    inputs_by_node[n] = inputs;
+    if (np.has_doc_string()) {
+      n->setDocString(np.doc_string());
+    }
+    if (np.has_name()) {
+      n->setName(np.name());
+    }
+    if (np.has_domain()) {
+      n->setDomain(np.domain());
+    }
+
+    FunctionProto* local_function_proto = find_local_function(local_functions, np.op_type());
+    n->set_function_body(local_function_proto);
+  }
+
+  for (auto n : f->nodes()) {
+    auto search = inputs_by_node.find(n);
+    if (search == inputs_by_node.end()) {
+      continue;
+    }
+    for (const auto& input : search->second) {
+        // function is always nested
+      if (!value_by_name_of.count(input) /* && nested */) {
+        // Undefined reference to an input in a nested block. This may be a
+        // captured value. Create a dummy node that we ignore later.
+        createDummyValue(f.get(), input, value_by_name_of);
+      }
+
+      if (!value_by_name_of.count(input)) {
+        std::ostringstream msg;
+        msg << "Input " << input << " is undefined!";
+        ONNX_THROW_EX(std::out_of_range(msg.str()));
+      }
+      n->addInput(value_by_name_of.at(input));
+    }
+  }
+
+  for (int i = 0; i < fp.output_size(); i++) {
+    if (!value_by_name_of.count(fp.output(i)) /* && nested*/) {
+      // Same captured value logic as above. We can consider outputs of a
+      // graph to be "inputs" of a dummy "output" node. The same lexical
+      // scoping rules are valid here, thus we need to add a dummy node
+      // in the case of an undefined reference
+      createDummyValue(f.get(), fp.output(i), value_by_name_of);
+    }
+    f->registerOutput(value_by_name_of[fp.output(i)]);
+  }
+
+  
+  for (int i = 0; i < fp.opset_import_size(); i++) {
+    OpSetID new_opset_version(fp.opset_import(i).domain(), fp.opset_import(i).version());
+    f->opset_versions_mutable().emplace_back(new_opset_version);
+  }
+
+  f->set_domain(fp.domain());
+  return f;
 }
 
 std::unique_ptr<Graph> graphProtoToGraph(
@@ -332,7 +430,6 @@ std::unique_ptr<Graph> graphProtoToGraph(
 
     FunctionProto* local_function_proto = find_local_function(local_functions, np.op_type());
     n->set_function_body(local_function_proto);
-
   }
 
   for (auto n : g->nodes()) {
@@ -344,7 +441,7 @@ std::unique_ptr<Graph> graphProtoToGraph(
       if (!value_by_name_of.count(input) && nested) {
         // Undefined reference to an input in a nested block. This may be a
         // captured value. Create a dummy node that we ignore later.
-        createDummyValue(g, input, value_by_name_of);
+        createDummyValue(g.get(), input, value_by_name_of);
       }
 
       if (!value_by_name_of.count(input)) {
@@ -362,7 +459,7 @@ std::unique_ptr<Graph> graphProtoToGraph(
       // graph to be "inputs" of a dummy "output" node. The same lexical
       // scoping rules are valid here, thus we need to add a dummy node
       // in the case of an undefined reference
-      createDummyValue(g, gp.output(i).name(), value_by_name_of);
+      createDummyValue(g.get(), gp.output(i).name(), value_by_name_of);
     }
     const auto& output_tensor_type = gp.output(i).type().tensor_type();
     if (output_tensor_type.has_elem_type()) {
@@ -391,7 +488,9 @@ std::unique_ptr<Graph> graphProtoToGraph(
   return g;
 }
 
-std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
+std::unique_ptr<GraphBase> ImportModelProto(
+    const ModelProto& mp,
+    std::vector<std::shared_ptr<FunctionIR>>& local_functions) {
   if (!mp.has_ir_version()) {
     return nullptr;
   } else if (mp.ir_version() <= 1) {
@@ -402,17 +501,23 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   //std::vector<FunctionProto*> local_functions(mp.functions().size());
   //std::copy(mp.functions().begin(), mp.functions().end(), std::back_inserter(local_functions));
 
-  std::vector<FunctionProto> local_functions(mp.functions().size());
+  std::vector<FunctionProto> local_function_protos(mp.functions().size());
   std::transform(
-      mp.functions().begin(), mp.functions().end(), local_functions.begin(),
+      mp.functions().begin(), mp.functions().end(), local_function_protos.begin(),
       [](FunctionProto x) -> FunctionProto { return x;});
 
-  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false, local_functions, mp.ir_version()));
+  std::unique_ptr<GraphBase> g(graphProtoToGraph(mp.graph(), false, local_function_protos, mp.ir_version()));
   for (int i = 0; i < mp.opset_import_size(); i++) {
     OpSetID new_opset_version(mp.opset_import(i).domain(), mp.opset_import(i).version());
     g->forSelfAndEachSubGraph(
         [&new_opset_version](GraphBase* graph) { graph->opset_versions_mutable().emplace_back(new_opset_version); });
   }
+
+  for (auto& fp : local_function_protos) {
+    std::shared_ptr<FunctionIR> f(functionProtoToFunction(fp, local_function_protos, mp.ir_version()));
+    local_functions.push_back(f);
+  }
+
   return g;
 }
 
@@ -421,7 +526,8 @@ std::string value_name(Value* n) {
   return n->uniqueName();
 }
 
-void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g);
+void encodeFunction(FunctionProto* p_f, const std::shared_ptr<FunctionIR>& f);
+void encodeGraph(GraphProto* p_g, const std::shared_ptr<GraphBase>& g);
 
 void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
   if (tensor.hasName()) {
@@ -590,7 +696,77 @@ void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
   }
 }
 
-void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
+void encodeFunction(FunctionProto* p_f, const std::shared_ptr<FunctionIR>& f) {
+  ONNX_ASSERT(p_f != nullptr);
+
+  if (f->has_name()) {
+    p_f->set_name(f->name());
+  }
+
+  if (f->has_doc_string()) {
+    p_f->set_doc_string(f->docString());
+  }
+
+  for (auto input : f->inputs()) {
+    *p_f->add_input() = value_name(input);
+  }
+  for (auto output : f->outputs()) {
+    *p_f->add_output() = value_name(output);
+  }
+
+  std::unordered_set<Value*> graph_outputs(f->outputs().begin(), f->outputs().end());
+
+  for (auto node : f->nodes()) {
+    if (node->kind() == kUndefined || node->kind() == kCaptured) {
+      // Undefined nodes are used to represent optional inputs that are not
+      // provided.
+      continue;
+    }
+    auto p_n = p_f->add_node();
+    for (auto input : node->inputs()) {
+      if (input->node()->kind() == kUndefined) {
+        p_n->add_input("");
+      } else {
+        p_n->add_input(value_name(input));
+      }
+    }
+    for (auto output : node->outputs()) {
+      p_n->add_output(value_name(output));
+      // only save it if
+      //  - it has actual information worth saving
+      //  - it's not already saved in the graph outputs value info
+      if (graph_outputs.find(output) != graph_outputs.end()) {
+        continue;
+      }
+      if (output->elemType() == TensorProto_DataType_UNDEFINED && output->sizes().empty()) {
+        continue;
+      }
+    }
+    p_n->set_op_type(node->kind().toString());
+    for (auto attr_name : node->attributeNames()) {
+      addAttribute(p_n, node, attr_name);
+    }
+    if (node->has_doc_string()) {
+      p_n->set_doc_string(node->docString());
+    }
+    if (node->has_name()) {
+      p_n->set_name(node->name());
+    }
+    if (node->has_domain()) {
+      p_n->set_domain(node->domain());
+    }
+  }
+
+  for (const OpSetID& opset : f->opset_versions_mutable()) {
+    OperatorSetIdProto* opset_version_output = p_f->add_opset_import();
+    opset_version_output->set_domain(opset.domain());
+    opset_version_output->set_version(opset.version());
+  }
+
+  p_f->set_domain(f->get_domain());
+}
+
+void encodeGraph(GraphProto* p_g, const std::shared_ptr<GraphBase>& g) {
   ONNX_ASSERT(p_g != nullptr);
 
   if (g->has_name()) {
@@ -663,7 +839,10 @@ void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
   }
 }
 
-void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g) {
+void ExportModelProto(
+    ModelProto* p_m,
+    const std::shared_ptr<GraphBase>& g,
+    std::vector<std::shared_ptr<FunctionIR>>& local_functions) {
   GraphProto* p_g = p_m->mutable_graph();
   encodeGraph(p_g, g);
   // Add new opset_versions
@@ -672,6 +851,11 @@ void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g) {
     OperatorSetIdProto* opset_version_output = p_m->add_opset_import();
     opset_version_output->set_domain(opset.domain());
     opset_version_output->set_version(opset.version());
+  }
+
+  for (auto& local_function : local_functions) {
+    FunctionProto* p_f = p_m->mutable_functions()->Add();
+    encodeFunction(p_f, local_function);
   }
 }
 
@@ -720,7 +904,7 @@ ModelProto PrepareOutput(const ModelProto& mp_in) {
   return mp_out;
 }
 
-void assertNonNull(const std::shared_ptr<Graph>& g) {
+void assertNonNull(const std::shared_ptr<GraphBase>& g) {
   ONNX_ASSERTM(
       g.get() != nullptr,
       "Warning: onnx version converter is unable to parse input model. "
