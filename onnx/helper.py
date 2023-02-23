@@ -94,14 +94,25 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
 OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
 
 
-def find_min_ir_version_for(opsetidlist: List[OperatorSetIdProto]) -> int:
-    """Given list of opset ids, determine minimum IR version required"""
+def find_min_ir_version_for(
+    opsetidlist: List[OperatorSetIdProto], ignore_unknown: bool = False
+) -> int:
+    """Given list of opset ids, determine minimum IR version required.
+
+    Arguments:
+        opsetidlist (List[OperatorSetIdProto]): The list of OperatorSetIdProto
+        ignore_unknown (bool): If True, ignore unknown domain and return default min version for that domain.
+    Returns:
+        The minimum IR version required (integer)
+    """
     default_min_version = 3
 
     def find_min(domain: Union[str, None], version: int) -> int:
         key = (domain if domain else "ai.onnx", version)
         if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
+        if ignore_unknown:
+            return default_min_version
         raise ValueError("Unsupported opset-version.")
 
     if opsetidlist:
