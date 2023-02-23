@@ -28,7 +28,7 @@ from onnx.numpy_helper import from_array
 
 def _replace_constant(
     node: NodeProto, threshold: int
-) -> Tuple[Optional[NodeProto], NodeProto]:
+) -> List[NodeProto]:
     """
     Replace a node *Constant* two nodes, one *Constant* for the shape,
     one *ConstantOfShape*.
@@ -47,7 +47,7 @@ def _replace_constant(
             dims = value.dims
             size = np.prod(dims)
             if size <= threshold:
-                return None, node
+                return [node]
             init = from_array(np.array(list(dims), dtype=np.int64), name=new_name)
             dtype = tensor_dtype_to_np_dtype(value.data_type)
             node_shape = make_node(
@@ -62,11 +62,11 @@ def _replace_constant(
                 node.output,
                 value=from_array(np.array([0.5], dtype=dtype)),
             )
-            return node_shape, new_node
+            return [node_shape, new_node]
         raise NotImplementedError(
             f"Replacement of constant with attribute {att.name!r}"
         )
-    return None, node
+    return [node]
 
 
 def replace_initializer_by_constant_of_shape(
@@ -90,11 +90,10 @@ def replace_initializer_by_constant_of_shape(
         new_nodes: List[NodeProto] = []
         for node in onx.node:
             if node.op_type == "Constant":
-                new_node_shape, new_node = _replace_constant(node, threshold)
-                if new_node_shape is not None:
-                    new_nodes.append(new_node_shape)
-                new_nodes.append(new_node)
-                modified = True
+                cst_nodes = _replace_constant(node, threshold)
+                if len(cst_nodes) == 2:
+                    modified = True
+                new_nodes.extend(cst_nodes)
                 continue
             new_nodes.append(node)
         if modified:
