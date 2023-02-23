@@ -139,11 +139,11 @@ globals().update(backend_test.test_cases)
 
 if __name__ == "__main__":
     res = unittest.main(verbosity=2, exit=False)
-    tests_run = res.result.tests_run
+    tests_run = res.result.testsRun
     errors = len(res.result.errors)
     skipped = len(res.result.skipped)
-    unexpected_successes = len(res.result.unexpected_successes)
-    expected_failures = len(res.result.expected_failures)
+    unexpected_successes = len(res.result.unexpectedSuccesses)
+    expected_failures = len(res.result.expectedFailures)
     print("---------------------------------")
     print(
         f"tests_run={tests_run} errors={errors} skipped={skipped} "
