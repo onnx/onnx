@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import itertools
 import os
 import platform
 import unittest
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any
 
 import numpy
 
@@ -12,9 +11,8 @@ import onnx.backend.base
 import onnx.backend.test
 import onnx.shape_inference
 import onnx.version_converter
-from onnx import ModelProto, NodeProto, TensorProto
+from onnx import ModelProto
 from onnx.backend.base import Device, DeviceType
-from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 from onnx.reference import ReferenceEvaluator
 
 # The following just executes a backend based on ReferenceEvaluator through the backend test
@@ -46,7 +44,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     @classmethod
-    def is_opset_supported(cls, model):
+    def is_opset_supported(cls, model):  # pylint: disable=unused-argument
         return True, ""
 
     @classmethod
@@ -120,7 +118,7 @@ backend_test.exclude("(test_bernoulli)")
 
 # The following tests fail due to a bug in the backend test comparison.
 backend_test.exclude(
-    "(test_cast_FLOAT_to_STRING" "|test_castlike_FLOAT_to_STRING" "|test_strnorm)"
+    "(test_cast_FLOAT_to_STRING|test_castlike_FLOAT_to_STRING|test_strnorm)"
 )
 
 # The following tests fail due to a shape mismatch.
@@ -138,4 +136,15 @@ backend_test.exclude("test_adam_multiple")  # 1e-2
 globals().update(backend_test.test_cases)
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    res = unittest.main(verbosity=2, exit=False)
+    testsRun = res.result.testsRun
+    errors = len(res.result.errors)
+    skipped = len(res.result.skipped)
+    unexpectedSuccesses = len(res.result.unexpectedSuccesses)
+    expectedFailures = len(res.result.expectedFailures)
+    print("---------------------------------")
+    print(
+        f"testsRun={testsRun} errors={errors} skipped={skipped} "
+        f"unexpectedSuccesses={unexpectedSuccesses} "
+        f"expectedFailures={expectedFailures}"
+    )

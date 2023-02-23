@@ -62,9 +62,7 @@ class BatchNormalization_6(OpRun):
 class BatchNormalization_9(OpRun):
     def _run(self, x, scale, bias, mean, var, epsilon=None, momentum=None):  # type: ignore
         if momentum is None:
-            res = _batchnorm_test_mode(
-                x, scale, bias, mean, var, epsilon=epsilon, momentum=momentum
-            )
+            res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
             return (res,)
         axis = tuple(np.delete(np.arange(len(x.shape)), 1))
         saved_mean = x.mean(axis=axis)
