@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=too-many-statements,too-many-branches
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import numpy as np
 
