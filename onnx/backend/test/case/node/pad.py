@@ -3,9 +3,8 @@
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ignore
@@ -60,8 +59,8 @@ class Pad(Base):
         expect(node, inputs=[x, pads, value], outputs=[y], name="test_constant_pad")
 
     @staticmethod
-    def export_reflection_and_edge_pad() -> None:
-        for mode in ["edge", "reflect"]:
+    def export_reflection_edge_and_wrap_pad() -> None:
+        for mode in ["edge", "reflect", "wrap"]:
             node = onnx.helper.make_node(
                 "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
             )

@@ -53,13 +53,13 @@ class TestLoadExternalDataBase(unittest.TestCase):
             inputs=[],
             outputs=["values"],
             value=self.create_external_data_tensor(
-                self.attribute_value, "attribute_value"
+                self.attribute_value, "attribute_value"  # type: ignore[arg-type]
             ),
         )
 
         initializers = [
             self.create_external_data_tensor(
-                self.initializer_value, "input_value", location
+                self.initializer_value, "input_value", location  # type: ignore[arg-type]
             )
         ]
         inputs = [
@@ -135,7 +135,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         tensors = []
 
         with open(os.path.join(self.temp_dir, tensor_filename), "ab") as data_file:
-            for (value, tensor_name) in tensors_data:
+            for value, tensor_name in tensors_data:
                 tensor = from_array(np.array(value))
                 offset = data_file.tell()
                 if offset % 4096 != 0:
@@ -196,7 +196,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self, tensors_data: List[Tuple[List[Any], Any]]
     ) -> List[TensorProto]:
         tensors = []
-        for (value, tensor_name) in tensors_data:
+        for value, tensor_name in tensors_data:
             tensor = from_array(np.array(value))
             tensor.name = tensor_name
             tensors.append(tensor)
@@ -206,8 +206,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
     def create_test_model_proto(self) -> ModelProto:
         tensors = self.create_data_tensors(
             [
-                (self.attribute_value, "attribute_value"),
-                (self.initializer_value, "input_value"),
+                (self.attribute_value, "attribute_value"),  # type: ignore[list-item]
+                (self.initializer_value, "input_value"),  # type: ignore[list-item]
             ]
         )
 

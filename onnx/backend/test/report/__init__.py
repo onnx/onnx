@@ -5,7 +5,7 @@ from typing import Any, Dict, Sequence
 import _pytest
 import pytest
 
-from .coverage import Coverage
+from onnx.backend.test.report.coverage import Coverage
 
 _coverage = Coverage()
 _marks: Dict[str, Sequence[Any]] = {}

@@ -33,10 +33,9 @@ import numpy as np
 import onnx
 from onnx import ModelProto, NodeProto, TypeProto, numpy_helper
 from onnx.backend.base import Backend
-
-from ..case.test_case import TestCase
-from ..loader import load_model_tests
-from .item import TestItem
+from onnx.backend.test.case.test_case import TestCase
+from onnx.backend.test.loader import load_model_tests
+from onnx.backend.test.runner.item import TestItem
 
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):

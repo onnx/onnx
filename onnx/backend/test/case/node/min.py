@@ -3,10 +3,9 @@
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from ..utils import all_numeric_dtypes
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
+from onnx.backend.test.case.utils import all_numeric_dtypes
 
 
 class Min(Base):

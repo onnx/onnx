@@ -7,7 +7,6 @@ parameterized
 nbval
 wheel
 jupyter
-pyzmq
 setuptools
 twine
 # Dependencies for linting. Versions match those in setup.py.

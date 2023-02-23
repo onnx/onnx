@@ -2,8 +2,6 @@
 onnx.checker
 ============
 
-.. contents::
-    :local:
 
 CheckerContext
 ++++++++++++++
