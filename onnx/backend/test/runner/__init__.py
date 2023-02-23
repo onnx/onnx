@@ -312,7 +312,7 @@ class Runner:
             )
         if x.type.tensor_type.elem_type != 1:
             raise NotImplementedError(
-                f"Input expected to be a float tensor. "
+                f"Currently limited to float tensors. "
                 f"Unable to generate random data for model {name!r} and input {x}."
             )
         shape = tuple(
