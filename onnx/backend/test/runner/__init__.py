@@ -313,7 +313,8 @@ class Runner:
             raise NotImplementedError(
                 f"Unable to generate random data for model {name!r} and input {x}."
             )
-        shape = tuple(d.dim_value for d in x.type.tensor_type.shape.dim)
+        shape = tuple(d.dim_value if d.HasField("dim_value") else 1
+                      for d in x.type.tensor_type.shape.dim)
         gen = np.random.default_rng(seed=seed)
         return gen.random(shape, np.float32)
 
@@ -369,14 +370,18 @@ class Runner:
             assert prepared_model is not None
 
             if use_dummy:
-                # We generate dummy data and compute the expected output
-                # with the reference runtime.
+                # When the backend test goes through a test involving a
+                # model stored in onnx/backend/test/data/light,
+                # this function generates expected output coming from
+                # from ReferenceEvaluator run with random inputs.
+                # A couple of models include many Conv operators and the
+                # python implementation is slow (such as test_bvlc_alexnet).
                 with open(model_pb_path, "rb") as f:
                     onx = onnx.load(f)
                 test_data_set = os.path.join(model_dir, "test_data_set_0")
                 if not os.path.exists(test_data_set):
                     os.mkdir(test_data_set)
-                ref = onnx.reference.ReferenceEvaluator(onx, verbose=2)
+                ref = onnx.reference.ReferenceEvaluator(onx)
                 feeds = {}
                 inits = set(i.name for i in onx.graph.initializer)
                 n_input = 0
@@ -394,7 +399,7 @@ class Runner:
                     feeds[x.name] = value
                     with open(name, "wb") as f:
                         f.write(onnx.numpy_helper.from_array(value).SerializeToString())
-                # Reference implementation of operator Conv is too slow.
+
                 outputs = ref.run(None, feeds)
                 ref_outputs = []
                 for i, o in enumerate(outputs):
