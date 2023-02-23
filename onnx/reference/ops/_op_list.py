@@ -24,196 +24,206 @@ from onnx.reference.op_run import (
     RuntimeImplementationError,
     _split_class_name,
 )
-
-from ._helpers import build_registered_operators_any_domain
-from .op_abs import Abs
-from .op_acos import Acos
-from .op_acosh import Acosh
-from .op_add import Add
-from .op_and import And
-from .op_argmax import ArgMax_1, ArgMax_12
-from .op_argmin import ArgMin_1, ArgMin_12
-from .op_asin import Asin
-from .op_asinh import Asinh
-from .op_atan import Atan
-from .op_atanh import Atanh
-from .op_attribute_has_value import AttributeHasValue
-from .op_average_pool import (
+from onnx.reference.ops._helpers import build_registered_operators_any_domain
+from onnx.reference.ops.op_abs import Abs
+from onnx.reference.ops.op_acos import Acos
+from onnx.reference.ops.op_acosh import Acosh
+from onnx.reference.ops.op_add import Add
+from onnx.reference.ops.op_and import And
+from onnx.reference.ops.op_argmax import ArgMax_1, ArgMax_12
+from onnx.reference.ops.op_argmin import ArgMin_1, ArgMin_12
+from onnx.reference.ops.op_asin import Asin
+from onnx.reference.ops.op_asinh import Asinh
+from onnx.reference.ops.op_atan import Atan
+from onnx.reference.ops.op_atanh import Atanh
+from onnx.reference.ops.op_attribute_has_value import AttributeHasValue
+from onnx.reference.ops.op_average_pool import (
     AveragePool_1,
     AveragePool_7,
     AveragePool_11,
     AveragePool_19,
 )
-from .op_batch_normalization import (
+from onnx.reference.ops.op_batch_normalization import (
     BatchNormalization_6,
     BatchNormalization_9,
     BatchNormalization_14,
 )
-from .op_bernoulli import Bernoulli
-from .op_bitshift import BitShift
-from .op_bitwise_and import BitwiseAnd
-from .op_bitwise_not import BitwiseNot
-from .op_bitwise_or import BitwiseOr
-from .op_bitwise_xor import BitwiseXor
-from .op_blackman_window import BlackmanWindow
-from .op_cast import Cast
-from .op_cast_like import CastLike
-from .op_ceil import Ceil
-from .op_celu import Celu
-from .op_center_crop_pad import CenterCropPad
-from .op_clip import Clip_6, Clip_11
-from .op_col2im import Col2Im
-from .op_compress import Compress
-from .op_concat import Concat
-from .op_concat_from_sequence import ConcatFromSequence
-from .op_constant import Constant_1, Constant_9, Constant_11, Constant_12
-from .op_constant_of_shape import ConstantOfShape
-from .op_conv import Conv
-from .op_conv_integer import ConvInteger
-from .op_conv_transpose import ConvTranspose
-from .op_cos import Cos
-from .op_cosh import Cosh
-from .op_cum_sum import CumSum
-from .op_depth_to_space import DepthToSpace
-from .op_dequantize_linear import DequantizeLinear
-from .op_det import Det
-from .op_dft import DFT
-from .op_div import Div
-from .op_dropout import Dropout_7, Dropout_12
-from .op_dynamic_quantize_linear import DynamicQuantizeLinear
-from .op_einsum import Einsum
-from .op_elu import Elu
-from .op_equal import Equal
-from .op_erf import Erf
-from .op_exp import Exp
-from .op_expand import Expand
-from .op_eyelike import EyeLike
-from .op_flatten import Flatten
-from .op_floor import Floor
-from .op_gather import Gather
-from .op_gather_elements import GatherElements
-from .op_gathernd import GatherND
-from .op_gemm import Gemm_6, Gemm_7
-from .op_global_average_pool import GlobalAveragePool
-from .op_global_max_pool import GlobalMaxPool
-from .op_greater import Greater
-from .op_greater_or_equal import GreaterOrEqual
-from .op_grid_sample import GridSample
-from .op_gru import GRU
-from .op_hamming_window import HammingWindow
-from .op_hann_window import HannWindow
-from .op_hard_sigmoid import HardSigmoid
-from .op_hardmax import Hardmax
-from .op_identity import Identity
-from .op_if import If
-from .op_instance_normalization import InstanceNormalization
-from .op_isinf import IsInf
-from .op_isnan import IsNaN
-from .op_layer_normalization import LayerNormalization
-from .op_leaky_relu import LeakyRelu
-from .op_less import Less
-from .op_less_or_equal import LessOrEqual
-from .op_log import Log
-from .op_log_softmax import LogSoftmax
-from .op_loop import Loop
-from .op_lp_normalization import LpNormalization
-from .op_lp_pool import LpPool
-from .op_lrn import LRN
-from .op_lstm import LSTM
-from .op_matmul import MatMul
-from .op_matmul_integer import MatMulInteger
-from .op_max import Max
-from .op_max_pool import MaxPool
-from .op_max_unpool import MaxUnpool
-from .op_mean import Mean
-from .op_mel_weight_matrix import MelWeightMatrix
-from .op_min import Min
-from .op_mod import Mod
-from .op_mul import Mul
-from .op_neg import Neg
-from .op_negative_log_likelihood_loss import NegativeLogLikelihoodLoss
-from .op_non_max_suppression import NonMaxSuppression
-from .op_non_zero import NonZero
-from .op_not import Not
-from .op_one_hot import OneHot
-from .op_optional import Optional
-from .op_optional_get_element import OptionalGetElement
-from .op_optional_has_element import OptionalHasElement
-from .op_or import Or
-from .op_pad import Pad_1, Pad_2, Pad_11, Pad_18
-from .op_pow import Pow
-from .op_prelu import PRelu
-from .op_qlinear_conv import QLinearConv
-from .op_qlinear_matmul import QLinearMatMul
-from .op_quantize_linear import QuantizeLinear
-from .op_random_normal import RandomNormal
-from .op_random_normal_like import RandomNormalLike
-from .op_random_uniform import RandomUniform
-from .op_random_uniform_like import RandomUniformLike
-from .op_range import Range
-from .op_reciprocal import Reciprocal
-from .op_reduce_l1 import ReduceL1_1, ReduceL1_18
-from .op_reduce_l2 import ReduceL2_1, ReduceL2_18
-from .op_reduce_log_sum import ReduceLogSum_1, ReduceLogSum_18
-from .op_reduce_log_sum_exp import ReduceLogSumExp_1, ReduceLogSumExp_18
-from .op_reduce_max import ReduceMax_1, ReduceMax_18
-from .op_reduce_mean import ReduceMean_1, ReduceMean_18
-from .op_reduce_min import ReduceMin_1, ReduceMin_18
-from .op_reduce_prod import ReduceProd_1, ReduceProd_18
-from .op_reduce_sum import ReduceSum_1, ReduceSum_13
-from .op_reduce_sum_square import ReduceSumSquare_1, ReduceSumSquare_18
-from .op_relu import Relu
-from .op_reshape import Reshape_5, Reshape_14
-from .op_resize import Resize
-from .op_reverse_sequence import ReverseSequence
-from .op_rnn import RNN_7, RNN_14
-from .op_roi_align import RoiAlign
-from .op_round import Round
-from .op_scan import Scan
-from .op_scatter_elements import ScatterElements
-from .op_scatternd import ScatterND
-from .op_selu import Selu
-from .op_sequence_at import SequenceAt
-from .op_sequence_construct import SequenceConstruct
-from .op_sequence_empty import SequenceEmpty
-from .op_sequence_erase import SequenceErase
-from .op_sequence_insert import SequenceInsert
-from .op_sequence_length import SequenceLength
-from .op_sequence_map import SequenceMap
-from .op_shape import Shape_1, Shape_15
-from .op_shrink import Shrink
-from .op_sigmoid import Sigmoid
-from .op_sign import Sign
-from .op_sin import Sin
-from .op_sinh import Sinh
-from .op_size import Size
-from .op_slice import Slice_1, Slice_10
-from .op_softmax import Softmax
-from .op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss
-from .op_softplus import Softplus
-from .op_softsign import Softsign
-from .op_space_to_depth import SpaceToDepth
-from .op_split import Split_2, Split_11, Split_13, Split_18
-from .op_split_to_sequence import SplitToSequence
-from .op_sqrt import Sqrt
-from .op_squeeze import Squeeze_1, Squeeze_11, Squeeze_13
-from .op_stft import STFT
-from .op_string_normalizer import StringNormalizer
-from .op_sub import Sub
-from .op_sum import Sum
-from .op_tan import Tan
-from .op_tanh import Tanh
-from .op_tfidf_vectorizer import TfIdfVectorizer
-from .op_thresholded_relu import ThresholdedRelu
-from .op_tile import Tile
-from .op_topk import TopK_1, TopK_10, TopK_11
-from .op_transpose import Transpose
-from .op_trilu import Trilu
-from .op_unique import Unique
-from .op_unsqueeze import Unsqueeze_1, Unsqueeze_11, Unsqueeze_13
-from .op_upsample import Upsample
-from .op_where import Where
-from .op_xor import Xor
+from onnx.reference.ops.op_bernoulli import Bernoulli
+from onnx.reference.ops.op_bitshift import BitShift
+from onnx.reference.ops.op_bitwise_and import BitwiseAnd
+from onnx.reference.ops.op_bitwise_not import BitwiseNot
+from onnx.reference.ops.op_bitwise_or import BitwiseOr
+from onnx.reference.ops.op_bitwise_xor import BitwiseXor
+from onnx.reference.ops.op_blackman_window import BlackmanWindow
+from onnx.reference.ops.op_cast import Cast
+from onnx.reference.ops.op_cast_like import CastLike
+from onnx.reference.ops.op_ceil import Ceil
+from onnx.reference.ops.op_celu import Celu
+from onnx.reference.ops.op_center_crop_pad import CenterCropPad
+from onnx.reference.ops.op_clip import Clip_6, Clip_11
+from onnx.reference.ops.op_col2im import Col2Im
+from onnx.reference.ops.op_compress import Compress
+from onnx.reference.ops.op_concat import Concat
+from onnx.reference.ops.op_concat_from_sequence import ConcatFromSequence
+from onnx.reference.ops.op_constant import (
+    Constant_1,
+    Constant_9,
+    Constant_11,
+    Constant_12,
+)
+from onnx.reference.ops.op_constant_of_shape import ConstantOfShape
+from onnx.reference.ops.op_conv import Conv
+from onnx.reference.ops.op_conv_integer import ConvInteger
+from onnx.reference.ops.op_conv_transpose import ConvTranspose
+from onnx.reference.ops.op_cos import Cos
+from onnx.reference.ops.op_cosh import Cosh
+from onnx.reference.ops.op_cum_sum import CumSum
+from onnx.reference.ops.op_depth_to_space import DepthToSpace
+from onnx.reference.ops.op_dequantize_linear import DequantizeLinear
+from onnx.reference.ops.op_det import Det
+from onnx.reference.ops.op_dft import DFT
+from onnx.reference.ops.op_div import Div
+from onnx.reference.ops.op_dropout import Dropout_7, Dropout_12
+from onnx.reference.ops.op_dynamic_quantize_linear import DynamicQuantizeLinear
+from onnx.reference.ops.op_einsum import Einsum
+from onnx.reference.ops.op_elu import Elu
+from onnx.reference.ops.op_equal import Equal
+from onnx.reference.ops.op_erf import Erf
+from onnx.reference.ops.op_exp import Exp
+from onnx.reference.ops.op_expand import Expand
+from onnx.reference.ops.op_eyelike import EyeLike
+from onnx.reference.ops.op_flatten import Flatten
+from onnx.reference.ops.op_floor import Floor
+from onnx.reference.ops.op_gather import Gather
+from onnx.reference.ops.op_gather_elements import GatherElements
+from onnx.reference.ops.op_gathernd import GatherND
+from onnx.reference.ops.op_gemm import Gemm_6, Gemm_7
+from onnx.reference.ops.op_global_average_pool import GlobalAveragePool
+from onnx.reference.ops.op_global_max_pool import GlobalMaxPool
+from onnx.reference.ops.op_greater import Greater
+from onnx.reference.ops.op_greater_or_equal import GreaterOrEqual
+from onnx.reference.ops.op_grid_sample import GridSample
+from onnx.reference.ops.op_gru import GRU
+from onnx.reference.ops.op_hamming_window import HammingWindow
+from onnx.reference.ops.op_hann_window import HannWindow
+from onnx.reference.ops.op_hard_sigmoid import HardSigmoid
+from onnx.reference.ops.op_hardmax import Hardmax
+from onnx.reference.ops.op_identity import Identity
+from onnx.reference.ops.op_if import If
+from onnx.reference.ops.op_instance_normalization import InstanceNormalization
+from onnx.reference.ops.op_isinf import IsInf
+from onnx.reference.ops.op_isnan import IsNaN
+from onnx.reference.ops.op_layer_normalization import LayerNormalization
+from onnx.reference.ops.op_leaky_relu import LeakyRelu
+from onnx.reference.ops.op_less import Less
+from onnx.reference.ops.op_less_or_equal import LessOrEqual
+from onnx.reference.ops.op_log import Log
+from onnx.reference.ops.op_log_softmax import LogSoftmax
+from onnx.reference.ops.op_loop import Loop
+from onnx.reference.ops.op_lp_normalization import LpNormalization
+from onnx.reference.ops.op_lp_pool import LpPool
+from onnx.reference.ops.op_lrn import LRN
+from onnx.reference.ops.op_lstm import LSTM
+from onnx.reference.ops.op_matmul import MatMul
+from onnx.reference.ops.op_matmul_integer import MatMulInteger
+from onnx.reference.ops.op_max import Max
+from onnx.reference.ops.op_max_pool import MaxPool
+from onnx.reference.ops.op_max_unpool import MaxUnpool
+from onnx.reference.ops.op_mean import Mean
+from onnx.reference.ops.op_mel_weight_matrix import MelWeightMatrix
+from onnx.reference.ops.op_min import Min
+from onnx.reference.ops.op_mod import Mod
+from onnx.reference.ops.op_mul import Mul
+from onnx.reference.ops.op_neg import Neg
+from onnx.reference.ops.op_negative_log_likelihood_loss import NegativeLogLikelihoodLoss
+from onnx.reference.ops.op_non_max_suppression import NonMaxSuppression
+from onnx.reference.ops.op_non_zero import NonZero
+from onnx.reference.ops.op_not import Not
+from onnx.reference.ops.op_one_hot import OneHot
+from onnx.reference.ops.op_optional import Optional
+from onnx.reference.ops.op_optional_get_element import OptionalGetElement
+from onnx.reference.ops.op_optional_has_element import OptionalHasElement
+from onnx.reference.ops.op_or import Or
+from onnx.reference.ops.op_pad import Pad_1, Pad_2, Pad_11, Pad_18
+from onnx.reference.ops.op_pow import Pow
+from onnx.reference.ops.op_prelu import PRelu
+from onnx.reference.ops.op_qlinear_conv import QLinearConv
+from onnx.reference.ops.op_qlinear_matmul import QLinearMatMul
+from onnx.reference.ops.op_quantize_linear import QuantizeLinear
+from onnx.reference.ops.op_random_normal import RandomNormal
+from onnx.reference.ops.op_random_normal_like import RandomNormalLike
+from onnx.reference.ops.op_random_uniform import RandomUniform
+from onnx.reference.ops.op_random_uniform_like import RandomUniformLike
+from onnx.reference.ops.op_range import Range
+from onnx.reference.ops.op_reciprocal import Reciprocal
+from onnx.reference.ops.op_reduce_l1 import ReduceL1_1, ReduceL1_18
+from onnx.reference.ops.op_reduce_l2 import ReduceL2_1, ReduceL2_18
+from onnx.reference.ops.op_reduce_log_sum import ReduceLogSum_1, ReduceLogSum_18
+from onnx.reference.ops.op_reduce_log_sum_exp import (
+    ReduceLogSumExp_1,
+    ReduceLogSumExp_18,
+)
+from onnx.reference.ops.op_reduce_max import ReduceMax_1, ReduceMax_18
+from onnx.reference.ops.op_reduce_mean import ReduceMean_1, ReduceMean_18
+from onnx.reference.ops.op_reduce_min import ReduceMin_1, ReduceMin_18
+from onnx.reference.ops.op_reduce_prod import ReduceProd_1, ReduceProd_18
+from onnx.reference.ops.op_reduce_sum import ReduceSum_1, ReduceSum_13
+from onnx.reference.ops.op_reduce_sum_square import (
+    ReduceSumSquare_1,
+    ReduceSumSquare_18,
+)
+from onnx.reference.ops.op_relu import Relu
+from onnx.reference.ops.op_reshape import Reshape_5, Reshape_14
+from onnx.reference.ops.op_resize import Resize
+from onnx.reference.ops.op_reverse_sequence import ReverseSequence
+from onnx.reference.ops.op_rnn import RNN_7, RNN_14
+from onnx.reference.ops.op_roi_align import RoiAlign
+from onnx.reference.ops.op_round import Round
+from onnx.reference.ops.op_scan import Scan
+from onnx.reference.ops.op_scatter_elements import ScatterElements
+from onnx.reference.ops.op_scatternd import ScatterND
+from onnx.reference.ops.op_selu import Selu
+from onnx.reference.ops.op_sequence_at import SequenceAt
+from onnx.reference.ops.op_sequence_construct import SequenceConstruct
+from onnx.reference.ops.op_sequence_empty import SequenceEmpty
+from onnx.reference.ops.op_sequence_erase import SequenceErase
+from onnx.reference.ops.op_sequence_insert import SequenceInsert
+from onnx.reference.ops.op_sequence_length import SequenceLength
+from onnx.reference.ops.op_sequence_map import SequenceMap
+from onnx.reference.ops.op_shape import Shape_1, Shape_15
+from onnx.reference.ops.op_shrink import Shrink
+from onnx.reference.ops.op_sigmoid import Sigmoid
+from onnx.reference.ops.op_sign import Sign
+from onnx.reference.ops.op_sin import Sin
+from onnx.reference.ops.op_sinh import Sinh
+from onnx.reference.ops.op_size import Size
+from onnx.reference.ops.op_slice import Slice_1, Slice_10
+from onnx.reference.ops.op_softmax import Softmax
+from onnx.reference.ops.op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss
+from onnx.reference.ops.op_softplus import Softplus
+from onnx.reference.ops.op_softsign import Softsign
+from onnx.reference.ops.op_space_to_depth import SpaceToDepth
+from onnx.reference.ops.op_split import Split_2, Split_11, Split_13, Split_18
+from onnx.reference.ops.op_split_to_sequence import SplitToSequence
+from onnx.reference.ops.op_sqrt import Sqrt
+from onnx.reference.ops.op_squeeze import Squeeze_1, Squeeze_11, Squeeze_13
+from onnx.reference.ops.op_stft import STFT
+from onnx.reference.ops.op_string_normalizer import StringNormalizer
+from onnx.reference.ops.op_sub import Sub
+from onnx.reference.ops.op_sum import Sum
+from onnx.reference.ops.op_tan import Tan
+from onnx.reference.ops.op_tanh import Tanh
+from onnx.reference.ops.op_tfidf_vectorizer import TfIdfVectorizer
+from onnx.reference.ops.op_thresholded_relu import ThresholdedRelu
+from onnx.reference.ops.op_tile import Tile
+from onnx.reference.ops.op_topk import TopK_1, TopK_10, TopK_11
+from onnx.reference.ops.op_transpose import Transpose
+from onnx.reference.ops.op_trilu import Trilu
+from onnx.reference.ops.op_unique import Unique
+from onnx.reference.ops.op_unsqueeze import Unsqueeze_1, Unsqueeze_11, Unsqueeze_13
+from onnx.reference.ops.op_upsample import Upsample
+from onnx.reference.ops.op_where import Where
+from onnx.reference.ops.op_xor import Xor
 
 
 def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRun]]:

@@ -248,6 +248,10 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   } // nullptr != scales
 }
 
+void resizeShapeInference_opset18_to_19(InferenceContext& ctx) {
+  resizeShapeInferenceVersioned(ctx, 19);
+}
+
 void resizeShapeInference_opset13_to_18(InferenceContext& ctx) {
   resizeShapeInferenceVersioned(ctx, 13);
 }
