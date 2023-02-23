@@ -85,6 +85,8 @@ if os.getenv("APPVEYOR"):
     backend_test.exclude("(test_vgg19|test_zfnet)")
 if platform.architecture()[0] == "32bit":
     backend_test.exclude("(test_vgg19|test_zfnet|test_bvlc_alexnet)")
+if platform.system() == "Windows":
+    backend_test.exclude("test_sequence_model")
 
 # The following tests are not supported.
 backend_test.exclude(
