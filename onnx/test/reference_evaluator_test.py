@@ -1029,7 +1029,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     def test_custom_node(self):
         class _InvAlpha:
-
             op_domain = "custom"
 
             def __init__(self, onnx_node, run_params):  # type: ignore
@@ -1044,7 +1043,6 @@ class TestReferenceEvaluator(unittest.TestCase):
                 return (1 / (x + self.alpha),)
 
         class InvAlpha(OpRun):
-
             op_domain = "custom"
 
             def _run(self, x, alpha=None):  # type: ignore
@@ -1678,7 +1676,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
     def test_col2im_2d(self):
-
         data = np.zeros([6, 28], dtype=np.float32)
         data[0][0] = 1.0
         image_shape, kernel_shape, dilations, pads, stride = (
@@ -2846,7 +2843,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         ]
     )
     def test_mvn(self, opset: int, ref_opset: int = 13):
-
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         nodes = [

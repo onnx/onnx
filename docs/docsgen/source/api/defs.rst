@@ -4,8 +4,6 @@
 onnx.defs
 =========
 
-.. contents::
-    :local:
 
 .. _l-api-opset-version:
 
@@ -43,9 +41,9 @@ Domains officially supported in onnx package.
 .. exec_code::
 
     from onnx.defs import (
-        ONNX_DOMAIN,    
-        ONNX_ML_DOMAIN,    
-        AI_ONNX_PREVIEW_TRAINING_DOMAIN,    
+        ONNX_DOMAIN,
+        ONNX_ML_DOMAIN,
+        AI_ONNX_PREVIEW_TRAINING_DOMAIN,
     )
     print(f"ONNX_DOMAIN={ONNX_DOMAIN!r}")
     print(f"ONNX_ML_DOMAIN={ONNX_ML_DOMAIN!r}")

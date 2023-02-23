@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op_run_training import OpRunTraining
+from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
 def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # type: ignore

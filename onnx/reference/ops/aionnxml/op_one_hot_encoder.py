@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op_run_aionnxml import OpRunAiOnnxMl
+from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class OneHotEncoder(OpRunAiOnnxMl):

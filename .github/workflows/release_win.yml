@@ -43,7 +43,7 @@ jobs:
         architecture: ${{ matrix.architecture }}
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@34cfbaee7f672c76950673338facd8a73f637506 # v1.1.3
+      uses: microsoft/setup-msbuild@1ff57057b5cfdc39105cd07a01d78e9b0ea0c14c # v1.3.1
       with:
         msbuild-architecture: ${{ matrix.architecture }}
 
@@ -80,14 +80,16 @@ jobs:
         cd onnx
         pytest
 
-    - uses: actions/upload-artifact@3446296876d12d4e3a0f3145a3c87e67bf0a16b5 # v1.0.0
+    - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       with:
         name: wheels
         path: ./onnx/dist
 
-    - name: Upload wheel to TestPyPI weekly
+    - name: Upload onnx-weekly wheel to TestPyPI/PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
+        twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
+        # TODO: stop uploading to TestPyPI after future ONNX 1.14
         twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy
