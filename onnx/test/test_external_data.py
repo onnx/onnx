@@ -18,6 +18,7 @@ from onnx.external_data_helper import (
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
+from onnx.test.helper import skip_if_no_onnxruntime
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
@@ -670,6 +671,19 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
         self.model_filename = self.create_test_model("C:/file.bin")
         with self.assertRaises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
+
+
+class TestRuntimeQuantizationFilePathBug(TestLoadExternalDataBase):
+    @skip_if_no_onnxruntime
+    def test_file_path_is_correct_during_quantization(self) -> None:
+        from onnxruntime.quantization import quantize_dynamic, QuantType
+
+        quantize_dynamic(
+            model_input=self.model_filename,
+            model_output=os.path.join(self.temp_dir, f"quantized-{str(uuid.uuid4())}.onnx"),
+            weight_type=QuantType.QInt8,
+            use_external_data_format=True,
+        )
 
 
 if __name__ == "__main__":

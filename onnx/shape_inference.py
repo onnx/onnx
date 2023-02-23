@@ -74,6 +74,7 @@ def infer_shapes_path(
         if output_path == "":
             output_path = model_path
         C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
+        return
 
     raise TypeError(
         "infer_shapes_path only accepts model path (String), "
