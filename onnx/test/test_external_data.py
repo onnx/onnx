@@ -5,6 +5,7 @@ import tempfile
 import unittest
 import uuid
 from typing import Any, List, Tuple
+from pathlib import Path
 
 import numpy as np
 
@@ -674,16 +675,26 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
 
 
 class TestRuntimeQuantizationFilePathBug(TestLoadExternalDataBase):
+    def test_load_from_path_object(self) -> None:
+        model_path = Path(self.model_filename)
+        model = onnx.load_model(model_path)
+
     @skip_if_no_onnxruntime
     def test_file_path_is_correct_during_quantization(self) -> None:
         from onnxruntime.quantization import quantize_dynamic, QuantType
+        
+        prev_dir = os.getcwd()
+        os.chdir(os.path.dirname(self.temp_dir))
 
-        quantize_dynamic(
-            model_input=self.model_filename,
-            model_output=os.path.join(self.temp_dir, f"quantized-{str(uuid.uuid4())}.onnx"),
-            weight_type=QuantType.QInt8,
-            use_external_data_format=True,
-        )
+        try:
+            quantize_dynamic(
+                model_input=self.model_filename,
+                model_output=os.path.join(self.temp_dir, f"quantized-{str(uuid.uuid4())}.onnx"),
+                weight_type=QuantType.QInt8,
+                use_external_data_format=True,
+            )
+        finally:
+            os.chdir(prev_dir)
 
 
 if __name__ == "__main__":
