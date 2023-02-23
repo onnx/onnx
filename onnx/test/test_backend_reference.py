@@ -50,7 +50,7 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     @classmethod
     def supports_device(cls, device: str) -> bool:
         d = Device(device)
-        return d.type == DeviceType.CPU
+        return d.type == DeviceType.CPU  # type: ignore[no-any-return]
 
     @classmethod
     def create_inference_session(cls, model):
@@ -139,14 +139,14 @@ globals().update(backend_test.test_cases)
 
 if __name__ == "__main__":
     res = unittest.main(verbosity=2, exit=False)
-    testsRun = res.result.testsRun
+    tests_run = res.result.tests_run
     errors = len(res.result.errors)
     skipped = len(res.result.skipped)
-    unexpectedSuccesses = len(res.result.unexpectedSuccesses)
-    expectedFailures = len(res.result.expectedFailures)
+    unexpected_successes = len(res.result.unexpected_successes)
+    expected_failures = len(res.result.expected_failures)
     print("---------------------------------")
     print(
-        f"testsRun={testsRun} errors={errors} skipped={skipped} "
-        f"unexpectedSuccesses={unexpectedSuccesses} "
-        f"expectedFailures={expectedFailures}"
+        f"tests_run={tests_run} errors={errors} skipped={skipped} "
+        f"unexpected_successes={unexpected_successes} "
+        f"expected_failures={expected_failures}"
     )

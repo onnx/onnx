@@ -26,9 +26,7 @@ from onnx.helper import (
 from onnx.numpy_helper import from_array
 
 
-def _replace_constant(
-    node: NodeProto, threshold: int
-) -> List[NodeProto]:
+def _replace_constant(node: NodeProto, threshold: int) -> List[NodeProto]:
     """
     Replace a node *Constant* two nodes, one *Constant* for the shape,
     one *ConstantOfShape*.
@@ -193,11 +191,10 @@ def replace_initializer_by_constant_of_shape(
 
     for node in onx.node:
         if node.op_type == "Constant":
-            new_node_shape, new_node = _replace_constant(node, threshold)
-            if new_node_shape is not None:
-                new_nodes.append(new_node_shape)
+            shape_nodes = _replace_constant(node, threshold)
+            if len(shape_nodes) == 2:
                 n_modifications += 1
-            new_nodes.append(new_node)
+            new_nodes.extend(shape_nodes)
             continue
         modified = False
         atts = []
