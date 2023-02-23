@@ -307,14 +307,18 @@ class Runner:
         """
         if not x.type.tensor_type:
             raise NotImplementedError(
+                f"Input expected to have tensor type. "
                 f"Unable to generate random data for model {name!r} and input {x}."
             )
         if x.type.tensor_type.elem_type != 1:
             raise NotImplementedError(
+                f"Input expected to be a float tensor. "
                 f"Unable to generate random data for model {name!r} and input {x}."
             )
-        shape = tuple(d.dim_value if d.HasField("dim_value") else 1
-                      for d in x.type.tensor_type.shape.dim)
+        shape = tuple(
+            d.dim_value if d.HasField("dim_value") else 1
+            for d in x.type.tensor_type.shape.dim
+        )
         gen = np.random.default_rng(seed=seed)
         return gen.random(shape, np.float32)
 
