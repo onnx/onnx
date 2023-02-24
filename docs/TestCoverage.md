@@ -2117,7 +2117,7 @@ test_cases = [
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -2140,7 +2140,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -2167,11 +2167,11 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -2255,7 +2255,7 @@ test_cases = [
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -2278,7 +2278,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -2305,11 +2305,11 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
