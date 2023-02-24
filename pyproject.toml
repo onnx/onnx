@@ -85,7 +85,6 @@ select = [
     "SIM", # flake8-simplify
 ]
 ignore = [
-    "B9", # Opinionated bugbear rules
     "E501",
     "N803", # Argument casing
     "N806", # Relax: Variable name in function should be lowercase
