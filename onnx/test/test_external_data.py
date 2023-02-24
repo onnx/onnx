@@ -19,7 +19,7 @@ from onnx.external_data_helper import (
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
-from onnx.test.helper import skip_if_no_onnxruntime
+from helper import skip_if_no_onnxruntime
 
 
 class TestLoadExternalDataBase(unittest.TestCase):

@@ -48,7 +48,7 @@ from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
 )
-from onnx.test.helper import skip_if_no_onnxruntime
+from helper import skip_if_no_onnxruntime
 
 
 def skip_if_no_torch(fn):

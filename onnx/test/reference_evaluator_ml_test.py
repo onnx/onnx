@@ -19,7 +19,7 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.reference import ReferenceEvaluator
-from onnx.test.helper import has_onnxruntime, skip_if_no_onnxruntime
+from helper import has_onnxruntime, skip_if_no_onnxruntime
 
 TARGET_OPSET = onnx_opset_version() - 2
 TARGET_OPSET_ML = 3
