@@ -82,6 +82,7 @@ select = [
     "YTT", # flake8-2020
     "RUF", # Ruff-specific rules
     "TID252", # Relative imports
+    "SIM", # flake8-simplify
 ]
 ignore = [
     "B9", # Opinionated bugbear rules
@@ -91,6 +92,9 @@ ignore = [
     "N803", # Argument casing
     "N806", # Variable name in function should be lowercase
     "N999", # Module names
+    "SIM108", # We don't encourage ternary operators
+    "SIM114", # Don't combine if branches for debugability
+    "SIM116", # Don't use dict lookup to replace if-else
 ]
 ignore-init-module-imports = true
 unfixable = [
