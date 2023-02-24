@@ -3464,9 +3464,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
-          if (is_onesided) {
-            dft_size = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
-          }
+          int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
 
           auto n_dfts = static_cast<int64_t>((signal_size - dft_size) / static_cast<float>(frame_step_value)) + 1;
 
@@ -3474,7 +3472,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ONNX_NAMESPACE::TensorShapeProto result_shape_proto;
           result_shape_proto.add_dim()->set_dim_value(input_shape.dim(0).dim_value()); // batch size
           result_shape_proto.add_dim()->set_dim_value(n_dfts);
-          result_shape_proto.add_dim()->set_dim_value(dft_size);
+          result_shape_proto.add_dim()->set_dim_value(dft_unique_bins);
           result_shape_proto.add_dim()->set_dim_value(2);
           updateOutputShape(ctx, 0, result_shape_proto);
         }));

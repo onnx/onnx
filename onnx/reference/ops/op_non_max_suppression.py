@@ -50,7 +50,7 @@ def suppress_by_iou(
     box1 = boxes_data[box_index1]
     box2 = boxes_data[box_index2]
     # center_point_box_ only support 0 or 1
-    if 0 == center_point_box:
+    if center_point_box == 0:
         # boxes data format [y1, x1, y2, x2]
         x1_min, x1_max = max_min(box1[1], box1[3])
         x2_min, x2_max = max_min(box2[1], box2[3])

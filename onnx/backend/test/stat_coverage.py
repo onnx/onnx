@@ -12,10 +12,7 @@ from onnx.backend.test.runner import Runner
 
 
 def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:
-    for s in schemas:
-        if s.domain == "ai.onnx.ml":
-            return True
-    return False
+    return any(s.domain == "ai.onnx.ml" for s in schemas)
 
 
 def gen_outlines(f: IO[Any], ml: bool) -> None:

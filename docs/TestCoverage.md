@@ -2117,7 +2117,7 @@ test_cases = [
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -2140,7 +2140,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -2167,11 +2167,11 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -2255,7 +2255,7 @@ test_cases = [
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -2278,7 +2278,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -2305,11 +2305,11 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -13871,7 +13871,7 @@ for test_name, shape in test_cases.items():
 
 
 ### Resize
-There are 37 test cases, listed as following:
+There are 39 test cases, listed as following:
 <details>
 <summary>resize_downsample_scales_cubic</summary>
 
@@ -14174,6 +14174,38 @@ expect(
     inputs=[data, scales],
     outputs=[output],
     name="test_resize_downsample_scales_linear_antialias",
+)
+```
+
+</details>
+<details>
+<summary>resize_downsample_scales_linear_half_pixel_symmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Resize",
+    inputs=["X", "", "scales"],
+    outputs=["Y"],
+    mode="linear",
+    coordinate_transformation_mode="half_pixel_symmetric",
+)
+
+data = np.array([[[[1, 2, 3, 4]]]], dtype=np.float32)
+scales = np.array([1.0, 1.0, 1.0, 0.6], dtype=np.float32)
+
+# [[[[1.6666667, 3.3333333]]]]
+output = interpolate_nd(
+    data,
+    lambda x, _: linear_coeffs(x),
+    scale_factors=scales,
+    coordinate_transformation_mode="half_pixel_symmetric",
+).astype(np.float32)
+
+expect(
+    node,
+    inputs=[data, scales],
+    outputs=[output],
+    name="test_resize_downsample_scales_linear_half_pixel_symmetric",
 )
 ```
 
@@ -15058,6 +15090,41 @@ expect(
     inputs=[data, scales],
     outputs=[output],
     name="test_resize_upsample_scales_linear_align_corners",
+)
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_linear_half_pixel_symmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Resize",
+    inputs=["X", "", "scales"],
+    outputs=["Y"],
+    mode="linear",
+    coordinate_transformation_mode="half_pixel_symmetric",
+)
+
+data = np.array([[[[1, 2], [3, 4]]]], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.3, 2.94], dtype=np.float32)
+
+# [[[[1.        , 1.15986395, 1.5       , 1.84013605, 2.        ],
+#    [1.56521738, 1.72508133, 2.06521738, 2.40535343, 2.56521738],
+#    [2.43478262, 2.59464657, 2.93478262, 3.27491867, 3.43478262],
+#    [3.        , 3.15986395, 3.5       , 3.84013605, 4.        ]]]]
+output = interpolate_nd(
+    data,
+    lambda x, _: linear_coeffs(x),
+    scale_factors=scales,
+    coordinate_transformation_mode="half_pixel_symmetric",
+).astype(np.float32)
+
+expect(
+    node,
+    inputs=[data, scales],
+    outputs=[output],
+    name="test_resize_upsample_scales_linear_half_pixel_symmetric",
 )
 ```
 
