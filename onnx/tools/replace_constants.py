@@ -28,8 +28,8 @@ from onnx.numpy_helper import from_array
 
 def _replace_constant(node: NodeProto, threshold: int) -> List[NodeProto]:
     """
-    Replace a node *Constant* two nodes, one *Constant* for the shape,
-    one *ConstantOfShape*.
+    Replaces a Constant node with a large tensor (with more than threshold elements)
+    by a sequence of nodes that produces a dummy constant of same shape as original tensor.
     """
     if node.op_type != "Constant":
         raise TypeError(f"Node type must be 'Constant' not {node.op_type!r}.")
