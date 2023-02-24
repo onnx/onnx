@@ -401,8 +401,9 @@ def get_rst_doc(  # type: ignore
             name = str(ii)
         name = f"**{name}** in ("
         if const.allowed_type_strs:
-            text = ",\n  ".join(sorted(const.allowed_type_strs))
-            name += "\n  " + text + "\n  )"
+            types = [f"``{type_str}``" for type_str in sorted(const.allowed_type_strs)]
+            text = ", ".join(types)
+            name += " " + text + " )"
         return name
 
     def getname(obj, i):
