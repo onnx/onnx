@@ -86,12 +86,11 @@ select = [
 ]
 ignore = [
     "B9", # Opinionated bugbear rules
-    "E402", # warns on imports coming after statements. There are important use cases
-            # like demandimport (https://fburl.com/demandimport) that require statements
     "E501",
     "N803", # Argument casing
-    "N806", # Variable name in function should be lowercase
+    "N806", # Relax: Variable name in function should be lowercase
     "N999", # Module names
+    "SIM102", # We don't perfer always combining if branches
     "SIM108", # We don't encourage ternary operators
     "SIM114", # Don't combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
