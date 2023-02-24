@@ -6,6 +6,7 @@
 #include <fstream>
 #include <list>
 #include "onnx/checker.h"
+#include "onnx/common/common.h"
 #include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
@@ -867,22 +868,22 @@ struct FunctionInferenceContext : public InferenceContext {
   }
 
   GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override {
-    (void)attribute_name; // This method is unused for function-type-inference.
+    ONNX_UNUSED_PARAMETER(attribute_name); // This method is unused for function-type-inference.
     return nullptr;
   }
 
   const TensorProto* getInputData(size_t index) const override {
-    (void)index; // This inference doesn't take advantage of statically known input values.
+    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of statically known input values.
     return nullptr;
   }
 
   const SparseTensorProto* getInputSparseData(size_t index) const override {
-    (void)index; // This inference doesn't take advantage of statically known input values.
+    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of statically known input values.
     return nullptr;
   }
 
   const TensorShapeProto* getSymbolicInput(size_t index) const override {
-    (void)index; // This inference doesn't take advantage of data-propagation.
+    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of data-propagation.
     return nullptr;
   }
 

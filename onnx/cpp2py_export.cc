@@ -457,6 +457,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ParseProtoFromPyBytes(&proto, function_proto_bytes);
 
         std::vector<TypeProto> input_types;
+        input_types.reserve(input_types_bytes.size());
         for (const py::bytes& bytes : input_types_bytes) {
           TypeProto type;
           ParseProtoFromPyBytes(&type, bytes);
@@ -464,6 +465,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         }
 
         std::vector<AttributeProto> attributes;
+        attributes.reserve(attributes_bytes.size());
         for (const py::bytes& bytes : attributes_bytes) {
           AttributeProto attr;
           ParseProtoFromPyBytes(&attr, bytes);
@@ -472,6 +474,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
         std::vector<TypeProto> output_types = shape_inference::InferFunctionOutputTypes(proto, input_types, attributes);
         std::vector<py::bytes> result;
+        result.reserve(output_types.size());
         for (auto& type_proto : output_types) {
           std::string out;
           type_proto.SerializeToString(&out);
