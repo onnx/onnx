@@ -2198,51 +2198,81 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
-static const char* Resize_ver18_doc = R"DOC(
+static const char* Resize_ver19_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
-Each dimension value of the output tensor is: <br/>
-  `output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)` <br/>
+Each dimension value of the output tensor is:
+```
+output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)
+```
 if input \"sizes\" is not specified.
 )DOC";
 
-static const char* Resize_attr_coordinate_transformation_mode_doc = R"DOC(
-This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
+static const char* Resize_ver19_attr_coordinate_transformation_mode_doc = R"DOC(
+This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor.
 
 The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example.
-Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, `length_original` as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", `scale = length_resized / length_original`, <br/>
+Denote `x_resized` as the coordinate of axis x in the resized tensor,
+ `x_original` as the coordinate of axis x in the original tensor,
+ `length_original` as the length of the original tensor in axis x,
+ `length_resized` as the length of the resized tensor in axis x,
+ `scale = length_resized / length_original`,
+ `output_width` the target length on the axis x which can be a fractional number when it is calculated out of a scale factor,
+ and `output_width_int` the effective output width as an integer.
 
-if coordinate_transformation_mode is `"half_pixel"`, <br/>
-`x_original = (x_resized + 0.5) / scale - 0.5` <br/>
+if coordinate_transformation_mode is `"half_pixel"`,
+```
+x_original = (x_resized + 0.5) / scale - 0.5
+```
 
-if coordinate_transformation_mode is `"pytorch_half_pixel"`, <br/>
-`x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0` <br/>
+if coordinate_transformation_mode is `"half_pixel_symmetric"`,
+```
+adjustment = output_width_int / output_width
+center = input_width / 2
+offset = center * (1 - adjustment)
+x_ori = offset + (x + 0.5) / scale - 0.5
+```
 
-if coordinate_transformation_mode is `"align_corners"`, <br/>
-`x_original = x_resized * (length_original - 1) / (length_resized - 1)` <br/>
+if coordinate_transformation_mode is `"pytorch_half_pixel"`,
+```
+x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0
+```
 
-if coordinate_transformation_mode is `"asymmetric"`, <br/>
-`x_original = x_resized / scale` <br/>
+if coordinate_transformation_mode is `"align_corners"`,
+```
+x_original = x_resized * (length_original - 1) / (length_resized - 1)
+```
 
-if coordinate_transformation_mode is `"tf_crop_and_resize"`, <br/>
-`x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1)`
+if coordinate_transformation_mode is `"asymmetric"`,
+```
+x_original = x_resized / scale
+```
+
+if coordinate_transformation_mode is `"tf_crop_and_resize"`,
+```
+x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1)
+```
 .)DOC";
 
-static const char* Resize_attr_keep_aspect_ratio_policy_doc = R"DOC(
+static const char* Resize_ver19_attr_keep_aspect_ratio_policy_doc = R"DOC(
 This attribute describes how to interpret the `sizes` input with regard to keeping the original aspect ratio of the input, and it is not applicable when
-the `scales` input is used. <br/>
+the `scales` input is used.
 
-Given a set of `sizes`, associated with a subset of `axes` (explicitly provided or default), and assuming `d = axes[i]`, with `i` being the index of the provided `sizes`. <br/>
+Given a set of `sizes`, associated with a subset of `axes` (explicitly provided or default), and assuming `d = axes[i]`, with `i` being the index of the provided `sizes`.
 
-If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disregarded, and the input is resized to the specified size: <br/>
-`out_size[d] = sizes[i]` <br/>
+If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disregarded, and the input is resized to the specified size:
+`out_size[d] = sizes[i]`
 
-If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio: <br/>
-`scale = Min(sizes[i] / in_size[d])` <br/>
-`out_size[d] = round_int(scale * in_size[i])` <br/>
+If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio:
+```
+scale = Min(sizes[i] / in_size[d])
+out_size[d] = round_int(scale * in_size[i])
+```
 
-If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio: <br/>
-`scale = Max(sizes[i] / in_size[d])` <br/>
-`out_size[d] = round_int(scale * in_size[i])` <br/>
+If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio:
+```
+scale = Max(sizes[i] / in_size[d])
+out_size[d] = round_int(scale * in_size[i])
+```
 
 For non-resizable axes (those not specified in `axes`), the output size will be equal to the input size.
 
@@ -2250,7 +2280,7 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 
 ONNX_OPERATOR_SET_SCHEMA(
     Resize,
-    18,
+    19,
     OpSchema()
         .Attr(
             "mode",
@@ -2274,7 +2304,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "coordinate_transformation_mode",
-            Resize_attr_coordinate_transformation_mode_doc,
+            Resize_ver19_attr_coordinate_transformation_mode_doc,
             AttributeProto::STRING,
             std::string("half_pixel"))
         .Attr(
@@ -2304,7 +2334,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             false)
         .Attr(
             "keep_aspect_ratio_policy",
-            Resize_attr_keep_aspect_ratio_policy_doc,
+            Resize_ver19_attr_keep_aspect_ratio_policy_doc,
             AttributeProto::STRING,
             std::string("stretch"))
         .Input(0, "X", "N-D tensor", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -2350,8 +2380,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain roi type to float or double.")
-        .SetDoc(Resize_ver18_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset13_to_18(ctx); }));
+        .SetDoc(Resize_ver19_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
 
 static const char* GridSample_ver16_doc = R"DOC(
 Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from `grid`.

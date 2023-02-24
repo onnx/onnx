@@ -7,7 +7,7 @@ proto is legal.
 
 import functools
 import sys
-from typing import Any, Callable, Type, TypeVar, Union, cast
+from typing import Any, Callable, Optional, Type, TypeVar, Union, cast
 
 from google.protobuf.message import Message
 
@@ -24,6 +24,7 @@ from onnx import (
     SparseTensorProto,
     TensorProto,
     ValueInfoProto,
+    helper,
 )
 
 # Limitation of single protobuf file is 2GB
@@ -84,11 +85,19 @@ def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None
     pass
 
 
-@_create_checker(FunctionProto)
 def check_function(
-    graph: FunctionProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+    function: FunctionProto, ctx: Optional[C.CheckerContext] = None
 ) -> None:
-    pass
+    if ctx is None:
+        ctx = C.CheckerContext()
+        ctx.ir_version = helper.find_min_ir_version_for(
+            list(function.opset_import), True
+        )
+        function_opset_dic = {}
+        for domain_version in function.opset_import:
+            function_opset_dic[domain_version.domain] = domain_version.version
+        ctx.opset_imports = function_opset_dic
+    C.check_function(function.SerializeToString(), ctx)
 
 
 @_create_checker(GraphProto)

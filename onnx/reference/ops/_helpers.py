@@ -7,7 +7,6 @@ from onnx.reference.op_run import OpRun, _split_class_name
 def build_registered_operators_any_domain(
     module_context: Dict[str, Any]
 ) -> Dict[str, Dict[Union[int, None], OpRun]]:
-
     reg_ops: Dict[str, Dict[Union[int, None], OpRun]] = {}
     for class_name, class_type in module_context.items():
         if class_name.startswith("_") or class_name in {

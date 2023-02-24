@@ -7,13 +7,13 @@ from typing import Union, IO, Optional, TypeVar, Any
 
 import google.protobuf.message
 
-from .onnx_cpp2py_export import ONNX_ML
+from onnx.onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import (
     load_external_data_for_model,
     write_external_data_tensors,
     convert_model_to_external_data,
 )
-from .onnx_pb import (
+from onnx.onnx_pb import (
     AttributeProto,
     EXPERIMENTAL,
     FunctionProto,
@@ -42,19 +42,12 @@ from .onnx_pb import (
     ValueInfoProto,
     Version,
 )
-from .onnx_operators_pb import (
-    OperatorProto,
-    OperatorSetProto,
-)
-from .onnx_data_pb import (
-    MapProto,
-    OptionalProto,
-    SequenceProto,
-)
-from .version import version as __version__
+from onnx.onnx_operators_pb import OperatorProto, OperatorSetProto
+from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
+from onnx.version import version as __version__
 
 # Import common subpackages so they're available when you 'import onnx'
-from . import (
+from onnx import (
     checker,
     compose,
     defs,

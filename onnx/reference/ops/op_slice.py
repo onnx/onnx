@@ -5,7 +5,7 @@ from typing import Optional
 
 import numpy as np
 
-from ._op import OpRun
+from onnx.reference.ops._op import OpRun
 
 
 def _slice(

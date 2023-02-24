@@ -3,13 +3,13 @@
 
 import numpy as np
 
-from ._op_run_aionnxml import OpRunAiOnnxMl
+from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class Binarizer(OpRunAiOnnxMl):
     def _run(self, x, threshold=None):  # type: ignore
         X = x.copy()
-        cond = X > threshold
+        cond = threshold < X
         not_cond = np.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0

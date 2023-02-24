@@ -4,8 +4,6 @@
 onnx.helper
 ===========
 
-.. contents::
-    :local:
 
 .. currentmodule:: onnx.helper
 

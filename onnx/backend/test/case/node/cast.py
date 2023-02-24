@@ -7,11 +7,10 @@ import numpy as np
 
 import onnx
 from onnx import TensorProto, helper
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 from onnx.helper import float32_to_floate4m3, float32_to_floate5m2, make_tensor
 from onnx.numpy_helper import floate4m3_to_float32, floate5m2_to_float32
-
-from ..base import Base
-from . import expect
 
 
 class Cast(Base):
@@ -46,7 +45,7 @@ class Cast(Base):
         for from_type, to_type in test_cases:
             input_type_proto = None
             output_type_proto = None
-            if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+            if from_type == "BFLOAT16" or to_type == "BFLOAT16":
                 np_fp32 = np.array(
                     [
                         "0.47892547",
@@ -69,7 +68,7 @@ class Cast(Base):
                 np_bfp16 = (
                     np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
                 )
-                if "BFLOAT16" == to_type:
+                if to_type == "BFLOAT16":
                     assert from_type == "FLOAT"
                     input = np_fp32.reshape([3, 4])
                     output = np_bfp16.reshape([3, 4])
@@ -142,11 +141,11 @@ class Cast(Base):
                     raise ValueError(
                         f"Either from_type={from_type!r} or to_type={to_type!r} is misspelled."
                     )
-            elif "STRING" != from_type:
+            elif from_type != "STRING":
                 input = np.random.random_sample(shape).astype(
                     helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
                 )
-                if "STRING" == to_type:
+                if to_type == "STRING":
                     # Converting input to str, then give it object dtype for generating script
                     ss = []
                     for i in input.flatten():

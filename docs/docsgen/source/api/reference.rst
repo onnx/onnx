@@ -4,8 +4,6 @@
 onnx.reference
 ==============
 
-.. contents::
-    :local:
 
 DefaultNone
 +++++++++++
