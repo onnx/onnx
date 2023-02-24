@@ -2,8 +2,6 @@
 onnx.shape_inference
 ====================
 
-.. contents::
-    :local:
 
 infer_shapes
 ++++++++++++

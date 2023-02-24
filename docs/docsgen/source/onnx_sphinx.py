@@ -26,7 +26,7 @@ from onnx.onnx_cpp2py_export.defs import (  # pylint: disable=E1101,E0611,E0401
 def get_template():  # type: ignore
     try:
         from jinja2 import Template
-    except ImportError:  # pragma no cover
+    except ImportError:
 
         class Template:  # type: ignore
             "Docstring template"
@@ -885,9 +885,6 @@ def onnx_documentation_folder(folder, title="ONNX Operators", flog=None, max_ops
                 "=" * len(main),
                 main,
                 "=" * len(main),
-                "",
-                ".. contents::",
-                "    :local:",
                 "",
                 doc,
             ]
