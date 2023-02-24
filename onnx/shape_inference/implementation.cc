@@ -650,7 +650,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  const std::vector<std::string>& Errors() const {
+  const std::vector<std::string>& getErrors() const {
     return inference_errors;
   }
 
@@ -915,7 +915,7 @@ std::vector<TypeProto> InferFunctionOutputTypes(
       /*schema_registry*/ OpSchemaRegistry::Instance(),
       /*generated_shape_data_by_name*/ nullptr);
   base.process(function_proto, ctx);
-  auto& errors = base.Errors();
+  auto& errors = base.getErrors();
   if (!errors.empty()) {
     std::string all_errors = "Inference error(s): ";
     for (const std::string& error : errors) {
