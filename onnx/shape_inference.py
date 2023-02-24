@@ -136,6 +136,10 @@ def infer_function_output_types(
     input_types: Sequence[TypeProto],
     attributes: Sequence[AttributeProto],
 ) -> List[TypeProto]:
+    """
+    Apply type-and-shape-inference to given function body, with given input types
+    and given input attribute values.
+    """
     result = C.infer_function_output_types(
         function.SerializeToString(),
         [x.SerializeToString() for x in input_types],
