@@ -2,15 +2,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "tensor_util.h"
 #include <vector>
 #include "onnx/common/platform_helpers.h"
+#include "tensor_util.h"
 
 namespace ONNX_NAMESPACE {
 
 #define DEFINE_PARSE_DATA(type, typed_data_fetch)                          \
   template <>                                                              \
   const std::vector<type> ParseData(const Tensor* tensor) {                \
+    ONNX_ASSERT(tensor != nullptr)                                         \
     std::vector<type> res;                                                 \
     if (!tensor->is_raw_data()) {                                          \
       const auto& data = tensor->typed_data_fetch();                       \
@@ -44,6 +45,7 @@ namespace ONNX_NAMESPACE {
     /* copying as the underlying type, otherwise we may hit memory   */    \
     /* misalignment issues on certain platforms, such as arm32-v7a */      \
     const size_t raw_data_size = raw_data.size();                          \
+    ONNX_ASSERT(tensor->elem_num() == (raw_data_size / sizeof(type)));     \
     res.resize(raw_data_size / sizeof(type));                              \
     memcpy(reinterpret_cast<char*>(res.data()), bytes, raw_data_size);     \
     return res;                                                            \
@@ -54,5 +56,28 @@ DEFINE_PARSE_DATA(int64_t, int64s)
 DEFINE_PARSE_DATA(float, floats)
 DEFINE_PARSE_DATA(double, doubles)
 DEFINE_PARSE_DATA(uint64_t, uint64s)
+DEFINE_PARSE_DATA(uint8_t, int32s)
+DEFINE_PARSE_DATA(int8_t, int32s)
+DEFINE_PARSE_DATA(uint16_t, int32s)
+DEFINE_PARSE_DATA(int16_t, int32s)
+DEFINE_PARSE_DATA(uint32_t, uint64s)
+
+#undef DEFINE_PARSE_DATA
+
+template <>
+const std::vector<bool> ParseData<bool>(const Tensor* tensor) {
+  std::vector<bool> res;
+  if (!tensor->is_raw_data()) {
+    std::transform(tensor->int32s().cbegin(), tensor->int32s().cend(), std::back_inserter(res), [](int32_t d) -> bool {
+      return !!d;
+    });
+    return res;
+  }
+  const auto& raw_data = tensor->raw();
+  ONNX_ASSERT(tensor->elem_num() == raw_data.size());
+  res.reserve(tensor->elem_num());
+  std::transform(raw_data.cbegin(), raw_data.cend(), std::back_inserter(res), [](char c) { return !!c; });
+  return res;
+}
 
 } // namespace ONNX_NAMESPACE
