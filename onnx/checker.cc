@@ -622,7 +622,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   }
   auto domain_version = dit->second;
 
-  // for ops referencing local functions, there is no schame to verify it.
+  // for ops referencing local functions, there is no schema to verify it.
   // will add a check to verify consistency between these ops and local functions.
   std::unordered_set<std::string> seen_attr_names{};
   for (const auto& attr : node.attribute()) {
