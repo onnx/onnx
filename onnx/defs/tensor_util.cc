@@ -2,9 +2,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "tensor_util.h"
 #include <vector>
 #include "onnx/common/platform_helpers.h"
-#include "tensor_util.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -45,8 +45,9 @@ namespace ONNX_NAMESPACE {
     /* copying as the underlying type, otherwise we may hit memory   */    \
     /* misalignment issues on certain platforms, such as arm32-v7a */      \
     const size_t raw_data_size = raw_data.size();                          \
-    ONNX_ASSERT(tensor->elem_num() == (raw_data_size / sizeof(type)));     \
-    res.resize(raw_data_size / sizeof(type));                              \
+    const size_t elem_num = static_cast<size_t>(tensor->elem_num());       \
+    ONNX_ASSERT(elem_num == (raw_data_size / sizeof(type)));               \
+    res.resize(elem_num);                                                  \
     memcpy(reinterpret_cast<char*>(res.data()), bytes, raw_data_size);     \
     return res;                                                            \
   }
@@ -74,8 +75,9 @@ const std::vector<bool> ParseData<bool>(const Tensor* tensor) {
     return res;
   }
   const auto& raw_data = tensor->raw();
-  ONNX_ASSERT(tensor->elem_num() == raw_data.size());
-  res.reserve(tensor->elem_num());
+  const size_t elem_num = static_cast<size_t>(tensor->elem_num());
+  ONNX_ASSERT(elem_num == raw_data.size());
+  res.reserve(elem_num);
   std::transform(raw_data.cbegin(), raw_data.cend(), std::back_inserter(res), [](char c) { return !!c; });
   return res;
 }
