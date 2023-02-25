@@ -2,7 +2,7 @@
 import unittest
 
 import onnx
-from onnx import GraphProto, checker
+from onnx import GraphProto, OperatorSetIdProto, checker
 
 
 class TestBasicFunctions(unittest.TestCase):
@@ -114,6 +114,75 @@ class TestBasicFunctions(unittest.TestCase):
 
         model = onnx.parser.parse_model(input)
         checker.check_model(model)
+
+
+    def test_composite_parse_function_with_attributes(self) -> None:
+        function_text = """
+         <
+         domain: "custom_domain",
+         opset_import: [ "" : 15],
+         doc_string: "Test function proto"
+         >
+           Selu
+           <alpha: float=1.67326319217681884765625, gamma: float=1.05070102214813232421875>
+           (X) => (C)
+           {
+               constant_alpha = Constant<value_float: float=@alpha>()
+               constant_gamma = Constant<value_float: float=@gamma>()
+               alpha_x = CastLike(constant_alpha, X)
+               gamma_x = CastLike(constant_gamma, X)
+               exp_x = Exp(X)
+               alpha_x_exp_x = Mul(alpha_x, exp_x)
+               alpha_x_exp_x_ = Sub(alpha_x_exp_x, alpha_x)
+               neg = Mul(gamma_x, alpha_x_exp_x_)
+               pos = Mul(gamma_x, X)
+               _zero = Constant<value_float=0.0>()
+               zero = CastLike(_zero, X)
+               less_eq = LessOrEqual(X, zero)
+               C = Where(less_eq, neg, pos)
+           }
+        """
+
+        functions = [onnx.parser.parse_function(function_text)]
+        
+        graph_texts = [
+        """
+        agraph (float[N] x) => (float[N] out)
+         {
+            out = custom_domain.Selu(x)
+         }
+        """,
+        """
+        agraph (float[N] x) => (float[N] out)
+         {
+            out = custom_domain.Selu<alpha=2.0>(x)
+         }
+        """,
+        """
+        agraph (float[N] x) => (float[N] out)
+         {
+            out = custom_domain.Selu<gamma=3.0>(x)
+         }
+        """,
+        """
+        agraph (float[N] x) => (float[N] out)
+         {
+            out = custom_domain.Selu<alpha=2.0, gamma=3.0>(x)
+         }
+        """,
+        ]
+        # graph_text = """
+        # agraph (float[N] x) => (float[N] out)
+        #  {
+        #     out = custom_domain.Selu(x)
+        #  }
+        # """
+        for graph_text in graph_texts:
+            graph = onnx.parser.parse_graph(graph_text)
+            opset_imports = [OperatorSetIdProto(domain = "", version = 15), OperatorSetIdProto(domain = "custom_domain", version = 1)]
+
+            model = onnx.helper.make_model(graph, functions= functions, opset_imports=opset_imports)
+            checker.check_model(model)
 
 
 if __name__ == "__main__":

@@ -236,6 +236,7 @@ def make_function(
     nodes: Sequence[NodeProto],
     opset_imports: Sequence[OperatorSetIdProto],
     attributes: Optional[Sequence[str]] = None,
+    attribute_protos: Optional[Sequence[AttributeProto]] = None,
     doc_string: Optional[str] = None,
 ) -> FunctionProto:
     if attributes is None:
@@ -248,6 +249,7 @@ def make_function(
     f.node.extend(nodes)
     f.opset_import.extend(opset_imports)
     f.attribute.extend(attributes)
+    f.attribute_protos.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
     return f
