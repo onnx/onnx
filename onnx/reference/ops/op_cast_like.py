@@ -1,5 +1,6 @@
+# SPDX-FileCopyrightText: 2023 ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
 
 from onnx.helper import np_dtype_to_tensor_dtype
 from onnx.onnx_pb import TensorProto

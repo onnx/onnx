@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// SPDX-FileCopyrightText: 2023 ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for MaxPool in default domain from version 8 to 7
 

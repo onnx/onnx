@@ -1,5 +1,6 @@
+# SPDX-FileCopyrightText: 2023 ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0914,R1702,W0221
 
 import numpy as np
 
