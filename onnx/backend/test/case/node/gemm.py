@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2023 ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Optional

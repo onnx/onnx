@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 ---
 name: Bug report
 about: Create a bug report to help improve the ONNX.

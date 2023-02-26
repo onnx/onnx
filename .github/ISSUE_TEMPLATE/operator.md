@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 ---
 name: New Operator
 about: Create a new operator that does not currently exist in the ONNX.

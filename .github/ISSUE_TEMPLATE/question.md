@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 ---
 name: Question
 about: Ask a question about the ONNX.

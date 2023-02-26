@@ -1,5 +1,7 @@
 # SPDX-FileCopyrightText: 2022 Free Software Foundation Europe e.V. <https://fsfe.org>
+# SPDX-FileCopyrightText: 2023 ONNX Project Contributors
 #
+# SPDX-License-Identifier: Apache-2.0
 # SPDX-License-Identifier: CC0-1.0
 
 name: REUSE Compliance Check

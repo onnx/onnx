@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # This workflow uses actions that are not certified by GitHub. They are provided
 # by a third-party and are governed by separate terms of service, privacy
 # policy, and support documentation.
@@ -27,8 +31,6 @@ jobs:
       # Needed to publish results and get a badge (see publish_results below).
       id-token: write
       # Uncomment the permissions below if installing in a private repository.
-      # contents: read
-      # actions: read
 
     steps:
       - name: "Checkout code"
