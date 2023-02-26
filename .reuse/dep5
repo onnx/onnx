@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Onnx
+Upstream-Contact: Jane Doe <jane@example.com>
+Source: https://github.com/onnx/onnx
+
+Files: onnx/backend/
+Copyright: ONNX Project Contributors
+License: Apache-2.0
