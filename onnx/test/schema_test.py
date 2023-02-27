@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 
-from onnx import AttributeProto, defs
+from onnx import AttributeProto, FunctionProto, defs
 
 
 class TestSchema(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(v.type, AttributeProto.FLOAT)
 
     def test_function_body(self) -> None:
-        defs.get_schema("Selu").function_body
+        self.assertEqual(type(defs.get_schema("Selu").function_body), FunctionProto)
 
 
 if __name__ == "__main__":
